@@ -1,119 +1,122 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import bgVideo from '../assets/gasanview.mp4'; 
-import logoImg from '../assets/gasan-logo.png'; 
-import openEyeIcon from '../assets/openeye.png';
-import closeEyeIcon from '../assets/closeeye.png';
-import loadingGif from '../assets/loading.gif'; // imported loading gif
+import { ShieldAlert, LogIn } from 'lucide-react';
 
-export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // added loading state
-    const navigate = useNavigate();
+const Login = () => {
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    contact: '', // Pinalitan natin ito mula 'email' to 'contact'
+    password: ''
+  });
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setIsLoading(true); // start loading indicator
-        try {
-            const response = await fetch('https://g-trams-web2.onrender.com/api/v1/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-            const data = await response.json();
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
 
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                
-                // added optional chaining and tolowercase to prevent exact string mismatch bugs
-                if (data.role?.toLowerCase() === 'admin') {
-                    navigate('/admin-dashboard');
-                } else {
-                    navigate('/operator-dashboard');
-                }
-            } else {
-                alert(data.message || 'login failed. please check your email and password.');
-            }
-        } catch (error) {
-            console.error("error logging in:", error);
-            alert("cannot connect to the server. please make sure the backend is running.");
-        } finally {
-            setIsLoading(false); // stop loading regardless of outcome
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // I-save ang token at role sa browser memory
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);
+
+        // I-redirect base sa role
+        if (data.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else {
+          navigate('/operator-dashboard');
         }
-    };
-
-    // render loading screen if authentication is in progress
-    if (isLoading) {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f8fafc' }}>
-                <img src={loadingGif} alt="loading..." style={{ width: '150px', height: 'auto', objectFit: 'contain' }} />
-                <h3 style={{ color: '#1F6F5F', marginTop: '1rem', fontFamily: 'sans-serif' }}>authenticating...</h3>
-                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>please wait while we connect to the server.</p>
-            </div>
-        );
+      } else {
+        setError(data.message || 'Login failed. Check your credentials.');
+      }
+    } catch (err) {
+      setError('Cannot connect to the server. Make sure backend is running.');
     }
+  };
 
-    return (
-        <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            
-            <video autoPlay loop muted playsInline style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', objectFit: 'cover', zIndex: -2 }}>
-                <source src={bgVideo} type="video/mp4" />
-            </video>
+  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all duration-200";
 
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: -1 }}></div>
-
-            <div className="card" style={{ width: '100%', maxWidth: '400px', zIndex: 1, backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
-                
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <img src={logoImg} alt="Municipal Logo" style={{ width: '80px', height: 'auto', marginBottom: '10px' }} />
-                    <h2 style={{ color: '#1F6F5F', margin: 0, fontWeight: '800' }}>G-TRAMS</h2>
-                    <p style={{ margin: 0, color: '#64748b' }}>Gasan Tricycle Franchise Management System</p>
-                </div>
-
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column' }}>
-                    
-                    <label style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>Email Address</label>
-                    <input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-
-                    <label style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem', marginTop: '10px' }}>Password</label>
-                    <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
-                        <input 
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="Enter your password" 
-                            value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
-                            required 
-                            style={{ width: '100%', paddingRight: '45px', boxSizing: 'border-box', margin: 0 }}
-                        />
-                        <button 
-                            type="button" 
-                            onClick={() => setShowPassword(!showPassword)}
-                            style={{ position: 'absolute', right: '12px', top: 0, bottom: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            <img src={showPassword ? openEyeIcon : closeEyeIcon} alt="toggle" style={{ width: '20px', height: '20px', opacity: 0.6 }} />
-                        </button>
-                    </div>
-
-                    <div style={{ textAlign: 'right', marginTop: '5px' }}>
-                        <Link to="/forgot-password" style={{ fontSize: '0.8rem', color: '#2FA084', textDecoration: 'none', fontWeight: 'bold' }}>
-                            Forgot Password?
-                        </Link>
-                    </div>
-
-                    <button type="submit" className="btn-primary" style={{ marginTop: '1rem', width: '100%' }} disabled={isLoading}>
-                        {isLoading ? 'Logging In...' : 'Log In'}
-                    </button>
-                </form>
-
-                <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem' }}>
-                    <p style={{ margin: 0 }}>
-                        Don't have an account yet? <Link to="/register" style={{ color: '#2FA084', textDecoration: 'none', fontWeight: '600' }}>Register here</Link>
-                    </p>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-slate-200 p-8 sm:p-10">
+        
+        <div className="flex flex-col items-center mb-8 text-center">
+          <div className="w-20 h-20 bg-white border-2 border-[#D4AF37] shadow-md rounded-full flex items-center justify-center mx-auto mb-5 overflow-hidden">
+   <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+</div>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">G-TRAMS Portal</h2>
+          <p className="text-sm text-slate-500 mt-1">Municipality of Gasan</p>
         </div>
-    );
-}
+
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-600 text-sm font-semibold rounded-xl p-4 text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email or Phone Number</label>
+            <input
+              type="text"
+              name="contact"
+              value={formData.contact}
+              onChange={handleChange}
+              required
+              className={inputClasses}
+              placeholder="juan@gmail.com or 09123456789"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className={inputClasses}
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="text-xs font-bold text-[#7A1B22] hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 bg-[#7A1B22] text-white py-3.5 rounded-xl font-bold shadow-sm hover:bg-[#5A1419] hover:shadow-md active:scale-[0.98] transition-all duration-200 mt-2"
+          >
+            <LogIn size={18} />
+            Sign In
+          </button>
+        </form>
+
+        <p className="mt-8 text-center text-sm text-slate-500 font-medium">
+          Unregistered operator?{' '}
+          <Link to="/register" className="font-bold text-[#7A1B22] hover:underline">
+            Create an account
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Login;

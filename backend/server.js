@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./src/config/db');
 
+// TAMA NA ANG PATH NITO NGAYON (nilagyan natin ng /src)
+const todaRoutes = require('./src/routes/todaRoutes'); 
+
 const app = express();
 connectDB();
 
@@ -18,6 +21,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Para mabasa ang uploaded files mula sa frontend
+app.use('/uploads', express.static('uploads')); 
+
 const PORT = process.env.PORT || 3000;
 const BASE_URI = process.env.BASE_URI || '/api/v1';
 
@@ -32,6 +38,9 @@ app.use(`${BASE_URI}/franchises`, franchiseRoutes);
 // calendar and report routes
 app.use(`${BASE_URI}/calendar`, require('./src/routes/calendarRoutes'));
 app.use(`${BASE_URI}/reports`, require('./src/routes/reportRoutes'));
+
+// BAGONG TODA ROUTE (Inilipat natin sa taas bago ang app.listen)
+app.use(`${BASE_URI}/toda`, todaRoutes); 
 
 // server initialization
 app.listen(PORT, () => {

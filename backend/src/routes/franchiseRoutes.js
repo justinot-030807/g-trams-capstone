@@ -11,29 +11,48 @@ const {
     deleteFranchise, 
     renewFranchise,
     updateFranchiseStatus,
-    cancelMyFranchise
+    cancelMyFranchise,
+    searchHistoricalFranchise,
+    toggleArchiveFranchise,
+    revokeFranchise // <-- IN-IMPORT NATIN DITO
 } = require('../controllers/franchiseController');
 
-// CREATE & GET ALL
+router.get('/search', protect, searchHistoricalFranchise);
+
 router.route('/')
-    .post(protect, upload.single('orCrDocument'), createFranchise)
+    .post(
+        protect, 
+        upload.fields([
+            { name: 'orCrDocument', maxCount: 1 },
+            { name: 'license', maxCount: 1 },
+            { name: 'todaEndorsement', maxCount: 1 },
+            { name: 'brgyClearance', maxCount: 1 }
+        ]), 
+        createFranchise
+    )
     .get(protect, getAllFranchises);
 
-// GET MY FRANCHISES (Operator)
 router.get('/my-franchises', protect, getMyFranchises);
+router.put('/:id/archive', protect, toggleArchiveFranchise);
 
-// UPDATE & DELETE FULL FRANCHISE (Admin Edit & Delete Button)
+// MODULE 8: ROUTE PARA SA REVOCATION MAY KASAMANG FILE UPLOAD
+router.put('/:id/revoke', protect, upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
+
 router.route('/:id')
-    .put(protect, updateFranchise)
+    .put(
+        protect, 
+        upload.fields([
+            { name: 'orCrDocument', maxCount: 1 },
+            { name: 'license', maxCount: 1 },
+            { name: 'todaEndorsement', maxCount: 1 },
+            { name: 'brgyClearance', maxCount: 1 }
+        ]), 
+        updateFranchise
+    )
     .delete(protect, deleteFranchise);
 
-// RENEW FRANCHISE
 router.put('/:id/renew', protect, renewFranchise);
-
-// QUICK UPDATE STATUS ONLY
 router.put('/:id/status', protect, updateFranchiseStatus);
-
-// CANCEL OWN FRANCHISE
 router.put('/:id/cancel', protect, cancelMyFranchise);
 
 module.exports = router;

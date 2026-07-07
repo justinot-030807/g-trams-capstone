@@ -1,457 +1,404 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import MainLayout from '../components/MainLayout';
+import { RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, CalendarDays, PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// icons
-import logoImg from '../assets/gasan-logo.png'; 
-import dashboardIcon from '../assets/dashboard-icon.png';
-import scheduleIcon from '../assets/schedule-icon.png';
-import usersIcon from '../assets/users-icon.png';
-import settingsIcon from '../assets/analytics-icon.png'; 
-import printerIcon from '../assets/printer.png';
+const OperatorDashboard = () => {
+  const [franchises, setFranchises] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const navigate = useNavigate();
 
-// loading gif
-import loadingGif from '../assets/loading.gif';
+  const loggedInUserName = localStorage.getItem('name') || 'Operator';
 
-export default function OperatorDashboard() {
-    // loading state
-    const [isLoading, setIsLoading] = useState(true); 
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
 
-    const [activeTab, setActiveTab] = useState('franchises'); 
-    const [myFranchises, setMyFranchises] = useState([]);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [userName, setUserName] = useState('');
-    const [savedProfilePic, setSavedProfilePic] = useState(null); 
-    const [calendarEvents, setCalendarEvents] = useState([]);
-    const [reports, setReports] = useState([]); 
+  useEffect(() => {
+    fetchMyFranchises();
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
-    const navigate = useNavigate();
-    const token = localStorage.getItem('token');
-
-    const [formData, setFormData] = useState({ zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', todaName: '', cedulaDate: '', cedulaAddress: '', cedulaSerialNo: '' });
-    const [orCrFile, setOrCrFile] = useState(null); 
-    const [renewingId, setRenewingId] = useState(null);
-    const [renewData, setRenewData] = useState({ cedulaSerialNo: '', cedulaDate: '', cedulaAddress: '' });
-    const [profileData, setProfileData] = useState({ name: '', address: '' });
-    const [profilePic, setProfilePic] = useState(null);
-    const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
-    const [reportForm, setReportForm] = useState({ subject: '', message: '' }); 
-
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    // concurrent data fetching
-    useEffect(() => {
-        if (!token) {
-            navigate('/login');
-        } else {
-            const loadAllData = async () => {
-                setIsLoading(true);
-                try {
-                    await Promise.all([
-                        fetchMyFranchises(),
-                        fetchUser(),
-                        fetchCalendarEvents(),
-                        fetchReports()
-                    ]);
-                } catch (error) {
-                    console.error(error);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-            loadAllData();
-        }
-    }, [navigate, token]);
-
-    const fetchUser = async () => {
-        try {
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/auth', { headers: { 'Authorization': `Bearer ${token}` } });
-            const users = await res.json();
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const me = users.find(u => u._id === payload.id);
-            if (me) { setUserName(me.name); setProfileData({ name: me.name, address: me.address }); if (me.profilePic) setSavedProfilePic(me.profilePic); }
-        } catch (e) { console.error(e); }
-    };
-
-    const fetchMyFranchises = async () => {
-        try {
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/franchises/my-franchises', { headers: { 'Authorization': `Bearer ${token}` }});
-            if(res.ok) setMyFranchises(await res.json());
-        } catch (e) { console.error(e); }
-    };
-
-    const fetchCalendarEvents = async () => {
-        try {
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/calendar', { headers: { 'Authorization': `Bearer ${token}` } });
-            if(res.ok) setCalendarEvents(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    const fetchReports = async () => {
-        try {
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/reports/my-reports', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) setReports(await res.json());
-        } catch (e) { console.error(e); }
-    };
-
-    const handleLogout = () => { localStorage.removeItem('token'); navigate('/login'); };
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-    const handleRenewChange = (e) => setRenewData({ ...renewData, [e.target.name]: e.target.value });
-    const handleProfileChange = (e) => setProfileData({ ...profileData, [e.target.name]: e.target.value });
-    const switchTab = (tab) => { setActiveTab(tab); setIsSidebarOpen(false); };
-
-    const getImageUrl = (path) => {
-        if (!path) return '';
-        return path.startsWith('http') ? path : `https://g-trams-web2.onrender.com/${path.replace(/\\/g, '/')}`;
-    };
-
-    const canApply = myFranchises.length < 2;
-
-    const handleApply = async (e) => {
-        e.preventDefault();
-        if (!canApply) return alert("Limit 2 units per operator.");
-        try {
-            const submitData = new FormData();
-            Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
-            if (orCrFile) submitData.append('orCrDocument', orCrFile);
-
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/franchises', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: submitData });
-            if (res.ok) { alert('Application Submitted Successfully!'); fetchMyFranchises(); setFormData({ zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', todaName: '', cedulaDate: '', cedulaAddress: '', cedulaSerialNo: '' }); setOrCrFile(null); } 
-            else { alert('Error. Plate or Motor Number might already exist.'); }
-        } catch (e) { console.error(e); }
-    };
-
-    const submitRenewal = async (e, id) => {
-        e.preventDefault();
-        try {
-            const payload = { dateApplied: new Date().toISOString().split('T')[0], ...renewData };
-            const res = await fetch(`https://g-trams-web2.onrender.com/api/v1/franchises/${id}/renew`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
-            if (res.ok) { alert('Renewal Application Sent!'); setRenewingId(null); setRenewData({ cedulaSerialNo: '', cedulaDate: '', cedulaAddress: '' }); fetchMyFranchises(); }
-        } catch (e) { console.error(e); }
-    };
-
-    const handleCancelFranchise = async (id) => {
-        const confirmCancel = window.confirm("Warning: Are you sure you want to cancel this franchise? This cannot be undone.");
-        if (!confirmCancel) return;
-        const reason = window.prompt("Please enter the reason for cancellation:");
-        if (!reason || reason.trim() === '') return alert("A reason is required to cancel the franchise.");
-        try {
-            const res = await fetch(`https://g-trams-web2.onrender.com/api/v1/franchises/${id}/cancel`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ cancelReason: reason }) });
-            if (res.ok) { alert("Franchise Successfully Cancelled."); fetchMyFranchises(); }
-        } catch (e) { console.error(e); }
-    };
-
-    const handleUpdateProfile = async (e) => {
-        e.preventDefault();
-        try {
-            const formDataProfile = new FormData();
-            formDataProfile.append('name', profileData.name); formDataProfile.append('address', profileData.address);
-            if (profilePic) formDataProfile.append('profilePic', profilePic);
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/auth/profile', { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: formDataProfile });
-            if (res.ok) { alert("Profile updated successfully!"); setProfilePic(null); fetchUser(); } else { alert("Failed to update profile."); }
-        } catch (e) { console.error(e); }
-    };
-
-    const handleChangePassword = async (e) => {
-        e.preventDefault();
-        if (passwordData.newPassword !== passwordData.confirmPassword) return alert("Passwords do not match.");
-        try {
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/auth/change-password', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ oldPassword: passwordData.oldPassword, newPassword: passwordData.newPassword }) });
-            if (res.ok) { alert('Password Updated!'); setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' }); } 
-        } catch (e) { console.error(e); }
-    };
-
-    const handleSubmitReport = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await fetch('https://g-trams-web2.onrender.com/api/v1/reports', {
-                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(reportForm)
-            });
-            if (res.ok) { alert('Report successfully sent to Admin!'); setReportForm({ subject: '', message: '' }); fetchReports(); }
-        } catch (error) { console.error(error); }
-    };
-
-    const getExpiryDate = (dateApplied) => {
-        if (!dateApplied) return 'N/A';
-        const applied = new Date(dateApplied);
-        return new Date(applied.setFullYear(applied.getFullYear() + 1)).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    };
-
-    const handlePrintPermit = (franchise) => {
-        const printContent = document.getElementById(`print-permit-${franchise._id}`);
-        const originalBody = document.body.innerHTML;
-        document.body.innerHTML = printContent.innerHTML;
-        window.print();
-        document.body.innerHTML = originalBody;
-        window.location.reload(); 
-    };
-
-    // modern ui styles
-    const modernCard = { backgroundColor: '#ffffff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #f1f5f9' };
-
-    // loading screen view
-    if (isLoading) {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f8fafc' }}>
-                <img src={loadingGif} alt="Loading..." style={{ width: '150px', height: 'auto', objectFit: 'contain' }} />
-                <h3 style={{ color: '#1F6F5F', marginTop: '1rem', fontFamily: 'sans-serif' }}>Loading G-TRAMS...</h3>
-                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Please wait while we connect your data.</p>
-            </div>
-        );
+  const fetchMyFranchises = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/franchises/my-franchises', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setFranchises(data);
+      }
+    } catch (error) {
+      console.error('Error loading dashboard units:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    return (
-        <div className="admin-layout" style={{ backgroundColor: '#f8fafc', minHeight: '100vh', display: isMobile ? 'block' : 'flex' }}>
-            
-            {/* mobile header */}
-            {isMobile && (
-                <div className="mobile-header no-print" style={{ backgroundColor: '#1F6F5F', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                    <div className="flex-row gap-1" style={{ alignItems: 'center' }}>
-                        {savedProfilePic ? <img src={getImageUrl(savedProfilePic)} style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover', border: '2px solid white' }} alt="Profile" /> : logoImg && <img src={logoImg} width="35" alt="Logo" />}
-                        <h3 className="m-0" style={{ fontSize: '1.2rem', fontWeight: '600' }}>G-TRAMS</h3>
-                    </div>
-                    <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.8rem', cursor: 'pointer' }}>☰</button>
-                </div>
-            )}
+  const getExpirationDate = (dateApplied) => {
+    if (!dateApplied) return 'N/A';
+    const date = new Date(dateApplied);
+    date.setFullYear(date.getFullYear() + 1); 
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
 
-            {isMobile && <div className={`mobile-overlay no-print ${isSidebarOpen ? 'open' : ''}`} onClick={() => setIsSidebarOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 40, display: isSidebarOpen ? 'block' : 'none' }}></div>}
+  const openDetails = (unit) => {
+    setSelectedUnit(unit);
+    setIsDetailsOpen(true);
+  };
 
-            {/* sidebar */}
-            <div className={`sidebar-container no-print ${isSidebarOpen ? 'open' : ''}`} style={{ backgroundColor: '#ffffff', boxShadow: '2px 0 8px rgba(0,0,0,0.05)', zIndex: 50, display: (!isMobile || isSidebarOpen) ? 'flex' : 'none', flexDirection: 'column', width: isMobile ? '250px' : '260px', height: '100vh', position: isMobile ? 'fixed' : 'sticky', top: 0, left: 0, transition: 'transform 0.3s ease' }}>
-                <div className="sidebar-title flex-column gap-1" style={{ alignItems: 'center', marginBottom: '2rem', padding: '2rem 1rem 0' }}>
-                    {savedProfilePic ? (
-                        <img src={getImageUrl(savedProfilePic)} alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #2FA084', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-                    ) : (
-                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #2FA084', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}><img src={usersIcon} style={{ width: '40px', opacity: 0.5 }} alt="Default" /></div>
-                    )}
-                    <h3 className="m-0 text-center" style={{ fontSize: '1.1rem', color: '#1e293b', fontWeight: '700' }}>{userName || 'Operator'}</h3>
-                </div>
+  const openPrintPermit = (unit) => {
+    setSelectedUnit(unit);
+    setIsPrintOpen(true);
+  };
 
-                <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <button className={`nav-button ${activeTab === 'franchises' ? 'active' : ''}`} onClick={() => switchTab('franchises')} style={{ borderRadius: '8px', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center' }}><img src={dashboardIcon} width="20" height="20" alt="Franchises" style={{marginRight: '8px'}} /> My Franchises</button>
-                    <button className={`nav-button ${activeTab === 'calendar' ? 'active' : ''}`} onClick={() => switchTab('calendar')} style={{ borderRadius: '8px', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center' }}><img src={scheduleIcon} width="20" height="20" alt="Schedule" style={{marginRight: '8px'}} /> Schedule</button>
-                    <button className={`nav-button ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => switchTab('reports')} style={{ borderRadius: '8px', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center' }}><img src={settingsIcon} width="20" height="20" alt="Reports" style={{marginRight: '8px'}} /> Help & Feedback</button>
-                    <button className={`nav-button ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => switchTab('profile')} style={{ borderRadius: '8px', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center' }}><img src={usersIcon} width="20" height="20" alt="Profile" style={{marginRight: '8px'}} /> My Profile</button>
-                    <button className={`nav-button ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => switchTab('settings')} style={{ borderRadius: '8px', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center' }}><img src={settingsIcon} width="20" height="20" alt="Settings" style={{marginRight: '8px'}} /> Settings</button>
-                </div>
-                <div style={{ flex: 1 }}></div>
-                <div style={{ padding: '1rem' }}>
-                    <button className="btn-danger w-100" onClick={handleLogout} style={{ borderRadius: '8px', padding: '0.8rem', fontWeight: '600' }}>Log Out</button>
-                </div>
-            </div>
+  return (
+    <MainLayout>
+      {/* CUSTOM CSS ANIMATION (Para hindi mo na kailangang baguhin ang Tailwind config) */}
+      <style>{`
+        @keyframes slideFadeUp {
+          0% { opacity: 0; transform: translateY(30px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-fade-up {
+          opacity: 0;
+          animation: slideFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
 
-            {/* content container */}
-            <div className="content-container" style={{ flex: 1, padding: isMobile ? '1rem' : '2rem', maxWidth: '1400px', width: '100%', overflowX: 'hidden' }}>
-                
-                {activeTab === 'franchises' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <h2 className="m-0 text-primary no-print" style={{ fontSize: '1.8rem' }}>Welcome, {userName || 'Operator'}!</h2>
-                        
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-                            
-                            {/* my units section */}
-                            <div style={modernCard}>
-                                <div className="flex-between mb-2" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
-                                    <h3 className="m-0" style={{ color: '#1e293b' }}>My Units</h3>
-                                    <span style={{ padding: '0.4rem 0.8rem', borderRadius: '20px', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: '600', fontSize: '0.85rem' }}>{myFranchises.length} / 2 Units</span>
-                                </div>
-                                
-                                {myFranchises.length === 0 ? (
-                                    <div style={{ backgroundColor: '#f8fafc', padding: '2rem', borderRadius: '8px', textAlign: 'center' }}><p className="text-muted m-0">No registered franchises yet.</p></div>
-                                ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        {myFranchises.map(franchise => (
-                                            <div key={franchise._id} style={{ backgroundColor: '#f8fafc', padding: '1.2rem', borderRadius: '8px', borderLeft: `4px solid ${franchise.status === 'Active' ? '#2FA084' : franchise.status === 'Pending' ? '#f59e0b' : '#ef4444'}` }}>
-                                                <div className="flex-between mb-1">
-                                                    <strong style={{ fontSize: '1.2rem', color: '#0f172a' }}>{franchise.plateNo}</strong>
-                                                    <span className={`badge ${franchise.status.toLowerCase()}`}>{franchise.status}</span>
-                                                </div>
-                                                <p style={{ margin: '0 0 0.3rem 0', color: '#475569', fontSize: '0.9rem' }}><strong>Unit:</strong> {franchise.make} {franchise.made}</p>
-                                                <p style={{ margin: '0 0 0.3rem 0', color: '#475569', fontSize: '0.9rem' }}><strong>Zone:</strong> {franchise.zone} | <strong>TODA:</strong> {franchise.todaName}</p>
-                                                <p style={{ margin: '0.5rem 0 0 0', color: '#2FA084', fontWeight: '600', fontSize: '0.95rem' }}>Valid Until: {getExpiryDate(franchise.dateApplied)}</p>
+      {/* 1. PROFESSIONAL WELCOME BANNER */}
+      <div 
+        className="animate-slide-fade-up bg-gradient-to-r from-[#7A1B22] to-[#9B2A33] rounded-3xl p-6 md:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6"
+        style={{ animationDelay: '0.1s' }}
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
-                                                {franchise.status === 'Active' && franchise.releaseDate && <p style={{ margin: '0.5rem 0 0 0', color: '#3b82f6', fontWeight: '600', fontSize: '0.9rem' }}>Estimated Release: {franchise.releaseDate}</p>}
-                                                
-                                                {franchise.status === 'Active' && (
-                                                    <button onClick={() => handlePrintPermit(franchise)} className="btn-success w-100 mt-2" style={{ padding: '0.8rem', borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                                        <img src={printerIcon} width="18" height="18" style={{ filter: 'brightness(0) invert(1)' }} alt="Print" /> Print E-Permit
-                                                    </button>
-                                                )}
-                                                
-                                                {franchise.status === 'Cancelled' && franchise.cancelReason && (
-                                                    <div style={{ backgroundColor: '#fee2e2', padding: '1rem', borderRadius: '8px', marginTop: '1rem', borderLeft: '3px solid #ef4444' }}>
-                                                        <p style={{ margin: '0 0 0.3rem 0', fontWeight: '600', color: '#b91c1c', fontSize: '0.85rem', textTransform: 'uppercase' }}>Reason for Cancellation:</p>
-                                                        <p style={{ margin: 0, color: '#7f1d1d', fontSize: '0.95rem' }}>{franchise.cancelReason}</p>
-                                                    </div>
-                                                )}
-
-                                                {franchise.status !== 'Cancelled' && (<button onClick={() => handleCancelFranchise(franchise._id)} className="btn-danger w-100" style={{ marginTop: '0.8rem', padding: '0.6rem', borderRadius: '8px' }}>Cancel Application</button>)}
-                                                
-                                                {franchise.status === 'Expired' && renewingId !== franchise._id && (<button onClick={() => setRenewingId(franchise._id)} className="btn-warning w-100" style={{ marginTop: '0.8rem', padding: '0.8rem', borderRadius: '8px', fontWeight: '600' }}>Renew Franchise</button>)}
-
-                                                {renewingId === franchise._id && (
-                                                    <form onSubmit={(e) => submitRenewal(e, franchise._id)} style={{ backgroundColor: '#fff', padding: '1rem', borderRadius: '8px', marginTop: '1rem', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                                        <h4 style={{ margin: 0, color: '#1e293b' }}>Renewal Requirements</h4>
-                                                        <input type="text" placeholder="New CTC No." name="cedulaSerialNo" value={renewData.cedulaSerialNo} onChange={handleRenewChange} required style={{ padding: '0.8rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }} />
-                                                        <input type="date" name="cedulaDate" value={renewData.cedulaDate} onChange={handleRenewChange} required style={{ padding: '0.8rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }} />
-                                                        <input type="text" placeholder="Place Issued" name="cedulaAddress" value={renewData.cedulaAddress} onChange={handleRenewChange} required style={{ padding: '0.8rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }} />
-                                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                            <button type="submit" className="btn-success" style={{ flex: 1, padding: '0.8rem', borderRadius: '6px', fontWeight: '600' }}>Submit</button>
-                                                            <button type="button" onClick={() => setRenewingId(null)} className="btn-danger" style={{ flex: 1, padding: '0.8rem', borderRadius: '6px', fontWeight: '600' }}>Back</button>
-                                                        </div>
-                                                    </form>
-                                                )}
-
-                                                {/* hidden print template */}
-                                                <div id={`print-permit-${franchise._id}`} style={{ display: 'none' }}>
-                                                    <div className="print-template">
-                                                        <div className="print-header-section"><div className="print-header-content"><img src={printerIcon} alt="Logo" className="print-logo" /><h2 className="m-0">MUNICIPALITY OF GASAN</h2><h3 className="m-0">CERTIFICATE OF PUBLIC CONVENIENCE</h3><p className="text-sm">(FRANCHISE PERMIT)</p></div></div>
-                                                        <div className="mb-2" style={{ marginTop: '30px' }}><p>Operator: {franchise.operator?.name}</p><p>Plate: {franchise.plateNo}</p><p>TODA: {franchise.todaName} - {franchise.zone}</p><p>Unit: {franchise.make} {franchise.made}</p><p>Motor/Chassis: {franchise.motorNo} / {franchise.chassisNo}</p></div>
-                                                        <div className="flex-between mt-2" style={{ borderTop: '1px solid #ccc', paddingTop: '20px' }}><p>Issued: {new Date(franchise.dateApplied || franchise.createdAt).toLocaleDateString()}</p><p>Valid: {getExpiryDate(franchise.dateApplied || franchise.createdAt)}</p></div>
-                                                        <div className="flex-between mt-3" style={{ paddingTop: '80px' }}><div className="signature-block text-center">{franchise.eSigned && <span className="e-sign-text">Approved e-Sign</span>}<p className="font-bold m-0" style={{ textDecoration: 'underline' }}>HON. VICE MAYOR</p><p className="m-0">Vice Mayor</p></div><div className="signature-block text-center">{franchise.eSigned && <span className="e-sign-text">Approved e-Sign</span>}<p className="font-bold m-0" style={{ textDecoration: 'underline' }}>HON. MAYOR</p><p className="m-0">Mayor</p></div></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* application form */}
-                            <div style={modernCard}>
-                                <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '1rem' }}>
-                                    <h3 className="m-0" style={{ color: '#1e293b' }}>Apply New Franchise</h3>
-                                </div>
-                                {!canApply ? (
-                                    <div style={{ backgroundColor: '#fee2e2', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}><p style={{ margin: 0, color: '#b91c1c', fontWeight: '600' }}>Limit Reached: Maximum of 2 units per operator allowed.</p></div>
-                                ) : (
-                                    <form onSubmit={handleApply} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem' }}>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>TODA Name</label><input type="text" name="todaName" value={formData.todaName} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Zone</label><input type="text" name="zone" value={formData.zone} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Plate No.</label><input type="text" name="plateNo" value={formData.plateNo} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Year Made</label><input type="text" name="made" value={formData.made} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div style={{ gridColumn: '1 / -1' }}><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Brand / Make</label><input type="text" name="make" value={formData.make} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Motor No.</label><input type="text" name="motorNo" value={formData.motorNo} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Chassis No.</label><input type="text" name="chassisNo" value={formData.chassisNo} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                        </div>
-                                        
-                                        <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '0.5rem 0' }} />
-                                        <h4 style={{ margin: 0, color: '#3b82f6' }}>Cedula Information</h4>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem' }}>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>CTC No.</label><input type="text" name="cedulaSerialNo" value={formData.cedulaSerialNo} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Date Issued</label><input type="date" name="cedulaDate" value={formData.cedulaDate} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                            <div style={{ gridColumn: '1 / -1' }}><label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Place Issued</label><input type="text" name="cedulaAddress" value={formData.cedulaAddress} onChange={handleChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                        </div>
-                                        
-                                        <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '0.5rem 0' }} />
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#3b82f6', marginBottom: '0.5rem' }}>Upload OR/CR Document (Image or PDF)</label>
-                                            <input type="file" accept="image/*,.pdf" onChange={(e) => setOrCrFile(e.target.files[0])} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc' }} />
-                                        </div>
-                                        
-                                        <button type="submit" className="btn-primary" style={{ padding: '1rem', borderRadius: '8px', fontWeight: '600', fontSize: '1rem', marginTop: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>Submit Application</button>
-                                    </form>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* reports and feedback tab */}
-                {activeTab === 'reports' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <h2 className="m-0 text-primary" style={{ fontSize: '1.8rem' }}>Help & Support Desk</h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                            <div style={modernCard}>
-                                <h3 style={{ margin: '0 0 1rem 0', color: '#1e293b' }}>Submit a Ticket</h3>
-                                <form onSubmit={handleSubmitReport} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <div><label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' }}>Subject</label><input type="text" value={reportForm.subject} onChange={(e) => setReportForm({...reportForm, subject: e.target.value})} placeholder="Ex. Inquiry about renewal" required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                    <div><label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' }}>Message</label><textarea rows="5" value={reportForm.message} onChange={(e) => setReportForm({...reportForm, message: e.target.value})} placeholder="Type your concern here..." required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', resize: 'vertical' }}></textarea></div>
-                                    <button type="submit" className="btn-primary" style={{ padding: '0.8rem', borderRadius: '8px', fontWeight: '600' }}>Send to Admin</button>
-                                </form>
-                            </div>
-                            <div style={modernCard}>
-                                <div className="flex-between mb-1" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}><h3 style={{ margin: 0, color: '#1e293b' }}>My Tickets</h3><span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' }}>{reports.length}</span></div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem', maxHeight: '500px', overflowY: 'auto', paddingRight: '5px' }}>
-                                    {reports.length === 0 ? <p className="text-muted text-center">No reports submitted yet.</p> : reports.map(r => (
-                                        <div key={r._id} style={{ backgroundColor: '#f8fafc', padding: '1.2rem', borderRadius: '8px', borderLeft: `4px solid ${r.status === 'Resolved' ? '#2FA084' : '#f59e0b'}` }}>
-                                            <div className="flex-between mb-1"><h4 style={{ margin: 0, color: '#0f172a', fontSize: '1.05rem' }}>{r.subject}</h4><span style={{ padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600', backgroundColor: r.status === 'Resolved' ? '#eaf6f3' : '#fef3c7', color: r.status === 'Resolved' ? '#2FA084' : '#d97706' }}>{r.status}</span></div>
-                                            <p style={{ margin: '0 0 0.5rem 0', color: '#475569', fontSize: '0.9rem', lineHeight: '1.5' }}>{r.message}</p>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '0.5rem' }}>Submitted: {new Date(r.createdAt).toLocaleDateString()}</div>
-                                            {r.response && (
-                                                <div style={{ backgroundColor: '#ffffff', padding: '1rem', borderRadius: '8px', borderLeft: '3px solid #3b82f6', marginTop: '0.8rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                                                    <p style={{ margin: '0 0 0.3rem 0', fontWeight: '600', color: '#3b82f6', fontSize: '0.8rem', textTransform: 'uppercase' }}>Admin Reply:</p>
-                                                    <p style={{ margin: 0, color: '#334155', fontSize: '0.9rem', lineHeight: '1.4' }}>{r.response}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* calendar schedule */}
-                {activeTab === 'calendar' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <h2 className="m-0 text-primary" style={{ fontSize: '1.8rem' }}>Office Schedule</h2>
-                        <div style={modernCard}>
-                            {calendarEvents.length === 0 ? (<p className="text-muted text-center" style={{ padding: '2rem' }}>No schedule available.</p>) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {calendarEvents.map((ev, idx) => (
-                                        <div key={idx} style={{ backgroundColor: '#f8fafc', padding: '1.2rem', borderRadius: '8px', borderLeft: `5px solid ${ev.status === 'Available' ? '#2FA084' : ev.status === 'E-Sign Mode' ? '#f59e0b' : '#ef4444'}` }}>
-                                            <h4 style={{ margin: '0 0 0.3rem 0', color: '#0f172a', fontSize: '1.1rem' }}>{ev.date} <span style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 'normal', marginLeft: '10px' }}>— {ev.status}</span></h4>
-                                            <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem' }}>{ev.note}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* my profile */}
-                {activeTab === 'profile' && (
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <div style={{...modernCard, width: '100%', maxWidth: '600px'}}>
-                            <h2 style={{ margin: '0 0 1.5rem 0', color: '#1e293b', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>Profile Settings</h2>
-                            <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <div style={{ width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#f1f5f9', border: '4px solid #fff', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                        {profilePic ? <img src={URL.createObjectURL(profilePic)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" /> : savedProfilePic ? <img src={getImageUrl(savedProfilePic)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Saved Profile" /> : <img src={usersIcon} style={{ width: '50px', opacity: 0.4 }} alt="Default" />}
-                                    </div>
-                                    <input type="file" accept="image/*" onChange={(e) => setProfilePic(e.target.files[0])} style={{ padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', fontSize: '0.85rem' }} />
-                                </div>
-                                <div><label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' }}>Full Name</label><input type="text" name="name" value={profileData.name} onChange={handleProfileChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                <div><label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' }}>Home Address</label><input type="text" name="address" value={profileData.address} onChange={handleProfileChange} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                <button type="submit" className="btn-primary" style={{ padding: '1rem', borderRadius: '8px', fontWeight: '600', marginTop: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>Save Profile Updates</button>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                {/* account settings */}
-                {activeTab === 'settings' && (
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <div style={{...modernCard, width: '100%', maxWidth: '500px'}}>
-                            <h2 style={{ margin: '0 0 1.5rem 0', color: '#1e293b', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>Security Settings</h2>
-                            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                                <div><label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' }}>Current Password</label><input type="password" value={passwordData.oldPassword} onChange={(e) => setPasswordData({...passwordData, oldPassword: e.target.value})} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                <div><label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' }}>New Password</label><input type="password" value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                <div><label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' }}>Confirm New Password</label><input type="password" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} required style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} /></div>
-                                <button type="submit" className="btn-primary" style={{ padding: '1rem', borderRadius: '8px', fontWeight: '600', marginTop: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>Update Security Info</button>
-                            </form>
-                        </div>
-                    </div>
-                )}
-            </div>
+        <div className="relative z-10 text-center md:text-left w-full md:w-auto">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">
+            Welcome, {loggedInUserName}!
+          </h1>
+          <p className="text-white/80 font-medium text-sm">Manage your active and pending franchises securely.</p>
         </div>
-    );
-}
+
+        <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 px-6 py-4 rounded-2xl w-full md:w-auto text-center md:text-right shadow-sm">
+          <p className="font-bold text-lg tracking-wide text-white">
+            {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+          </p>
+          <p className="text-sm font-medium text-white/80 flex items-center justify-center md:justify-end gap-1.5 mt-1">
+            <Clock size={16} />
+            {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      </div>
+
+      {/* 2. FLEET OVERVIEW HEADER */}
+      <header 
+        className="animate-slide-fade-up mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4"
+        style={{ animationDelay: '0.2s' }}
+      >
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          <Activity className="text-[#7A1B22]" size={22} /> My Units
+        </h2>
+        
+        <div className="flex items-center gap-4 bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit Capacity</span>
+          <div className="flex gap-1.5">
+            <div className={`w-8 h-2.5 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`}></div>
+            <div className={`w-8 h-2.5 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`}></div>
+          </div>
+          <span className="text-sm font-extrabold text-[#7A1B22]">{franchises.length}/2</span>
+        </div>
+      </header>
+
+      {/* 3. MAIN CONTENT AREA */}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-48 animate-pulse">
+          <Loader2 className="animate-spin text-[#7A1B22]" size={36} />
+        </div>
+      ) : franchises.length === 0 ? (
+        <div 
+          className="animate-slide-fade-up bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-500 flex flex-col items-center justify-center min-h-[300px]"
+          style={{ animationDelay: '0.3s' }}
+        >
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+            <PlusCircle className="text-slate-300" size={32} />
+          </div>
+          <h3 className="text-lg font-bold text-slate-700 mb-1">No Franchise Units Found</h3>
+          <p className="text-sm mb-6 max-w-sm">Your garage is currently empty. Start by registering your first tricycle unit for a franchise.</p>
+          <button onClick={() => navigate('/apply-franchise')} className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-8 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm">
+            Apply New Franchise
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {franchises.map((unit, index) => (
+            <div 
+              key={unit._id} 
+              className="animate-slide-fade-up bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden hover:border-slate-300 transition-all"
+              style={{ animationDelay: `${0.3 + (index * 0.15)}s` }} /* STAGGERED EFFECT: Magkakasunod na lilitaw ang cards */
+            >
+              
+              <div className={`absolute top-0 left-0 w-full h-1.5 ${
+                unit.status === 'Active' ? 'bg-emerald-500' :
+                unit.status === 'Expired' ? 'bg-orange-500' :
+                unit.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-400'
+              }`} />
+
+              <div>
+                <div className="flex justify-between items-start mb-6 mt-1">
+                  <div>
+                    <h3 className="font-black text-2xl text-slate-900 tracking-wider mb-1">
+                      {unit.plateNo || 'NO PLATE'}
+                    </h3>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{unit.todaName} &bull; {unit.make} {unit.made}</p>
+                  </div>
+                  
+                  <span className={`px-3 py-1.5 text-[11px] font-bold rounded-md uppercase tracking-wider flex items-center gap-1.5 border shadow-sm ${
+                    unit.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                    unit.status === 'Expired' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                    unit.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                    'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {unit.status === 'Active' && <CheckCircle size={14}/>}
+                    {unit.status === 'Pending' && <Clock size={14} className="animate-pulse"/>}
+                    {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={14}/>}
+                    {unit.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <MapPin className="text-slate-400 shrink-0" size={16} />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Route Zone</p>
+                      <p className="text-sm font-bold text-slate-800">{unit.zone}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <Hash className="text-slate-400 shrink-0" size={16} />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Motor Number</p>
+                      <p className="text-sm font-bold text-slate-800">{unit.motorNo}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {unit.status === 'Active' && (
+                  <div className="mb-6 bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl">
+                    <div className="grid grid-cols-2 gap-4 mb-3 pb-3 border-b border-emerald-100">
+                      <div>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide">Approved On</p>
+                        <p className="text-xs font-bold text-emerald-900">{new Date(unit.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide">Validity (MTOP)</p>
+                        <p className="text-xs font-bold text-emerald-900">1 Year</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays size={16} className="text-emerald-600" />
+                        <span className="text-[11px] font-bold text-emerald-700 uppercase">Expires On</span>
+                      </div>
+                      <p className="text-sm font-extrabold text-emerald-900">{getExpirationDate(unit.dateApplied)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {unit.status === 'Cancelled' && (
+                  <div className="mb-6 bg-red-50 border border-red-200 p-4 rounded-xl flex items-start gap-3">
+                    <AlertCircle size={20} className="text-red-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-red-800 font-bold text-xs uppercase mb-1">Reason for Rejection</h4>
+                      <p className="text-sm font-medium text-red-600 leading-tight">{unit.cancelReason || 'LGU did not provide a specific reason.'}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 mt-auto pt-5 border-t border-slate-100">
+                {unit.status === 'Expired' ? (
+                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                    <RefreshCw size={16} /> Renew Franchise
+                  </button>
+                ) : unit.status === 'Active' ? (
+                  <>
+                    <button onClick={() => openDetails(unit)} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">View Details</button>
+                    <button onClick={() => openPrintPermit(unit)} className="flex-1 bg-slate-900 text-white hover:bg-slate-800 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+                      <Printer size={16} /> Print
+                    </button>
+                  </>
+                ) : unit.status === 'Cancelled' ? (
+                  <button 
+                    onClick={() => {
+                      localStorage.setItem('reapply_target', JSON.stringify(unit));
+                      navigate('/apply-franchise');
+                    }} 
+                    className="w-full bg-slate-900 text-white hover:bg-slate-800 px-4 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <RefreshCw size={16} /> Fix Issue
+                  </button>
+                ) : (
+                   <>
+                     <button onClick={() => openDetails(unit)} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">View Details</button>
+                     <button disabled className="flex-1 bg-slate-50 text-slate-400 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm cursor-not-allowed">Pending</button>
+                   </>
+                )}
+              </div>
+
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* MODAL: VIEW DETAILS */}
+      {isDetailsOpen && selectedUnit && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsDetailsOpen(false)}></div>
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative z-10 animate-[slideFadeUp_0.3s_ease-out_forwards]">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-slate-900">Franchise Details</h2>
+              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500"><X size={20} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-y-4 text-sm">
+                <div className="col-span-2">
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Operator Name</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.fullName}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Address</p>
+                  <p className="font-medium text-slate-800">{selectedUnit.address}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">TODA</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.todaName}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Route / Zone</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.zone}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Plate Number</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.plateNo}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Vehicle Make</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.make} ({selectedUnit.made})</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Motor No.</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.motorNo}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Chassis No.</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.chassisNo}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Date Applied</p>
+                  <p className="font-bold text-slate-900">{new Date(selectedUnit.dateApplied).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Status</p>
+                  <p className="font-bold text-slate-900">{selectedUnit.status}</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+              <button onClick={() => setIsDetailsOpen(false)} className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-sm transition-colors">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PRINT DOCUMENT */}
+      {isPrintOpen && selectedUnit && (
+        <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col animate-[slideFadeUp_0.3s_ease-out_forwards]">
+          <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
+            <h2 className="font-bold">Print Preview</h2>
+            <div className="flex gap-3">
+              <button onClick={() => setIsPrintOpen(false)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold flex items-center gap-2">
+                <X size={16} /> Cancel
+              </button>
+              <button onClick={() => window.print()} className="px-5 py-2 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-lg text-sm font-bold flex items-center gap-2">
+                <Printer size={16} /> Print Document
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-8 print:p-0 print:bg-white flex justify-center">
+            <div className="bg-white w-full max-w-[800px] border border-slate-200 shadow-xl p-12 print:border-none print:shadow-none relative">
+              
+              <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                <ShieldCheck size={400} />
+              </div>
+
+              <div className="text-center mb-8 border-b-2 border-black pb-6">
+                <p className="text-sm font-bold uppercase">Republic of the Philippines</p>
+                <p className="text-sm font-bold uppercase">Province of Marinduque</p>
+                <p className="text-lg font-black uppercase mt-1">Municipality of Gasan</p>
+                <div className="mt-6 inline-block bg-black text-white px-8 py-2 border-4 border-black">
+                  <h1 className="text-2xl font-black uppercase tracking-widest">Motorized Tricycle Operator's Permit</h1>
+                </div>
+                <p className="text-xs font-bold tracking-widest mt-2">(OFFICIAL COPY)</p>
+              </div>
+
+              <div className="space-y-6 relative z-10">
+                <p className="text-justify text-sm leading-relaxed">
+                  This certifies that the person named below has been granted the franchise to operate a Motorized Tricycle-For-Hire within the authorized zones of the Municipality of Gasan, subject to existing local ordinances and national laws.
+                </p>
+
+                <div className="border border-black p-6 bg-slate-50/50 print:bg-white">
+                  <table className="w-full text-sm">
+                    <tbody>
+                      <tr><td className="py-2 font-bold w-1/3">Operator Name:</td><td className="py-2 border-b border-black/20">{selectedUnit.fullName}</td></tr>
+                      <tr><td className="py-2 font-bold">Address:</td><td className="py-2 border-b border-black/20">{selectedUnit.address}</td></tr>
+                      <tr><td className="py-2 font-bold">TODA Association:</td><td className="py-2 border-b border-black/20">{selectedUnit.todaName}</td></tr>
+                      <tr><td className="py-2 font-bold">Route / Zone:</td><td className="py-2 border-b border-black/20">{selectedUnit.zone}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="border border-black p-6 bg-slate-50/50 print:bg-white mt-4">
+                  <h3 className="font-bold text-sm uppercase mb-3 border-b border-black pb-1">Vehicle Specifications</h3>
+                  <div className="grid grid-cols-2 gap-y-3 text-sm">
+                    <div><span className="font-bold">Make/Brand:</span> {selectedUnit.make}</div>
+                    <div><span className="font-bold">Year Model:</span> {selectedUnit.made}</div>
+                    <div><span className="font-bold">Motor Number:</span> {selectedUnit.motorNo}</div>
+                    <div><span className="font-bold">Chassis Number:</span> {selectedUnit.chassisNo}</div>
+                    <div className="col-span-2 mt-2">
+                      <span className="font-bold mr-2">Assigned Plate Number:</span>
+                      <span className="font-black border-2 border-black px-3 py-1 bg-slate-100 print:bg-white tracking-widest">{selectedUnit.plateNo || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-between items-end text-sm">
+                  <div>
+                    <p className="font-bold">Approved On:</p>
+                    <p>{new Date(selectedUnit.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-black">Valid Until:</p>
+                    <p className="font-black underline decoration-2">{getExpirationDate(selectedUnit.dateApplied)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-16 pt-8 border-t-2 border-black text-center">
+                <p className="text-xs italic text-slate-500 print:text-black">This Document is system generated and serves as a proof of franchise registration via the G-TRAMS Portal.</p>
+                <p className="text-xs font-bold mt-1">System ID: {selectedUnit._id}</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </MainLayout>
+  );
+};
+
+export default OperatorDashboard;
