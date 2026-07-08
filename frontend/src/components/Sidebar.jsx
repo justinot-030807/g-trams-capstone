@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, FileCheck, ShieldAlert, LogOut, Menu, X, User } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, FileCheck, ShieldAlert, LogOut, Menu, X, User, Printer } from 'lucide-react'; // IDINAGDAG ANG PRINTER ICON
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -43,6 +43,7 @@ const Sidebar = () => {
       { name: 'Revocations', path: '/manage-revocations', icon: <ShieldAlert size={18} /> },
       { name: 'User Management', path: '/user-management', icon: <Users size={18} /> },
       { name: 'System Settings', path: '/system-settings', icon: <Settings size={18} /> },
+      { name: 'System Reports', path: '/system-reports', icon: <Printer size={18} /> }, // <-- IDINAGDAG DITO!
     ],
     'operator': [
       { name: 'Dashboard', path: '/operator-dashboard', icon: <LayoutDashboard size={18} /> },
@@ -95,7 +96,6 @@ const Sidebar = () => {
             {userData.profilePic ? (
               <img src={userData.profilePic} alt="Profile" className="w-full h-full object-cover" />
             ) : role === 'admin' ? (
-              // FIX: Dito papasok ang Gasan Logo kapag Admin ang nag-login!
               <img src="/gasan-logo.png" alt="Gasan Logo" className="w-full h-full object-contain p-1.5" />
             ) : (
               <User className="text-slate-400" size={40} />

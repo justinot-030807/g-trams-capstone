@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../config/cloudinary');
+const { authorize } = require('../middleware/authMiddleware'); 
 
 const { 
     createFranchise, 
@@ -14,7 +15,8 @@ const {
     cancelMyFranchise,
     searchHistoricalFranchise,
     toggleArchiveFranchise,
-    revokeFranchise // <-- IN-IMPORT NATIN DITO
+    revokeFranchise,
+    getFranchiseReports 
 } = require('../controllers/franchiseController');
 
 router.get('/search', protect, searchHistoricalFranchise);
@@ -32,6 +34,7 @@ router.route('/')
     )
     .get(protect, getAllFranchises);
 
+router.get('/reports', protect, authorize('admin'), getFranchiseReports);
 router.get('/my-franchises', protect, getMyFranchises);
 router.put('/:id/archive', protect, toggleArchiveFranchise);
 
@@ -54,5 +57,7 @@ router.route('/:id')
 router.put('/:id/renew', protect, renewFranchise);
 router.put('/:id/status', protect, updateFranchiseStatus);
 router.put('/:id/cancel', protect, cancelMyFranchise);
+
+
 
 module.exports = router;

@@ -75,7 +75,6 @@ const ApplyFranchise = () => {
     }
   };
 
-  // HELPER FUNCTION: Expiration date calculator
   const getExpirationDate = (dateApplied) => {
     if (!dateApplied) return 'N/A';
     const date = new Date(dateApplied);
@@ -227,12 +226,20 @@ const ApplyFranchise = () => {
   const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all";
   const disabledClasses = "w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-500 outline-none cursor-not-allowed";
 
+  // =========================================================================
+  // SETUP PARA SA AUTO-FILL (PANGALAN, ADDRESS, AT TODA)
+  // =========================================================================
   let loggedInUserName = localStorage.getItem('name') || '';
+  let loggedInAddress = ''; 
+  let loggedInToda = ''; // DINAGDAG ANG TODA VARIABLE
+
   const userObj = localStorage.getItem('user');
   if (userObj) {
     try {
       const parsedUser = JSON.parse(userObj);
       if (!loggedInUserName) loggedInUserName = parsedUser.name || '';
+      if (parsedUser.address) loggedInAddress = parsedUser.address; 
+      if (parsedUser.todaAssociation) loggedInToda = parsedUser.todaAssociation; // KUKUNIN SA DATABASE
     } catch (e) { console.error(e); }
   }
 
@@ -290,7 +297,6 @@ const ApplyFranchise = () => {
                     )}
                   </div>
 
-                  {/* IDINAGDAG: VALIDITY AT EXPIRATION DATE PARA SA ACTIVE UNITS */}
                   {unit.status === 'Active' && (
                     <div className="mt-4 bg-emerald-50/50 border border-emerald-100 p-3 rounded-xl flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -326,9 +332,15 @@ const ApplyFranchise = () => {
                 onClick={() => {
                   setFormMode('New');
                   setFilePreviews({});
+                  // =========================================================================
+                  // DITO PINASOK YUNG MGA AUTO-FILL VARIABLES KAPAG NAG-CLICK NG "APPLY"
+                  // =========================================================================
                   setFormData({ 
                     fullName: loggedInUserName, 
-                    address: '', zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', todaName: '', dateApplied: '', cedulaDate: '', 
+                    address: loggedInAddress, 
+                    zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+                    todaName: loggedInToda, 
+                    dateApplied: '', cedulaDate: '', 
                     cedulaAddress: 'Gasan, Marinduque', 
                     cedulaSerialNo: '' 
                   });
@@ -396,9 +408,10 @@ const ApplyFranchise = () => {
                 name="fullName" 
                 value={formData.fullName} 
                 onChange={handleInputChange} 
-                className={formMode === 'Renewal' || formMode === 'Re-apply' || storedName ? disabledClasses : inputClasses} 
+                /* TINANGGAL ANG LOCK SA PANGALAN PARA EDITABLE SA 'NEW' */
+                className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                 required 
-                readOnly={formMode === 'Renewal' || formMode === 'Re-apply' || !!storedName} 
+                readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
               />
             </div>
             

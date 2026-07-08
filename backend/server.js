@@ -37,7 +37,7 @@ app.use(`${BASE_URI}/franchises`, franchiseRoutes);
 
 // calendar and report routes
 app.use(`${BASE_URI}/calendar`, require('./src/routes/calendarRoutes'));
-app.use(`${BASE_URI}/reports`, require('./src/routes/reportRoutes'));
+
 
 // BAGONG TODA ROUTE (Inilipat natin sa taas bago ang app.listen)
 app.use(`${BASE_URI}/toda`, todaRoutes); 

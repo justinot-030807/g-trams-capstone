@@ -238,6 +238,61 @@ const revokeFranchise = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// MODULE 7: GENERATE SYSTEM REPORTS (Dynamic Filtering)
+const getFranchiseReports = async (req, res) => {
+    try {
+        const { startDate, endDate, status, todaName, barangay } = req.query;
+        let query = {}; // Dito natin iipunin ang mga filters
+
+        // 1. DATE RANGE FILTER
+        if (startDate && endDate) {
+            // Sine-set natin ang time para sakop ang buong araw
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
+            query.dateApplied = { $gte: start, $lte: end };
+        }
+
+        // 2. STATUS FILTER
+        if (status) {
+            query.status = status;
+        }
+
+        // 3. TODA FILTER
+        if (todaName) {
+            query.todaName = todaName;
+        }
+
+        // 4. BARANGAY FILTER
+        // Gagamit tayo ng regex kasi ang format natin sa form ay "BarangayName, Gasan"
+        if (barangay) {
+            query.address = { $regex: barangay, $options: 'i' };
+        }
+
+        // Kunin ang mga data mula sa database base sa filters
+        const reports = await Franchise.find(query)
+            .populate('operator', 'name contact') // Kukunin din natin ang pangalan ng operator
+            .sort({ dateApplied: -1 });
+
+        // Gagawa tayo ng mabilisang summary para sa Dashboard Analytics
+        const summary = {
+            total: reports.length,
+            active: reports.filter(r => r.status === 'Active').length,
+            pending: reports.filter(r => r.status === 'Pending').length,
+            revoked: reports.filter(r => r.status === 'Revoked').length,
+            cancelled: reports.filter(r => r.status === 'Cancelled').length,
+            expired: reports.filter(r => r.status === 'Expired').length,
+        };
+
+        res.status(200).json({ summary, data: reports });
+    } catch (error) {
+        console.error("Report Generation Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 module.exports = { 
     createFranchise, 
@@ -250,5 +305,6 @@ module.exports = {
     updateFranchiseStatus,
     cancelMyFranchise,
     toggleArchiveFranchise,
-    revokeFranchise
+    revokeFranchise,
+    getFranchiseReports
 };

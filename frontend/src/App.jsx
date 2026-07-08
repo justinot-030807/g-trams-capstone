@@ -13,8 +13,8 @@ import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 import FranchiseApproval from './pages/FranchiseApproval';
 import ManageRevocations from './pages/ManageRevocations';
-import SystemReports from './pages/SystemReports';
 import ValidateTODA from './pages/ValidateTODA';
+import AdminReports from './pages/AdminReports';
 // Operator & TODA President Pages
 import OperatorDashboard from './pages/OperatorDashboard';
 import ApplyFranchise from './pages/ApplyFranchise';
@@ -38,8 +38,9 @@ function App() {
       <Route path="/system-settings" element={<SystemSettings />} />
       <Route path="/franchise-approval" element={<FranchiseApproval />} />
       <Route path="/manage-revocations" element={<ManageRevocations />} />
-      <Route path="/system-reports" element={<SystemReports />} />
       <Route path="/validate-toda" element={<ValidateTODA />} />
+      <Route path="/system-reports" element={<AdminReports />} />
+    
 
       {/* Operator & TODA Routes */}
       <Route path="/submit-members" element={<SubmitMembers />} />
