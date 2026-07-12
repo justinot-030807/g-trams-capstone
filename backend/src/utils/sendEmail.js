@@ -2,11 +2,9 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
     const transporter = nodemailer.createTransport({
-        // 1. Literal na tina-target natin ang IPv4 address ng Gmail para iwas ENETUNREACH
-        host: 'smtp.ipv4.gmail.com', 
-        // 2. Gagamitin natin ang Port 587 (Mas cloud-friendly kaysa 465)
+        // Binalik natin sa official na address ng Gmail
+        host: 'smtp.gmail.com', 
         port: 587, 
-        // 3. Dapat false kapag 587, pero gagamit pa rin tayo ng TLS
         secure: false, 
         requireTLS: true, 
         auth: {
@@ -15,7 +13,9 @@ const sendEmail = async (options) => {
         },
         tls: {
             rejectUnauthorized: false
-        }
+        },
+        // ITO ANG MAGIC: Pinipilit nito ang Node.js na gumamit ng IPv4 para iwas timeout at ENETUNREACH!
+        family: 4 
     });
 
     const mailOptions = {
