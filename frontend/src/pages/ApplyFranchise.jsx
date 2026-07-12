@@ -181,16 +181,14 @@ const ApplyFranchise = () => {
         });
 
         const url = formMode === 'Re-apply' 
-          ? `import.meta.env.VITE_API_URL'/api/v1/franchises/${selectedId}`
-          : import.meta.env.VITE_API_URL + '/api/v1/franchises';
-
+          const url = formMode === 'Re-apply' ? `${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}` : import.meta.env.VITE_API_URL + '/api/v1/franchises';
         response = await fetch(url, {
           method: formMode === 'Re-apply' ? 'PUT' : 'POST',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: submitData
         });
       } else if (formMode === 'Renewal') {
-        response = await fetch(`import.meta.env.VITE_API_URL'/api/v1/franchises/${selectedId}/renew`, {
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}/renew`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,

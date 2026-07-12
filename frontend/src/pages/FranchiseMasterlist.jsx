@@ -20,7 +20,7 @@ const FranchiseMasterlist = () => {
   const fetchFranchises = async () => {
     setIsLoading(true);
     try {
-      const url = `import.meta.env.VITE_API_URL'/api/v1/franchises?archived=${activeTab === 'archived'}`;
+     const url = `${import.meta.env.VITE_API_URL}/api/v1/franchises?archived=${activeTab === 'archived'}`;
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -47,7 +47,7 @@ const FranchiseMasterlist = () => {
     if (!confirmModal.data) return;
     
     try {
-      const response = await fetch(`import.meta.env.VITE_API_URL'/api/v1/franchises/${confirmModal.data.id}/archive`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${confirmModal.data.id}/archive`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });

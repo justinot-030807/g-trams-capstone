@@ -56,7 +56,7 @@ const ManageRevocations = () => {
     formData.append('evidence', evidenceFile);
 
     try {
-      const response = await fetch(`import.meta.env.VITE_API_URL'/api/v1/franchises/${selectedFranchise._id}/revoke`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedFranchise._id}/revoke`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: formData

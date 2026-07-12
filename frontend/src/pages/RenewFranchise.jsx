@@ -39,7 +39,7 @@ const RenewFranchise = () => {
 
     try {
       // Assuming your API endpoint for renewal includes the franchise ID
-      const response = await fetch(`import.meta.env.VITE_API_URL'/api/v1/franchises/${id}/renew`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/renew`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
