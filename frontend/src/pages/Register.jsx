@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, Globe, X } from 'lucide-react';
-
+import { UserPlus, Eye, EyeOff, Globe, X, Loader2 } from 'lucide-react';
 const gasanBarangays = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", "Pinggan", "Tabionan", "Tapuyan", "Tiguion", "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
 ];
@@ -22,6 +21,7 @@ const Register = () => {
   const [otpCode, setOtpCode] = useState('');
 
   // UI States
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
@@ -46,22 +46,34 @@ const Register = () => {
   };
 
   const handleRequestOTP = async (e) => {
-    e.preventDefault();
-    setError(''); setSuccess('');
+  e.preventDefault();
+  setError(''); setSuccess('');
 
-    if (passwordStrength < 3) return setError('Your password is too weak. Please include symbols, numbers, and uppercase letters.');
-    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match!');
-    if (!termsAccepted) return setError('You must accept the Terms and Conditions to proceed.');
-    
-    try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/register', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
-      });
-      const data = await response.json();
-      if (response.ok) { setSuccess('OTP code sent successfully!'); setStep(2); } 
-      else { setError(data.message || 'Registration failed.'); }
-    } catch (err) { setError('Cannot connect to the server.'); }
-  };
+  if (passwordStrength < 3) return setError('Your password is too weak. Please include symbols, numbers, and uppercase letters.');
+  if (formData.password !== formData.confirmPassword) return setError('Passwords do not match!');
+  if (!termsAccepted) return setError('You must accept the Terms and Conditions to proceed.');
+
+  // I-set ang loading sa true
+  setIsLoading(true);
+
+  try {
+    const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
+    });
+    const data = await response.json();
+    if (response.ok) { 
+      setSuccess('OTP code sent successfully!'); 
+      setStep(2); 
+    } else { 
+      setError(data.message || 'Registration failed.'); 
+    }
+  } catch (err) { 
+    setError('Cannot connect to the server.'); 
+  } finally {
+    // I-set ang loading sa false kapag tapos na (success man o error)
+    setIsLoading(false);
+  }
+};
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
@@ -172,9 +184,24 @@ const Register = () => {
               </label>
             </div>
             
-            <button type="submit" className="w-full flex items-center justify-center gap-2 bg-[#7A1B22] text-white py-3 rounded-xl text-sm font-bold shadow-sm hover:bg-[#5A1419] active:scale-[0.98] transition-all duration-200 mt-2">
-              <UserPlus size={18} /> Continue to Verification
-            </button>
+           <button 
+  type="submit" 
+  disabled={isLoading} // I-disable kapag naglo-load
+  className={`w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 mt-2 ${
+    isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419] active:scale-[0.98]'
+  }`}
+>
+  {isLoading ? (
+    <>
+      <Loader2 size={18} className="animate-spin" />
+      Sending Verification Code...
+    </>
+  ) : (
+    <>
+      <UserPlus size={18} /> Continue to Verification
+    </>
+  )}
+</button>
           </form>
         )}
 
