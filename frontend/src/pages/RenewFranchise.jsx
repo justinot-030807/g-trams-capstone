@@ -39,7 +39,7 @@ const RenewFranchise = () => {
 
     try {
       // Assuming your API endpoint for renewal includes the franchise ID
-      const response = await fetch(`http://localhost:3000/api/v1/franchises/${id}/renew`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/franchises/${id}/renew`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

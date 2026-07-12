@@ -49,7 +49,7 @@ const AdminReports = () => {
       if (filters.todaName) queryParams.append('todaName', filters.todaName);
       if (filters.barangay) queryParams.append('barangay', filters.barangay);
 
-      const response = await fetch(`http://localhost:3000/api/v1/franchises/reports?${queryParams.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/franchises/reports?${queryParams.toString()}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
 

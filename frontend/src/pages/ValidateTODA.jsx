@@ -45,7 +45,7 @@ const ValidateTODA = () => {
 
   const handleApprove = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/toda/approve/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/toda/approve/${id}`, {
         method: 'PUT', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
@@ -197,7 +197,7 @@ const ValidateTODA = () => {
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-center space-x-2 flex justify-center">
-                          <a href={`http://localhost:3000/${sub.filePath}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors border border-slate-200">
+                          <a href={`${API_BASE_URL}/${sub.filePath}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors border border-slate-200">
                             <Eye size={14} /> View
                           </a>
                           <button onClick={() => handleApprove(sub._id)} disabled={sub.status === 'Approved'} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${sub.status === 'Approved' ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'}`}>

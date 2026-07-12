@@ -46,7 +46,7 @@ const UserManagement = () => {
     const { userId, newRole } = pendingRoleChange;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/auth/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify({ role: newRole })
@@ -70,7 +70,7 @@ const UserManagement = () => {
     if (!statusModal.user) return;
     
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/auth/${statusModal.user._id}/toggle-status`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/${statusModal.user._id}/toggle-status`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });

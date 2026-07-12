@@ -57,7 +57,7 @@ const FranchiseApproval = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/franchises/${selectedApp._id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/franchises/${selectedApp._id}/status`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
