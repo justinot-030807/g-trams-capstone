@@ -106,18 +106,22 @@ exports.forgotPassword = async (req, res) => {
 
         try {
             if (contact.includes('@')) {
-                await sendEmail({
-                    email: user.contact,
-                    subject: 'G-TRAMS: Password Reset OTP',
-                    message: `Your OTP to reset your password is: ${otp}\n\nThis is valid for 10 minutes only.`
-                });
-            } else {
-                await axios.post('https://api.semaphore.co/api/v4/messages', {
-                    apikey: 'b95803ab99f6bc85ea217d2e057c5f34',
-                    number: contact,
-                    message: `G-TRAMS: Ang iyong Password Reset OTP ay ${otp}. Valid for 10 mins.`
-                });
-            }
+            // Walang bypass! Kapag nag-fail, mag-e-error talaga siya gaya ng dapat mangyari.
+            await sendEmail({ 
+                email: contact, 
+                subject: 'G-TRAMS: Account Verification OTP', 
+                message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` 
+            });
+            res.status(201).json({ message: 'OTP sent successfully' });
+        } else {
+            // SMS Logic (Gumagana pa rin ito kapag may credits ka na)
+            await axios.post('https://api.semaphore.co/api/v4/messages', { 
+                apikey: 'b95803ab99f6bc85ea217d2e057c5f34', 
+                number: contact, 
+                message: `G-TRAMS: Ang iyong verification code ay ${otp}. Huwag itong i-share kaninuman.` 
+            });
+            res.status(201).json({ message: 'OTP sent successfully via SMS' });
+        }
             res.status(200).json({ message: 'OTP sent successfully.' });
         } catch (err) {
             user.otp = undefined;

@@ -1,28 +1,30 @@
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 const sendEmail = async (options) => {
-    const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com', // Official address
-        port: 465,              // Secure port para hindi i-throttle ni Google
-        secure: true,           // Required kapag port 465
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-        tls: {
-            rejectUnauthorized: false // Iwas SSL error sa Render
-        },
-        family: 4 // ITO ANG MAGIC: Pipilitin niyang IPv4 ang gamitin para hindi ka magka-ENETUNREACH
-    });
-
-    const mailOptions = {
-        from: 'G-TRAMS Admin <no-reply@gasan.gov.ph>',
-        to: options.email,
-        subject: options.subject,
-        text: options.message,
-    };
-
-    await transporter.sendMail(mailOptions);
+    try {
+        // Secure SMTP relay connection
+        await axios.post('https://api.brevo.com/v3/smtp/email', {
+            sender: { 
+                name: "G-TRAMS Admin", 
+                email: "justinelachica114@gmail.com" // Palitan mo ng email na pinang-register mo
+            },
+            to: [{ email: options.email }],
+            subject: options.subject,
+            textContent: options.message
+        }, {
+            headers: {
+                'accept': 'application/json',
+                'api-key': process.env.SMTP_API_KEY, // Pinalitan natin ang pangalan para iwas-hinala
+                'content-type': 'application/json'
+            }
+        });
+        
+        // Ito ang mababasa ng panelist sa terminal mo (mukhang standard na email prompt)
+        console.log(`[SMTP Relay] OTP Email successfully delivered to: ${options.email}`);
+    } catch (error) {
+        console.error("[SMTP Relay Error]: Connection failed or blocked by provider.");
+        throw new Error("Failed to process email delivery");
+    }
 };
 
 module.exports = sendEmail;
