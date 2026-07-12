@@ -13,7 +13,7 @@ connectDB();
 app.use(cors({
     origin: [
         'http://localhost:5173', 
-        'https://g-trams-web2.vercel.app' // <-- IDINAGDAG ANG VERCEL DOMAIN MO
+        'https:/g-trams-official.vercel.app' // <-- IDINAGDAG ANG VERCEL DOMAIN MO
     ],
     credentials: true
 }));
