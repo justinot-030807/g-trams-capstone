@@ -181,7 +181,7 @@ const ApplyFranchise = () => {
         });
 
         const url = formMode === 'Re-apply' 
-          ? `${API_BASE_URL}/api/v1/franchises/${selectedId}`
+          ? `import.meta.env.VITE_API_URL'/api/v1/franchises/${selectedId}`
           : import.meta.env.VITE_API_URL + '/api/v1/franchises';
 
         response = await fetch(url, {
@@ -190,7 +190,7 @@ const ApplyFranchise = () => {
           body: submitData
         });
       } else if (formMode === 'Renewal') {
-        response = await fetch(`${API_BASE_URL}/api/v1/franchises/${selectedId}/renew`, {
+        response = await fetch(`import.meta.env.VITE_API_URL'/api/v1/franchises/${selectedId}/renew`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
