@@ -35,7 +35,8 @@ exports.register = async (req, res) => {
         }
         res.status(201).json({ message: 'OTP sent successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error("REGISTER ERROR:", error); // <-- Dinagdag para makita sa Render Logs
+        res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
 // 2. VERIFY OTP
@@ -125,7 +126,8 @@ exports.forgotPassword = async (req, res) => {
             return res.status(500).json({ message: 'Error sending OTP.' });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error("REGISTER ERROR:", error); // <-- Dinagdag para makita sa Render Logs
+        res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
 
