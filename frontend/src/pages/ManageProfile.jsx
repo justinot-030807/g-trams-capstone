@@ -39,7 +39,7 @@ const ManageProfile = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const response = await fetch('http://localhost:3000/api/v1/auth/profile', {
+        const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/profile', {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -108,7 +108,7 @@ const ManageProfile = () => {
         
         if (profilePicFile) formData.append('profilePic', profilePicFile);
 
-        const response = await fetch('http://localhost:3000/api/v1/auth/profile', {
+        const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/profile', {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: formData 
@@ -138,7 +138,7 @@ const ManageProfile = () => {
     
     else if (confirmModal.type === 'password') {
       try {
-        const response = await fetch('http://localhost:3000/api/v1/auth/change-password', {
+        const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/change-password', {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,

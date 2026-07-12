@@ -12,8 +12,8 @@ connectDB();
 // configure cors for the deployed vercel frontend and local development
 app.use(cors({
     origin: [
-        'https://g-trams-web2.vercel.app',
-        'http://localhost:5173'
+        'http://localhost:5173', 
+        'https://g-trams-web2.vercel.app' // <-- IDINAGDAG ANG VERCEL DOMAIN MO
     ],
     credentials: true
 }));

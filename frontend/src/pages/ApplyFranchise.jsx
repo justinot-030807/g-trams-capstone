@@ -61,7 +61,7 @@ const ApplyFranchise = () => {
   const fetchMyFranchises = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/v1/franchises/my-franchises', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises/my-franchises', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
@@ -182,7 +182,7 @@ const ApplyFranchise = () => {
 
         const url = formMode === 'Re-apply' 
           ? `http://localhost:3000/api/v1/franchises/${selectedId}`
-          : 'http://localhost:3000/api/v1/franchises';
+          : import.meta.env.VITE_API_URL + '/api/v1/franchises';
 
         response = await fetch(url, {
           method: formMode === 'Re-apply' ? 'PUT' : 'POST',

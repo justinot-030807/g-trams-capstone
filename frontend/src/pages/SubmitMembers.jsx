@@ -14,7 +14,7 @@ const SubmitMembers = () => {
 
   const fetchMySubmissions = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/toda/my-submissions', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/toda/my-submissions', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -44,7 +44,7 @@ const SubmitMembers = () => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:3000/api/v1/toda/upload', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/toda/upload', {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}` 

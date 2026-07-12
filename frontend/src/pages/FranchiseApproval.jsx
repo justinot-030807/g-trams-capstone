@@ -32,7 +32,7 @@ const FranchiseApproval = () => {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/v1/franchises', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {

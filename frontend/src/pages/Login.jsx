@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, LogIn } from 'lucide-react';
+import { ShieldAlert, LogIn, Eye, EyeOff } from 'lucide-react'; // IDINAGDAG ANG EYE ICONS
 
 const Login = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // STATE PARA SA SHOW/HIDE PASSWORD
   const [formData, setFormData] = useState({
-    contact: '', // Pinalitan natin ito mula 'email' to 'contact'
+    contact: '',
     password: ''
   });
 
@@ -19,7 +20,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -28,11 +29,9 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // I-save ang token at role sa browser memory
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
 
-        // I-redirect base sa role
         if (data.role === 'admin') {
           navigate('/admin-dashboard');
         } else {
@@ -54,8 +53,8 @@ const Login = () => {
         
         <div className="flex flex-col items-center mb-8 text-center">
           <div className="w-20 h-20 bg-white border-2 border-[#D4AF37] shadow-md rounded-full flex items-center justify-center mx-auto mb-5 overflow-hidden">
-   <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
-</div>
+            <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+          </div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">G-TRAMS Portal</h2>
           <p className="text-sm text-slate-500 mt-1">Municipality of Gasan</p>
         </div>
@@ -82,15 +81,24 @@ const Login = () => {
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className={inputClasses}
-              placeholder="Enter your password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"} // DYNAMIC TYPE
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className={`${inputClasses} pr-12`} // LALAGYAN NG PADDING SA KANAN PARA SA ICON
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22] focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end">

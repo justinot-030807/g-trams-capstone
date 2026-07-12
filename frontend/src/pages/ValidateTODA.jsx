@@ -27,14 +27,14 @@ const ValidateTODA = () => {
 
   const fetchSubmissions = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/toda/submissions', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/toda/submissions', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
       if (response.ok) setSubmissions(await response.json());
     } catch (error) { console.error(error); }
   };
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/auth', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
       if (response.ok) {
         const allUsers = await response.json();
         // Kunin lang ang mga operators at toda presidents
