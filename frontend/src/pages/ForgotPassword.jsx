@@ -88,7 +88,7 @@ const ForgotPassword = () => {
   return (
     <div className="relative min-h-screen w-full bg-[#1F0406] flex flex-col justify-between items-center p-4 sm:p-6 overflow-hidden select-none">
       
-      {/* FLOATING LIQUID ANIMATION */}
+      {/* KEYFRAME ANIMATIONS */}
       <style>{`
         @keyframes floatSlow1 {
           0%, 100% { transform: translate(0px, 0px) scale(1); }
@@ -100,15 +100,36 @@ const ForgotPassword = () => {
           33% { transform: translate(-60px, 70px) scale(1.2); }
           66% { transform: translate(50px, -40px) scale(0.85); }
         }
+        @keyframes entranceCard {
+          0% { opacity: 0; transform: scale(0.92) translateY(30px); }
+          100% { opacity: 1; transform: scale(1) translateY(0px); }
+        }
+        @keyframes logoPop {
+          0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+          70% { transform: scale(1.1) rotate(2deg); }
+          100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes itemFadeUp {
+          0% { opacity: 0; transform: translateY(16px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
         .animate-blob-1 { animation: floatSlow1 18s ease-in-out infinite; }
         .animate-blob-2 { animation: floatSlow2 22s ease-in-out infinite; }
+        .animate-card-entrance {
+          animation: entranceCard 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-logo-entrance {
+          animation: logoPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .animate-item-1 { animation: itemFadeUp 0.6s ease-out 0.2s both; }
+        .animate-item-2 { animation: itemFadeUp 0.6s ease-out 0.3s both; }
+        .animate-item-3 { animation: itemFadeUp 0.6s ease-out 0.4s both; }
       `}</style>
 
-      {/* DYNAMIC ORBS */}
+      {/* Ambient Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-br from-[#7A1B22] via-[#9B2A33] to-transparent rounded-full blur-[90px] opacity-75 animate-blob-1" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[550px] h-[550px] bg-gradient-to-tl from-[#5A1419] via-[#851D25] to-[#D4AF37]/20 rounded-full blur-[100px] opacity-70 animate-blob-2" />
-        
         <div 
           className="absolute inset-0 opacity-[0.07]"
           style={{
@@ -119,17 +140,17 @@ const ForgotPassword = () => {
       </div>
 
       {/* Main Glass Card */}
-      <div className="w-full max-w-md my-auto relative z-10">
+      <div className="w-full max-w-md my-auto relative z-10 animate-card-entrance">
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] border border-white/40 p-8 sm:p-10">
           
           <div className="flex flex-col items-center mb-6 text-center">
-            <div className="w-16 h-16 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-md flex items-center justify-center mb-4 ring-4 ring-[#D4AF37]/30">
+            <div className="w-16 h-16 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-md flex items-center justify-center mb-4 ring-4 ring-[#D4AF37]/30 animate-logo-entrance">
               {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={32} /> : <KeyRound className="text-[#7A1B22]" size={32} />}
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight animate-item-1">
               {step === 1 ? 'Forgot Password?' : 'Reset Your Password'}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium animate-item-1">
               {step === 1 ? 'Enter your registered email or phone number to receive a reset code.' : 'Create a new secure password for your account.'}
             </p>
           </div>
@@ -139,7 +160,7 @@ const ForgotPassword = () => {
 
           {step === 1 && (
             <form onSubmit={handleRequestOTP} className="space-y-4">
-              <div>
+              <div className="animate-item-2">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email or Phone Number</label>
                 <input 
                   type="text" 
@@ -151,22 +172,24 @@ const ForgotPassword = () => {
                 />
               </div>
               
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-[#7A1B22]/30 transition-all duration-200 mt-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
-              >
-                {isLoading ? <><Loader2 className="animate-spin" size={18} /> Sending...</> : 'Send Reset Code'}
-              </button>
+              <div className="animate-item-3">
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-[#7A1B22]/30 transition-all duration-200 mt-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
+                >
+                  {isLoading ? <><Loader2 className="animate-spin" size={18} /> Sending...</> : 'Send Reset Code'}
+                </button>
 
-              <Link to="/login" className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-[#7A1B22] mt-4 transition-colors">
-                <ArrowLeft size={16} /> Back to Login
-              </Link>
+                <Link to="/login" className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-[#7A1B22] mt-4 transition-colors">
+                  <ArrowLeft size={16} /> Back to Login
+                </Link>
+              </div>
             </form>
           )}
 
           {step === 2 && (
-            <form onSubmit={handleResetPassword} className="space-y-4">
+            <form onSubmit={handleResetPassword} className="space-y-4 animate-item-2">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 text-center">Enter 6-Digit Code</label>
                 <input 
@@ -222,7 +245,7 @@ const ForgotPassword = () => {
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 mt-8 text-center text-white/70 text-xs space-y-1 pb-2">
+      <footer className="relative z-10 mt-8 text-center text-white/70 text-xs space-y-1 pb-2 animate-item-3">
         <div className="flex items-center justify-center gap-2 font-medium tracking-wide">
           <ShieldCheck size={14} className="text-[#D4AF37]" />
           <span>G-TRAMS — Gasan Tricycle Records and Application Management System</span>
