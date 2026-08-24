@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, Globe, X, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Globe, X, Loader2, CheckCircle2 } from 'lucide-react';
 
 const gasanBarangays = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", "Pinggan", "Tabionan", "Tapuyan", "Tiguion", "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
@@ -48,9 +48,9 @@ const Register = () => {
     e.preventDefault();
     setError(''); setSuccess('');
 
-    if (passwordStrength < 3) return setError('Your password is too weak. Please include symbols, numbers, and uppercase letters.');
-    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match!');
-    if (!termsAccepted) return setError('You must accept the Terms and Conditions to proceed.');
+    if (passwordStrength < 3) return setError('PASSWORD TOO WEAK. INCLUDE SYMBOLS & NUMBERS.');
+    if (formData.password !== formData.confirmPassword) return setError('PASSWORDS DO NOT MATCH!');
+    if (!termsAccepted) return setError('PLEASE ACCEPT THE TERMS AND CONDITIONS.');
 
     setIsLoading(true);
 
@@ -60,13 +60,13 @@ const Register = () => {
       });
       const data = await response.json();
       if (response.ok) { 
-        setSuccess('OTP code sent successfully!'); 
+        setSuccess('OTP CODE SENT SUCCESSFULLY!'); 
         setStep(2); 
       } else { 
-        setError(data.message || 'Registration failed.'); 
+        setError(data.message || 'REGISTRATION FAILED.'); 
       }
     } catch (err) { 
-      setError('Cannot connect to the server.'); 
+      setError('CANNOT CONNECT TO THE SERVER.'); 
     } finally {
       setIsLoading(false);
     }
@@ -80,31 +80,42 @@ const Register = () => {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contact: formData.contact, otp: otpCode }),
       });
       if (response.ok) {
-        setSuccess('Account Verified! Redirecting to login...');
+        setSuccess('ACCOUNT VERIFIED! REDIRECTING...');
         setTimeout(() => { navigate('/login'); }, 2000);
       } else {
         const data = await response.json();
-        setError(data.message || 'Invalid OTP code.');
+        setError(data.message || 'INVALID OTP CODE.');
       }
-    } catch (err) { setError('Cannot connect to the server.'); }
+    } catch (err) { setError('CANNOT CONNECT TO THE SERVER.'); }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-screen w-full bg-[#1F0406] flex flex-col justify-between items-center px-4 py-6 sm:p-6 overflow-hidden select-none">
+    <div className="relative min-h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-6 sm:p-6 overflow-hidden select-none">
       
-      {/* KEYFRAME ANIMATIONS */}
+      {/* KEYFRAMES */}
       <style>{`
-        @keyframes floatSlow1 {
-          0%, 100% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(80px, -50px) scale(1.15); }
-          66% { transform: translate(-50px, 60px) scale(0.9); }
+        @keyframes liquidOrbit1 {
+          0% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+          33% { transform: translate(90px, -60px) rotate(60deg) scale(1.22); }
+          66% { transform: translate(-40px, 80px) rotate(120deg) scale(0.92); }
+          100% { transform: translate(0px, 0px) rotate(180deg) scale(1); }
         }
-        @keyframes floatSlow2 {
-          0%, 100% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(-70px, 60px) scale(1.2); }
-          66% { transform: translate(60px, -50px) scale(0.85); }
+        @keyframes liquidOrbit2 {
+          0% { transform: translate(0px, 0px) rotate(0deg) scale(1.05); }
+          33% { transform: translate(-80px, 70px) rotate(-60deg) scale(1.28); }
+          66% { transform: translate(70px, -50px) rotate(-120deg) scale(0.88); }
+          100% { transform: translate(0px, 0px) rotate(-180deg) scale(1.05); }
+        }
+        @keyframes liquidOrbit3 {
+          0% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
+          50% { transform: translate(-60px, -50px) scale(1.3); opacity: 0.65; }
+          100% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
+        }
+        @keyframes goldenPulseGlow {
+          0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.65; transform: translate(-45%, -55%) scale(1.35); }
         }
         @keyframes entranceCard {
           0% { opacity: 0; transform: scale(0.94) translateY(20px); }
@@ -119,8 +130,12 @@ const Register = () => {
           0% { opacity: 0; transform: translateY(12px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-blob-1 { animation: floatSlow1 20s ease-in-out infinite; }
-        .animate-blob-2 { animation: floatSlow2 24s ease-in-out infinite; }
+
+        .animate-liquid-1 { animation: liquidOrbit1 16s ease-in-out infinite alternate; }
+        .animate-liquid-2 { animation: liquidOrbit2 20s ease-in-out infinite alternate; }
+        .animate-liquid-3 { animation: liquidOrbit3 14s ease-in-out infinite alternate; }
+        .animate-golden-glow { animation: goldenPulseGlow 11s ease-in-out infinite alternate; }
+
         .animate-card-entrance { animation: entranceCard 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-logo-entrance { animation: logoPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         .animate-item-1 { animation: itemFadeUp 0.5s ease-out 0.15s both; }
@@ -129,56 +144,50 @@ const Register = () => {
         .animate-item-4 { animation: itemFadeUp 0.5s ease-out 0.45s both; }
       `}</style>
 
-      {/* Ambient Orbs */}
+      {/* Living Ambient Gradient Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-5%] right-[-5%] w-[450px] h-[450px] bg-gradient-to-bl from-[#7A1B22] via-[#A31D24] to-transparent rounded-full blur-[100px] opacity-75 animate-blob-1" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-tr from-[#5A1419] via-[#851D25] to-[#D4AF37]/25 rounded-full blur-[110px] opacity-70 animate-blob-2" />
-        <div 
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.8) 1px, transparent 0)',
-            backgroundSize: '28px 28px'
-          }}
-        />
+        <div className="absolute top-[-15%] right-[-10%] w-[580px] h-[580px] bg-gradient-to-bl from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
+        <div className="absolute bottom-[-15%] left-[-15%] w-[620px] h-[620px] bg-gradient-to-tr from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[95px] opacity-85 animate-liquid-2" />
+        <div className="absolute top-[20%] left-[10%] w-[420px] h-[420px] bg-gradient-to-br from-[#E03144]/60 via-[#8A141E] to-transparent rounded-full blur-[75px] animate-liquid-3" />
+        <div className="absolute top-1/2 left-1/2 w-[480px] h-[480px] bg-gradient-to-r from-[#D4AF37]/35 via-[#F39C12]/20 to-transparent rounded-full blur-[105px] animate-golden-glow" />
       </div>
 
-      {/* Sleek Glass Card */}
-      <div className="w-full max-w-[360px] sm:max-w-[420px] my-auto relative z-10 animate-card-entrance">
-        <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] border border-white/50 p-5 sm:p-7">
+      {/* Card Container */}
+      <div className="w-full max-w-[360px] sm:max-w-[410px] my-auto relative z-10 animate-card-entrance">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-7">
           
           <div className="flex flex-col items-center mb-4 text-center">
-            {/* FIXED LOGO SIZE: 56px exactly */}
             <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-md rounded-full flex items-center justify-center p-0.5 mx-auto mb-2 ring-4 ring-[#D4AF37]/25 overflow-hidden shrink-0 animate-logo-entrance">
               <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight animate-item-1">
-              {step === 1 ? 'Register Account' : 'Verify Contact'}
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">
+              {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
             </h2>
-            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 font-medium animate-item-1">
-              {step === 1 ? 'Create an operator or TODA account' : `Enter code sent to ${formData.contact}`}
+            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
+              {step === 1 ? 'CREATE AN OPERATOR OR TODA ACCOUNT' : `CODE SENT TO ${formData.contact}`}
             </p>
           </div>
 
-          {error && <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold rounded-xl p-2.5 text-center shadow-sm">{error}</div>}
-          {success && <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold rounded-xl p-2.5 text-center shadow-sm">{success}</div>}
+          {error && <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">{error}</div>}
+          {success && <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">{success}</div>}
 
           {step === 1 && (
             <form onSubmit={handleRequestOTP} className="space-y-2.5">
               <div className="animate-item-2">
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Full Name</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
               </div>
               
               <div className="grid grid-cols-2 gap-2 animate-item-2">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Barangay</label>
+                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">BARANGAY</label>
                   <select name="address" value={formData.address} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
                     <option value="" disabled>Select Brgy</option>
                     {gasanBarangays.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA Association</label>
+                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA ASSOCIATION</label>
                   <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
                     {TODA_LIST.map((toda) => <option key={toda} value={toda}>{toda}</option>)}
                   </select>
@@ -186,30 +195,22 @@ const Register = () => {
               </div>
 
               <div className="animate-item-3">
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Email or Phone Number</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">EMAIL OR PHONE NUMBER</label>
                 <input type="text" name="contact" value={formData.contact} onChange={handleChange} required className={inputClasses} placeholder="juan@gmail.com or 09123456789" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 animate-item-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Password</label>
+                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
                   <div className="relative">
                     <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
-                  {formData.password && (
-                    <div className="mt-1 flex gap-1">
-                      <div className={`h-1 w-full rounded-full ${passwordStrength >= 1 ? 'bg-red-500' : 'bg-slate-200'}`}></div>
-                      <div className={`h-1 w-full rounded-full ${passwordStrength >= 2 ? 'bg-orange-400' : 'bg-slate-200'}`}></div>
-                      <div className={`h-1 w-full rounded-full ${passwordStrength >= 3 ? 'bg-yellow-400' : 'bg-slate-200'}`}></div>
-                      <div className={`h-1 w-full rounded-full ${passwordStrength >= 4 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                    </div>
-                  )}
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Confirm</label>
+                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
                   <div className="relative">
                     <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
@@ -227,8 +228,8 @@ const Register = () => {
                   onChange={() => setTermsAccepted(!termsAccepted)} 
                   className="mt-0.5 accent-[#7A1B22] w-3.5 h-3.5 rounded cursor-pointer"
                 />
-                <label htmlFor="terms" className="text-[10px] text-slate-600 leading-tight cursor-pointer">
-                  I accept the <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#7A1B22] hover:underline">Terms & Privacy Policy</button>.
+                <label htmlFor="terms" className="text-[10px] text-slate-600 leading-tight cursor-pointer font-medium uppercase tracking-tight">
+                  I ACCEPT THE <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#7A1B22] hover:underline">TERMS & PRIVACY POLICY</button>.
                 </label>
               </div>
               
@@ -236,18 +237,18 @@ const Register = () => {
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className={`w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-bold shadow-md transition-all ${
+                  className={`w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider ${
                     isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/25 hover:brightness-110 active:scale-[0.98]'
                   }`}
                 >
                   {isLoading ? (
                     <>
                       <Loader2 size={15} className="animate-spin" />
-                      Sending OTP...
+                      SENDING CODE...
                     </>
                   ) : (
                     <>
-                      <UserPlus size={15} /> Continue to Verification
+                      <UserPlus size={15} /> CONTINUE TO VERIFICATION
                     </>
                   )}
                 </button>
@@ -259,7 +260,7 @@ const Register = () => {
             <form onSubmit={handleVerifyOTP} className="space-y-3 animate-item-2">
               <div>
                 <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">
-                  Enter 6-Digit Code
+                  ENTER 6-DIGIT CODE
                 </label>
                 <input 
                   type="text" 
@@ -273,24 +274,24 @@ const Register = () => {
               </div>
               <button 
                 type="submit" 
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2.5 rounded-xl text-xs font-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2.5 rounded-xl text-xs font-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all uppercase tracking-wider"
               >
-                <CheckCircle2 size={15} /> Verify and Register
+                <CheckCircle2 size={15} /> VERIFY AND REGISTER
               </button>
               <button 
                 type="button" 
                 onClick={() => setStep(1)} 
-                className="w-full text-center text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors"
+                className="w-full text-center text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
               >
-                ← Change contact info
+                ← CHANGE CONTACT INFO
               </button>
             </form>
           )}
 
           {step === 1 && (
             <div className="mt-3.5 pt-3 border-t border-slate-100 text-center animate-item-4">
-              <p className="text-[11px] text-slate-500 font-medium">
-                Already have an account? <Link to="/login" className="font-bold text-[#7A1B22] hover:underline">Log in here</Link>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#7A1B22] hover:underline">LOG IN HERE</Link>
               </p>
             </div>
           )}
@@ -298,25 +299,25 @@ const Register = () => {
         </div>
       </div>
 
-      {/* Terms Modal */}
+      {/* Modal */}
       {showTermsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border border-white/20">
             <div className="p-3.5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-black text-xs text-slate-900 tracking-tight">
-                {termsLang === 'en' ? 'Terms & Privacy Policy' : 'Mga Tuntunin at Patakaran'}
+              <h3 className="font-black text-xs text-slate-900 tracking-wider uppercase">
+                {termsLang === 'en' ? 'TERMS & PRIVACY POLICY' : 'MGA TUNTUNIN AT PATAKARAN'}
               </h3>
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setTermsLang(termsLang === 'en' ? 'tl' : 'en')}
-                  className="flex items-center gap-1 text-[9px] font-bold text-[#7A1B22] bg-[#7A1B22]/10 px-2 py-0.5 rounded-md"
+                  className="flex items-center gap-1 text-[9px] font-bold text-[#7A1B22] bg-[#7A1B22]/10 px-2 py-0.5 rounded-md uppercase"
                 >
                   <Globe size={11} /> {termsLang === 'en' ? 'Tagalog' : 'English'}
                 </button>
                 <button onClick={() => setShowTermsModal(false)} className="text-slate-400 hover:text-red-500 p-0.5"><X size={16} /></button>
               </div>
             </div>
-            <div className="p-4 overflow-y-auto text-xs text-slate-600 space-y-2.5 leading-relaxed">
+            <div className="p-4 overflow-y-auto text-xs text-slate-600 space-y-2.5 leading-relaxed font-medium">
               {termsLang === 'en' ? (
                 <>
                   <p><strong>1. Data Collection:</strong> By using G-TRAMS, you consent to the storage and validation of your operator credentials by the Local Government Unit of Gasan.</p>
@@ -334,9 +335,9 @@ const Register = () => {
             <div className="p-3 border-t border-slate-100 bg-slate-50 flex justify-end">
               <button 
                 onClick={() => { setTermsAccepted(true); setShowTermsModal(false); }} 
-                className="bg-[#7A1B22] text-white px-4 py-1.5 rounded-lg text-xs font-bold"
+                className="bg-[#7A1B22] text-white px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider"
               >
-                {termsLang === 'en' ? 'Accept' : 'Tanggapin'}
+                {termsLang === 'en' ? 'ACCEPT' : 'TANGGAPIN'}
               </button>
             </div>
           </div>
@@ -344,12 +345,9 @@ const Register = () => {
       )}
 
       {/* Footer */}
-      <footer className="relative z-10 mt-4 text-center text-white/70 text-[10px] sm:text-xs space-y-0.5 pb-1 animate-item-4">
-        <div className="flex items-center justify-center gap-1.5 font-medium tracking-wide">
-          <ShieldCheck size={13} className="text-[#D4AF37] shrink-0" />
-          <span className="truncate max-w-[280px] sm:max-w-none">G-TRAMS — Gasan Tricycle Records System</span>
-        </div>
-        <p className="text-white/50 text-[9px]">
+      <footer className="relative z-10 mt-4 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-1 animate-item-4 uppercase tracking-wider font-semibold">
+        <p>G-TRAMS — GASAN TRICYCLE RECORDS SYSTEM</p>
+        <p className="text-white/40 text-[8px] sm:text-[9px] normal-case font-normal">
           © 2026 Municipality of Gasan, Marinduque. All rights reserved.
         </p>
       </footer>
