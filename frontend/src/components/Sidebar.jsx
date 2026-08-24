@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, FileCheck, ShieldAlert, LogOut, Menu, X, User, Printer } from 'lucide-react'; // IDINAGDAG ANG PRINTER ICON
+import { 
+  LayoutDashboard, Users, FileText, Settings, 
+  FileCheck, ShieldAlert, LogOut, Menu, X, User, Printer, HelpCircle 
+} from 'lucide-react';
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -10,7 +13,11 @@ const Sidebar = () => {
   const [userData, setUserData] = useState({ name: 'G-TRAMS', profilePic: null });
   let role = localStorage.getItem('role') || 'operator';
 
-  const adminRoutes = ['/admin-dashboard', '/franchise-masterlist', '/franchise-approval', '/manage-revocations', '/user-management', '/system-settings', '/validate-toda', '/system-reports'];
+  const adminRoutes = [
+    '/admin-dashboard', '/franchise-masterlist', '/franchise-approval', 
+    '/manage-revocations', '/user-management', '/system-settings', 
+    '/validate-toda', '/system-reports'
+  ];
   if (adminRoutes.includes(location.pathname)) {
     role = 'admin';
   }
@@ -43,18 +50,20 @@ const Sidebar = () => {
       { name: 'Revocations', path: '/manage-revocations', icon: <ShieldAlert size={18} /> },
       { name: 'User Management', path: '/user-management', icon: <Users size={18} /> },
       { name: 'System Settings', path: '/system-settings', icon: <Settings size={18} /> },
-      { name: 'System Reports', path: '/system-reports', icon: <Printer size={18} /> }, // <-- IDINAGDAG DITO!
+      { name: 'System Reports', path: '/system-reports', icon: <Printer size={18} /> },
     ],
     'operator': [
       { name: 'Dashboard', path: '/operator-dashboard', icon: <LayoutDashboard size={18} /> },
       { name: 'Apply/Renew', path: '/apply-franchise', icon: <FileText size={18} /> },
       { name: 'Profile', path: '/manage-profile', icon: <Users size={18} /> },
+      { name: 'Help & Support', path: '/help-support', icon: <HelpCircle size={18} /> },
     ],
     'toda_president': [
       { name: 'Dashboard', path: '/operator-dashboard', icon: <LayoutDashboard size={18} /> },
       { name: 'Submit TODA Members', path: '/submit-members', icon: <Users size={18} /> },
       { name: 'Apply/Renew', path: '/apply-franchise', icon: <FileText size={18} /> },
       { name: 'Profile', path: '/manage-profile', icon: <Users size={18} /> },
+      { name: 'Help & Support', path: '/help-support', icon: <HelpCircle size={18} /> },
     ]
   };
 
@@ -70,13 +79,9 @@ const Sidebar = () => {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-3 left-3 z-[60] p-2 bg-[#7A1B22] text-[#D4AF37] border border-[#D4AF37]/50 rounded-lg shadow-md hover:bg-[#5A1419] hover:scale-105 transition-all duration-300 focus:outline-none group"
+        className="md:hidden fixed top-3 left-3 z-[60] p-2 bg-[#7A1B22] text-[#D4AF37] border border-[#D4AF37]/50 rounded-lg shadow-md hover:bg-[#5A1419] transition-all focus:outline-none"
       >
-        {isOpen ? (
-          <X size={22} className="transform transition-transform group-hover:rotate-90" />
-        ) : (
-          <Menu size={22} className="transform transition-transform group-hover:scale-110" />
-        )}
+        {isOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
       {isOpen && (
@@ -123,8 +128,8 @@ const Sidebar = () => {
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                   isActive 
-                    ? 'bg-white text-[#7A1B22] shadow-md transform scale-[1.02]' 
-                    : 'text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1'
+                    ? 'bg-white text-[#7A1B22] shadow-md' 
+                    : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 {item.icon}

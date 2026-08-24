@@ -21,6 +21,7 @@ import ApplyFranchise from './pages/ApplyFranchise';
 import RenewFranchise from './pages/RenewFranchise';
 import ManageProfile from './pages/ManageProfile';
 import SubmitMembers from './pages/SubmitMembers';
+import HelpSupport from './pages/HelpSupport';
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
       <Route path="/apply-franchise" element={<ApplyFranchise />} />
       <Route path="/renew-franchise/:id" element={<RenewFranchise />} />
       <Route path="/manage-profile" element={<ManageProfile />} />
+      <Route path="/help-support" element={<HelpSupport />} />
     
     </Routes>
   );

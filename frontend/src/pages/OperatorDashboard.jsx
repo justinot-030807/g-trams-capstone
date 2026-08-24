@@ -1,50 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
 import { 
-  RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, CalendarDays, 
-  PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck, 
-  HelpCircle, Phone, Mail, Building, ChevronDown, Search, Flame, Info
+  RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
+  CalendarDays, PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-// DEFAULT FREQUENTLY ASKED QUESTIONS DATA
-const INITIAL_FAQS = [
-  {
-    id: 1,
-    question: "Ano ang mga kailangang requirements para sa New Franchise Application?",
-    answer: "Kailangan ng malinaw na kopya o picture ng: 1. OR/CR ng Motor, 2. Valid Driver's License, 3. TODA Endorsement Certificate, at 4. Barangay Clearance.",
-    tags: ["requirements", "apply", "bago", "dokumento"],
-    views: 18
-  },
-  {
-    id: 2,
-    question: "Kailan ang regular schedule ng Franchise Renewal?",
-    answer: "Taon-taon tuwing buwan ng Enero ginagawa ang regular renewal. Maaari kayong mag-apply online 30 days bago mag-expire ang inyong prangkisa.",
-    tags: ["renewal", "deadline", "expire", "petsa"],
-    views: 12
-  },
-  {
-    id: 3,
-    question: "Paano i-download o i-print ang aking Motorized Tricycle Operator's Permit?",
-    answer: "Pumunta sa Dashboard, hanapin ang iyong Active unit card, at i-click ang 'Print' button upang lumabas ang opisyal na printable permit.",
-    tags: ["print", "permit", "download", "mtop"],
-    views: 15
-  },
-  {
-    id: 4,
-    question: "Bakit na-cancel o rejected ang aking franchise application?",
-    answer: "Maaaring malabo ang naipasa mong dokumento o may hindi tugmang impormasyon sa BPLO remarks. Tingnan ang pulang rejection note sa dashboard para sa detalye.",
-    tags: ["reject", "cancel", "mali", "aberya"],
-    views: 8
-  },
-  {
-    id: 5,
-    question: "Ilang tricycle unit ang pwedeng i-rehistro ng isang operator?",
-    answer: "Alinsunod sa Municipal Ordinance ng Gasan, hanggang 2 units lamang ang maximum capacity na maaaring hawakan ng bawat rehistradong operator.",
-    tags: ["capacity", "limit", "units", "dami"],
-    views: 6
-  }
-];
 
 const OperatorDashboard = () => {
   const [franchises, setFranchises] = useState([]);
@@ -53,29 +13,15 @@ const OperatorDashboard = () => {
   const navigate = useNavigate();
 
   const loggedInUserName = localStorage.getItem('name') || 'Operator';
-
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
-
-  // HELPDESK & FAQ STATES
-  const [faqs, setFaqs] = useState(() => {
-    const saved = localStorage.getItem('gtrams_faqs_analytics');
-    return saved ? JSON.parse(saved) : INITIAL_FAQS;
-  });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedFaq, setExpandedFaq] = useState(null);
 
   useEffect(() => {
     fetchMyFranchises();
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
-
-  // I-save ang dynamic view frequency tuwing may nagbabago
-  useEffect(() => {
-    localStorage.setItem('gtrams_faqs_analytics', JSON.stringify(faqs));
-  }, [faqs]);
 
   const fetchMyFranchises = async () => {
     setIsLoading(true);
@@ -101,67 +47,11 @@ const OperatorDashboard = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const openDetails = (unit) => {
-    setSelectedUnit(unit);
-    setIsDetailsOpen(true);
-  };
-
-  const openPrintPermit = (unit) => {
-    setSelectedUnit(unit);
-    setIsPrintOpen(true);
-  };
-
-  // HELPDESK ALGORITHM: FREQUENCY + RELEVANCE MATCHING
-  const handleFaqClick = (id) => {
-    if (expandedFaq === id) {
-      setExpandedFaq(null);
-    } else {
-      setExpandedFaq(id);
-      // Increment view frequency count for intelligent ranking
-      setFaqs(prevFaqs => 
-        prevFaqs.map(f => f.id === id ? { ...f, views: f.views + 1 } : f)
-      );
-    }
-  };
-
-  const filteredAndSortedFaqs = [...faqs]
-    .map(faq => {
-      if (!searchQuery.trim()) {
-        return { ...faq, score: faq.views }; // Default sort by popularity
-      }
-      
-      const query = searchQuery.toLowerCase();
-      let score = 0;
-      
-      // Relevance Scoring Engine
-      if (faq.question.toLowerCase().includes(query)) score += 30;
-      if (faq.tags.some(t => t.toLowerCase().includes(query))) score += 20;
-      if (faq.answer.toLowerCase().includes(query)) score += 10;
-      
-      return { ...faq, score: score + faq.views };
-    })
-    .filter(faq => !searchQuery.trim() || faq.score >= 10)
-    .sort((a, b) => b.score - a.score);
-
   return (
     <MainLayout>
-      <style>{`
-        @keyframes slideFadeUp {
-          0% { opacity: 0; transform: translateY(30px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slide-fade-up {
-          opacity: 0;
-          animation: slideFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-      `}</style>
-
-      {/* 1. PROFESSIONAL WELCOME BANNER */}
-      <div 
-        className="animate-slide-fade-up bg-gradient-to-r from-[#7A1B22] to-[#9B2A33] rounded-3xl p-6 md:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6"
-        style={{ animationDelay: '0.1s' }}
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-[#7A1B22] to-[#9B2A33] rounded-3xl p-6 md:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
         <div className="relative z-10 text-center md:text-left w-full md:w-auto">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">
@@ -181,11 +71,8 @@ const OperatorDashboard = () => {
         </div>
       </div>
 
-      {/* 2. FLEET OVERVIEW HEADER */}
-      <header 
-        className="animate-slide-fade-up mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4"
-        style={{ animationDelay: '0.2s' }}
-      >
+      {/* Fleet Overview Header */}
+      <header className="mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
         <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
           <Activity className="text-[#7A1B22]" size={22} /> My Units
         </h2>
@@ -193,23 +80,20 @@ const OperatorDashboard = () => {
         <div className="flex items-center gap-4 bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit Capacity</span>
           <div className="flex gap-1.5">
-            <div className={`w-8 h-2.5 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`}></div>
-            <div className={`w-8 h-2.5 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`}></div>
+            <div className={`w-8 h-2.5 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`} />
+            <div className={`w-8 h-2.5 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`} />
           </div>
           <span className="text-sm font-extrabold text-[#7A1B22]">{franchises.length}/2</span>
         </div>
       </header>
 
-      {/* 3. MAIN CONTENT AREA */}
+      {/* Main Units List */}
       {isLoading ? (
         <div className="flex justify-center items-center h-48 animate-pulse">
           <Loader2 className="animate-spin text-[#7A1B22]" size={36} />
         </div>
       ) : franchises.length === 0 ? (
-        <div 
-          className="animate-slide-fade-up bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-500 flex flex-col items-center justify-center min-h-[300px]"
-          style={{ animationDelay: '0.3s' }}
-        >
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-500 flex flex-col items-center justify-center min-h-[300px]">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
             <PlusCircle className="text-slate-300" size={32} />
           </div>
@@ -220,13 +104,9 @@ const OperatorDashboard = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
-          {franchises.map((unit, index) => (
-            <div 
-              key={unit._id} 
-              className="animate-slide-fade-up bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden hover:border-slate-300 transition-all"
-              style={{ animationDelay: `${0.3 + (index * 0.15)}s` }}
-            >
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {franchises.map((unit) => (
+            <div key={unit._id} className="bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
                 unit.status === 'Active' ? 'bg-emerald-500' :
                 unit.status === 'Expired' ? 'bg-orange-500' :
@@ -312,8 +192,10 @@ const OperatorDashboard = () => {
                   </button>
                 ) : unit.status === 'Active' ? (
                   <>
-                    <button onClick={() => openDetails(unit)} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">View Details</button>
-                    <button onClick={() => openPrintPermit(unit)} className="flex-1 bg-slate-900 text-white hover:bg-slate-800 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
+                      View Details
+                    </button>
+                    <button onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} className="flex-1 bg-slate-900 text-white hover:bg-slate-800 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
                       <Printer size={16} /> Print
                     </button>
                   </>
@@ -328,10 +210,14 @@ const OperatorDashboard = () => {
                     <RefreshCw size={16} /> Fix Issue
                   </button>
                 ) : (
-                   <>
-                     <button onClick={() => openDetails(unit)} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">View Details</button>
-                     <button disabled className="flex-1 bg-slate-50 text-slate-400 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm cursor-not-allowed">Pending</button>
-                   </>
+                  <>
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
+                      View Details
+                    </button>
+                    <button disabled className="flex-1 bg-slate-50 text-slate-400 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm cursor-not-allowed">
+                      Pending
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -339,156 +225,17 @@ const OperatorDashboard = () => {
         </div>
       )}
 
-      {/* 4. ABOUT US & ADMIN CONTACT SUPPORT SECTION */}
-      <section className="animate-slide-fade-up grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" style={{ animationDelay: '0.45s' }}>
-        
-        {/* About G-TRAMS Info */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-[#7A1B22]/10 text-[#7A1B22] rounded-2xl">
-                <Info size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">About G-TRAMS Portal</h3>
-                <p className="text-xs text-slate-500 font-medium">Official Tricycle Records & Application System</p>
-              </div>
-            </div>
-            <p className="text-slate-600 text-sm leading-relaxed mb-4">
-              Ang <strong>G-TRAMS</strong> ay ang opisyal na digital platform ng Lokal na Pamahalaan ng Gasan para sa mabilis, maayos, at transparent na pagproseso ng prangkisa ng tricycle. Layunin nitong pabilisin ang aplikasyon at alisin ang mahabang pila tuwing renewal season.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
-              <Building size={16} className="text-[#7A1B22]" />
-              <span>Sangguniang Bayan Office / BPLO</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
-              <MapPin size={16} className="text-[#7A1B22]" />
-              <span>Municipal Hall, Gasan, Marinduque</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Administrator Contact Info */}
-        <div className="bg-gradient-to-br from-[#7A1B22] to-[#4D1115] text-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck size={20} className="text-[#D4AF37]" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">Admin Helpdesk</span>
-            </div>
-            <h3 className="text-xl font-black mb-2 tracking-tight">May katanungan?</h3>
-            <p className="text-white/80 text-xs leading-relaxed mb-6">
-              Maaaring makipag-ugnayan sa mga opisyal na kawani ng munisipyo sa mga sumusunod na linya:
-            </p>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            <a href="tel:09123456789" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/10 transition-colors">
-              <Phone size={16} className="text-[#D4AF37]" />
-              <div>
-                <p className="text-[10px] text-white/60 uppercase font-bold">Hotline (Office Hours)</p>
-                <p className="font-bold tracking-wide">+63 (042) 342-1234 / 0912 345 6789</p>
-              </div>
-            </a>
-            <a href="mailto:support@gtrams-gasan.gov.ph" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/10 transition-colors">
-              <Mail size={16} className="text-[#D4AF37]" />
-              <div>
-                <p className="text-[10px] text-white/60 uppercase font-bold">Email Support</p>
-                <p className="font-bold tracking-wide">bplo@gasan.gov.ph</p>
-              </div>
-            </a>
-          </div>
-        </div>
-
-      </section>
-
-      {/* 5. DYNAMIC HELPDESK & FAQ MODULE (WITH INTELLIGENT SEARCH & FREQUENCY ALGORITHM) */}
-      <section className="animate-slide-fade-up bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm mb-12" style={{ animationDelay: '0.6s' }}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
-          <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <HelpCircle className="text-[#7A1B22]" size={24} /> Frequently Asked Questions (FAQ)
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Naka-ayos ayon sa pinakamadalas itanong ng mga operators</p>
-          </div>
-
-          {/* Realtime Search Algorithm Input */}
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search help topics (e.g. renewal, permit)..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {filteredAndSortedFaqs.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-xs">
-              Walang nahanap na tugmang tanong sa iyong hinahanap. Subukan ang ibang keyword.
-            </div>
-          ) : (
-            filteredAndSortedFaqs.map((faq, idx) => (
-              <div 
-                key={faq.id}
-                className="border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300"
-              >
-                <button
-                  onClick={() => handleFaqClick(faq.id)}
-                  className="w-full p-4 sm:p-5 flex items-center justify-between text-left bg-slate-50/50 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3 pr-4">
-                    {idx === 0 && !searchQuery && (
-                      <span className="flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0">
-                        <Flame size={12} className="text-amber-600" /> Top FAQ
-                      </span>
-                    )}
-                    <span className="font-bold text-sm text-slate-800">{faq.question}</span>
-                  </div>
-                  <ChevronDown 
-                    size={18} 
-                    className={`text-slate-400 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#7A1B22]' : ''}`} 
-                  />
-                </button>
-
-                {expandedFaq === faq.id && (
-                  <div className="p-5 bg-white border-t border-slate-100 text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 animate-[slideFadeUp_0.2s_ease-out_forwards]">
-                    <p>{faq.answer}</p>
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                      <div className="flex gap-1.5 flex-wrap">
-                        {faq.tags.map(t => (
-                          <span key={t} className="text-[10px] bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded">
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        Viewed {faq.views} times
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* MODAL: VIEW DETAILS */}
+      {/* Details Modal */}
       {isDetailsOpen && selectedUnit && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsDetailsOpen(false)}></div>
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative z-10 animate-[slideFadeUp_0.3s_ease-out_forwards]">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsDetailsOpen(false)} />
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative z-10">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-lg font-bold text-slate-900">Franchise Details</h2>
               <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500"><X size={20} /></button>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-y-4 text-sm">
+            <div className="p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-y-4">
                 <div className="col-span-2">
                   <p className="text-slate-500 text-xs font-bold uppercase mb-1">Operator Name</p>
                   <p className="font-bold text-slate-900">{selectedUnit.fullName}</p>
@@ -521,26 +268,20 @@ const OperatorDashboard = () => {
                   <p className="text-slate-500 text-xs font-bold uppercase mb-1">Chassis No.</p>
                   <p className="font-bold text-slate-900">{selectedUnit.chassisNo}</p>
                 </div>
-                <div>
-                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Date Applied</p>
-                  <p className="font-bold text-slate-900">{new Date(selectedUnit.dateApplied).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Status</p>
-                  <p className="font-bold text-slate-900">{selectedUnit.status}</p>
-                </div>
               </div>
             </div>
             <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
-              <button onClick={() => setIsDetailsOpen(false)} className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-sm transition-colors">Close</button>
+              <button onClick={() => setIsDetailsOpen(false)} className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-sm transition-colors">
+                Close
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: PRINT DOCUMENT */}
+      {/* Print Document Modal */}
       {isPrintOpen && selectedUnit && (
-        <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col animate-[slideFadeUp_0.3s_ease-out_forwards]">
+        <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
           <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
             <h2 className="font-bold">Print Preview</h2>
             <div className="flex gap-3">
@@ -555,7 +296,6 @@ const OperatorDashboard = () => {
 
           <div className="flex-1 overflow-y-auto p-8 print:p-0 print:bg-white flex justify-center">
             <div className="bg-white w-full max-w-[800px] border border-slate-200 shadow-xl p-12 print:border-none print:shadow-none relative">
-              
               <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
                 <ShieldCheck size={400} />
               </div>
@@ -616,7 +356,6 @@ const OperatorDashboard = () => {
                 <p className="text-xs italic text-slate-500 print:text-black">This Document is system generated and serves as a proof of franchise registration via the G-TRAMS Portal.</p>
                 <p className="text-xs font-bold mt-1">System ID: {selectedUnit._id}</p>
               </div>
-
             </div>
           </div>
         </div>
