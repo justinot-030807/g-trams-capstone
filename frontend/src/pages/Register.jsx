@@ -92,19 +92,44 @@ const Register = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm";
 
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-br from-[#3D0A0E] via-[#6B141B] to-[#200406] flex flex-col justify-between items-center p-4 sm:p-6 overflow-hidden">
+    <div className="relative min-h-screen w-full bg-[#1F0406] flex flex-col justify-between items-center p-4 sm:p-6 overflow-hidden select-none">
       
-      {/* Background Glow Orbs */}
-      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-[#7A1B22]/40 rounded-full blur-3xl pointer-events-none" />
+      {/* FLOATING LIQUID ANIMATION */}
+      <style>{`
+        @keyframes floatSlow1 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(80px, -50px) scale(1.15); }
+          66% { transform: translate(-50px, 60px) scale(0.9); }
+        }
+        @keyframes floatSlow2 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(-70px, 60px) scale(1.2); }
+          66% { transform: translate(60px, -50px) scale(0.85); }
+        }
+        .animate-blob-1 { animation: floatSlow1 20s ease-in-out infinite; }
+        .animate-blob-2 { animation: floatSlow2 24s ease-in-out infinite; }
+      `}</style>
 
-      {/* Main Glass Card Container */}
+      {/* DYNAMIC ORBS */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-5%] right-[-5%] w-[550px] h-[550px] bg-gradient-to-bl from-[#7A1B22] via-[#A31D24] to-transparent rounded-full blur-[100px] opacity-75 animate-blob-1" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-gradient-to-tr from-[#5A1419] via-[#851D25] to-[#D4AF37]/25 rounded-full blur-[110px] opacity-70 animate-blob-2" />
+        
+        <div 
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.8) 1px, transparent 0)',
+            backgroundSize: '32px 32px'
+          }}
+        />
+      </div>
+
+      {/* Glass Card */}
       <div className="w-full max-w-lg my-auto relative z-10">
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.35)] border border-white/40 p-6 sm:p-8">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] border border-white/40 p-6 sm:p-8">
           
-          {/* Header */}
           <div className="flex flex-col items-center mb-6 text-center">
-            <div className="w-16 h-16 bg-white border-2 border-[#D4AF37] shadow-lg rounded-full flex items-center justify-center p-1 mx-auto mb-3 ring-4 ring-[#D4AF37]/20 overflow-hidden">
+            <div className="w-16 h-16 bg-white border-2 border-[#D4AF37] shadow-lg rounded-full flex items-center justify-center p-1 mx-auto mb-3 ring-4 ring-[#D4AF37]/30 overflow-hidden">
               <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -155,7 +180,6 @@ const Register = () => {
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  {/* Password Strength Indicator */}
                   {formData.password && (
                     <div className="mt-1.5 flex gap-1">
                       <div className={`h-1 w-full rounded-full ${passwordStrength >= 1 ? 'bg-red-500' : 'bg-slate-200'}`}></div>
@@ -179,7 +203,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Terms Checkbox */}
               <div className="flex items-start gap-2.5 pt-1">
                 <input 
                   type="checkbox" 
@@ -197,7 +220,7 @@ const Register = () => {
                 type="submit" 
                 disabled={isLoading}
                 className={`w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-sm font-bold shadow-lg transition-all duration-200 mt-2 ${
-                  isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#7A1B22] to-[#5A1419] shadow-[#7A1B22]/30 hover:from-[#66151B] hover:to-[#480E12] active:scale-[0.98]'
+                  isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:brightness-110 active:scale-[0.98]'
                 }`}
               >
                 {isLoading ? (
@@ -257,7 +280,7 @@ const Register = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Terms Modal */}
       {showTermsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-white/20">

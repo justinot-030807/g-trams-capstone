@@ -48,21 +48,58 @@ const Login = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm";
 
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-br from-[#3D0A0E] via-[#6B141B] to-[#200406] flex flex-col justify-between items-center p-4 sm:p-6 overflow-hidden">
+    <div className="relative min-h-screen w-full bg-[#1F0406] flex flex-col justify-between items-center p-4 sm:p-6 overflow-hidden select-none">
       
-      {/* Background Glow Orbs for Glass Effect */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#7A1B22]/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-950/30 rounded-full blur-[120px] pointer-events-none" />
+      {/* INLINE CSS PARA SA SMOOTH FLOATING LIQUID ANIMATION */}
+      <style>{`
+        @keyframes floatSlow1 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(70px, -60px) scale(1.15); }
+          66% { transform: translate(-40px, 50px) scale(0.9); }
+        }
+        @keyframes floatSlow2 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(-60px, 70px) scale(1.2); }
+          66% { transform: translate(50px, -40px) scale(0.85); }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { opacity: 0.35; transform: scale(1); }
+          50% { opacity: 0.65; transform: scale(1.25); }
+        }
+        .animate-blob-1 {
+          animation: floatSlow1 18s ease-in-out infinite;
+        }
+        .animate-blob-2 {
+          animation: floatSlow2 22s ease-in-out infinite;
+        }
+        .animate-blob-3 {
+          animation: pulseGlow 14s ease-in-out infinite;
+        }
+      `}</style>
 
-      {/* Main Glass Card Container */}
+      {/* DYNAMIC LIQUID MAROON & GOLD GLOW ORBS */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-br from-[#7A1B22] via-[#9B2A33] to-transparent rounded-full blur-[90px] opacity-75 animate-blob-1" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[550px] h-[550px] bg-gradient-to-tl from-[#5A1419] via-[#851D25] to-[#D4AF37]/20 rounded-full blur-[100px] opacity-70 animate-blob-2" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#D4AF37]/15 rounded-full blur-[120px] animate-blob-3" />
+        
+        {/* Subtle Textured Glass Grid */}
+        <div 
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.8) 1px, transparent 0)',
+            backgroundSize: '32px 32px'
+          }}
+        />
+      </div>
+
+      {/* Main Glass Card */}
       <div className="w-full max-w-md my-auto relative z-10">
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.35)] border border-white/40 p-8 sm:p-10">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] border border-white/40 p-8 sm:p-10 transition-all duration-300">
           
-          {/* Logo & Portal Header */}
           <div className="flex flex-col items-center mb-8 text-center">
-            <div className="relative mb-4">
-              <div className="w-20 h-20 bg-white border-2 border-[#D4AF37] shadow-lg rounded-full flex items-center justify-center p-1 overflow-hidden ring-4 ring-[#D4AF37]/20">
+            <div className="relative mb-4 group">
+              <div className="w-20 h-20 bg-white border-2 border-[#D4AF37] shadow-lg rounded-full flex items-center justify-center p-1 overflow-hidden ring-4 ring-[#D4AF37]/30 transition-transform duration-300 group-hover:scale-105">
                 <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
               </div>
             </div>
@@ -70,18 +107,16 @@ const Login = () => {
             <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <span>Municipality of Gasan</span>
               <span>•</span>
-              <span className="text-[#7A1B22]">Official System</span>
+              <span className="text-[#7A1B22] font-bold">Official System</span>
             </div>
           </div>
 
-          {/* Error Alert */}
           {error && (
-            <div className="mb-6 bg-red-50/90 border border-red-200 text-red-700 text-xs sm:text-sm font-semibold rounded-xl p-3.5 text-center shadow-sm animate-shake">
+            <div className="mb-6 bg-red-50/90 border border-red-200 text-red-700 text-xs sm:text-sm font-semibold rounded-xl p-3.5 text-center shadow-sm">
               {error}
             </div>
           )}
 
-          {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -130,14 +165,13 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-[#7A1B22]/30 hover:shadow-xl hover:from-[#66151B] hover:to-[#480E12] active:scale-[0.98] transition-all duration-200 mt-3 tracking-wide"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-[#7A1B22]/30 hover:shadow-xl hover:brightness-110 active:scale-[0.98] transition-all duration-200 mt-3 tracking-wide"
             >
               <LogIn size={18} />
               Sign In
             </button>
           </form>
 
-          {/* Register Redirection */}
           <div className="mt-8 pt-6 border-t border-slate-100 text-center">
             <p className="text-xs sm:text-sm text-slate-500 font-medium">
               Unregistered operator?{' '}
@@ -150,7 +184,7 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Professional Footer */}
+      {/* Footer */}
       <footer className="relative z-10 mt-8 text-center text-white/70 text-xs space-y-1 pb-2">
         <div className="flex items-center justify-center gap-2 font-medium tracking-wide">
           <ShieldCheck size={14} className="text-[#D4AF37]" />

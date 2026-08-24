@@ -86,18 +86,44 @@ const ForgotPassword = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm";
 
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-br from-[#3D0A0E] via-[#6B141B] to-[#200406] flex flex-col justify-between items-center p-4 sm:p-6 overflow-hidden">
+    <div className="relative min-h-screen w-full bg-[#1F0406] flex flex-col justify-between items-center p-4 sm:p-6 overflow-hidden select-none">
       
-      {/* Background Glow Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#7A1B22]/40 rounded-full blur-3xl pointer-events-none" />
+      {/* FLOATING LIQUID ANIMATION */}
+      <style>{`
+        @keyframes floatSlow1 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(70px, -60px) scale(1.15); }
+          66% { transform: translate(-40px, 50px) scale(0.9); }
+        }
+        @keyframes floatSlow2 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(-60px, 70px) scale(1.2); }
+          66% { transform: translate(50px, -40px) scale(0.85); }
+        }
+        .animate-blob-1 { animation: floatSlow1 18s ease-in-out infinite; }
+        .animate-blob-2 { animation: floatSlow2 22s ease-in-out infinite; }
+      `}</style>
+
+      {/* DYNAMIC ORBS */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-br from-[#7A1B22] via-[#9B2A33] to-transparent rounded-full blur-[90px] opacity-75 animate-blob-1" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[550px] h-[550px] bg-gradient-to-tl from-[#5A1419] via-[#851D25] to-[#D4AF37]/20 rounded-full blur-[100px] opacity-70 animate-blob-2" />
+        
+        <div 
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.8) 1px, transparent 0)',
+            backgroundSize: '32px 32px'
+          }}
+        />
+      </div>
 
       {/* Main Glass Card */}
       <div className="w-full max-w-md my-auto relative z-10">
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.35)] border border-white/40 p-8 sm:p-10">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] border border-white/40 p-8 sm:p-10">
           
           <div className="flex flex-col items-center mb-6 text-center">
-            <div className="w-16 h-16 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-md flex items-center justify-center mb-4 ring-4 ring-[#D4AF37]/20">
+            <div className="w-16 h-16 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-md flex items-center justify-center mb-4 ring-4 ring-[#D4AF37]/30">
               {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={32} /> : <KeyRound className="text-[#7A1B22]" size={32} />}
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -128,7 +154,7 @@ const ForgotPassword = () => {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-[#7A1B22]/30 transition-all duration-200 mt-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:from-[#66151B] hover:to-[#480E12] active:scale-[0.98]'}`}
+                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-[#7A1B22]/30 transition-all duration-200 mt-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
               >
                 {isLoading ? <><Loader2 className="animate-spin" size={18} /> Sending...</> : 'Send Reset Code'}
               </button>
@@ -145,7 +171,7 @@ const ForgotPassword = () => {
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 text-center">Enter 6-Digit Code</label>
                 <input 
                   type="text" 
-                  maxLength="6"
+                  maxLength="6" 
                   value={otpCode} 
                   onChange={(e) => setOtpCode(e.target.value)} 
                   required 
