@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
-import { User, Lock, Camera, Save, Loader2, Phone, AlertTriangle, X, CheckCircle, ShieldAlert } from 'lucide-react';
+import { User, Lock, Camera, Save, Loader2, Phone, AlertTriangle, CheckCircle, Moon, Sun, Globe } from 'lucide-react';
 
 const ManageProfile = () => {
   const [profileData, setProfileData] = useState({ name: '', contact: '', address: '', todaAssociation: 'NON-TODA' });
@@ -10,11 +10,18 @@ const ManageProfile = () => {
   
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   
+  // FIX: App Preferences State (Dark Mode & Language)
+  const [preferences, setPreferences] = useState({ theme: 'light', language: 'en' });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null });
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
+    // I-load ang saved Preferences (Dark Mode at Language)
+    const savedTheme = localStorage.getItem('gtrams_theme') || 'light';
+    const savedLang = localStorage.getItem('gtrams_lang') || 'en';
+    setPreferences({ theme: savedTheme, language: savedLang });
+
     const fetchProfileData = async () => {
       setIsLoadingData(true);
       try {
@@ -34,9 +41,7 @@ const ManageProfile = () => {
             todaAssociation: dbUser.todaAssociation || 'NON-TODA'
           });
           
-          if (dbUser.profilePic) {
-            setProfilePicPreview(dbUser.profilePic);
-          }
+          if (dbUser.profilePic) setProfilePicPreview(dbUser.profilePic);
           
           localStorage.setItem('name', dbUser.name || dbUser.fullName || '');
           localStorage.setItem('user', JSON.stringify(dbUser));
@@ -79,7 +84,6 @@ const ManageProfile = () => {
         const formData = new FormData();
         formData.append('name', profileData.name);
         formData.append('contact', profileData.contact);
-        // Kahit locked sa UI, isasama pa rin ang registered values
         formData.append('address', profileData.address);
         formData.append('todaAssociation', profileData.todaAssociation);
         
@@ -98,10 +102,7 @@ const ManageProfile = () => {
           
           setConfirmModal({ isOpen: false, type: null });
           setSuccessMessage('Profile details updated successfully!');
-          
-          setTimeout(() => {
-            window.location.reload();
-          }, 1200);
+          setTimeout(() => window.location.reload(), 1200);
         } else {
           alert('Failed to save profile.');
           setConfirmModal({ isOpen: false, type: null });
@@ -118,10 +119,7 @@ const ManageProfile = () => {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            oldPassword: passwordData.currentPassword, 
-            newPassword: passwordData.newPassword
-          })
+          body: JSON.stringify({ oldPassword: passwordData.currentPassword, newPassword: passwordData.newPassword })
         });
 
         if (response.ok) {
@@ -143,14 +141,28 @@ const ManageProfile = () => {
     setIsProcessing(false);
   };
 
+  // I-save ang User System Preferences sa mismong browser
+  const savePreferences = (key, value) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
+    localStorage.setItem(`gtrams_${key}`, value);
+
+    if (key === 'theme') {
+      if (value === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  };
+
   const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all";
   const lockedClasses = "w-full bg-slate-100 border border-slate-200/80 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 outline-none cursor-not-allowed select-none";
 
   return (
     <MainLayout>
       <header className="mb-6 relative">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Manage Profile</h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Update personal details and account credentials.</p>
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Account Settings</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Update personal details, credentials, and app preferences.</p>
 
         {successMessage && (
           <div className="absolute top-0 right-0 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
@@ -167,7 +179,6 @@ const ManageProfile = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
           
-          {/* PROFILE DETAILS */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
             <h2 className="flex items-center gap-2 font-black text-slate-900 mb-6 text-base border-b border-slate-100 pb-3">
               <User size={18} className="text-[#7A1B22]" /> Public Information
@@ -194,57 +205,31 @@ const ManageProfile = () => {
               <div className="space-y-3.5">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Full Name</label>
-                  <input 
-                    type="text" 
-                    value={profileData.name} 
-                    onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
-                    className={inputClasses} 
-                    required
-                  />
+                  <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} className={inputClasses} required />
                 </div>
                 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Email / Contact Number</label>
                   <div className="relative">
                     <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input 
-                      type="text" 
-                      value={profileData.contact} 
-                      onChange={(e) => setProfileData({...profileData, contact: e.target.value})} 
-                      className={`${inputClasses} pl-10`} 
-                      required
-                    />
+                    <input type="text" value={profileData.contact} onChange={(e) => setProfileData({...profileData, contact: e.target.value})} className={`${inputClasses} pl-10`} required />
                   </div>
                 </div>
 
-                {/* LOCKED TODA ASSOCIATION */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">TODA Association</label>
                     <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Locked</span>
                   </div>
-                  <input 
-                    type="text" 
-                    value={profileData.todaAssociation} 
-                    readOnly 
-                    title="Registered TODA is permanent. Visit LGU office for TODA transfer."
-                    className={lockedClasses} 
-                  />
+                  <input type="text" value={profileData.todaAssociation} readOnly title="Registered TODA is permanent. Visit LGU office for TODA transfer." className={lockedClasses} />
                 </div>
 
-                {/* LOCKED HOME ADDRESS */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Registered Address / Barangay</label>
                     <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Locked</span>
                   </div>
-                  <input 
-                    type="text" 
-                    value={profileData.address} 
-                    readOnly 
-                    title="Official registered address cannot be self-edited. Contact BPLO for changes."
-                    className={lockedClasses} 
-                  />
+                  <input type="text" value={profileData.address} readOnly title="Official registered address cannot be self-edited. Contact BPLO for changes." className={lockedClasses} />
                 </div>
               </div>
 
@@ -254,29 +239,80 @@ const ManageProfile = () => {
             </form>
           </div>
 
-          {/* SECURITY & PASSWORD */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm h-fit">
-            <h2 className="flex items-center gap-2 font-black text-slate-900 mb-6 text-base border-b border-slate-100 pb-3">
-              <Lock size={18} className="text-[#D4AF37]" /> Change Password
-            </h2>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Current Password</label>
-                <input type="password" value={passwordData.currentPassword} onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required />
-              </div>
-              <div className="pt-2 border-t border-slate-100">
-                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">New Password</label>
-                <input type="password" value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required minLength="6" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Confirm New Password</label>
-                <input type="password" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required minLength="6" />
-              </div>
+          <div className="flex flex-col gap-6">
+            
+            {/* APP PREFERENCES (Language at Dark Mode) */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm h-fit">
+              <h2 className="flex items-center gap-2 font-black text-slate-900 mb-6 text-base border-b border-slate-100 pb-3">
+                <Globe size={18} className="text-[#D4AF37]" /> App Preferences
+              </h2>
               
-              <button type="submit" className="mt-6 w-full bg-slate-900 text-white hover:bg-slate-800 px-4 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
-                <Lock size={16} /> Update Password
-              </button>
-            </form>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-xl">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Language</p>
+                    <p className="text-[10px] font-medium text-slate-500 mt-0.5">Select preferred system language</p>
+                  </div>
+                  <select 
+                    value={preferences.language}
+                    onChange={(e) => savePreferences('language', e.target.value)}
+                    className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+                  >
+                    <option value="en">English (US)</option>
+                    <option value="fil">Filipino</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-xl">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                      {preferences.theme === 'dark' ? <Moon size={14} className="text-indigo-600"/> : <Sun size={14} className="text-amber-500"/>} 
+                      Theme Display
+                    </p>
+                    <p className="text-[10px] font-medium text-slate-500 mt-0.5">Toggle light or dark mode styling</p>
+                  </div>
+                  <div className="flex bg-slate-200 p-1 rounded-lg">
+                    <button 
+                      onClick={() => savePreferences('theme', 'light')}
+                      className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${preferences.theme === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Light
+                    </button>
+                    <button 
+                      onClick={() => savePreferences('theme', 'dark')}
+                      className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${preferences.theme === 'dark' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Dark
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECURITY & PASSWORD */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm h-fit">
+              <h2 className="flex items-center gap-2 font-black text-slate-900 mb-6 text-base border-b border-slate-100 pb-3">
+                <Lock size={18} className="text-[#D4AF37]" /> Change Password
+              </h2>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Current Password</label>
+                  <input type="password" value={passwordData.currentPassword} onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required />
+                </div>
+                <div className="pt-2 border-t border-slate-100">
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">New Password</label>
+                  <input type="password" value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required minLength="6" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Confirm New Password</label>
+                  <input type="password" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required minLength="6" />
+                </div>
+                
+                <button type="submit" className="mt-6 w-full bg-slate-900 text-white hover:bg-slate-800 px-4 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
+                  <Lock size={16} /> Update Password
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}
