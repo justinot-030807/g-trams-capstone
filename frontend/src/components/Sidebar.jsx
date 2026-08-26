@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
   FileCheck, ShieldAlert, LogOut, User, Printer, 
-  HelpCircle, ChevronDown, Folder, Shield, PanelLeftClose, Layers
+  HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -23,6 +23,13 @@ const Sidebar = ({ isOpen, onClose }) => {
   if (adminRoutes.includes(location.pathname)) {
     role = 'admin';
   }
+
+  // AUTOMATIC CLOSE ON MOBILE VIEW TUWING LILIPAT NG ROUTE
+  useEffect(() => {
+    if (window.innerWidth < 768 && onClose) {
+      onClose();
+    }
+  }, [location.pathname]);
 
   // Load User Data & Pending Badges
   useEffect(() => {
@@ -55,9 +62,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         })
         .catch(() => {});
     }
-  }, [role, location.pathname]);
+  }, [role]);
 
-  // STRUCTURED MENU NAVIGATION WITH SUB-PAGES (ACCORDION)
+  // STRUCTURED MENU NAVIGATION
   const menuConfig = {
     'admin': [
       { 
@@ -157,7 +164,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const activeMenu = menuConfig[role] || menuConfig['operator'];
 
-  // Kusang buksan ang dropdown kung nandoon ang active route
+  // Kusang buksan ang accordion ng active route
   useEffect(() => {
     activeMenu.forEach(item => {
       if (item.type === 'dropdown') {
@@ -173,6 +180,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     setOpenSubMenus(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleNavigate = (path) => {
+    navigate(path);
+    if (window.innerWidth < 768 && onClose) {
+      onClose();
+    }
+  };
+
   const getRoleLabel = () => {
     if (role === 'toda_president') return 'TODA PRESIDENT';
     if (role === 'admin') return 'ADMINISTRATOR';
@@ -181,7 +195,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Dark Mobile Backdrop */}
+      {/* Mobile Dark Backdrop Overlay */}
       {isOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-300"
@@ -189,16 +203,14 @@ const Sidebar = ({ isOpen, onClose }) => {
         />
       )}
 
-      {/* Main Sidebar Aside */}
+      {/* Main Sidebar Panel */}
       <aside 
         className={`w-64 bg-[#7A1B22] h-[100dvh] fixed top-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Profile Header & Close Button */}
+        {/* Header Section */}
         <div className="p-4 sm:p-5 flex flex-col items-center border-b border-white/10 shrink-0 relative bg-[#6c171e]/50">
-          
-          {/* Close Sidebar Trigger Button (Mobile & Desktop) */}
           <button 
             onClick={onClose}
             title="Hide Sidebar"
@@ -226,20 +238,15 @@ const Sidebar = ({ isOpen, onClose }) => {
           </p>
         </div>
 
-        {/* Accordion Navigation List */}
-        <nav className="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-scrollbar">
+        {/* Navigation List */}
+        <nav className="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto min-h-0">
           {activeMenu.map((item, index) => {
-            
-            // 1. Single Route Button
             if (item.type === 'link') {
               const isActive = location.pathname === item.path;
               return (
                 <button
                   key={index}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (window.innerWidth < 768 && onClose) onClose();
-                  }}
+                  onClick={() => handleNavigate(item.path)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
                     isActive 
                       ? 'bg-white text-[#7A1B22] shadow-sm scale-[1.01]' 
@@ -254,14 +261,12 @@ const Sidebar = ({ isOpen, onClose }) => {
               );
             }
 
-            // 2. Dropdown Accordion Group
             if (item.type === 'dropdown') {
               const isExpanded = !!openSubMenus[item.id];
               const isAnySubActive = item.subItems.some(sub => sub.path === location.pathname);
 
               return (
                 <div key={index} className="space-y-1">
-                  {/* Dropdown Header */}
                   <button
                     onClick={() => toggleSubMenu(item.id)}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
@@ -288,18 +293,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                     </div>
                   </button>
 
-                  {/* Accordion Sub-items */}
                   {isExpanded && (
-                    <div className="pl-6 pr-1 py-1 space-y-1 border-l-2 border-white/15 ml-4 animate-in fade-in duration-200">
+                    <div className="pl-6 pr-1 py-1 space-y-1 border-l-2 border-white/15 ml-4">
                       {item.subItems.map((sub, subIdx) => {
                         const isSubActive = location.pathname === sub.path;
                         return (
                           <button
                             key={subIdx}
-                            onClick={() => {
-                              navigate(sub.path);
-                              if (window.innerWidth < 768 && onClose) onClose();
-                            }}
+                            onClick={() => handleNavigate(sub.path)}
                             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
                               isSubActive 
                                 ? 'bg-white text-[#7A1B22] font-black shadow-sm' 
@@ -329,7 +330,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           })}
         </nav>
 
-        {/* Footer Logout Section */}
+        {/* Footer Logout */}
         <div className="p-3 border-t border-white/10 shrink-0 bg-[#651419]">
           <button 
             onClick={() => { 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
-import { FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, Clock, AlertCircle, Loader2, X } from 'lucide-react';
+import { FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, Clock, AlertCircle, Loader2, X, CalendarDays } from 'lucide-react';
 
 const FranchiseMasterlist = () => {
   const [franchises, setFranchises] = useState([]);
@@ -13,15 +13,18 @@ const FranchiseMasterlist = () => {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, data: null });
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Kunin ang nakatakdang Fiscal Year mula sa System Settings
+  const currentFiscalYear = localStorage.getItem('fiscal_year') || new Date().getFullYear().toString();
+
   useEffect(() => {
     fetchFranchises();
-  }, [activeTab]);
+  }, []);
 
   const fetchFranchises = async () => {
     setIsLoading(true);
     try {
-     const url = `${import.meta.env.VITE_API_URL}/api/v1/franchises?archived=${activeTab === 'archived'}`;
-      const response = await fetch(url, {
+      // Kinukuha na natin LAHAT ng records para sa frontend natin gagawin ang Fiscal Year filtering
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
@@ -59,7 +62,7 @@ const FranchiseMasterlist = () => {
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         const errorData = await response.json();
-        alert(`Failed: ${errorData.message || 'Route not found. Make sure backend is running.'}`);
+        alert(`Failed: ${errorData.message || 'Route not found.'}`);
         setConfirmModal({ isOpen: false, data: null });
       }
     } catch (error) {
@@ -68,8 +71,29 @@ const FranchiseMasterlist = () => {
     }
   };
 
-  // SMART FILTER (hinahanap din yung pangalan ng operator kung blangko yung fullName)
+  // FISCAL YEAR LOGIC & SMART FILTERING
   const filteredFranchises = franchises.filter(f => {
+    // 1. Alamin ang Year ng Record
+    const recordDate = new Date(f.dateApplied || f.createdAt);
+    const recordYear = recordDate.getFullYear().toString();
+    
+    // 2. Logic: Ituturing na Archived kung nakaraan na ang taon O kaya ay manual na in-archive
+    const isPastYear = recordYear !== currentFiscalYear;
+    const isManuallyArchived = f.isArchived === true;
+
+    // Tab Separation Logic
+    let belongsToCurrentTab = false;
+    if (activeTab === 'active') {
+      // Para maging Active: Dapat ka-taon ng Fiscal Year AT hindi manually archived
+      belongsToCurrentTab = !isPastYear && !isManuallyArchived;
+    } else {
+      // Para nasa Archive: Lumang taon O kaya pinindot ang Archive button
+      belongsToCurrentTab = isPastYear || isManuallyArchived;
+    }
+
+    if (!belongsToCurrentTab) return false;
+
+    // 3. Search at Status Filters
     const nameToMatch = f.fullName || (f.operator ? f.operator.name : '');
     const matchesSearch = 
       (nameToMatch.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -77,6 +101,7 @@ const FranchiseMasterlist = () => {
       (f.motorNo?.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatus = statusFilter === 'All' || f.status === statusFilter;
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -84,19 +109,24 @@ const FranchiseMasterlist = () => {
     <MainLayout>
       <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-end gap-4 relative">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Franchise Masterlist</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage, search, and archive operator records.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Franchise Masterlist</h1>
+            <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-black rounded-full uppercase tracking-widest flex items-center gap-1 border border-blue-200 shadow-sm">
+              <CalendarDays size={12} /> FY {currentFiscalYear}
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 mt-1">Manage, search, and archive operator records automatically by fiscal year.</p>
         </div>
 
         {successMessage && (
-          <div className="absolute top-0 right-0 bg-emerald-500 text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
+          <div className="absolute top-0 right-0 bg-emerald-500 text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2 z-10">
             <CheckCircle size={18} />
             <span className="font-bold text-sm">{successMessage}</span>
           </div>
         )}
       </header>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         
         {/* TABS */}
         <div className="flex border-b border-slate-200 bg-slate-50">
@@ -114,7 +144,7 @@ const FranchiseMasterlist = () => {
               activeTab === 'archived' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
             }`}
           >
-            <Archive size={18} /> Archives
+            <Archive size={18} /> Fiscal Archives
           </button>
         </div>
 
@@ -177,17 +207,25 @@ const FranchiseMasterlist = () => {
                   </tr>
                 ) : (
                   filteredFranchises.map((f) => {
-                    // FIX: Kukunin ang Operator name kung sakaling walang laman ang fullName
                     const displayName = f.fullName || (f.operator ? f.operator.name : 'Unknown Operator');
+                    const recordYear = new Date(f.dateApplied || f.createdAt).getFullYear().toString();
                     
                     return (
                       <tr key={f._id} className="hover:bg-slate-50 transition-colors">
                         <td className="p-4 pl-6">
-                          <p className="font-bold text-slate-900">{displayName}</p>
+                          <p className="font-bold text-slate-900 flex items-center gap-2">
+                            {displayName}
+                            {/* Maglagay ng badge kapag luma na ang taon at nakikita sa Archives tab */}
+                            {activeTab === 'archived' && recordYear !== currentFiscalYear && (
+                               <span className="px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[9px] rounded uppercase tracking-wider font-black">
+                                 FY {recordYear}
+                               </span>
+                            )}
+                          </p>
                           <p className="text-xs text-slate-500 mt-0.5">{f.address}</p>
                         </td>
                         <td className="p-4">
-                          <p className="font-black text-slate-800 tracking-wider bg-yellow-100 inline-block px-2 py-0.5 border border-yellow-300 rounded mb-1 text-xs">
+                          <p className="font-black text-slate-800 tracking-wider bg-yellow-100 inline-block px-2 py-0.5 border border-yellow-300 rounded mb-1 text-xs shadow-sm">
                             {f.plateNo || 'N/A'}
                           </p>
                           <p className="text-[11px] text-slate-500 font-medium">Motor: {f.motorNo}</p>
@@ -212,14 +250,14 @@ const FranchiseMasterlist = () => {
                         <td className="p-4 pr-6 text-center">
                           <button 
                             onClick={() => initiateToggleArchive(f._id, displayName)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-colors border shadow-sm ${
                               activeTab === 'active' 
                               ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200' 
-                              : 'bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#7A1B22] border-[#D4AF37]/30'
+                              : 'bg-white hover:bg-blue-50 text-blue-600 border-blue-200'
                             }`}
                           >
                             {activeTab === 'active' ? (
-                              <><Archive size={14} /> Archive</>
+                              <><Archive size={14} /> Force Archive</>
                             ) : (
                               <><ArchiveRestore size={14} /> Restore</>
                             )}
@@ -235,7 +273,7 @@ const FranchiseMasterlist = () => {
         </div>
       </div>
 
-      {/* --- CUSTOM CONFIRMATION MODAL --- */}
+      {/* --- CONFIRMATION MODAL --- */}
       {confirmModal.isOpen && confirmModal.data && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div 
@@ -243,7 +281,7 @@ const FranchiseMasterlist = () => {
             onClick={() => setConfirmModal({ isOpen: false, data: null })}
           ></div>
           
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 sm:p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-8 text-center animate-in fade-in zoom-in-95 duration-200">
             <button 
               onClick={() => setConfirmModal({ isOpen: false, data: null })}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
