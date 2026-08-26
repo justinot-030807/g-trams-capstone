@@ -12,7 +12,17 @@ const Sidebar = ({ isOpen, onClose }) => {
   
   const [userData, setUserData] = useState({ name: 'G-TRAMS', profilePic: null });
   const [pendingCount, setPendingCount] = useState(0);
-  const [openSubMenus, setOpenSubMenus] = useState({});
+  
+  // PERSISTENT SUBMENU STATE SA LOCALSTORAGE
+  const [openSubMenus, setOpenSubMenus] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gtrams_open_submenus');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   let role = localStorage.getItem('role') || 'operator';
 
   const adminRoutes = [
@@ -24,6 +34,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     role = 'admin';
   }
 
+  // Mobile Auto-close nang hindi nire-reset ang dropdown state
   useEffect(() => {
     if (window.innerWidth < 768 && onClose) {
       onClose();
@@ -161,19 +172,28 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const activeMenu = menuConfig[role] || menuConfig['operator'];
 
+  // Auto-expand active dropdown without collapsing user-opened ones
   useEffect(() => {
     activeMenu.forEach(item => {
       if (item.type === 'dropdown') {
         const isCurrentInside = item.subItems.some(sub => sub.path === location.pathname);
         if (isCurrentInside) {
-          setOpenSubMenus(prev => ({ ...prev, [item.id]: true }));
+          setOpenSubMenus(prev => {
+            const next = { ...prev, [item.id]: true };
+            localStorage.setItem('gtrams_open_submenus', JSON.stringify(next));
+            return next;
+          });
         }
       }
     });
   }, [location.pathname, role]);
 
   const toggleSubMenu = (id) => {
-    setOpenSubMenus(prev => ({ ...prev, [id]: !prev[id] }));
+    setOpenSubMenus(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      localStorage.setItem('gtrams_open_submenus', JSON.stringify(next));
+      return next;
+    });
   };
 
   const handleNavigate = (path) => {
@@ -191,6 +211,23 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   return (
     <>
+      <style>{`
+        .custom-sidebar-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.18);
+          border-radius: 9999px;
+        }
+      `}</style>
+
       {isOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-300"
@@ -231,7 +268,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </p>
         </div>
 
-        <nav className="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto min-h-0">
+        <nav className="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-sidebar-scroll">
           {activeMenu.map((item, index) => {
             if (item.type === 'link') {
               const isActive = location.pathname === item.path;
@@ -239,13 +276,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <button
                   key={index}
                   onClick={() => handleNavigate(item.path)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
                     isActive 
                       ? 'bg-white text-[#7A1B22] shadow-sm scale-[1.01]' 
                       : 'text-white/80 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3 truncate">
+                  <div className="flex items-center gap-2.5 truncate">
                     {item.icon}
                     <span className="truncate">{item.name}</span>
                   </div>
@@ -254,25 +291,25 @@ const Sidebar = ({ isOpen, onClose }) => {
             }
 
             if (item.type === 'dropdown') {
-              const isExpanded = !openSubMenus[item.id];
+              const isExpanded = !!openSubMenus[item.id];
               const isAnySubActive = item.subItems.some(sub => sub.path === location.pathname);
 
               return (
                 <div key={index} className="space-y-1">
                   <button
                     onClick={() => toggleSubMenu(item.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
                       isAnySubActive && !isExpanded 
                         ? 'bg-white/15 text-white' 
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <div className="flex items-center gap-3 truncate">
+                    <div className="flex items-center gap-2.5 truncate">
                       {item.icon}
                       <span className="truncate">{item.name}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {Boolean(item.badge) && (
                         <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22]">
                           {item.badge}
@@ -286,26 +323,26 @@ const Sidebar = ({ isOpen, onClose }) => {
                   </button>
 
                   {isExpanded && (
-                    <div className="pl-6 pr-1 py-1 space-y-1 border-l-2 border-white/15 ml-4">
+                    <div className="pl-5 pr-1 py-1 space-y-1 border-l-2 border-white/15 ml-3.5 animate-in fade-in duration-150">
                       {item.subItems.map((sub, subIdx) => {
                         const isSubActive = location.pathname === sub.path;
                         return (
                           <button
                             key={subIdx}
                             onClick={() => handleNavigate(sub.path)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
                               isSubActive 
                                 ? 'bg-white text-[#7A1B22] font-black shadow-sm' 
                                 : 'text-white/70 hover:bg-white/10 hover:text-white'
                             }`}
                           >
-                            <div className="flex items-center gap-2.5 truncate">
+                            <div className="flex items-center gap-2 truncate">
                               {sub.icon}
                               <span className="truncate">{sub.name}</span>
                             </div>
 
                             {Boolean(sub.badge) && (
-                              <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22]">
+                              <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22] shrink-0">
                                 {sub.badge}
                               </span>
                             )}

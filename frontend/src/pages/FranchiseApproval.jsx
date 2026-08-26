@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
-import { CheckCircle, XCircle, Eye, FileText, AlertCircle, X, Search, Loader2 } from 'lucide-react';
+import { 
+  CheckCircle, XCircle, Eye, FileText, AlertCircle, 
+  X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, SendHorizontal 
+} from 'lucide-react';
 
 const REJECT_REASONS = [
   "Incomplete Requirements",
@@ -22,8 +25,10 @@ const FranchiseApproval = () => {
   const [customReason, setCustomReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // STATE PARA SA IN-APP DOCUMENT PREVIEW
+  // RESPONSIVE DOCUMENT VIEWER CONTROLS
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
     fetchApplications();
@@ -37,7 +42,8 @@ const FranchiseApproval = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setApplications(data.filter(app => app.status === 'Pending'));
+        // Ipapakita ang Pending at Ready for Pickup applications
+        setApplications(data.filter(app => app.status === 'Pending' || app.status === 'Ready for Pickup'));
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
@@ -67,7 +73,7 @@ const FranchiseApproval = () => {
       });
 
       if (response.ok) {
-        alert(`Application successfully ${status === 'Active' ? 'Approved' : 'Rejected'}!`);
+        alert(`Application status updated to: ${status}!`);
         setSelectedApp(null); 
         setIsRejecting(false);
         fetchApplications(); 
@@ -81,6 +87,12 @@ const FranchiseApproval = () => {
     }
   };
 
+  const openDocPreview = (url, title) => {
+    setZoomScale(1);
+    setRotation(0);
+    setPreviewDoc({ url, title });
+  };
+
   const filteredApps = applications.filter(app => 
     (app.fullName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (app.plateNo?.toLowerCase() || '').includes(searchQuery.toLowerCase())
@@ -88,21 +100,68 @@ const FranchiseApproval = () => {
 
   return (
     <MainLayout>
-      {/* FULL SCREEN DOCUMENT PREVIEWER */}
+      {/* PROFESSIONAL DOCUMENT PREVIEW MODAL */}
       {previewDoc && (
-        <div className="fixed inset-0 z-[200] bg-slate-900/95 flex flex-col items-center justify-center p-4 md:p-8 backdrop-blur-sm animate-in fade-in">
-          <div className="flex justify-between items-center w-full max-w-5xl mb-4">
-            <h3 className="text-white font-bold text-lg flex items-center gap-2"><Eye size={20}/> Document Preview</h3>
-            <button onClick={() => setPreviewDoc(null)} className="text-white hover:text-red-400 transition-colors bg-white/10 p-2 rounded-lg">
-              <X size={24} />
-            </button>
+        <div className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="flex justify-between items-center bg-slate-900/80 px-6 py-3 rounded-2xl border border-white/10 text-white">
+            <div className="flex items-center gap-3">
+              <Eye size={20} className="text-[#D4AF37]" />
+              <h3 className="font-bold text-sm tracking-wide">{previewDoc.title || 'Document Preview'}</h3>
+            </div>
+
+            {/* ZOOM & ROTATE TOOLBAR */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setZoomScale(prev => Math.max(prev - 0.25, 0.5))} 
+                className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80"
+                title="Zoom Out"
+              >
+                <ZoomOut size={18} />
+              </button>
+              <span className="text-xs font-mono px-2">{Math.round(zoomScale * 100)}%</span>
+              <button 
+                onClick={() => setZoomScale(prev => Math.min(prev + 0.25, 3))} 
+                className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80"
+                title="Zoom In"
+              >
+                <ZoomIn size={18} />
+              </button>
+              <button 
+                onClick={() => setRotation(prev => (prev + 90) % 360)} 
+                className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80"
+                title="Rotate Document"
+              >
+                <RotateCw size={18} />
+              </button>
+              <div className="h-4 w-px bg-white/20 mx-1" />
+              <button 
+                onClick={() => setPreviewDoc(null)} 
+                className="p-2 hover:bg-red-500 rounded-xl transition-colors text-white"
+                title="Close Viewer"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
-          {/* Dito lalabas ang PDF/Image sa loob ng system */}
-          <iframe 
-            src={previewDoc} 
-            className="w-full max-w-5xl h-[75vh] md:h-[85vh] bg-white rounded-xl shadow-2xl" 
-            title="Document Viewer"
-          />
+
+          <div className="flex-1 my-4 flex items-center justify-center overflow-auto p-4 rounded-3xl bg-slate-900/40 border border-white/5">
+            {previewDoc.url.toLowerCase().includes('.pdf') ? (
+              <iframe 
+                src={previewDoc.url} 
+                className="w-full h-full max-w-4xl bg-white rounded-2xl shadow-2xl" 
+                title="PDF Previewer"
+              />
+            ) : (
+              <div className="overflow-auto flex items-center justify-center">
+                <img 
+                  src={previewDoc.url} 
+                  alt="Requirements" 
+                  style={{ transform: `scale(${zoomScale}) rotate(${rotation}deg)`, transition: 'transform 0.2s ease-out' }}
+                  className="max-h-[72vh] max-w-[85vw] object-contain rounded-xl shadow-2xl" 
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -156,6 +215,7 @@ const FranchiseApproval = () => {
               <div><h2 className="text-xl font-bold text-slate-900">Application Review</h2><p className="text-xs text-slate-500 font-medium">ID: {selectedApp._id}</p></div>
               <button onClick={() => setSelectedApp(null)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><X size={24} /></button>
             </div>
+            
             <div className="p-6 space-y-8">
               <div className="bg-slate-50 border border-slate-100 rounded-xl p-5">
                 <h3 className="text-sm font-bold text-[#7A1B22] mb-4 uppercase tracking-wider flex items-center gap-2"><FileText size={16} /> Operator & Vehicle Details</h3>
@@ -173,7 +233,7 @@ const FranchiseApproval = () => {
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-slate-900 mb-3 border-b pb-2">Uploaded Requirements</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-3 border-b pb-2">Uploaded Requirements (Click to Zoom / Preview)</h3>
                 {selectedApp.applicationType === 'Renewal' ? (
                   <p className="text-sm text-slate-500 italic">No files required for Renewal.</p>
                 ) : (
@@ -186,8 +246,11 @@ const FranchiseApproval = () => {
                     ].map((doc, idx) => (
                       <div key={idx}>
                         {doc.url ? (
-                          // BINAGO: Pagniclick ito, lilitaw yung fullscreen document preview
-                          <button onClick={() => setPreviewDoc(doc.url)} type="button" className="w-full flex flex-col items-center justify-center p-4 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors group">
+                          <button 
+                            onClick={() => openDocPreview(doc.url, doc.label)} 
+                            type="button" 
+                            className="w-full flex flex-col items-center justify-center p-4 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors group"
+                          >
                             <Eye size={24} className="text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
                             <span className="text-xs font-bold text-emerald-800 text-center">{doc.label}</span>
                           </button>
@@ -222,10 +285,33 @@ const FranchiseApproval = () => {
               )}
             </div>
 
+            {/* 5-STEP WORKFLOW ACTIONS */}
             {!isRejecting && (
-              <div className="sticky bottom-0 bg-white border-t border-slate-100 p-6 flex justify-end gap-3 z-20 rounded-b-2xl">
-                <button onClick={() => setIsRejecting(true)} className="px-6 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-sm flex items-center gap-2"><XCircle size={18} /> Reject Application</button>
-                <button onClick={() => handleUpdateStatus('Active')} disabled={isProcessing} className="px-8 py-3 bg-[#7A1B22] text-white hover:bg-[#5A1419] rounded-xl font-bold text-sm flex items-center gap-2"><CheckCircle size={18} /> Approve Franchise</button>
+              <div className="sticky bottom-0 bg-white border-t border-slate-100 p-6 flex flex-wrap justify-end gap-3 z-20 rounded-b-2xl">
+                <button 
+                  onClick={() => setIsRejecting(true)} 
+                  className="px-5 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
+                >
+                  <XCircle size={16} /> Reject Application
+                </button>
+                
+                {selectedApp.status === 'Pending' ? (
+                  <button 
+                    onClick={() => handleUpdateStatus('Ready for Pickup')} 
+                    disabled={isProcessing} 
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
+                  >
+                    <Printer size={16} /> Print for Signing & Set Ready for Pickup
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => handleUpdateStatus('Active')} 
+                    disabled={isProcessing} 
+                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
+                  >
+                    <CheckCircle size={16} /> Acknowledge Payment & Release Hardcopy
+                  </button>
+                )}
               </div>
             )}
           </div>
