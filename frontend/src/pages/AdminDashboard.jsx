@@ -60,8 +60,10 @@ const AdminDashboard = () => {
   const getPercentage = (count) => stats.total === 0 ? 0 : Math.round((count / stats.total) * 100);
 
   const getGraphHeight = (count) => {
+    if (!count || count === 0) return '0%';
     const maxCount = Math.max(stats.active, stats.pending, stats.expired, stats.cancelled, 1);
-    return `${Math.max((count / maxCount) * 100, 8)}%`;
+    const calculated = (count / maxCount) * 100;
+    return `${Math.max(calculated, 16)}%`;
   };
 
   const getActionDetails = (log) => {
@@ -76,34 +78,39 @@ const AdminDashboard = () => {
 
   return (
     <MainLayout>
-      {/* DASHBOARD ANIMATION STYLES */}
+      {/* BUTTERY-SMOOTH CUSTOM ANIMATIONS */}
       <style>{`
-        @keyframes slideFadeUp {
-          0% { opacity: 0; transform: translateY(22px); }
-          100% { opacity: 1; transform: translateY(0); }
+        @keyframes smoothSlideUp {
+          0% { opacity: 0; transform: translateY(24px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes floatSlow {
+        @keyframes floatOrb {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(15px, -15px) scale(1.1); }
+          50% { transform: translate(20px, -20px) scale(1.12); }
         }
-        .animate-dashboard-card {
+        .animate-smooth-card {
           opacity: 0;
-          animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: smoothSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          will-change: transform, opacity;
         }
         .animate-banner-orb {
-          animation: floatSlow 8s ease-in-out infinite alternate;
+          animation: floatOrb 10s ease-in-out infinite alternate;
+          will-change: transform;
+        }
+        .smooth-bar-transition {
+          transition: height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
 
-      {/* 1. WELCOME HERO BANNER */}
+      {/* 1. HERO BANNER */}
       <div 
-        className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]"
+        className="animate-smooth-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]"
         style={{ animationDelay: '0.05s' }}
       >
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
 
         <div className="relative z-10 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10 shadow-sm">
             <Sparkles size={12} /> Executive Overview
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
@@ -133,7 +140,7 @@ const AdminDashboard = () => {
         ].map((stat, index) => (
           <div 
             key={index} 
-            className="animate-dashboard-card bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 hover:shadow-md transition-all relative overflow-hidden group"
+            className="animate-smooth-card bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
             style={{ animationDelay: `${0.1 + (index * 0.08)}s` }}
           >
             <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.color}`} />
@@ -143,7 +150,7 @@ const AdminDashboard = () => {
                 <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stat.count}</p>
                 <p className="text-[10px] text-slate-500 font-medium mt-0.5">{stat.sub}</p>
               </div>
-              <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform shadow-sm`}>
+              <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
                 {stat.icon}
               </div>
             </div>
@@ -151,15 +158,15 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* 3. MODERN ANALYTICS GRAPHS */}
+      {/* 3. SMOOTH ANALYTICS GRAPH */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
         {/* BAR CHART */}
         <div 
-          className="animate-dashboard-card lg:col-span-2 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 flex flex-col justify-between"
+          className="animate-smooth-card lg:col-span-2 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 flex flex-col justify-between"
           style={{ animationDelay: '0.45s' }}
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-[#7A1B22]/10 text-[#7A1B22] rounded-xl">
                 <BarChart3 size={18} />
@@ -171,20 +178,29 @@ const AdminDashboard = () => {
             </span>
           </div>
 
-          <div className="h-44 flex items-end gap-3 sm:gap-6 justify-around border-b border-slate-100 pb-2 relative">
+          <div className="h-56 w-full flex items-end justify-around gap-2 sm:gap-6 border-b border-slate-100 pt-6 pb-2">
             {[
-              { label: 'Active', count: stats.active, gradient: 'from-emerald-500 to-teal-500' },
-              { label: 'Pending', count: stats.pending, gradient: 'from-amber-400 to-orange-400' },
-              { label: 'Expired', count: stats.expired, gradient: 'from-red-500 to-rose-500' },
-              { label: 'Cancelled', count: stats.cancelled, gradient: 'from-slate-400 to-slate-500' }
+              { label: 'Active', count: stats.active, gradient: 'from-emerald-500 to-teal-400', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+              { label: 'Pending', count: stats.pending, gradient: 'from-amber-400 to-orange-400', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+              { label: 'Expired', count: stats.expired, gradient: 'from-red-500 to-rose-500', badge: 'bg-red-50 text-red-700 border-red-200' },
+              { label: 'Cancelled', count: stats.cancelled, gradient: 'from-slate-400 to-slate-500', badge: 'bg-slate-50 text-slate-700 border-slate-200' }
             ].map((bar, i) => (
-              <div key={i} className="flex flex-col items-center w-14 sm:w-20 group relative z-10">
-                <span className="text-[11px] font-black text-slate-700 mb-1">{bar.count}</span>
-                <div 
-                  className={`w-full rounded-t-xl bg-gradient-to-t ${bar.gradient} shadow-sm group-hover:brightness-110 transition-all duration-1000 ease-out`} 
-                  style={{ height: getGraphHeight(bar.count) }}
-                />
-                <span className="text-[10px] font-bold text-slate-500 uppercase mt-2">{bar.label}</span>
+              <div key={i} className="flex flex-col items-center h-full justify-end w-16 sm:w-24 group relative">
+                
+                <span className={`text-[11px] font-black px-2 py-0.5 rounded-md border shadow-xs mb-2 transition-transform duration-300 group-hover:scale-110 ${bar.badge}`}>
+                  {bar.count}
+                </span>
+                
+                <div className="w-full bg-slate-100/80 rounded-2xl h-36 flex items-end p-1 shadow-inner overflow-hidden">
+                  <div 
+                    className={`w-full rounded-xl bg-gradient-to-t ${bar.gradient} shadow-md smooth-bar-transition group-hover:brightness-110 group-hover:scale-[1.02]`} 
+                    style={{ height: getGraphHeight(bar.count) }}
+                  />
+                </div>
+
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-2.5">
+                  {bar.label}
+                </span>
               </div>
             ))}
           </div>
@@ -192,7 +208,7 @@ const AdminDashboard = () => {
 
         {/* PROGRESS METRICS */}
         <div 
-          className="animate-dashboard-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          className="animate-smooth-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
           style={{ animationDelay: '0.55s' }}
         >
           <div className="flex items-center gap-2.5 mb-6">
@@ -218,7 +234,7 @@ const AdminDashboard = () => {
                   <span className="text-slate-900">{getPercentage(item.count)}%</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div className={`${item.color} h-full rounded-full transition-all duration-1000 ease-out`} style={{ width: `${getPercentage(item.count)}%` }} />
+                  <div className={`${item.color} h-full rounded-full transition-all duration-1200 ease-out`} style={{ width: `${getPercentage(item.count)}%` }} />
                 </div>
               </div>
             ))}
@@ -231,7 +247,7 @@ const AdminDashboard = () => {
         
         {/* LOGS */}
         <div 
-          className="animate-dashboard-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          className="animate-smooth-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
           style={{ animationDelay: '0.65s' }}
         >
           <div className="flex items-center justify-between mb-5">
@@ -251,7 +267,7 @@ const AdminDashboard = () => {
               historyLogs.map((log) => {
                 const actionData = getActionDetails(log);
                 return (
-                  <div key={log._id} className="p-3 bg-slate-50/70 hover:bg-slate-50 rounded-2xl flex items-center justify-between gap-3 transition-colors">
+                  <div key={log._id} className="p-3 bg-slate-50/70 hover:bg-slate-100/80 rounded-2xl flex items-center justify-between gap-3 transition-all duration-200">
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-bold text-slate-800 truncate">{actionData.text}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
@@ -270,7 +286,7 @@ const AdminDashboard = () => {
 
         {/* PENDING APPROVAL LIST */}
         <div 
-          className="animate-dashboard-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          className="animate-smooth-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
           style={{ animationDelay: '0.75s' }}
         >
           <div className="flex items-center justify-between mb-5">
@@ -293,14 +309,14 @@ const AdminDashboard = () => {
               </div>
             ) : (
               recentApps.map((app) => (
-                <div key={app._id} className="p-3 bg-amber-50/40 rounded-2xl border border-amber-100 flex items-center justify-between gap-3">
+                <div key={app._id} className="p-3 bg-amber-50/40 hover:bg-amber-50/80 rounded-2xl border border-amber-100 flex items-center justify-between gap-3 transition-all duration-200">
                   <div className="min-w-0">
                     <p className="text-xs font-black text-slate-900 truncate">{app.fullName || 'Applicant'}</p>
                     <p className="text-[10px] text-slate-500 font-semibold">{app.todaName} • {app.make || 'Tricycle'}</p>
                   </div>
                   <button 
                     onClick={() => navigate('/franchise-approval')}
-                    className="px-3.5 py-1.5 bg-[#7A1B22] text-white text-xs font-bold rounded-xl hover:bg-[#5A1419] transition-all shrink-0 active:scale-95"
+                    className="px-3.5 py-1.5 bg-[#7A1B22] text-white text-xs font-bold rounded-xl hover:bg-[#5A1419] transition-all shrink-0 active:scale-95 shadow-sm"
                   >
                     Review
                   </button>

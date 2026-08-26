@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, User, LogOut, FileText, Menu } from 'lucide-react';
+import { 
+  Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
+  User, LogOut, FileText, Menu, PanelLeftOpen 
+} from 'lucide-react';
 
-const TopNavbar = ({ onOpenSidebar }) => {
+const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const navigate = useNavigate();
   const [role, setRole] = useState(localStorage.getItem('role') || 'operator');
   const [userName, setUserName] = useState(localStorage.getItem('name') || 'User');
@@ -15,7 +18,6 @@ const TopNavbar = ({ onOpenSidebar }) => {
 
   const storageKey = 'gtrams_read_notification_ids';
 
-  // Base notification list
   const baseNotifications = role === 'admin' ? [
     {
       id: 'admin_notif_1',
@@ -44,7 +46,6 @@ const TopNavbar = ({ onOpenSidebar }) => {
     }
   ];
 
-  // Persistent read state gamit ang LocalStorage IDs
   const [readIds, setReadIds] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -75,7 +76,6 @@ const TopNavbar = ({ onOpenSidebar }) => {
         }
       }
 
-      // Kumuha agad sa backend kung available ang token para laging updated ang name & role
       const token = localStorage.getItem('token');
       if (token) {
         try {
@@ -127,7 +127,6 @@ const TopNavbar = ({ onOpenSidebar }) => {
     if (notif.link) navigate(notif.link);
   };
 
-  // Formatted Role Label
   const getRoleBadge = () => {
     if (role === 'toda_president') return 'TODA PRESIDENT';
     if (role === 'admin') return 'ADMINISTRATOR';
@@ -137,18 +136,19 @@ const TopNavbar = ({ onOpenSidebar }) => {
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm">
       
-      {/* Left: Mobile Burger Menu Only */}
-      <div className="flex items-center">
+      {/* Left: Toggle Button (Lilitaw kung sarado ang sidebar sa desktop o kapag mobile) */}
+      <div className="flex items-center gap-2">
         <button
-          onClick={onOpenSidebar}
-          className="md:hidden p-2 text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-xl transition-colors focus:outline-none"
-          aria-label="Open Menu"
+          onClick={onToggleSidebar}
+          title={isSidebarOpen ? "Hide Menu" : "Show Menu"}
+          className="p-2 text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-xl transition-colors focus:outline-none"
+          aria-label="Toggle Sidebar"
         >
-          <Menu size={20} />
+          {isSidebarOpen ? <Menu size={20} className="md:hidden" /> : <PanelLeftOpen size={20} className="text-[#7A1B22]" />}
         </button>
       </div>
 
-      {/* Right: Notifications & Profile */}
+      {/* Right Side: Notifications & Profile */}
       <div className="flex items-center gap-2 sm:gap-3.5 ml-auto">
         
         {/* Notification Bell */}
@@ -162,8 +162,6 @@ const TopNavbar = ({ onOpenSidebar }) => {
             }`}
           >
             <Bell size={18} />
-            
-            {/* Lilitaw LANG ang red dot kapag may unread */}
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-sm ring-2 ring-white animate-pulse">
                 {unreadCount}
@@ -171,7 +169,7 @@ const TopNavbar = ({ onOpenSidebar }) => {
             )}
           </button>
 
-          {/* Dropdown */}
+          {/* Dropdown Menu */}
           {isNotifOpen && (
             <div className="absolute right-0 mt-2 w-72 sm:w-88 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
