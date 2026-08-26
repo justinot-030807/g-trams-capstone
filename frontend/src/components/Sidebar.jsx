@@ -24,14 +24,12 @@ const Sidebar = ({ isOpen, onClose }) => {
     role = 'admin';
   }
 
-  // AUTOMATIC CLOSE ON MOBILE VIEW TUWING LILIPAT NG ROUTE
   useEffect(() => {
     if (window.innerWidth < 768 && onClose) {
       onClose();
     }
   }, [location.pathname]);
 
-  // Load User Data & Pending Badges
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     const storedName = localStorage.getItem('name');
@@ -64,7 +62,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   }, [role]);
 
-  // STRUCTURED MENU NAVIGATION
   const menuConfig = {
     'admin': [
       { 
@@ -164,7 +161,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const activeMenu = menuConfig[role] || menuConfig['operator'];
 
-  // Kusang buksan ang accordion ng active route
   useEffect(() => {
     activeMenu.forEach(item => {
       if (item.type === 'dropdown') {
@@ -195,7 +191,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Mobile Dark Backdrop Overlay */}
       {isOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-300"
@@ -203,13 +198,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         />
       )}
 
-      {/* Main Sidebar Panel */}
       <aside 
         className={`w-64 bg-[#7A1B22] h-[100dvh] fixed top-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Header Section */}
         <div className="p-4 sm:p-5 flex flex-col items-center border-b border-white/10 shrink-0 relative bg-[#6c171e]/50">
           <button 
             onClick={onClose}
@@ -238,7 +231,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           </p>
         </div>
 
-        {/* Navigation List */}
         <nav className="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto min-h-0">
           {activeMenu.map((item, index) => {
             if (item.type === 'link') {
@@ -262,7 +254,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             }
 
             if (item.type === 'dropdown') {
-              const isExpanded = !!openSubMenus[item.id];
+              const isExpanded = !openSubMenus[item.id];
               const isAnySubActive = item.subItems.some(sub => sub.path === location.pathname);
 
               return (
@@ -330,7 +322,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           })}
         </nav>
 
-        {/* Footer Logout */}
         <div className="p-3 border-t border-white/10 shrink-0 bg-[#651419]">
           <button 
             onClick={() => { 

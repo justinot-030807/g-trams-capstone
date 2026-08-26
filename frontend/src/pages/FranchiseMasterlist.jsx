@@ -13,7 +13,7 @@ const FranchiseMasterlist = () => {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, data: null });
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Kunin ang nakatakdang Fiscal Year mula sa System Settings
+  // Kunin ang nakatakdang Fiscal Year (e.g., "2026-2027" o "2026")
   const currentFiscalYear = localStorage.getItem('fiscal_year') || new Date().getFullYear().toString();
 
   useEffect(() => {
@@ -23,14 +23,19 @@ const FranchiseMasterlist = () => {
   const fetchFranchises = async () => {
     setIsLoading(true);
     try {
-      // Kinukuha na natin LAHAT ng records para sa frontend natin gagawin ang Fiscal Year filtering
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setFranchises(data);
-      }
+      // FIX: Sabay nating kukunin ang unarchived at archived mula sa backend para hindi nawawala
+      const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+      
+      const [resActive, resArchived] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?archived=false`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?archived=true`, { headers })
+      ]);
+
+      const dataActive = resActive.ok ? await resActive.json() : [];
+      const dataArchived = resArchived.ok ? await resArchived.json() : [];
+
+      // Pagsasamahin natin lahat bago natin i-sort at i-filter
+      setFranchises([...dataActive, ...dataArchived]);
     } catch (error) {
       console.error('Error fetching masterlist:', error);
     } finally {
@@ -71,29 +76,27 @@ const FranchiseMasterlist = () => {
     }
   };
 
-  // FISCAL YEAR LOGIC & SMART FILTERING
+  // 1. SMART FILTERING, FISCAL YEAR LOGIC, AT STATUS SORTING
   const filteredFranchises = franchises.filter(f => {
-    // 1. Alamin ang Year ng Record
-    const recordDate = new Date(f.dateApplied || f.createdAt);
-    const recordYear = recordDate.getFullYear().toString();
+    const recordYear = new Date(f.dateApplied || f.createdAt).getFullYear().toString();
     
-    // 2. Logic: Ituturing na Archived kung nakaraan na ang taon O kaya ay manual na in-archive
-    const isPastYear = recordYear !== currentFiscalYear;
+    // FIX: Gumamit ng .includes() para basahin kahit "2026-2027" ang nasa settings
+    const isCurrentFY = currentFiscalYear.includes(recordYear);
     const isManuallyArchived = f.isArchived === true;
 
-    // Tab Separation Logic
+    // Paghihiwalay sa Active at Archived Tabs
     let belongsToCurrentTab = false;
     if (activeTab === 'active') {
-      // Para maging Active: Dapat ka-taon ng Fiscal Year AT hindi manually archived
-      belongsToCurrentTab = !isPastYear && !isManuallyArchived;
+      // Para nasa Active Tab: Kasalukuyang Fiscal Year AT HINDI manually archived
+      belongsToCurrentTab = isCurrentFY && !isManuallyArchived;
     } else {
-      // Para nasa Archive: Lumang taon O kaya pinindot ang Archive button
-      belongsToCurrentTab = isPastYear || isManuallyArchived;
+      // Para nasa Archive Tab: Lumang Fiscal Year O KAYA in-archive mo nang sadya
+      belongsToCurrentTab = !isCurrentFY || isManuallyArchived;
     }
 
     if (!belongsToCurrentTab) return false;
 
-    // 3. Search at Status Filters
+    // Pang-Search at Dropdown Filter
     const nameToMatch = f.fullName || (f.operator ? f.operator.name : '');
     const matchesSearch = 
       (nameToMatch.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -103,6 +106,19 @@ const FranchiseMasterlist = () => {
     const matchesStatus = statusFilter === 'All' || f.status === statusFilter;
     
     return matchesSearch && matchesStatus;
+
+  }).sort((a, b) => {
+    // FIX: Sorting Weight para laging nauuna ang 'Active'
+    const statusWeight = {
+      'Active': 1,
+      'Pending': 2,
+      'Expired': 3,
+      'Cancelled': 4,
+      'Revoked': 5
+    };
+    const weightA = statusWeight[a.status] || 99;
+    const weightB = statusWeight[b.status] || 99;
+    return weightA - weightB;
   });
 
   return (
@@ -173,6 +189,7 @@ const FranchiseMasterlist = () => {
               <option value="Pending">Pending</option>
               <option value="Expired">Expired</option>
               <option value="Cancelled">Cancelled</option>
+              <option value="Revoked">Revoked</option>
             </select>
           </div>
         </div>
@@ -215,8 +232,7 @@ const FranchiseMasterlist = () => {
                         <td className="p-4 pl-6">
                           <p className="font-bold text-slate-900 flex items-center gap-2">
                             {displayName}
-                            {/* Maglagay ng badge kapag luma na ang taon at nakikita sa Archives tab */}
-                            {activeTab === 'archived' && recordYear !== currentFiscalYear && (
+                            {activeTab === 'archived' && !currentFiscalYear.includes(recordYear) && (
                                <span className="px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[9px] rounded uppercase tracking-wider font-black">
                                  FY {recordYear}
                                </span>
@@ -238,30 +254,38 @@ const FranchiseMasterlist = () => {
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider border ${
                             f.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                             f.status === 'Expired' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                            f.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                            (f.status === 'Cancelled' || f.status === 'Revoked') ? 'bg-red-50 text-red-700 border-red-200' :
                             'bg-amber-50 text-amber-700 border-amber-200'
                           }`}>
                             {f.status === 'Active' && <CheckCircle size={12}/>}
                             {f.status === 'Pending' && <Clock size={12}/>}
-                            {(f.status === 'Cancelled' || f.status === 'Expired') && <AlertCircle size={12}/>}
+                            {(f.status === 'Cancelled' || f.status === 'Expired' || f.status === 'Revoked') && <AlertCircle size={12}/>}
                             {f.status}
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-center">
-                          <button 
-                            onClick={() => initiateToggleArchive(f._id, displayName)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-colors border shadow-sm ${
-                              activeTab === 'active' 
-                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200' 
-                              : 'bg-white hover:bg-blue-50 text-blue-600 border-blue-200'
-                            }`}
-                          >
-                            {activeTab === 'active' ? (
-                              <><Archive size={14} /> Force Archive</>
+                          {activeTab === 'active' ? (
+                            // FIX: Bawal I-archive ang "Active" records.
+                            f.status === 'Active' ? (
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                                Protected
+                              </span>
                             ) : (
-                              <><ArchiveRestore size={14} /> Restore</>
-                            )}
-                          </button>
+                              <button 
+                                onClick={() => initiateToggleArchive(f._id, displayName)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-colors border shadow-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                              >
+                                <Archive size={14} /> Archive
+                              </button>
+                            )
+                          ) : (
+                            <button 
+                              onClick={() => initiateToggleArchive(f._id, displayName)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-colors border shadow-sm bg-white hover:bg-blue-50 text-blue-600 border-blue-200"
+                            >
+                              <ArchiveRestore size={14} /> Restore
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
