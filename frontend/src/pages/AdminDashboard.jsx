@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
-import { Users, FileStack, Clock, ShieldCheck, AlertTriangle, PieChart, BarChart3, History, CheckCircle, ArrowRight } from 'lucide-react';
+import { 
+  Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
+  BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
@@ -46,7 +49,6 @@ const AdminDashboard = () => {
         const pendingList = data.filter(f => f.status === 'Pending').slice(0, 5);
         setRecentApps(pendingList);
 
-        // Kukunin ang pinakabagong update sa database at gagawing "Action History"
         const sortedHistory = [...data].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 6);
         setHistoryLogs(sortedHistory);
       }
@@ -59,81 +61,89 @@ const AdminDashboard = () => {
 
   const getGraphHeight = (count) => {
     const maxCount = Math.max(stats.active, stats.pending, stats.expired, stats.cancelled, 1);
-    return `${(count / maxCount) * 100}%`;
+    return `${Math.max((count / maxCount) * 100, 8)}%`;
   };
 
-  // SMART ACTION TRANSLATOR: Ginagawang action log ang status ng franchise
   const getActionDetails = (log) => {
     const name = log.fullName || log.operator?.name || 'an Operator';
-    
-    if (log.isArchived) return { text: `Archived the record of ${name}`, color: 'text-slate-600 bg-slate-100 border-slate-200' };
-    if (log.status === 'Active' && log.applicationType === 'Renewal') return { text: `Approved franchise renewal for ${name}`, color: 'text-blue-700 bg-blue-50 border-blue-200' };
-    if (log.status === 'Active') return { text: `Approved new franchise of ${name}`, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
-    if (log.status === 'Cancelled') return { text: `Rejected/Cancelled application of ${name}`, color: 'text-red-700 bg-red-50 border-red-200' };
-    if (log.status === 'Expired') return { text: `System flagged franchise as expired for ${name}`, color: 'text-orange-700 bg-orange-50 border-orange-200' };
-    
-    return { text: `Updated pending application for ${name}`, color: 'text-amber-700 bg-amber-50 border-amber-200' };
+    if (log.isArchived) return { text: `Archived record of ${name}`, color: 'text-slate-600 bg-slate-100 border-slate-200' };
+    if (log.status === 'Active' && log.applicationType === 'Renewal') return { text: `Approved renewal for ${name}`, color: 'text-blue-700 bg-blue-50 border-blue-200' };
+    if (log.status === 'Active') return { text: `Approved franchise of ${name}`, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+    if (log.status === 'Cancelled') return { text: `Rejected application of ${name}`, color: 'text-red-700 bg-red-50 border-red-200' };
+    if (log.status === 'Expired') return { text: `Flagged as expired for ${name}`, color: 'text-orange-700 bg-orange-50 border-orange-200' };
+    return { text: `Updated pending record of ${name}`, color: 'text-amber-700 bg-amber-50 border-amber-200' };
   };
 
   return (
     <MainLayout>
-      {/* CUSTOM CSS ANIMATION */}
+      {/* DASHBOARD ANIMATION STYLES */}
       <style>{`
         @keyframes slideFadeUp {
-          0% { opacity: 0; transform: translateY(30px); }
+          0% { opacity: 0; transform: translateY(22px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-slide-fade-up {
+        @keyframes floatSlow {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(15px, -15px) scale(1.1); }
+        }
+        .animate-dashboard-card {
           opacity: 0;
-          animation: slideFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-banner-orb {
+          animation: floatSlow 8s ease-in-out infinite alternate;
         }
       `}</style>
 
-      {/* 1. PREMIUM MAROON ADMIN BANNER */}
+      {/* 1. WELCOME HERO BANNER */}
       <div 
-        className="animate-slide-fade-up bg-gradient-to-r from-[#7A1B22] to-[#9B2A33] rounded-3xl p-6 md:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]"
-        style={{ animationDelay: '0.1s' }}
+        className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]"
+        style={{ animationDelay: '0.05s' }}
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
 
-        <div className="relative z-10 text-center md:text-left w-full md:w-auto">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">
+        <div className="relative z-10 text-center md:text-left">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10">
+            <Sparkles size={12} /> Executive Overview
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
             Admin Overview, {loggedInAdminName}
           </h1>
-          <p className="text-white/80 font-medium text-sm">Real-time system analytics and franchise monitoring.</p>
+          <p className="text-white/80 font-medium text-xs sm:text-sm">Real-time system analytics and franchise monitoring.</p>
         </div>
 
-        <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 px-6 py-4 rounded-2xl w-full md:w-auto text-center md:text-right shadow-sm">
-          <p className="font-bold text-lg tracking-wide text-white">
-            {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+        <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 px-5 py-3.5 rounded-2xl text-center md:text-right shadow-sm shrink-0">
+          <p className="font-black text-sm sm:text-base tracking-wide text-white">
+            {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
-          <p className="text-sm font-medium text-white/80 flex items-center justify-center md:justify-end gap-1.5 mt-1">
-            <Clock size={16} />
+          <p className="text-xs font-semibold text-white/80 flex items-center justify-center md:justify-end gap-1.5 mt-0.5">
+            <Clock size={14} className="text-[#D4AF37]" />
             {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
       </div>
 
-      {/* 2. TOP STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* 2. STATS CARDS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
         {[
-          { label: 'Total Franchises', count: stats.total, color: 'bg-blue-500', icon: <Users size={24} />, bg: 'bg-blue-50', text: 'text-blue-600' },
-          { label: 'Active Franchises', count: stats.active, color: 'bg-emerald-500', icon: <ShieldCheck size={24} />, bg: 'bg-emerald-50', text: 'text-emerald-600' },
-          { label: 'Pending Approval', count: stats.pending, color: 'bg-amber-500', icon: <Clock size={24} />, bg: 'bg-amber-50', text: 'text-amber-600' },
-          { label: 'Expired Units', count: stats.expired, color: 'bg-red-500', icon: <AlertTriangle size={24} />, bg: 'bg-red-50', text: 'text-red-600' }
+          { label: 'Total Franchises', count: stats.total, sub: 'Registered fleet', icon: <Users size={22} />, color: 'from-blue-600 to-indigo-600', iconBg: 'bg-blue-50 text-blue-600' },
+          { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-50 text-emerald-600' },
+          { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, color: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-50 text-amber-600' },
+          { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, color: 'from-red-500 to-rose-600', iconBg: 'bg-red-50 text-red-600' }
         ].map((stat, index) => (
           <div 
             key={index} 
-            className="animate-slide-fade-up bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md transition-all"
-            style={{ animationDelay: `${0.2 + (index * 0.1)}s` }}
+            className="animate-dashboard-card bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 hover:shadow-md transition-all relative overflow-hidden group"
+            style={{ animationDelay: `${0.1 + (index * 0.08)}s` }}
           >
-            <div className={`absolute top-0 left-0 w-full h-1 ${stat.color}`}></div>
+            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.color}`} />
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{stat.label}</p>
-                <p className="text-4xl font-black text-slate-900">{stat.count}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stat.count}</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{stat.sub}</p>
               </div>
-              <div className={`p-3 rounded-xl ${stat.bg} ${stat.text} group-hover:scale-110 transition-transform`}>
+              <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform shadow-sm`}>
                 {stat.icon}
               </div>
             </div>
@@ -141,82 +151,74 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* 3. MIDDLE SECTION: GRAPH & PROGRESS */}
+      {/* 3. MODERN ANALYTICS GRAPHS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
-        {/* VERTICAL BAR GRAPH */}
+        {/* BAR CHART */}
         <div 
-          className="animate-slide-fade-up lg:col-span-2 bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200"
-          style={{ animationDelay: '0.5s' }}
+          className="animate-dashboard-card lg:col-span-2 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 flex flex-col justify-between"
+          style={{ animationDelay: '0.45s' }}
         >
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                <BarChart3 size={20} />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-[#7A1B22]/10 text-[#7A1B22] rounded-xl">
+                <BarChart3 size={18} />
               </div>
-              <h2 className="text-base font-bold text-slate-900">Franchise Status Overview</h2>
+              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">Franchise Distribution</h2>
             </div>
-            <span className="text-xs font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-full uppercase tracking-wider">Total: {stats.total} Units</span>
+            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-full uppercase tracking-wider">
+              {stats.total} Total Units
+            </span>
           </div>
 
-          <div className="h-48 flex items-end gap-4 sm:gap-8 justify-around px-4 border-b border-slate-100 pb-2 relative">
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
-              <div className="border-t border-slate-400 w-full"></div>
-              <div className="border-t border-slate-400 w-full"></div>
-              <div className="border-t border-slate-400 w-full"></div>
-            </div>
-
+          <div className="h-44 flex items-end gap-3 sm:gap-6 justify-around border-b border-slate-100 pb-2 relative">
             {[
-              { label: 'Active', count: stats.active, color: 'bg-emerald-500', hover: 'hover:bg-emerald-600' },
-              { label: 'Pending', count: stats.pending, color: 'bg-amber-400', hover: 'hover:bg-amber-500' },
-              { label: 'Expired', count: stats.expired, color: 'bg-red-500', hover: 'hover:bg-red-600' },
-              { label: 'Cancelled', count: stats.cancelled, color: 'bg-slate-500', hover: 'hover:bg-slate-600' }
+              { label: 'Active', count: stats.active, gradient: 'from-emerald-500 to-teal-500' },
+              { label: 'Pending', count: stats.pending, gradient: 'from-amber-400 to-orange-400' },
+              { label: 'Expired', count: stats.expired, gradient: 'from-red-500 to-rose-500' },
+              { label: 'Cancelled', count: stats.cancelled, gradient: 'from-slate-400 to-slate-500' }
             ].map((bar, i) => (
-              <div key={i} className="flex flex-col items-center w-16 sm:w-20 group relative z-10">
-                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded transition-opacity">
-                  {bar.count}
-                </div>
+              <div key={i} className="flex flex-col items-center w-14 sm:w-20 group relative z-10">
+                <span className="text-[11px] font-black text-slate-700 mb-1">{bar.count}</span>
                 <div 
-                  className={`w-full rounded-t-md transition-all duration-1000 ease-out ${bar.color} ${bar.hover} cursor-pointer shadow-sm`} 
-                  style={{ height: getGraphHeight(bar.count) || '5%' }}
-                ></div>
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase mt-3">{bar.label}</span>
+                  className={`w-full rounded-t-xl bg-gradient-to-t ${bar.gradient} shadow-sm group-hover:brightness-110 transition-all duration-1000 ease-out`} 
+                  style={{ height: getGraphHeight(bar.count) }}
+                />
+                <span className="text-[10px] font-bold text-slate-500 uppercase mt-2">{bar.label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* HORIZONTAL PROGRESS BARS */}
+        {/* PROGRESS METRICS */}
         <div 
-          className="animate-slide-fade-up bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200"
-          style={{ animationDelay: '0.6s' }}
+          className="animate-dashboard-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          style={{ animationDelay: '0.55s' }}
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-              <PieChart size={20} />
+          <div className="flex items-center gap-2.5 mb-6">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+              <TrendingUp size={18} />
             </div>
-            <h2 className="text-base font-bold text-slate-900">Analytics Ratio</h2>
+            <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">Ratio Breakdown</h2>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {[
-              { label: 'Active', count: stats.active, color: 'bg-emerald-500' },
-              { label: 'Pending', count: stats.pending, color: 'bg-amber-500' },
-              { label: 'Expired', count: stats.expired, color: 'bg-red-500' },
+              { label: 'Active Compliance', count: stats.active, color: 'bg-emerald-500' },
+              { label: 'Pending Queue', count: stats.pending, color: 'bg-amber-400' },
+              { label: 'Expired Units', count: stats.expired, color: 'bg-red-500' },
               { label: 'Cancelled', count: stats.cancelled, color: 'bg-slate-400' }
             ].map((item, i) => (
               <div key={i}>
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${item.color}`}></span>
+                <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+                  <span className="text-slate-600 flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${item.color}`} />
                     {item.label}
                   </span>
-                  <span className="text-sm font-bold text-slate-900">
-                    {item.count} <span className="text-slate-400 font-medium">({getPercentage(item.count)}%)</span>
-                  </span>
+                  <span className="text-slate-900">{getPercentage(item.count)}%</span>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                  <div className={`${item.color} h-full rounded-full transition-all duration-1000 ease-out`} style={{ width: `${getPercentage(item.count)}%` }}></div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className={`${item.color} h-full rounded-full transition-all duration-1000 ease-out`} style={{ width: `${getPercentage(item.count)}%` }} />
                 </div>
               </div>
             ))}
@@ -224,98 +226,81 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* 4. BOTTOM SECTION: HISTORY ACTION LOG & PENDING TASKS */}
+      {/* 4. ACTIVITY LOGS & PENDING QUEUE */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* ACTION HISTORY LOG */}
+        {/* LOGS */}
         <div 
-          className="animate-slide-fade-up bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200"
-          style={{ animationDelay: '0.7s' }}
+          className="animate-dashboard-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          style={{ animationDelay: '0.65s' }}
         >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-100 text-slate-600 rounded-lg">
-                <History size={20} />
-              </div>
-              <h2 className="text-base font-bold text-slate-900">System Action History</h2>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <History size={18} className="text-[#7A1B22]" />
+              <h2 className="text-sm sm:text-base font-black text-slate-900">System Activity History</h2>
             </div>
             <button onClick={() => navigate('/franchise-masterlist')} className="text-xs font-bold text-[#7A1B22] hover:underline flex items-center gap-1">
-              View Masterlist <ArrowRight size={12} />
+              Masterlist <ArrowRight size={12} />
             </button>
           </div>
-          
-          <div className="space-y-4">
+
+          <div className="space-y-3">
             {historyLogs.length === 0 ? (
-              <p className="text-sm text-slate-500 font-medium pb-4 text-center mt-10">No recent system activity.</p>
+              <p className="text-xs text-slate-400 text-center py-8">No recent system actions logged.</p>
             ) : (
               historyLogs.map((log) => {
                 const actionData = getActionDetails(log);
                 return (
-                  <div key={log._id} className="flex items-start gap-3 pb-4 border-b border-slate-50 last:border-0 last:pb-0 hover:bg-slate-50 p-2 rounded-lg transition-colors">
-                    <div className="w-2 h-2 mt-2 rounded-full bg-slate-300 shrink-0"></div>
-                    <div className="flex-1">
-                      {/* ACTION TEXT */}
-                      <p className="text-sm text-slate-700 leading-tight">
-                        <span className="font-bold text-slate-900 mr-1">
-                          {actionData.text.split(' for ')[0].split(' of ')[0]}
-                        </span>
-                        {actionData.text.includes('for') ? 'for ' : actionData.text.includes('of') ? 'of ' : ''}
-                        <span className="font-bold text-[#7A1B22]">
-                          {log.fullName || log.operator?.name || 'an Operator'}
-                        </span>
+                  <div key={log._id} className="p-3 bg-slate-50/70 hover:bg-slate-50 rounded-2xl flex items-center justify-between gap-3 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-800 truncate">{actionData.text}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                        {new Date(log.updatedAt).toLocaleDateString()} at {new Date(log.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </p>
-                      
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[11px] text-slate-400 font-medium">
-                          {new Date(log.updatedAt).toLocaleDateString()} at {new Date(log.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                        <span className={`px-2 py-0.5 text-[9px] uppercase font-bold rounded-full tracking-wider border ${actionData.color}`}>
-                          {log.status}
-                        </span>
-                      </div>
                     </div>
+                    <span className={`px-2 py-0.5 text-[9px] uppercase font-bold rounded-md border shrink-0 ${actionData.color}`}>
+                      {log.status}
+                    </span>
                   </div>
-                )
+                );
               })
             )}
           </div>
         </div>
 
-        {/* PENDING APPLICATIONS */}
+        {/* PENDING APPROVAL LIST */}
         <div 
-          className="animate-slide-fade-up bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200"
-          style={{ animationDelay: '0.8s' }}
+          className="animate-dashboard-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          style={{ animationDelay: '0.75s' }}
         >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
-                <FileStack size={20} />
-              </div>
-              <h2 className="text-base font-bold text-slate-900">Pending Approvals</h2>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <FileStack size={18} className="text-amber-500" />
+              <h2 className="text-sm sm:text-base font-black text-slate-900">Pending Approvals Queue</h2>
             </div>
             {stats.pending > 0 && (
-              <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+              <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
                 {stats.pending} New
               </span>
             )}
           </div>
-          
-          <div className="space-y-4">
+
+          <div className="space-y-3">
             {recentApps.length === 0 ? (
-              <p className="text-sm text-slate-500 font-medium pb-4 text-center mt-10 flex flex-col items-center">
-                <CheckCircle size={32} className="text-emerald-400 mb-2" />
+              <div className="text-center py-8 text-slate-400 text-xs flex flex-col items-center">
+                <CheckCircle size={28} className="text-emerald-500 mb-1" />
                 All caught up! No pending applications.
-              </p>
+              </div>
             ) : (
               recentApps.map((app) => (
-                <div key={app._id} className="flex justify-between items-center pb-4 border-b border-slate-100 last:border-0 last:pb-0 group">
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{app.fullName || app.operator?.name || 'Applicant'}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">TODA: <span className="font-semibold text-slate-700">{app.todaName}</span></p>
+                <div key={app._id} className="p-3 bg-amber-50/40 rounded-2xl border border-amber-100 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-slate-900 truncate">{app.fullName || 'Applicant'}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{app.todaName} • {app.make || 'Tricycle'}</p>
                   </div>
                   <button 
                     onClick={() => navigate('/franchise-approval')}
-                    className="px-4 py-1.5 bg-slate-100 hover:bg-[#7A1B22] hover:text-white text-slate-600 text-xs font-bold rounded-lg transition-colors border border-slate-200"
+                    className="px-3.5 py-1.5 bg-[#7A1B22] text-white text-xs font-bold rounded-xl hover:bg-[#5A1419] transition-all shrink-0 active:scale-95"
                   >
                     Review
                   </button>

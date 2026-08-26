@@ -36,6 +36,19 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
 
+        // IDINAGDAG: Sine-save agad ang pangalan at user info para hindi maging "User" sa TopBar
+        if (data.name) localStorage.setItem('name', data.name);
+        if (data.fullName) localStorage.setItem('name', data.fullName);
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          if (data.user.name || data.user.fullName) {
+            localStorage.setItem('name', data.user.name || data.user.fullName);
+          }
+          if (data.user.role) {
+            localStorage.setItem('role', data.user.role);
+          }
+        }
+
         if (data.role === 'admin') {
           navigate('/admin-dashboard');
         } else {

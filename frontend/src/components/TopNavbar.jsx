@@ -4,7 +4,7 @@ import { Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, User, LogOut, Fi
 
 const TopNavbar = ({ onOpenSidebar }) => {
   const navigate = useNavigate();
-  const role = localStorage.getItem('role') || 'operator';
+  const [role, setRole] = useState(localStorage.getItem('role') || 'operator');
   const [userName, setUserName] = useState(localStorage.getItem('name') || 'User');
   const [profilePic, setProfilePic] = useState(null);
 
@@ -13,71 +13,94 @@ const TopNavbar = ({ onOpenSidebar }) => {
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
-  const storageKey = `gtrams_notifications_${role}`;
+  const storageKey = 'gtrams_read_notification_ids';
 
-  // Default initial list kung wala pang saved state sa browser
-  const defaultAdminNotifs = [
+  // Base notification list
+  const baseNotifications = role === 'admin' ? [
     {
-      id: 1,
+      id: 'admin_notif_1',
       title: 'New Franchise Application',
-      desc: 'Jay Vincent submitted a new application for GSTODA.',
+      desc: 'An operator submitted a new application for franchise approval.',
       time: 'Recent',
       type: 'pending',
-      read: false,
       link: '/franchise-approval'
     },
     {
-      id: 2,
-      title: 'TODA Masterlist Updated',
-      desc: 'Gasan Central TODA submitted updated member records.',
+      id: 'admin_notif_2',
+      title: 'TODA Masterlist Update',
+      desc: 'A TODA president submitted updated member records.',
       time: 'Recent',
       type: 'info',
-      read: false,
       link: '/validate-toda'
     }
-  ];
-
-  const defaultOperatorNotifs = [
+  ] : [
     {
-      id: 1,
-      title: 'Franchise Approved!',
-      desc: 'Your application for Plate 45TYRFR4 is now active. You may print your MTOP permit.',
+      id: 'op_notif_1',
+      title: 'Franchise Updates',
+      desc: 'Check your dashboard for real-time MTOP status and approval notices.',
       time: 'Recent',
       type: 'success',
-      read: false,
       link: '/operator-dashboard'
     }
   ];
 
-  // Kunin ang notifications mula sa LocalStorage para hindi mag-reset sa refresh
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
+  // Persistent read state gamit ang LocalStorage IDs
+  const [readIds, setReadIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey)) || [];
+    } catch {
+      return [];
     }
-    return role === 'admin' ? defaultAdminNotifs : defaultOperatorNotifs;
   });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = baseNotifications.filter(n => !readIds.includes(n.id)).length;
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    const storedName = localStorage.getItem('name');
-    if (userStr) {
-      try {
-        const parsed = JSON.parse(userStr);
-        setUserName(parsed.name || parsed.fullName || storedName || 'User');
-        setProfilePic(parsed.profilePic || parsed.profilePicUrl || null);
-      } catch (e) {
-        console.error(e);
+    const fetchFreshUser = async () => {
+      const storedRole = localStorage.getItem('role');
+      const storedName = localStorage.getItem('name');
+      const userStr = localStorage.getItem('user');
+
+      if (storedRole) setRole(storedRole);
+      if (storedName && storedName !== 'User') setUserName(storedName);
+
+      if (userStr) {
+        try {
+          const parsed = JSON.parse(userStr);
+          if (parsed.name || parsed.fullName) setUserName(parsed.name || parsed.fullName);
+          if (parsed.role) setRole(parsed.role);
+          if (parsed.profilePic || parsed.profilePicUrl) setProfilePic(parsed.profilePic || parsed.profilePicUrl);
+        } catch (e) {
+          console.error(e);
+        }
       }
-    } else if (storedName) {
-      setUserName(storedName);
-    }
+
+      // Kumuha agad sa backend kung available ang token para laging updated ang name & role
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.name || data.fullName) {
+              const nameToSet = data.name || data.fullName;
+              setUserName(nameToSet);
+              localStorage.setItem('name', nameToSet);
+            }
+            if (data.role) {
+              setRole(data.role);
+              localStorage.setItem('role', data.role);
+            }
+            if (data.profilePic) setProfilePic(data.profilePic);
+            localStorage.setItem('user', JSON.stringify(data));
+          }
+        } catch {}
+      }
+    };
+
+    fetchFreshUser();
 
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setIsNotifOpen(false);
@@ -87,26 +110,34 @@ const TopNavbar = ({ onOpenSidebar }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Mark all as read at i-save agad sa LocalStorage
   const markAllAsRead = () => {
-    const updated = notifications.map(n => ({ ...n, read: true }));
-    setNotifications(updated);
+    const allIds = baseNotifications.map(n => n.id);
+    const updated = Array.from(new Set([...readIds, ...allIds]));
+    setReadIds(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
-  // Pag-click sa isang notification
   const handleNotificationClick = (notif) => {
-    const updated = notifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
-    setNotifications(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
+    if (!readIds.includes(notif.id)) {
+      const updated = [...readIds, notif.id];
+      setReadIds(updated);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    }
     setIsNotifOpen(false);
     if (notif.link) navigate(notif.link);
+  };
+
+  // Formatted Role Label
+  const getRoleBadge = () => {
+    if (role === 'toda_president') return 'TODA PRESIDENT';
+    if (role === 'admin') return 'ADMINISTRATOR';
+    return 'OPERATOR';
   };
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm">
       
-      {/* Left Side: Mobile Burger Menu Only */}
+      {/* Left: Mobile Burger Menu Only */}
       <div className="flex items-center">
         <button
           onClick={onOpenSidebar}
@@ -117,7 +148,7 @@ const TopNavbar = ({ onOpenSidebar }) => {
         </button>
       </div>
 
-      {/* Right Side: Notification & Profile */}
+      {/* Right: Notifications & Profile */}
       <div className="flex items-center gap-2 sm:gap-3.5 ml-auto">
         
         {/* Notification Bell */}
@@ -132,7 +163,7 @@ const TopNavbar = ({ onOpenSidebar }) => {
           >
             <Bell size={18} />
             
-            {/* Lilitaw LAMANG ang red dot kapag may UNREAD notifications */}
+            {/* Lilitaw LANG ang red dot kapag may unread */}
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-sm ring-2 ring-white animate-pulse">
                 {unreadCount}
@@ -140,9 +171,9 @@ const TopNavbar = ({ onOpenSidebar }) => {
             )}
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Dropdown */}
           {isNotifOpen && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-88 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 z-50">
+            <div className="absolute right-0 mt-2 w-72 sm:w-88 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-xs sm:text-sm text-slate-900">Notifications</h3>
@@ -161,15 +192,14 @@ const TopNavbar = ({ onOpenSidebar }) => {
               </div>
 
               <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
-                {notifications.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-slate-400">No notifications</div>
-                ) : (
-                  notifications.map((notif) => (
+                {baseNotifications.map((notif) => {
+                  const isRead = readIds.includes(notif.id);
+                  return (
                     <div
                       key={notif.id}
                       onClick={() => handleNotificationClick(notif)}
                       className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 transition-colors cursor-pointer ${
-                        !notif.read ? 'bg-red-50/40' : ''
+                        !isRead ? 'bg-red-50/40' : ''
                       }`}
                     >
                       <div className="mt-0.5 shrink-0">
@@ -180,23 +210,23 @@ const TopNavbar = ({ onOpenSidebar }) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <p className={`text-xs truncate ${!notif.read ? 'font-black text-slate-900' : 'font-semibold text-slate-700'}`}>
+                          <p className={`text-xs truncate ${!isRead ? 'font-black text-slate-900' : 'font-semibold text-slate-700'}`}>
                             {notif.title}
                           </p>
-                          {!notif.read && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
+                          {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
                         </div>
                         <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">{notif.desc}</p>
                         <span className="text-[9px] text-slate-400 font-medium mt-1 block">{notif.time}</span>
                       </div>
                     </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
 
-        {/* Profile Pill */}
+        {/* User Profile Pill */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -211,9 +241,9 @@ const TopNavbar = ({ onOpenSidebar }) => {
             </div>
 
             <div className="hidden sm:flex flex-col text-left leading-tight">
-              <span className="text-xs font-bold text-slate-900 line-clamp-1 max-w-[110px]">{userName}</span>
-              <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                {role === 'admin' ? 'Admin' : 'Operator'}
+              <span className="text-xs font-bold text-slate-900 line-clamp-1 max-w-[120px]">{userName}</span>
+              <span className="text-[9px] font-bold text-[#7A1B22] uppercase tracking-wider">
+                {getRoleBadge()}
               </span>
             </div>
 
@@ -221,10 +251,10 @@ const TopNavbar = ({ onOpenSidebar }) => {
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50">
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 py-2 border-b border-slate-100 sm:hidden">
                 <p className="font-bold text-xs text-slate-900 truncate">{userName}</p>
-                <p className="text-[10px] text-slate-400 uppercase">{role}</p>
+                <p className="text-[10px] text-[#7A1B22] font-bold uppercase">{getRoleBadge()}</p>
               </div>
               <button
                 onClick={() => {
