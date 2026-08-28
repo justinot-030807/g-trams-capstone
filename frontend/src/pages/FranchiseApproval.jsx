@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
 import { 
   CheckCircle, XCircle, Eye, FileText, AlertCircle, 
-  X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck 
+  X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download 
 } from 'lucide-react';
 
 const REJECT_REASONS = [
@@ -25,12 +25,15 @@ const FranchiseApproval = () => {
   const [customReason, setCustomReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Custom Toast Notification State
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
   // Document Viewer States
   const [previewDoc, setPreviewDoc] = useState(null);
   const [zoomScale, setZoomScale] = useState(1);
   const [rotation, setRotation] = useState(0);
 
-  // Print Modal State para sa Admin
+  // Print Modal State
   const [isPrintOpen, setIsPrintOpen] = useState(false);
 
   useEffect(() => {
@@ -45,7 +48,6 @@ const FranchiseApproval = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        // Papapasukin lang natin ang mga nasa Pending at Ready for Pickup stages
         setApplications(data.filter(app => app.status === 'Pending' || app.status === 'Ready for Pickup'));
       }
     } catch (error) {
@@ -55,12 +57,18 @@ const FranchiseApproval = () => {
     }
   };
 
+  // Helper para sa custom notification
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
+  };
+
   const handleUpdateStatus = async (status) => {
     setIsProcessing(true);
     const finalReason = status === 'Cancelled' ? (rejectReason === 'Others (Please specify)' ? customReason : rejectReason) : '';
 
     if (status === 'Cancelled' && !finalReason.trim()) {
-      alert("Please provide a reason for rejection.");
+      showToast("Please provide a reason for rejection.", "error");
       setIsProcessing(false);
       return;
     }
@@ -76,15 +84,15 @@ const FranchiseApproval = () => {
       });
 
       if (response.ok) {
-        alert(`Application status updated successfully!`);
+        showToast(`Application successfully moved to ${status}!`);
         setSelectedApp(null); 
         setIsRejecting(false);
         fetchApplications(); 
       } else {
-        alert('Failed to update status.');
+        showToast('Failed to update status. Please try again.', 'error');
       }
     } catch (error) {
-      alert('Network error.');
+      showToast('Network error. Cannot connect to server.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -96,7 +104,6 @@ const FranchiseApproval = () => {
     setPreviewDoc({ url, title });
   };
 
-  // Helper para sa Valid Until computation sa piprint na Permit
   const getExpirationDate = (dateApplied) => {
     if (!dateApplied) return 'N/A';
     const date = new Date(dateApplied);
@@ -111,7 +118,6 @@ const FranchiseApproval = () => {
 
   return (
     <MainLayout>
-      {/* ADD CSS FOR PRINTING OFFICIAL PERMIT */}
       <style>{`
         @media print {
           body * { visibility: hidden; }
@@ -119,6 +125,18 @@ const FranchiseApproval = () => {
           #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
         }
       `}</style>
+
+      {/* CUSTOM FLOATING TOAST NOTIFICATION (Imbes na default browser alert) */}
+      {toast.show && (
+        <div className="fixed top-6 right-6 z-[999] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className={`px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border ${
+            toast.type === 'error' ? 'bg-red-600 border-red-500 text-white' : 'bg-emerald-600 border-emerald-500 text-white'
+          }`}>
+            {toast.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+            <span className="font-bold text-sm tracking-wide">{toast.message}</span>
+          </div>
+        </div>
+      )}
 
       {/* DOCUMENT PREVIEW MODAL */}
       {previewDoc && (
@@ -160,10 +178,18 @@ const FranchiseApproval = () => {
       {isPrintOpen && selectedApp && (
         <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
           <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
-            <h2 className="font-bold text-sm">Print Official MTOP Permit</h2>
+            <h2 className="font-bold text-sm">Official MTOP Permit</h2>
             <div className="flex gap-2">
-              <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"><X size={14} /> Close</button>
-              <button onClick={() => window.print()} className="px-4 py-1.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold flex items-center gap-1.5"><Printer size={14} /> Print Document</button>
+              <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"><X size={14} /> Close</button>
+              
+              {/* DAGDAG: Download / Save as PDF Button */}
+              <button onClick={() => window.print()} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                <Download size={14} /> Download / Save PDF
+              </button>
+
+              <button onClick={() => window.print()} className="px-4 py-1.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                <Printer size={14} /> Print Document
+              </button>
             </div>
           </div>
 
@@ -224,7 +250,6 @@ const FranchiseApproval = () => {
                   </div>
                 </div>
 
-                {/* SIGNATURE SECTION FOR MAYOR */}
                 <div className="mt-16 flex justify-end">
                   <div className="text-center w-64">
                     <div className="border-b-2 border-black mb-2"></div>
@@ -265,7 +290,7 @@ const FranchiseApproval = () => {
       ) : (
         <div className="space-y-4">
           {filteredApps.map((app) => (
-            <div key={app._id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div key={app._id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#7A1B22]/30">
               <div className="flex items-start gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${app.status === 'Ready for Pickup' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
                   {app.status === 'Ready for Pickup' ? <Printer size={24} /> : <FileText size={24} />}
@@ -282,7 +307,7 @@ const FranchiseApproval = () => {
                   </div>
                 </div>
               </div>
-              <button onClick={() => { setSelectedApp(app); setIsRejecting(false); }} className="w-full md:w-auto bg-slate-900 text-white hover:bg-[#7A1B22] px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
+              <button onClick={() => { setSelectedApp(app); setIsRejecting(false); }} className="w-full md:w-auto bg-slate-900 text-white hover:bg-[#7A1B22] px-6 py-2.5 rounded-xl font-bold text-sm transition-colors active:scale-95">
                 Review Details
               </button>
             </div>
@@ -293,7 +318,7 @@ const FranchiseApproval = () => {
       {selectedApp && !isPrintOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedApp(null)} />
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto z-10">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto z-10 animate-in zoom-in-95 duration-200">
             <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex justify-between items-center z-20">
               <div><h2 className="text-xl font-bold text-slate-900">Application Review</h2><p className="text-xs text-slate-500 font-medium">ID: {selectedApp._id}</p></div>
               <button onClick={() => setSelectedApp(null)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><X size={24} /></button>
@@ -350,19 +375,19 @@ const FranchiseApproval = () => {
               </div>
 
               {isRejecting && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-5 animate-in fade-in slide-in-from-top-2">
                   <h3 className="text-red-800 font-bold mb-3">Reason for Rejection</h3>
-                  <select value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-2.5 text-sm mb-3">
+                  <select value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-2.5 text-sm mb-3 outline-none focus:ring-2 focus:ring-red-200">
                     {REJECT_REASONS.map((r, i) => <option key={i} value={r}>{r}</option>)}
                   </select>
                   {rejectReason === 'Others (Please specify)' && (
-                    <textarea placeholder="Type specific reason..." value={customReason} onChange={(e) => setCustomReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-sm min-h-[80px]" />
+                    <textarea placeholder="Type specific reason..." value={customReason} onChange={(e) => setCustomReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-sm min-h-[80px] outline-none focus:ring-2 focus:ring-red-200" />
                   )}
                   <div className="flex gap-2 mt-4">
-                    <button onClick={() => handleUpdateStatus('Cancelled')} disabled={isProcessing} className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                    <button onClick={() => handleUpdateStatus('Cancelled')} disabled={isProcessing} className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 active:scale-95 transition-all">
                       {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />} Confirm Reject
                     </button>
-                    <button onClick={() => setIsRejecting(false)} className="bg-white text-slate-600 border border-slate-300 px-6 py-2 rounded-lg text-sm font-bold">Cancel</button>
+                    <button onClick={() => setIsRejecting(false)} className="bg-white text-slate-600 border border-slate-300 px-6 py-2 rounded-lg text-sm font-bold hover:bg-slate-50">Cancel</button>
                   </div>
                 </div>
               )}
@@ -374,7 +399,7 @@ const FranchiseApproval = () => {
                 {selectedApp.status === 'Pending' && (
                   <button 
                     onClick={() => setIsRejecting(true)} 
-                    className="px-5 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
+                    className="px-5 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95"
                   >
                     <XCircle size={16} /> Reject Application
                   </button>
@@ -384,7 +409,7 @@ const FranchiseApproval = () => {
                   <button 
                     onClick={() => handleUpdateStatus('Ready for Pickup')} 
                     disabled={isProcessing} 
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
                   >
                     <CheckCircle size={16} /> Approve (Set to Ready for Pickup)
                   </button>
@@ -392,14 +417,14 @@ const FranchiseApproval = () => {
                   <>
                     <button 
                       onClick={() => setIsPrintOpen(true)} 
-                      className="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
+                      className="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
                     >
                       <Printer size={16} /> Print Official Form
                     </button>
                     <button 
                       onClick={() => handleUpdateStatus('Active')} 
                       disabled={isProcessing} 
-                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm"
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
                     >
                       <CheckCircle size={16} /> Acknowledge Payment & Release
                     </button>
