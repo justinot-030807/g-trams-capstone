@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
-  CalendarDays, PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck, Sparkles 
+  CalendarDays, PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck, Sparkles, Receipt
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,6 +16,9 @@ const OperatorDashboard = () => {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+
+  // KUNIN ANG FRANCHISE FEE MULA SA SYSTEM SETTINGS (Default: 500)
+  const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 
   useEffect(() => {
     fetchMyFranchises();
@@ -54,8 +57,14 @@ const OperatorDashboard = () => {
         @keyframes floatSlow { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(15px, -15px) scale(1.1); } }
         .animate-dashboard-card { opacity: 0; animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-banner-orb { animation: floatSlow 8s ease-in-out infinite alternate; }
+        @media print {
+          body * { visibility: hidden; }
+          #printable-document, #printable-document * { visibility: visible; }
+          #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
+        }
       `}</style>
 
+      {/* HERO BANNER */}
       <div className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]">
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
         <div className="relative z-10 text-center md:text-left">
@@ -86,6 +95,7 @@ const OperatorDashboard = () => {
         </div>
       </header>
 
+      {/* UNITS GRID */}
       {isLoading ? (
         <div className="flex justify-center items-center h-48 animate-pulse"><Loader2 className="animate-spin text-[#7A1B22]" size={36} /></div>
       ) : franchises.length === 0 ? (
@@ -121,10 +131,10 @@ const OperatorDashboard = () => {
                     'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
                     {unit.status === 'Active' && <CheckCircle size={13}/>}
-                    {unit.status === 'Ready for Pickup' && <Printer size={13}/>}
+                    {unit.status === 'Ready for Pickup' && <Receipt size={13}/>}
                     {unit.status === 'Pending' && <Clock size={13} className="animate-pulse"/>}
                     {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={13}/>}
-                    {unit.status}
+                    {unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
                   </span>
                 </div>
 
@@ -154,10 +164,13 @@ const OperatorDashboard = () => {
                   </div>
                 )}
 
-                {unit.status === 'Cancelled' && (
-                  <div className="mb-6 bg-red-50 border border-red-200 p-4 rounded-2xl flex items-start gap-2.5">
-                    <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
-                    <div><h4 className="text-red-900 font-black text-[11px] uppercase">Rejection Reason</h4><p className="text-xs font-medium text-red-700 leading-snug">{unit.cancelReason || 'Please review your uploaded documents.'}</p></div>
+                {unit.status === 'Ready for Pickup' && (
+                  <div className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
+                    <Receipt className="text-blue-600 shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <h4 className="text-blue-900 font-black text-xs uppercase mb-1">Approved! Next Step: Payment</h4>
+                      <p className="text-xs font-medium text-blue-700 leading-snug">Present your Claim Stub to the Municipal Cashier to pay the <b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b> fee and claim your Official Permit.</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -165,12 +178,19 @@ const OperatorDashboard = () => {
               <div className="flex flex-col sm:flex-row gap-2.5 mt-auto pt-4 border-t border-slate-100">
                 {unit.status === 'Expired' ? (
                   <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-98"><RefreshCw size={14} /> Renew Franchise</button>
-                ) : (unit.status === 'Active' || unit.status === 'Ready for Pickup') ? (
-                  // FIX: Available ang pag-download ng e-permit kung ito ay Active o Ready For Pickup na
+                ) : unit.status === 'Active' ? (
                   <>
                     <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">View Details</button>
                     <button onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} className="flex-1 bg-slate-900 text-white hover:bg-slate-800 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-98">
-                      <Printer size={14} /> Download E-Permit
+                      <ShieldCheck size={14} /> View Permit
+                    </button>
+                  </>
+                ) : unit.status === 'Ready for Pickup' ? (
+                  <>
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">View Details</button>
+                    {/* VIEW CLAIM STUB BUTTON */}
+                    <button onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} className="flex-1 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-98">
+                      <Receipt size={14} /> View Claim Stub
                     </button>
                   </>
                 ) : unit.status === 'Cancelled' ? (
@@ -192,7 +212,7 @@ const OperatorDashboard = () => {
       {/* Details Modal */}
       {isDetailsOpen && selectedUnit && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsDetailsOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
               <h2 className="text-base font-black text-slate-900">Unit Specifications</h2>
@@ -215,86 +235,145 @@ const OperatorDashboard = () => {
         </div>
       )}
 
-      {/* Print Document Modal */}
+      {/* DOCUMENT PREVIEW & PRINT MODAL */}
       {isPrintOpen && selectedUnit && (
         <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
           <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
-            <h2 className="font-bold text-sm">Download E-Permit</h2>
+            <h2 className="font-bold text-sm">
+              {selectedUnit.status === 'Ready for Pickup' ? 'Payment & Claim Stub' : 'Official Digital Permit'}
+            </h2>
             <div className="flex gap-2">
               <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"><X size={14} /> Close</button>
-              <button onClick={() => window.print()} className="px-4 py-1.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold flex items-center gap-1.5"><Printer size={14} /> Print Document</button>
+              <button onClick={() => window.print()} className="px-4 py-1.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+                {selectedUnit.status === 'Ready for Pickup' ? <Printer size={14} /> : <Printer size={14} />} 
+                {selectedUnit.status === 'Ready for Pickup' ? 'Print Stub' : 'Print Permit'}
+              </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8 print:p-0 print:bg-white flex justify-center">
-            <div className="bg-white w-full max-w-[800px] border border-slate-200 shadow-xl p-12 print:border-none print:shadow-none relative">
-              <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-                <ShieldCheck size={400} />
-              </div>
-
-              <div className="text-center mb-8 border-b-2 border-black pb-6">
-                <p className="text-sm font-bold uppercase">Republic of the Philippines</p>
-                <p className="text-sm font-bold uppercase">Province of Marinduque</p>
-                <p className="text-lg font-black uppercase mt-1">Municipality of Gasan</p>
-                <div className="mt-6 inline-block bg-black text-white px-8 py-2 border-4 border-black">
-                  <h1 className="text-2xl font-black uppercase tracking-widest">Motorized Tricycle Operator's Permit</h1>
-                </div>
-                {/* FIX: TEMPORARY vs OFFICIAL DIGITAL COPY Text Logic */}
-                <p className="text-xs font-bold tracking-widest mt-2 text-[#7A1B22]">
-                  {selectedUnit.status === 'Ready for Pickup' ? '(TEMPORARY E-PERMIT / TRACKING COPY)' : '(OFFICIAL DIGITAL COPY)'}
-                </p>
-              </div>
-
-              <div className="space-y-6 relative z-10">
-                <p className="text-justify text-sm leading-relaxed">
-                  This certifies that the person named below has been granted the franchise to operate a Motorized Tricycle-For-Hire within the authorized zones of the Municipality of Gasan, subject to existing local ordinances and national laws.
-                </p>
-
-                <div className="border border-black p-6 bg-slate-50/50 print:bg-white">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      <tr><td className="py-2 font-bold w-1/3">Operator Name:</td><td className="py-2 border-b border-black/20">{selectedUnit.fullName}</td></tr>
-                      <tr><td className="py-2 font-bold">Address:</td><td className="py-2 border-b border-black/20">{selectedUnit.address}</td></tr>
-                      <tr><td className="py-2 font-bold">TODA Association:</td><td className="py-2 border-b border-black/20">{selectedUnit.todaName}</td></tr>
-                      <tr><td className="py-2 font-bold">Route / Zone:</td><td className="py-2 border-b border-black/20">{selectedUnit.zone}</td></tr>
-                    </tbody>
-                  </table>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 print:p-0 print:bg-white flex justify-center items-start">
+            
+            {/* DYNAMIC DOCUMENT GENERATION */}
+            {selectedUnit.status === 'Ready for Pickup' ? (
+              
+              // ==========================================
+              // UI DESIGN PARA SA PAYMENT & CLAIM STUB
+              // ==========================================
+              <div id="printable-document" className="bg-white w-full max-w-[600px] border-2 border-dashed border-slate-300 shadow-xl p-8 sm:p-12 print:border-none print:shadow-none relative">
+                <div className="text-center mb-6 border-b-2 border-dashed border-slate-300 pb-6">
+                  <div className="inline-flex justify-center items-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-4">
+                    <Receipt size={32} />
+                  </div>
+                  <h1 className="text-2xl font-black uppercase tracking-widest text-[#7A1B22]">Franchise Claim Stub</h1>
+                  <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">Municipality of Gasan</p>
                 </div>
 
-                <div className="border border-black p-6 bg-slate-50/50 print:bg-white mt-4">
-                  <h3 className="font-bold text-sm uppercase mb-3 border-b border-black pb-1">Vehicle Specifications</h3>
-                  <div className="grid grid-cols-2 gap-y-3 text-sm">
-                    <div><span className="font-bold">Make/Brand:</span> {selectedUnit.make}</div>
-                    <div><span className="font-bold">Year Model:</span> {selectedUnit.made}</div>
-                    <div><span className="font-bold">Motor Number:</span> {selectedUnit.motorNo}</div>
-                    <div><span className="font-bold">Chassis Number:</span> {selectedUnit.chassisNo}</div>
-                    <div className="col-span-2 mt-2">
-                      <span className="font-bold mr-2">Assigned Plate Number:</span>
-                      <span className="font-black border-2 border-black px-3 py-1 bg-slate-100 print:bg-white tracking-widest">{selectedUnit.plateNo || 'N/A'}</span>
+                <div className="text-center mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Amount Due</p>
+                  <p className="text-5xl font-black text-slate-900">₱ {parseFloat(systemFranchiseFee).toFixed(2)}</p>
+                  <p className="text-xs text-red-500 font-semibold mt-2">* Amount may vary if late penalties apply.</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-sm text-slate-500 font-bold uppercase">Applicant Name</span>
+                    <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit.fullName}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-sm text-slate-500 font-bold uppercase">Tricycle Plate No.</span>
+                    <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit.plateNo || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-sm text-slate-500 font-bold uppercase">Application Type</span>
+                    <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit.applicationType}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-sm text-slate-500 font-bold uppercase">Date Approved</span>
+                    <span className="text-sm font-black text-slate-900 uppercase text-right">{new Date(selectedUnit.updatedAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <div className="mt-8 text-center bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-blue-800 leading-relaxed uppercase">
+                    Please present this stub (Digital or Printed) to the Municipal Cashier to process your payment and claim your Official Dry-Sealed Franchise Permit.
+                  </p>
+                </div>
+                
+                {/* Fake Barcode Visual para mukhang authentic stub */}
+                <div className="mt-8 flex flex-col items-center justify-center opacity-60">
+                  <div className="flex gap-1 h-10 w-48 bg-slate-800" style={{ background: 'repeating-linear-gradient(90deg, #1e293b, #1e293b 2px, transparent 2px, transparent 4px, #1e293b 4px, #1e293b 8px, transparent 8px, transparent 10px)' }}></div>
+                  <p className="text-[10px] font-mono font-bold mt-1 tracking-widest">{selectedUnit._id}</p>
+                </div>
+              </div>
+
+            ) : (
+
+              // ==========================================
+              // UI DESIGN PARA SA OFFICIAL MTOP PERMIT (ACTIVE)
+              // ==========================================
+              <div id="printable-document" className="bg-white w-full max-w-[800px] border border-slate-200 shadow-xl p-12 print:border-none print:shadow-none relative">
+                <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                  <ShieldCheck size={400} />
+                </div>
+
+                <div className="text-center mb-8 border-b-2 border-black pb-6">
+                  <p className="text-sm font-bold uppercase">Republic of the Philippines</p>
+                  <p className="text-sm font-bold uppercase">Province of Marinduque</p>
+                  <p className="text-lg font-black uppercase mt-1">Municipality of Gasan</p>
+                  <div className="mt-6 inline-block bg-black text-white px-8 py-2 border-4 border-black">
+                    <h1 className="text-2xl font-black uppercase tracking-widest">Motorized Tricycle Operator's Permit</h1>
+                  </div>
+                  <p className="text-xs font-bold tracking-widest mt-2 text-emerald-700">(OFFICIAL COPY)</p>
+                </div>
+
+                <div className="space-y-6 relative z-10">
+                  <p className="text-justify text-sm leading-relaxed">
+                    This certifies that the person named below has been granted the franchise to operate a Motorized Tricycle-For-Hire within the authorized zones of the Municipality of Gasan, subject to existing local ordinances and national laws.
+                  </p>
+
+                  <div className="border border-black p-6 bg-slate-50/50 print:bg-white">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr><td className="py-2 font-bold w-1/3">Operator Name:</td><td className="py-2 border-b border-black/20 font-black">{selectedUnit.fullName}</td></tr>
+                        <tr><td className="py-2 font-bold">Address:</td><td className="py-2 border-b border-black/20">{selectedUnit.address}</td></tr>
+                        <tr><td className="py-2 font-bold">TODA Association:</td><td className="py-2 border-b border-black/20">{selectedUnit.todaName}</td></tr>
+                        <tr><td className="py-2 font-bold">Route / Zone:</td><td className="py-2 border-b border-black/20">{selectedUnit.zone}</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="border border-black p-6 bg-slate-50/50 print:bg-white mt-4">
+                    <h3 className="font-bold text-sm uppercase mb-3 border-b border-black pb-1">Vehicle Specifications</h3>
+                    <div className="grid grid-cols-2 gap-y-3 text-sm">
+                      <div><span className="font-bold">Make/Brand:</span> {selectedUnit.make}</div>
+                      <div><span className="font-bold">Year Model:</span> {selectedUnit.made}</div>
+                      <div><span className="font-bold">Motor Number:</span> {selectedUnit.motorNo}</div>
+                      <div><span className="font-bold">Chassis Number:</span> {selectedUnit.chassisNo}</div>
+                      <div className="col-span-2 mt-2">
+                        <span className="font-bold mr-2">Assigned Plate Number:</span>
+                        <span className="font-black border-2 border-black px-3 py-1 bg-slate-100 print:bg-white tracking-widest">{selectedUnit.plateNo || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex justify-between items-end text-sm">
+                    <div>
+                      <p className="font-bold">Approved On:</p>
+                      <p className="font-black">{new Date(selectedUnit.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-black">Valid Until:</p>
+                      <p className="font-black underline decoration-2">{getExpirationDate(selectedUnit.dateApplied)}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-8 flex justify-between items-end text-sm">
-                  <div>
-                    <p className="font-bold">Approved On:</p>
-                    <p>{new Date(selectedUnit.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-black">Valid Until:</p>
-                    <p className="font-black underline decoration-2">{selectedUnit.status === 'Ready for Pickup' ? 'TBD (Upon Payment)' : getExpirationDate(selectedUnit.dateApplied)}</p>
-                  </div>
+                <div className="mt-16 pt-8 border-t-2 border-black text-center">
+                  <p className="text-[10px] italic text-slate-500 print:text-black font-bold uppercase tracking-wider">This document serves as proof of franchise registration via the G-TRAMS Portal.</p>
+                  <p className="text-[9px] font-mono mt-1">System ID: {selectedUnit._id}</p>
                 </div>
               </div>
-
-              <div className="mt-16 pt-8 border-t-2 border-black text-center">
-                <p className="text-xs italic text-slate-500 print:text-black">This Document is system generated and serves as proof of franchise registration via the G-TRAMS Portal.</p>
-                <p className="text-xs font-bold mt-1">System ID: {selectedUnit._id}</p>
-                {selectedUnit.status === 'Ready for Pickup' && (
-                  <p className="text-[10px] text-red-600 font-bold mt-2 border border-red-200 bg-red-50 p-2 rounded">Note: This temporary tracking copy is strictly for processing references. Operator must claim and pay for the official dry-sealed MTOP hardcopy at the Municipal Office.</p>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
 import { 
   CheckCircle, XCircle, Eye, FileText, AlertCircle, 
-  X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer 
+  X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck 
 } from 'lucide-react';
 
 const REJECT_REASONS = [
@@ -25,10 +25,13 @@ const FranchiseApproval = () => {
   const [customReason, setCustomReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // FIX: Document Viewer
+  // Document Viewer States
   const [previewDoc, setPreviewDoc] = useState(null);
   const [zoomScale, setZoomScale] = useState(1);
   const [rotation, setRotation] = useState(0);
+
+  // Print Modal State para sa Admin
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -73,7 +76,7 @@ const FranchiseApproval = () => {
       });
 
       if (response.ok) {
-        alert(`Application status updated to: ${status}!`);
+        alert(`Application status updated successfully!`);
         setSelectedApp(null); 
         setIsRejecting(false);
         fetchApplications(); 
@@ -88,9 +91,17 @@ const FranchiseApproval = () => {
   };
 
   const openDocPreview = (url, title) => {
-    setZoomScale(1); // Normal size agad, hindi sobrang laki
+    setZoomScale(1); 
     setRotation(0);
     setPreviewDoc({ url, title });
+  };
+
+  // Helper para sa Valid Until computation sa piprint na Permit
+  const getExpirationDate = (dateApplied) => {
+    if (!dateApplied) return 'N/A';
+    const date = new Date(dateApplied);
+    date.setFullYear(date.getFullYear() + 1); 
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   const filteredApps = applications.filter(app => 
@@ -100,7 +111,16 @@ const FranchiseApproval = () => {
 
   return (
     <MainLayout>
-      {/* FIXED DOCUMENT VIEWER MODAL */}
+      {/* ADD CSS FOR PRINTING OFFICIAL PERMIT */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #printable-document, #printable-document * { visibility: visible; }
+          #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
+
+      {/* DOCUMENT PREVIEW MODAL */}
       {previewDoc && (
         <div className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200">
           <div className="flex justify-between items-center bg-slate-900/80 px-6 py-3 rounded-2xl border border-white/10 text-white">
@@ -124,7 +144,6 @@ const FranchiseApproval = () => {
               <iframe src={previewDoc.url} className="w-full h-full max-w-4xl bg-white rounded-2xl shadow-2xl" title="PDF Previewer" />
             ) : (
               <div className="overflow-auto flex items-center justify-center w-full h-full">
-                {/* FIX: object-contain para sakto lang sa screen kahit anong size ng image */}
                 <img 
                   src={previewDoc.url} 
                   alt="Requirements" 
@@ -133,6 +152,93 @@ const FranchiseApproval = () => {
                 />
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* PRINT OFFICIAL PERMIT MODAL PARA SA ADMIN */}
+      {isPrintOpen && selectedApp && (
+        <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
+          <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
+            <h2 className="font-bold text-sm">Print Official MTOP Permit</h2>
+            <div className="flex gap-2">
+              <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"><X size={14} /> Close</button>
+              <button onClick={() => window.print()} className="px-4 py-1.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold flex items-center gap-1.5"><Printer size={14} /> Print Document</button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 print:p-0 print:bg-white flex justify-center items-start">
+            <div id="printable-document" className="bg-white w-full max-w-[800px] border border-slate-200 shadow-xl p-12 print:border-none print:shadow-none relative">
+              <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                <ShieldCheck size={400} />
+              </div>
+
+              <div className="text-center mb-8 border-b-2 border-black pb-6">
+                <p className="text-sm font-bold uppercase">Republic of the Philippines</p>
+                <p className="text-sm font-bold uppercase">Province of Marinduque</p>
+                <p className="text-lg font-black uppercase mt-1">Municipality of Gasan</p>
+                <div className="mt-6 inline-block bg-black text-white px-8 py-2 border-4 border-black">
+                  <h1 className="text-2xl font-black uppercase tracking-widest">Motorized Tricycle Operator's Permit</h1>
+                </div>
+                <p className="text-xs font-bold tracking-widest mt-2 text-[#7A1B22]">(OFFICIAL COPY)</p>
+              </div>
+
+              <div className="space-y-6 relative z-10">
+                <p className="text-justify text-sm leading-relaxed">
+                  This certifies that the person named below has been granted the franchise to operate a Motorized Tricycle-For-Hire within the authorized zones of the Municipality of Gasan, subject to existing local ordinances and national laws.
+                </p>
+
+                <div className="border border-black p-6 bg-slate-50/50 print:bg-white">
+                  <table className="w-full text-sm">
+                    <tbody>
+                      <tr><td className="py-2 font-bold w-1/3">Operator Name:</td><td className="py-2 border-b border-black/20 font-black">{selectedApp.fullName}</td></tr>
+                      <tr><td className="py-2 font-bold">Address:</td><td className="py-2 border-b border-black/20">{selectedApp.address}</td></tr>
+                      <tr><td className="py-2 font-bold">TODA Association:</td><td className="py-2 border-b border-black/20">{selectedApp.todaName}</td></tr>
+                      <tr><td className="py-2 font-bold">Route / Zone:</td><td className="py-2 border-b border-black/20">{selectedApp.zone}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="border border-black p-6 bg-slate-50/50 print:bg-white mt-4">
+                  <h3 className="font-bold text-sm uppercase mb-3 border-b border-black pb-1">Vehicle Specifications</h3>
+                  <div className="grid grid-cols-2 gap-y-3 text-sm">
+                    <div><span className="font-bold">Make/Brand:</span> {selectedApp.make}</div>
+                    <div><span className="font-bold">Year Model:</span> {selectedApp.made}</div>
+                    <div><span className="font-bold">Motor Number:</span> {selectedApp.motorNo}</div>
+                    <div><span className="font-bold">Chassis Number:</span> {selectedApp.chassisNo}</div>
+                    <div className="col-span-2 mt-2">
+                      <span className="font-bold mr-2">Assigned Plate Number:</span>
+                      <span className="font-black border-2 border-black px-3 py-1 bg-slate-100 print:bg-white tracking-widest">{selectedApp.plateNo || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-between items-end text-sm">
+                  <div>
+                    <p className="font-bold">Approved On:</p>
+                    <p className="font-black">{new Date(selectedApp.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-black">Valid Until:</p>
+                    <p className="font-black underline decoration-2">{getExpirationDate(selectedApp.dateApplied)}</p>
+                  </div>
+                </div>
+
+                {/* SIGNATURE SECTION FOR MAYOR */}
+                <div className="mt-16 flex justify-end">
+                  <div className="text-center w-64">
+                    <div className="border-b-2 border-black mb-2"></div>
+                    <p className="font-black text-sm uppercase">Municipal Mayor</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-bold">Authorized Signature</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-12 pt-8 border-t-2 border-black text-center">
+                <p className="text-[10px] italic text-slate-500 print:text-black font-bold uppercase tracking-wider">This document serves as proof of franchise registration via the G-TRAMS Portal.</p>
+                <p className="text-[9px] font-mono mt-1">System ID: {selectedApp._id}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -184,7 +290,7 @@ const FranchiseApproval = () => {
         </div>
       )}
 
-      {selectedApp && (
+      {selectedApp && !isPrintOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedApp(null)} />
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto z-10">
@@ -262,7 +368,7 @@ const FranchiseApproval = () => {
               )}
             </div>
 
-            {/* 5-STEP WORKFLOW ACTIONS */}
+            {/* ADMIN WORKFLOW ACTIONS */}
             {!isRejecting && (
               <div className="sticky bottom-0 bg-white border-t border-slate-100 p-6 flex flex-wrap justify-end gap-3 z-20 rounded-b-2xl">
                 {selectedApp.status === 'Pending' && (
@@ -274,23 +380,30 @@ const FranchiseApproval = () => {
                   </button>
                 )}
                 
-                {/* Workflow Logic: Kung pending -> Magiging Ready for Pickup | Kung Ready For Pickup -> Magiging Active */}
                 {selectedApp.status === 'Pending' ? (
                   <button 
                     onClick={() => handleUpdateStatus('Ready for Pickup')} 
                     disabled={isProcessing} 
                     className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
                   >
-                    <Printer size={16} /> Print for Signing & Set Ready for Pickup
+                    <CheckCircle size={16} /> Approve (Set to Ready for Pickup)
                   </button>
                 ) : (
-                  <button 
-                    onClick={() => handleUpdateStatus('Active')} 
-                    disabled={isProcessing} 
-                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
-                  >
-                    <CheckCircle size={16} /> Acknowledge Payment & Release Hardcopy
-                  </button>
+                  <>
+                    <button 
+                      onClick={() => setIsPrintOpen(true)} 
+                      className="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2"
+                    >
+                      <Printer size={16} /> Print Official Form
+                    </button>
+                    <button 
+                      onClick={() => handleUpdateStatus('Active')} 
+                      disabled={isProcessing} 
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm"
+                    >
+                      <CheckCircle size={16} /> Acknowledge Payment & Release
+                    </button>
+                  </>
                 )}
               </div>
             )}
