@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
-  CalendarDays, PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck, Sparkles, Receipt, Download, Eye,
-  Check, FileText, Banknote, ShieldAlert
+  CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Sparkles, Receipt, Download, Eye,
+  Check, ShieldAlert
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -58,15 +58,17 @@ const OperatorDashboard = () => {
     }, 500);
   };
 
-  // Helper para sa Visual Application Tracker
+  // Visual Application Tracker (Hidden once franchise is Active)
   const renderApplicationTracker = (status) => {
+    if (status === 'Active') return null;
+
     if (status === 'Cancelled') {
       return (
         <div className="mb-5 bg-red-50/80 border border-red-200 rounded-2xl p-3.5 flex items-start gap-2.5">
           <ShieldAlert className="text-red-600 shrink-0 mt-0.5" size={18} />
           <div>
-            <p className="text-xs font-bold text-red-900">Naantala ang Aplikasyon</p>
-            <p className="text-[11px] text-red-700 leading-snug">Pakitingnan ang dahilan sa ibaba at pindutin ang "Fix Issues" upang ma-update ang mga kinakailangang dokumento.</p>
+            <p className="text-xs font-bold text-red-900">Application Needs Attention</p>
+            <p className="text-[11px] text-red-700 leading-snug">Please review the reason below and click "Fix Issues" to re-submit corrected details.</p>
           </div>
         </div>
       );
@@ -77,30 +79,29 @@ const OperatorDashboard = () => {
         <div className="mb-5 bg-orange-50/80 border border-orange-200 rounded-2xl p-3.5 flex items-start gap-2.5">
           <AlertCircle className="text-orange-600 shrink-0 mt-0.5" size={18} />
           <div>
-            <p className="text-xs font-bold text-orange-900">Paso na ang Prangkisa</p>
-            <p className="text-[11px] text-orange-700 leading-snug">Magsumite ng panibagong Cedula at updated na impormasyon sa pamamagitan ng "Renew Franchise".</p>
+            <p className="text-xs font-bold text-orange-900">Franchise Expired</p>
+            <p className="text-[11px] text-orange-700 leading-snug">Your franchise validity has ended. Click "Renew Franchise" to submit your updated CTC/Cedula.</p>
           </div>
         </div>
       );
     }
 
     const steps = [
-      { id: 1, label: 'Naisumite' },
-      { id: 2, label: 'Pagsusuri' },
-      { id: 3, label: 'Pagbayad' },
-      { id: 4, label: 'Aktibo' }
+      { id: 1, label: 'Submitted' },
+      { id: 2, label: 'Review' },
+      { id: 3, label: 'Payment' },
+      { id: 4, label: 'Active' }
     ];
 
     let currentStepNum = 1;
     if (status === 'Pending') currentStepNum = 2;
     if (status === 'Ready for Pickup') currentStepNum = 3;
-    if (status === 'Active') currentStepNum = 4;
 
     const progressWidth = ((currentStepNum - 1) / (steps.length - 1)) * 100;
 
     return (
       <div className="mb-5 bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 sm:p-4">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Status ng Aplikasyon</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Application Progress</p>
         <div className="relative px-3 sm:px-4">
           <div className="absolute left-6 right-6 top-3 h-[2px] bg-slate-200 z-0" />
           <div 
@@ -175,10 +176,14 @@ const OperatorDashboard = () => {
         </div>
       </div>
 
+      {/* SECTION HEADER WITH MODERN VERTICAL LINE ACCENT */}
       <header className="animate-dashboard-card mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
-        <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2"><Activity className="text-[#7A1B22]" size={22} /> My Franchise Garage</h2>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Assigned tricycle units under your account</p>
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-7 bg-[#7A1B22] rounded-full" />
+          <div>
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">My Franchise Garage</h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Assigned tricycle units under your account</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit Capacity</span>
@@ -233,7 +238,7 @@ const OperatorDashboard = () => {
                   </span>
                 </div>
 
-                {/* VISUAL APPLICATION TRACKER STEPPER */}
+                {/* VISUAL TRACKER (Automatically hidden if Active) */}
                 {renderApplicationTracker(unit.status)}
 
                 <div className="grid grid-cols-2 gap-3 mb-5">

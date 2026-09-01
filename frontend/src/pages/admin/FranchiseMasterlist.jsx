@@ -1,10 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, 
   Clock, AlertCircle, Loader2, X, CalendarDays, Printer,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag,
+  ChevronDown, Check, CheckSquare, Square, RotateCcw, Eye,
+  Car, User, ShieldCheck, FileCheck, Phone, MapPin, Hash, ExternalLink
 } from 'lucide-react';
+
+const STATUS_OPTIONS = [
+  { label: 'Active', value: 'Active', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { label: 'Pending', value: 'Pending', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { label: 'Ready for Pickup', value: 'Ready for Pickup', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { label: 'Expired', value: 'Expired', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+  { label: 'Cancelled', value: 'Cancelled', color: 'bg-red-50 text-red-700 border-red-200' },
+  { label: 'Revoked', value: 'Revoked', color: 'bg-rose-50 text-rose-700 border-rose-200' },
+];
+
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
 const FranchiseMasterlist = () => {
   const [franchises, setFranchises] = useState([]);
@@ -12,7 +25,18 @@ const FranchiseMasterlist = () => {
   
   const [activeTab, setActiveTab] = useState('active'); 
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  
+  // Multi-Select Status Filter
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isPageSizeDropdownOpen, setIsPageSizeDropdownOpen] = useState(false);
+  
+  const filterDropdownRef = useRef(null);
+  const pageSizeDropdownRef = useRef(null);
+
+  // View Details Modal State
+  const [selectedFranchise, setSelectedFranchise] = useState(null);
+  const [docPreviewUrl, setDocPreviewUrl] = useState(null);
 
   // Server-Side Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,16 +60,31 @@ const FranchiseMasterlist = () => {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setIsFilterDropdownOpen(false);
+      }
+      if (pageSizeDropdownRef.current && !pageSizeDropdownRef.current.contains(event.target)) {
+        setIsPageSizeDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const fetchFranchises = useCallback(async () => {
     setIsLoading(true);
     try {
       const isArchived = activeTab === 'archived';
+      const statusParam = selectedStatuses.length > 0 ? selectedStatuses.join(',') : 'All';
+      
       const queryParams = new URLSearchParams({
         archived: isArchived ? 'true' : 'false',
         page: currentPage.toString(),
         limit: pageSize.toString(),
         search: searchQuery.trim(),
-        status: statusFilter
+        status: statusParam
       });
 
       const response = await fetch(
@@ -70,9 +109,8 @@ const FranchiseMasterlist = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, currentPage, pageSize, searchQuery, statusFilter]);
+  }, [activeTab, currentPage, pageSize, searchQuery, selectedStatuses]);
 
-  // Debounced search query handler
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchFranchises();
@@ -91,13 +129,23 @@ const FranchiseMasterlist = () => {
     setCurrentPage(1);
   };
 
-  const handleStatusChange = (e) => {
-    setStatusFilter(e.target.value);
+  const toggleStatusFilter = (statusVal) => {
     setCurrentPage(1);
+    setSelectedStatuses(prev => 
+      prev.includes(statusVal)
+        ? prev.filter(s => s !== statusVal)
+        : [...prev, statusVal]
+    );
   };
 
-  const handlePageSizeChange = (e) => {
-    setPageSize(Number(e.target.value));
+  const removeSingleStatus = (statusVal) => {
+    setCurrentPage(1);
+    setSelectedStatuses(prev => prev.filter(s => s !== statusVal));
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedStatuses([]);
     setCurrentPage(1);
   };
 
@@ -140,10 +188,21 @@ const FranchiseMasterlist = () => {
     }
   };
 
+  const getExpirationDate = (dateApplied) => {
+    if (!dateApplied) return 'N/A';
+    const date = new Date(dateApplied);
+    date.setFullYear(date.getFullYear() + 1); 
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
   const startRecordIndex = paginationMeta.totalRecords === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endRecordIndex = Math.min(currentPage * pageSize, paginationMeta.totalRecords);
-
-  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'All';
+  const hasActiveFilters = searchQuery.trim() !== '' || selectedStatuses.length > 0;
 
   return (
     <MainLayout>
@@ -168,6 +227,220 @@ const FranchiseMasterlist = () => {
         </div>
       )}
 
+      {/* DOCUMENT PREVIEW MODAL */}
+      {docPreviewUrl && (
+        <div className="fixed inset-0 z-[150] bg-slate-900/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="flex justify-between items-center w-full max-w-4xl mb-3">
+            <h3 className="text-white font-bold text-sm flex items-center gap-2">
+              <FileCheck size={18} className="text-[#D4AF37]" /> Document Attachment
+            </h3>
+            <button onClick={() => setDocPreviewUrl(null)} className="text-white hover:text-red-400 bg-white/10 p-2 rounded-xl transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+          {docPreviewUrl.toLowerCase().includes('.pdf') ? (
+            <iframe src={docPreviewUrl} className="w-full max-w-4xl h-[75vh] bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
+          ) : (
+            <img src={docPreviewUrl} alt="Requirement Preview" className="max-h-[80vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl bg-slate-800" />
+          )}
+        </div>
+      )}
+
+      {/* FULL DETAILS MODAL */}
+      {selectedFranchise && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setSelectedFranchise(null)}
+          />
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-slate-100 p-5 sm:p-6 flex justify-between items-center z-20 rounded-t-3xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#7A1B22]/10 text-[#7A1B22] flex items-center justify-center font-bold">
+                  <Car size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                    {selectedFranchise.plateNo || 'PENDING PLATE'}
+                    <span className={`px-2.5 py-0.5 text-[10px] font-black rounded-lg uppercase tracking-wider border ${
+                      selectedFranchise.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      selectedFranchise.status === 'Ready for Pickup' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      selectedFranchise.status === 'Expired' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                      (selectedFranchise.status === 'Cancelled' || selectedFranchise.status === 'Revoked') ? 'bg-red-50 text-red-700 border-red-200' :
+                      'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {selectedFranchise.status}
+                    </span>
+                  </h2>
+                  <p className="text-[11px] text-slate-400 font-mono">System ID: {selectedFranchise._id}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedFranchise(null)} 
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 space-y-6 text-xs">
+
+              {/* TIMELINE & DATES CARD */}
+              <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 sm:p-5">
+                <h3 className="text-[10px] font-black text-[#7A1B22] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <CalendarDays size={14} /> Registration Timeline & Validity
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Date Applied</span>
+                    <span className="font-bold text-slate-900">{formatDate(selectedFranchise.dateApplied || selectedFranchise.createdAt)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Expiration Date</span>
+                    <span className="font-black text-emerald-800">{getExpirationDate(selectedFranchise.dateApplied)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Application Type</span>
+                    <span className="font-bold text-slate-900">{selectedFranchise.applicationType || 'New'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Fiscal Year</span>
+                    <span className="font-bold text-slate-900">FY {new Date(selectedFranchise.dateApplied || selectedFranchise.createdAt).getFullYear()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* OPERATOR DETAILS */}
+              <div className="border border-slate-100 rounded-2xl p-4 sm:p-5">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <User size={14} /> Operator Information
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Full Name</span>
+                    <span className="font-bold text-slate-900 text-sm">{selectedFranchise.fullName || (selectedFranchise.operator?.name) || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Registered Barangay / Address</span>
+                    <span className="font-bold text-slate-800">{selectedFranchise.address || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">TODA Association</span>
+                    <span className="font-bold text-slate-800">{selectedFranchise.todaName || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Authorized Route Zone</span>
+                    <span className="font-bold text-slate-800">Zone {selectedFranchise.zone || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* VEHICLE SPECIFICATIONS */}
+              <div className="border border-slate-100 rounded-2xl p-4 sm:p-5">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Car size={14} /> Tricycle Specifications
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Make / Brand</span>
+                    <span className="font-bold text-slate-800">{selectedFranchise.make || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Year Made</span>
+                    <span className="font-bold text-slate-800">{selectedFranchise.made || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Motor Number</span>
+                    <span className="font-bold text-slate-800 font-mono">{selectedFranchise.motorNo || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Chassis Number</span>
+                    <span className="font-bold text-slate-800 font-mono">{selectedFranchise.chassisNo || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* CEDULA & TAX INFO */}
+              <div className="border border-slate-100 rounded-2xl p-4 sm:p-5">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <FileText size={14} /> Community Tax Certificate (Cedula)
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Serial Number</span>
+                    <span className="font-bold text-slate-800">{selectedFranchise.cedulaSerialNo || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Date Issued</span>
+                    <span className="font-bold text-slate-800">{formatDate(selectedFranchise.cedulaDate)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase">Place Issued</span>
+                    <span className="font-bold text-slate-800">{selectedFranchise.cedulaAddress || 'Gasan, Marinduque'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* UPLOADED ATTACHMENTS */}
+              <div>
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">
+                  Document Attachments
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {[
+                    { label: 'OR/CR Motor', url: selectedFranchise.orCrUrl },
+                    { label: "Driver's License", url: selectedFranchise.licenseUrl },
+                    { label: 'TODA Endorsement', url: selectedFranchise.todaEndorsementUrl },
+                    { label: 'Barangay Clearance', url: selectedFranchise.brgyClearanceUrl }
+                  ].map((doc, i) => (
+                    <div key={i}>
+                      {doc.url ? (
+                        <button
+                          type="button"
+                          onClick={() => setDocPreviewUrl(doc.url)}
+                          className="w-full flex items-center justify-between p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors text-left group"
+                        >
+                          <span className="text-[11px] font-bold text-emerald-900 truncate">{doc.label}</span>
+                          <Eye size={14} className="text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
+                        </button>
+                      ) : (
+                        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 text-[11px] font-medium text-center">
+                          {doc.label} (None)
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CANCELLATION / REVOCATION REASON (Kung meron) */}
+              {selectedFranchise.cancelReason && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                  <span className="text-[10px] font-bold uppercase text-red-600 block mb-1">Reason for Rejection / Revocation:</span>
+                  <p className="text-xs text-red-900 font-medium">{selectedFranchise.cancelReason}</p>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-6 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/50 rounded-b-3xl">
+              <button 
+                type="button"
+                onClick={() => setSelectedFranchise(null)} 
+                className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER SECTION */}
       <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-end gap-4 relative print-hide">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -176,7 +449,7 @@ const FranchiseMasterlist = () => {
               <CalendarDays size={12} /> FY {currentFiscalYear}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage, query, search, and paginate official tricycle records.</p>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage, query, multi-filter, inspect, and paginate official tricycle records.</p>
         </div>
 
         <button 
@@ -187,7 +460,7 @@ const FranchiseMasterlist = () => {
         </button>
       </header>
 
-      {/* MAIN CONTAINER */}
+      {/* MAIN TABLE CONTAINER */}
       <div id="printable-masterlist" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden print:border-none print:shadow-none">
         
         {/* PRINT HEADER */}
@@ -217,54 +490,133 @@ const FranchiseMasterlist = () => {
           </button>
         </div>
 
-        {/* SEARCH AND FILTER CONTROLS */}
-        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row gap-4 justify-between items-center bg-white print-hide">
-          <div className="relative w-full md:w-96">
+        {/* SEARCH AND CUSTOM FILTER CONTROLS */}
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row gap-3 sm:gap-4 justify-between items-stretch md:items-center bg-white print-hide">
+          
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
-              placeholder="Server search (Name, Plate, Motor, Chassis)..."
+              placeholder="Search Name, Plate, Motor, Chassis..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all"
             />
           </div>
           
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <Filter className="text-slate-400 shrink-0" size={18} />
-              <select 
-                value={statusFilter}
-                onChange={handleStatusChange}
-                className="w-full md:w-auto px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-700 outline-none cursor-pointer focus:border-[#7A1B22]"
+          <div className="flex items-center gap-2.5 shrink-0 justify-between md:justify-end">
+            
+            {/* MULTI-SELECT STATUS FILTER POPOVER */}
+            <div className="relative flex-1 sm:flex-initial" ref={filterDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsFilterDropdownOpen(prev => !prev)}
+                className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border flex items-center justify-between gap-2.5 transition-all shadow-xs ${
+                  selectedStatuses.length > 0 
+                    ? 'bg-[#7A1B22] text-white border-[#7A1B22]' 
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
               >
-                <option value="All">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Pending">Pending</option>
-                <option value="Ready for Pickup">Ready for Pickup</option>
-                <option value="Expired">Expired</option>
-                <option value="Cancelled">Cancelled</option>
-                <option value="Revoked">Revoked</option>
-              </select>
+                <div className="flex items-center gap-2">
+                  <Filter size={15} className={selectedStatuses.length > 0 ? 'text-white' : 'text-slate-400'} />
+                  <span>Status Filter</span>
+                  {selectedStatuses.length > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-white text-[#7A1B22] text-[10px] font-black flex items-center justify-center">
+                      {selectedStatuses.length}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown size={15} className={`transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isFilterDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 px-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Select Statuses</span>
+                    {selectedStatuses.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedStatuses([]); setCurrentPage(1); }}
+                        className="text-[10px] font-bold text-[#7A1B22] hover:underline"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                    {STATUS_OPTIONS.map((opt) => {
+                      const isSelected = selectedStatuses.includes(opt.value);
+                      return (
+                        <div
+                          key={opt.value}
+                          onClick={() => toggleStatusFilter(opt.value)}
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
+                            isSelected 
+                              ? 'bg-slate-100 text-slate-900' 
+                              : 'text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            {isSelected ? (
+                              <CheckSquare size={16} className="text-[#7A1B22]" />
+                            ) : (
+                              <Square size={16} className="text-slate-300" />
+                            )}
+                            <span>{opt.label}</span>
+                          </div>
+                          <span className={`text-[9px] px-2 py-0.5 rounded-full border ${opt.color}`}>
+                            {opt.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs font-bold text-slate-400 hidden sm:inline">Rows:</span>
-              <select
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none cursor-pointer focus:border-[#7A1B22]"
+            {/* ROWS PER PAGE DROPDOWN */}
+            <div className="relative shrink-0" ref={pageSizeDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsPageSizeDropdownOpen(prev => !prev)}
+                className="px-3 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1.5 transition-colors shadow-xs"
               >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
+                <span className="text-slate-400 text-[11px] font-medium hidden sm:inline">Rows:</span>
+                <span>{pageSize}</span>
+                <ChevronDown size={14} className="text-slate-400" />
+              </button>
+
+              {isPageSizeDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-28 bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => {
+                        setPageSize(size);
+                        setCurrentPage(1);
+                        setIsPageSizeDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                        pageSize === size 
+                          ? 'bg-[#7A1B22] text-white' 
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span>{size} rows</span>
+                      {pageSize === size && <Check size={13} />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
           </div>
         </div>
 
-        {/* INTERACTIVE FILTER PILLS */}
+        {/* ACTIVE FILTER PILLS */}
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-100 print-hide animate-in fade-in duration-150">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 mr-1">
@@ -272,32 +624,43 @@ const FranchiseMasterlist = () => {
             </span>
 
             {searchQuery.trim() !== '' && (
-              <button
-                onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-bold shadow-xs hover:border-red-300 hover:text-red-600 transition-all group"
-                title="Remove search filter"
-              >
-                <span>Search: <span className="font-black text-slate-900 group-hover:text-red-600">"{searchQuery}"</span></span>
-                <X size={13} className="text-slate-400 group-hover:text-red-500" />
-              </button>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold shadow-xs">
+                <span>Search: <strong className="text-slate-900 font-black">"{searchQuery}"</strong></span>
+                <button
+                  type="button"
+                  onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
+                  className="p-0.5 hover:bg-slate-100 rounded-md text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  <X size={13} />
+                </button>
+              </span>
             )}
 
-            {statusFilter !== 'All' && (
-              <button
-                onClick={() => { setStatusFilter('All'); setCurrentPage(1); }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#7A1B22]/10 border border-[#7A1B22]/20 text-[#7A1B22] text-xs font-bold shadow-xs hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all group"
-                title="Reset status filter"
-              >
-                <span>Status: <span className="font-black">{statusFilter}</span></span>
-                <X size={13} className="text-[#7A1B22]/60 group-hover:text-red-500" />
-              </button>
-            )}
+            {selectedStatuses.map((statusVal) => {
+              const matchedOption = STATUS_OPTIONS.find(o => o.value === statusVal);
+              return (
+                <span
+                  key={statusVal}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#7A1B22]/10 border border-[#7A1B22]/20 text-[#7A1B22] text-xs font-bold shadow-xs"
+                >
+                  <span>Status: <strong className="font-black">{matchedOption ? matchedOption.label : statusVal}</strong></span>
+                  <button
+                    type="button"
+                    onClick={() => removeSingleStatus(statusVal)}
+                    className="p-0.5 hover:bg-[#7A1B22]/20 rounded-md text-[#7A1B22] hover:text-red-600 transition-colors"
+                  >
+                    <X size={13} />
+                  </button>
+                </span>
+              );
+            })}
 
             <button
-              onClick={() => { setSearchQuery(''); setStatusFilter('All'); setCurrentPage(1); }}
-              className="text-[11px] font-bold text-slate-400 hover:text-[#7A1B22] underline ml-1 cursor-pointer transition-colors"
+              type="button"
+              onClick={clearAllFilters}
+              className="text-[11px] font-bold text-slate-400 hover:text-[#7A1B22] flex items-center gap-1 ml-1 cursor-pointer transition-colors"
             >
-              Clear all filters
+              <RotateCcw size={12} /> Clear all
             </button>
           </div>
         )}
@@ -317,7 +680,7 @@ const FranchiseMasterlist = () => {
                   <th className="p-4">Tricycle Info</th>
                   <th className="p-4">TODA / Zone</th>
                   <th className="p-4 text-center">Status</th>
-                  <th className="p-4 text-center pr-6 print-hide">Action</th>
+                  <th className="p-4 text-center pr-6 print-hide">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -327,7 +690,7 @@ const FranchiseMasterlist = () => {
                       <div className="flex flex-col items-center justify-center">
                         {activeTab === 'archived' ? <Archive size={40} className="text-slate-300 mb-3"/> : <FileText size={40} className="text-slate-300 mb-3"/>}
                         <p className="font-bold text-base text-slate-700">No records found</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Try searching with different terms or reset your filters.</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Try changing search keywords or remove some filter tags.</p>
                       </div>
                     </td>
                   </tr>
@@ -374,27 +737,43 @@ const FranchiseMasterlist = () => {
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-center print-hide">
-                          {!f.isArchived ? (
-                            f.status === 'Active' ? (
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                                Protected
-                              </span>
+                          <div className="flex items-center justify-center gap-1.5">
+                            
+                            {/* VIEW DETAILS BUTTON */}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedFranchise(f)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs active:scale-95"
+                              title="View Full Specifications"
+                            >
+                              <Eye size={13} className="text-[#7A1B22]" /> Details
+                            </button>
+
+                            {/* ARCHIVE / RESTORE BUTTON */}
+                            {!f.isArchived ? (
+                              f.status === 'Active' ? (
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200">
+                                  Protected
+                                </span>
+                              ) : (
+                                <button 
+                                  onClick={() => initiateToggleArchive(f._id, displayName, f.isArchived)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 active:scale-95"
+                                  title="Archive Record"
+                                >
+                                  <Archive size={13} /> Archive
+                                </button>
+                              )
                             ) : (
                               <button 
                                 onClick={() => initiateToggleArchive(f._id, displayName, f.isArchived)}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 active:scale-95"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-xs bg-white hover:bg-blue-50 text-blue-600 border-blue-200 active:scale-95"
+                                title="Restore Record"
                               >
-                                <Archive size={14} /> Archive
+                                <ArchiveRestore size={13} /> Restore
                               </button>
-                            )
-                          ) : (
-                            <button 
-                              onClick={() => initiateToggleArchive(f._id, displayName, f.isArchived)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-xs bg-white hover:bg-blue-50 text-blue-600 border-blue-200 active:scale-95"
-                            >
-                              <ArchiveRestore size={14} /> Restore
-                            </button>
-                          )}
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -454,7 +833,7 @@ const FranchiseMasterlist = () => {
 
       </div>
 
-      {/* CONFIRMATION MODAL */}
+      {/* ARCHIVE / RESTORE CONFIRMATION MODAL */}
       {confirmModal.isOpen && confirmModal.data && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div 

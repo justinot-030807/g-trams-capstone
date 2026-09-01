@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   CheckCircle, XCircle, Eye, FileText, AlertCircle, 
-  X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download 
+  X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
+  CalendarDays, User, Clock
 } from 'lucide-react';
 
 const REJECT_REASONS = [
@@ -48,7 +49,12 @@ const FranchiseApproval = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setApplications(data.filter(app => app.status === 'Pending' || app.status === 'Ready for Pickup'));
+        // Filter and sort by earliest submission date first (First-In, First-Out Queue)
+        const queue = (Array.isArray(data) ? data : (data.data || []))
+          .filter(app => app.status === 'Pending' || app.status === 'Ready for Pickup')
+          .sort((a, b) => new Date(a.dateApplied || a.createdAt) - new Date(b.dateApplied || b.createdAt));
+        
+        setApplications(queue);
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
@@ -57,7 +63,6 @@ const FranchiseApproval = () => {
     }
   };
 
-  // Helper function para sa custom notification
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
@@ -84,7 +89,7 @@ const FranchiseApproval = () => {
       });
 
       if (response.ok) {
-        showToast(`Application successfully updated to ${status}!`, "success");
+        showToast(`Application status updated to ${status}!`, "success");
         setSelectedApp(null); 
         setIsRejecting(false);
         fetchApplications(); 
@@ -111,9 +116,19 @@ const FranchiseApproval = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   const filteredApps = applications.filter(app => 
     (app.fullName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (app.plateNo?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    (app.plateNo?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (app.motorNo?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -174,7 +189,7 @@ const FranchiseApproval = () => {
         </div>
       )}
 
-      {/* PRINT OFFICIAL PERMIT MODAL PARA SA ADMIN */}
+      {/* PRINT OFFICIAL PERMIT MODAL */}
       {isPrintOpen && selectedApp && (
         <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
           <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
@@ -265,47 +280,86 @@ const FranchiseApproval = () => {
         </div>
       )}
 
+      {/* SECTION HEADER WITH MODERN VERTICAL LINE ACCENT */}
       <header className="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pending Approvals</h1>
-          <p className="text-sm text-slate-500 mt-1">Review documents and process MTOP franchise applications.</p>
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-7 bg-[#7A1B22] rounded-full" />
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Pending Approvals</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Review and process franchise applications in queue (Oldest First).</p>
+          </div>
         </div>
         <div className="relative w-full md:w-80">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input type="text" placeholder="Search Name or Plate No..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:border-[#7A1B22]"/>
+          <input 
+            type="text" 
+            placeholder="Search Name or Plate No..." 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} 
+            className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium outline-none focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/15"
+          />
         </div>
       </header>
 
       {isLoading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-[#7A1B22]" size={32} /></div>
       ) : filteredApps.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500">
+        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-500">
           <CheckCircle size={48} className="mx-auto mb-4 text-emerald-400 opacity-50" />
-          <p className="font-bold">All caught up!</p>
-          <p className="text-sm">There are no pending applications to review right now.</p>
+          <p className="font-bold text-base text-slate-800">All caught up!</p>
+          <p className="text-xs text-slate-500 mt-1">There are no pending applications to review right now.</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredApps.map((app) => (
-            <div key={app._id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#7A1B22]/30">
+          {filteredApps.map((app, index) => (
+            <div key={app._id} className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#7A1B22]/30">
+              
               <div className="flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${app.status === 'Ready for Pickup' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                  {app.status === 'Ready for Pickup' ? <Printer size={24} /> : <FileText size={24} />}
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${app.status === 'Ready for Pickup' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                  {app.status === 'Ready for Pickup' ? <Printer size={22} /> : <FileText size={22} />}
                 </div>
+
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                    {app.fullName}
-                    {app.status === 'Ready for Pickup' && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 uppercase tracking-widest">Awaiting Payment</span>}
-                  </h3>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm font-medium text-slate-500">
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Plate: {app.plateNo}</span>
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> TODA: {app.todaName}</span>
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Type: {app.applicationType}</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                      Queue #{index + 1}
+                    </span>
+                    <h3 className="font-black text-slate-900 text-lg">
+                      {app.fullName}
+                    </h3>
+                    {app.status === 'Ready for Pickup' && (
+                      <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 uppercase font-black tracking-wider">
+                        Awaiting Payment
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2 text-xs font-medium text-slate-500">
+                    <span className="flex items-center gap-1 font-bold text-slate-800">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 
+                      Plate: {app.plateNo || 'PENDING'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 
+                      TODA: {app.todaName}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> 
+                      Type: {app.applicationType || 'New'}
+                    </span>
+                    <span className="flex items-center gap-1 text-slate-600 font-bold bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                      <CalendarDays size={13} className="text-[#7A1B22]" /> 
+                      Submitted: {formatDate(app.dateApplied || app.createdAt)}
+                    </span>
                   </div>
                 </div>
               </div>
-              <button onClick={() => { setSelectedApp(app); setIsRejecting(false); }} className="w-full md:w-auto bg-slate-900 text-white hover:bg-[#7A1B22] px-6 py-2.5 rounded-xl font-bold text-sm transition-colors active:scale-95">
-                Review Details
+
+              <button 
+                onClick={() => { setSelectedApp(app); setIsRejecting(false); }} 
+                className="w-full md:w-auto bg-slate-900 text-white hover:bg-[#7A1B22] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs"
+              >
+                Review Application
               </button>
             </div>
           ))}
@@ -315,34 +369,37 @@ const FranchiseApproval = () => {
       {selectedApp && !isPrintOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedApp(null)} />
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto z-10 animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex justify-between items-center z-20">
-              <div><h2 className="text-xl font-bold text-slate-900">Application Review</h2><p className="text-xs text-slate-500 font-medium">ID: {selectedApp._id}</p></div>
-              <button onClick={() => setSelectedApp(null)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><X size={24} /></button>
+          <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto z-10 animate-in zoom-in-95 duration-200">
+            <div className="sticky top-0 bg-white border-b border-slate-100 p-5 sm:p-6 flex justify-between items-center z-20 rounded-t-3xl">
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-slate-900">Application Review</h2>
+                <p className="text-xs text-slate-500 font-medium">Submitted on: {formatDate(selectedApp.dateApplied || selectedApp.createdAt)} &bull; ID: {selectedApp._id}</p>
+              </div>
+              <button onClick={() => setSelectedApp(null)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"><X size={22} /></button>
             </div>
             
-            <div className="p-6 space-y-8">
-              <div className="bg-slate-50 border border-slate-100 rounded-xl p-5">
-                <h3 className="text-sm font-bold text-[#7A1B22] mb-4 uppercase tracking-wider flex items-center gap-2"><FileText size={16} /> Operator & Vehicle Details</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6 text-sm">
-                  <div className="col-span-2"><p className="text-slate-500 text-xs">Full Name</p><p className="font-bold text-slate-900">{selectedApp.fullName}</p></div>
-                  <div className="col-span-2"><p className="text-slate-500 text-xs">Address</p><p className="font-bold text-slate-900">{selectedApp.address}</p></div>
-                  <div><p className="text-slate-500 text-xs">TODA</p><p className="font-bold text-slate-900">{selectedApp.todaName}</p></div>
-                  <div><p className="text-slate-500 text-xs">Zone</p><p className="font-bold text-slate-900">{selectedApp.zone}</p></div>
-                  <div><p className="text-slate-500 text-xs">Make / Brand</p><p className="font-bold text-slate-900">{selectedApp.make}</p></div>
-                  <div><p className="text-slate-500 text-xs">Year Made</p><p className="font-bold text-slate-900">{selectedApp.made}</p></div>
-                  <div><p className="text-slate-500 text-xs">Plate No.</p><p className="font-bold text-slate-900">{selectedApp.plateNo}</p></div>
-                  <div><p className="text-slate-500 text-xs">Motor No.</p><p className="font-bold text-slate-900">{selectedApp.motorNo}</p></div>
-                  <div className="col-span-2"><p className="text-slate-500 text-xs">Chassis No.</p><p className="font-bold text-slate-900">{selectedApp.chassisNo}</p></div>
+            <div className="p-5 sm:p-6 space-y-6">
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
+                <h3 className="text-xs font-black text-[#7A1B22] mb-4 uppercase tracking-wider flex items-center gap-2"><FileText size={16} /> Operator & Vehicle Details</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6 text-xs">
+                  <div className="col-span-2"><p className="text-slate-500 text-[10px] font-bold uppercase">Full Name</p><p className="font-bold text-slate-900 text-sm">{selectedApp.fullName}</p></div>
+                  <div className="col-span-2"><p className="text-slate-500 text-[10px] font-bold uppercase">Address</p><p className="font-bold text-slate-900">{selectedApp.address}</p></div>
+                  <div><p className="text-slate-500 text-[10px] font-bold uppercase">TODA</p><p className="font-bold text-slate-900">{selectedApp.todaName}</p></div>
+                  <div><p className="text-slate-500 text-[10px] font-bold uppercase">Zone</p><p className="font-bold text-slate-900">Zone {selectedApp.zone}</p></div>
+                  <div><p className="text-slate-500 text-[10px] font-bold uppercase">Make / Brand</p><p className="font-bold text-slate-900">{selectedApp.make}</p></div>
+                  <div><p className="text-slate-500 text-[10px] font-bold uppercase">Year Made</p><p className="font-bold text-slate-900">{selectedApp.made}</p></div>
+                  <div><p className="text-slate-500 text-[10px] font-bold uppercase">Plate No.</p><p className="font-black text-slate-900">{selectedApp.plateNo || 'PENDING'}</p></div>
+                  <div><p className="text-slate-500 text-[10px] font-bold uppercase">Motor No.</p><p className="font-bold text-slate-900 font-mono">{selectedApp.motorNo}</p></div>
+                  <div className="col-span-2"><p className="text-slate-500 text-[10px] font-bold uppercase">Chassis No.</p><p className="font-bold text-slate-900 font-mono">{selectedApp.chassisNo}</p></div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-slate-900 mb-3 border-b pb-2">Uploaded Requirements (Click to Expand)</h3>
+                <h3 className="text-xs font-black text-slate-900 mb-3 border-b border-slate-100 pb-2 uppercase tracking-wider">Uploaded Requirements (Click to Preview)</h3>
                 {selectedApp.applicationType === 'Renewal' ? (
-                  <p className="text-sm text-slate-500 italic">No files required for Renewal.</p>
+                  <p className="text-xs text-slate-500 italic">No new files required for Renewal application.</p>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
                       { label: "OR/CR Document", url: selectedApp.orCrUrl },
                       { label: "Driver's License", url: selectedApp.licenseUrl },
@@ -354,15 +411,15 @@ const FranchiseApproval = () => {
                           <button 
                             onClick={() => openDocPreview(doc.url, doc.label)} 
                             type="button" 
-                            className="w-full flex flex-col items-center justify-center p-4 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors group"
+                            className="w-full flex flex-col items-center justify-center p-4 bg-emerald-50 border border-emerald-200 rounded-2xl hover:bg-emerald-100 transition-colors group"
                           >
-                            <Eye size={24} className="text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
-                            <span className="text-xs font-bold text-emerald-800 text-center">{doc.label}</span>
+                            <Eye size={22} className="text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
+                            <span className="text-[11px] font-bold text-emerald-800 text-center">{doc.label}</span>
                           </button>
                         ) : (
-                          <div className="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-xl opacity-60">
-                            <AlertCircle size={24} className="text-slate-400 mb-2" />
-                            <span className="text-xs font-medium text-slate-500 text-center">Missing File</span>
+                          <div className="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl opacity-60">
+                            <AlertCircle size={22} className="text-slate-400 mb-2" />
+                            <span className="text-[11px] font-medium text-slate-500 text-center">Missing File</span>
                           </div>
                         )}
                       </div>
@@ -372,31 +429,31 @@ const FranchiseApproval = () => {
               </div>
 
               {isRejecting && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-5 animate-in fade-in slide-in-from-top-2">
-                  <h3 className="text-red-800 font-bold mb-3">Reason for Rejection</h3>
-                  <select value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-2.5 text-sm mb-3 outline-none focus:ring-2 focus:ring-red-200">
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-5 animate-in fade-in slide-in-from-top-2">
+                  <h3 className="text-red-800 font-bold mb-3 text-xs uppercase tracking-wider">Reason for Rejection</h3>
+                  <select value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold mb-3 outline-none focus:ring-2 focus:ring-red-200">
                     {REJECT_REASONS.map((r, i) => <option key={i} value={r}>{r}</option>)}
                   </select>
                   {rejectReason === 'Others (Please specify)' && (
-                    <textarea placeholder="Type specific reason..." value={customReason} onChange={(e) => setCustomReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-sm min-h-[80px] outline-none focus:ring-2 focus:ring-red-200" />
+                    <textarea placeholder="Type specific reason..." value={customReason} onChange={(e) => setCustomReason(e.target.value)} className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-xs font-medium min-h-[80px] outline-none focus:ring-2 focus:ring-red-200" />
                   )}
                   <div className="flex gap-2 mt-4">
-                    <button onClick={() => handleUpdateStatus('Cancelled')} disabled={isProcessing} className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 active:scale-95 transition-all">
-                      {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />} Confirm Reject
+                    <button onClick={() => handleUpdateStatus('Cancelled')} disabled={isProcessing} className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-xl text-xs font-bold flex items-center gap-2 active:scale-95 transition-all">
+                      {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />} Confirm Reject
                     </button>
-                    <button onClick={() => setIsRejecting(false)} className="bg-white text-slate-600 border border-slate-300 px-6 py-2 rounded-lg text-sm font-bold hover:bg-slate-50">Cancel</button>
+                    <button onClick={() => setIsRejecting(false)} className="bg-white text-slate-600 border border-slate-300 px-6 py-2 rounded-xl text-xs font-bold hover:bg-slate-50">Cancel</button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* ADMIN WORKFLOW ACTIONS */}
+            {/* ACTION BUTTONS */}
             {!isRejecting && (
-              <div className="sticky bottom-0 bg-white border-t border-slate-100 p-6 flex flex-wrap justify-end gap-3 z-20 rounded-b-2xl">
+              <div className="sticky bottom-0 bg-white border-t border-slate-100 p-5 sm:p-6 flex flex-wrap justify-end gap-3 z-20 rounded-b-3xl">
                 {selectedApp.status === 'Pending' && (
                   <button 
                     onClick={() => setIsRejecting(true)} 
-                    className="px-5 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95"
+                    className="px-5 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95"
                   >
                     <XCircle size={16} /> Reject Application
                   </button>
@@ -406,7 +463,7 @@ const FranchiseApproval = () => {
                   <button 
                     onClick={() => handleUpdateStatus('Ready for Pickup')} 
                     disabled={isProcessing} 
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
                   >
                     <CheckCircle size={16} /> Approve (Set to Ready for Pickup)
                   </button>
@@ -414,14 +471,14 @@ const FranchiseApproval = () => {
                   <>
                     <button 
                       onClick={() => setIsPrintOpen(true)} 
-                      className="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
+                      className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
                     >
                       <Printer size={16} /> Print Official Form
                     </button>
                     <button 
                       onClick={() => handleUpdateStatus('Active')} 
                       disabled={isProcessing} 
-                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
+                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
                     >
                       <CheckCircle size={16} /> Acknowledge Payment & Release
                     </button>

@@ -101,15 +101,20 @@ const getAllFranchises = async (req, res) => {
         const limitNum = Math.max(1, parseInt(limit, 10) || 10);
         const skip = (pageNum - 1) * limitNum;
 
-        // 1. Archive filter condition[cite: 34]
+        // 1. Archive Condition
         let queryCondition = archived === 'true' ? { isArchived: true } : { isArchived: { $ne: true } };
 
-        // 2. Status filter condition
+        // 2. Multi-Status Filter Condition ($in)
         if (status && status !== 'All') {
-            queryCondition.status = status;
+            const statusList = status.split(',').filter(s => s && s.trim() !== 'All');
+            if (statusList.length === 1) {
+                queryCondition.status = statusList[0];
+            } else if (statusList.length > 1) {
+                queryCondition.status = { $in: statusList };
+            }
         }
 
-        // 3. Multi-field regular expression search
+        // 3. Multi-field Regular Expression Search
         if (search && search.trim() !== '') {
             const searchRegex = { $regex: search.trim(), $options: 'i' };
             queryCondition.$or = [
