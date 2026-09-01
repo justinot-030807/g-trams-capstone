@@ -2,35 +2,42 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const userStr = localStorage.getItem('user');
   const token = localStorage.getItem('token');
+  let userRole = localStorage.getItem('role');
 
-  // Kung walang login data
-  if (!userStr || !token) {
-    return <Navigate to="/login" replace />;
+  // Fallback: Kung wala sa 'role', baka nasa loob ng 'user' object na-save ng Login page mo
+  if (!userRole) {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const userObj = JSON.parse(userStr);
+        userRole = userObj?.role || '';
+      }
+    } catch (error) {
+      console.error("Hindi mabasa ang user data sa storage.");
+    }
   }
 
-  try {
-    const user = JSON.parse(userStr);
-    
-    // Gawing lowercase lahat para walang mintis sa case-sensitivity
-    const userRole = user.role.toLowerCase();
-    const safeAllowedRoles = allowedRoles.map(r => r.toLowerCase());
-
-    // Kung hindi kasali ang role ng user sa pinapayagang roles
-    if (!safeAllowedRoles.includes(userRole)) {
-      if (userRole === 'admin') {
-        return <Navigate to="/admin-dashboard" replace />;
-      } else {
-        return <Navigate to="/operator-dashboard" replace />;
-      }
-    }
-  } catch (error) {
+  // Kapag walang token o walang role, ibalik sa login
+  if (!token || !userRole) {
     localStorage.clear();
     return <Navigate to="/login" replace />;
   }
 
-  // Kung tama ang role, papasukin sa page
+  // Gawing lowercase para walang case-sensitive issues (Admin vs admin)
+  const safeUserRole = userRole.toLowerCase();
+  const safeAllowedRoles = allowedRoles.map(r => r.toLowerCase());
+
+  // Kung ang role mo ay WALA sa pinapayagan sa pahinang ito, ire-redirect ka sa tamang dashboard
+  if (!safeAllowedRoles.includes(safeUserRole)) {
+    if (safeUserRole === 'admin') {
+      return <Navigate to="/admin-dashboard" replace />;
+    } else {
+      return <Navigate to="/operator-dashboard" replace />;
+    }
+  }
+
+  // Kapag tama ang lahat, papasukin sa pahina
   return children;
 };
 
