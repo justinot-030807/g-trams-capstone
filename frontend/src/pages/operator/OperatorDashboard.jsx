@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
+// GINAMIT LANG ANG MGA STANDARD/SAFE ICONS PARA IWAS CRASH
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
-  CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Sparkles, Receipt, Download, Eye,
-  Check, ShieldAlert
+  CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
+  Check, FileText, Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,10 +35,14 @@ const OperatorDashboard = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setFranchises(data);
+        // SAFE FALLBACK: Siguraduhing Array ang data bago i-set para iwas Fatal Error
+        setFranchises(Array.isArray(data) ? data : []);
+      } else {
+        setFranchises([]);
       }
     } catch (error) {
       console.error('Error loading dashboard units:', error);
+      setFranchises([]);
     } finally {
       setIsLoading(false);
     }
@@ -58,14 +63,14 @@ const OperatorDashboard = () => {
     }, 500);
   };
 
-  // Visual Application Tracker (Hidden once franchise is Active)
+  // Safe Visual Application Tracker
   const renderApplicationTracker = (status) => {
     if (status === 'Active') return null;
 
     if (status === 'Cancelled') {
       return (
         <div className="mb-5 bg-red-50/80 border border-red-200 rounded-2xl p-3.5 flex items-start gap-2.5">
-          <ShieldAlert className="text-red-600 shrink-0 mt-0.5" size={18} />
+          <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={18} />
           <div>
             <p className="text-xs font-bold text-red-900">Application Needs Attention</p>
             <p className="text-[11px] text-red-700 leading-snug">Please review the reason below and click "Fix Issues" to re-submit corrected details.</p>
@@ -97,50 +102,49 @@ const OperatorDashboard = () => {
     if (status === 'Pending') currentStepNum = 2;
     if (status === 'Ready for Pickup') currentStepNum = 3;
 
-    const progressWidth = ((currentStepNum - 1) / (steps.length - 1)) * 100;
-
     return (
-      <div className="mb-5 bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 sm:p-4">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Application Progress</p>
-        <div className="relative px-3 sm:px-4">
-          <div className="absolute left-6 right-6 top-3 h-[2px] bg-slate-200 z-0" />
+      <div className="mb-5 bg-slate-50/70 border border-slate-100 rounded-2xl p-4 sm:p-5">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Application Progress</p>
+        
+        {/* FIXED: Hinding-hindi na lalagpas ang background line sa circle nodes */}
+        <div className="relative flex items-center justify-between z-10 before:absolute before:left-0 before:top-3 before:w-full before:h-[3px] before:bg-slate-200 before:-z-10">
+          
           <div 
-            className="absolute left-6 top-3 h-[2px] bg-[#7A1B22] transition-all duration-500 ease-out z-0"
-            style={{ width: `calc(${progressWidth}% - 12px)` }}
+            className="absolute left-0 top-3 h-[3px] bg-[#7A1B22] transition-all duration-500 ease-out -z-10"
+            style={{ width: currentStepNum === 1 ? '0%' : currentStepNum === 2 ? '33.33%' : currentStepNum === 3 ? '66.66%' : '100%' }}
           />
-          <div className="relative z-10 flex justify-between items-center">
-            {steps.map((step) => {
-              const isCompleted = currentStepNum > step.id;
-              const isCurrent = currentStepNum === step.id;
+          
+          {steps.map((step) => {
+            const isCompleted = currentStepNum > step.id;
+            const isCurrent = currentStepNum === step.id;
 
-              return (
-                <div key={step.id} className="flex flex-col items-center">
-                  <div 
-                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
-                      isCompleted 
-                        ? 'bg-[#7A1B22] text-white shadow-xs' 
-                        : isCurrent 
-                        ? 'bg-white border-2 border-[#7A1B22] ring-3 ring-[#7A1B22]/15' 
-                        : 'bg-white border-2 border-slate-200'
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <Check size={12} className="stroke-[3]" />
-                    ) : isCurrent ? (
-                      <div className="w-2 h-2 bg-[#7A1B22] rounded-full animate-pulse" />
-                    ) : (
-                      <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
-                    )}
-                  </div>
-                  <span className={`text-[10px] font-bold mt-1 tracking-tight text-center ${
-                    isCurrent ? 'text-[#7A1B22] font-black' : isCompleted ? 'text-slate-800' : 'text-slate-400'
-                  }`}>
-                    {step.label}
-                  </span>
+            return (
+              <div key={step.id} className="flex flex-col items-center bg-slate-50 px-2 sm:px-3">
+                <div 
+                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    isCompleted 
+                      ? 'bg-[#7A1B22] text-white shadow-xs' 
+                      : isCurrent 
+                      ? 'bg-white border-2 border-[#7A1B22] ring-3 ring-[#7A1B22]/15' 
+                      : 'bg-white border-2 border-slate-200'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <Check size={12} className="stroke-[3]" />
+                  ) : isCurrent ? (
+                    <div className="w-2 h-2 bg-[#7A1B22] rounded-full animate-pulse" />
+                  ) : (
+                    <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
+                  )}
                 </div>
-              );
-            })}
-          </div>
+                <span className={`text-[10px] font-bold mt-1.5 tracking-tight text-center ${
+                  isCurrent ? 'text-[#7A1B22] font-black' : isCompleted ? 'text-slate-800' : 'text-slate-400'
+                }`}>
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -160,12 +164,11 @@ const OperatorDashboard = () => {
         }
       `}</style>
 
-      {/* HERO BANNER */}
       <div className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]">
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
         <div className="relative z-10 text-center md:text-left">
           <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10">
-            <Sparkles size={12} /> Operator Portal
+            <Star size={12} /> Operator Portal
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">Welcome, {loggedInUserName}!</h1>
           <p className="text-white/80 font-medium text-xs sm:text-sm">Manage your active and pending franchises securely.</p>
@@ -176,7 +179,6 @@ const OperatorDashboard = () => {
         </div>
       </div>
 
-      {/* SECTION HEADER WITH MODERN VERTICAL LINE ACCENT */}
       <header className="animate-dashboard-card mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-7 bg-[#7A1B22] rounded-full" />
@@ -195,7 +197,6 @@ const OperatorDashboard = () => {
         </div>
       </header>
 
-      {/* UNITS GRID */}
       {isLoading ? (
         <div className="flex justify-center items-center h-48 animate-pulse"><Loader2 className="animate-spin text-[#7A1B22]" size={36} /></div>
       ) : franchises.length === 0 ? (
@@ -231,14 +232,13 @@ const OperatorDashboard = () => {
                     'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
                     {unit.status === 'Active' && <CheckCircle size={13}/>}
-                    {unit.status === 'Ready for Pickup' && <Receipt size={13}/>}
+                    {unit.status === 'Ready for Pickup' && <FileText size={13}/>}
                     {unit.status === 'Pending' && <Clock size={13} className="animate-pulse"/>}
                     {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={13}/>}
                     {unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
                   </span>
                 </div>
 
-                {/* VISUAL TRACKER (Automatically hidden if Active) */}
                 {renderApplicationTracker(unit.status)}
 
                 <div className="grid grid-cols-2 gap-3 mb-5">
@@ -269,7 +269,7 @@ const OperatorDashboard = () => {
 
                 {unit.status === 'Ready for Pickup' && (
                   <div className="mb-5 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
-                    <Receipt className="text-blue-600 shrink-0 mt-0.5" size={20} />
+                    <FileText className="text-blue-600 shrink-0 mt-0.5" size={20} />
                     <div>
                       <h4 className="text-blue-900 font-black text-xs uppercase mb-1">Approved! Next Step: Payment</h4>
                       <p className="text-xs font-medium text-blue-700 leading-snug">Present your Claim Stub to the Municipal Cashier to pay the <b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b> fee and claim your Official Permit.</p>
@@ -323,14 +323,14 @@ const OperatorDashboard = () => {
             <div className="grid grid-cols-2 gap-y-3 text-xs">
               <div className="col-span-2">
                 <p className="text-slate-400 font-bold uppercase text-[10px]">Operator</p>
-                <p className="font-bold text-slate-900">{selectedUnit.fullName}</p>
+                <p className="font-bold text-slate-900">{selectedUnit?.fullName}</p>
               </div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">TODA</p><p className="font-bold text-slate-900">{selectedUnit.todaName}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Route Zone</p><p className="font-bold text-slate-900">{selectedUnit.zone}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Plate No.</p><p className="font-black text-slate-900">{selectedUnit.plateNo || 'N/A'}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Make & Model</p><p className="font-bold text-slate-900">{selectedUnit.make} ({selectedUnit.made})</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Motor Number</p><p className="font-bold text-slate-900">{selectedUnit.motorNo}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Chassis Number</p><p className="font-bold text-slate-900">{selectedUnit.chassisNo}</p></div>
+              <div><p className="text-slate-400 font-bold uppercase text-[10px]">TODA</p><p className="font-bold text-slate-900">{selectedUnit?.todaName}</p></div>
+              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Route Zone</p><p className="font-bold text-slate-900">{selectedUnit?.zone}</p></div>
+              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Plate No.</p><p className="font-black text-slate-900">{selectedUnit?.plateNo || 'N/A'}</p></div>
+              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Make & Model</p><p className="font-bold text-slate-900">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
+              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Motor Number</p><p className="font-bold text-slate-900">{selectedUnit?.motorNo}</p></div>
+              <div><p className="text-slate-400 font-bold uppercase text-[10px]">Chassis Number</p><p className="font-bold text-slate-900">{selectedUnit?.chassisNo}</p></div>
             </div>
             <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors">Close</button>
           </div>
@@ -342,7 +342,7 @@ const OperatorDashboard = () => {
         <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
           <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
             <h2 className="font-bold text-sm flex items-center gap-2">
-              <Receipt size={18} className="text-[#D4AF37]" /> Payment & Claim Stub
+              <FileText size={18} className="text-[#D4AF37]" /> Payment & Claim Stub
             </h2>
             <div className="flex gap-2">
               <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"><X size={14} /> Close</button>
@@ -356,7 +356,7 @@ const OperatorDashboard = () => {
             <div id="printable-document" className="bg-white w-full max-w-[600px] border-2 border-dashed border-slate-300 shadow-xl p-8 sm:p-12 print:border-none print:shadow-none relative">
               <div className="text-center mb-6 border-b-2 border-dashed border-slate-300 pb-6">
                 <div className="inline-flex justify-center items-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-4">
-                  <Receipt size={32} />
+                  <FileText size={32} />
                 </div>
                 <h1 className="text-2xl font-black uppercase tracking-widest text-[#7A1B22]">Franchise Claim Stub</h1>
                 <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">Municipality of Gasan</p>
@@ -371,19 +371,19 @@ const OperatorDashboard = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-sm text-slate-500 font-bold uppercase">Applicant Name</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit.fullName}</span>
+                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.fullName}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-sm text-slate-500 font-bold uppercase">Tricycle Plate No.</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit.plateNo || 'N/A'}</span>
+                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.plateNo || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-sm text-slate-500 font-bold uppercase">Application Type</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit.applicationType}</span>
+                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.applicationType}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-sm text-slate-500 font-bold uppercase">Date Approved</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{new Date(selectedUnit.updatedAt).toLocaleDateString()}</span>
+                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.updatedAt ? new Date(selectedUnit.updatedAt).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
 
@@ -395,7 +395,7 @@ const OperatorDashboard = () => {
               
               <div className="mt-8 flex flex-col items-center justify-center opacity-60">
                 <div className="flex gap-1 h-10 w-48 bg-slate-800" style={{ background: 'repeating-linear-gradient(90deg, #1e293b, #1e293b 2px, transparent 2px, transparent 4px, #1e293b 4px, #1e293b 8px, transparent 8px, transparent 10px)' }}></div>
-                <p className="text-[10px] font-mono font-bold mt-1 tracking-widest">{selectedUnit._id}</p>
+                <p className="text-[10px] font-mono font-bold mt-1 tracking-widest">{selectedUnit?._id}</p>
               </div>
             </div>
           </div>

@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 
-// Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import FranchiseMasterlist from './pages/admin/FranchiseMasterlist';
 import UserManagement from './pages/admin/UserManagement';
@@ -16,7 +15,6 @@ import ManageRevocations from './pages/admin/ManageRevocations';
 import ValidateTODA from './pages/admin/ValidateTODA';
 import AdminReports from './pages/admin/AdminReports';
 
-// Operator Pages
 import OperatorDashboard from './pages/operator/OperatorDashboard';
 import ApplyFranchise from './pages/operator/ApplyFranchise';
 import RenewFranchise from './pages/operator/RenewFranchise';
@@ -27,12 +25,13 @@ import HelpSupport from './pages/operator/HelpSupport';
 function App() {
   return (
     <Routes>
+      {/* PUBLIC ROUTES */}
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* ADMIN SECURE ROUTES (Mga 'admin' lang ang pwedeng pumasok dito) */}
+      {/* ADMIN SECURE ROUTES */}
       <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseMasterlist /></ProtectedRoute>} />
       <Route path="/user-management" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
@@ -42,15 +41,15 @@ function App() {
       <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
       <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
 
-      {/* OPERATOR & TODA SECURE ROUTES (Bawal ang Admin dito) */}
-      <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['toda president', 'operator']}><SubmitMembers /></ProtectedRoute>} />
-      <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['toda president', 'operator']}><OperatorDashboard /></ProtectedRoute>} />
-      <Route path="/apply-franchise" element={<ProtectedRoute allowedRoles={['toda president', 'operator']}><ApplyFranchise /></ProtectedRoute>} />
-      <Route path="/renew-franchise/:id" element={<ProtectedRoute allowedRoles={['toda president', 'operator']}><RenewFranchise /></ProtectedRoute>} />
+      {/* OPERATOR & TODA SECURE ROUTES */}
+      <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><SubmitMembers /></ProtectedRoute>} />
+      <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorDashboard /></ProtectedRoute>} />
+      <Route path="/apply-franchise" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><ApplyFranchise /></ProtectedRoute>} />
+      <Route path="/renew-franchise/:id" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><RenewFranchise /></ProtectedRoute>} />
       
       {/* SHARED SECURE ROUTES */}
-      <Route path="/manage-profile" element={<ProtectedRoute allowedRoles={['admin', 'toda president', 'operator']}><ManageProfile /></ProtectedRoute>} />
-      <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'toda president', 'operator']}><HelpSupport /></ProtectedRoute>} />
+      <Route path="/manage-profile" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><ManageProfile /></ProtectedRoute>} />
+      <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
     </Routes>
   );
 }

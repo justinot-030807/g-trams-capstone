@@ -4,40 +4,38 @@ import { Navigate } from 'react-router-dom';
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
   let userRole = localStorage.getItem('role');
+  const userStr = localStorage.getItem('user');
 
-  // Fallback: Kung wala sa 'role', baka nasa loob ng 'user' object na-save ng Login page mo
-  if (!userRole) {
+  // Fallback: Kunin ang role sa loob ng 'user' object kung wala sa 'role' key
+  if (!userRole && userStr) {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const userObj = JSON.parse(userStr);
-        userRole = userObj?.role || '';
-      }
+      const userObj = JSON.parse(userStr);
+      userRole = userObj?.role;
     } catch (error) {
-      console.error("Hindi mabasa ang user data sa storage.");
+      console.error("Failed to parse user data.");
     }
   }
 
-  // Kapag walang token o walang role, ibalik sa login
+  // Kung walang token o walang role, sipain sa login
   if (!token || !userRole) {
     localStorage.clear();
     return <Navigate to="/login" replace />;
   }
 
-  // Gawing lowercase para walang case-sensitive issues (Admin vs admin)
-  const safeUserRole = userRole.toLowerCase();
-  const safeAllowedRoles = allowedRoles.map(r => r.toLowerCase());
+  // Linisin ang text: Tanggalin ang spaces at gawing small letters lahat
+  const safeUserRole = String(userRole).toLowerCase().trim();
+  const safeAllowedRoles = allowedRoles.map(r => String(r).toLowerCase().trim());
 
-  // Kung ang role mo ay WALA sa pinapayagan sa pahinang ito, ire-redirect ka sa tamang dashboard
+  // Kung WALA sa allowed roles ang user, i-redirect sa tamang page niya
   if (!safeAllowedRoles.includes(safeUserRole)) {
-    if (safeUserRole === 'admin') {
+    if (safeUserRole === 'admin' || safeUserRole === 'administrator') {
       return <Navigate to="/admin-dashboard" replace />;
     } else {
       return <Navigate to="/operator-dashboard" replace />;
     }
   }
 
-  // Kapag tama ang lahat, papasukin sa pahina
+  // Kung tama ang role, papasukin
   return children;
 };
 
