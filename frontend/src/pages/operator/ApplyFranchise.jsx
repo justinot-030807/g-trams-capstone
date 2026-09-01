@@ -30,17 +30,12 @@ const ApplyFranchise = () => {
   const [selectedId, setSelectedId] = useState(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Progress Steps (1, 2, 3)
   const [currentStep, setCurrentStep] = useState(1);
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
 
-  // Toast Notifications
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  
-  // Document Preview Modal
   const [fullPreview, setFullPreview] = useState(null);
 
-  // KUNIN ANG REGISTERED PROFILE DATA MULA SA LOCAL STORAGE
   let loggedInUserName = localStorage.getItem('name') || '';
   let loggedInAddress = ''; 
   let loggedInToda = 'NON-TODA'; 
@@ -79,7 +74,6 @@ const ApplyFranchise = () => {
     }
   }, []);
 
-  // AUTO-SAVE EFFECT: Nagsesave kapag 'New' application mode
   useEffect(() => {
     if (formMode === 'New') {
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
@@ -129,7 +123,7 @@ const ApplyFranchise = () => {
         if (parsedDraft.formData) {
           setFormData({
             ...parsedDraft.formData,
-            todaName: loggedInToda // Tiyaking laging naka-sync sa profile TODA
+            todaName: loggedInToda 
           });
           setCurrentStep(parsedDraft.currentStep || 1);
           setHasDraftRestored(true);
@@ -347,7 +341,6 @@ const ApplyFranchise = () => {
   const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all";
   const disabledClasses = "w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-500 outline-none cursor-not-allowed select-none";
 
-  // UNITS LIST VIEW
   if (formMode === null) {
     return (
       <MainLayout>
@@ -488,25 +481,32 @@ const ApplyFranchise = () => {
         </div>
       )}
 
+      {/* FIXED: MOBILE RESPONSIVE PREVIEW MODAL WITH FLOATING CLOSE BUTTON */}
       {fullPreview && (
-        <div className="fixed inset-0 z-[200] bg-slate-900/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="flex justify-between items-center w-full max-w-5xl mb-4">
-            <h3 className="text-white font-bold text-lg flex items-center gap-2">
+        <div className="fixed inset-0 z-[200] bg-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-8 backdrop-blur-md animate-in fade-in">
+          <button 
+            onClick={() => setFullPreview(null)} 
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 text-white bg-red-500/80 hover:bg-red-500 p-2 sm:p-2.5 rounded-full shadow-lg transition-all"
+          >
+            <X size={20} />
+          </button>
+          
+          <div className="w-full max-w-5xl mb-3 mt-8 sm:mt-0 text-center">
+            <h3 className="text-white font-bold text-sm sm:text-lg flex items-center justify-center gap-2">
               <ShieldCheck size={20} className="text-[#D4AF37]" /> {fullPreview.title}
             </h3>
-            <button onClick={() => setFullPreview(null)} className="text-white hover:text-red-400 bg-white/10 p-2 rounded-xl transition-colors">
-              <X size={22} />
-            </button>
           </div>
-          {fullPreview.url.toLowerCase().includes('.pdf') ? (
-            <iframe src={fullPreview.url} className="w-full max-w-5xl h-[75vh] bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
-          ) : (
-            <img src={fullPreview.url} alt="Preview" className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl bg-slate-800" />
-          )}
+
+          <div className="w-full max-w-5xl h-[75vh] flex items-center justify-center relative">
+            {fullPreview.url.toLowerCase().includes('.pdf') ? (
+              <iframe src={fullPreview.url} className="w-full h-full bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
+            ) : (
+              <img src={fullPreview.url} alt="Preview" className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl bg-slate-800" />
+            )}
+          </div>
         </div>
       )}
 
-      {/* HEADER SECTION */}
       <header className="mb-4 sm:mb-6 max-w-3xl flex flex-col sm:flex-row justify-between sm:items-end gap-2">
         <div>
           <button 
@@ -535,15 +535,15 @@ const ApplyFranchise = () => {
         )}
       </header>
 
-      {/* MINIMALIST PROGRESS STEPPER */}
+      {/* FIXED: ADJUSTED PROGRESS LINE TO PREVENT OVEREXTENSION */}
       <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs max-w-3xl mb-5">
-        <div className="relative flex items-center justify-between px-6 sm:px-12">
-          <div className="absolute left-8 right-8 sm:left-16 sm:right-16 top-3 sm:top-3.5 h-[2px] bg-slate-200 z-0" />
+        <div className="relative flex items-center justify-between px-4 sm:px-12">
+          
+          <div className="absolute left-[15%] right-[15%] sm:left-[20%] sm:right-[20%] top-[14px] sm:top-[16px] h-[2px] bg-slate-200 z-0" />
+          
           <div 
-            className="absolute left-8 sm:left-16 top-3 sm:top-3.5 h-[2px] bg-[#7A1B22] transition-all duration-300 ease-out z-0"
-            style={{
-              width: currentStep === 1 ? '0%' : currentStep === 2 ? 'calc(50% - 8px)' : 'calc(100% - 16px)'
-            }}
+            className="absolute left-[15%] sm:left-[20%] top-[14px] sm:top-[16px] h-[2px] bg-[#7A1B22] transition-all duration-300 ease-out z-0"
+            style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '35%' : '70%' }}
           />
 
           {steps.map((step) => {
@@ -551,24 +551,24 @@ const ApplyFranchise = () => {
             const isCurrent = currentStep === step.num;
 
             return (
-              <div key={step.num} className="relative z-10 flex flex-col items-center">
+              <div key={step.num} className="relative z-10 flex flex-col items-center w-24 sm:w-32">
                 <div 
-                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                     isCompleted 
-                      ? 'bg-[#7A1B22] text-white shadow-xs' 
+                      ? 'bg-[#7A1B22] text-white shadow-md' 
                       : isCurrent 
-                      ? 'bg-white border-2 border-[#7A1B22] ring-3 ring-[#7A1B22]/15' 
-                      : 'bg-white border-2 border-slate-200'
+                      ? 'bg-white border-[3px] border-[#7A1B22] ring-4 ring-[#7A1B22]/10' 
+                      : 'bg-white border-2 border-slate-300'
                   }`}
                 >
                   {isCompleted ? (
-                    <Check size={13} className="stroke-[3]" />
+                    <Check size={14} className="stroke-[3]" />
                   ) : isCurrent ? (
-                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#7A1B22] rounded-full" />
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#7A1B22] rounded-full" />
                   ) : null}
                 </div>
                 
-                <span className={`text-[10px] sm:text-xs font-bold mt-1.5 text-center tracking-tight transition-colors ${
+                <span className={`text-[10px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors ${
                   isCurrent ? 'text-[#7A1B22] font-black' : isCompleted ? 'text-slate-800' : 'text-slate-400'
                 }`}>
                   {step.title}
@@ -579,10 +579,8 @@ const ApplyFranchise = () => {
         </div>
       </div>
 
-      {/* FORM STEPS */}
       <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl">
         
-        {/* STEP 1: OPERATOR & VEHICLE DETAILS */}
         {currentStep === 1 && (
           <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 animate-in fade-in duration-150">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
@@ -637,7 +635,6 @@ const ApplyFranchise = () => {
                 <input type="text" name="make" value={formData.make} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. Honda / Kawasaki" />
               </div>
 
-              {/* AUTOMATIC AT LOCKED TODA ASSOCIATION INPUT */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">TODA Association</label>
@@ -681,7 +678,6 @@ const ApplyFranchise = () => {
           </div>
         )}
 
-        {/* STEP 2: CEDULA & TAX DETAILS */}
         {currentStep === 2 && (
           <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 animate-in fade-in duration-150">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
@@ -731,7 +727,6 @@ const ApplyFranchise = () => {
           </div>
         )}
 
-        {/* STEP 3: UPLOAD & VERIFY */}
         {currentStep === 3 && (
           <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 animate-in fade-in duration-150">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
@@ -817,7 +812,6 @@ const ApplyFranchise = () => {
               </div>
             )}
 
-            {/* REVIEW SUMMARY */}
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 sm:p-4 mb-6">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Buod ng Aplikasyon</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">

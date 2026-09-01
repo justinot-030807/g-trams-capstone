@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
 const upload = require('../config/cloudinary');
-const { authorize } = require('../middleware/authMiddleware'); 
+const { protect, authorize } = require('../middleware/authMiddleware'); 
 
 const { 
     createFranchise, 
@@ -19,11 +18,15 @@ const {
     getFranchiseReports 
 } = require('../controllers/franchiseController');
 
+// Lahat makakagamit nito
 router.get('/search', protect, searchHistoricalFranchise);
 
+// API ROUTES:
 router.route('/')
+    // OPERATOR AT TODA LANG ANG PWEDENG MAGPASA (Bawal Admin)
     .post(
         protect, 
+        authorize('operator', 'toda president'),
         upload.fields([
             { name: 'orCrDocument', maxCount: 1 },
             { name: 'license', maxCount: 1 },
@@ -32,15 +35,21 @@ router.route('/')
         ]), 
         createFranchise
     )
-    .get(protect, getAllFranchises);
+    // ADMIN LANG ANG PWEDENG KUMUHA NG MASTERLIST (Bawal Operator)
+    .get(protect, authorize('admin'), getAllFranchises);
 
+// ADMIN ONLY ROUTES
 router.get('/reports', protect, authorize('admin'), getFranchiseReports);
-router.get('/my-franchises', protect, getMyFranchises);
-router.put('/:id/archive', protect, toggleArchiveFranchise);
+router.put('/:id/archive', protect, authorize('admin'), toggleArchiveFranchise);
+router.put('/:id/revoke', protect, authorize('admin'), upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
+router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
 
-// MODULE 8: ROUTE PARA SA REVOCATION MAY KASAMANG FILE UPLOAD
-router.put('/:id/revoke', protect, upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
+// OPERATOR ONLY ROUTES
+router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
+router.put('/:id/renew', protect, authorize('operator', 'toda president'), renewFranchise);
+router.put('/:id/cancel', protect, authorize('operator', 'toda president'), cancelMyFranchise);
 
+// SHARED ROUTES (Basta sariling data / update lang)
 router.route('/:id')
     .put(
         protect, 
@@ -52,12 +61,6 @@ router.route('/:id')
         ]), 
         updateFranchise
     )
-    .delete(protect, deleteFranchise);
-
-router.put('/:id/renew', protect, renewFranchise);
-router.put('/:id/status', protect, updateFranchiseStatus);
-router.put('/:id/cancel', protect, cancelMyFranchise);
-
-
+    .delete(protect, authorize('admin'), deleteFranchise);
 
 module.exports = router;

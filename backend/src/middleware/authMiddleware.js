@@ -1,19 +1,13 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
-// 1. Protect routes (Authentication) - Kailangan nakalogin
 const protect = async (req, res, next) => {
     let token;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            // getyung token 
             token = req.headers.authorization.split(' ')[1];
-            
-            // verify ang token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            
-            // get ang user mula sa database 
             req.user = await User.findById(decoded.id).select('-password');
             next();
         } catch (error) {
@@ -26,12 +20,15 @@ const protect = async (req, res, next) => {
     }
 };
 
-// 2. Role-Based Access Control (Authorization)
+// ROLE-BASED ACCESS CONTROL (Case-Insensitive Check)
 const authorize = (...roles) => {
     return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
+        const userRole = req.user.role.toLowerCase();
+        const allowedRoles = roles.map(r => r.toLowerCase());
+
+        if (!allowedRoles.includes(userRole)) {
             return res.status(403).json({
-                message: `User role '${req.user.role}' is not authorized to access this route`
+                message: `ACCESS DENIED: Role '${req.user.role}' is not authorized to execute this API.`
             });
         }
         next();
