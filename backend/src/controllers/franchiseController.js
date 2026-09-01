@@ -1,7 +1,7 @@
 const Franchise = require('../models/franchiseModel');
 const cron = require('node-cron');
 
-// AUTO-ARCHIVE ENGINE: Tumatakbo araw-araw tuwing hatinggabi (Midnight)
+// AUTO-ARCHIVE ENGINE: Tumatakbo araw-araw tuwing hatinggabi (Midnight)[cite: 34]
 cron.schedule('0 0 * * *', async () => {
     try {
         console.log('Running Auto-Archive Engine...');
@@ -92,12 +92,57 @@ const searchHistoricalFranchise = async (req, res) => {
     }
 };
 
+// SERVER-SIDE PAGINATED & SEARCH-OPTIMIZED MASTERLIST[cite: 34]
 const getAllFranchises = async (req, res) => {
     try {
-        const { archived } = req.query;
-        const queryCondition = archived === 'true' ? { isArchived: true } : { isArchived: { $ne: true } };
-        const franchises = await Franchise.find(queryCondition).populate('operator', 'name address contact').sort({ createdAt: -1 });
-        res.status(200).json(franchises);
+        const { archived, page = 1, limit = 10, search = '', status = 'All' } = req.query;
+
+        const pageNum = Math.max(1, parseInt(page, 10) || 1);
+        const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+        const skip = (pageNum - 1) * limitNum;
+
+        // 1. Archive filter condition[cite: 34]
+        let queryCondition = archived === 'true' ? { isArchived: true } : { isArchived: { $ne: true } };
+
+        // 2. Status filter condition
+        if (status && status !== 'All') {
+            queryCondition.status = status;
+        }
+
+        // 3. Multi-field regular expression search
+        if (search && search.trim() !== '') {
+            const searchRegex = { $regex: search.trim(), $options: 'i' };
+            queryCondition.$or = [
+                { fullName: searchRegex },
+                { plateNo: searchRegex },
+                { motorNo: searchRegex },
+                { chassisNo: searchRegex },
+                { todaName: searchRegex },
+                { address: searchRegex }
+            ];
+        }
+
+        const totalRecords = await Franchise.countDocuments(queryCondition);
+
+        const franchises = await Franchise.find(queryCondition)
+            .populate('operator', 'name address contact')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limitNum);
+
+        const totalPages = Math.ceil(totalRecords / limitNum) || 1;
+
+        res.status(200).json({
+            data: franchises,
+            pagination: {
+                totalRecords,
+                totalPages,
+                currentPage: pageNum,
+                limit: limitNum,
+                hasNextPage: pageNum < totalPages,
+                hasPrevPage: pageNum > 1
+            }
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -184,24 +229,22 @@ const cancelMyFranchise = async (req, res) => {
     }
 };
 
-// MANUAL ARCHIVE LOGIC (Fix para sa mga lumang data)
+// MANUAL ARCHIVE LOGIC (Supports explicit state boolean updates)[cite: 34]
 const toggleArchiveFranchise = async (req, res) => {
     try {
         const franchise = await Franchise.findById(req.params.id);
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
 
-        const newArchiveStatus = !franchise.isArchived;
-        const newArchiveDate = newArchiveStatus ? Date.now() : null;
+        const targetState = req.body.isArchived !== undefined ? req.body.isArchived : !franchise.isArchived;
+        const newArchiveDate = targetState ? Date.now() : null;
         
-        // Imbes na .save(), gagamit tayo ng findByIdAndUpdate. 
-        // Bapa-bypass nito ang strict validation kaya ma-a-archive kahit pa yung mga lumang data na kulang ang details!
         const updatedFranchise = await Franchise.findByIdAndUpdate(
             req.params.id,
             {
-                isArchived: newArchiveStatus,
+                isArchived: targetState,
                 archivedAt: newArchiveDate
             },
-            { returnDocument: 'after' }
+            { new: true, runValidators: false } 
         );
 
         res.status(200).json({ 
@@ -222,7 +265,6 @@ const revokeFranchise = async (req, res) => {
         franchise.status = 'Revoked';
         franchise.cancelReason = cancelReason || 'Revoked by Admin due to violation';
 
-        // Kung may in-upload na ebidensya (PDF o Image)
         const files = req.files || {};
         if (files.evidence && files.evidence[0]) {
             franchise.evidenceUrl = files.evidence[0].path;
@@ -238,15 +280,13 @@ const revokeFranchise = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-// MODULE 7: GENERATE SYSTEM REPORTS (Dynamic Filtering)
+
 const getFranchiseReports = async (req, res) => {
     try {
         const { startDate, endDate, status, todaName, barangay } = req.query;
-        let query = {}; // Dito natin iipunin ang mga filters
+        let query = {}; 
 
-        // 1. DATE RANGE FILTER
         if (startDate && endDate) {
-            // Sine-set natin ang time para sakop ang buong araw
             const start = new Date(startDate);
             start.setHours(0, 0, 0, 0);
             
@@ -256,28 +296,14 @@ const getFranchiseReports = async (req, res) => {
             query.dateApplied = { $gte: start, $lte: end };
         }
 
-        // 2. STATUS FILTER
-        if (status) {
-            query.status = status;
-        }
+        if (status) query.status = status;
+        if (todaName) query.todaName = todaName;
+        if (barangay) query.address = { $regex: barangay, $options: 'i' };
 
-        // 3. TODA FILTER
-        if (todaName) {
-            query.todaName = todaName;
-        }
-
-        // 4. BARANGAY FILTER
-        // Gagamit tayo ng regex kasi ang format natin sa form ay "BarangayName, Gasan"
-        if (barangay) {
-            query.address = { $regex: barangay, $options: 'i' };
-        }
-
-        // Kunin ang mga data mula sa database base sa filters
         const reports = await Franchise.find(query)
-            .populate('operator', 'name contact') // Kukunin din natin ang pangalan ng operator
+            .populate('operator', 'name contact')
             .sort({ dateApplied: -1 });
 
-        // Gagawa tayo ng mabilisang summary para sa Dashboard Analytics
         const summary = {
             total: reports.length,
             active: reports.filter(r => r.status === 'Active').length,

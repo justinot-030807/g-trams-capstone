@@ -57,7 +57,7 @@ const FranchiseApproval = () => {
     }
   };
 
-  // Helper para sa custom notification
+  // Helper function para sa custom notification
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
@@ -84,7 +84,7 @@ const FranchiseApproval = () => {
       });
 
       if (response.ok) {
-        showToast(`Application successfully moved to ${status}!`);
+        showToast(`Application successfully updated to ${status}!`, "success");
         setSelectedApp(null); 
         setIsRejecting(false);
         fetchApplications(); 
@@ -126,7 +126,7 @@ const FranchiseApproval = () => {
         }
       `}</style>
 
-      {/* CUSTOM FLOATING TOAST NOTIFICATION (Imbes na default browser alert) */}
+      {/* CUSTOM FLOATING TOAST NOTIFICATION */}
       {toast.show && (
         <div className="fixed top-6 right-6 z-[999] animate-in fade-in slide-in-from-top-4 duration-300">
           <div className={`px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border ${
@@ -181,12 +181,9 @@ const FranchiseApproval = () => {
             <h2 className="font-bold text-sm">Official MTOP Permit</h2>
             <div className="flex gap-2">
               <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"><X size={14} /> Close</button>
-              
-              {/* DAGDAG: Download / Save as PDF Button */}
               <button onClick={() => window.print()} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
                 <Download size={14} /> Download / Save PDF
               </button>
-
               <button onClick={() => window.print()} className="px-4 py-1.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
                 <Printer size={14} /> Print Document
               </button>
