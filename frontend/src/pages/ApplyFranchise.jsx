@@ -1,21 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/MainLayout';
 import { 
-  UploadCloud, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
+  UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
-  User, FileText, ChevronRight, ChevronLeft, ShieldCheck, Car
+  ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw
 } from 'lucide-react';
-
-const TODA_LIST = [
-  "BATODA", "POB TODA", "NBI TODA", "GT TODA", "TIGUION TODA", 
-  "BANGBANG–IPIL TODA", "TAB TODA", "LUG TODA (incl. LUGTODA)", 
-  "MASIGA TODA", "4B TODA", "CT TODA", "TG TODA", "GC TODA", 
-  "MA TODA", "PG TODA", "MAT TODA (incl. MATODA / MAT. GASAN TODA)", 
-  "DPAB TODA", "MGN TODA", "GSTODA", "GS TODA", "TTODA", 
-  "TC TODA", "NORTH TODA", "GASAN CENTRAL TODA", "BAHI TODA", 
-  "ILAYA TODA", "GTF TODA", 
-  "NON-TODA"
-];
 
 const GASAN_BARANGAYS = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
@@ -32,6 +21,8 @@ const REQUIREMENTS_LIST = [
   { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
 ];
 
+const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
+
 const ApplyFranchise = () => {
   const [myFranchises, setMyFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,17 +30,36 @@ const ApplyFranchise = () => {
   const [selectedId, setSelectedId] = useState(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // MULTI-STEP PROGRESS STATE (Step 1, 2, 3)
+  // Progress Steps (1, 2, 3)
   const [currentStep, setCurrentStep] = useState(1);
+  const [hasDraftRestored, setHasDraftRestored] = useState(false);
 
-  // CUSTOM TOAST NOTIFICATION STATE
+  // Toast Notifications
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   
-  // DOCUMENT PREVIEW MODAL STATE
+  // Document Preview Modal
   const [fullPreview, setFullPreview] = useState(null);
+
+  // KUNIN ANG REGISTERED PROFILE DATA MULA SA LOCAL STORAGE
+  let loggedInUserName = localStorage.getItem('name') || '';
+  let loggedInAddress = ''; 
+  let loggedInToda = 'NON-TODA'; 
+
+  const userObj = localStorage.getItem('user');
+  if (userObj) {
+    try {
+      const parsedUser = JSON.parse(userObj);
+      if (!loggedInUserName) loggedInUserName = parsedUser.name || '';
+      if (parsedUser.address) loggedInAddress = parsedUser.address; 
+      if (parsedUser.todaAssociation) loggedInToda = parsedUser.todaAssociation; 
+    } catch (e) { console.error(e); }
+  }
   
   const [formData, setFormData] = useState({
-    fullName: '', address: '', zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', todaName: '',
+    fullName: loggedInUserName, 
+    address: loggedInAddress, 
+    zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+    todaName: loggedInToda,
     dateApplied: '', cedulaDate: '', cedulaAddress: 'Gasan, Marinduque', 
     cedulaSerialNo: ''
   });
@@ -68,6 +78,16 @@ const ApplyFranchise = () => {
       } catch (e) { console.error(e); }
     }
   }, []);
+
+  // AUTO-SAVE EFFECT: Nagsesave kapag 'New' application mode
+  useEffect(() => {
+    if (formMode === 'New') {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+        formData,
+        currentStep
+      }));
+    }
+  }, [formData, currentStep, formMode]);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -98,6 +118,60 @@ const ApplyFranchise = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  const handleStartNewApplication = () => {
+    setFormMode('New');
+    setFilePreviews({});
+    
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        if (parsedDraft.formData) {
+          setFormData({
+            ...parsedDraft.formData,
+            todaName: loggedInToda // Tiyaking laging naka-sync sa profile TODA
+          });
+          setCurrentStep(parsedDraft.currentStep || 1);
+          setHasDraftRestored(true);
+          showToast("Na-restore ang iyong dating nai-type na draft.", "success");
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    setHasDraftRestored(false);
+    setCurrentStep(1);
+    setFormData({ 
+      fullName: loggedInUserName, 
+      address: loggedInAddress, 
+      zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+      todaName: loggedInToda, 
+      dateApplied: '', cedulaDate: '', 
+      cedulaAddress: 'Gasan, Marinduque', 
+      cedulaSerialNo: '' 
+    });
+  };
+
+  const handleClearDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setHasDraftRestored(false);
+    setCurrentStep(1);
+    setFormData({ 
+      fullName: loggedInUserName, 
+      address: loggedInAddress, 
+      zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+      todaName: loggedInToda, 
+      dateApplied: '', cedulaDate: '', 
+      cedulaAddress: 'Gasan, Marinduque', 
+      cedulaSerialNo: '' 
+    });
+    setUploadedDocs({});
+    setFilePreviews({});
+    showToast("Binura ang draft. Naka-reset na ang form.", "success");
+  };
+
   const handleRenewClick = (franchise) => {
     setFormMode('Renewal');
     setSelectedId(franchise._id);
@@ -113,7 +187,7 @@ const ApplyFranchise = () => {
       motorNo: franchise.motorNo || '',
       chassisNo: franchise.chassisNo || '',
       plateNo: franchise.plateNo || '',
-      todaName: franchise.todaName || '',
+      todaName: franchise.todaName || loggedInToda,
       dateApplied: '', cedulaDate: '', 
       cedulaAddress: 'Gasan, Marinduque', 
       cedulaSerialNo: ''
@@ -134,7 +208,7 @@ const ApplyFranchise = () => {
       motorNo: franchise.motorNo || '',
       chassisNo: franchise.chassisNo || '',
       plateNo: franchise.plateNo || '',
-      todaName: franchise.todaName || '',
+      todaName: franchise.todaName || loggedInToda,
       dateApplied: franchise.dateApplied ? franchise.dateApplied.substring(0, 10) : '',
       cedulaDate: franchise.cedulaDate ? franchise.cedulaDate.substring(0, 10) : '',
       cedulaAddress: franchise.cedulaAddress || 'Gasan, Marinduque',
@@ -178,16 +252,15 @@ const ApplyFranchise = () => {
     });
   };
 
-  // VALIDATION PER STEP BAGO PUMUNTA SA SUSUNOD
   const validateAndNext = () => {
     if (currentStep === 1) {
-      if (!formData.fullName || !formData.address || !formData.zone || !formData.make || !formData.made || !formData.todaName || !formData.motorNo || !formData.chassisNo || !formData.plateNo) {
-        showToast("Pakipunan ang lahat ng kinakailangang impormasyon sa Step 1.", "error");
+      if (!formData.fullName || !formData.address || !formData.zone || !formData.make || !formData.made || !formData.motorNo || !formData.chassisNo || !formData.plateNo) {
+        showToast("Pakipunan ang lahat ng impormasyon bago magpatuloy.", "error");
         return;
       }
     } else if (currentStep === 2) {
       if (!formData.dateApplied || !formData.cedulaDate || !formData.cedulaSerialNo || !formData.cedulaAddress) {
-        showToast("Pakilagay ang kumpletong detalye ng Cedula sa Step 2.", "error");
+        showToast("Pakilagay ang kumpletong detalye ng Cedula.", "error");
         return;
       }
     }
@@ -203,11 +276,10 @@ const ApplyFranchise = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check if requirements are uploaded in Step 3 for New/Re-apply
     if (formMode === 'New') {
       const missing = REQUIREMENTS_LIST.filter(req => !uploadedDocs[req.id]);
       if (missing.length > 0) {
-        showToast("Pakisiguradong kumpleto ang 4 na in-upload na requirements.", "error");
+        showToast("Pakisiguradong kumpleto ang 4 na requirements na in-upload.", "error");
         return;
       }
     }
@@ -255,44 +327,30 @@ const ApplyFranchise = () => {
       const data = await response.json();
 
       if (response.ok) {
-        showToast(`Franchise ${formMode} Application Submitted Successfully!`, "success");
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        showToast("Matagumpay na naisumite ang aplikasyon!", "success");
         setFormMode(null);
         setCurrentStep(1);
         fetchMyFranchises(); 
         setUploadedDocs({});
         setFilePreviews({});
       } else {
-        showToast(data.message || data.error || 'Failed to submit application.', 'error');
+        showToast(data.message || data.error || 'Hindi naisumite ang aplikasyon.', 'error');
       }
     } catch (error) {
-      showToast('Network error. Cannot connect to server.', 'error');
+      showToast('Network error. Hindi makakonekta sa server.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all";
-  const disabledClasses = "w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 outline-none cursor-not-allowed";
+  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all";
+  const disabledClasses = "w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-500 outline-none cursor-not-allowed select-none";
 
-  let loggedInUserName = localStorage.getItem('name') || '';
-  let loggedInAddress = ''; 
-  let loggedInToda = ''; 
-
-  const userObj = localStorage.getItem('user');
-  if (userObj) {
-    try {
-      const parsedUser = JSON.parse(userObj);
-      if (!loggedInUserName) loggedInUserName = parsedUser.name || '';
-      if (parsedUser.address) loggedInAddress = parsedUser.address; 
-      if (parsedUser.todaAssociation) loggedInToda = parsedUser.todaAssociation; 
-    } catch (e) { console.error(e); }
-  }
-
-  // LIST / DASHBOARD VIEW OF UNITS
+  // UNITS LIST VIEW
   if (formMode === null) {
     return (
       <MainLayout>
-        {/* CUSTOM TOAST NOTIFICATION */}
         {toast.show && (
           <div className="fixed top-6 right-6 z-[999] animate-in fade-in slide-in-from-top-4 duration-300">
             <div className={`px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border ${
@@ -306,7 +364,7 @@ const ApplyFranchise = () => {
 
         <header className="mb-6">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">My Franchises</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage your active tricycle units and pending franchise applications.</p>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage your active tricycle units and pending applications.</p>
         </header>
 
         {isLoading ? (
@@ -389,20 +447,7 @@ const ApplyFranchise = () => {
 
             {myFranchises.length < 2 ? (
               <button 
-                onClick={() => {
-                  setFormMode('New');
-                  setCurrentStep(1);
-                  setFilePreviews({});
-                  setFormData({ 
-                    fullName: loggedInUserName, 
-                    address: loggedInAddress, 
-                    zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
-                    todaName: loggedInToda, 
-                    dateApplied: '', cedulaDate: '', 
-                    cedulaAddress: 'Gasan, Marinduque', 
-                    cedulaSerialNo: '' 
-                  });
-                }}
+                onClick={handleStartNewApplication}
                 className="bg-slate-50 hover:bg-slate-100 border-2 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 hover:text-[#7A1B22] hover:border-[#7A1B22]/50 transition-all min-h-[200px] group active:scale-98"
               >
                 <div className="w-14 h-14 rounded-2xl bg-white shadow-xs border border-slate-200 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:border-[#7A1B22]/30 transition-all">
@@ -424,18 +469,14 @@ const ApplyFranchise = () => {
     );
   }
 
-  // MULTI-STEP WIZARD FORM VIEW
   const steps = [
-    { num: 1, title: 'Vehicle & Operator', icon: <Car size={16} /> },
-    { num: 2, title: 'Cedula & Tax Info', icon: <FileText size={16} /> },
-    { num: 3, title: 'Upload & Review', icon: <UploadCloud size={16} /> }
+    { num: 1, title: 'Operator & Vehicle' },
+    { num: 2, title: 'Cedula & Tax' },
+    { num: 3, title: 'Requirements' }
   ];
-
-  const progressPercentage = formMode === 'Renewal' ? (currentStep === 1 ? 50 : 100) : ((currentStep - 1) / 2) * 100;
 
   return (
     <MainLayout>
-      {/* CUSTOM TOAST NOTIFICATION */}
       {toast.show && (
         <div className="fixed top-6 right-6 z-[999] animate-in fade-in slide-in-from-top-4 duration-300">
           <div className={`px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border ${
@@ -447,12 +488,11 @@ const ApplyFranchise = () => {
         </div>
       )}
 
-      {/* OPERATOR FULL-SCREEN DOCUMENT PREVIEW MODAL */}
       {fullPreview && (
         <div className="fixed inset-0 z-[200] bg-slate-900/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="flex justify-between items-center w-full max-w-5xl mb-4">
             <h3 className="text-white font-bold text-lg flex items-center gap-2">
-              <ShieldCheck size={20} className="text-[#D4AF37]" /> {fullPreview.title} Preview
+              <ShieldCheck size={20} className="text-[#D4AF37]" /> {fullPreview.title}
             </h3>
             <button onClick={() => setFullPreview(null)} className="text-white hover:text-red-400 bg-white/10 p-2 rounded-xl transition-colors">
               <X size={22} />
@@ -466,83 +506,96 @@ const ApplyFranchise = () => {
         </div>
       )}
 
-      <header className="mb-6 max-w-4xl">
-        <button 
-          onClick={() => { setFormMode(null); setCurrentStep(1); }} 
-          className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mb-4"
-        >
-          <ArrowLeft size={16} /> Back to My Units
-        </button>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-          {formMode === 'New' ? 'Franchise Registration Wizard' : formMode === 'Renewal' ? 'Franchise Renewal Wizard' : 'Fix Application Issue'}
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          {formMode === 'Renewal' ? 'Verify your auto-filled records and update your Cedula tax details.' : 'Complete the step-by-step application form and upload your valid requirements.'}
-        </p>
+      {/* HEADER SECTION */}
+      <header className="mb-4 sm:mb-6 max-w-3xl flex flex-col sm:flex-row justify-between sm:items-end gap-2">
+        <div>
+          <button 
+            onClick={() => { setFormMode(null); setCurrentStep(1); }} 
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mb-3"
+          >
+            <ArrowLeft size={15} /> Back to My Units
+          </button>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
+          </h1>
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+            {formMode === 'Renewal' ? 'Pakisuri ang inyong mga detalye at i-update ang impormasyon ng Cedula.' : 'Punan ang mga kinakailangang impormasyon at mag-upload ng mga dokumento.'}
+          </p>
+        </div>
+
+        {formMode === 'New' && hasDraftRestored && (
+          <button
+            type="button"
+            onClick={handleClearDraft}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors w-fit"
+            title="Burahin ang draft at mag-umpisa ulit"
+          >
+            <RotateCcw size={13} /> Reset Draft
+          </button>
+        )}
       </header>
 
-      {/* MULTI-STEP PROGRESS BAR & STEPPER HEADER */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm max-w-4xl mb-6">
-        <div className="relative mb-6">
-          {/* Background Track Line */}
-          <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-100 -translate-y-1/2 rounded-full z-0" />
-          
-          {/* Animated Active Progress Line */}
+      {/* MINIMALIST PROGRESS STEPPER */}
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs max-w-3xl mb-5">
+        <div className="relative flex items-center justify-between px-6 sm:px-12">
+          <div className="absolute left-8 right-8 sm:left-16 sm:right-16 top-3 sm:top-3.5 h-[2px] bg-slate-200 z-0" />
           <div 
-            className="absolute top-1/2 left-0 h-1.5 bg-[#7A1B22] -translate-y-1/2 rounded-full transition-all duration-500 ease-out z-0"
-            style={{ width: `${progressPercentage}%` }}
+            className="absolute left-8 sm:left-16 top-3 sm:top-3.5 h-[2px] bg-[#7A1B22] transition-all duration-300 ease-out z-0"
+            style={{
+              width: currentStep === 1 ? '0%' : currentStep === 2 ? 'calc(50% - 8px)' : 'calc(100% - 16px)'
+            }}
           />
 
-          {/* Stepper Node Icons */}
-          <div className="relative z-10 flex justify-between items-center">
-            {steps.map((step) => {
-              const isCompleted = currentStep > step.num;
-              const isCurrent = currentStep === step.num;
+          {steps.map((step) => {
+            const isCompleted = currentStep > step.num;
+            const isCurrent = currentStep === step.num;
 
-              return (
-                <div key={step.num} className="flex flex-col items-center">
-                  <div 
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xs transition-all duration-300 shadow-sm border-2 ${
-                      isCompleted 
-                        ? 'bg-[#7A1B22] border-[#7A1B22] text-white' 
-                        : isCurrent 
-                        ? 'bg-white border-[#7A1B22] text-[#7A1B22] ring-4 ring-[#7A1B22]/15 scale-110' 
-                        : 'bg-white border-slate-200 text-slate-400'
-                    }`}
-                  >
-                    {isCompleted ? <CheckCircle size={18} /> : step.icon}
-                  </div>
-                  <span className={`text-[10px] sm:text-xs font-bold mt-2 text-center uppercase tracking-wider ${
-                    isCurrent ? 'text-[#7A1B22]' : isCompleted ? 'text-slate-800' : 'text-slate-400'
-                  }`}>
-                    {step.title}
-                  </span>
+            return (
+              <div key={step.num} className="relative z-10 flex flex-col items-center">
+                <div 
+                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    isCompleted 
+                      ? 'bg-[#7A1B22] text-white shadow-xs' 
+                      : isCurrent 
+                      ? 'bg-white border-2 border-[#7A1B22] ring-3 ring-[#7A1B22]/15' 
+                      : 'bg-white border-2 border-slate-200'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <Check size={13} className="stroke-[3]" />
+                  ) : isCurrent ? (
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#7A1B22] rounded-full" />
+                  ) : null}
                 </div>
-              );
-            })}
-          </div>
+                
+                <span className={`text-[10px] sm:text-xs font-bold mt-1.5 text-center tracking-tight transition-colors ${
+                  isCurrent ? 'text-[#7A1B22] font-black' : isCompleted ? 'text-slate-800' : 'text-slate-400'
+                }`}>
+                  {step.title}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* FORM CONTAINER */}
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+      {/* FORM STEPS */}
+      <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl">
         
-        {/* ========================================================================= */}
         {/* STEP 1: OPERATOR & VEHICLE DETAILS */}
-        {/* ========================================================================= */}
         {currentStep === 1 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-left-4 duration-200">
+          <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 animate-in fade-in duration-150">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-              <Car className="text-[#7A1B22]" size={20} />
+              <Car className="text-[#7A1B22]" size={18} />
               <div>
-                <h2 className="text-base font-black text-slate-900">Step 1: Vehicle & Operator Information</h2>
-                <p className="text-xs text-slate-400 font-medium">Verify your registered unit specifications</p>
+                <h2 className="text-sm sm:text-base font-black text-slate-900">Impormasyon ng Operator at Motor</h2>
+                <p className="text-[11px] text-slate-400 font-medium">Ipasok ang tamang mga detalye ng sasakyan</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-              <div className="lg:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Full Name</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+              <div className="sm:col-span-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pangalan ng Operator</label>
                 <input 
                   type="text" 
                   name="fullName" 
@@ -551,17 +604,17 @@ const ApplyFranchise = () => {
                   className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                   required 
                   readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                  placeholder="e.g. Juan Dela Cruz"
+                  placeholder="Hal. Juan Dela Cruz"
                 />
               </div>
               
-              <div className="lg:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Address (Barangay)</label>
+              <div className="sm:col-span-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Barangay</label>
                 {formMode === 'Renewal' || formMode === 'Re-apply' ? (
                   <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly />
                 ) : (
                   <select name="address" value={formData.address} onChange={handleInputChange} className={inputClasses} required>
-                    <option value="">Select Barangay...</option>
+                    <option value="">Pumili ng Barangay...</option>
                     {GASAN_BARANGAYS.map((brgy, i) => (
                       <option key={i} value={brgy}>{brgy}, Gasan</option>
                     ))}
@@ -570,132 +623,132 @@ const ApplyFranchise = () => {
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Route Zone</label>
-                <input type="text" name="zone" value={formData.zone} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="e.g. Zone 1" />
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Route Zone</label>
+                <input type="text" name="zone" value={formData.zone} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. Zone 1" />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Year Made</label>
-                <input type="text" name="made" value={formData.made} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="e.g. 2024" />
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Year Made</label>
+                <input type="text" name="made" value={formData.made} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. 2024" />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Make / Brand</label>
-                <input type="text" name="make" value={formData.make} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="e.g. Honda / Kawasaki" />
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Make / Brand</label>
+                <input type="text" name="make" value={formData.make} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. Honda / Kawasaki" />
               </div>
 
+              {/* AUTOMATIC AT LOCKED TODA ASSOCIATION INPUT */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">TODA Association</label>
-                {formMode === 'Renewal' || formMode === 'Re-apply' ? (
-                  <input type="text" value={formData.todaName} className={disabledClasses} readOnly />
-                ) : (
-                  <select name="todaName" value={formData.todaName} onChange={handleInputChange} className={`${inputClasses} cursor-pointer`} required>
-                    <option value="">Select TODA...</option>
-                    {TODA_LIST.map((toda, i) => <option key={i} value={toda}>{toda}</option>)}
-                  </select>
-                )}
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">TODA Association</label>
+                  <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">Registered</span>
+                </div>
+                <input 
+                  type="text" 
+                  name="todaName" 
+                  value={formData.todaName || loggedInToda || 'NON-TODA'} 
+                  readOnly 
+                  className={disabledClasses} 
+                  title="Ang inyong TODA ay awtomatikong nakabase sa inyong registered account."
+                />
               </div>
 
-              <div className="lg:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Motor Number</label>
+              <div className="sm:col-span-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Motor Number</label>
                 <input type="text" name="motorNo" value={formData.motorNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Motor Serial No." />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Chassis Number</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Chassis Number</label>
                 <input type="text" name="chassisNo" value={formData.chassisNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Chassis Serial No." />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assigned Plate No.</label>
-                <input type="text" name="plateNo" value={formData.plateNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="e.g. 123-ABC" />
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Plate Number</label>
+                <input type="text" name="plateNo" value={formData.plateNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. 123-ABC" />
               </div>
             </div>
 
-            <div className="flex justify-end mt-8 border-t border-slate-100 pt-4">
+            <div className="flex justify-end mt-6 border-t border-slate-100 pt-4">
               <button 
                 type="button" 
                 onClick={validateAndNext}
-                className="flex items-center gap-2 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm hover:bg-[#5A1419] transition-all shadow-sm active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-[#5A1419] transition-all shadow-xs active:scale-95"
               >
-                Next Step <ChevronRight size={16} />
+                Susunod <ChevronRight size={15} />
               </button>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* STEP 2: TAX IDENTIFICATION & CEDULA */}
-        {/* ========================================================================= */}
+        {/* STEP 2: CEDULA & TAX DETAILS */}
         {currentStep === 2 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-left-4 duration-200">
+          <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 animate-in fade-in duration-150">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-              <FileText className="text-[#7A1B22]" size={20} />
+              <FileText className="text-[#7A1B22]" size={18} />
               <div>
-                <h2 className="text-base font-black text-slate-900">Step 2: Cedula & Tax Identification</h2>
-                <p className="text-xs text-slate-400 font-medium">Provide your latest community tax certificate records</p>
+                <h2 className="text-sm sm:text-base font-black text-slate-900">Impormasyon ng Cedula</h2>
+                <p className="text-[11px] text-slate-400 font-medium">Ilagay ang pinakabagong Community Tax Certificate</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Date Applied</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Petsa ng Pag-apply</label>
                 <input type="date" name="dateApplied" value={formData.dateApplied} onChange={handleInputChange} className={inputClasses} required />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Date Kinuha (Cedula)</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Petsa Kinuha (Cedula)</label>
                 <input type="date" name="cedulaDate" value={formData.cedulaDate} onChange={handleInputChange} className={inputClasses} required />
               </div>
-              <div className="lg:col-span-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cedula Serial No.</label>
-                <input type="text" name="cedulaSerialNo" value={formData.cedulaSerialNo} onChange={handleInputChange} className={inputClasses} placeholder="e.g. 12345678" required />
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cedula Serial No.</label>
+                <input type="text" name="cedulaSerialNo" value={formData.cedulaSerialNo} onChange={handleInputChange} className={inputClasses} placeholder="Hal. 12345678" required />
               </div>
-              <div className="lg:col-span-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cedula Address</label>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Lugar Kinuha (Cedula)</label>
                 <input type="text" name="cedulaAddress" value={formData.cedulaAddress} onChange={handleInputChange} className={inputClasses} required />
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-8 border-t border-slate-100 pt-4">
+            <div className="flex justify-between items-center mt-6 border-t border-slate-100 pt-4 gap-3">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                className="flex items-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
               >
-                <ChevronLeft size={16} /> Previous
+                <ChevronLeft size={15} /> Bumalik
               </button>
 
               <button 
                 type="button" 
                 onClick={validateAndNext}
-                className="flex items-center gap-2 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm hover:bg-[#5A1419] transition-all shadow-sm active:scale-95"
+                className="flex items-center gap-1.5 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-[#5A1419] transition-all shadow-xs active:scale-95"
               >
-                Next Step <ChevronRight size={16} />
+                Susunod <ChevronRight size={15} />
               </button>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* STEP 3: UPLOAD REQUIREMENTS & FINAL SUBMIT */}
-        {/* ========================================================================= */}
+        {/* STEP 3: UPLOAD & VERIFY */}
         {currentStep === 3 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-left-4 duration-200">
+          <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 animate-in fade-in duration-150">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-              <UploadCloud className="text-[#7A1B22]" size={20} />
+              <UploadCloud className="text-[#7A1B22]" size={18} />
               <div>
-                <h2 className="text-base font-black text-slate-900">Step 3: Document Requirements Verification</h2>
-                <p className="text-xs text-slate-400 font-medium">Upload clear photos or PDF documents and verify before submitting</p>
+                <h2 className="text-sm sm:text-base font-black text-slate-900">Upload ng mga Dokumento</h2>
+                <p className="text-[11px] text-slate-400 font-medium">I-upload ang mga larawan o PDF ng requirements</p>
               </div>
             </div>
 
             {formMode === 'Renewal' ? (
-              <div className="p-6 bg-blue-50 border border-blue-200 text-blue-800 rounded-2xl text-xs font-semibold mb-6 flex items-start gap-3">
-                <Info size={18} className="shrink-0 mt-0.5" />
-                <p>No new physical files are required for simple renewal. Review your vehicle & cedula details before final submission.</p>
+              <div className="p-4 bg-blue-50/70 border border-blue-200 text-blue-800 rounded-2xl text-xs font-semibold mb-5 flex items-start gap-2.5">
+                <Info size={17} className="shrink-0 mt-0.5" />
+                <p className="leading-relaxed">Hindi na kailangang mag-upload ng mga bagong file para sa renewal. Pakisuri ang buod sa ibaba bago i-submit.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 {REQUIREMENTS_LIST.map((req) => {
                   const hasFile = !!filePreviews[req.id];
                   const isPdf = filePreviews[req.id]?.toLowerCase().includes('.pdf');
@@ -703,17 +756,17 @@ const ApplyFranchise = () => {
                   return (
                     <div 
                       key={req.id} 
-                      className={`relative border-2 border-dashed rounded-2xl p-3 flex flex-col items-center justify-center text-center transition-all min-h-[150px] overflow-hidden group ${
-                        hasFile ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-[#7A1B22]/50'
+                      className={`relative border-2 border-dashed rounded-2xl p-2.5 flex flex-col items-center justify-center text-center transition-all min-h-[135px] overflow-hidden group ${
+                        hasFile ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
                       {hasFile && (
                         <button
                           onClick={(e) => handleRemoveFile(req.id, e)}
-                          className="absolute top-2 right-2 z-30 p-1 bg-red-500 text-white rounded-full hover:bg-red-700 shadow-md transition-all scale-100 active:scale-95"
+                          className="absolute top-1.5 right-1.5 z-30 p-1 bg-red-500 text-white rounded-full hover:bg-red-700 shadow-xs transition-all active:scale-90"
                           title="Remove Document"
                         >
-                          <X size={14} />
+                          <X size={12} />
                         </button>
                       )}
 
@@ -726,22 +779,22 @@ const ApplyFranchise = () => {
                             className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
                             required={formMode === 'New'} 
                           />
-                          <UploadCloud className="text-slate-400 mb-2 group-hover:text-[#7A1B22] transition-colors" size={28} />
-                          <p className="text-xs font-bold text-slate-700">{req.label}</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">Tap to upload</p>
+                          <UploadCloud className="text-slate-400 mb-1.5 group-hover:text-[#7A1B22] transition-colors" size={24} />
+                          <p className="text-[11px] font-bold text-slate-700 leading-tight">{req.label}</p>
+                          <p className="text-[9px] text-slate-400 mt-0.5">Pindutin para mag-upload</p>
                         </>
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center z-10">
                           {isPdf ? (
-                            <div className="flex flex-col items-center p-2 cursor-pointer" onClick={() => setFullPreview({ url: filePreviews[req.id], title: req.label })}>
-                              <FileCheck size={32} className="text-emerald-600 mb-1" />
-                              <p className="text-[11px] font-bold text-emerald-800 tracking-tight text-center line-clamp-2">{req.label}</p>
-                              <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded mt-1">PDF &bull; Click to View</span>
+                            <div className="flex flex-col items-center p-1 cursor-pointer" onClick={() => setFullPreview({ url: filePreviews[req.id], title: req.label })}>
+                              <FileCheck size={28} className="text-emerald-600 mb-1" />
+                              <p className="text-[10px] font-bold text-emerald-800 text-center line-clamp-2">{req.label}</p>
+                              <span className="text-[8px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded mt-0.5">PDF File</span>
                             </div>
                           ) : (
                             <div 
                               onClick={() => setFullPreview({ url: filePreviews[req.id], title: req.label })}
-                              className="relative w-full h-28 flex items-center justify-center rounded-xl overflow-hidden bg-white border border-emerald-100 shadow-inner cursor-pointer"
+                              className="relative w-full h-24 flex items-center justify-center rounded-xl overflow-hidden bg-white border border-emerald-100 shadow-inner cursor-pointer"
                             >
                               <img 
                                 src={filePreviews[req.id]} 
@@ -749,10 +802,10 @@ const ApplyFranchise = () => {
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                               />
                               <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                <ZoomIn className="text-white" size={22} />
+                                <ZoomIn className="text-white" size={18} />
                               </div>
                               <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-1">
-                                <p className="text-[9px] font-bold text-white truncate w-full text-center py-0.5 rounded">{req.label}</p>
+                                <p className="text-[9px] font-bold text-white truncate w-full text-center py-0.5">{req.label}</p>
                               </div>
                             </div>
                           )}
@@ -764,35 +817,35 @@ const ApplyFranchise = () => {
               </div>
             )}
 
-            {/* REVIEW SUMMARY SUMMARY CARD */}
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 sm:p-5 mb-8">
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-3">Application Summary Review</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div><span className="text-slate-400 font-bold block text-[10px]">Operator:</span><span className="font-bold text-slate-800">{formData.fullName}</span></div>
-                <div><span className="text-slate-400 font-bold block text-[10px]">Plate No:</span><span className="font-black text-slate-900">{formData.plateNo}</span></div>
-                <div><span className="text-slate-400 font-bold block text-[10px]">TODA:</span><span className="font-bold text-slate-800">{formData.todaName}</span></div>
-                <div><span className="text-slate-400 font-bold block text-[10px]">Route:</span><span className="font-bold text-slate-800">Zone {formData.zone}</span></div>
+            {/* REVIEW SUMMARY */}
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 sm:p-4 mb-6">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Buod ng Aplikasyon</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div><span className="text-slate-400 font-bold block text-[9px]">Operator</span><span className="font-bold text-slate-800 truncate block">{formData.fullName}</span></div>
+                <div><span className="text-slate-400 font-bold block text-[9px]">Plate No.</span><span className="font-black text-slate-900 truncate block">{formData.plateNo}</span></div>
+                <div><span className="text-slate-400 font-bold block text-[9px]">TODA</span><span className="font-bold text-slate-800 truncate block">{formData.todaName || loggedInToda}</span></div>
+                <div><span className="text-slate-400 font-bold block text-[9px]">Zone</span><span className="font-bold text-slate-800 truncate block">Zone {formData.zone}</span></div>
               </div>
             </div>
 
-            <div className="flex justify-between items-center border-t border-slate-100 pt-4">
+            <div className="flex justify-between items-center border-t border-slate-100 pt-4 gap-3">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                className="flex items-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
               >
-                <ChevronLeft size={16} /> Previous
+                <ChevronLeft size={15} /> Bumalik
               </button>
 
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-sm active:scale-95 ${
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs text-white transition-all shadow-xs active:scale-95 ${
                   isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419]'
                 }`}
               >
-                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <FileCheck size={16} />}
-                {isSubmitting ? 'Submitting Application...' : formMode === 'Re-apply' ? 'Submit Updated Application' : `Submit ${formMode} Application`}
+                {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                {isSubmitting ? 'Isinusumite...' : formMode === 'Re-apply' ? 'Isumite ang Update' : `Isumite ang Aplikasyon`}
               </button>
             </div>
           </div>
