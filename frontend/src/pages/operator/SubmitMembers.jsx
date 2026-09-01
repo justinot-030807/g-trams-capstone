@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { UploadCloud, FileText, CheckCircle, Clock } from 'lucide-react';
 
 const SubmitMembers = () => {

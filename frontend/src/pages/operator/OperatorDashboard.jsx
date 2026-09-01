@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
-  CalendarDays, PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck, Sparkles, Receipt, Download, Eye
+  CalendarDays, PlusCircle, Activity, MapPin, Hash, Printer, X, ShieldCheck, Sparkles, Receipt, Download, Eye,
+  Check, FileText, Banknote, ShieldAlert
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,7 +18,6 @@ const OperatorDashboard = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
 
-  // KUNIN ANG FRANCHISE FEE MULA SA SYSTEM SETTINGS (Default: 500)
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 
   useEffect(() => {
@@ -50,14 +50,99 @@ const OperatorDashboard = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  // Direct Download / Print Handler
   const handleDirectDownload = (unit) => {
     setSelectedUnit(unit);
     setIsPrintOpen(true);
-    // Bigyan ng 500ms delay para mag-render muna yung modal bago i-trigger ang Save PDF/Print
     setTimeout(() => {
       window.print();
     }, 500);
+  };
+
+  // Helper para sa Visual Application Tracker
+  const renderApplicationTracker = (status) => {
+    if (status === 'Cancelled') {
+      return (
+        <div className="mb-5 bg-red-50/80 border border-red-200 rounded-2xl p-3.5 flex items-start gap-2.5">
+          <ShieldAlert className="text-red-600 shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-xs font-bold text-red-900">Naantala ang Aplikasyon</p>
+            <p className="text-[11px] text-red-700 leading-snug">Pakitingnan ang dahilan sa ibaba at pindutin ang "Fix Issues" upang ma-update ang mga kinakailangang dokumento.</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (status === 'Expired') {
+      return (
+        <div className="mb-5 bg-orange-50/80 border border-orange-200 rounded-2xl p-3.5 flex items-start gap-2.5">
+          <AlertCircle className="text-orange-600 shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-xs font-bold text-orange-900">Paso na ang Prangkisa</p>
+            <p className="text-[11px] text-orange-700 leading-snug">Magsumite ng panibagong Cedula at updated na impormasyon sa pamamagitan ng "Renew Franchise".</p>
+          </div>
+        </div>
+      );
+    }
+
+    const steps = [
+      { id: 1, label: 'Naisumite' },
+      { id: 2, label: 'Pagsusuri' },
+      { id: 3, label: 'Pagbayad' },
+      { id: 4, label: 'Aktibo' }
+    ];
+
+    let currentStepNum = 1;
+    if (status === 'Pending') currentStepNum = 2;
+    if (status === 'Ready for Pickup') currentStepNum = 3;
+    if (status === 'Active') currentStepNum = 4;
+
+    const progressWidth = ((currentStepNum - 1) / (steps.length - 1)) * 100;
+
+    return (
+      <div className="mb-5 bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 sm:p-4">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Status ng Aplikasyon</p>
+        <div className="relative px-3 sm:px-4">
+          <div className="absolute left-6 right-6 top-3 h-[2px] bg-slate-200 z-0" />
+          <div 
+            className="absolute left-6 top-3 h-[2px] bg-[#7A1B22] transition-all duration-500 ease-out z-0"
+            style={{ width: `calc(${progressWidth}% - 12px)` }}
+          />
+          <div className="relative z-10 flex justify-between items-center">
+            {steps.map((step) => {
+              const isCompleted = currentStepNum > step.id;
+              const isCurrent = currentStepNum === step.id;
+
+              return (
+                <div key={step.id} className="flex flex-col items-center">
+                  <div 
+                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+                      isCompleted 
+                        ? 'bg-[#7A1B22] text-white shadow-xs' 
+                        : isCurrent 
+                        ? 'bg-white border-2 border-[#7A1B22] ring-3 ring-[#7A1B22]/15' 
+                        : 'bg-white border-2 border-slate-200'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <Check size={12} className="stroke-[3]" />
+                    ) : isCurrent ? (
+                      <div className="w-2 h-2 bg-[#7A1B22] rounded-full animate-pulse" />
+                    ) : (
+                      <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-bold mt-1 tracking-tight text-center ${
+                    isCurrent ? 'text-[#7A1B22] font-black' : isCompleted ? 'text-slate-800' : 'text-slate-400'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -117,7 +202,7 @@ const OperatorDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {franchises.map((unit, index) => (
+          {franchises.map((unit) => (
             <div key={unit._id} className="animate-dashboard-card bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
                 unit.status === 'Active' ? 'bg-emerald-500' :
@@ -127,7 +212,7 @@ const OperatorDashboard = () => {
               }`} />
 
               <div>
-                <div className="flex justify-between items-start mb-6 mt-1">
+                <div className="flex justify-between items-start mb-5 mt-1">
                   <div>
                     <h3 className="font-black text-2xl text-slate-900 tracking-wider mb-0.5">{unit.plateNo || 'PENDING PLATE'}</h3>
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
@@ -148,7 +233,10 @@ const OperatorDashboard = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-6">
+                {/* VISUAL APPLICATION TRACKER STEPPER */}
+                {renderApplicationTracker(unit.status)}
+
+                <div className="grid grid-cols-2 gap-3 mb-5">
                   <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-100">
                     <MapPin className="text-[#7A1B22] shrink-0" size={16} />
                     <div>
@@ -166,7 +254,7 @@ const OperatorDashboard = () => {
                 </div>
 
                 {unit.status === 'Active' && (
-                  <div className="mb-6 bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl">
+                  <div className="mb-5 bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2"><CalendarDays size={16} className="text-emerald-600" /><span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide">Valid Until</span></div>
                       <p className="text-xs font-black text-emerald-950">{getExpirationDate(unit.dateApplied)}</p>
@@ -175,7 +263,7 @@ const OperatorDashboard = () => {
                 )}
 
                 {unit.status === 'Ready for Pickup' && (
-                  <div className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
+                  <div className="mb-5 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
                     <Receipt className="text-blue-600 shrink-0 mt-0.5" size={20} />
                     <div>
                       <h4 className="text-blue-900 font-black text-xs uppercase mb-1">Approved! Next Step: Payment</h4>
@@ -189,13 +277,10 @@ const OperatorDashboard = () => {
                 {unit.status === 'Expired' ? (
                   <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-98"><RefreshCw size={14} /> Renew Franchise</button>
                 ) : unit.status === 'Active' ? (
-                  // TANGGAL NA ANG VIEW PERMIT DITO, VIEW DETAILS NALANG
                   <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">View Details</button>
                 ) : unit.status === 'Ready for Pickup' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2.5">
                     <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">View Details</button>
-                    
-                    {/* BAGONG VIEW AT DOWNLOAD BUTTONS PARA SA STUB */}
                     <div className="flex flex-1 gap-2">
                       <button onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} className="flex-1 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-3 py-2.5 rounded-xl font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 active:scale-98">
                         <Eye size={14} /> View Stub
@@ -263,8 +348,6 @@ const OperatorDashboard = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 sm:p-8 print:p-0 print:bg-white flex justify-center items-start">
-            
-            {/* PAYMENT & CLAIM STUB DESIGN */}
             <div id="printable-document" className="bg-white w-full max-w-[600px] border-2 border-dashed border-slate-300 shadow-xl p-8 sm:p-12 print:border-none print:shadow-none relative">
               <div className="text-center mb-6 border-b-2 border-dashed border-slate-300 pb-6">
                 <div className="inline-flex justify-center items-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-4">

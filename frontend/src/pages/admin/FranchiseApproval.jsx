@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { 
   CheckCircle, XCircle, Eye, FileText, AlertCircle, 
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download 

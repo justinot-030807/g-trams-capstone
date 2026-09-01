@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { 
   FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, 
   Clock, AlertCircle, Loader2, X, CalendarDays, Printer,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag
 } from 'lucide-react';
 
 const FranchiseMasterlist = () => {
@@ -143,6 +143,8 @@ const FranchiseMasterlist = () => {
   const startRecordIndex = paginationMeta.totalRecords === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endRecordIndex = Math.min(currentPage * pageSize, paginationMeta.totalRecords);
 
+  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'All';
+
   return (
     <MainLayout>
       <style>{`
@@ -195,7 +197,7 @@ const FranchiseMasterlist = () => {
           <p className="text-[10px] text-slate-500 font-medium mt-1">Fiscal Year {currentFiscalYear} | Tab: {activeTab.toUpperCase()}</p>
         </div>
 
-        {/* TABS[cite: 33] */}
+        {/* TABS */}
         <div className="flex border-b border-slate-200 bg-slate-50 print-hide">
           <button 
             onClick={() => handleTabChange('active')}
@@ -261,6 +263,44 @@ const FranchiseMasterlist = () => {
             </div>
           </div>
         </div>
+
+        {/* INTERACTIVE FILTER PILLS */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-100 print-hide animate-in fade-in duration-150">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 mr-1">
+              <Tag size={12} /> Active Filters:
+            </span>
+
+            {searchQuery.trim() !== '' && (
+              <button
+                onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-bold shadow-xs hover:border-red-300 hover:text-red-600 transition-all group"
+                title="Remove search filter"
+              >
+                <span>Search: <span className="font-black text-slate-900 group-hover:text-red-600">"{searchQuery}"</span></span>
+                <X size={13} className="text-slate-400 group-hover:text-red-500" />
+              </button>
+            )}
+
+            {statusFilter !== 'All' && (
+              <button
+                onClick={() => { setStatusFilter('All'); setCurrentPage(1); }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#7A1B22]/10 border border-[#7A1B22]/20 text-[#7A1B22] text-xs font-bold shadow-xs hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all group"
+                title="Reset status filter"
+              >
+                <span>Status: <span className="font-black">{statusFilter}</span></span>
+                <X size={13} className="text-[#7A1B22]/60 group-hover:text-red-500" />
+              </button>
+            )}
+
+            <button
+              onClick={() => { setSearchQuery(''); setStatusFilter('All'); setCurrentPage(1); }}
+              className="text-[11px] font-bold text-slate-400 hover:text-[#7A1B22] underline ml-1 cursor-pointer transition-colors"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
 
         {/* TABLE CONTENT */}
         <div className="overflow-x-auto min-h-[320px]">
@@ -414,7 +454,7 @@ const FranchiseMasterlist = () => {
 
       </div>
 
-      {/* CONFIRMATION MODAL[cite: 33] */}
+      {/* CONFIRMATION MODAL */}
       {confirmModal.isOpen && confirmModal.data && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div 

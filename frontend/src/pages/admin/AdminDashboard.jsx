@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
   BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { User, Lock, Camera, Save, Loader2, Phone, AlertTriangle, CheckCircle, Moon, Sun, Globe } from 'lucide-react';
 
 const ManageProfile = () => {

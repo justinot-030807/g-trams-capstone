@@ -1,27 +1,28 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-// Auth Pages
+// Auth Pages (Nasa root ng pages/)
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 
-// Admin Pages
-import AdminDashboard from './pages/AdminDashboard';
-import FranchiseMasterlist from './pages/FranchiseMasterlist';
-import UserManagement from './pages/UserManagement';
-import SystemSettings from './pages/SystemSettings';
-import FranchiseApproval from './pages/FranchiseApproval';
-import ManageRevocations from './pages/ManageRevocations';
-import ValidateTODA from './pages/ValidateTODA';
-import AdminReports from './pages/AdminReports';
-// Operator & TODA President Pages
-import OperatorDashboard from './pages/OperatorDashboard';
-import ApplyFranchise from './pages/ApplyFranchise';
-import RenewFranchise from './pages/RenewFranchise';
-import ManageProfile from './pages/ManageProfile';
-import SubmitMembers from './pages/SubmitMembers';
-import HelpSupport from './pages/HelpSupport';
+// Admin Pages (Nasa pages/admin/)
+import AdminDashboard from './pages/admin/AdminDashboard';
+import FranchiseMasterlist from './pages/admin/FranchiseMasterlist';
+import UserManagement from './pages/admin/UserManagement';
+import SystemSettings from './pages/admin/SystemSettings';
+import FranchiseApproval from './pages/admin/FranchiseApproval';
+import ManageRevocations from './pages/admin/ManageRevocations';
+import ValidateTODA from './pages/admin/ValidateTODA';
+import AdminReports from './pages/admin/AdminReports';
+
+// Operator & TODA President Pages (Nasa pages/operator/)
+import OperatorDashboard from './pages/operator/OperatorDashboard';
+import ApplyFranchise from './pages/operator/ApplyFranchise';
+import RenewFranchise from './pages/operator/RenewFranchise';
+import ManageProfile from './pages/operator/ManageProfile';
+import SubmitMembers from './pages/operator/SubmitMembers';
+import HelpSupport from './pages/operator/HelpSupport';
 
 function App() {
   return (
@@ -32,7 +33,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* Admin Routes - TINANGGAL ANG <MainLayout> DITO PARA HINDI DUMOBLE */}
+      {/* Admin Routes */}
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
       <Route path="/franchise-masterlist" element={<FranchiseMasterlist />} />
       <Route path="/user-management" element={<UserManagement />} />
@@ -41,7 +42,6 @@ function App() {
       <Route path="/manage-revocations" element={<ManageRevocations />} />
       <Route path="/validate-toda" element={<ValidateTODA />} />
       <Route path="/system-reports" element={<AdminReports />} />
-    
 
       {/* Operator & TODA Routes */}
       <Route path="/submit-members" element={<SubmitMembers />} />
@@ -50,7 +50,6 @@ function App() {
       <Route path="/renew-franchise/:id" element={<RenewFranchise />} />
       <Route path="/manage-profile" element={<ManageProfile />} />
       <Route path="/help-support" element={<HelpSupport />} />
-    
     </Routes>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { Users, FileText, CheckCircle, Search, Eye, FolderTree } from 'lucide-react';
 
 const TODA_LIST = [

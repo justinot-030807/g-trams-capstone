@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../components/MainLayout';
+import MainLayout from '../../components/MainLayout';
 import { Users, Search, Info, MapPin, Phone, Calendar, ShieldCheck, X, AlertTriangle, User, UserMinus, UserCheck, ShieldAlert } from 'lucide-react';
 
 const UserManagement = () => {
