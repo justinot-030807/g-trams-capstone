@@ -112,7 +112,28 @@ const translations = {
     'profile.successPass': 'Password changed successfully!',
     'profile.passMismatch': 'New passwords do not match!',
     'profile.themeDark': 'Dark Mode',
-    'profile.themeLight': 'Light Mode'
+    'profile.themeLight': 'Light Mode',
+
+    // Help & Support Page
+    'help.badge': 'Helpdesk & Support',
+    'help.title': 'Help Center & About Us',
+    'help.subtitle': 'Find system information, user guides, and official municipal contact details.',
+    'help.aboutTitle': 'About G-TRAMS Portal',
+    'help.aboutSub': 'A Web-Based Tricycle Franchise Management System for the Municipality of Gasan, Marinduque',
+    'help.aboutText': 'G-TRAMS (Gasan Tricycle Records and Application Management System) is a Web-Based Tricycle Franchise Management System for the Municipality of Gasan, Marinduque. Developed to make tricycle franchise registration, renewals, record verification, and fleet monitoring digital, fast, and transparent for every operator and TODA.',
+    'help.deptBplo': 'Sangguniang Bayan Office / BPLO',
+    'help.location': 'Municipal Hall, Gasan, Marinduque',
+    'help.adminBadge': 'Admin Helpdesk',
+    'help.haveQuestions': 'Have questions or concerns?',
+    'help.contactDesc': 'You may reach out to municipal officers and BPLO staff through the following official channels:',
+    'help.hotline': 'Hotline (Office Hours)',
+    'help.emailSupport': 'Email Support',
+    'help.faqTitle': 'Frequently Asked Questions (FAQ)',
+    'help.faqSubtitle': 'Ranked by trending and frequently accessed topics',
+    'help.searchPlaceholder': 'Search help topics (e.g. renewal, permit, requirements)...',
+    'help.noResults': 'No matching questions found. Try different search keywords.',
+    'help.topFaq': 'Top FAQ',
+    'help.views': 'views'
   },
   fil: {
     // TopNavbar & Sidebar
@@ -225,7 +246,28 @@ const translations = {
     'profile.successPass': 'Matagumpay na napalitan ang password!',
     'profile.passMismatch': 'Hindi tugma ang mga bagong password!',
     'profile.themeDark': 'Madilim na Tema',
-    'profile.themeLight': 'Maliwanag na Tema'
+    'profile.themeLight': 'Maliwanag na Tema',
+
+    // Help & Support Page
+    'help.badge': 'Tulong at Gabay',
+    'help.title': 'Sentro ng Tulong at Tungkol sa Amin',
+    'help.subtitle': 'Alamin ang impormasyon ukol sa sistema, gabay sa paggamit, at mga opisyal na contact details ng munisipyo.',
+    'help.aboutTitle': 'Tungkol sa G-TRAMS Portal',
+    'help.aboutSub': 'Isang Web-Based Tricycle Franchise Management System para sa Bayan ng Gasan, Marinduque',
+    'help.aboutText': 'Ang G-TRAMS (Gasan Tricycle Records and Application Management System) ay isang Web-Based Tricycle Franchise Management System para sa Bayan ng Gasan, Marinduque. Binuo ito upang gawing digital, mabilis, at transparent ang pagpaparehistro, pag-renew, at pag-monitor ng prangkisa ng tricycle para sa bawat operator at TODA.',
+    'help.deptBplo': 'Tanggapan ng Sangguniang Bayan / BPLO',
+    'help.location': 'Gusaling Pamahalaan, Gasan, Marinduque',
+    'help.adminBadge': 'Helpdesk ng Admin',
+    'help.haveQuestions': 'May mga katanungan o kailangan ng tulong?',
+    'help.contactDesc': 'Maaaring makipag-ugnayan sa mga kawani ng munisipyo sa mga sumusunod na opisyal na linya:',
+    'help.hotline': 'Hotline (Oras ng Opisina)',
+    'help.emailSupport': 'Suporta sa Email',
+    'help.faqTitle': 'Mga Madalas Itanong (FAQ)',
+    'help.faqSubtitle': 'Naka-sort ayon sa trending at pinakamadalas buksang paksa',
+    'help.searchPlaceholder': 'Maghanap ng paksa (hal. renewal, permit, requirements)...',
+    'help.noResults': 'Walang nahanap na tugmang tanong. Subukan ang ibang keyword.',
+    'help.topFaq': 'Pangunahing FAQ',
+    'help.views': 'mga pagtingin'
   }
 };
 

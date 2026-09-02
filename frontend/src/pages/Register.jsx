@@ -465,7 +465,7 @@ const Register = () => {
 
       {/* Footer */}
       <footer className="relative z-10 mt-6 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold">
-        <p>G-TRAMS — GASAN TRICYCLE RECORDS SYSTEM</p>
+        <p>G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
         <p className="text-white/40 text-[8px] sm:text-[9px] normal-case font-normal">
           © 2026 Municipality of Gasan, Marinduque. All rights reserved.
         </p>

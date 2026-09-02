@@ -4,70 +4,124 @@ import {
   HelpCircle, Phone, Mail, Building, ChevronDown, 
   Search, Flame, Info, ShieldCheck, MapPin 
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
-const INITIAL_FAQS = [
-  {
-    id: 1,
-    question: "Ano ang mga kailangang requirements para sa New Franchise Application?",
-    answer: "Kailangan ng malinaw na kopya o litrato ng: 1. OR/CR ng Motor, 2. Valid Driver's License, 3. TODA Endorsement Certificate, at 4. Barangay Clearance.",
-    tags: ["requirements", "apply", "bago", "dokumento"],
-    views: 24
-  },
-  {
-    id: 2,
-    question: "Kailan ang regular schedule ng Franchise Renewal?",
-    answer: "Taon-taon tuwing buwan ng Enero ginagawa ang regular renewal. Maaari kayong mag-apply online 30 days bago mag-expire ang inyong prangkisa.",
-    tags: ["renewal", "deadline", "expire", "petsa"],
-    views: 19
-  },
-  {
-    id: 3,
-    question: "Paano i-download o i-print ang aking Motorized Tricycle Operator's Permit?",
-    answer: "Pumunta sa Dashboard, hanapin ang iyong Active unit card, at i-click ang 'Print' button upang lumabas ang opisyal na printable permit.",
-    tags: ["print", "permit", "download", "mtop"],
-    views: 15
-  },
-  {
-    id: 4,
-    question: "Bakit na-cancel o rejected ang aking franchise application?",
-    answer: "Maaaring malabo ang naipasa mong dokumento o may hindi tugmang impormasyon sa BPLO remarks. Tingnan ang pulang rejection note sa dashboard para sa detalye.",
-    tags: ["reject", "cancel", "mali", "aberya"],
-    views: 11
-  },
-  {
-    id: 5,
-    question: "Ilang tricycle unit ang pwedeng i-rehistro ng isang operator?",
-    answer: "Alinsunod sa Municipal Ordinance ng Gasan, hanggang 2 units lamang ang maximum capacity na maaaring hawakan ng bawat rehistradong operator.",
-    tags: ["capacity", "limit", "units", "dami"],
-    views: 8
-  }
-];
+const FAQS_DATA = {
+  en: [
+    {
+      id: 1,
+      question: "What are the required documents for a New Franchise Application?",
+      answer: "You must submit clear scanned copies or photos of: 1. Motor OR / CR (Official Receipt and Certificate of Registration), 2. Valid Driver's License, 3. TODA Endorsement Certificate, and 4. Barangay Clearance.",
+      tags: ["requirements", "apply", "new", "documents", "or/cr", "license"],
+      defaultViews: 24
+    },
+    {
+      id: 2,
+      question: "When is the regular schedule for Franchise Renewal?",
+      answer: "Regular annual franchise renewal is conducted every January. You may submit your online renewal application starting 30 days before your franchise permit expires.",
+      tags: ["renewal", "deadline", "expire", "schedule", "january"],
+      defaultViews: 19
+    },
+    {
+      id: 3,
+      question: "How do I download or print my Motorized Tricycle Operator's Permit / Claim Stub?",
+      answer: "Navigate to your Operator Dashboard, locate your Approved or Active tricycle unit card, and click the 'Print' or 'View Stub' button to open and save your official printable document.",
+      tags: ["print", "permit", "download", "mtop", "claim stub"],
+      defaultViews: 15
+    },
+    {
+      id: 4,
+      question: "Why was my franchise application returned or cancelled?",
+      answer: "Applications may be returned due to blurry or incomplete uploaded documents, or mismatched motor and chassis numbers noted by BPLO evaluators. Please review the remarks on your dashboard for specific correction instructions.",
+      tags: ["reject", "cancel", "revision", "remarks", "bplo"],
+      defaultViews: 11
+    },
+    {
+      id: 5,
+      question: "How many tricycle units can an individual operator register?",
+      answer: "In accordance with the Municipal Ordinance of Gasan, each registered operator is allowed a maximum of 2 units (or as configured by Municipal Administration).",
+      tags: ["capacity", "limit", "units", "ordinance", "max"],
+      defaultViews: 8
+    }
+  ],
+  fil: [
+    {
+      id: 1,
+      question: "Ano ang mga kailangang requirements para sa New Franchise Application?",
+      answer: "Kailangan ng malinaw na kopya o litrato ng: 1. OR/CR ng Motor (Official Receipt / Certificate of Registration), 2. Valid Driver's License, 3. TODA Endorsement Certificate, at 4. Barangay Clearance.",
+      tags: ["requirements", "apply", "bago", "dokumento", "or/cr", "lisensya"],
+      defaultViews: 24
+    },
+    {
+      id: 2,
+      question: "Kailan ang regular schedule ng Franchise Renewal?",
+      answer: "Taon-taon tuwing buwan ng Enero ginagawa ang regular renewal. Maaari kayong mag-apply online 30 days bago mag-expire ang inyong prangkisa.",
+      tags: ["renewal", "deadline", "expire", "petsa", "enero"],
+      defaultViews: 19
+    },
+    {
+      id: 3,
+      question: "Paano i-download o i-print ang aking Permit o Claim Stub?",
+      answer: "Pumunta sa Dashboard, hanapin ang iyong Active o Aprubadong unit card, at i-click ang 'Print' o 'View Stub' button upang lumabas ang opisyal na printable permit.",
+      tags: ["print", "permit", "download", "mtop", "claim stub"],
+      defaultViews: 15
+    },
+    {
+      id: 4,
+      question: "Bakit na-cancel o ibinalik ang aking franchise application?",
+      answer: "Maaaring malabo ang naipasa mong dokumento o may hindi tugmang impormasyon sa motor at chassis ayon sa BPLO remarks. Tingnan ang rejection/revision note sa dashboard para sa detalye.",
+      tags: ["reject", "cancel", "mali", "aberya", "bplo"],
+      defaultViews: 11
+    },
+    {
+      id: 5,
+      question: "Ilang tricycle unit ang pwedeng i-rehistro ng isang operator?",
+      answer: "Alinsunod sa Municipal Ordinance ng Gasan, hanggang 2 units lamang ang karaniwang limitasyon na maaaring hawakan ng bawat rehistradong operator.",
+      tags: ["capacity", "limit", "units", "dami", "ordinansa"],
+      defaultViews: 8
+    }
+  ]
+};
 
 const HelpSupport = () => {
-  const [faqs, setFaqs] = useState(() => {
-    const saved = localStorage.getItem('gtrams_faqs_analytics');
-    return saved ? JSON.parse(saved) : INITIAL_FAQS;
+  const { language, t } = useLanguage();
+  const currentLang = language === 'fil' || language === 'tl' || language === 'tagalog' ? 'fil' : 'en';
+
+  const [viewCounts, setViewCounts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gtrams_faqs_analytics');
+      return saved ? JSON.parse(saved) : { 1: 24, 2: 19, 3: 15, 4: 11, 5: 8 };
+    } catch {
+      return { 1: 24, 2: 19, 3: 15, 4: 11, 5: 8 };
+    }
   });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem('gtrams_faqs_analytics', JSON.stringify(faqs));
-  }, [faqs]);
+    localStorage.setItem('gtrams_faqs_analytics', JSON.stringify(viewCounts));
+  }, [viewCounts]);
 
   const handleFaqClick = (id) => {
     if (expandedFaq === id) {
       setExpandedFaq(null);
     } else {
       setExpandedFaq(id);
-      setFaqs(prevFaqs => 
-        prevFaqs.map(f => f.id === id ? { ...f, views: f.views + 1 } : f)
-      );
+      setViewCounts(prev => ({
+        ...prev,
+        [id]: (prev[id] || 0) + 1
+      }));
     }
   };
 
+  const currentFaqList = (FAQS_DATA[currentLang] || FAQS_DATA.en).map(faq => ({
+    ...faq,
+    views: viewCounts[faq.id] ?? faq.defaultViews
+  }));
+
   // Relevance + Frequency Scoring Algorithm
-  const filteredAndSortedFaqs = [...faqs]
+  const filteredAndSortedFaqs = currentFaqList
     .map(faq => {
       if (!searchQuery.trim()) {
         return { ...faq, score: faq.views };
@@ -93,13 +147,13 @@ const HelpSupport = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
           <div className="relative z-10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] bg-white/10 px-3 py-1 rounded-full border border-white/10">
-              Helpdesk & Support
+              {t('help.badge', 'Helpdesk & Support')}
             </span>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-2 mb-1">
-              Help Center & About Us
+              {t('help.title', 'Help Center & About Us')}
             </h1>
-            <p className="text-white/80 text-sm font-medium">
-              Alamin ang impormasyon ukol sa sistema, gabay sa paggamit, at mga opisyal na contact details ng munisipyo.
+            <p className="text-white/80 text-xs sm:text-sm font-medium max-w-2xl">
+              {t('help.subtitle', 'Find system information, user guides, and official municipal contact details.')}
             </p>
           </div>
         </div>
@@ -115,23 +169,35 @@ const HelpSupport = () => {
                   <Info size={24} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">About G-TRAMS Portal</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Official Tricycle Records & Application System</p>
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                    {t('help.aboutTitle', 'About G-TRAMS Portal')}
+                  </h2>
+                  <p className="text-xs text-[#7A1B22] dark:text-[#D4AF37] font-bold">
+                    {t('help.aboutSub', 'A Web-Based Tricycle Franchise Management System for the Municipality of Gasan, Marinduque')}
+                  </p>
                 </div>
               </div>
-              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                Ang <strong>G-TRAMS</strong> (Gasan Tricycle Records and Application Management System) ay ang opisyal na digital platform ng Lokal na Pamahalaan ng Gasan. Binuo ito upang gawing digital, mabilis, at transparent ang pagpaparehistro, pag-renew, at pag-monitor ng prangkisa ng tricycle para sa bawat operator at TODA.
+              <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
+                {currentLang === 'fil' ? (
+                  <>
+                    Ang <strong>G-TRAMS</strong> (Gasan Tricycle Records and Application Management System) ay isang <strong>Web-Based Tricycle Franchise Management System para sa Bayan ng Gasan, Marinduque</strong>. Binuo ito upang gawing digital, mabilis, at transparent ang pagpaparehistro, pag-renew, pag-verify ng mga talaan, at pag-monitor ng prangkisa ng tricycle para sa bawat operator at TODA.
+                  </>
+                ) : (
+                  <>
+                    <strong>G-TRAMS</strong> (Gasan Tricycle Records and Application Management System) is a <strong>Web-Based Tricycle Franchise Management System for the Municipality of Gasan, Marinduque</strong>. It was developed to make tricycle franchise registrations, renewals, record verification, and fleet monitoring digital, fast, and transparent for every operator and TODA association.
+                  </>
+                )}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <Building size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                <span>Sangguniang Bayan Office / BPLO</span>
+                <span>{t('help.deptBplo', 'Sangguniang Bayan Office / BPLO')}</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <MapPin size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                <span>Municipal Hall, Gasan, Marinduque</span>
+                <span>{t('help.location', 'Municipal Hall, Gasan, Marinduque')}</span>
               </div>
             </div>
           </div>
@@ -141,11 +207,15 @@ const HelpSupport = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <ShieldCheck size={20} className="text-[#D4AF37]" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">Admin Helpdesk</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
+                  {t('help.adminBadge', 'Admin Helpdesk')}
+                </span>
               </div>
-              <h2 className="text-xl font-black mb-2 tracking-tight">May katanungan?</h2>
+              <h2 className="text-xl font-black mb-2 tracking-tight">
+                {t('help.haveQuestions', 'Have questions or concerns?')}
+              </h2>
               <p className="text-white/80 text-xs leading-relaxed mb-6">
-                Maaaring makipag-ugnayan sa mga kawani ng munisipyo sa mga sumusunod na linya:
+                {t('help.contactDesc', 'You may reach out to municipal officers and BPLO staff through the following official channels:')}
               </p>
             </div>
 
@@ -153,14 +223,14 @@ const HelpSupport = () => {
               <a href="tel:09123456789" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/10 transition-colors">
                 <Phone size={16} className="text-[#D4AF37]" />
                 <div>
-                  <p className="text-[10px] text-white/60 uppercase font-bold">Hotline (Office Hours)</p>
+                  <p className="text-[10px] text-white/60 uppercase font-bold">{t('help.hotline', 'Hotline (Office Hours)')}</p>
                   <p className="font-bold tracking-wide">+63 (042) 342-1234 / 0912 345 6789</p>
                 </div>
               </a>
-              <a href="mailto:support@gtrams-gasan.gov.ph" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/10 transition-colors">
+              <a href="mailto:bplo@gasan.gov.ph" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/10 transition-colors">
                 <Mail size={16} className="text-[#D4AF37]" />
                 <div>
-                  <p className="text-[10px] text-white/60 uppercase font-bold">Email Support</p>
+                  <p className="text-[10px] text-white/60 uppercase font-bold">{t('help.emailSupport', 'Email Support')}</p>
                   <p className="font-bold tracking-wide">bplo@gasan.gov.ph</p>
                 </div>
               </a>
@@ -174,9 +244,11 @@ const HelpSupport = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
             <div>
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <HelpCircle className="text-[#7A1B22] dark:text-[#D4AF37]" size={24} /> Frequently Asked Questions (FAQ)
+                <HelpCircle className="text-[#7A1B22] dark:text-[#D4AF37]" size={24} /> {t('help.faqTitle', 'Frequently Asked Questions (FAQ)')}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Naka-sort ayon sa trending at pinakamadalas buksang paksa</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('help.faqSubtitle', 'Ranked by trending and frequently accessed topics')}
+              </p>
             </div>
 
             <div className="relative w-full md:w-80">
@@ -185,7 +257,7 @@ const HelpSupport = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search help topics (e.g. renewal, permit)..."
+                placeholder={t('help.searchPlaceholder', 'Search help topics (e.g. renewal, permit, requirements)...')}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all"
               />
             </div>
@@ -194,7 +266,7 @@ const HelpSupport = () => {
           <div className="space-y-3">
             {filteredAndSortedFaqs.length === 0 ? (
               <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                Walang nahanap na tugmang tanong. Subukan ang ibang keyword.
+                {t('help.noResults', 'No matching questions found. Try different search keywords.')}
               </div>
             ) : (
               filteredAndSortedFaqs.map((faq, idx) => (
@@ -209,7 +281,7 @@ const HelpSupport = () => {
                     <div className="flex items-center gap-3 pr-4">
                       {idx === 0 && !searchQuery && (
                         <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-200 dark:border-amber-800/80">
-                          <Flame size={12} className="text-amber-600 dark:text-amber-400" /> Top FAQ
+                          <Flame size={12} className="text-amber-600 dark:text-amber-400" /> {t('help.topFaq', 'Top FAQ')}
                         </span>
                       )}
                       <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{faq.question}</span>
@@ -225,14 +297,14 @@ const HelpSupport = () => {
                       <p>{faq.answer}</p>
                       <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800">
                         <div className="flex gap-1.5 flex-wrap">
-                          {faq.tags.map(t => (
-                            <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded">
-                              #{t}
+                          {faq.tags.map(tag => (
+                            <span key={tag} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded">
+                              #{tag}
                             </span>
                           ))}
                         </div>
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                          Viewed {faq.views} times
+                          {faq.views} {t('help.views', 'views')}
                         </span>
                       </div>
                     </div>
@@ -248,4 +320,4 @@ const HelpSupport = () => {
   );
 };
 
-export default HelpSupport;
+export default HelpSupport;
