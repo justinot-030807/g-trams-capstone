@@ -4,7 +4,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, Star
+  Check, FileText, Star, ShieldAlert, Receipt
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -209,65 +209,65 @@ const OperatorDashboard = () => {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {franchises.map((unit) => (
-            <div key={unit._id} className="animate-dashboard-card bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+            <div key={unit?._id} className="animate-dashboard-card bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
-                unit.status === 'Active' ? 'bg-emerald-500' :
-                unit.status === 'Ready for Pickup' ? 'bg-blue-500' :
-                unit.status === 'Expired' ? 'bg-orange-500' :
-                unit.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-400'
+                unit?.status === 'Active' ? 'bg-emerald-500' :
+                unit?.status === 'Ready for Pickup' ? 'bg-blue-500' :
+                unit?.status === 'Expired' ? 'bg-orange-500' :
+                unit?.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-400'
               }`} />
 
               <div>
                 <div className="flex justify-between items-start mb-5 mt-1">
                   <div>
-                    <h3 className="font-black text-2xl text-slate-900 tracking-wider mb-0.5">{unit.plateNo || 'PENDING PLATE'}</h3>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
+                    <h3 className="font-black text-2xl text-slate-900 tracking-wider mb-0.5">{unit?.plateNo || 'PENDING PLATE'}</h3>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{unit?.todaName} &bull; {unit?.make} ({unit?.made})</p>
                   </div>
                   
                   <span className={`px-3 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-sm ${
-                    unit.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                    unit.status === 'Ready for Pickup' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                    unit.status === 'Expired' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                    unit.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                    unit?.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                    unit?.status === 'Ready for Pickup' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                    unit?.status === 'Expired' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                    unit?.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
                     'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
-                    {unit.status === 'Active' && <CheckCircle size={13}/>}
-                    {unit.status === 'Ready for Pickup' && <FileText size={13}/>}
-                    {unit.status === 'Pending' && <Clock size={13} className="animate-pulse"/>}
-                    {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={13}/>}
-                    {unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
+                    {unit?.status === 'Active' && <CheckCircle size={13}/>}
+                    {unit?.status === 'Ready for Pickup' && <FileText size={13}/>}
+                    {unit?.status === 'Pending' && <Clock size={13} className="animate-pulse"/>}
+                    {(unit?.status === 'Cancelled' || unit?.status === 'Expired') && <AlertCircle size={13}/>}
+                    {unit?.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit?.status}
                   </span>
                 </div>
 
-                {renderApplicationTracker(unit.status)}
+                {renderApplicationTracker(unit?.status)}
 
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-100">
                     <MapPin className="text-[#7A1B22] shrink-0" size={16} />
                     <div>
                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Route Zone</p>
-                      <p className="text-xs font-bold text-slate-800">{unit.zone}</p>
+                      <p className="text-xs font-bold text-slate-800">{unit?.zone}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-100">
                     <Hash className="text-[#7A1B22] shrink-0" size={16} />
                     <div>
                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Motor Number</p>
-                      <p className="text-xs font-bold text-slate-800">{unit.motorNo}</p>
+                      <p className="text-xs font-bold text-slate-800">{unit?.motorNo}</p>
                     </div>
                   </div>
                 </div>
 
-                {unit.status === 'Active' && (
+                {unit?.status === 'Active' && (
                   <div className="mb-5 bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2"><CalendarDays size={16} className="text-emerald-600" /><span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide">Valid Until</span></div>
-                      <p className="text-xs font-black text-emerald-950">{getExpirationDate(unit.dateApplied)}</p>
+                      <p className="text-xs font-black text-emerald-950">{getExpirationDate(unit?.dateApplied)}</p>
                     </div>
                   </div>
                 )}
 
-                {unit.status === 'Ready for Pickup' && (
+                {unit?.status === 'Ready for Pickup' && (
                   <div className="mb-5 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
                     <FileText className="text-blue-600 shrink-0 mt-0.5" size={20} />
                     <div>
@@ -279,11 +279,11 @@ const OperatorDashboard = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2.5 mt-auto pt-4 border-t border-slate-100">
-                {unit.status === 'Expired' ? (
+                {unit?.status === 'Expired' ? (
                   <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-98"><RefreshCw size={14} /> Renew Franchise</button>
-                ) : unit.status === 'Active' ? (
+                ) : unit?.status === 'Active' ? (
                   <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">View Details</button>
-                ) : unit.status === 'Ready for Pickup' ? (
+                ) : unit?.status === 'Ready for Pickup' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2.5">
                     <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">View Details</button>
                     <div className="flex flex-1 gap-2">
@@ -295,7 +295,7 @@ const OperatorDashboard = () => {
                       </button>
                     </div>
                   </div>
-                ) : unit.status === 'Cancelled' ? (
+                ) : unit?.status === 'Cancelled' ? (
                   <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 text-white hover:bg-slate-800 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 active:scale-98">
                     <RefreshCw size={14} /> Fix Issues
                   </button>
@@ -383,7 +383,7 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-sm text-slate-500 font-bold uppercase">Date Approved</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.updatedAt ? new Date(selectedUnit.updatedAt).toLocaleDateString() : 'N/A'}</span>
+                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.updatedAt ? new Date(selectedUnit?.updatedAt).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
 

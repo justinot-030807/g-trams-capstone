@@ -30,8 +30,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   if (!safeAllowedRoles.includes(safeUserRole)) {
     if (safeUserRole === 'admin' || safeUserRole === 'administrator') {
       return <Navigate to="/admin-dashboard" replace />;
-    } else {
+    } else if (safeUserRole === 'operator' || safeUserRole === 'toda president') {
       return <Navigate to="/operator-dashboard" replace />;
+    } else {
+      localStorage.clear();
+      return <Navigate to="/login" replace />;
     }
   }
 

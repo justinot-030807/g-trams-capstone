@@ -23,8 +23,8 @@ const protect = async (req, res, next) => {
 // ROLE-BASED ACCESS CONTROL (Case-Insensitive Check)
 const authorize = (...roles) => {
     return (req, res, next) => {
-        const userRole = req.user.role.toLowerCase();
-        const allowedRoles = roles.map(r => r.toLowerCase());
+        const userRole = req.user.role.toLowerCase().trim();
+        const allowedRoles = roles.map(r => r.toLowerCase().trim());
 
         if (!allowedRoles.includes(userRole)) {
             return res.status(403).json({
