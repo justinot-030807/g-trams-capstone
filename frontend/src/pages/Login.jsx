@@ -33,23 +33,30 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
+        const normalizedRole = data.role ? String(data.role).toLowerCase().trim() : '';
+        
         localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
+        localStorage.setItem('role', normalizedRole);
 
         // IDINAGDAG: Sine-save agad ang pangalan at user info para hindi maging "User" sa TopBar
         if (data.name) localStorage.setItem('name', data.name);
         if (data.fullName) localStorage.setItem('name', data.fullName);
         if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user));
+          const userObj = { ...data.user };
+          if (userObj.role) {
+            userObj.role = String(userObj.role).toLowerCase().trim();
+            localStorage.setItem('role', userObj.role);
+          }
+          localStorage.setItem('user', JSON.stringify(userObj));
+          
           if (data.user.name || data.user.fullName) {
             localStorage.setItem('name', data.user.name || data.user.fullName);
           }
-          if (data.user.role) {
-            localStorage.setItem('role', data.user.role);
-          }
         }
 
-        if (data.role === 'admin') {
+        const finalRole = localStorage.getItem('role') || normalizedRole;
+
+        if (finalRole === 'admin' || finalRole === 'administrator') {
           navigate('/admin-dashboard');
         } else {
           navigate('/operator-dashboard');

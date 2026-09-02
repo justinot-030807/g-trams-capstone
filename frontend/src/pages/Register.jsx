@@ -94,7 +94,7 @@ const Register = () => {
   return (
     <div className="relative min-h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-6 sm:p-6 overflow-hidden select-none">
       
-      {/* KEYFRAMES */}
+      {/* ADVANCED LIQUID AURORA KEYFRAMES */}
       <style>{`
         @keyframes liquidOrbit1 {
           0% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
@@ -144,12 +144,20 @@ const Register = () => {
         .animate-item-4 { animation: itemFadeUp 0.5s ease-out 0.45s both; }
       `}</style>
 
-      {/* Living Ambient Gradient Orbs */}
+      {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-15%] right-[-10%] w-[580px] h-[580px] bg-gradient-to-bl from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
-        <div className="absolute bottom-[-15%] left-[-15%] w-[620px] h-[620px] bg-gradient-to-tr from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[95px] opacity-85 animate-liquid-2" />
-        <div className="absolute top-[20%] left-[10%] w-[420px] h-[420px] bg-gradient-to-br from-[#E03144]/60 via-[#8A141E] to-transparent rounded-full blur-[75px] animate-liquid-3" />
+        <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
+        <div className="absolute bottom-[-15%] right-[-15%] w-[620px] h-[620px] bg-gradient-to-tl from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[95px] opacity-85 animate-liquid-2" />
+        <div className="absolute top-[25%] right-[10%] w-[420px] h-[420px] bg-gradient-to-bl from-[#E03144]/60 via-[#8A141E] to-transparent rounded-full blur-[75px] animate-liquid-3" />
         <div className="absolute top-1/2 left-1/2 w-[480px] h-[480px] bg-gradient-to-r from-[#D4AF37]/35 via-[#F39C12]/20 to-transparent rounded-full blur-[105px] animate-golden-glow" />
+
+        <div 
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.9) 1px, transparent 0)',
+            backgroundSize: '24px 24px'
+          }}
+        />
       </div>
 
       {/* Card Container */}
