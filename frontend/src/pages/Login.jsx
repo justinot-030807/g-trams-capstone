@@ -264,12 +264,7 @@ const Login = () => {
               </div>
             </div>
 
-            {localStorage.getItem('maintenance_mode') === 'true' && (
-              <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-800 text-[10px] sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-xs flex items-center justify-center gap-1.5 animate-pulse">
-                <span>🛠️</span>
-                <span>Scheduled Maintenance Active • Admin Access Only</span>
-              </div>
-            )}
+
 
             {error && (
               <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-3 text-center shadow-sm animate-shake uppercase tracking-wide">
