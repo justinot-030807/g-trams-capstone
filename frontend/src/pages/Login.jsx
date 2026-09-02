@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2, Sparkles, FileText, ShieldCheck, Clock, Phone, ChevronRight } from 'lucide-react';
 
