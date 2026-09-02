@@ -14,12 +14,24 @@ const ForgotPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const isValidContact = (value) => {
+    const trimmed = value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^(09|\+639)\d{9}$/;
+    return emailRegex.test(trimmed) || phoneRegex.test(trimmed.replace(/[\s-]/g, ''));
+  };
+
   const handleRequestOTP = async (e) => {
     e.preventDefault();
     if (isLoading) return;
     
-    setIsLoading(true);
     setError(''); setSuccess('');
+
+    if (!isValidContact(contact)) {
+      return setError('PLEASE ENTER A VALID PH MOBILE (09XXXXXXXXX) OR EMAIL ADDRESS.');
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/forgot-password', {

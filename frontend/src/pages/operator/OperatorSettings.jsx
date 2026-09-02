@@ -29,8 +29,7 @@ const OperatorSettings = () => {
     name: '',
     contact: '',
     address: 'Municipality of Gasan',
-    todaAssociation: 'NON-TODA',
-    licenseNumber: ''
+    todaAssociation: 'NON-TODA'
   });
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
@@ -74,7 +73,6 @@ const OperatorSettings = () => {
       try {
         const savedTheme = localStorage.getItem('theme') || 'light';
         const savedLang = localStorage.getItem('gtrams_lang') || language || 'en';
-        const savedLicense = localStorage.getItem('gtrams_operator_license') || '';
 
         setPreferences({ theme: savedTheme, language: savedLang });
 
@@ -89,8 +87,7 @@ const OperatorSettings = () => {
               name: dbUser.name || dbUser.fullName || localStorage.getItem('name') || '',
               contact: dbUser.contact || '',
               address: dbUser.address || 'Municipality of Gasan',
-              todaAssociation: dbUser.todaAssociation || 'NON-TODA',
-              licenseNumber: dbUser.licenseNumber || savedLicense
+              todaAssociation: dbUser.todaAssociation || 'NON-TODA'
             });
 
             if (dbUser.profilePic) setProfilePicPreview(dbUser.profilePic);
@@ -153,10 +150,6 @@ const OperatorSettings = () => {
         formData.append('todaAssociation', profileData.todaAssociation);
         formData.append('language', preferences.language);
         formData.append('theme', preferences.theme);
-        if (profileData.licenseNumber) {
-          formData.append('licenseNumber', profileData.licenseNumber);
-          localStorage.setItem('gtrams_operator_license', profileData.licenseNumber);
-        }
 
         if (profilePicFile) formData.append('profilePic', profilePicFile);
 
@@ -343,7 +336,7 @@ const OperatorSettings = () => {
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                     {t('profile.contact', 'Contact Phone / Email')}
                   </label>
@@ -357,19 +350,6 @@ const OperatorSettings = () => {
                       required
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
-                    Driver's License No.
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.licenseNumber}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, licenseNumber: e.target.value }))}
-                    placeholder="e.g. N01-12-345678"
-                    className={inputClasses}
-                  />
                 </div>
 
                 <div>

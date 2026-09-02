@@ -263,12 +263,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-white font-black text-sm tracking-wider">G-TRAMS</span>
-                <span className="text-[#D4AF37] text-[8px] font-black uppercase tracking-widest bg-[#D4AF37]/15 px-1.5 py-0.5 rounded border border-[#D4AF37]/30">
-                  {role === 'admin' ? 'ADMIN' : (role === 'toda president' || role === 'toda_president' ? 'TODA' : 'OPERATOR')}
-                </span>
-              </div>
+              <span className="text-white font-black text-sm tracking-wider">G-TRAMS</span>
               <span className="text-white/60 text-[10px] font-semibold tracking-tight truncate">Municipality of Gasan</span>
             </div>
           </div>

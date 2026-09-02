@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { LogIn, Eye, EyeOff, Loader2, Sparkles, FileText, ShieldCheck, Clock, Phone, ChevronRight } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,8 +12,16 @@ const Login = () => {
     password: ''
   });
 
+  const isValidContact = (value) => {
+    const trimmed = value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^(09|\+639)\d{9}$/;
+    return emailRegex.test(trimmed) || phoneRegex.test(trimmed.replace(/[\s-]/g, ''));
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError('');
   };
 
   const handleLogin = async (e) => {
@@ -21,6 +29,13 @@ const Login = () => {
     if (isLoading) return;
 
     setError('');
+
+    // Input Format Validation (PH Mobile / Email)
+    if (!isValidContact(formData.contact)) {
+      setError('Please enter a valid PH mobile (09XXXXXXXXX) or email address.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -39,7 +54,6 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', normalizedRole);
 
-        // Sine-save agad ang pangalan at user info para kumpleto ang profile sa portal
         if (data.name) localStorage.setItem('name', data.name);
         if (data.fullName) localStorage.setItem('name', data.fullName);
         if (data.user) {
@@ -54,8 +68,6 @@ const Login = () => {
 
         if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
           navigate('/admin-dashboard');
-        } else if (normalizedRole === 'operator' || normalizedRole === 'toda president') {
-          navigate('/operator-dashboard');
         } else {
           navigate('/operator-dashboard');
         }
@@ -72,7 +84,7 @@ const Login = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-6 sm:p-6 overflow-hidden select-none">
+    <div className="relative min-h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-6 sm:px-8 sm:py-8 lg:px-12 overflow-x-hidden select-none">
       
       {/* ADVANCED LIQUID AURORA KEYFRAMES */}
       <style>{`
@@ -98,7 +110,7 @@ const Login = () => {
           50% { opacity: 0.65; transform: translate(-45%, -55%) scale(1.35); }
         }
         @keyframes entranceCard {
-          0% { opacity: 0; transform: scale(0.94) translateY(20px); }
+          0% { opacity: 0; transform: scale(0.95) translateY(18px); }
           100% { opacity: 1; transform: scale(1) translateY(0px); }
         }
         @keyframes logoPop {
@@ -140,116 +152,187 @@ const Login = () => {
         />
       </div>
 
-      {/* Main Glass Card */}
-      <div className="w-full max-w-[350px] sm:max-w-[390px] my-auto relative z-10 animate-card-entrance">
-        <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-7">
-          
-          <div className="flex flex-col items-center mb-5 text-center">
-            <div className="relative mb-2.5 animate-logo-entrance">
-              <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-md rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/25 shrink-0">
-                <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
-              </div>
+      {/* MAIN SPLIT-SCREEN CONTAINER */}
+      <div className="w-full max-w-6xl my-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-14">
+        
+        {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
+        <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-black uppercase tracking-widest w-fit mb-4 shadow-sm">
+            <Sparkles size={13} /> Official LGU Transport Portal
+          </div>
+
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1 shadow-xl border-2 border-[#D4AF37] shrink-0">
+              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
             </div>
-            <h2 className="text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
-            <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
-              <span>MUNICIPALITY OF GASAN</span>
-              <span>•</span>
-              <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
+            <div>
+              <h1 className="text-4xl font-black text-white tracking-tight leading-none">G-TRAMS</h1>
+              <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1">Municipality of Gasan • Marinduque</p>
             </div>
           </div>
 
-          {error && (
-            <div className="mb-3.5 bg-red-50/90 border border-red-200 text-red-700 text-[11px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
-              {error}
-            </div>
-          )}
+          <h2 className="text-xl font-bold text-white/90 tracking-tight leading-snug mt-2">
+            Gasan Tricycle Records & Application Management System
+          </h2>
+          <p className="text-white/70 text-xs sm:text-sm mt-2 leading-relaxed">
+            Ang opisyal na digital platform para sa mabilis, ligtas, at transparent na pagpaparehistro, pag-renew, at pamamahala ng mga prangkisa ng tricycle para sa bawat operator at TODA.
+          </p>
 
-          <form onSubmit={handleLogin} className="space-y-3">
-            <div className="animate-item-2">
-              <label className="block text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                EMAIL OR PHONE NUMBER
-              </label>
-              <input
-                type="text"
-                name="contact"
-                value={formData.contact}
-                onChange={handleChange}
-                disabled={isLoading}
-                required
-                className={`${inputClasses} ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                placeholder="juan@gmail.com or 09123456789"
-              />
+          {/* 3 FEATURE CARDS */}
+          <div className="grid grid-cols-1 gap-3 mt-6">
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
+              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+                <FileText size={18} />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-white">Online Application & Renewal</h3>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Magsumite ng mga kinakailangang dokumento at cedula nang digital mula sa inyong tahanan o terminal.</p>
+              </div>
             </div>
 
-            <div className="animate-item-3">
-              <label className="block text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                PASSWORD
-              </label>
-              <div className="relative">
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
+              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+                <ShieldCheck size={18} />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-white">Talaan ng TODA & Prangkisa</h3>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Opisyal na masterlist para sa lehitimong mga operator at pinagkaisang samahan ng mga TODA sa Gasan.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
+              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+                <Clock size={18} />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-white">Real-Time Status & Claim Stub</h3>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Subaybayan ang pag-apruba ng prangkisa at kumuha ng opisyal na printable claim stub para sa pagbabayad.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* LGU HELPDESK FOOTER BADGE */}
+          <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/10 text-white/60 text-xs">
+            <Phone size={14} className="text-[#D4AF37]" />
+            <span>BPLO Helpdesk Hotline: <strong>(042) 342-1234</strong> / <strong>bplo@gasan.gov.ph</strong></span>
+          </div>
+        </div>
+
+        {/* RIGHT AUTH CARD */}
+        <div className="w-full max-w-[360px] sm:max-w-[400px] shrink-0 animate-card-entrance">
+          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-6 sm:p-8">
+            
+            <div className="flex flex-col items-center mb-6 text-center">
+              <div className="relative mb-3 animate-logo-entrance">
+                <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-md rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/25 shrink-0">
+                  <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+                </div>
+              </div>
+              <h2 className="text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
+              <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
+                <span>MUNICIPALITY OF GASAN</span>
+                <span>•</span>
+                <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-3 text-center shadow-sm animate-shake uppercase tracking-wide">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="animate-item-2">
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  EMAIL OR PHONE NUMBER
+                </label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
+                  type="text"
+                  name="contact"
+                  value={formData.contact}
                   onChange={handleChange}
-                  disabled={isLoading}
                   required
-                  className={`${inputClasses} pr-10 ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  placeholder="Enter your password"
+                  className={inputClasses}
+                  placeholder="juan@gmail.com or 09123456789"
                 />
+              </div>
+
+              <div className="animate-item-3">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    PASSWORD
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className={`${inputClasses} pr-10`}
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22] transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <div className="text-right mt-1.5">
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
+                  >
+                    FORGOT PASSWORD?
+                  </Link>
+                </div>
+              </div>
+
+              <div className="animate-item-4 pt-1">
                 <button
-                  type="button"
+                  type="submit"
                   disabled={isLoading}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22] p-1 disabled:opacity-40"
+                  className={`w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-xs sm:text-sm font-black shadow-lg transition-all duration-300 uppercase tracking-wider ${
+                    isLoading 
+                      ? 'bg-slate-400 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:shadow-[#7A1B22]/50 hover:brightness-110 active:scale-[0.98]'
+                  }`}
                 >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      SIGNING IN...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn size={16} />
+                      SIGN IN
+                    </>
+                  )}
                 </button>
               </div>
+            </form>
+
+            <div className="mt-5 pt-4 border-t border-slate-100 text-center animate-item-4">
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">
+                UNREGISTERED OPERATOR?{' '}
+                <Link to="/register" className="font-black text-[#7A1B22] hover:underline">
+                  CREATE AN ACCOUNT
+                </Link>
+              </p>
             </div>
 
-            <div className="flex justify-end animate-item-3">
-              <Link to="/forgot-password" className="text-[10px] font-bold text-[#7A1B22] hover:underline uppercase tracking-wider">
-                FORGOT PASSWORD?
-              </Link>
-            </div>
-
-            <div className="animate-item-4 pt-1">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-black shadow-lg shadow-[#7A1B22]/25 active:scale-[0.98] transition-all tracking-wider uppercase ${
-                  isLoading ? 'opacity-70 cursor-not-allowed brightness-95' : 'hover:brightness-110'
-                }`}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    AUTHENTICATING...
-                  </>
-                ) : (
-                  <>
-                    <LogIn size={15} />
-                    SIGN IN
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-4 pt-3.5 border-t border-slate-100 text-center animate-item-4">
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-              UNREGISTERED OPERATOR?{' '}
-              <Link to="/register" className="text-[#7A1B22] hover:underline font-black">
-                CREATE AN ACCOUNT
-              </Link>
-            </p>
           </div>
-
         </div>
+
       </div>
 
-      {/* Modern Footer */}
-      <footer className="relative z-10 mt-4 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-1 animate-item-4 uppercase tracking-wider font-semibold">
+      {/* Footer */}
+      <footer className="relative z-10 mt-6 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold">
         <p>G-TRAMS — GASAN TRICYCLE RECORDS SYSTEM</p>
         <p className="text-white/40 text-[8px] sm:text-[9px] normal-case font-normal">
           © 2026 Municipality of Gasan, Marinduque. All rights reserved.

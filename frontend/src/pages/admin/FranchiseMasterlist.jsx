@@ -446,12 +446,12 @@ const FranchiseMasterlist = () => {
           <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Franchise Masterlist</h1>
-              <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-black rounded-full uppercase tracking-widest flex items-center gap-1 border border-blue-200 shadow-xs">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Franchise Masterlist</h1>
+              <span className="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 text-[10px] font-black rounded-full uppercase tracking-widest flex items-center gap-1 border border-blue-200 dark:border-blue-800/80 shadow-xs">
                 <CalendarDays size={12} /> FY {currentFiscalYear}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage, query, multi-filter, inspect, and paginate official tricycle records.</p>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Manage, query, multi-filter, inspect, and paginate official tricycle records.</p>
           </div>
         </div>
 
