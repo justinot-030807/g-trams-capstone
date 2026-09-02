@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import SidebarLayout from '../../components/SidebarLayout';
+import MainLayout from '../../components/MainLayout';
 import { Printer, Filter, CheckCircle, Clock, AlertTriangle, XCircle, FileText, Ban, Loader2 } from 'lucide-react';
 
 const TODA_LIST = [
@@ -74,7 +74,7 @@ const AdminReports = () => {
   const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all";
 
   return (
-    <SidebarLayout>
+    <MainLayout>
       {/* Header */}
       <header className="mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4 print:hidden">
         <div className="flex items-center gap-3">
@@ -225,7 +225,7 @@ const AdminReports = () => {
           </table>
         </div>
       </div>
-    </SidebarLayout>
+    </MainLayout>
   );
 };
 

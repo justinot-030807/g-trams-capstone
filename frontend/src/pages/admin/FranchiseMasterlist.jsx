@@ -215,14 +215,26 @@ const FranchiseMasterlist = () => {
         }
       `}</style>
 
-      {/* CUSTOM FLOATING TOAST NOTIFICATION */}
+      {/* Minimalist Floating Toast Notification */}
       {toast.show && (
-        <div className="fixed top-6 right-6 z-[999] animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className={`px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border ${
-            toast.type === 'error' ? 'bg-red-600 border-red-500 text-white' : 'bg-emerald-600 border-emerald-500 text-white'
-          }`}>
-            {toast.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
-            <span className="font-bold text-sm tracking-wide">{toast.message}</span>
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+              toast.type === 'error'
+                ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+            }`}>
+              {toast.type === 'error' ? (
+                <AlertCircle size={15} />
+              ) : (
+                <CheckCircle2 size={15} />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                {toast.message}
+              </p>
+            </div>
           </div>
         </div>
       )}

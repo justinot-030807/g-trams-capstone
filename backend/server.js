@@ -36,11 +36,7 @@ app.use(`${BASE_URI}/auth`, authRoutes);
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 app.use(`${BASE_URI}/franchises`, franchiseRoutes);
 
-// calendar and report routes
-app.use(`${BASE_URI}/calendar`, require('./src/routes/calendarRoutes'));
-
-
-// BAGONG TODA ROUTE (Inilipat natin sa taas bago ang app.listen)
+// TODA Routes
 app.use(`${BASE_URI}/toda`, todaRoutes); 
 
 // SYSTEM SETTINGS & MAINTENANCE MODE ROUTE

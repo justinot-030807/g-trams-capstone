@@ -18,6 +18,7 @@ const AdminSettings = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // TAB 1: SYSTEM & PLATFORM CONFIGURATION STATE
+  const [initialSystemConfig, setInitialSystemConfig] = useState(null);
   const [systemConfig, setSystemConfig] = useState({
     newFranchise: 3,
     renewFranchise: 1,
@@ -92,20 +93,24 @@ const AdminSettings = () => {
         const savedDocs = localStorage.getItem('required_docs');
         const savedMaxUnits = localStorage.getItem('max_units_per_operator');
 
-        setSystemConfig(prev => ({
-          ...prev,
-          newFranchise: savedNew ? parseInt(savedNew) : 3,
-          renewFranchise: savedRenew ? parseInt(savedRenew) : 1,
-          fiscalYear: savedFiscal || new Date().getFullYear().toString(),
-          franchiseFee: savedFee ? parseFloat(savedFee) : 500,
-          penaltyFee: savedPenalty ? parseFloat(savedPenalty) : 150,
-          fareBase: savedFareBase ? parseFloat(savedFareBase) : 15,
-          farePerKm: savedFareKm ? parseFloat(savedFareKm) : 2.5,
-          maxUnitsPerOperator: savedMaxUnits ? parseInt(savedMaxUnits) : 2,
-          maintenanceMode: savedMaint === 'true',
-          expiryWarningDays: savedExpiryDays ? parseInt(savedExpiryDays) : 30,
-          requiredDocs: savedDocs ? JSON.parse(savedDocs) : prev.requiredDocs
-        }));
+        setSystemConfig(prev => {
+          const newState = {
+            ...prev,
+            newFranchise: savedNew ? parseInt(savedNew) : 3,
+            renewFranchise: savedRenew ? parseInt(savedRenew) : 1,
+            fiscalYear: savedFiscal || new Date().getFullYear().toString(),
+            franchiseFee: savedFee ? parseFloat(savedFee) : 500,
+            penaltyFee: savedPenalty ? parseFloat(savedPenalty) : 150,
+            fareBase: savedFareBase ? parseFloat(savedFareBase) : 15,
+            farePerKm: savedFareKm ? parseFloat(savedFareKm) : 2.5,
+            maxUnitsPerOperator: savedMaxUnits ? parseInt(savedMaxUnits) : 2,
+            maintenanceMode: savedMaint === 'true',
+            expiryWarningDays: savedExpiryDays ? parseInt(savedExpiryDays) : 30,
+            requiredDocs: savedDocs ? JSON.parse(savedDocs) : prev.requiredDocs
+          };
+          setInitialSystemConfig(newState);
+          return newState;
+        });
 
         // Fetch authoritative settings from backend
         try {
@@ -118,19 +123,23 @@ const AdminSettings = () => {
                 ? d.requiredDocs 
                 : (savedDocs ? JSON.parse(savedDocs) : ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance']);
               
-              setSystemConfig(prev => ({
-                ...prev,
-                newFranchise: d.validityNew ?? prev.newFranchise,
-                renewFranchise: d.validityRenew ?? prev.renewFranchise,
-                fiscalYear: d.fiscalYear || prev.fiscalYear,
-                franchiseFee: d.franchiseFee ?? prev.franchiseFee,
-                penaltyFee: d.penaltyRate ?? prev.penaltyFee,
-                fareBase: d.baseFare ?? prev.fareBase,
-                maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
-                maintenanceMode: Boolean(d.maintenanceMode),
-                expiryWarningDays: d.expiryWarningDays ?? prev.expiryWarningDays,
-                requiredDocs: loadedDocs
-              }));
+              setSystemConfig(prev => {
+                const newState = {
+                  ...prev,
+                  newFranchise: d.validityNew ?? prev.newFranchise,
+                  renewFranchise: d.validityRenew ?? prev.renewFranchise,
+                  fiscalYear: d.fiscalYear || prev.fiscalYear,
+                  franchiseFee: d.franchiseFee ?? prev.franchiseFee,
+                  penaltyFee: d.penaltyRate ?? prev.penaltyFee,
+                  fareBase: d.baseFare ?? prev.fareBase,
+                  maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
+                  maintenanceMode: Boolean(d.maintenanceMode),
+                  expiryWarningDays: d.expiryWarningDays ?? prev.expiryWarningDays,
+                  requiredDocs: loadedDocs
+                };
+                setInitialSystemConfig(newState);
+                return newState;
+              });
               localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
               localStorage.setItem('fiscal_year', d.fiscalYear || prev.fiscalYear);
               localStorage.setItem('franchise_fee', d.franchiseFee ?? prev.franchiseFee);
@@ -302,7 +311,28 @@ const AdminSettings = () => {
         localStorage.setItem('required_docs', JSON.stringify(docsArray));
 
         setConfirmModal({ isOpen: false, type: null, data: null });
-        showToast('System configuration, unit limits, and rules saved successfully!', 'success');
+
+        const changes = [];
+        if (initialSystemConfig) {
+          if (Number(systemConfig.newFranchise) !== Number(initialSystemConfig.newFranchise)) changes.push('New Validity');
+          if (Number(systemConfig.renewFranchise) !== Number(initialSystemConfig.renewFranchise)) changes.push('Renew Validity');
+          if (systemConfig.fiscalYear !== initialSystemConfig.fiscalYear) changes.push('Fiscal Year');
+          if (Number(systemConfig.franchiseFee) !== Number(initialSystemConfig.franchiseFee)) changes.push('Franchise Fee');
+          if (Number(systemConfig.penaltyFee) !== Number(initialSystemConfig.penaltyFee)) changes.push('Penalty Fee');
+          if (Number(systemConfig.fareBase) !== Number(initialSystemConfig.fareBase)) changes.push('Base Fare');
+          if (Number(systemConfig.farePerKm) !== Number(initialSystemConfig.farePerKm)) changes.push('Fare Per KM');
+          if (Number(systemConfig.maxUnitsPerOperator) !== Number(initialSystemConfig.maxUnitsPerOperator)) changes.push('Max Units');
+          if (systemConfig.maintenanceMode !== initialSystemConfig.maintenanceMode) changes.push('Maintenance Mode');
+          if (Number(systemConfig.expiryWarningDays) !== Number(initialSystemConfig.expiryWarningDays)) changes.push('Expiry Warning');
+          if (JSON.stringify(docsArray) !== JSON.stringify(initialSystemConfig.requiredDocs)) changes.push('Required Docs');
+        }
+
+        setInitialSystemConfig(systemConfig);
+        if (changes.length > 0) {
+          showToast(`Updated: ${changes.join(', ')}`, 'success');
+        } else {
+          showToast('No settings were changed.', 'info');
+        }
       } 
       else if (type === 'account') {
         const formData = new FormData();
@@ -382,20 +412,30 @@ const AdminSettings = () => {
 
   return (
     <MainLayout>
-      {/* Centered Auto-Dismiss Floating Toast */}
+      {/* Minimalist Floating Toast Notification */}
       {toast.show && preferences.inAppToastAlerts && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className={`px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border backdrop-blur-md ${
-            toast.type === 'error' 
-              ? 'bg-red-600/95 border-red-500 text-white shadow-red-950/30' 
-              : 'bg-emerald-600/95 border-emerald-500 text-white shadow-emerald-950/30'
-          }`}>
-            {toast.type === 'error' ? (
-              <AlertCircle size={20} className="shrink-0 text-white animate-pulse" />
-            ) : (
-              <CheckCircle2 size={20} className="shrink-0 text-white" />
-            )}
-            <span className="font-bold text-xs sm:text-sm tracking-wide">{toast.message}</span>
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+              toast.type === 'error'
+                ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                : toast.type === 'info'
+                ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-900/60 text-blue-600 dark:text-blue-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+            }`}>
+              {toast.type === 'error' ? (
+                <AlertCircle size={15} />
+              ) : toast.type === 'info' ? (
+                <Info size={15} />
+              ) : (
+                <CheckCircle2 size={15} />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                {toast.message}
+              </p>
+            </div>
           </div>
         </div>
       )}
