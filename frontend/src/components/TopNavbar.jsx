@@ -104,8 +104,9 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   };
 
   const getRoleBadge = () => {
-    if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
-    if (role === 'admin') return t('nav.roleAdmin', 'ADMINISTRATOR');
+    const normalized = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
+    if (normalized === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
+    if (normalized === 'admin' || normalized === 'administrator') return t('nav.roleAdmin', 'ADMINISTRATOR');
     return t('nav.roleOperator', 'OPERATOR');
   };
 

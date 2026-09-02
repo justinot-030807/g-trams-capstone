@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     address: { type: String, required: true },
     contact: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['operator', 'admin', 'toda_president'], default: 'operator' },
+    role: { type: String, enum: ['operator', 'admin', 'administrator', 'toda_president', 'toda president'], default: 'operator' },
     
     // BAGONG IDINAGDAG: TODA Association
     todaAssociation: { type: String, default: 'NON-TODA' },

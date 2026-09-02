@@ -33,20 +33,18 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        const normalizedRole = data.role ? String(data.role).toLowerCase().trim() : '';
+        const rawRole = data.role || data.user?.role || '';
+        const normalizedRole = String(rawRole).toLowerCase().trim().replace(/_/g, ' ');
         
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', normalizedRole);
 
-        // IDINAGDAG: Sine-save agad ang pangalan at user info para hindi maging "User" sa TopBar
+        // Sine-save agad ang pangalan at user info para kumpleto ang profile sa portal
         if (data.name) localStorage.setItem('name', data.name);
         if (data.fullName) localStorage.setItem('name', data.fullName);
         if (data.user) {
           const userObj = { ...data.user };
-          if (userObj.role) {
-            userObj.role = String(userObj.role).toLowerCase().trim();
-            localStorage.setItem('role', userObj.role);
-          }
+          userObj.role = normalizedRole;
           localStorage.setItem('user', JSON.stringify(userObj));
           
           if (data.user.name || data.user.fullName) {
@@ -54,10 +52,10 @@ const Login = () => {
           }
         }
 
-        const finalRole = localStorage.getItem('role') || normalizedRole;
-
-        if (finalRole === 'admin' || finalRole === 'administrator') {
+        if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
           navigate('/admin-dashboard');
+        } else if (normalizedRole === 'operator' || normalizedRole === 'toda president') {
+          navigate('/operator-dashboard');
         } else {
           navigate('/operator-dashboard');
         }

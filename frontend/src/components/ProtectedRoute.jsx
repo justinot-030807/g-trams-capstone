@@ -1,7 +1,12 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const normalizeRole = (role) => {
+  if (!role) return '';
+  return String(role).toLowerCase().trim().replace(/_/g, ' ');
+};
+
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const token = localStorage.getItem('token');
   let userRole = localStorage.getItem('role');
   const userStr = localStorage.getItem('user');
@@ -22,15 +27,21 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Linisin ang text: Tanggalin ang spaces at gawing small letters lahat
-  const safeUserRole = String(userRole).toLowerCase().trim();
-  const safeAllowedRoles = allowedRoles.map(r => String(r).toLowerCase().trim());
+  // Linisin ang text: Tanggalin ang spaces/underscores at gawing small letters lahat
+  const safeUserRole = normalizeRole(userRole);
+  const safeAllowedRoles = allowedRoles.map(normalizeRole);
 
-  // Kung WALA sa allowed roles ang user, i-redirect sa tamang page niya
-  if (!safeAllowedRoles.includes(safeUserRole)) {
+  // Requirement: Treat 'toda president' and 'operator' interchangeably for all operator-level routes
+  const isOperatorAllowed = safeAllowedRoles.includes('operator') || safeAllowedRoles.includes('toda president');
+  const isUserOperatorOrToda = safeUserRole === 'operator' || safeUserRole === 'toda president';
+
+  const isAuthorized = safeAllowedRoles.includes(safeUserRole) || (isOperatorAllowed && isUserOperatorOrToda);
+
+  // Kung WALA sa allowed roles ang user, i-redirect sa tamang dashboard niya nang hindi sumisipa pabalik sa login
+  if (!isAuthorized) {
     if (safeUserRole === 'admin' || safeUserRole === 'administrator') {
       return <Navigate to="/admin-dashboard" replace />;
-    } else if (safeUserRole === 'operator' || safeUserRole === 'toda president') {
+    } else if (isUserOperatorOrToda) {
       return <Navigate to="/operator-dashboard" replace />;
     } else {
       localStorage.clear();

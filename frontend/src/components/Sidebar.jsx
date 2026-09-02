@@ -25,7 +25,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   });
 
-  let role = localStorage.getItem('role') || 'operator';
+  let role = String(localStorage.getItem('role') || 'operator').toLowerCase().trim().replace(/_/g, ' ');
 
   const adminRoutes = [
     '/admin-dashboard', '/franchise-masterlist', '/franchise-approval', 
@@ -61,7 +61,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       setUserData(prev => ({ ...prev, name: storedName }));
     }
 
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'administrator') {
       fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/reports`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       })
@@ -74,6 +74,32 @@ const Sidebar = ({ isOpen, onClose }) => {
         .catch(() => {});
     }
   }, [role]);
+
+  const todaMenu = [
+    { 
+      type: 'link', 
+      name: t('nav.dashboard', 'Dashboard'), 
+      path: '/operator-dashboard', 
+      icon: <LayoutDashboard size={18} /> 
+    },
+    {
+      type: 'dropdown',
+      name: t('nav.todaPortal', 'TODA Portal'),
+      id: 'toda_portal',
+      icon: <Users size={18} />,
+      subItems: [
+        { name: t('nav.submitMembers', 'Submit Members'), path: '/submit-members', icon: <Users size={16} /> },
+        { name: t('nav.applyRenew', 'Apply / Renew'), path: '/apply-franchise', icon: <FileText size={16} /> },
+        { name: t('nav.myProfile', 'My Profile'), path: '/manage-profile', icon: <User size={16} /> }
+      ]
+    },
+    { 
+      type: 'link', 
+      name: t('nav.helpSupport', 'Help & Support'), 
+      path: '/help-support', 
+      icon: <HelpCircle size={18} /> 
+    }
+  ];
 
   const menuConfig = {
     'admin': [
@@ -145,31 +171,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         icon: <HelpCircle size={18} /> 
       }
     ],
-    'toda_president': [
-      { 
-        type: 'link', 
-        name: t('nav.dashboard', 'Dashboard'), 
-        path: '/operator-dashboard', 
-        icon: <LayoutDashboard size={18} /> 
-      },
-      {
-        type: 'dropdown',
-        name: t('nav.todaPortal', 'TODA Portal'),
-        id: 'toda_portal',
-        icon: <Users size={18} />,
-        subItems: [
-          { name: t('nav.submitMembers', 'Submit Members'), path: '/submit-members', icon: <Users size={16} /> },
-          { name: t('nav.applyRenew', 'Apply / Renew'), path: '/apply-franchise', icon: <FileText size={16} /> },
-          { name: t('nav.myProfile', 'My Profile'), path: '/manage-profile', icon: <User size={16} /> }
-        ]
-      },
-      { 
-        type: 'link', 
-        name: t('nav.helpSupport', 'Help & Support'), 
-        path: '/help-support', 
-        icon: <HelpCircle size={18} /> 
-      }
-    ]
+    'toda president': todaMenu,
+    'toda_president': todaMenu
   };
 
   const activeMenu = menuConfig[role] || menuConfig['operator'];

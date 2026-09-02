@@ -20,13 +20,24 @@ const protect = async (req, res, next) => {
     }
 };
 
-// ROLE-BASED ACCESS CONTROL (Case-Insensitive Check)
+const normalizeRole = (r) => String(r || '').toLowerCase().trim().replace(/_/g, ' ');
+
+// ROLE-BASED ACCESS CONTROL (Case-Insensitive & Underscore-Insensitive Check)
 const authorize = (...roles) => {
     return (req, res, next) => {
-        const userRole = req.user.role.toLowerCase().trim();
-        const allowedRoles = roles.map(r => r.toLowerCase().trim());
+        if (!req.user || !req.user.role) {
+            return res.status(403).json({ message: 'ACCESS DENIED: No role found on user.' });
+        }
 
-        if (!allowedRoles.includes(userRole)) {
+        const userRole = normalizeRole(req.user.role);
+        const allowedRoles = roles.map(normalizeRole);
+
+        const isOperatorAllowed = allowedRoles.includes('operator') || allowedRoles.includes('toda president');
+        const isUserOperatorOrToda = userRole === 'operator' || userRole === 'toda president';
+
+        const isAuthorized = allowedRoles.includes(userRole) || (isOperatorAllowed && isUserOperatorOrToda);
+
+        if (!isAuthorized) {
             return res.status(403).json({
                 message: `ACCESS DENIED: Role '${req.user.role}' is not authorized to execute this API.`
             });
