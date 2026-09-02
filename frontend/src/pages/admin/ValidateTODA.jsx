@@ -72,19 +72,19 @@ const ValidateTODA = () => {
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">TODA Management</h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Manage TODA directories and validate masterlist submissions.</p>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">TODA Management</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage TODA directories and validate masterlist submissions.</p>
           </div>
         </div>
       </header>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
         {/* TABS */}
-        <div className="flex border-b border-slate-200 bg-slate-50">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80">
           <button 
             onClick={() => { setActiveTab('directory'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'directory' ? 'text-[#7A1B22] border-b-2 border-[#7A1B22] bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              activeTab === 'directory' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FolderTree size={18} /> Live Members Directory
@@ -92,7 +92,7 @@ const ValidateTODA = () => {
           <button 
             onClick={() => { setActiveTab('validations'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'validations' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              activeTab === 'validations' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={18} /> Document Validations
@@ -103,26 +103,26 @@ const ValidateTODA = () => {
         {activeTab === 'directory' && (
           <div className="p-6">
             {groupedToda.length === 0 ? (
-               <div className="text-center py-12 text-slate-500">
+               <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                  <Users size={32} className="mx-auto mb-3 opacity-30"/>
                  <p className="font-bold">No registered members yet.</p>
                </div>
             ) : (
               <div className="space-y-4">
                 {groupedToda.map((toda) => (
-                  <div key={toda.name} className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                  <div key={toda.name} className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
                     <button 
                       onClick={() => setExpandedToda(expandedToda === toda.name ? null : toda.name)}
-                      className="w-full bg-slate-50 hover:bg-slate-100 p-4 flex justify-between items-center transition-colors"
+                      className="w-full bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-800 p-4 flex justify-between items-center transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#7A1B22] text-white font-bold rounded-lg flex items-center justify-center text-xs">
+                        <div className="w-10 h-10 bg-[#7A1B22] text-white font-bold rounded-lg flex items-center justify-center text-xs shadow-xs">
                           {toda.name.substring(0,3)}
                         </div>
-                        <h3 className="font-bold text-slate-900 text-left">{toda.name}</h3>
+                        <h3 className="font-bold text-slate-900 dark:text-white text-left">{toda.name}</h3>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="text-xs font-bold bg-white border border-slate-200 px-3 py-1 rounded-full text-slate-600">
+                        <span className="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300">
                           {toda.members.length} Member{toda.members.length > 1 ? 's' : ''}
                         </span>
                       </div>
@@ -130,24 +130,24 @@ const ValidateTODA = () => {
                     
                     {/* EXPANDED TABLE */}
                     {expandedToda === toda.name && (
-                      <div className="bg-white border-t border-slate-200 p-4">
+                      <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4">
                         <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="border-b border-slate-100 text-slate-500 text-[10px] uppercase tracking-wider font-bold">
+                            <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider font-bold">
                               <th className="py-2 px-3">Name</th>
                               <th className="py-2 px-3">Barangay</th>
                               <th className="py-2 px-3">Contact</th>
                               <th className="py-2 px-3">Role</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-50">
+                          <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                             {toda.members.map(member => (
-                              <tr key={member._id} className="text-sm text-slate-700 hover:bg-slate-50">
-                                <td className="py-3 px-3 font-bold text-slate-900">{member.name}</td>
+                              <tr key={member._id} className="text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <td className="py-3 px-3 font-bold text-slate-900 dark:text-white">{member.name}</td>
                                 <td className="py-3 px-3">{member.address}</td>
                                 <td className="py-3 px-3">{member.contact}</td>
                                 <td className="py-3 px-3">
-                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${member.role === 'toda_president' ? 'bg-[#D4AF37]/20 text-[#7A1B22]' : 'bg-slate-100 text-slate-500'}`}>
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${member.role === 'toda_president' ? 'bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}>
                                     {member.role.replace('_', ' ')}
                                   </span>
                                 </td>
@@ -164,20 +164,20 @@ const ValidateTODA = () => {
           </div>
         )}
 
-        {/* CONTENT PARA SA DOCUMENT VALIDATIONS (Yung luma mong file) */}
+        {/* CONTENT PARA SA DOCUMENT VALIDATIONS */}
         {activeTab === 'validations' && (
           <>
-            <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50">
+            <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50 dark:bg-slate-800/60">
               <div className="relative w-full sm:w-96">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="text" placeholder="Search by TODA President or filename..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all shadow-sm" />
+                <input type="text" placeholder="Search by TODA President or filename..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all shadow-sm" />
               </div>
             </div>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider font-bold">
+                  <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                     <th className="p-4 pl-6">Submitted By</th>
                     <th className="p-4">Document</th>
                     <th className="p-4">Date Submitted</th>
@@ -185,25 +185,25 @@ const ValidateTODA = () => {
                     <th className="p-4 text-center pr-6">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                   {filteredSubmissions.length === 0 ? (
-                    <tr><td colSpan="5" className="p-12 text-center text-sm font-medium text-slate-500">No TODA member lists found.</td></tr>
+                    <tr><td colSpan="5" className="p-12 text-center text-sm font-medium text-slate-500 dark:text-slate-400">No TODA member lists found.</td></tr>
                   ) : (
                     filteredSubmissions.map((sub) => (
-                      <tr key={sub._id} className="hover:bg-slate-50 transition-colors group">
-                        <td className="p-4 pl-6"><p className="font-bold text-slate-900">{sub.presidentName}</p></td>
-                        <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#7A1B22]"><FileText size={16} /> {sub.fileName}</div></td>
-                        <td className="p-4 text-sm font-semibold text-slate-600">{new Date(sub.createdAt).toLocaleDateString()}</td>
+                      <tr key={sub._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group">
+                        <td className="p-4 pl-6"><p className="font-bold text-slate-900 dark:text-white">{sub.presidentName}</p></td>
+                        <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37]"><FileText size={16} /> {sub.fileName}</div></td>
+                        <td className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">{new Date(sub.createdAt).toLocaleDateString()}</td>
                         <td className="p-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${sub.status === 'Approved' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${sub.status === 'Approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'}`}>
                             {sub.status}
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-center space-x-2 flex justify-center">
-                         <a href={`${import.meta.env.VITE_API_URL}/${sub.filePath}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors border border-slate-200">
+                         <a href={`${import.meta.env.VITE_API_URL}/${sub.filePath}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
                             <Eye size={14} /> View
                           </a>
-                          <button onClick={() => handleApprove(sub._id)} disabled={sub.status === 'Approved'} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${sub.status === 'Approved' ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'}`}>
+                          <button onClick={() => handleApprove(sub._id)} disabled={sub.status === 'Approved'} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${sub.status === 'Approved' ? 'bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'}`}>
                             <CheckCircle size={14} /> {sub.status === 'Approved' ? 'Approved' : 'Approve'}
                           </button>
                         </td>

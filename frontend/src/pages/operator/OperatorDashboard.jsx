@@ -72,11 +72,11 @@ const OperatorDashboard = () => {
 
     if (status === 'Cancelled') {
       return (
-        <div className="mb-5 bg-red-50/80 border border-red-200 rounded-2xl p-3.5 flex items-start gap-2.5">
-          <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={18} />
+        <div className="mb-5 bg-red-50/80 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl p-3.5 flex items-start gap-2.5">
+          <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={18} />
           <div>
-            <p className="text-xs font-bold text-red-900">{t('dashboard.attentionTitle', 'Application Needs Attention')}</p>
-            <p className="text-[11px] text-red-700 leading-snug">{t('dashboard.attentionDesc', 'Please review the reason below and click "Fix Issues" to re-submit corrected details.')}</p>
+            <p className="text-xs font-bold text-red-900 dark:text-red-300">{t('dashboard.attentionTitle', 'Application Needs Attention')}</p>
+            <p className="text-[11px] text-red-700 dark:text-red-400 leading-snug">{t('dashboard.attentionDesc', 'Please review the reason below and click "Fix Issues" to re-submit corrected details.')}</p>
           </div>
         </div>
       );
@@ -84,11 +84,11 @@ const OperatorDashboard = () => {
 
     if (status === 'Expired') {
       return (
-        <div className="mb-5 bg-orange-50/80 border border-orange-200 rounded-2xl p-3.5 flex items-start gap-2.5">
-          <AlertCircle className="text-orange-600 shrink-0 mt-0.5" size={18} />
+        <div className="mb-5 bg-orange-50/80 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 rounded-2xl p-3.5 flex items-start gap-2.5">
+          <AlertCircle className="text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" size={18} />
           <div>
-            <p className="text-xs font-bold text-orange-900">{t('dashboard.expiredTitle', 'Franchise Expired')}</p>
-            <p className="text-[11px] text-orange-700 leading-snug">{t('dashboard.expiredDesc', 'Your franchise validity has ended. Click "Renew Franchise" to submit your updated CTC/Cedula.')}</p>
+            <p className="text-xs font-bold text-orange-900 dark:text-orange-300">{t('dashboard.expiredTitle', 'Franchise Expired')}</p>
+            <p className="text-[11px] text-orange-700 dark:text-orange-400 leading-snug">{t('dashboard.expiredDesc', 'Your franchise validity has ended. Click "Renew Franchise" to submit your updated CTC/Cedula.')}</p>
           </div>
         </div>
       );
@@ -106,14 +106,14 @@ const OperatorDashboard = () => {
     if (status === 'Ready for Pickup') currentStepNum = 3;
 
     return (
-      <div className="mb-5 bg-slate-50/70 border border-slate-100 rounded-2xl p-4 sm:p-5">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{t('dashboard.appProgress', 'Application Progress')}</p>
+      <div className="mb-5 bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
+        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">{t('dashboard.appProgress', 'Application Progress')}</p>
         
         {/* FIXED: Hinding-hindi na lalagpas ang background line sa circle nodes */}
-        <div className="relative flex items-center justify-between z-10 before:absolute before:left-0 before:top-3 before:w-full before:h-[3px] before:bg-slate-200 before:-z-10">
+        <div className="relative flex items-center justify-between z-10 before:absolute before:left-0 before:top-3 before:w-full before:h-[3px] before:bg-slate-200 dark:before:bg-slate-700 before:-z-10">
           
           <div 
-            className="absolute left-0 top-3 h-[3px] bg-[#7A1B22] transition-all duration-500 ease-out -z-10"
+            className="absolute left-0 top-3 h-[3px] bg-[#7A1B22] dark:bg-[#D4AF37] transition-all duration-500 ease-out -z-10"
             style={{ width: currentStepNum === 1 ? '0%' : currentStepNum === 2 ? '33.33%' : currentStepNum === 3 ? '66.66%' : '100%' }}
           />
           
@@ -122,26 +122,26 @@ const OperatorDashboard = () => {
             const isCurrent = currentStepNum === step.id;
 
             return (
-              <div key={step.id} className="flex flex-col items-center bg-slate-50 px-2 sm:px-3">
+              <div key={step.id} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800/90 px-2 sm:px-3 rounded-lg">
                 <div 
                   className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
                     isCompleted 
-                      ? 'bg-[#7A1B22] text-white shadow-xs' 
+                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs' 
                       : isCurrent 
-                      ? 'bg-white border-2 border-[#7A1B22] ring-3 ring-[#7A1B22]/15' 
-                      : 'bg-white border-2 border-slate-200'
+                      ? 'bg-white dark:bg-slate-800 border-2 border-[#7A1B22] dark:border-[#D4AF37] ring-3 ring-[#7A1B22]/15 dark:ring-[#D4AF37]/20' 
+                      : 'bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   {isCompleted ? (
                     <Check size={12} className="stroke-[3]" />
                   ) : isCurrent ? (
-                    <div className="w-2 h-2 bg-[#7A1B22] rounded-full animate-pulse" />
+                    <div className="w-2 h-2 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full animate-pulse" />
                   ) : (
-                    <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
+                    <div className="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
                   )}
                 </div>
                 <span className={`text-[10px] font-bold mt-1.5 tracking-tight text-center ${
-                  isCurrent ? 'text-[#7A1B22] font-black' : isCompleted ? 'text-slate-800' : 'text-slate-400'
+                  isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
                 }`}>
                   {step.label}
                 </span>
@@ -186,33 +186,33 @@ const OperatorDashboard = () => {
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
           <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">{t('dashboard.garageTitle', 'My Franchise Garage')}</h2>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('dashboard.garageSub', 'Assigned tricycle units under your account')}</p>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{t('dashboard.garageTitle', 'My Franchise Garage')}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{t('dashboard.garageSub', 'Assigned tricycle units under your account')}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
+        <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
+          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
           <div className="flex gap-1.5">
-            <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`} />
-            <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22]' : 'bg-slate-200'}`} />
+            <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+            <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
           </div>
-          <span className="text-xs font-black text-[#7A1B22]">{franchises.length}/2</span>
+          <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37]">{franchises.length}/2</span>
         </div>
       </header>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-48 animate-pulse"><Loader2 className="animate-spin text-[#7A1B22]" size={36} /></div>
+        <div className="flex justify-center items-center h-48 animate-pulse"><Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={36} /></div>
       ) : franchises.length === 0 ? (
-        <div className="animate-dashboard-card bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center text-slate-500 flex flex-col items-center justify-center min-h-[300px]">
-          <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 text-[#7A1B22]"><PlusCircle size={32} /></div>
-          <h3 className="text-base font-bold text-slate-800 mb-1">{t('dashboard.noUnitsTitle', 'No Franchise Units Found')}</h3>
-          <p className="text-xs text-slate-500 mb-6 max-w-sm">{t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}</p>
+        <div className="animate-dashboard-card bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[300px] transition-colors">
+          <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 text-[#7A1B22] dark:text-[#D4AF37]"><PlusCircle size={32} /></div>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">{t('dashboard.noUnitsTitle', 'No Franchise Units Found')}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 max-w-sm">{t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}</p>
           <button onClick={() => navigate('/apply-franchise')} className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-95">{t('dashboard.applyNew', 'Apply New Franchise')}</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {franchises.map((unit) => (
-            <div key={unit?._id} className="animate-dashboard-card bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+            <div key={unit?._id} className="animate-dashboard-card bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
                 unit?.status === 'Active' ? 'bg-emerald-500' :
                 unit?.status === 'Ready for Pickup' ? 'bg-blue-500' :
@@ -223,16 +223,16 @@ const OperatorDashboard = () => {
               <div>
                 <div className="flex justify-between items-start mb-5 mt-1">
                   <div>
-                    <h3 className="font-black text-2xl text-slate-900 tracking-wider mb-0.5">{unit?.plateNo || t('dashboard.pendingPlate', 'PENDING PLATE')}</h3>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{unit?.todaName} &bull; {unit?.make} ({unit?.made})</p>
+                    <h3 className="font-black text-2xl text-slate-900 dark:text-white tracking-wider mb-0.5">{unit?.plateNo || t('dashboard.pendingPlate', 'PENDING PLATE')}</h3>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{unit?.todaName} &bull; {unit?.make} ({unit?.made})</p>
                   </div>
                   
                   <span className={`px-3 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-sm ${
-                    unit?.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                    unit?.status === 'Ready for Pickup' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                    unit?.status === 'Expired' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                    unit?.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
-                    'bg-amber-50 text-amber-700 border-amber-200'
+                    unit?.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
+                    unit?.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
+                    unit?.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
+                    unit?.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
+                    'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
                   }`}>
                     {unit?.status === 'Active' && <CheckCircle size={13}/>}
                     {unit?.status === 'Ready for Pickup' && <FileText size={13}/>}
@@ -249,52 +249,52 @@ const OperatorDashboard = () => {
                 {renderApplicationTracker(unit?.status)}
 
                 <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                    <MapPin className="text-[#7A1B22] shrink-0" size={16} />
+                  <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800">
+                    <MapPin className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" size={16} />
                     <div>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.routeZone', 'Route Zone')}</p>
-                      <p className="text-xs font-bold text-slate-800">{unit?.zone}</p>
+                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('dashboard.routeZone', 'Route Zone')}</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{unit?.zone}</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                    <Hash className="text-[#7A1B22] shrink-0" size={16} />
+                  <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800">
+                    <Hash className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" size={16} />
                     <div>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.motorNumber', 'Motor Number')}</p>
-                      <p className="text-xs font-bold text-slate-800">{unit?.motorNo}</p>
+                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('dashboard.motorNumber', 'Motor Number')}</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{unit?.motorNo}</p>
                     </div>
                   </div>
                 </div>
 
                 {unit?.status === 'Active' && (
-                  <div className="mb-5 bg-emerald-50/60 border border-emerald-100 p-4 rounded-2xl">
+                  <div className="mb-5 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-4 rounded-2xl">
                     <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2"><CalendarDays size={16} className="text-emerald-600" /><span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide">{t('dashboard.validUntil', 'Valid Until')}</span></div>
-                      <p className="text-xs font-black text-emerald-950">{getExpirationDate(unit?.dateApplied)}</p>
+                      <div className="flex items-center gap-2"><CalendarDays size={16} className="text-emerald-600 dark:text-emerald-400" /><span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">{t('dashboard.validUntil', 'Valid Until')}</span></div>
+                      <p className="text-xs font-black text-emerald-950 dark:text-emerald-200">{getExpirationDate(unit?.dateApplied)}</p>
                     </div>
                   </div>
                 )}
 
                 {unit?.status === 'Ready for Pickup' && (
-                  <div className="mb-5 bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
-                    <FileText className="text-blue-600 shrink-0 mt-0.5" size={20} />
+                  <div className="mb-5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-4 rounded-2xl flex items-start gap-3">
+                    <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={20} />
                     <div>
-                      <h4 className="text-blue-900 font-black text-xs uppercase mb-1">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
-                      <p className="text-xs font-medium text-blue-700 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                      <h4 className="text-blue-900 dark:text-blue-200 font-black text-xs uppercase mb-1">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
+                      <p className="text-xs font-medium text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2.5 mt-auto pt-4 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row gap-2.5 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
                 {unit?.status === 'Expired' ? (
                   <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-98"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
-                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
                 ) : unit?.status === 'Ready for Pickup' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2.5">
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
                     <div className="flex flex-1 gap-2">
-                      <button onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} className="flex-1 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-3 py-2.5 rounded-xl font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 active:scale-98">
+                      <button onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} className="flex-1 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-2.5 rounded-xl font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 active:scale-98">
                         <Eye size={14} /> {t('dashboard.btnViewStub', 'View Stub')}
                       </button>
                       <button onClick={() => handleDirectDownload(unit)} className="flex-1 bg-blue-600 text-white hover:bg-blue-700 px-3 py-2.5 rounded-xl font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-98">
@@ -303,13 +303,13 @@ const OperatorDashboard = () => {
                     </div>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 text-white hover:bg-slate-800 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 active:scale-98">
+                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 active:scale-98">
                     <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                   </button>
                 ) : (
                   <>
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
-                    <button disabled className="flex-1 bg-slate-50 text-slate-400 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs cursor-not-allowed">{t('dashboard.btnPendingReview', 'Pending Review')}</button>
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                    <button disabled className="flex-1 bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs cursor-not-allowed">{t('dashboard.btnPendingReview', 'Pending Review')}</button>
                   </>
                 )}
               </div>
@@ -321,32 +321,32 @@ const OperatorDashboard = () => {
       {/* Details Modal */}
       {isDetailsOpen && selectedUnit && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-              <h2 className="text-base font-black text-slate-900">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-md rounded-3xl shadow-2xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-base font-black text-slate-900 dark:text-white">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
               <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500"><X size={18} /></button>
             </div>
-            <div className="grid grid-cols-2 gap-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-y-3 text-xs text-slate-700 dark:text-slate-300">
               <div className="col-span-2">
-                <p className="text-slate-400 font-bold uppercase text-[10px]">{t('dashboard.operator', 'Operator')}</p>
-                <p className="font-bold text-slate-900">{selectedUnit?.fullName}</p>
+                <p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.operator', 'Operator')}</p>
+                <p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.fullName}</p>
               </div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-slate-900">{selectedUnit?.todaName}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-slate-900">{selectedUnit?.zone}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-black text-slate-900">{selectedUnit?.plateNo || 'N/A'}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-bold text-slate-900">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-bold text-slate-900">{selectedUnit?.motorNo}</p></div>
-              <div><p className="text-slate-400 font-bold uppercase text-[10px]">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-bold text-slate-900">{selectedUnit?.chassisNo}</p></div>
+              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.todaName}</p></div>
+              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.zone}</p></div>
+              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-black text-slate-900 dark:text-white">{selectedUnit?.plateNo || 'N/A'}</p></div>
+              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
+              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.motorNo}</p></div>
+              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.chassisNo}</p></div>
             </div>
-            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors">{t('dashboard.btnClose', 'Close')}</button>
+            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs transition-colors">{t('dashboard.btnClose', 'Close')}</button>
           </div>
         </div>
       )}
 
       {/* Document View & Download Modal */}
       {isPrintOpen && selectedUnit && (
-        <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 flex flex-col">
           <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
             <h2 className="font-bold text-sm flex items-center gap-2">
               <FileText size={18} className="text-[#D4AF37]" /> {t('dashboard.claimStubTitle', 'Payment & Claim Stub')}

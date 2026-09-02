@@ -133,22 +133,22 @@ const AdminDashboard = () => {
       {/* 2. STATS CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
         {[
-          { label: 'Total Franchises', count: stats.total, sub: 'Registered fleet', icon: <Users size={22} />, color: 'from-blue-600 to-indigo-600', iconBg: 'bg-blue-50 text-blue-600' },
-          { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-50 text-emerald-600' },
-          { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, color: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-50 text-amber-600' },
-          { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, color: 'from-red-500 to-rose-600', iconBg: 'bg-red-50 text-red-600' }
+          { label: 'Total Franchises', count: stats.total, sub: 'Registered fleet', icon: <Users size={22} />, color: 'from-blue-600 to-indigo-600', iconBg: 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' },
+          { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' },
+          { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, color: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' },
+          { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, color: 'from-red-500 to-rose-600', iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400' }
         ].map((stat, index) => (
           <div 
             key={index} 
-            className="animate-smooth-card bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
+            className="animate-smooth-card bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
             style={{ animationDelay: `${0.1 + (index * 0.08)}s` }}
           >
             <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.color}`} />
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stat.count}</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{stat.sub}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{stat.count}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{stat.sub}</p>
               </div>
               <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
                 {stat.icon}
@@ -163,27 +163,27 @@ const AdminDashboard = () => {
         
         {/* BAR CHART */}
         <div 
-          className="animate-smooth-card lg:col-span-2 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 flex flex-col justify-between"
+          className="animate-smooth-card lg:col-span-2 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between"
           style={{ animationDelay: '0.45s' }}
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-[#7A1B22]/10 text-[#7A1B22] rounded-xl">
+              <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl">
                 <BarChart3 size={18} />
               </div>
-              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">Franchise Distribution</h2>
+              <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">Franchise Distribution</h2>
             </div>
-            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-full uppercase tracking-wider">
+            <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-full uppercase tracking-wider border border-slate-200/60 dark:border-slate-700">
               {stats.total} Total Units
             </span>
           </div>
 
-          <div className="h-56 w-full flex items-end justify-around gap-2 sm:gap-6 border-b border-slate-100 pt-6 pb-2">
+          <div className="h-56 w-full flex items-end justify-around gap-2 sm:gap-6 border-b border-slate-100 dark:border-slate-800 pt-6 pb-2">
             {[
-              { label: 'Active', count: stats.active, gradient: 'from-emerald-500 to-teal-400', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { label: 'Pending', count: stats.pending, gradient: 'from-amber-400 to-orange-400', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-              { label: 'Expired', count: stats.expired, gradient: 'from-red-500 to-rose-500', badge: 'bg-red-50 text-red-700 border-red-200' },
-              { label: 'Cancelled', count: stats.cancelled, gradient: 'from-slate-400 to-slate-500', badge: 'bg-slate-50 text-slate-700 border-slate-200' }
+              { label: 'Active', count: stats.active, gradient: 'from-emerald-500 to-teal-400', badge: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' },
+              { label: 'Pending', count: stats.pending, gradient: 'from-amber-400 to-orange-400', badge: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60' },
+              { label: 'Expired', count: stats.expired, gradient: 'from-red-500 to-rose-500', badge: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' },
+              { label: 'Cancelled', count: stats.cancelled, gradient: 'from-slate-400 to-slate-500', badge: 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700' }
             ].map((bar, i) => (
               <div key={i} className="flex flex-col items-center h-full justify-end w-16 sm:w-24 group relative">
                 
@@ -191,14 +191,14 @@ const AdminDashboard = () => {
                   {bar.count}
                 </span>
                 
-                <div className="w-full bg-slate-100/80 rounded-2xl h-36 flex items-end p-1 shadow-inner overflow-hidden">
+                <div className="w-full bg-slate-100/80 dark:bg-slate-800 rounded-2xl h-36 flex items-end p-1 shadow-inner overflow-hidden">
                   <div 
                     className={`w-full rounded-xl bg-gradient-to-t ${bar.gradient} shadow-md smooth-bar-transition group-hover:brightness-110 group-hover:scale-[1.02]`} 
                     style={{ height: getGraphHeight(bar.count) }}
                   />
                 </div>
 
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-2.5">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2.5">
                   {bar.label}
                 </span>
               </div>
@@ -208,14 +208,14 @@ const AdminDashboard = () => {
 
         {/* PROGRESS METRICS */}
         <div 
-          className="animate-smooth-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
           style={{ animationDelay: '0.55s' }}
         >
           <div className="flex items-center gap-2.5 mb-6">
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-xl">
               <TrendingUp size={18} />
             </div>
-            <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">Ratio Breakdown</h2>
+            <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">Ratio Breakdown</h2>
           </div>
 
           <div className="space-y-4">
@@ -227,13 +227,13 @@ const AdminDashboard = () => {
             ].map((item, i) => (
               <div key={i}>
                 <div className="flex justify-between items-center text-xs font-bold mb-1.5">
-                  <span className="text-slate-600 flex items-center gap-1.5">
+                  <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${item.color}`} />
                     {item.label}
                   </span>
-                  <span className="text-slate-900">{getPercentage(item.count)}%</span>
+                  <span className="text-slate-900 dark:text-white">{getPercentage(item.count)}%</span>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                   <div className={`${item.color} h-full rounded-full transition-all duration-1200 ease-out`} style={{ width: `${getPercentage(item.count)}%` }} />
                 </div>
               </div>
@@ -247,30 +247,30 @@ const AdminDashboard = () => {
         
         {/* LOGS */}
         <div 
-          className="animate-smooth-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
           style={{ animationDelay: '0.65s' }}
         >
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <History size={18} className="text-[#7A1B22]" />
-              <h2 className="text-sm sm:text-base font-black text-slate-900">System Activity History</h2>
+              <History size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+              <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">System Activity History</h2>
             </div>
-            <button onClick={() => navigate('/franchise-masterlist')} className="text-xs font-bold text-[#7A1B22] hover:underline flex items-center gap-1">
+            <button onClick={() => navigate('/franchise-masterlist')} className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline flex items-center gap-1">
               Masterlist <ArrowRight size={12} />
             </button>
           </div>
 
           <div className="space-y-3">
             {historyLogs.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">No recent system actions logged.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-8">No recent system actions logged.</p>
             ) : (
               historyLogs.map((log) => {
                 const actionData = getActionDetails(log);
                 return (
-                  <div key={log._id} className="p-3 bg-slate-50/70 hover:bg-slate-100/80 rounded-2xl flex items-center justify-between gap-3 transition-all duration-200">
+                  <div key={log._id} className="p-3 bg-slate-50/70 dark:bg-slate-800/70 hover:bg-slate-100/80 dark:hover:bg-slate-800 rounded-2xl flex items-center justify-between gap-3 transition-all duration-200 border border-slate-100 dark:border-slate-800">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-800 truncate">{actionData.text}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{actionData.text}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
                         {new Date(log.updatedAt).toLocaleDateString()} at {new Date(log.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </p>
                     </div>
@@ -286,13 +286,13 @@ const AdminDashboard = () => {
 
         {/* PENDING APPROVAL LIST */}
         <div 
-          className="animate-smooth-card bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80"
+          className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
           style={{ animationDelay: '0.75s' }}
         >
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <FileStack size={18} className="text-amber-500" />
-              <h2 className="text-sm sm:text-base font-black text-slate-900">Pending Approvals Queue</h2>
+              <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Pending Approvals Queue</h2>
             </div>
             {stats.pending > 0 && (
               <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
@@ -303,16 +303,16 @@ const AdminDashboard = () => {
 
           <div className="space-y-3">
             {recentApps.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs flex flex-col items-center">
+              <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center">
                 <CheckCircle size={28} className="text-emerald-500 mb-1" />
                 All caught up! No pending applications.
               </div>
             ) : (
               recentApps.map((app) => (
-                <div key={app._id} className="p-3 bg-amber-50/40 hover:bg-amber-50/80 rounded-2xl border border-amber-100 flex items-center justify-between gap-3 transition-all duration-200">
+                <div key={app._id} className="p-3 bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 rounded-2xl border border-amber-100 dark:border-amber-900/40 flex items-center justify-between gap-3 transition-all duration-200">
                   <div className="min-w-0">
-                    <p className="text-xs font-black text-slate-900 truncate">{app.fullName || 'Applicant'}</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">{app.todaName} • {app.make || 'Tricycle'}</p>
+                    <p className="text-xs font-black text-slate-900 dark:text-white truncate">{app.fullName || 'Applicant'}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{app.todaName} • {app.make || 'Tricycle'}</p>
                   </div>
                   <button 
                     onClick={() => navigate('/franchise-approval')}

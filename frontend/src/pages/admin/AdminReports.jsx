@@ -71,7 +71,7 @@ const AdminReports = () => {
     window.print();
   };
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all";
+  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all";
 
   return (
     <SidebarLayout>
@@ -80,8 +80,8 @@ const AdminReports = () => {
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">System Reports</h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Filter, view, and print franchise records.</p>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">System Reports</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Filter, view, and print franchise records.</p>
           </div>
         </div>
         <button 
@@ -93,21 +93,21 @@ const AdminReports = () => {
       </header>
 
       {/* Filter Criteria */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm mb-6 print:hidden">
-        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Filter size={14} className="text-[#7A1B22]" /> Filter Criteria
+      <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 print:hidden transition-colors">
+        <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Filter size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Filter Criteria
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Date From</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Date From</label>
             <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={inputClasses} />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Date To</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Date To</label>
             <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={inputClasses} />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Status</label>
             <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All Status</option>
               <option value="Active">Active</option>
@@ -118,14 +118,14 @@ const AdminReports = () => {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">TODA</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">TODA</label>
             <select name="todaName" value={filters.todaName} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All TODA</option>
               {TODA_LIST.map((toda, i) => <option key={i} value={toda}>{toda}</option>)}
             </select>
           </div>
           <div className="sm:col-span-2 lg:col-span-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Barangay</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Barangay</label>
             <select name="barangay" value={filters.barangay} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All Barangays</option>
               {GASAN_BARANGAYS.map((brgy, i) => <option key={i} value={brgy}>{brgy}</option>)}
@@ -136,32 +136,32 @@ const AdminReports = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <div className="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl text-center shadow-sm">
-          <FileText size={18} className="mx-auto text-slate-500 mb-1" />
-          <p className="text-xl sm:text-2xl font-black text-slate-900">{summary.total}</p>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Total Records</p>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors">
+          <FileText size={18} className="mx-auto text-slate-500 dark:text-slate-400 mb-1" />
+          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{summary.total}</p>
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Total Records</p>
         </div>
-        <div className="bg-emerald-50 border border-emerald-200 p-3 sm:p-4 rounded-2xl text-center shadow-sm">
-          <CheckCircle size={18} className="mx-auto text-emerald-600 mb-1" />
-          <p className="text-xl sm:text-2xl font-black text-emerald-900">{summary.active}</p>
-          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide">Active</p>
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors">
+          <CheckCircle size={18} className="mx-auto text-emerald-600 dark:text-emerald-400 mb-1" />
+          <p className="text-xl sm:text-2xl font-black text-emerald-900 dark:text-emerald-300">{summary.active}</p>
+          <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Active</p>
         </div>
-        <div className="bg-amber-50 border border-amber-200 p-3 sm:p-4 rounded-2xl text-center shadow-sm">
-          <Clock size={18} className="mx-auto text-amber-600 mb-1" />
-          <p className="text-xl sm:text-2xl font-black text-amber-900">{summary.pending}</p>
-          <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Pending</p>
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors">
+          <Clock size={18} className="mx-auto text-amber-600 dark:text-amber-400 mb-1" />
+          <p className="text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-300">{summary.pending}</p>
+          <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Pending</p>
         </div>
-        <div className="bg-orange-50 border border-orange-200 p-3 sm:p-4 rounded-2xl text-center shadow-sm">
-          <AlertTriangle size={18} className="mx-auto text-orange-600 mb-1" />
-          <p className="text-xl sm:text-2xl font-black text-orange-900">{summary.expired}</p>
-          <p className="text-[10px] font-bold text-orange-600 uppercase tracking-wide">Expired</p>
+        <div className="bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors">
+          <AlertTriangle size={18} className="mx-auto text-orange-600 dark:text-orange-400 mb-1" />
+          <p className="text-xl sm:text-2xl font-black text-orange-900 dark:text-orange-300">{summary.expired}</p>
+          <p className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide">Expired</p>
         </div>
-        <div className="bg-red-50 border border-red-200 p-3 sm:p-4 rounded-2xl text-center shadow-sm">
-          <XCircle size={18} className="mx-auto text-red-600 mb-1" />
-          <p className="text-xl sm:text-2xl font-black text-red-900">{summary.cancelled}</p>
-          <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide">Cancelled</p>
+        <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors">
+          <XCircle size={18} className="mx-auto text-red-600 dark:text-red-400 mb-1" />
+          <p className="text-xl sm:text-2xl font-black text-red-900 dark:text-red-300">{summary.cancelled}</p>
+          <p className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wide">Cancelled</p>
         </div>
-        <div className="bg-slate-800 border border-slate-900 p-3 sm:p-4 rounded-2xl text-center shadow-sm">
+        <div className="bg-slate-800 dark:bg-slate-800/90 border border-slate-900 dark:border-slate-700 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors">
           <Ban size={18} className="mx-auto text-slate-300 mb-1" />
           <p className="text-xl sm:text-2xl font-black text-white">{summary.revoked}</p>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Revoked</p>
@@ -169,10 +169,10 @@ const AdminReports = () => {
       </div>
 
       {/* Responsive Data Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider whitespace-nowrap">
+            <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider whitespace-nowrap">
               <tr>
                 <th className="p-3.5 sm:p-4">Plate No.</th>
                 <th className="p-3.5 sm:p-4">Operator Name</th>
@@ -182,38 +182,38 @@ const AdminReports = () => {
                 <th className="p-3.5 sm:p-4">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 whitespace-nowrap">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 whitespace-nowrap text-xs">
               {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-500">
+                  <td colSpan="6" className="p-8 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="animate-spin text-[#7A1B22]" size={18} />
+                      <Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={18} />
                       <span>Loading reports...</span>
                     </div>
                   </td>
                 </tr>
               ) : reports.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-400 text-xs sm:text-sm">
+                  <td colSpan="6" className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs sm:text-sm">
                     No records found for the selected filters.
                   </td>
                 </tr>
               ) : (
                 reports.map((report) => (
-                  <tr key={report._id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="p-3.5 sm:p-4 font-black text-slate-900">{report.plateNo}</td>
-                    <td className="p-3.5 sm:p-4 text-slate-700 font-medium">{report.fullName}</td>
-                    <td className="p-3.5 sm:p-4 text-slate-600">{report.address}</td>
-                    <td className="p-3.5 sm:p-4 text-slate-600">{report.todaName}</td>
-                    <td className="p-3.5 sm:p-4 text-slate-500">
+                  <tr key={report._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors">
+                    <td className="p-3.5 sm:p-4 font-black text-slate-900 dark:text-white">{report.plateNo}</td>
+                    <td className="p-3.5 sm:p-4 text-slate-700 dark:text-slate-200 font-medium">{report.fullName}</td>
+                    <td className="p-3.5 sm:p-4 text-slate-600 dark:text-slate-300">{report.address}</td>
+                    <td className="p-3.5 sm:p-4 text-slate-600 dark:text-slate-300">{report.todaName}</td>
+                    <td className="p-3.5 sm:p-4 text-slate-500 dark:text-slate-400">
                       {new Date(report.dateApplied).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </td>
                     <td className="p-3.5 sm:p-4">
                       <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider ${
-                        report.status === 'Active' ? 'bg-emerald-100 text-emerald-700' :
-                        report.status === 'Cancelled' || report.status === 'Revoked' ? 'bg-red-100 text-red-700' :
-                        report.status === 'Expired' ? 'bg-orange-100 text-orange-700' :
-                        'bg-amber-100 text-amber-700'
+                        report.status === 'Active' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400' :
+                        report.status === 'Cancelled' || report.status === 'Revoked' ? 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400' :
+                        report.status === 'Expired' ? 'bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400' :
+                        'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
                       }`}>
                         {report.status}
                       </span>

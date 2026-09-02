@@ -108,29 +108,29 @@ const HelpSupport = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* About Us Card */}
-          <div className="lg:col-span-2 bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-[#7A1B22]/10 text-[#7A1B22] rounded-2xl">
+                <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] rounded-2xl">
                   <Info size={24} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 tracking-tight">About G-TRAMS Portal</h2>
-                  <p className="text-xs text-slate-500 font-medium">Official Tricycle Records & Application System</p>
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">About G-TRAMS Portal</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Official Tricycle Records & Application System</p>
                 </div>
               </div>
-              <p className="text-slate-600 text-sm leading-relaxed mb-6">
+              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
                 Ang <strong>G-TRAMS</strong> (Gasan Tricycle Records and Application Management System) ay ang opisyal na digital platform ng Lokal na Pamahalaan ng Gasan. Binuo ito upang gawing digital, mabilis, at transparent ang pagpaparehistro, pag-renew, at pag-monitor ng prangkisa ng tricycle para sa bawat operator at TODA.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
-                <Building size={16} className="text-[#7A1B22]" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <Building size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                 <span>Sangguniang Bayan Office / BPLO</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
-                <MapPin size={16} className="text-[#7A1B22]" />
+              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <MapPin size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                 <span>Municipal Hall, Gasan, Marinduque</span>
               </div>
             </div>
@@ -170,68 +170,68 @@ const HelpSupport = () => {
         </div>
 
         {/* Dynamic FAQ Module */}
-        <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <HelpCircle className="text-[#7A1B22]" size={24} /> Frequently Asked Questions (FAQ)
+              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <HelpCircle className="text-[#7A1B22] dark:text-[#D4AF37]" size={24} /> Frequently Asked Questions (FAQ)
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">Naka-sort ayon sa trending at pinakamadalas buksang paksa</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Naka-sort ayon sa trending at pinakamadalas buksang paksa</p>
             </div>
 
             <div className="relative w-full md:w-80">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search help topics (e.g. renewal, permit)..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-3">
             {filteredAndSortedFaqs.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">
+              <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
                 Walang nahanap na tugmang tanong. Subukan ang ibang keyword.
               </div>
             ) : (
               filteredAndSortedFaqs.map((faq, idx) => (
                 <div 
                   key={faq.id}
-                  className="border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300"
+                  className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700"
                 >
                   <button
                     onClick={() => handleFaqClick(faq.id)}
-                    className="w-full p-4 sm:p-5 flex items-center justify-between text-left bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                    className="w-full p-4 sm:p-5 flex items-center justify-between text-left bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     <div className="flex items-center gap-3 pr-4">
                       {idx === 0 && !searchQuery && (
-                        <span className="flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0">
-                          <Flame size={12} className="text-amber-600" /> Top FAQ
+                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-200 dark:border-amber-800/80">
+                          <Flame size={12} className="text-amber-600 dark:text-amber-400" /> Top FAQ
                         </span>
                       )}
-                      <span className="font-bold text-sm text-slate-800">{faq.question}</span>
+                      <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{faq.question}</span>
                     </div>
                     <ChevronDown 
                       size={18} 
-                      className={`text-slate-400 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#7A1B22]' : ''}`} 
+                      className={`text-slate-400 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#7A1B22] dark:text-[#D4AF37]' : ''}`} 
                     />
                   </button>
 
                   {expandedFaq === faq.id && (
-                    <div className="p-5 bg-white border-t border-slate-100 text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3">
+                    <div className="p-5 bg-white dark:bg-slate-900/90 border-t border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-3">
                       <p>{faq.answer}</p>
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800">
                         <div className="flex gap-1.5 flex-wrap">
                           {faq.tags.map(t => (
-                            <span key={t} className="text-[10px] bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded">
+                            <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded">
                               #{t}
                             </span>
                           ))}
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                           Viewed {faq.views} times
                         </span>
                       </div>

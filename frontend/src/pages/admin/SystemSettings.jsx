@@ -42,15 +42,15 @@ const SystemSettings = () => {
     setTimeout(() => setIsSaved(false), 3000);
   };
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all";
+  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all";
 
   return (
     <MainLayout>
       <header className="mb-6 flex items-center gap-3">
         <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">System Settings</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Configure franchise rules and system parameters.</p>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">System Settings</h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Configure franchise rules and system parameters.</p>
         </div>
       </header>
 
@@ -58,24 +58,24 @@ const SystemSettings = () => {
         <form onSubmit={handleSave} className="space-y-6">
           
           {isSaved && (
-            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold rounded-xl p-4">
+            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-sm font-semibold rounded-xl p-4">
               <CheckCircle size={18} />
               System settings successfully updated!
             </div>
           )}
 
           {/* SECTION 1: Franchise Validity */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="p-2 bg-[#7A1B22]/10 rounded-lg border border-[#7A1B22]/20">
-                <Clock className="text-[#7A1B22]" size={20} />
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 rounded-lg border border-[#7A1B22]/20 dark:border-[#7A1B22]/40">
+                <Clock className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} />
               </div>
-              <h2 className="text-base font-bold text-slate-900">Franchise Validity Period</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Franchise Validity Period</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   New Application (Years)
                 </label>
                 <div className="relative">
@@ -88,13 +88,13 @@ const SystemSettings = () => {
                     onChange={handleChange}
                     className={inputClasses}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500 font-medium">yrs</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400 font-medium">yrs</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">Applies to first-time registrations.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Applies to first-time registrations.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Renewal Validity (Years)
                 </label>
                 <div className="relative">
@@ -107,25 +107,25 @@ const SystemSettings = () => {
                     onChange={handleChange}
                     className={inputClasses}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500 font-medium">yrs</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400 font-medium">yrs</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">Applies to franchise renewals.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Applies to franchise renewals.</p>
               </div>
             </div>
           </div>
 
           {/* SECTION 2: Fiscal & Financial Settings */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-              <div className="p-2 bg-amber-50 rounded-lg border border-amber-200">
-                <Wallet className="text-amber-600" size={20} />
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-800/60">
+                <Wallet className="text-amber-600 dark:text-amber-400" size={20} />
               </div>
-              <h2 className="text-base font-bold text-slate-900">Fiscal & Financial</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Fiscal & Financial</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Current Fiscal Year
                 </label>
                 <div className="relative">
@@ -141,15 +141,15 @@ const SystemSettings = () => {
                     placeholder="e.g. 2026-2027"
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">Active year for records and reports.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Active year for records and reports.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Standard Franchise Fee
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">₱</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500 dark:text-slate-400">₱</span>
                   <input
                     type="number"
                     name="franchiseFee"
@@ -161,7 +161,7 @@ const SystemSettings = () => {
                     placeholder="0.00"
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">Base fee for applications and renewals.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Base fee for applications and renewals.</p>
               </div>
             </div>
           </div>

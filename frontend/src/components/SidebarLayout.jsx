@@ -32,7 +32,7 @@ const SidebarLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200">
       {/* Sidebar Navigation */}
       <Sidebar 
         isOpen={isSidebarOpen} 
