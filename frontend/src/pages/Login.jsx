@@ -89,7 +89,9 @@ const Login = () => {
           navigate('/operator-dashboard');
         }
       } else {
-        if (response.status === 429) {
+        if (response.status === 503) {
+          setError(data.message || 'The system is undergoing maintenance. Access is restricted for non-admin users.');
+        } else if (response.status === 429) {
           const secs = data.retryAfterSeconds || 60;
           setLockoutSeconds(secs);
           setError(`TOO MANY ATTEMPTS. LOCKED FOR ${secs} SECONDS.`);
@@ -262,9 +264,21 @@ const Login = () => {
               </div>
             </div>
 
+            {localStorage.getItem('maintenance_mode') === 'true' && (
+              <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-800 text-[10px] sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-xs flex items-center justify-center gap-1.5 animate-pulse">
+                <span>🛠️</span>
+                <span>Scheduled Maintenance Active • Admin Access Only</span>
+              </div>
+            )}
+
             {error && (
               <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-3 text-center shadow-sm animate-shake uppercase tracking-wide">
-                {error}
+                <p>{error}</p>
+                {error.toLowerCase().includes('maintenance') && (
+                  <Link to="/maintenance" className="inline-block mt-1.5 font-black text-[#7A1B22] underline tracking-wider">
+                    VIEW SYSTEM STATUS PAGE →
+                  </Link>
+                )}
               </div>
             )}
 

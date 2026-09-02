@@ -93,10 +93,11 @@ const ApplyFranchise = () => {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
         if (res.ok) {
           const json = await res.json();
-          if (json.data) {
-            if (json.data.maxUnitsPerOperator) {
-              setMaxAllowedUnits(json.data.maxUnitsPerOperator);
-              localStorage.setItem('max_units_per_operator', json.data.maxUnitsPerOperator);
+          if (json && json.data) {
+            if (json.data.maxUnitsPerOperator !== undefined && json.data.maxUnitsPerOperator !== null) {
+              const numUnits = Number(json.data.maxUnitsPerOperator) || 2;
+              setMaxAllowedUnits(numUnits);
+              localStorage.setItem('max_units_per_operator', numUnits);
             }
             if (Array.isArray(json.data.requiredDocs) && json.data.requiredDocs.length > 0) {
               const mapped = json.data.requiredDocs.map((doc, idx) => ({

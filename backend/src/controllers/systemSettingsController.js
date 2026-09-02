@@ -22,6 +22,8 @@ const getSettings = async (req, res) => {
         maintenanceMode: false,
         maintenanceMessage: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.'
       });
+    if (settings && (settings.maxUnitsPerOperator === undefined || settings.maxUnitsPerOperator === null)) {
+      settings.maxUnitsPerOperator = 2;
     }
 
     res.status(200).json({ success: true, data: settings });

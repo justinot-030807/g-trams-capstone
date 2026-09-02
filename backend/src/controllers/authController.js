@@ -1,4 +1,5 @@
 const User = require('../models/userModel'); 
+const SystemSettings = require('../models/systemSettingsModel');
 const jwt = require('jsonwebtoken'); 
 const sendEmail = require('../utils/sendEmail'); 
 const axios = require('axios'); // Para sa Semaphore SMS
@@ -6,6 +7,15 @@ const axios = require('axios'); // Para sa Semaphore SMS
 // 1. REGISTER & SEND OTP
 exports.register = async (req, res) => {
     try {
+        // MAINTENANCE CHECK SA REGISTRATION
+        const sysSettings = await SystemSettings.findOne().sort({ createdAt: -1 });
+        if (sysSettings && sysSettings.maintenanceMode === true) {
+            return res.status(503).json({ 
+                message: 'Portal registration is temporarily disabled while scheduled system maintenance is active.',
+                maintenanceMode: true
+            });
+        }
+
         const { name, address, contact, password, role, todaAssociation } = req.body;
         const normalizedContact = String(contact || '').trim();
 
@@ -86,6 +96,18 @@ exports.login = async (req, res) => {
         
         const isMatch = await user.matchPassword(password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+
+        // MAINTENANCE MODE HARANG: Kung naka-on ang maintenance mode, tanging ADMIN lamang ang makakalogin!
+        const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const isAdminUser = normalizedRole === 'admin' || normalizedRole === 'administrator';
+
+        const sysSettings = await SystemSettings.findOne().sort({ createdAt: -1 });
+        if (sysSettings && sysSettings.maintenanceMode === true && !isAdminUser) {
+            return res.status(503).json({ 
+                message: sysSettings.maintenanceMessage || 'Portal is currently undergoing system maintenance. Non-admin access is restricted. Please try again later.',
+                maintenanceMode: true
+            });
+        }
         
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
         const userObj = user.toObject();

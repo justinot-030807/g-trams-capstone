@@ -302,12 +302,7 @@ const AdminSettings = () => {
         localStorage.setItem('required_docs', JSON.stringify(docsArray));
 
         setConfirmModal({ isOpen: false, type: null, data: null });
-        showToast(
-          systemConfig.maintenanceMode 
-            ? 'Maintenance Mode is now ACTIVE! Non-admin users are restricted.' 
-            : 'System and platform configurations saved successfully!',
-          'success'
-        );
+        showToast('System configuration, unit limits, and rules saved successfully!', 'success');
       } 
       else if (type === 'account') {
         const formData = new FormData();
@@ -961,31 +956,82 @@ const AdminSettings = () => {
         </div>
       )}
 
-      {/* SAVE CHANGES CONFIRMATION MODAL */}
+      {/* SAVE CHANGES MINIMALIST CONFIRMATION MODAL */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200"
             onClick={() => !isProcessing && setConfirmModal({ isOpen: false, type: null, data: null })}
           />
-          <div className="relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-7 text-center animate-in zoom-in-95 duration-150">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] border border-[#7A1B22]/20 shadow-sm">
-              <Save size={24} />
-            </div>
-
-            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1.5 tracking-tight">
-              Save Configuration Changes?
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-              Are you sure you want to save and apply these settings to the system?
-            </p>
-
-            <div className="flex items-center gap-3">
+          <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 animate-in zoom-in-95 duration-150 transition-colors">
+            
+            {/* Minimalist Header */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37]">
+                  <Save size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+                    {confirmModal.type === 'system' ? 'Save System Configuration' : 'Confirm Action'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-medium">Apply updates to platform database</p>
+                </div>
+              </div>
               <button
                 type="button"
                 disabled={isProcessing}
                 onClick={() => setConfirmModal({ isOpen: false, type: null, data: null })}
-                className="flex-1 py-3 rounded-xl font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content Summary Breakdown */}
+            {confirmModal.type === 'system' ? (
+              <div className="space-y-3 mb-5">
+                <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 space-y-2 text-xs">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                    <span>Max Units / Operator:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{systemConfig.maxUnitsPerOperator} unit(s)</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                    <span>Fiscal Year Cycle:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{systemConfig.fiscalYear}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                    <span>Franchise Application Fee:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">₱{Number(systemConfig.franchiseFee).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                    <span>Maintenance Mode:</span>
+                    <span className={`font-bold ${systemConfig.maintenanceMode ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {systemConfig.maintenanceMode ? 'Active (Restricted)' : 'Inactive (Public Access)'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                    <span>Required Documents:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs.length : 0} items</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-slate-400 text-center">
+                  Changes will take effect immediately across all operator portals.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-600 dark:text-slate-300 mb-5 leading-relaxed">
+                Are you sure you want to proceed with this account update?
+              </p>
+            )}
+
+            {/* Minimalist Action Buttons */}
+            <div className="flex items-center gap-2.5 pt-1">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={() => setConfirmModal({ isOpen: false, type: null, data: null })}
+                className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs"
               >
                 Cancel
               </button>
@@ -993,17 +1039,17 @@ const AdminSettings = () => {
                 type="button"
                 onClick={executeSave}
                 disabled={isProcessing}
-                className="flex-1 py-3 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] transition-all text-xs shadow-md shadow-[#7A1B22]/20 flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] transition-all text-xs shadow-xs flex items-center justify-center gap-1.5 active:scale-98"
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 size={15} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" />
                     <span>Saving...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 size={15} />
-                    <span>Confirm Save</span>
+                    <CheckCircle2 size={14} />
+                    <span>Save Changes</span>
                   </>
                 )}
               </button>
