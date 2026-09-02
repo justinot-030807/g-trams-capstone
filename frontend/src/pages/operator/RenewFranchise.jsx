@@ -63,11 +63,14 @@ const RenewFranchise = () => {
     <div className="min-h-screen bg-background p-6 flex justify-center items-start pt-12">
       <div className="w-full max-w-2xl bg-white rounded-xl shadow p-8 border-t-4 border-maroon">
         
-        // Header
-        <div className="mb-6 border-b pb-4">
-          <h2 className="text-2xl font-bold text-maroon">Renew Franchise</h2>
-          <p className="text-sm text-gray-500">Submit your updated requirements for renewal.</p>
-        </div>
+        {/* Header */}
+        <header className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Renew Franchise</h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Submit your updated requirements for renewal.</p>
+          </div>
+        </header>
 
         // Form
         <form onSubmit={handleSubmit} className="space-y-6">

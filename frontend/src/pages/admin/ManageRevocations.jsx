@@ -99,10 +99,13 @@ const ManageRevocations = () => {
         </div>
       )}
 
-      <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manage Revocations</h1>
-          <p className="text-sm text-slate-500 mt-1">Process violations and revoke operator franchises securely.</p>
+      <header className="mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Manage Revocations</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Process violations and revoke operator franchises securely.</p>
+          </div>
         </div>
       </header>
 

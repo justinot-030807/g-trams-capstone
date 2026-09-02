@@ -283,7 +283,7 @@ const FranchiseApproval = () => {
       {/* SECTION HEADER WITH MODERN VERTICAL LINE ACCENT */}
       <header className="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-7 bg-[#7A1B22] rounded-full" />
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Pending Approvals</h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Review and process franchise applications in queue (Oldest First).</p>

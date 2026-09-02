@@ -9,6 +9,18 @@
     <meta name="theme-color" content="#2563eb" />
     
     <title>G-TRAMS</title>
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('gtrams_theme') || localStorage.getItem('theme');
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -184,7 +184,7 @@ const OperatorDashboard = () => {
 
       <header className="animate-dashboard-card mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-7 bg-[#7A1B22] rounded-full" />
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
           <div>
             <h2 className="text-xl font-black text-slate-900 tracking-tight">{t('dashboard.garageTitle', 'My Franchise Garage')}</h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">{t('dashboard.garageSub', 'Assigned tricycle units under your account')}</p>

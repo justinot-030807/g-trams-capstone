@@ -101,10 +101,13 @@ const UserManagement = () => {
 
   return (
     <MainLayout>
-      <header className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">User Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage operators, roles, and account access.</p>
+      <header className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">User Management</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Manage operators, roles, and account access.</p>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 bg-[#7A1B22]/10 text-[#7A1B22] px-4 py-2 rounded-xl font-bold text-sm border border-[#7A1B22]/20 shadow-sm">

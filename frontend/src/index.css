@@ -33,6 +33,15 @@
     --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .dark {
+    --color-canvas: #0b0f19;      /* Deep dark background */
+    --color-surface: #131b2e;     /* Deep dark surface */
+    --text-main: #f8fafc;         /* High contrast text */
+    --text-muted: #94a3b8;        /* slate-400 */
+    --border-subtle: #1e293b;     /* slate-800 */
+    --border-strong: #334155;     /* slate-700 */
+  }
+
   body {
     font-family: 'Inter', sans-serif;
     background-color: var(--color-canvas);

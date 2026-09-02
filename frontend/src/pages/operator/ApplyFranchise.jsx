@@ -355,9 +355,12 @@ const ApplyFranchise = () => {
           </div>
         )}
 
-        <header className="mb-6">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">My Franchises</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">Manage your active tricycle units and pending applications.</p>
+        <header className="mb-6 flex items-center gap-3">
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">My Franchises</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Manage your active tricycle units and pending applications.</p>
+          </div>
         </header>
 
         {isLoading ? (
@@ -507,20 +510,23 @@ const ApplyFranchise = () => {
         </div>
       )}
 
-      <header className="mb-4 sm:mb-6 max-w-3xl flex flex-col sm:flex-row justify-between sm:items-end gap-2">
-        <div>
-          <button 
-            onClick={() => { setFormMode(null); setCurrentStep(1); }} 
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mb-3"
-          >
-            <ArrowLeft size={15} /> Back to My Units
-          </button>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
-          </h1>
-          <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
-            {formMode === 'Renewal' ? 'Pakisuri ang inyong mga detalye at i-update ang impormasyon ng Cedula.' : 'Punan ang mga kinakailangang impormasyon at mag-upload ng mga dokumento.'}
-          </p>
+      <header className="mb-6 max-w-3xl flex flex-col sm:flex-row justify-between sm:items-end gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div>
+            <button 
+              onClick={() => { setFormMode(null); setCurrentStep(1); }} 
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mb-1"
+            >
+              <ArrowLeft size={15} /> Back to My Units
+            </button>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
+            </h1>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+              {formMode === 'Renewal' ? 'Pakisuri ang inyong mga detalye at i-update ang impormasyon ng Cedula.' : 'Punan ang mga kinakailangang impormasyon at mag-upload ng mga dokumento.'}
+            </p>
+          </div>
         </div>
 
         {formMode === 'New' && hasDraftRestored && (

@@ -77,9 +77,12 @@ const AdminReports = () => {
     <SidebarLayout>
       {/* Header */}
       <header className="mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4 print:hidden">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">System Reports</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Filter, view, and print franchise records.</p>
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">System Reports</h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Filter, view, and print franchise records.</p>
+          </div>
         </div>
         <button 
           onClick={handlePrint}

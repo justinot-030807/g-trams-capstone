@@ -100,13 +100,18 @@ const translations = {
     'profile.confirmNewPassword': 'Confirm New Password',
     'profile.updatePasswordBtn': 'Update Password',
     'profile.confirmTitle': 'Confirm Update?',
-    'profile.confirmProfileDesc': 'Are you sure you want to update your profile details?',
+    'profile.saveConfirmTitle': 'Save Profile Changes?',
+    'profile.confirmProfileDesc': 'Are you sure you want to save these changes to your profile?',
+    'profile.saveConfirmDesc': 'Are you sure you want to save these changes to your profile?',
     'profile.confirmPassDesc': 'Are you sure you want to change your account password?',
     'profile.cancel': 'Cancel',
     'profile.yesUpdate': 'Yes, Update',
+    'profile.confirmSaveBtn': 'Confirm Save',
     'profile.successProfile': 'Profile details updated successfully!',
     'profile.successPass': 'Password changed successfully!',
-    'profile.passMismatch': 'New passwords do not match!'
+    'profile.passMismatch': 'New passwords do not match!',
+    'profile.themeDark': 'Dark Mode',
+    'profile.themeLight': 'Light Mode'
   },
   fil: {
     // TopNavbar & Sidebar
@@ -207,13 +212,18 @@ const translations = {
     'profile.confirmNewPassword': 'Kumpirmahin ang Bagong Password',
     'profile.updatePasswordBtn': 'I-update ang Password',
     'profile.confirmTitle': 'Kumpirmahin ang Pag-update?',
+    'profile.saveConfirmTitle': 'I-save ang mga Pagbabago sa Profile?',
     'profile.confirmProfileDesc': 'Sigurado ka bang nais mong i-update ang mga detalye ng iyong profile?',
+    'profile.saveConfirmDesc': 'Sigurado ka ba na nais mong i-save ang mga pagbabagong ito sa iyong profile?',
     'profile.confirmPassDesc': 'Sigurado ka bang nais mong palitan ang iyong password?',
     'profile.cancel': 'Kanselahin',
     'profile.yesUpdate': 'Oo, I-update',
+    'profile.confirmSaveBtn': 'Kumpirmahin at I-save',
     'profile.successProfile': 'Matagumpay na na-update ang mga detalye ng profile!',
     'profile.successPass': 'Matagumpay na napalitan ang password!',
-    'profile.passMismatch': 'Hindi tugma ang mga bagong password!'
+    'profile.passMismatch': 'Hindi tugma ang mga bagong password!',
+    'profile.themeDark': 'Madilim na Tema',
+    'profile.themeLight': 'Maliwanag na Tema'
   }
 };
 
