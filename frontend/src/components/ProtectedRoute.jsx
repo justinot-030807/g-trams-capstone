@@ -24,7 +24,10 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   // Kung walang token o walang role, sipain sa login
   if (!token || !userRole) {
-    localStorage.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('name');
+    localStorage.removeItem('user');
     return <Navigate to="/login" replace />;
   }
 
@@ -53,7 +56,10 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     } else if (isUserOperatorOrToda) {
       return <Navigate to="/operator-dashboard" replace />;
     } else {
-      localStorage.clear();
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('name');
+      localStorage.removeItem('user');
       return <Navigate to="/login" replace />;
     }
   }

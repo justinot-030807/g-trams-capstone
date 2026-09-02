@@ -371,7 +371,10 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="p-3 border-t border-white/10 shrink-0 bg-[#651419]">
           <button 
             onClick={() => { 
-              localStorage.clear(); 
+              localStorage.removeItem('token');
+              localStorage.removeItem('role');
+              localStorage.removeItem('name');
+              localStorage.removeItem('user');
               navigate('/login'); 
             }}
             className="w-full flex items-center justify-center gap-2 bg-white/10 text-white/90 py-2.5 rounded-xl hover:bg-red-600 hover:text-white transition-colors text-xs font-black uppercase tracking-wider"

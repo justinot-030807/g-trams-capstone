@@ -195,13 +195,36 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         }
 
         setNotifications(notifs);
+
+        // LIVE SYSTEM SETTINGS SYNC (Including Maintenance Mode)
+        try {
+          const setRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
+          if (setRes.ok) {
+            const setJson = await setRes.json();
+            if (setJson.data) {
+              const d = setJson.data;
+              localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
+              if (d.fiscalYear) localStorage.setItem('fiscal_year', d.fiscalYear);
+              if (d.franchiseFee) localStorage.setItem('franchise_fee', d.franchiseFee);
+              if (d.validityNew) localStorage.setItem('validity_new', d.validityNew);
+              if (d.validityRenew) localStorage.setItem('validity_renew', d.validityRenew);
+              
+              if (d.maintenanceMode === true && storedRole !== 'admin' && storedRole !== 'administrator') {
+                navigate('/maintenance');
+              }
+            }
+          }
+        } catch (setErr) {
+          console.error('Failed to sync live settings:', setErr);
+        }
+
       } catch (err) {
         console.error('Error fetching notifications:', err);
       }
     };
 
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 25000);
+    const interval = setInterval(fetchNotifications, 10000); // Changed to 10s for faster live updates
 
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setIsNotifOpen(false);
