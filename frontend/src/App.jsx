@@ -21,10 +21,12 @@ import RenewFranchise from './pages/operator/RenewFranchise';
 import ManageProfile from './pages/operator/ManageProfile';
 import SubmitMembers from './pages/operator/SubmitMembers';
 import HelpSupport from './pages/operator/HelpSupport';
+import { LanguageProvider } from './context/LanguageContext';
 
 function App() {
   return (
-    <Routes>
+    <LanguageProvider>
+      <Routes>
       {/* PUBLIC ROUTES */}
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
@@ -42,7 +44,7 @@ function App() {
       <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
 
       {/* TODA PRESIDENT SECURE ROUTES */}
-      <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['toda president']}><SubmitMembers /></ProtectedRoute>} />
+      <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><SubmitMembers /></ProtectedRoute>} />
       
       {/* OPERATOR & TODA SECURE ROUTES */}
       <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorDashboard /></ProtectedRoute>} />
@@ -53,6 +55,7 @@ function App() {
       <Route path="/manage-profile" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><ManageProfile /></ProtectedRoute>} />
       <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
     </Routes>
+    </LanguageProvider>
   );
 }
 

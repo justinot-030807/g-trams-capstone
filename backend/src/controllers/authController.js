@@ -76,7 +76,9 @@ exports.login = async (req, res) => {
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
         
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
-        res.status(200).json({ token, role: user.role });
+        const userObj = user.toObject();
+        delete userObj.password;
+        res.status(200).json({ token, role: user.role, user: userObj, name: user.name });
     } catch (error) {
         res.status(500).json({ message: 'Login error' });
     }
@@ -216,11 +218,15 @@ exports.deleteUser = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.user.id; 
-        const { name, address, contact, todaAssociation } = req.body;
+        const { name, address, contact, todaAssociation, language, theme } = req.body;
         
-        let updateData = { name, address };
-        if (contact) updateData.contact = contact;
-        if (todaAssociation) updateData.todaAssociation = todaAssociation; // Sinasalo na rito yung galing frontend
+        let updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (address !== undefined) updateData.address = address;
+        if (contact !== undefined) updateData.contact = contact;
+        if (todaAssociation !== undefined) updateData.todaAssociation = todaAssociation;
+        if (language !== undefined) updateData.language = language;
+        if (theme !== undefined) updateData.theme = theme;
         
         if (req.file) {
             updateData.profilePic = req.file.path; 

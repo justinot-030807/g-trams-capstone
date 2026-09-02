@@ -5,8 +5,10 @@ import {
   FileCheck, ShieldAlert, LogOut, User, Printer, 
   HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -77,7 +79,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     'admin': [
       { 
         type: 'link', 
-        name: 'Dashboard', 
+        name: t('nav.dashboard', 'Dashboard'), 
         path: '/admin-dashboard', 
         icon: <LayoutDashboard size={18} /> 
       },
@@ -122,23 +124,23 @@ const Sidebar = ({ isOpen, onClose }) => {
     'operator': [
       { 
         type: 'link', 
-        name: 'Dashboard', 
+        name: t('nav.dashboard', 'Dashboard'), 
         path: '/operator-dashboard', 
         icon: <LayoutDashboard size={18} /> 
       },
       {
         type: 'dropdown',
-        name: 'Franchise Services',
+        name: t('nav.franchiseServices', 'Franchise Services'),
         id: 'op_services',
         icon: <Layers size={18} />,
         subItems: [
-          { name: 'Apply / Renew', path: '/apply-franchise', icon: <FileText size={16} /> },
-          { name: 'My Profile', path: '/manage-profile', icon: <User size={16} /> }
+          { name: t('nav.applyRenew', 'Apply / Renew'), path: '/apply-franchise', icon: <FileText size={16} /> },
+          { name: t('nav.myProfile', 'My Profile'), path: '/manage-profile', icon: <User size={16} /> }
         ]
       },
       { 
         type: 'link', 
-        name: 'Help & Support', 
+        name: t('nav.helpSupport', 'Help & Support'), 
         path: '/help-support', 
         icon: <HelpCircle size={18} /> 
       }
@@ -146,24 +148,24 @@ const Sidebar = ({ isOpen, onClose }) => {
     'toda_president': [
       { 
         type: 'link', 
-        name: 'Dashboard', 
+        name: t('nav.dashboard', 'Dashboard'), 
         path: '/operator-dashboard', 
         icon: <LayoutDashboard size={18} /> 
       },
       {
         type: 'dropdown',
-        name: 'TODA Portal',
+        name: t('nav.todaPortal', 'TODA Portal'),
         id: 'toda_portal',
         icon: <Users size={18} />,
         subItems: [
-          { name: 'Submit Members', path: '/submit-members', icon: <Users size={16} /> },
-          { name: 'Apply / Renew', path: '/apply-franchise', icon: <FileText size={16} /> },
-          { name: 'My Profile', path: '/manage-profile', icon: <User size={16} /> }
+          { name: t('nav.submitMembers', 'Submit Members'), path: '/submit-members', icon: <Users size={16} /> },
+          { name: t('nav.applyRenew', 'Apply / Renew'), path: '/apply-franchise', icon: <FileText size={16} /> },
+          { name: t('nav.myProfile', 'My Profile'), path: '/manage-profile', icon: <User size={16} /> }
         ]
       },
       { 
         type: 'link', 
-        name: 'Help & Support', 
+        name: t('nav.helpSupport', 'Help & Support'), 
         path: '/help-support', 
         icon: <HelpCircle size={18} /> 
       }
@@ -204,9 +206,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const getRoleLabel = () => {
-    if (role === 'toda_president') return 'TODA PRESIDENT';
-    if (role === 'admin') return 'ADMINISTRATOR';
-    return 'OPERATOR';
+    if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
+    if (role === 'admin') return t('nav.roleAdmin', 'ADMINISTRATOR');
+    return t('nav.roleOperator', 'OPERATOR');
   };
 
   return (
@@ -368,7 +370,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             className="w-full flex items-center justify-center gap-2 bg-white/10 text-white/90 py-2.5 rounded-xl hover:bg-red-600 hover:text-white transition-colors text-xs font-black uppercase tracking-wider"
           >
             <LogOut size={15} />
-            Log Out
+            {t('nav.logOut', 'Log Out')}
           </button>
         </div>
       </aside>

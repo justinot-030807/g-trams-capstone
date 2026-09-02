@@ -15,7 +15,9 @@ const userSchema = new mongoose.Schema({
     profilePic: { type: String, default: '' },
     otp: { type: String },
     otpExpire: { type: Date },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    language: { type: String, default: 'en' },
+    theme: { type: String, default: 'light' }
 }, { timestamps: true });
 
 userSchema.pre('save', async function () {

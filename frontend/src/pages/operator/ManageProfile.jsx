@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { User, Lock, Camera, Save, Loader2, Phone, AlertTriangle, CheckCircle, Moon, Sun, Globe } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ManageProfile = () => {
+  const { language, setLanguage, t } = useLanguage();
   const [profileData, setProfileData] = useState({ name: '', contact: '', address: '', todaAssociation: 'NON-TODA' });
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
@@ -10,8 +12,8 @@ const ManageProfile = () => {
   
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   
-  // FIX: App Preferences State (Dark Mode & Language)
-  const [preferences, setPreferences] = useState({ theme: 'light', language: 'en' });
+  // App Preferences State (Dark Mode & Language)
+  const [preferences, setPreferences] = useState({ theme: 'light', language: language || 'en' });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null });
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -19,7 +21,7 @@ const ManageProfile = () => {
   useEffect(() => {
     // I-load ang saved Preferences (Dark Mode at Language)
     const savedTheme = localStorage.getItem('gtrams_theme') || 'light';
-    const savedLang = localStorage.getItem('gtrams_lang') || 'en';
+    const savedLang = localStorage.getItem('gtrams_lang') || language || 'en';
     setPreferences({ theme: savedTheme, language: savedLang });
 
     const fetchProfileData = async () => {
@@ -42,6 +44,14 @@ const ManageProfile = () => {
           });
           
           if (dbUser.profilePic) setProfilePicPreview(dbUser.profilePic);
+          if (dbUser.language) {
+            setPreferences(prev => ({ ...prev, language: dbUser.language }));
+            setLanguage(dbUser.language);
+          }
+          if (dbUser.theme) {
+            setPreferences(prev => ({ ...prev, theme: dbUser.theme }));
+            localStorage.setItem('gtrams_theme', dbUser.theme);
+          }
           
           localStorage.setItem('name', dbUser.name || dbUser.fullName || '');
           localStorage.setItem('user', JSON.stringify(dbUser));
@@ -86,6 +96,8 @@ const ManageProfile = () => {
         formData.append('contact', profileData.contact);
         formData.append('address', profileData.address);
         formData.append('todaAssociation', profileData.todaAssociation);
+        formData.append('language', preferences.language);
+        formData.append('theme', preferences.theme);
         
         if (profilePicFile) formData.append('profilePic', profilePicFile);
 
@@ -99,12 +111,15 @@ const ManageProfile = () => {
           const updatedUser = await response.json();
           localStorage.setItem('user', JSON.stringify(updatedUser));
           localStorage.setItem('name', updatedUser.name || profileData.name);
+          if (updatedUser.language) {
+            setLanguage(updatedUser.language);
+          }
           
           setConfirmModal({ isOpen: false, type: null });
-          setSuccessMessage('Profile details updated successfully!');
+          setSuccessMessage(t('profile.successProfile', 'Profile details updated successfully!'));
           setTimeout(() => window.location.reload(), 1200);
         } else {
-          alert('Failed to save profile.');
+          alert(t('profile.failedSave', 'Failed to save profile.'));
           setConfirmModal({ isOpen: false, type: null });
         }
       } catch (error) {
@@ -125,11 +140,11 @@ const ManageProfile = () => {
         if (response.ok) {
           setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
           setConfirmModal({ isOpen: false, type: null });
-          setSuccessMessage('Password changed successfully!');
+          setSuccessMessage(t('profile.successPass', 'Password changed successfully!'));
           setTimeout(() => setSuccessMessage(''), 3000);
         } else {
           const data = await response.json();
-          alert(data.message || 'Failed to change password.');
+          alert(data.message || t('profile.failedPass', 'Failed to change password.'));
           setConfirmModal({ isOpen: false, type: null });
         }
       } catch (error) {
@@ -141,16 +156,32 @@ const ManageProfile = () => {
     setIsProcessing(false);
   };
 
-  // I-save ang User System Preferences sa mismong browser
+  // I-save ang User System Preferences sa mismong browser at database
   const savePreferences = (key, value) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
     localStorage.setItem(`gtrams_${key}`, value);
+
+    if (key === 'language') {
+      setLanguage(value);
+    }
 
     if (key === 'theme') {
       if (value === 'dark') {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');
+      }
+      
+      const token = localStorage.getItem('token');
+      if (token) {
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ theme: value })
+        }).catch(err => console.error('Failed to sync theme:', err));
       }
     }
   };
@@ -161,8 +192,8 @@ const ManageProfile = () => {
   return (
     <MainLayout>
       <header className="mb-6 relative">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Account Settings</h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Update personal details, credentials, and app preferences.</p>
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t('profile.title', 'Account Settings')}</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{t('profile.subtitle', 'Update personal details, credentials, and app preferences.')}</p>
 
         {successMessage && (
           <div className="absolute top-0 right-0 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
@@ -181,7 +212,7 @@ const ManageProfile = () => {
           
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
             <h2 className="flex items-center gap-2 font-black text-slate-900 mb-6 text-base border-b border-slate-100 pb-3">
-              <User size={18} className="text-[#7A1B22]" /> Public Information
+              <User size={18} className="text-[#7A1B22]" /> {t('profile.publicInfo', 'Public Information')}
             </h2>
 
             <form onSubmit={handleProfileSubmit}>
@@ -199,17 +230,17 @@ const ManageProfile = () => {
                     <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                   </label>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2 font-medium">Click to upload photo (JPG / PNG)</p>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium">{t('profile.uploadPhotoHint', 'Click to upload photo (JPG / PNG)')}</p>
               </div>
 
               <div className="space-y-3.5">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Full Name</label>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">{t('profile.fullName', 'Full Name')}</label>
                   <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} className={inputClasses} required />
                 </div>
                 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Email / Contact Number</label>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">{t('profile.contact', 'Email / Contact Number')}</label>
                   <div className="relative">
                     <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input type="text" value={profileData.contact} onChange={(e) => setProfileData({...profileData, contact: e.target.value})} className={`${inputClasses} pl-10`} required />
@@ -218,23 +249,23 @@ const ManageProfile = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">TODA Association</label>
-                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Locked</span>
+                    <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">{t('profile.toda', 'TODA Association')}</label>
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{t('profile.locked', 'Locked')}</span>
                   </div>
                   <input type="text" value={profileData.todaAssociation} readOnly title="Registered TODA is permanent. Visit LGU office for TODA transfer." className={lockedClasses} />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Registered Address / Barangay</label>
-                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Locked</span>
+                    <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">{t('profile.address', 'Registered Address / Barangay')}</label>
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{t('profile.locked', 'Locked')}</span>
                   </div>
                   <input type="text" value={profileData.address} readOnly title="Official registered address cannot be self-edited. Contact BPLO for changes." className={lockedClasses} />
                 </div>
               </div>
 
               <button type="submit" className="mt-6 w-full bg-[#7A1B22] text-white hover:bg-[#5A1419] px-4 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
-                <Save size={16} /> Save Information
+                <Save size={16} /> {t('profile.saveBtn', 'Save Information')}
               </button>
             </form>
           </div>
@@ -244,14 +275,14 @@ const ManageProfile = () => {
             {/* APP PREFERENCES (Language at Dark Mode) */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm h-fit">
               <h2 className="flex items-center gap-2 font-black text-slate-900 mb-6 text-base border-b border-slate-100 pb-3">
-                <Globe size={18} className="text-[#D4AF37]" /> App Preferences
+                <Globe size={18} className="text-[#D4AF37]" /> {t('profile.preferencesTitle', 'App Preferences')}
               </h2>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-xl">
                   <div>
-                    <p className="text-sm font-bold text-slate-900">Language</p>
-                    <p className="text-[10px] font-medium text-slate-500 mt-0.5">Select preferred system language</p>
+                    <p className="text-sm font-bold text-slate-900">{t('profile.language', 'Language')}</p>
+                    <p className="text-[10px] font-medium text-slate-500 mt-0.5">{t('profile.languageDesc', 'Select preferred system language')}</p>
                   </div>
                   <select 
                     value={preferences.language}
@@ -259,7 +290,7 @@ const ManageProfile = () => {
                     className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-3 py-1.5 outline-none cursor-pointer"
                   >
                     <option value="en">English (US)</option>
-                    <option value="fil">Filipino</option>
+                    <option value="fil">Tagalog / Filipino</option>
                   </select>
                 </div>
 
@@ -267,22 +298,22 @@ const ManageProfile = () => {
                   <div>
                     <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                       {preferences.theme === 'dark' ? <Moon size={14} className="text-indigo-600"/> : <Sun size={14} className="text-amber-500"/>} 
-                      Theme Display
+                      {t('profile.theme', 'Theme Display')}
                     </p>
-                    <p className="text-[10px] font-medium text-slate-500 mt-0.5">Toggle light or dark mode styling</p>
+                    <p className="text-[10px] font-medium text-slate-500 mt-0.5">{t('profile.themeDesc', 'Toggle light or dark mode styling')}</p>
                   </div>
                   <div className="flex bg-slate-200 p-1 rounded-lg">
                     <button 
                       onClick={() => savePreferences('theme', 'light')}
                       className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${preferences.theme === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                      Light
+                      {t('profile.light', 'Light')}
                     </button>
                     <button 
                       onClick={() => savePreferences('theme', 'dark')}
                       className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${preferences.theme === 'dark' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                      Dark
+                      {t('profile.dark', 'Dark')}
                     </button>
                   </div>
                 </div>
@@ -292,24 +323,24 @@ const ManageProfile = () => {
             {/* SECURITY & PASSWORD */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm h-fit">
               <h2 className="flex items-center gap-2 font-black text-slate-900 mb-6 text-base border-b border-slate-100 pb-3">
-                <Lock size={18} className="text-[#D4AF37]" /> Change Password
+                <Lock size={18} className="text-[#D4AF37]" /> {t('profile.changePassword', 'Change Password')}
               </h2>
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Current Password</label>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">{t('profile.currentPassword', 'Current Password')}</label>
                   <input type="password" value={passwordData.currentPassword} onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required />
                 </div>
                 <div className="pt-2 border-t border-slate-100">
-                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">New Password</label>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">{t('profile.newPassword', 'New Password')}</label>
                   <input type="password" value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required minLength="6" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Confirm New Password</label>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">{t('profile.confirmNewPassword', 'Confirm New Password')}</label>
                   <input type="password" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} placeholder="••••••••" className={inputClasses} required minLength="6" />
                 </div>
                 
                 <button type="submit" className="mt-6 w-full bg-slate-900 text-white hover:bg-slate-800 px-4 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
-                  <Lock size={16} /> Update Password
+                  <Lock size={16} /> {t('profile.updatePasswordBtn', 'Update Password')}
                 </button>
               </form>
             </div>
@@ -326,9 +357,11 @@ const ManageProfile = () => {
               <AlertTriangle size={24} />
             </div>
             
-            <h3 className="text-lg font-black text-slate-900 mb-1">Confirm Update?</h3>
+            <h3 className="text-lg font-black text-slate-900 mb-1">{t('profile.confirmTitle', 'Confirm Update?')}</h3>
             <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-              Are you sure you want to {confirmModal.type === 'profile' ? 'update your profile details' : 'change your account password'}?
+              {confirmModal.type === 'profile' 
+                ? t('profile.confirmProfileDesc', 'Are you sure you want to update your profile details?') 
+                : t('profile.confirmPassDesc', 'Are you sure you want to change your account password?')}
             </p>
 
             <div className="flex gap-2.5">
@@ -337,7 +370,7 @@ const ManageProfile = () => {
                 onClick={() => setConfirmModal({ isOpen: false, type: null })}
                 className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors text-xs"
               >
-                Cancel
+                {t('profile.cancel', 'Cancel')}
               </button>
               <button 
                 type="button"
@@ -346,7 +379,7 @@ const ManageProfile = () => {
                 className="flex-1 py-2.5 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] transition-colors text-xs shadow-sm flex items-center justify-center gap-1.5"
               >
                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {isProcessing ? 'Saving...' : 'Yes, Update'}
+                {isProcessing ? 'Saving...' : t('profile.yesUpdate', 'Yes, Update')}
               </button>
             </div>
           </div>

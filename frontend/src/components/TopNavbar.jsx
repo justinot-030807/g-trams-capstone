@@ -4,8 +4,10 @@ import {
   Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
   User, LogOut, FileText, Menu, PanelLeftOpen 
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [role, setRole] = useState(localStorage.getItem('role') || 'operator');
   const [userName, setUserName] = useState(localStorage.getItem('name') || 'User');
@@ -102,9 +104,9 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   };
 
   const getRoleBadge = () => {
-    if (role === 'toda_president') return 'TODA PRESIDENT';
-    if (role === 'admin') return 'ADMINISTRATOR';
-    return 'OPERATOR';
+    if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
+    if (role === 'admin') return t('nav.roleAdmin', 'ADMINISTRATOR');
+    return t('nav.roleOperator', 'OPERATOR');
   };
 
   return (
@@ -142,9 +144,9 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             <div className="absolute right-0 mt-2 w-72 sm:w-88 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-xs sm:text-sm text-slate-900">Notifications</h3>
+                  <h3 className="font-bold text-xs sm:text-sm text-slate-900">{t('nav.notifications', 'Notifications')}</h3>
                   <p className="text-[10px] text-slate-400 font-medium">
-                    {unreadCount > 0 ? `${unreadCount} unread update${unreadCount > 1 ? 's' : ''}` : 'All caught up'}
+                    {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'unread update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
                   </p>
                 </div>
                 {unreadCount > 0 && (
@@ -152,7 +154,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     onClick={markAllAsRead} 
                     className="text-[10px] font-bold text-[#7A1B22] hover:underline"
                   >
-                    Mark all read
+                    {t('nav.markAllRead', 'Mark all read')}
                   </button>
                 )}
               </div>
@@ -161,8 +163,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center flex flex-col items-center justify-center">
                     <Bell size={24} className="text-slate-300 mb-2" />
-                    <p className="text-xs font-bold text-slate-700">No new notifications</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">System updates and approval notices will appear here.</p>
+                    <p className="text-xs font-bold text-slate-700">{t('nav.noNotifications', 'No new notifications')}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
                   </div>
                 ) : (
                   notifications.map((notif) => {
@@ -236,7 +238,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 }}
                 className="w-full px-4 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
               >
-                <User size={14} /> Profile Settings
+                <User size={14} /> {t('nav.profileSettings', 'Profile Settings')}
               </button>
               <button
                 onClick={() => {
@@ -245,7 +247,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 }}
                 className="w-full px-4 py-2 text-left text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
               >
-                <LogOut size={14} /> Log Out
+                <LogOut size={14} /> {t('nav.logOut', 'Log Out')}
               </button>
             </div>
           )}
