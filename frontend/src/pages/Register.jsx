@@ -196,54 +196,50 @@ const Register = () => {
         
         {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
         <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-black uppercase tracking-widest w-fit mb-4 shadow-sm">
-            <Sparkles size={13} /> Operator & TODA Registration
-          </div>
-
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1 shadow-xl border-2 border-[#D4AF37] shrink-0">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1.5 shadow-xl border-2 border-[#D4AF37] shrink-0">
               <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-4xl font-black text-white tracking-tight leading-none">G-TRAMS</h1>
-              <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1">Municipality of Gasan • Marinduque</p>
+              <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1.5">Municipality of Gasan • Province of Marinduque</p>
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-white/90 tracking-tight leading-snug mt-2">
-            Maging Rehistradong Operator sa Gasan
+          <h2 className="text-xl font-bold text-white/95 tracking-tight leading-snug">
+            Operator & TODA Account Registration
           </h2>
-          <p className="text-white/70 text-xs sm:text-sm mt-2 leading-relaxed">
-            Lumikha ng iyong opisyal na account upang ma-access ang online application, renewal, pag-monitor ng prangkisa, at digital claim stubs nang mabilis at transparent.
+          <p className="text-white/70 text-xs sm:text-sm mt-2.5 leading-relaxed">
+            Create your official G-TRAMS account to access digital franchise applications, renewal requests, real-time tracking, and downloadable claim stubs.
           </p>
 
-          {/* 3 FEATURE CARDS */}
+          {/* 2 FEATURE CARDS */}
           <div className="grid grid-cols-1 gap-3 mt-6">
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm">
-              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
                 <FileText size={18} />
               </div>
               <div>
                 <h3 className="font-bold text-xs text-white">Digital Document Processing</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">I-upload ang OR/CR at mga dokumento nang walang mahabang pila sa munisipyo.</p>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Upload OR/CR, valid IDs, and required municipal certificates directly online.</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm">
-              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
                 <ShieldCheck size={18} />
               </div>
               <div>
-                <h3 className="font-bold text-xs text-white">Opisyal na Proteksyon sa TODA</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Naka-link ang account sa iyong rehistradong TODA at Barangay para sa proteksyon.</p>
+                <h3 className="font-bold text-xs text-white">Verified TODA Affiliation</h3>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Securely linked to your recognized TODA association and registered Barangay for official compliance.</p>
               </div>
             </div>
           </div>
 
           {/* LGU HELPDESK FOOTER BADGE */}
-          <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/10 text-white/60 text-xs">
+          <div className="flex items-center gap-2.5 mt-6 pt-4 border-t border-white/10 text-white/60 text-xs">
             <Phone size={14} className="text-[#D4AF37]" />
-            <span>Kailangan ng Tulong? Tumawag sa BPLO: <strong>(042) 342-1234</strong></span>
+            <span>Need Assistance? Contact BPLO: <strong className="text-white">(042) 342-1234</strong> • <strong className="text-white">bplo@gasan.gov.ph</strong></span>
           </div>
         </div>
 
@@ -265,7 +261,12 @@ const Register = () => {
 
             {error && (
               <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
-                {error}
+                <p>{error}</p>
+                {error.includes('ALREADY EXISTS') && (
+                  <Link to="/login" className="inline-block mt-1 font-black text-[#7A1B22] underline tracking-wider">
+                    CLICK HERE TO LOG IN →
+                  </Link>
+                )}
               </div>
             )}
             {success && (

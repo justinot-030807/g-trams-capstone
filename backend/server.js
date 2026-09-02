@@ -7,6 +7,7 @@ const connectDB = require('./src/config/db');
 const todaRoutes = require('./src/routes/todaRoutes'); 
 
 const app = express();
+app.set('trust proxy', 1);
 connectDB();
 
 // configure cors for the deployed vercel frontend and local development
@@ -41,6 +42,9 @@ app.use(`${BASE_URI}/calendar`, require('./src/routes/calendarRoutes'));
 
 // BAGONG TODA ROUTE (Inilipat natin sa taas bago ang app.listen)
 app.use(`${BASE_URI}/toda`, todaRoutes); 
+
+// SYSTEM SETTINGS & MAINTENANCE MODE ROUTE
+app.use(`${BASE_URI}/settings`, require('./src/routes/systemSettingsRoutes'));
 
 // server initialization
 app.listen(PORT, () => {

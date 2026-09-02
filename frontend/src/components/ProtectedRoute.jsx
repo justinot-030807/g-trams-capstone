@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import MaintenanceMode from '../pages/MaintenanceMode';
 
 const normalizeRole = (role) => {
   if (!role) return '';
@@ -29,6 +30,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   // Linisin ang text: Tanggalin ang spaces/underscores at gawing small letters lahat
   const safeUserRole = normalizeRole(userRole);
+  const isAdmin = safeUserRole === 'admin' || safeUserRole === 'administrator';
+
+  // MAINTENANCE MODE CHECK: Block non-admins if active
+  const isMaintenanceActive = localStorage.getItem('maintenance_mode') === 'true';
+  if (isMaintenanceActive && !isAdmin) {
+    return <MaintenanceMode />;
+  }
+
   const safeAllowedRoles = allowedRoles.map(normalizeRole);
 
   // Requirement: Treat 'toda president' and 'operator' interchangeably for all operator-level routes

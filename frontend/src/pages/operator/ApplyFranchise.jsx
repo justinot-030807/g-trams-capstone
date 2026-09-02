@@ -14,14 +14,14 @@ const GASAN_BARANGAYS = [
   "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
 ];
 
-const REQUIREMENTS_LIST = [
+const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
+
+const DEFAULT_REQUIREMENTS = [
   { id: 'orCrDocument', label: 'OR / CR ng Motor', fieldUrl: 'orCrUrl' },
   { id: 'license', label: "Driver's License", fieldUrl: 'licenseUrl' },
   { id: 'todaEndorsement', label: 'TODA Endorsement', fieldUrl: 'todaEndorsementUrl' },
   { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
 ];
-
-const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
 const ApplyFranchise = () => {
   const [myFranchises, setMyFranchises] = useState([]);
@@ -35,6 +35,28 @@ const ApplyFranchise = () => {
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [fullPreview, setFullPreview] = useState(null);
+
+  // DYNAMIC SETTINGS: Max Units & Requirements List
+  const [maxAllowedUnits, setMaxAllowedUnits] = useState(() => {
+    return Number(localStorage.getItem('max_units_per_operator')) || 2;
+  });
+
+  const [requirementsList, setRequirementsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('required_docs');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((doc, idx) => ({
+            id: `doc_${idx}_${doc.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+            label: doc,
+            fieldUrl: `doc_${idx}Url`
+          }));
+        }
+      }
+    } catch {}
+    return DEFAULT_REQUIREMENTS;
+  });
 
   let loggedInUserName = localStorage.getItem('name') || '';
   let loggedInAddress = ''; 
@@ -64,6 +86,35 @@ const ApplyFranchise = () => {
 
   useEffect(() => {
     fetchMyFranchises();
+
+    // Fetch live system settings (Max Units & Required Docs)
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) {
+            if (json.data.maxUnitsPerOperator) {
+              setMaxAllowedUnits(json.data.maxUnitsPerOperator);
+              localStorage.setItem('max_units_per_operator', json.data.maxUnitsPerOperator);
+            }
+            if (Array.isArray(json.data.requiredDocs) && json.data.requiredDocs.length > 0) {
+              const mapped = json.data.requiredDocs.map((doc, idx) => ({
+                id: `doc_${idx}_${doc.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+                label: doc,
+                fieldUrl: `doc_${idx}Url`
+              }));
+              setRequirementsList(mapped);
+              localStorage.setItem('required_docs', JSON.stringify(json.data.requiredDocs));
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching dynamic settings:', e);
+      }
+    };
+    fetchSettings();
+
     const reapplyData = localStorage.getItem('reapply_target');
     if (reapplyData) {
       try {
@@ -219,7 +270,16 @@ const ApplyFranchise = () => {
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let sanitized = value;
+    if (name === 'made') {
+      sanitized = value.replace(/\D/g, '').slice(0, 4);
+    } else if (name === 'zone') {
+      sanitized = value.replace(/\D/g, '');
+    } else if (name === 'motorNo' || name === 'chassisNo' || name === 'plateNo') {
+      sanitized = value.toUpperCase();
+    }
+    setFormData(prev => ({ ...prev, [name]: sanitized }));
   };
 
   const handleFileChange = (reqId, file) => {
@@ -271,9 +331,9 @@ const ApplyFranchise = () => {
     e.preventDefault();
     
     if (formMode === 'New') {
-      const missing = REQUIREMENTS_LIST.filter(req => !uploadedDocs[req.id]);
+      const missing = requirementsList.filter(req => !uploadedDocs[req.id]);
       if (missing.length > 0) {
-        showToast("Pakisiguradong kumpleto ang 4 na requirements na in-upload.", "error");
+        showToast(`Pakisiguradong kumpleto ang ${requirementsList.length} na requirements na in-upload.`, "error");
         return;
       }
     }
@@ -290,7 +350,7 @@ const ApplyFranchise = () => {
 
         Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
         
-        REQUIREMENTS_LIST.forEach(req => {
+        requirementsList.forEach(req => {
           if (uploadedDocs[req.id]) {
             submitData.append(req.id, uploadedDocs[req.id]);
           }
@@ -441,7 +501,7 @@ const ApplyFranchise = () => {
               </div>
             ))}
 
-            {myFranchises.length < 2 ? (
+            {myFranchises.length < maxAllowedUnits ? (
               <button 
                 onClick={handleStartNewApplication}
                 className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] hover:border-[#7A1B22]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[200px] group active:scale-98"
@@ -450,13 +510,13 @@ const ApplyFranchise = () => {
                   <PlusCircle size={30} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                 </div>
                 <span className="font-black text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
-                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({2 - myFranchises.length} slot left)</span>
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
               </button>
             ) : (
               <div className="bg-red-50/60 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-3xl p-6 flex flex-col items-center justify-center text-red-700 dark:text-red-300 min-h-[200px] text-center">
                 <AlertCircle size={32} className="mb-2.5 opacity-60 text-red-600 dark:text-red-400" />
                 <span className="font-black text-sm text-red-900 dark:text-red-200">Maximum Limit Reached</span>
-                <span className="text-xs font-medium mt-1 px-4 text-red-600 dark:text-red-400 leading-snug">You have reached the maximum allowed limit of 2 registered tricycle units per operator.</span>
+                <span className="text-xs font-medium mt-1 px-4 text-red-600 dark:text-red-400 leading-snug">You have reached the maximum allowed limit of {maxAllowedUnits} registered tricycle units per operator.</span>
               </div>
             )}
           </div>
@@ -749,8 +809,8 @@ const ApplyFranchise = () => {
                 <p className="leading-relaxed">Hindi na kailangang mag-upload ng mga bagong file para sa renewal. Pakisuri ang buod sa ibaba bago i-submit.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                {REQUIREMENTS_LIST.map((req) => {
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+                {requirementsList.map((req) => {
                   const hasFile = !!filePreviews[req.id];
                   const isPdf = filePreviews[req.id]?.toLowerCase().includes('.pdf');
 

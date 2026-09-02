@@ -81,12 +81,137 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
     fetchFreshUser();
 
+    // REAL-TIME NOTIFICATIONS FETCHER
+    const fetchNotifications = async () => {
+      const token = localStorage.getItem('token');
+      const storedRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+      if (!token) return;
+
+      try {
+        const notifs = [];
+
+        if (storedRole === 'admin' || storedRole === 'administrator') {
+          // 1. Fetch pending approvals for Admin
+          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (fRes.ok) {
+            const fList = await fRes.json();
+            if (Array.isArray(fList)) {
+              fList.filter(item => item.status === 'Pending').slice(0, 10).forEach(item => {
+                notifs.push({
+                  id: `admin_pending_${item._id}`,
+                  title: 'New Franchise Application',
+                  desc: `${item.fullName} submitted a new application (${item.plateNo || 'Pending Plate'}) for ${item.todaName || 'TODA'}.`,
+                  time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent',
+                  type: 'pending',
+                  link: '/franchise-approval'
+                });
+              });
+
+              fList.filter(item => item.status === 'Expired').slice(0, 5).forEach(item => {
+                notifs.push({
+                  id: `admin_expired_${item._id}`,
+                  title: 'Expired Franchise Alert',
+                  desc: `Unit ${item.plateNo || 'N/A'} of ${item.fullName} has expired and needs renewal.`,
+                  time: 'Notice',
+                  type: 'reminder',
+                  link: '/franchise-masterlist'
+                });
+              });
+            }
+          }
+
+          // 2. Fetch TODA Submissions for Admin
+          try {
+            const tRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/submissions`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (tRes.ok) {
+              const tList = await tRes.json();
+              if (Array.isArray(tList)) {
+                tList.filter(t => t.status === 'Pending').slice(0, 5).forEach(t => {
+                  notifs.push({
+                    id: `admin_toda_${t._id}`,
+                    title: 'TODA Masterlist Submitted',
+                    desc: `${t.todaName || 'TODA'} submitted their official member roster for review.`,
+                    time: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recent',
+                    type: 'info',
+                    link: '/validate-toda'
+                  });
+                });
+              }
+            }
+          } catch {}
+        } else {
+          // OPERATOR / TODA PRESIDENT NOTIFICATIONS
+          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/my-franchises`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (fRes.ok) {
+            const fList = await fRes.json();
+            if (Array.isArray(fList)) {
+              fList.forEach(item => {
+                if (item.status === 'Ready for Pickup') {
+                  notifs.push({
+                    id: `op_ready_${item._id}`,
+                    title: 'Franchise Approved - Ready for Pickup!',
+                    desc: `Your franchise for unit ${item.plateNo || ''} is approved. Proceed to BPLO for payment & claim stub.`,
+                    time: 'Action Required',
+                    type: 'success',
+                    link: '/operator-dashboard'
+                  });
+                } else if (item.status === 'Active') {
+                  notifs.push({
+                    id: `op_active_${item._id}`,
+                    title: 'Permit Active',
+                    desc: `Franchise permit for unit ${item.plateNo || ''} is active with ${item.todaName}.`,
+                    time: 'Active',
+                    type: 'success',
+                    link: '/apply-franchise'
+                  });
+                } else if (item.status === 'Cancelled') {
+                  notifs.push({
+                    id: `op_cancelled_${item._id}`,
+                    title: 'Application Returned / Needs Revision',
+                    desc: item.cancelReason ? `LGU Note: ${item.cancelReason}` : 'Your application was returned for correction. Click to fix.',
+                    time: 'Attention',
+                    type: 'reminder',
+                    link: '/apply-franchise'
+                  });
+                } else if (item.status === 'Pending') {
+                  notifs.push({
+                    id: `op_pending_${item._id}`,
+                    title: 'Application In Review',
+                    desc: `Your application for ${item.plateNo || 'unit'} is currently in queue at BPLO.`,
+                    time: 'Pending',
+                    type: 'pending',
+                    link: '/apply-franchise'
+                  });
+                }
+              });
+            }
+          }
+        }
+
+        setNotifications(notifs);
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 25000);
+
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setIsNotifOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      clearInterval(interval);
+    };
   }, []);
 
   const markAllAsRead = () => {
@@ -146,10 +271,15 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
         <div className="hidden sm:block h-4 w-[1px] bg-slate-200 dark:bg-slate-700 shrink-0" />
 
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate tracking-tight">
             {getBreadcrumbTitle()}
           </span>
+          {localStorage.getItem('maintenance_mode') === 'true' && (
+            <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse">
+              🛠️ Maintenance Active
+            </span>
+          )}
         </div>
       </div>
 

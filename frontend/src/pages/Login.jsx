@@ -12,6 +12,21 @@ const Login = () => {
     password: ''
   });
 
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (lockoutSeconds > 0) {
+      timer = setInterval(() => {
+        setLockoutSeconds(prev => (prev > 1 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [lockoutSeconds]);
+
   const isValidContact = (value) => {
     const trimmed = value.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,7 +41,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isLoading || lockoutSeconds > 0) return;
 
     setError('');
 
@@ -48,6 +63,8 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
+        setFailedAttempts(0);
+        setLockoutSeconds(0);
         const rawRole = data.role || data.user?.role || '';
         const normalizedRole = String(rawRole).toLowerCase().trim().replace(/_/g, ' ');
         
@@ -72,7 +89,20 @@ const Login = () => {
           navigate('/operator-dashboard');
         }
       } else {
-        setError(data.message || 'LOGIN FAILED. CHECK YOUR CREDENTIALS.');
+        if (response.status === 429) {
+          const secs = data.retryAfterSeconds || 60;
+          setLockoutSeconds(secs);
+          setError(`TOO MANY ATTEMPTS. LOCKED FOR ${secs} SECONDS.`);
+        } else {
+          const newFails = failedAttempts + 1;
+          setFailedAttempts(newFails);
+          if (newFails >= 5) {
+            setLockoutSeconds(60);
+            setError('TOO MANY FAILED ATTEMPTS. ACCESS LOCKED FOR 60 SECONDS.');
+          } else {
+            setError(data.message || 'LOGIN FAILED. CHECK YOUR CREDENTIALS.');
+          }
+        }
       }
     } catch (err) {
       setError('CANNOT CONNECT TO THE SERVER.');
@@ -157,64 +187,60 @@ const Login = () => {
         
         {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
         <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-black uppercase tracking-widest w-fit mb-4 shadow-sm">
-            <Sparkles size={13} /> Official LGU Transport Portal
-          </div>
-
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1 shadow-xl border-2 border-[#D4AF37] shrink-0">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1.5 shadow-xl border-2 border-[#D4AF37] shrink-0">
               <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-4xl font-black text-white tracking-tight leading-none">G-TRAMS</h1>
-              <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1">Municipality of Gasan • Marinduque</p>
+              <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1.5">Municipality of Gasan • Province of Marinduque</p>
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-white/90 tracking-tight leading-snug mt-2">
+          <h2 className="text-xl font-bold text-white/95 tracking-tight leading-snug">
             Gasan Tricycle Records & Application Management System
           </h2>
-          <p className="text-white/70 text-xs sm:text-sm mt-2 leading-relaxed">
-            Ang opisyal na digital platform para sa mabilis, ligtas, at transparent na pagpaparehistro, pag-renew, at pamamahala ng mga prangkisa ng tricycle para sa bawat operator at TODA.
+          <p className="text-white/70 text-xs sm:text-sm mt-2.5 leading-relaxed">
+            The official digital portal of the Local Government Unit of Gasan for secure, streamlined, and transparent motorized tricycle franchise registration, renewal, and fleet management.
           </p>
 
           {/* 3 FEATURE CARDS */}
           <div className="grid grid-cols-1 gap-3 mt-6">
             <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
-              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
                 <FileText size={18} />
               </div>
               <div>
                 <h3 className="font-bold text-xs text-white">Online Application & Renewal</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Magsumite ng mga kinakailangang dokumento at cedula nang digital mula sa inyong tahanan o terminal.</p>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Submit official franchise requirements and documents digitally without waiting in long queues.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
-              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
                 <ShieldCheck size={18} />
               </div>
               <div>
-                <h3 className="font-bold text-xs text-white">Talaan ng TODA & Prangkisa</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Opisyal na masterlist para sa lehitimong mga operator at pinagkaisang samahan ng mga TODA sa Gasan.</p>
+                <h3 className="font-bold text-xs text-white">Verified TODA & Operator Registry</h3>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Centralized masterlist ensuring legitimate operator credentials and authorized TODA associations.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
-              <div className="p-2 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
                 <Clock size={18} />
               </div>
               <div>
                 <h3 className="font-bold text-xs text-white">Real-Time Status & Claim Stub</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Subaybayan ang pag-apruba ng prangkisa at kumuha ng opisyal na printable claim stub para sa pagbabayad.</p>
+                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Monitor application approvals live and generate official printable payment claim stubs instantly.</p>
               </div>
             </div>
           </div>
 
           {/* LGU HELPDESK FOOTER BADGE */}
-          <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/10 text-white/60 text-xs">
+          <div className="flex items-center gap-2.5 mt-6 pt-4 border-t border-white/10 text-white/60 text-xs">
             <Phone size={14} className="text-[#D4AF37]" />
-            <span>BPLO Helpdesk Hotline: <strong>(042) 342-1234</strong> / <strong>bplo@gasan.gov.ph</strong></span>
+            <span>BPLO Helpdesk Hotline: <strong className="text-white">(042) 342-1234</strong> • <strong className="text-white">bplo@gasan.gov.ph</strong></span>
           </div>
         </div>
 
@@ -295,9 +321,9 @@ const Login = () => {
               <div className="animate-item-4 pt-1">
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || lockoutSeconds > 0}
                   className={`w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-xs sm:text-sm font-black shadow-lg transition-all duration-300 uppercase tracking-wider ${
-                    isLoading 
+                    isLoading || lockoutSeconds > 0
                       ? 'bg-slate-400 cursor-not-allowed' 
                       : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:shadow-[#7A1B22]/50 hover:brightness-110 active:scale-[0.98]'
                   }`}
@@ -306,6 +332,10 @@ const Login = () => {
                     <>
                       <Loader2 size={16} className="animate-spin" />
                       SIGNING IN...
+                    </>
+                  ) : lockoutSeconds > 0 ? (
+                    <>
+                      LOCKED ({lockoutSeconds}s)
                     </>
                   ) : (
                     <>

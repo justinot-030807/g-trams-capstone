@@ -6,21 +6,33 @@ const axios = require('axios'); // Para sa Semaphore SMS
 // 1. REGISTER & SEND OTP
 exports.register = async (req, res) => {
     try {
-        // BINAGO: Idinagdag ang todaAssociation
         const { name, address, contact, password, role, todaAssociation } = req.body;
+        const normalizedContact = String(contact || '').trim();
+
+        if (!normalizedContact) {
+            return res.status(400).json({ message: 'Contact email or phone number is required.' });
+        }
         
-        let user = await User.findOne({ contact });
+        // Case-insensitive check for existing user
+        let user = await User.findOne({ 
+            contact: { $regex: new RegExp(`^${normalizedContact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } 
+        });
+
         if (user) {
-            if (user.isVerified) return res.status(400).json({ message: 'Contact already registered and verified' });
-            await User.deleteOne({ contact }); 
+            if (user.isVerified) {
+                return res.status(400).json({ 
+                    message: 'AN ACCOUNT WITH THIS EMAIL / PHONE NUMBER ALREADY EXISTS. PLEASE LOG IN INSTEAD.' 
+                });
+            }
+            await User.deleteOne({ _id: user._id }); 
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         
         user = new User({
-            name, address, contact, password,
+            name, address, contact: normalizedContact, password,
             role: role || 'operator',
-            todaAssociation: todaAssociation || 'NON-TODA', // <-- ISINAVE DITO
+            todaAssociation: todaAssociation || 'NON-TODA',
             isVerified: false,
             otp,
             otpExpire: Date.now() + 10 * 60 * 1000 
@@ -28,14 +40,14 @@ exports.register = async (req, res) => {
         
         await user.save();
 
-        if (contact.includes('@')) {
-            await sendEmail({ email: contact, subject: 'G-TRAMS: Account Verification OTP', message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` });
+        if (normalizedContact.includes('@')) {
+            await sendEmail({ email: normalizedContact, subject: 'G-TRAMS: Account Verification OTP', message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` });
         } else {
-            await axios.post('https://api.semaphore.co/api/v4/messages', { apikey: 'b95803ab99f6bc85ea217d2e057c5f34', number: contact, message: `G-TRAMS: Ang iyong verification code ay ${otp}. Huwag itong i-share kaninuman.` });
+            await axios.post('https://api.semaphore.co/api/v4/messages', { apikey: 'b95803ab99f6bc85ea217d2e057c5f34', number: normalizedContact, message: `G-TRAMS: Ang iyong verification code ay ${otp}. Huwag itong i-share kaninuman.` });
         }
         res.status(201).json({ message: 'OTP sent successfully' });
     } catch (error) {
-        console.error("REGISTER ERROR:", error); // <-- Dinagdag para makita sa Render Logs
+        console.error("REGISTER ERROR:", error);
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };

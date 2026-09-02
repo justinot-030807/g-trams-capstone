@@ -26,14 +26,11 @@ const AdminSettings = () => {
     penaltyFee: 150,
     fareBase: 15,
     farePerKm: 2.5,
+    maxUnitsPerOperator: 2,
     maintenanceMode: false,
     expiryWarningDays: 30,
-    requiredDocs: {
-      orCr: true,
-      license: true,
-      todaEndorsement: true,
-      brgyClearance: true
-    }
+    requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
+    newDocInput: ''
   });
 
   // TAB 2: ACCOUNT & SECURITY STATE
@@ -82,7 +79,7 @@ const AdminSettings = () => {
     const loadAllSettings = async () => {
       setIsLoading(true);
       try {
-        // 1. System Config from LocalStorage
+        // 1. System Config from LocalStorage & Backend
         const savedNew = localStorage.getItem('validity_new');
         const savedRenew = localStorage.getItem('validity_renew');
         const savedFiscal = localStorage.getItem('fiscal_year');
@@ -93,6 +90,7 @@ const AdminSettings = () => {
         const savedMaint = localStorage.getItem('maintenance_mode');
         const savedExpiryDays = localStorage.getItem('expiry_warning_days');
         const savedDocs = localStorage.getItem('required_docs');
+        const savedMaxUnits = localStorage.getItem('max_units_per_operator');
 
         setSystemConfig(prev => ({
           ...prev,
@@ -103,10 +101,48 @@ const AdminSettings = () => {
           penaltyFee: savedPenalty ? parseFloat(savedPenalty) : 150,
           fareBase: savedFareBase ? parseFloat(savedFareBase) : 15,
           farePerKm: savedFareKm ? parseFloat(savedFareKm) : 2.5,
+          maxUnitsPerOperator: savedMaxUnits ? parseInt(savedMaxUnits) : 2,
           maintenanceMode: savedMaint === 'true',
           expiryWarningDays: savedExpiryDays ? parseInt(savedExpiryDays) : 30,
           requiredDocs: savedDocs ? JSON.parse(savedDocs) : prev.requiredDocs
         }));
+
+        // Fetch authoritative settings from backend
+        try {
+          const setRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
+          if (setRes.ok) {
+            const setJson = await setRes.json();
+            if (setJson.data) {
+              const d = setJson.data;
+              const loadedDocs = Array.isArray(d.requiredDocs) && d.requiredDocs.length > 0 
+                ? d.requiredDocs 
+                : (savedDocs ? JSON.parse(savedDocs) : ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance']);
+              
+              setSystemConfig(prev => ({
+                ...prev,
+                newFranchise: d.validityNew ?? prev.newFranchise,
+                renewFranchise: d.validityRenew ?? prev.renewFranchise,
+                fiscalYear: d.fiscalYear || prev.fiscalYear,
+                franchiseFee: d.franchiseFee ?? prev.franchiseFee,
+                penaltyFee: d.penaltyRate ?? prev.penaltyFee,
+                fareBase: d.baseFare ?? prev.fareBase,
+                maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
+                maintenanceMode: Boolean(d.maintenanceMode),
+                expiryWarningDays: d.expiryWarningDays ?? prev.expiryWarningDays,
+                requiredDocs: loadedDocs
+              }));
+              localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
+              localStorage.setItem('fiscal_year', d.fiscalYear || prev.fiscalYear);
+              localStorage.setItem('franchise_fee', d.franchiseFee ?? prev.franchiseFee);
+              localStorage.setItem('validity_new', d.validityNew ?? prev.newFranchise);
+              localStorage.setItem('validity_renew', d.validityRenew ?? prev.renewFranchise);
+              localStorage.setItem('max_units_per_operator', d.maxUnitsPerOperator ?? 2);
+              localStorage.setItem('required_docs', JSON.stringify(loadedDocs));
+            }
+          }
+        } catch (err) {
+          console.error('Failed to fetch backend settings:', err);
+        }
 
         // 2. Preferences
         const currentSavedTheme = localStorage.getItem('theme') || 'light';
@@ -155,14 +191,38 @@ const AdminSettings = () => {
     }));
   };
 
-  const handleDocRequirementToggle = (docKey) => {
+  const handleAddRequirement = (e) => {
+    e?.preventDefault();
+    const docName = (systemConfig.newDocInput || '').trim();
+    if (!docName) return;
+    const currentList = Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : [];
+    if (currentList.some(d => d.toLowerCase() === docName.toLowerCase())) {
+      showToast('This document requirement is already in the list.', 'error');
+      return;
+    }
     setSystemConfig(prev => ({
       ...prev,
-      requiredDocs: {
-        ...prev.requiredDocs,
-        [docKey]: !prev.requiredDocs[docKey]
-      }
+      requiredDocs: [...(Array.isArray(prev.requiredDocs) ? prev.requiredDocs : []), docName],
+      newDocInput: ''
     }));
+    showToast(`Added "${docName}" to document checklist.`, 'success');
+  };
+
+  const handleRemoveRequirement = (docName) => {
+    setSystemConfig(prev => ({
+      ...prev,
+      requiredDocs: (Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).filter(d => d !== docName)
+    }));
+    showToast(`Removed "${docName}" from document checklist.`, 'info');
+  };
+
+  const handleResetDefaultDocs = () => {
+    const defaults = ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'];
+    setSystemConfig(prev => ({
+      ...prev,
+      requiredDocs: defaults
+    }));
+    showToast('Reset document requirements to default standard.', 'success');
   };
 
   const handleImageChange = (e) => {
@@ -184,7 +244,7 @@ const AdminSettings = () => {
         return;
       }
       if (passwordData.newPassword.length < 6) {
-        showToast('New password must be at least 6 characters.', 'error');
+        showToast('Password must be at least 6 characters long.', 'error');
         return;
       }
     }
@@ -197,7 +257,38 @@ const AdminSettings = () => {
 
     try {
       if (type === 'system') {
-        // Save System Settings locally & broadcast
+        const docsArray = Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : [];
+
+        // 1. Save System Settings to backend database
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                validityNew: Number(systemConfig.newFranchise),
+                validityRenew: Number(systemConfig.renewFranchise),
+                fiscalYear: systemConfig.fiscalYear,
+                franchiseFee: Number(systemConfig.franchiseFee),
+                penaltyRate: Number(systemConfig.penaltyFee),
+                baseFare: Number(systemConfig.fareBase),
+                expiryWarningDays: Number(systemConfig.expiryWarningDays),
+                maxUnitsPerOperator: Number(systemConfig.maxUnitsPerOperator) || 2,
+                requiredDocs: docsArray,
+                docChecklist: docsArray.join(', '),
+                maintenanceMode: Boolean(systemConfig.maintenanceMode)
+              })
+            });
+          } catch (err) {
+            console.error('Failed to sync settings with backend:', err);
+          }
+        }
+
+        // 2. Save System Settings locally
         localStorage.setItem('validity_new', systemConfig.newFranchise);
         localStorage.setItem('validity_renew', systemConfig.renewFranchise);
         localStorage.setItem('fiscal_year', systemConfig.fiscalYear);
@@ -205,12 +296,18 @@ const AdminSettings = () => {
         localStorage.setItem('penalty_fee', systemConfig.penaltyFee);
         localStorage.setItem('fare_base', systemConfig.fareBase);
         localStorage.setItem('fare_per_km', systemConfig.farePerKm);
-        localStorage.setItem('maintenance_mode', systemConfig.maintenanceMode);
+        localStorage.setItem('max_units_per_operator', systemConfig.maxUnitsPerOperator);
+        localStorage.setItem('maintenance_mode', systemConfig.maintenanceMode ? 'true' : 'false');
         localStorage.setItem('expiry_warning_days', systemConfig.expiryWarningDays);
-        localStorage.setItem('required_docs', JSON.stringify(systemConfig.requiredDocs));
+        localStorage.setItem('required_docs', JSON.stringify(docsArray));
 
         setConfirmModal({ isOpen: false, type: null, data: null });
-        showToast('System and platform configurations saved successfully!', 'success');
+        showToast(
+          systemConfig.maintenanceMode 
+            ? 'Maintenance Mode is now ACTIVE! Non-admin users are restricted.' 
+            : 'System and platform configurations saved successfully!',
+          'success'
+        );
       } 
       else if (type === 'account') {
         const formData = new FormData();
@@ -448,7 +545,7 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Fiscal Year Cycle
@@ -464,6 +561,24 @@ const AdminSettings = () => {
                         placeholder="2026-2027"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Max Units / Operator
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        name="maxUnitsPerOperator"
+                        value={systemConfig.maxUnitsPerOperator}
+                        onChange={handleSystemConfigChange}
+                        className={inputClasses}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">Default is 2 units</p>
                   </div>
 
                   <div>
@@ -521,30 +636,65 @@ const AdminSettings = () => {
 
               {/* Requirement Checklist Builder & Maintenance Mode */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <FileCheck size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                    <h2 className="text-base font-black text-slate-900 dark:text-white">Required Documents</h2>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Select documents required from operators upon franchise submission:</p>
+                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-3">
+                        <FileCheck size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                        <h2 className="text-base font-black text-slate-900 dark:text-white">Required Documents</h2>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetDefaultDocs}
+                        className="text-[10px] font-bold text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors"
+                      >
+                        Reset Defaults
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Manage the list of documents required from operators when submitting franchise applications:</p>
 
-                  <div className="space-y-3">
-                    {[
-                      { key: 'orCr', label: 'OR / CR (Official Receipt & Certificate of Registration)' },
-                      { key: 'license', label: "Valid Driver's License" },
-                      { key: 'todaEndorsement', label: 'TODA Endorsement Certificate' },
-                      { key: 'brgyClearance', label: 'Barangay Clearance' }
-                    ].map(item => (
-                      <label key={item.key} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.label}</span>
-                        <input
-                          type="checkbox"
-                          checked={!!systemConfig.requiredDocs[item.key]}
-                          onChange={() => handleDocRequirementToggle(item.key)}
-                          className="w-4 h-4 rounded text-[#7A1B22] focus:ring-[#7A1B22] dark:accent-[#7A1B22]"
-                        />
-                      </label>
-                    ))}
+                    {/* DYNAMIC DOCUMENT LIST */}
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {(Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).map((doc, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/60 transition-colors">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
+                            {doc}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRequirement(doc)}
+                            className="text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            title="Remove document requirement"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      {(Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).length === 0 && (
+                        <p className="text-xs text-slate-400 italic py-2 text-center">No document requirements defined. Add one below.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ADD NEW DOCUMENT INPUT */}
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+                    <input
+                      type="text"
+                      name="newDocInput"
+                      value={systemConfig.newDocInput || ''}
+                      onChange={handleSystemConfigChange}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddRequirement(); } }}
+                      placeholder="e.g. Medical Certificate, Emission Test"
+                      className={`${inputClasses} py-2 text-xs`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddRequirement}
+                      className="px-4 py-2 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold shrink-0 transition-colors shadow-xs"
+                    >
+                      + Add
+                    </button>
                   </div>
                 </div>
 
