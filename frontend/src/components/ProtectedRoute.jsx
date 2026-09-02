@@ -35,7 +35,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // MAINTENANCE MODE CHECK: Block non-admins if active
   const isMaintenanceActive = localStorage.getItem('maintenance_mode') === 'true';
   if (isMaintenanceActive && !isAdmin) {
-    return <MaintenanceMode />;
+    return <Navigate to="/maintenance" replace />;
   }
 
   const safeAllowedRoles = allowedRoles.map(normalizeRole);
