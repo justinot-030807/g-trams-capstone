@@ -1,8 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom'; // Import ang Router
+import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import './index.css';
+
+// Pre-mount theme enforcement to prevent flashing
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.documentElement.classList.add('dark');
+} else {
+  document.documentElement.classList.remove('dark');
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

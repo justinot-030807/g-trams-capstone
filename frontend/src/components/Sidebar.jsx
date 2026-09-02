@@ -30,7 +30,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const adminRoutes = [
     '/admin-dashboard', '/franchise-masterlist', '/franchise-approval', 
     '/manage-revocations', '/user-management', '/system-settings', 
-    '/validate-toda', '/system-reports'
+    '/admin/settings', '/validate-toda', '/system-reports'
   ];
   if (adminRoutes.includes(location.pathname)) {
     role = 'admin';
@@ -82,16 +82,23 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: '/operator-dashboard', 
       icon: <LayoutDashboard size={18} /> 
     },
-    {
-      type: 'dropdown',
-      name: t('nav.todaPortal', 'TODA Portal'),
-      id: 'toda_portal',
-      icon: <Users size={18} />,
-      subItems: [
-        { name: t('nav.submitMembers', 'Submit Members'), path: '/submit-members', icon: <Users size={16} /> },
-        { name: t('nav.applyRenew', 'Apply / Renew'), path: '/apply-franchise', icon: <FileText size={16} /> },
-        { name: t('nav.myProfile', 'My Profile'), path: '/manage-profile', icon: <User size={16} /> }
-      ]
+    { 
+      type: 'link', 
+      name: t('nav.submitMembers', 'Submit Members'), 
+      path: '/submit-members', 
+      icon: <Users size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.applyRenew', 'Apply / Renew'), 
+      path: '/apply-franchise', 
+      icon: <FileText size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.settings', 'Settings'), 
+      path: '/operator/settings', 
+      icon: <Settings size={18} /> 
     },
     { 
       type: 'link', 
@@ -136,15 +143,17 @@ const Sidebar = ({ isOpen, onClose }) => {
           { name: 'User Management', path: '/user-management', icon: <User size={16} /> }
         ]
       },
-      {
-        type: 'dropdown',
-        name: 'System & Reports',
-        id: 'system',
-        icon: <Settings size={18} />,
-        subItems: [
-          { name: 'System Settings', path: '/system-settings', icon: <Settings size={16} /> },
-          { name: 'System Reports', path: '/system-reports', icon: <Printer size={16} /> }
-        ]
+      { 
+        type: 'link', 
+        name: 'System Reports', 
+        path: '/system-reports', 
+        icon: <Printer size={18} /> 
+      },
+      { 
+        type: 'link', 
+        name: t('nav.settings', 'Settings'), 
+        path: '/admin/settings', 
+        icon: <Settings size={18} /> 
       }
     ],
     'operator': [
@@ -154,15 +163,17 @@ const Sidebar = ({ isOpen, onClose }) => {
         path: '/operator-dashboard', 
         icon: <LayoutDashboard size={18} /> 
       },
-      {
-        type: 'dropdown',
-        name: t('nav.franchiseServices', 'Franchise Services'),
-        id: 'op_services',
-        icon: <Layers size={18} />,
-        subItems: [
-          { name: t('nav.applyRenew', 'Apply / Renew'), path: '/apply-franchise', icon: <FileText size={16} /> },
-          { name: t('nav.myProfile', 'My Profile'), path: '/manage-profile', icon: <User size={16} /> }
-        ]
+      { 
+        type: 'link', 
+        name: t('nav.applyRenew', 'Apply / Renew'), 
+        path: '/apply-franchise', 
+        icon: <FileText size={18} /> 
+      },
+      { 
+        type: 'link', 
+        name: t('nav.settings', 'Settings'), 
+        path: '/operator/settings', 
+        icon: <Settings size={18} /> 
       },
       { 
         type: 'link', 
@@ -245,32 +256,30 @@ const Sidebar = ({ isOpen, onClose }) => {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-4 sm:p-5 flex flex-col items-center border-b border-white/10 shrink-0 relative bg-[#6c171e]/50">
+        {/* Brand Header */}
+        <div className="p-4 sm:p-5 flex items-center justify-between border-b border-white/10 shrink-0 bg-[#6c171e]/70">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-md border-2 border-[#D4AF37] p-1 shrink-0 overflow-hidden">
+              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-white font-black text-sm tracking-wider">G-TRAMS</span>
+                <span className="text-[#D4AF37] text-[8px] font-black uppercase tracking-widest bg-[#D4AF37]/15 px-1.5 py-0.5 rounded border border-[#D4AF37]/30">
+                  {role === 'admin' ? 'ADMIN' : (role === 'toda president' || role === 'toda_president' ? 'TODA' : 'OPERATOR')}
+                </span>
+              </div>
+              <span className="text-white/60 text-[10px] font-semibold tracking-tight truncate">Municipality of Gasan</span>
+            </div>
+          </div>
+
           <button 
             onClick={onClose}
             title="Hide Sidebar"
-            className="absolute top-3.5 right-3.5 text-white/70 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors focus:outline-none"
+            className="text-white/70 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors focus:outline-none shrink-0"
           >
             <PanelLeftClose size={18} />
           </button>
-
-          <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-2 shadow-md border-2 border-[#D4AF37] overflow-hidden shrink-0">
-            {userData.profilePic ? (
-              <img src={userData.profilePic} alt="Profile" className="w-full h-full object-cover" />
-            ) : role === 'admin' ? (
-              <img src="/gasan-logo.png" alt="Gasan Logo" className="w-full h-full object-contain p-0.5" />
-            ) : (
-              <User className="text-slate-400" size={26} />
-            )}
-          </div>
-          
-          <h1 className="text-white font-bold text-xs sm:text-sm tracking-wide text-center leading-tight line-clamp-1 w-full px-2" title={userData.name}>
-            {userData.name}
-          </h1>
-          
-          <p className="text-[#D4AF37] text-[8px] sm:text-[9px] font-black uppercase tracking-widest mt-1 text-center bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/20">
-            {getRoleLabel()}
-          </p>
         </div>
 
         <nav className="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-sidebar-scroll">

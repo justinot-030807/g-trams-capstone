@@ -9,11 +9,9 @@ const ThemeContext = createContext({
 export const ThemeProvider = ({ children }) => {
   const [theme, setThemeState] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('gtrams_theme') || localStorage.getItem('theme');
-      if (saved === 'dark' || saved === 'light') return saved;
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
-      }
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') return 'dark';
+      if (saved === 'light') return 'light';
     }
     return 'light';
   });
@@ -22,8 +20,10 @@ export const ThemeProvider = ({ children }) => {
     const root = document.documentElement;
     if (newTheme === 'dark') {
       root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
       root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
   };
 
@@ -35,8 +35,6 @@ export const ThemeProvider = ({ children }) => {
     const normalized = newTheme === 'dark' ? 'dark' : 'light';
     setThemeState(normalized);
     applyTheme(normalized);
-    localStorage.setItem('theme', normalized);
-    localStorage.setItem('gtrams_theme', normalized);
 
     // Sync preference with backend if user is logged in
     const token = localStorage.getItem('token');

@@ -9,7 +9,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import FranchiseMasterlist from './pages/admin/FranchiseMasterlist';
 import UserManagement from './pages/admin/UserManagement';
-import SystemSettings from './pages/admin/SystemSettings';
+import AdminSettings from './pages/admin/AdminSettings';
 import FranchiseApproval from './pages/admin/FranchiseApproval';
 import ManageRevocations from './pages/admin/ManageRevocations';
 import ValidateTODA from './pages/admin/ValidateTODA';
@@ -18,11 +18,19 @@ import AdminReports from './pages/admin/AdminReports';
 import OperatorDashboard from './pages/operator/OperatorDashboard';
 import ApplyFranchise from './pages/operator/ApplyFranchise';
 import RenewFranchise from './pages/operator/RenewFranchise';
-import ManageProfile from './pages/operator/ManageProfile';
+import OperatorSettings from './pages/operator/OperatorSettings';
 import SubmitMembers from './pages/operator/SubmitMembers';
 import HelpSupport from './pages/operator/HelpSupport';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+
+const ProfileRedirect = () => {
+  const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+  if (role === 'admin' || role === 'administrator') {
+    return <Navigate to="/admin/settings" replace />;
+  }
+  return <Navigate to="/operator/settings" replace />;
+};
 
 function App() {
   return (
@@ -39,7 +47,8 @@ function App() {
           <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseMasterlist /></ProtectedRoute>} />
           <Route path="/user-management" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
-          <Route path="/system-settings" element={<ProtectedRoute allowedRoles={['admin']}><SystemSettings /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
+          <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
           <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseApproval /></ProtectedRoute>} />
           <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['admin']}><ManageRevocations /></ProtectedRoute>} />
           <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
@@ -52,9 +61,10 @@ function App() {
           <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorDashboard /></ProtectedRoute>} />
           <Route path="/apply-franchise" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><ApplyFranchise /></ProtectedRoute>} />
           <Route path="/renew-franchise/:id" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><RenewFranchise /></ProtectedRoute>} />
+          <Route path="/operator/settings" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorSettings /></ProtectedRoute>} />
           
-          {/* SHARED SECURE ROUTES */}
-          <Route path="/manage-profile" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><ManageProfile /></ProtectedRoute>} />
+          {/* SHARED SECURE ROUTES & REDIRECTS */}
+          <Route path="/manage-profile" element={<ProfileRedirect />} />
           <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
         </Routes>
       </LanguageProvider>
