@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 
 const OperatorDashboard = () => {
   const { t, language } = useLanguage();
@@ -191,16 +192,22 @@ const OperatorDashboard = () => {
         </div>
         <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
           <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
-          <div className="flex gap-1.5">
-            <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
-            <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
-          </div>
-          <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37]">{franchises.length}/2</span>
+          {isLoading ? (
+            <SkeletonElement height="14px" className="w-16" rounded="rounded-full" delay={40} />
+          ) : (
+            <>
+              <div className="flex gap-1.5">
+                <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+              </div>
+              <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37]">{franchises.length}/2</span>
+            </>
+          )}
         </div>
       </header>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-48 animate-pulse"><Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={36} /></div>
+        <GarageGridSkeleton count={2} baseDelay={70} />
       ) : franchises.length === 0 ? (
         <div className="animate-dashboard-card bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[300px] transition-colors">
           <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 text-[#7A1B22] dark:text-[#D4AF37]"><PlusCircle size={32} /></div>
@@ -210,8 +217,12 @@ const OperatorDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {franchises.map((unit) => (
-            <div key={unit?._id} className="animate-dashboard-card bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+          {franchises.map((unit, unitIndex) => (
+            <div 
+              key={unit?._id} 
+              className="animate-dashboard-card bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all"
+              style={{ animationDelay: `${0.06 + unitIndex * 0.09}s` }}
+            >
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
                 unit?.status === 'Active' ? 'bg-emerald-500' :
                 unit?.status === 'Ready for Pickup' ? 'bg-blue-500' :

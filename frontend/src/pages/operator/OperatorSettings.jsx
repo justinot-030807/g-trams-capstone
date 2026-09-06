@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import { SettingsSkeleton } from '../../components/skeleton';
 
 const GASAN_BARANGAYS = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
@@ -133,6 +134,10 @@ const OperatorSettings = () => {
         showToast(t('profile.passTooShort', 'Password must be at least 6 characters.'), 'error');
         return;
       }
+      if (passwordData.currentPassword === passwordData.newPassword) {
+        showToast(t('profile.passSame', 'New password must be different from current password.'), 'error');
+        return;
+      }
     }
     setConfirmModal({ isOpen: true, type });
   };
@@ -255,9 +260,7 @@ const OperatorSettings = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={36} />
-        </div>
+        <SettingsSkeleton />
       ) : (
         <div className="space-y-6 max-w-5xl">
           {/* TAB NAVIGATION PILLS */}

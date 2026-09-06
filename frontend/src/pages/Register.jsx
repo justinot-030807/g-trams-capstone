@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, Globe, X, Loader2, CheckCircle2, Sparkles, FileText, ShieldCheck, Clock, Phone, AlertCircle } from 'lucide-react';
+import GoogleAuthButton from '../components/GoogleAuthButton';
+import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 
 const gasanBarangays = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", "Pinggan", "Tabionan", "Tapuyan", "Tiguion", "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
@@ -28,6 +30,12 @@ const Register = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsLang, setTermsLang] = useState('en');
+
+  // Google Sign-In & Onboarding state
+  const [googleProfileData, setGoogleProfileData] = useState(null);
+  const [googleOnboardingOpen, setGoogleOnboardingOpen] = useState(false);
+  const [isOnboardingLoading, setIsOnboardingLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState('');
 
   const isValidContact = (value) => {
     const trimmed = value.trim();
@@ -109,6 +117,63 @@ const Register = () => {
       }
     } catch (err) { 
       setError('CANNOT CONNECT TO THE SERVER.'); 
+    }
+  };
+
+  const handleGoogleSuccess = (data) => {
+    const rawRole = data.role || data.user?.role || '';
+    const normalizedRole = String(rawRole).toLowerCase().trim().replace(/_/g, ' ');
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('role', normalizedRole);
+
+    if (data.name) localStorage.setItem('name', data.name);
+    if (data.fullName) localStorage.setItem('name', data.fullName);
+    if (data.user) {
+      const userObj = { ...data.user };
+      userObj.role = normalizedRole;
+      localStorage.setItem('user', JSON.stringify(userObj));
+
+      if (data.user.name || data.user.fullName) {
+        localStorage.setItem('name', data.user.name || data.user.fullName);
+      }
+    }
+
+    if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
+      navigate('/admin-dashboard');
+    } else {
+      navigate('/operator-dashboard');
+    }
+  };
+
+  const handleOnboardingSubmit = async (onboardingData) => {
+    setIsOnboardingLoading(true);
+    setOnboardingError('');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          googleProfile: googleProfileData,
+          onboardingData
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.token) {
+        setGoogleOnboardingOpen(false);
+        setSuccess('Matagumpay ang pagpaparehistro via Google! Sandali lamang...');
+        setTimeout(() => {
+          handleGoogleSuccess(data);
+        }, 1000);
+      } else {
+        setOnboardingError(data.message || 'Nabigong kumpletuhin ang rehistro.');
+      }
+    } catch (err) {
+      setOnboardingError('Hindi makakonekta sa server. Pakisubukan muli.');
+    } finally {
+      setIsOnboardingLoading(false);
     }
   };
 
@@ -373,6 +438,34 @@ const Register = () => {
               </form>
             )}
 
+            {step === 1 && (
+              <>
+                {/* DIVIDER */}
+                <div className="relative my-3 animate-item-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                    <span className="bg-white/95 px-2.5">O MAG-REHISTRO GAMIT ANG</span>
+                  </div>
+                </div>
+
+                {/* GOOGLE SIGN UP BUTTON */}
+                <div className="animate-item-4">
+                  <GoogleAuthButton 
+                    text="Mag-rehistro gamit ang Google"
+                    onSuccess={handleGoogleSuccess}
+                    onNewUser={(profile) => {
+                      setOnboardingError('');
+                      setGoogleProfileData(profile);
+                      setGoogleOnboardingOpen(true);
+                    }}
+                    onError={(msg) => setError(msg)}
+                  />
+                </div>
+              </>
+            )}
+
             {step === 2 && (
               <form onSubmit={handleVerifyOTP} className="space-y-3 animate-item-2">
                 <div>
@@ -462,6 +555,16 @@ const Register = () => {
           </div>
         </div>
       )}
+
+      {/* Google Onboarding Modal */}
+      <GoogleOnboardingModal 
+        isOpen={googleOnboardingOpen}
+        onClose={() => setGoogleOnboardingOpen(false)}
+        googleProfile={googleProfileData}
+        onSubmit={handleOnboardingSubmit}
+        isLoading={isOnboardingLoading}
+        errorMessage={onboardingError}
+      />
 
       {/* Footer */}
       <footer className="relative z-10 mt-6 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold">

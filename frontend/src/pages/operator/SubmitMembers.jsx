@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { UploadCloud, FileText, CheckCircle, Clock } from 'lucide-react';
+import { SubmissionCardsSkeleton } from '../../components/skeleton';
 
 const SubmitMembers = () => {
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [submissions, setSubmissions] = useState([]); 
 
   // Load submission history on mount
@@ -13,6 +15,7 @@ const SubmitMembers = () => {
   }, []);
 
   const fetchMySubmissions = async () => {
+    setIsLoadingHistory(true);
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/toda/my-submissions', {
         headers: {
@@ -25,6 +28,8 @@ const SubmitMembers = () => {
       }
     } catch (error) {
       console.error('Failed to fetch history:', error);
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
@@ -133,13 +138,19 @@ const SubmitMembers = () => {
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Recent Submissions</h2>
             
             <div className="space-y-3">
-              {submissions.length === 0 ? (
+              {isLoadingHistory ? (
+                <SubmissionCardsSkeleton count={3} baseDelay={30} stepDelay={45} />
+              ) : submissions.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm font-medium bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                   No submissions yet.
                 </div>
               ) : (
-                submissions.map((sub) => (
-                  <div key={sub._id} className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/70 flex flex-col gap-2">
+                submissions.map((sub, sIdx) => (
+                  <div 
+                    key={sub._id} 
+                    className="stagger-reveal p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/70 flex flex-col gap-2"
+                    style={{ animationDelay: `${sIdx * 40}ms` }}
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
                         <FileText size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />

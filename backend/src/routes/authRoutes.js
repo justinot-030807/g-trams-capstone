@@ -18,17 +18,22 @@ const {
     deleteUser,
     updateProfile,
     toggleUserStatus,
-    getProfile
+    getProfile,
+    googleAuth
 } = require('../controllers/authController');
 
 // Rate limiters
 const loginLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many login attempts. Please try again after 15 minutes.' });
 const registerLimiter = authRateLimiter({ max: 10, windowMs: 15 * 60 * 1000, message: 'Too many registration attempts. Please try again after 15 minutes.' });
 const forgotLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many password reset requests. Please try again after 15 minutes.' });
+const resetLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many password reset attempts. Please try again after 15 minutes.' });
 
 // Profile routes
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, upload.single('profilePic'), updateProfile);
+
+// Google OAuth route
+router.post('/google', googleAuth);
 
 // Auth and registration routes
 router.post('/register', registerLimiter, register);
@@ -38,7 +43,7 @@ router.get('/', protect, getUsers);
 
 // Password management routes
 router.post('/forgot-password', forgotLimiter, forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', resetLimiter, resetPassword);
 router.put('/change-password', protect, changePassword);
 
 // Admin routes

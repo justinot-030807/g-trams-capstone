@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { Users, Search, Info, MapPin, Phone, Calendar, ShieldCheck, X, AlertTriangle, User, UserMinus, UserCheck, ShieldAlert } from 'lucide-react';
+import { TableRowsSkeleton } from '../../components/skeleton';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Modal states
@@ -20,6 +22,7 @@ const UserManagement = () => {
   }, []);
 
   const fetchUsers = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -31,6 +34,8 @@ const UserManagement = () => {
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -142,15 +147,21 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-              {filteredUsers.length === 0 ? (
+              {isLoading ? (
+                <TableRowsSkeleton rows={6} columns={5} baseDelay={30} stepDelay={45} />
+              ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="p-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
                     No users found matching "{searchQuery}"
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
-                  <tr key={user._id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group ${user.isActive === false ? 'opacity-70 bg-red-50/30 dark:bg-red-950/20' : ''}`}>
+                filteredUsers.map((user, uIdx) => (
+                  <tr 
+                    key={user._id} 
+                    className={`stagger-reveal hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group ${user.isActive === false ? 'opacity-70 bg-red-50/30 dark:bg-red-950/20' : ''}`}
+                    style={{ animationDelay: `${uIdx * 35}ms` }}
+                  >
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 shadow-sm shrink-0 ${user.isActive === false ? 'border-red-300 dark:border-red-800 bg-red-100 dark:bg-red-950/50 text-red-400' : 'border-white dark:border-slate-700 bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>

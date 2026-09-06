@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2, Sparkles, FileText, ShieldCheck, Clock, Phone, ChevronRight } from 'lucide-react';
+import GoogleAuthButton from '../components/GoogleAuthButton';
+import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,6 +16,12 @@ const Login = () => {
 
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // Google Sign-In & Onboarding state
+  const [googleProfileData, setGoogleProfileData] = useState(null);
+  const [googleOnboardingOpen, setGoogleOnboardingOpen] = useState(false);
+  const [isOnboardingLoading, setIsOnboardingLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState('');
 
   useEffect(() => {
     let timer;
@@ -63,31 +71,7 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setFailedAttempts(0);
-        setLockoutSeconds(0);
-        const rawRole = data.role || data.user?.role || '';
-        const normalizedRole = String(rawRole).toLowerCase().trim().replace(/_/g, ' ');
-        
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', normalizedRole);
-
-        if (data.name) localStorage.setItem('name', data.name);
-        if (data.fullName) localStorage.setItem('name', data.fullName);
-        if (data.user) {
-          const userObj = { ...data.user };
-          userObj.role = normalizedRole;
-          localStorage.setItem('user', JSON.stringify(userObj));
-          
-          if (data.user.name || data.user.fullName) {
-            localStorage.setItem('name', data.user.name || data.user.fullName);
-          }
-        }
-
-        if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
-          navigate('/admin-dashboard');
-        } else {
-          navigate('/operator-dashboard');
-        }
+        handleAuthSuccess(data);
       } else {
         if (response.status === 503) {
           setError(data.message || 'The system is undergoing maintenance. Access is restricted for non-admin users.');
@@ -110,6 +94,62 @@ const Login = () => {
       setError('CANNOT CONNECT TO THE SERVER.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAuthSuccess = (data) => {
+    setFailedAttempts(0);
+    setLockoutSeconds(0);
+    const rawRole = data.role || data.user?.role || '';
+    const normalizedRole = String(rawRole).toLowerCase().trim().replace(/_/g, ' ');
+    
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('role', normalizedRole);
+
+    if (data.name) localStorage.setItem('name', data.name);
+    if (data.fullName) localStorage.setItem('name', data.fullName);
+    if (data.user) {
+      const userObj = { ...data.user };
+      userObj.role = normalizedRole;
+      localStorage.setItem('user', JSON.stringify(userObj));
+      
+      if (data.user.name || data.user.fullName) {
+        localStorage.setItem('name', data.user.name || data.user.fullName);
+      }
+    }
+
+    if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
+      navigate('/admin-dashboard');
+    } else {
+      navigate('/operator-dashboard');
+    }
+  };
+
+  const handleOnboardingSubmit = async (onboardingData) => {
+    setIsOnboardingLoading(true);
+    setOnboardingError('');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          googleProfile: googleProfileData,
+          onboardingData
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.token) {
+        setGoogleOnboardingOpen(false);
+        handleAuthSuccess(data);
+      } else {
+        setOnboardingError(data.message || 'Nabigong kumpletuhin ang rehistro.');
+      }
+    } catch (err) {
+      setOnboardingError('Hindi makakonekta sa server. Pakisubukan muli.');
+    } finally {
+      setIsOnboardingLoading(false);
     }
   };
 
@@ -356,6 +396,30 @@ const Login = () => {
               </div>
             </form>
 
+            {/* DIVIDER */}
+            <div className="relative my-4 animate-item-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                <span className="bg-white/95 px-2.5">O MAGPATULOY GAMIT ANG</span>
+              </div>
+            </div>
+
+            {/* GOOGLE SIGN IN BUTTON */}
+            <div className="animate-item-4">
+              <GoogleAuthButton 
+                text="Mag-sign in gamit ang Google"
+                onSuccess={handleAuthSuccess}
+                onNewUser={(profile) => {
+                  setOnboardingError('');
+                  setGoogleProfileData(profile);
+                  setGoogleOnboardingOpen(true);
+                }}
+                onError={(msg) => setError(msg)}
+              />
+            </div>
+
             <div className="mt-5 pt-4 border-t border-slate-100 text-center animate-item-4">
               <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
@@ -369,6 +433,16 @@ const Login = () => {
         </div>
 
       </div>
+
+      {/* Google Onboarding Modal */}
+      <GoogleOnboardingModal 
+        isOpen={googleOnboardingOpen}
+        onClose={() => setGoogleOnboardingOpen(false)}
+        googleProfile={googleProfileData}
+        onSubmit={handleOnboardingSubmit}
+        isLoading={isOnboardingLoading}
+        errorMessage={onboardingError}
+      />
 
       {/* Footer */}
       <footer className="relative z-10 mt-6 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold">

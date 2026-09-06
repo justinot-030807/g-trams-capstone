@@ -5,6 +5,7 @@ import {
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
   CalendarDays, User, Clock
 } from 'lucide-react';
+import { QueueListSkeleton } from '../../components/skeleton';
 
 const REJECT_REASONS = [
   "Incomplete Requirements",
@@ -314,7 +315,7 @@ const FranchiseApproval = () => {
       </header>
 
       {isLoading ? (
-        <div className="flex justify-center p-12"><Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={32} /></div>
+        <QueueListSkeleton count={4} baseDelay={50} stepDelay={70} />
       ) : filteredApps.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 transition-colors">
           <CheckCircle size={48} className="mx-auto mb-4 text-emerald-400 opacity-50" />
@@ -324,7 +325,11 @@ const FranchiseApproval = () => {
       ) : (
         <div className="space-y-4">
           {filteredApps.map((app, index) => (
-            <div key={app._id} className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30">
+            <div 
+              key={app._id} 
+              className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30"
+              style={{ animationDelay: `${index * 40}ms` }}
+            >
               
               <div className="flex items-start gap-4">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${app.status === 'Ready for Pickup' ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400' : 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'}`}>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { Users, FileText, CheckCircle, Search, Eye, FolderTree } from 'lucide-react';
+import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 
 const TODA_LIST = [
   "BATODA", "POB TODA", "NBI TODA", "GT TODA", "TIGUION TODA", "BANGBANG IPIL TODA", "TAB TODA", "LUG TODA", "MASIGA TODA", "4B TODA", "CT TODA", "TG TODA", "GC TODA", "MA TODA", "PG TODA", "MAT TODA", "DPAB TODA", "MGN TODA", "GSTODA", "GS TODA", "TTODA", "TC TODA", "NORTH TODA", "GASAN CENTRAL TODA", "BAHI TODA", "ILAYA TODA", "GTF TODA", "NON-TODA"
@@ -8,6 +9,7 @@ const TODA_LIST = [
 
 const ValidateTODA = () => {
   const [activeTab, setActiveTab] = useState('directory');
+  const [isLoading, setIsLoading] = useState(true);
   
   // States
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,13 +28,19 @@ const ValidateTODA = () => {
   }, [activeTab]);
 
   const fetchSubmissions = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/toda/submissions', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
       if (response.ok) setSubmissions(await response.json());
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const fetchUsers = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
       if (response.ok) {
@@ -40,7 +48,11 @@ const ValidateTODA = () => {
         // Filter out admin users
         setUsers(allUsers.filter(u => u.role !== 'admin'));
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleApprove = async (id) => {
@@ -102,15 +114,21 @@ const ValidateTODA = () => {
         {/* Live directory content */}
         {activeTab === 'directory' && (
           <div className="p-6">
-            {groupedToda.length === 0 ? (
+            {isLoading ? (
+              <AccordionListSkeleton count={5} baseDelay={30} stepDelay={45} />
+            ) : groupedToda.length === 0 ? (
                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                  <Users size={32} className="mx-auto mb-3 opacity-30"/>
                  <p className="font-bold">No registered members yet.</p>
                </div>
             ) : (
               <div className="space-y-4">
-                {groupedToda.map((toda) => (
-                  <div key={toda.name} className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                {groupedToda.map((toda, tIdx) => (
+                  <div 
+                    key={toda.name} 
+                    className="stagger-reveal border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm"
+                    style={{ animationDelay: `${tIdx * 35}ms` }}
+                  >
                     <button 
                       onClick={() => setExpandedToda(expandedToda === toda.name ? null : toda.name)}
                       className="w-full bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-800 p-4 flex justify-between items-center transition-colors"
@@ -186,11 +204,17 @@ const ValidateTODA = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                  {filteredSubmissions.length === 0 ? (
+                  {isLoading ? (
+                    <TableRowsSkeleton rows={4} columns={5} baseDelay={30} stepDelay={45} />
+                  ) : filteredSubmissions.length === 0 ? (
                     <tr><td colSpan="5" className="p-12 text-center text-sm font-medium text-slate-500 dark:text-slate-400">No TODA member lists found.</td></tr>
                   ) : (
-                    filteredSubmissions.map((sub) => (
-                      <tr key={sub._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group">
+                    filteredSubmissions.map((sub, sIdx) => (
+                      <tr 
+                        key={sub._id} 
+                        className="stagger-reveal hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group"
+                        style={{ animationDelay: `${sIdx * 35}ms` }}
+                      >
                         <td className="p-4 pl-6"><p className="font-bold text-slate-900 dark:text-white">{sub.presidentName}</p></td>
                         <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37]"><FileText size={16} /> {sub.fileName}</div></td>
                         <td className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">{new Date(sub.createdAt).toLocaleDateString()}</td>

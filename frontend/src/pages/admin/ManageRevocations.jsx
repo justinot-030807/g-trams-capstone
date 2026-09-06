@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, CheckCircle, FileText, Eye } from 'lucide-react';
+import { TableRowsSkeleton } from '../../components/skeleton';
 
 const VIOLATIONS_LIST = [
   "Operating outside authorized routes",
@@ -146,33 +147,34 @@ const ManageRevocations = () => {
 
         {/* DATA TABLE */}
         <div className="overflow-x-auto">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-24">
-              <Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={32} />
-            </div>
-          ) : (
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
-                  <th className="p-4 pl-6">Operator & Vehicle</th>
-                  {activeTab === 'revoked' && <th className="p-4">Violation Details</th>}
-                  <th className="p-4 text-center">Status</th>
-                  <th className="p-4 text-center pr-6">Action</th>
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
+                <th className="p-4 pl-6">Operator & Vehicle</th>
+                {activeTab === 'revoked' && <th className="p-4">Violation Details</th>}
+                <th className="p-4 text-center">Status</th>
+                <th className="p-4 text-center pr-6">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+              {isLoading ? (
+                <TableRowsSkeleton rows={5} columns={activeTab === 'revoked' ? 4 : 3} baseDelay={30} stepDelay={45} />
+              ) : filteredFranchises.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="p-12 text-center text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-col items-center justify-center">
+                      <CheckCircle size={40} className="text-emerald-300 dark:text-emerald-500/50 mb-3"/>
+                      <p className="font-bold text-lg text-slate-700 dark:text-slate-200">No records found</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                {filteredFranchises.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="p-12 text-center text-slate-500 dark:text-slate-400">
-                      <div className="flex flex-col items-center justify-center">
-                        <CheckCircle size={40} className="text-emerald-300 dark:text-emerald-500/50 mb-3"/>
-                        <p className="font-bold text-lg text-slate-700 dark:text-slate-200">No records found</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredFranchises.map((f) => (
-                    <tr key={f._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+              ) : (
+                filteredFranchises.map((f, fIdx) => (
+                  <tr 
+                    key={f._id} 
+                    className="stagger-reveal hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                    style={{ animationDelay: `${fIdx * 35}ms` }}
+                  >
                       <td className="p-4 pl-6">
                         <p className="font-bold text-slate-900 dark:text-white text-sm">{f.fullName}</p>
                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Plate: <span className="text-slate-800 dark:text-slate-900 bg-yellow-100 px-1 rounded border border-yellow-300">{f.plateNo || 'N/A'}</span> &bull; {f.todaName}</p>
@@ -218,7 +220,6 @@ const ManageRevocations = () => {
                 )}
               </tbody>
             </table>
-          )}
         </div>
       </div>
 

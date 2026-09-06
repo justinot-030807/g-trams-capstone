@@ -1,5 +1,6 @@
 const Franchise = require('../models/franchiseModel');
 const cron = require('node-cron');
+const { logAudit } = require('../utils/auditLogger');
 
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -164,6 +165,18 @@ const getMyFranchises = async (req, res) => {
 
 const updateFranchise = async (req, res) => {
     try {
+        const existingFranchise = await Franchise.findById(req.params.id);
+        if (!existingFranchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        // IDOR Protection: verify user is owner or admin
+        const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const isAdmin = role === 'admin' || role === 'administrator';
+        const isOwner = existingFranchise.operator && existingFranchise.operator.toString() === req.user._id.toString();
+
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to update this franchise record.' });
+        }
+
         let updateData = { ...req.body };
         const files = req.files || {};
         if (files.orCrDocument) updateData.orCrUrl = files.orCrDocument[0].path;
@@ -172,7 +185,16 @@ const updateFranchise = async (req, res) => {
         if (files.brgyClearance) updateData.brgyClearanceUrl = files.brgyClearance[0].path;
         
         const updatedFranchise = await Franchise.findByIdAndUpdate(req.params.id, updateData, { returnDocument: 'after' }).populate('operator', 'name address contact');
-        if (!updatedFranchise) return res.status(404).json({ message: 'Franchise not found' });
+        
+        if (isAdmin) {
+            logAudit(req, {
+                action: 'FRANCHISE_UPDATED',
+                targetType: 'Franchise',
+                targetId: req.params.id,
+                details: { plateNo: updatedFranchise.plateNo, updatedFields: Object.keys(updateData) }
+            });
+        }
+
         res.status(200).json(updatedFranchise);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -183,6 +205,14 @@ const deleteFranchise = async (req, res) => {
     try {
         const franchise = await Franchise.findByIdAndDelete(req.params.id);
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        logAudit(req, {
+            action: 'FRANCHISE_DELETED',
+            targetType: 'Franchise',
+            targetId: req.params.id,
+            details: { plateNo: franchise.plateNo, fullName: franchise.fullName }
+        });
+
         res.status(200).json({ message: 'Franchise deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -191,13 +221,25 @@ const deleteFranchise = async (req, res) => {
 
 const renewFranchise = async (req, res) => {
     try {
+        const existingFranchise = await Franchise.findById(req.params.id);
+        if (!existingFranchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        // IDOR Protection: verify user is owner or admin
+        const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const isAdmin = role === 'admin' || role === 'administrator';
+        const isOwner = existingFranchise.operator && existingFranchise.operator.toString() === req.user._id.toString();
+
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to renew this franchise record.' });
+        }
+
         const { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo } = req.body;
         const updatedFranchise = await Franchise.findByIdAndUpdate(
             req.params.id,
             { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo, status: 'Pending', applicationType: 'Renewal' },
             { returnDocument: 'after' }
         ).populate('operator', 'name address contact');
-        if (!updatedFranchise) return res.status(404).json({ message: 'Franchise not found' });
+
         res.status(200).json(updatedFranchise);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -207,12 +249,30 @@ const renewFranchise = async (req, res) => {
 const updateFranchiseStatus = async (req, res) => {
     try {
         const { status, cancelReason, eSigned, releaseDate } = req.body;
+        const existingFranchise = await Franchise.findById(req.params.id);
+        if (!existingFranchise) return res.status(404).json({ message: 'Franchise not found' });
+        
+        const previousStatus = existingFranchise.status;
+
         const updatedFranchise = await Franchise.findByIdAndUpdate(
             req.params.id,
             { status: status, cancelReason: cancelReason || '', eSigned: eSigned || false, releaseDate: releaseDate || '' },
             { returnDocument: 'after' }
         ).populate('operator', 'name address contact');
-        if (!updatedFranchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        logAudit(req, {
+            action: 'FRANCHISE_STATUS_UPDATE',
+            targetType: 'Franchise',
+            targetId: req.params.id,
+            details: {
+                plateNo: updatedFranchise.plateNo,
+                fullName: updatedFranchise.fullName,
+                previousStatus,
+                newStatus: status,
+                reason: cancelReason || ''
+            }
+        });
+
         res.status(200).json(updatedFranchise);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -252,6 +312,16 @@ const toggleArchiveFranchise = async (req, res) => {
             { new: true, runValidators: false } 
         );
 
+        logAudit(req, {
+            action: updatedFranchise.isArchived ? 'FRANCHISE_ARCHIVED' : 'FRANCHISE_RESTORED',
+            targetType: 'Franchise',
+            targetId: req.params.id,
+            details: {
+                plateNo: updatedFranchise.plateNo,
+                fullName: updatedFranchise.fullName
+            }
+        });
+
         res.status(200).json({ 
             message: `Franchise successfully ${updatedFranchise.isArchived ? 'archived' : 'restored'}.`, 
             franchise: updatedFranchise 
@@ -276,6 +346,18 @@ const revokeFranchise = async (req, res) => {
         }
 
         await franchise.save();
+
+        logAudit(req, {
+            action: 'FRANCHISE_REVOKED',
+            targetType: 'Franchise',
+            targetId: req.params.id,
+            details: {
+                plateNo: franchise.plateNo,
+                fullName: franchise.fullName,
+                reason: franchise.cancelReason,
+                evidenceUrl: franchise.evidenceUrl || ''
+            }
+        });
 
         res.status(200).json({
             message: 'Franchise successfully revoked.',

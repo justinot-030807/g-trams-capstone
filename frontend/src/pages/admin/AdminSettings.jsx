@@ -4,10 +4,11 @@ import {
   Sliders, User, Lock, Camera, Save, Loader2, 
   CheckCircle2, AlertCircle, Moon, Sun, Globe, Clock, 
   Wallet, CalendarDays, AlertTriangle, ShieldCheck, 
-  Bell, FileCheck, Shield, ChevronRight, X
+  Bell, FileCheck, Shield, ChevronRight, ChevronLeft, X, Search, RefreshCw
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import { SettingsSkeleton } from '../../components/skeleton';
 
 const AdminSettings = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -55,6 +56,20 @@ const AdminSettings = () => {
     language: localStorage.getItem('gtrams_lang') || language || 'en',
     inAppToastAlerts: localStorage.getItem('gtrams_toast_alerts') !== 'false'
   });
+
+  // Audit Logs state
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPagination, setAuditPagination] = useState({
+    totalRecords: 0,
+    totalPages: 1,
+    currentPage: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  const [auditActionFilter, setAuditActionFilter] = useState('All');
+  const [auditSearchQuery, setAuditSearchQuery] = useState('');
 
   // Modal and toast state
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, data: null });
@@ -192,6 +207,39 @@ const AdminSettings = () => {
     loadAllSettings();
   }, []);
 
+  const fetchAuditLogs = async (page = 1, action = auditActionFilter, search = auditSearchQuery) => {
+    setAuditLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams({
+        page,
+        limit: 10,
+        action: action || 'All',
+        search: search || ''
+      });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/audit-logs?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAuditLogs(data.data || []);
+        setAuditPagination(data.pagination || {});
+        setAuditPage(page);
+      }
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+      showToast('Cannot load audit logs right now.', 'error');
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      fetchAuditLogs(1, auditActionFilter, auditSearchQuery);
+    }
+  }, [activeTab]);
+
   const handleSystemConfigChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSystemConfig(prev => ({
@@ -256,6 +304,10 @@ const AdminSettings = () => {
         showToast('Password must be at least 6 characters long.', 'error');
         return;
       }
+      if (passwordData.currentPassword === passwordData.newPassword) {
+        showToast('New password must be different from current password.', 'error');
+        return;
+      }
     }
     setConfirmModal({ isOpen: true, type, data });
   };
@@ -263,6 +315,9 @@ const AdminSettings = () => {
   const executeSave = async () => {
     setIsProcessing(true);
     const { type } = confirmModal;
+
+    // Immediately close modal so it doesn't get stuck on screen
+    setConfirmModal({ isOpen: false, type: null, data: null });
 
     try {
       if (type === 'system') {
@@ -299,6 +354,12 @@ const AdminSettings = () => {
         });
 
         if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error('Your session has expired. Please log in again.');
+          }
+          if (res.status === 403) {
+            throw new Error('Access denied. Administrator privileges required.');
+          }
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.message || `Server responded with error ${res.status}`);
         }
@@ -321,8 +382,6 @@ const AdminSettings = () => {
 
         // Notify other components of settings change immediately
         window.dispatchEvent(new Event('gtrams_settings_updated'));
-
-        setConfirmModal({ isOpen: false, type: null, data: null });
 
         const changes = [];
         if (initialSystemConfig) {
@@ -363,10 +422,10 @@ const AdminSettings = () => {
           const updated = await res.json();
           localStorage.setItem('user', JSON.stringify(updated));
           localStorage.setItem('name', updated.name || accountData.name);
-          setConfirmModal({ isOpen: false, type: null, data: null });
           showToast('Admin account details updated successfully!', 'success');
         } else {
-          showToast('Failed to update account details.', 'error');
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.message || 'Failed to update account details.', 'error');
         }
       } 
       else if (type === 'password') {
@@ -385,18 +444,22 @@ const AdminSettings = () => {
 
         if (res.ok) {
           setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-          setConfirmModal({ isOpen: false, type: null, data: null });
           showToast('Admin password changed successfully!', 'success');
         } else {
-          const errData = await res.json();
+          const errData = await res.json().catch(() => ({}));
           showToast(errData.message || 'Failed to change password.', 'error');
         }
       }
     } catch (err) {
-      console.error(err);
-      showToast('Network error while saving settings.', 'error');
+      console.error('Save error:', err);
+      const isFailedFetch = err?.name === 'TypeError' || String(err?.message || '').toLowerCase().includes('failed to fetch');
+      const msg = isFailedFetch
+        ? 'Cannot connect to backend server. It may still be deploying or waking up. Please try again in a few seconds.'
+        : (err.message || 'Error saving settings.');
+      showToast(msg, 'error', 4500);
     } finally {
       setIsProcessing(false);
+      setConfirmModal({ isOpen: false, type: null, data: null });
     }
   };
 
@@ -464,9 +527,7 @@ const AdminSettings = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={36} />
-        </div>
+        <SettingsSkeleton />
       ) : (
         <div className="space-y-6 max-w-5xl">
           {/* TAB NAVIGATION PILLS */}
@@ -505,6 +566,18 @@ const AdminSettings = () => {
             >
               <Globe size={16} />
               <span>Preferences & Appearance</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('audit'); fetchAuditLogs(1, auditActionFilter, auditSearchQuery); }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+                activeTab === 'audit'
+                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Shield size={16} />
+              <span>Audit Trail & Security Logs</span>
             </button>
           </div>
 
@@ -1002,6 +1075,193 @@ const AdminSettings = () => {
                     }`}
                   />
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: AUDIT TRAIL & SECURITY LOGS */}
+          {activeTab === 'audit' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-2xl border border-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37]">
+                      <Shield size={22} />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        System Audit Trail & Security Logs
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                          Immutable Ledger
+                        </span>
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Chronological record of administrative operations, approvals, revocations, and security events.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => fetchAuditLogs(auditPage, auditActionFilter, auditSearchQuery)}
+                    disabled={auditLoading}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all active:scale-95 shrink-0 border border-slate-200 dark:border-slate-700"
+                  >
+                    <RefreshCw size={14} className={auditLoading ? 'animate-spin' : ''} />
+                    <span>Refresh Logs</span>
+                  </button>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="pt-6 grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  <div className="sm:col-span-8 relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Search by Actor Name, Action, or Record ID..."
+                      value={auditSearchQuery}
+                      onChange={(e) => {
+                        setAuditSearchQuery(e.target.value);
+                        fetchAuditLogs(1, auditActionFilter, e.target.value);
+                      }}
+                      className={inputClasses + " pl-10"}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-4">
+                    <select
+                      value={auditActionFilter}
+                      onChange={(e) => {
+                        setAuditActionFilter(e.target.value);
+                        fetchAuditLogs(1, e.target.value, auditSearchQuery);
+                      }}
+                      className={inputClasses}
+                    >
+                      <option value="All">All Event Types</option>
+                      <option value="FRANCHISE_STATUS_UPDATE">Franchise Status Updates</option>
+                      <option value="FRANCHISE_REVOKED">Franchise Revocations</option>
+                      <option value="FRANCHISE_ARCHIVED">Franchise Archives</option>
+                      <option value="FRANCHISE_DELETED">Franchise Deletions</option>
+                      <option value="USER_UPDATED">User Profile Updates</option>
+                      <option value="USER_DEACTIVATED">User Deactivations</option>
+                      <option value="USER_ACTIVATED">User Activations</option>
+                      <option value="PASSWORD_CHANGED">Password Changes</option>
+                      <option value="PASSWORD_RESET">Password Resets</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Logs Table */}
+                <div className="mt-6 overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider font-bold">
+                        <th className="py-3 px-4">Timestamp & IP</th>
+                        <th className="py-3 px-4">Administrator / Actor</th>
+                        <th className="py-3 px-4">Action Event</th>
+                        <th className="py-3 px-4">Target & Summary</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                      {auditLoading ? (
+                        <tr>
+                          <td colSpan="4" className="py-12 text-center text-slate-400">
+                            <Loader2 className="animate-spin mx-auto mb-2 text-[#7A1B22] dark:text-[#D4AF37]" size={24} />
+                            <p className="font-bold text-xs">Loading audit ledger...</p>
+                          </td>
+                        </tr>
+                      ) : auditLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan="4" className="py-12 text-center text-slate-400">
+                            <ShieldCheck size={32} className="mx-auto mb-2 opacity-30" />
+                            <p className="font-bold text-slate-700 dark:text-slate-300">No audit log entries recorded yet.</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">Admin operations will automatically appear here in real time.</p>
+                          </td>
+                        </tr>
+                      ) : (
+                        auditLogs.map((log) => {
+                          const isDeleteOrRevoke = log.action?.includes('REVOKE') || log.action?.includes('DELETE') || log.action?.includes('DEACTIVATE');
+                          const isSuccess = log.action?.includes('APPROVE') || log.action?.includes('ACTIVATE') || log.action?.includes('RESTORE');
+                          
+                          return (
+                            <tr key={log._id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                              <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                <div className="font-bold text-slate-800 dark:text-slate-200">
+                                  {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  {new Date(log.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} &bull; IP: {log.ipAddress || '127.0.0.1'}
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                  <User size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                                  {log.actorName || 'System'}
+                                </div>
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">
+                                  {log.actorRole || 'admin'}
+                                </span>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                  isDeleteOrRevoke 
+                                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border-rose-200 dark:border-rose-900/60'
+                                    : isSuccess
+                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
+                                    : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-900/60'
+                                }`}>
+                                  {log.action?.replace(/_/g, ' ')}
+                                </span>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-slate-800 dark:text-slate-200">
+                                  {log.targetType}: {log.details?.plateNo || log.details?.name || log.targetId || 'N/A'}
+                                </div>
+                                {log.details?.reason && (
+                                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium truncate max-w-xs">
+                                    Reason: {log.details.reason}
+                                  </p>
+                                )}
+                                {log.details?.previousStatus && log.details?.newStatus && (
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                                    {log.details.previousStatus} ➜ {log.details.newStatus}
+                                  </p>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {auditPagination.totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs font-bold text-slate-600 dark:text-slate-400">
+                    <div>
+                      Page {auditPagination.currentPage} of {auditPagination.totalPages} ({auditPagination.totalRecords} total records)
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => fetchAuditLogs(auditPage - 1, auditActionFilter, auditSearchQuery)}
+                        disabled={!auditPagination.hasPrevPage || auditLoading}
+                        className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        onClick={() => fetchAuditLogs(auditPage + 1, auditActionFilter, auditSearchQuery)}
+                        disabled={!auditPagination.hasNextPage || auditLoading}
+                        className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

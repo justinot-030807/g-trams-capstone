@@ -7,6 +7,7 @@ import {
   ChevronDown, Check, CheckSquare, Square, RotateCcw, Eye,
   Car, User, ShieldCheck, FileCheck, Phone, MapPin, Hash, ExternalLink
 } from 'lucide-react';
+import { TableRowsSkeleton } from '../../components/skeleton';
 
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'Active', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -682,40 +683,40 @@ const FranchiseMasterlist = () => {
 
         {/* TABLE CONTENT */}
         <div className="overflow-x-auto min-h-[320px]">
-          {isLoading ? (
-            <div className="flex flex-col justify-center items-center py-24 print-hide">
-              <Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={36} />
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-2">Loading paginated records...</p>
-            </div>
-          ) : (
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-bold">
-                  <th className="p-4 pl-6">Operator Details</th>
-                  <th className="p-4">Tricycle Info</th>
-                  <th className="p-4">TODA / Zone</th>
-                  <th className="p-4 text-center">Status</th>
-                  <th className="p-4 text-center pr-6 print-hide">Actions</th>
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-bold">
+                <th className="p-4 pl-6">Operator Details</th>
+                <th className="p-4">Tricycle Info</th>
+                <th className="p-4">TODA / Zone</th>
+                <th className="p-4 text-center">Status</th>
+                <th className="p-4 text-center pr-6 print-hide">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+              {isLoading ? (
+                <TableRowsSkeleton rows={Math.min(pageSize, 10)} columns={5} baseDelay={30} stepDelay={45} />
+              ) : franchises.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-12 text-center text-slate-500 dark:text-slate-400 print-hide">
+                    <div className="flex flex-col items-center justify-center">
+                      {activeTab === 'archived' ? <Archive size={40} className="text-slate-300 dark:text-slate-600 mb-3"/> : <FileText size={40} className="text-slate-300 dark:text-slate-600 mb-3"/>}
+                      <p className="font-bold text-base text-slate-700 dark:text-slate-200">No records found</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Try changing search keywords or remove some filter tags.</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                {franchises.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="p-12 text-center text-slate-500 dark:text-slate-400 print-hide">
-                      <div className="flex flex-col items-center justify-center">
-                        {activeTab === 'archived' ? <Archive size={40} className="text-slate-300 dark:text-slate-600 mb-3"/> : <FileText size={40} className="text-slate-300 dark:text-slate-600 mb-3"/>}
-                        <p className="font-bold text-base text-slate-700 dark:text-slate-200">No records found</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Try changing search keywords or remove some filter tags.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  franchises.map((f) => {
-                    const displayName = f.fullName || (f.operator ? f.operator.name : 'Unknown Operator');
-                    const recordYear = new Date(f.dateApplied || f.createdAt).getFullYear().toString();
-                    
-                    return (
-                      <tr key={f._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors">
+              ) : (
+                franchises.map((f, fIdx) => {
+                  const displayName = f.fullName || (f.operator ? f.operator.name : 'Unknown Operator');
+                  const recordYear = new Date(f.dateApplied || f.createdAt).getFullYear().toString();
+                  
+                  return (
+                    <tr 
+                      key={f._id} 
+                      className="stagger-reveal hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
+                      style={{ animationDelay: `${fIdx * 35}ms` }}
+                    >
                         <td className="p-4 pl-6">
                           <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             {displayName}
@@ -796,7 +797,6 @@ const FranchiseMasterlist = () => {
                 )}
               </tbody>
             </table>
-          )}
         </div>
 
         {/* PAGINATION CONTROLS */}

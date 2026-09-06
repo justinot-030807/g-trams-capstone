@@ -5,6 +5,7 @@ import {
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw
 } from 'lucide-react';
+import { GarageGridSkeleton } from '../../components/skeleton';
 
 const GASAN_BARANGAYS = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
@@ -440,13 +441,17 @@ const ApplyFranchise = () => {
         </header>
 
         {isLoading ? (
-          <div className="flex items-center justify-center p-12">
-            <Loader2 className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" size={32} />
+          <div className="max-w-5xl">
+            <GarageGridSkeleton count={2} baseDelay={50} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
             {myFranchises.map((unit, index) => (
-              <div key={unit._id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors">
+              <div 
+                key={unit._id} 
+                className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
                 <div>
                   <div className="absolute top-0 right-0 w-2 h-full bg-[#7A1B22]" />
                   <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Unit {index + 1}</h3>

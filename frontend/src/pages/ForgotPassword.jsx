@@ -62,6 +62,11 @@ const ForgotPassword = () => {
     setIsLoading(true);
     setError(''); setSuccess('');
 
+    if (newPassword.length < 6) {
+      setIsLoading(false);
+      return setError('PASSWORD MUST BE AT LEAST 6 CHARACTERS LONG!');
+    }
+
     if (newPassword !== confirmPassword) {
       setIsLoading(false);
       return setError('PASSWORDS DO NOT MATCH!');
