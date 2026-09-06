@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
+import OperatorBottomNav from './operator/OperatorBottomNav';
+import TodaZoneGuideModal from './operator/TodaZoneGuideModal';
 
 const MainLayout = ({ children }) => {
   // Default closed on mobile, open on desktop
@@ -13,6 +15,11 @@ const MainLayout = ({ children }) => {
     }
     return true;
   });
+
+  const [isRouteGuideOpen, setIsRouteGuideOpen] = useState(false);
+
+  const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+  const isOperator = role === 'operator';
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => {
@@ -48,12 +55,25 @@ const MainLayout = ({ children }) => {
           onToggleSidebar={toggleSidebar} 
         />
 
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden">
+        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden ${isOperator ? 'pb-24 md:pb-8' : ''}`}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Operator Mobile Bottom Navigation */}
+      {isOperator && (
+        <OperatorBottomNav 
+          onOpenRouteGuide={() => setIsRouteGuideOpen(true)}
+        />
+      )}
+
+      {/* TODA Route & Zone Guide Modal */}
+      <TodaZoneGuideModal 
+        isOpen={isRouteGuideOpen} 
+        onClose={() => setIsRouteGuideOpen(false)} 
+      />
     </div>
   );
 };

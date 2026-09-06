@@ -46,7 +46,7 @@ router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
-router.put('/:id/renew', protect, authorize('operator', 'toda president'), renewFranchise);
+router.put('/:id/renew', protect, authorize('operator', 'toda president'), upload.fields([{ name: 'orcrFile', maxCount: 1 }]), renewFranchise);
 router.put('/:id/cancel', protect, authorize('operator', 'toda president'), cancelMyFranchise);
 
 // Update and delete franchise

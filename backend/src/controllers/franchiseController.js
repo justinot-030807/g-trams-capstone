@@ -233,10 +233,23 @@ const renewFranchise = async (req, res) => {
             return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to renew this franchise record.' });
         }
 
-        const { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo } = req.body;
+        const { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo, ctcNo, dateIssued, placeIssued } = req.body;
+        const updateData = {
+            dateApplied: dateApplied || new Date().toISOString(),
+            cedulaDate: cedulaDate || dateIssued || existingFranchise.cedulaDate,
+            cedulaAddress: cedulaAddress || placeIssued || existingFranchise.cedulaAddress || 'Gasan, Marinduque',
+            cedulaSerialNo: cedulaSerialNo || ctcNo || existingFranchise.cedulaSerialNo,
+            status: 'Pending',
+            applicationType: 'Renewal'
+        };
+
+        if (req.files && req.files['orcrFile'] && req.files['orcrFile'][0]) {
+            updateData.orCrUrl = req.files['orcrFile'][0].path;
+        }
+
         const updatedFranchise = await Franchise.findByIdAndUpdate(
             req.params.id,
-            { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo, status: 'Pending', applicationType: 'Renewal' },
+            updateData,
             { returnDocument: 'after' }
         ).populate('operator', 'name address contact');
 

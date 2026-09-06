@@ -144,10 +144,10 @@ const Login = () => {
         setGoogleOnboardingOpen(false);
         handleAuthSuccess(data);
       } else {
-        setOnboardingError(data.message || 'Nabigong kumpletuhin ang rehistro.');
+        setOnboardingError(data.message || 'Failed to complete registration.');
       }
     } catch (err) {
-      setOnboardingError('Hindi makakonekta sa server. Pakisubukan muli.');
+      setOnboardingError('Cannot connect to the server. Please try again.');
     } finally {
       setIsOnboardingLoading(false);
     }
@@ -402,14 +402,14 @@ const Login = () => {
                 <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                <span className="bg-white/95 px-2.5">O MAGPATULOY GAMIT ANG</span>
+                <span className="bg-white/95 px-2.5">OR CONTINUE WITH</span>
               </div>
             </div>
 
             {/* GOOGLE SIGN IN BUTTON */}
             <div className="animate-item-4">
               <GoogleAuthButton 
-                text="Mag-sign in gamit ang Google"
+                text="Continue with Google"
                 onSuccess={handleAuthSuccess}
                 onNewUser={(profile) => {
                   setOnboardingError('');

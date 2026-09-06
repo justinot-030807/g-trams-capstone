@@ -6,6 +6,7 @@ import {
   ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
+import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 
 const GASAN_BARANGAYS = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
@@ -294,8 +295,8 @@ const ApplyFranchise = () => {
   };
 
   const handleRemoveFile = (reqId, e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e?.preventDefault) e.preventDefault();
+    if (e?.stopPropagation) e.stopPropagation();
     
     setUploadedDocs(prev => {
       const copy = { ...prev };
@@ -876,72 +877,20 @@ const ApplyFranchise = () => {
                 <p className="leading-relaxed">Hindi na kailangang mag-upload ng mga bagong file para sa renewal. Pakisuri ang buod sa ibaba bago i-submit.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-                {requirementsList.map((req) => {
-                  const hasFile = !!filePreviews[req.id];
-                  const isPdf = filePreviews[req.id]?.toLowerCase().includes('.pdf');
-
-                  return (
-                    <div 
-                      key={req.id} 
-                      className={`relative border-2 border-dashed rounded-2xl p-2.5 flex flex-col items-center justify-center text-center transition-all min-h-[135px] overflow-hidden group ${
-                        hasFile ? 'bg-emerald-50/50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      {hasFile && (
-                        <button
-                          onClick={(e) => handleRemoveFile(req.id, e)}
-                          className="absolute top-1.5 right-1.5 z-30 p-1 bg-red-500 text-white rounded-full hover:bg-red-700 shadow-xs transition-all active:scale-90"
-                          title="Remove Document"
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
-
-                      {!hasFile ? (
-                        <>
-                          <input 
-                            type="file" 
-                            accept=".pdf, image/*"
-                            onChange={(e) => handleFileChange(req.id, e.target.files[0])}
-                            className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
-                            required={formMode === 'New'} 
-                          />
-                          <UploadCloud className="text-slate-400 dark:text-slate-500 mb-1.5 group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors" size={24} />
-                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 leading-tight">{req.label}</p>
-                          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">Pindutin para mag-upload</p>
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center z-10">
-                          {isPdf ? (
-                            <div className="flex flex-col items-center p-1 cursor-pointer" onClick={() => setFullPreview({ url: filePreviews[req.id], title: req.label })}>
-                              <FileCheck size={28} className="text-emerald-600 dark:text-emerald-400 mb-1" />
-                              <p className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 text-center line-clamp-2">{req.label}</p>
-                              <span className="text-[8px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded mt-0.5 border border-emerald-200 dark:border-emerald-800/80">PDF File</span>
-                            </div>
-                          ) : (
-                            <div 
-                              onClick={() => setFullPreview({ url: filePreviews[req.id], title: req.label })}
-                              className="relative w-full h-24 flex items-center justify-center rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-emerald-100 dark:border-emerald-900/50 shadow-inner cursor-pointer"
-                            >
-                              <img 
-                                src={filePreviews[req.id]} 
-                                alt={req.label} 
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                <ZoomIn className="text-white" size={18} />
-                              </div>
-                              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-1">
-                                <p className="text-[9px] font-bold text-white truncate w-full text-center py-0.5">{req.label}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                {requirementsList.map((req) => (
+                  <DocumentUploadCard
+                    key={req.id}
+                    id={req.id}
+                    label={req.label}
+                    file={uploadedDocs[req.id]}
+                    previewUrl={filePreviews[req.id]}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    required={formMode === 'New'}
+                  />
+                ))}
               </div>
             )}
 
@@ -979,6 +928,48 @@ const ApplyFranchise = () => {
         )}
 
       </form>
+
+      {/* Document Zoom Modal */}
+      {fullPreview && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setFullPreview(null)}
+        >
+          <div 
+            className="relative max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <FileCheck size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                {fullPreview.title || 'Document Preview'}
+              </h4>
+              <button 
+                onClick={() => setFullPreview(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="max-h-[70vh] overflow-auto flex items-center justify-center bg-slate-950/5 dark:bg-black/30 rounded-2xl p-2">
+              {fullPreview.url?.toLowerCase().includes('.pdf') ? (
+                <iframe 
+                  src={fullPreview.url} 
+                  title={fullPreview.title} 
+                  className="w-full h-[60vh] rounded-xl border-0"
+                />
+              ) : (
+                <img 
+                  src={fullPreview.url} 
+                  alt={fullPreview.title} 
+                  className="max-h-[65vh] w-auto object-contain rounded-xl shadow-xs" 
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

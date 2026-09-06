@@ -3,11 +3,13 @@ import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, Star, ShieldAlert, Receipt
+  Check, FileText, Star, ShieldAlert, Receipt, Compass
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
+import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
+import TodaZoneGuideModal from '../../components/operator/TodaZoneGuideModal';
 
 const OperatorDashboard = () => {
   const { t, language } = useLanguage();
@@ -20,8 +22,18 @@ const OperatorDashboard = () => {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isRouteGuideOpen, setIsRouteGuideOpen] = useState(false);
 
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
+
+  const calculateDaysRemaining = (dateApplied) => {
+    if (!dateApplied) return null;
+    const expDate = new Date(dateApplied);
+    expDate.setFullYear(expDate.getFullYear() + 1);
+    const today = new Date();
+    const diffTime = expDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   useEffect(() => {
     fetchMyFranchises();
@@ -190,19 +202,29 @@ const OperatorDashboard = () => {
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{t('dashboard.garageSub', 'Assigned tricycle units under your account')}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
-          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
-          {isLoading ? (
-            <SkeletonElement height="14px" className="w-16" rounded="rounded-full" delay={40} />
-          ) : (
-            <>
-              <div className="flex gap-1.5">
-                <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
-              </div>
-              <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37]">{franchises.length}/2</span>
-            </>
-          )}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsRouteGuideOpen(true)}
+            className="flex items-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] transition-all shadow-xs active:scale-95"
+          >
+            <Compass size={15} />
+            <span>TODA Routes &amp; Zones</span>
+          </button>
+
+          <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
+            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
+            {isLoading ? (
+              <SkeletonElement height="14px" className="w-16" rounded="rounded-full" delay={40} />
+            ) : (
+              <>
+                <div className="flex gap-1.5">
+                  <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                  <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                </div>
+                <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37]">{franchises.length}/2</span>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -275,14 +297,75 @@ const OperatorDashboard = () => {
                   </div>
                 </div>
 
-                {unit?.status === 'Active' && (
-                  <div className="mb-5 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-4 rounded-2xl">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2"><CalendarDays size={16} className="text-emerald-600 dark:text-emerald-400" /><span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">{t('dashboard.validUntil', 'Valid Until')}</span></div>
-                      <p className="text-xs font-black text-emerald-950 dark:text-emerald-200">{getExpirationDate(unit?.dateApplied)}</p>
+                {unit?.status === 'Active' && (() => {
+                  const daysRemaining = calculateDaysRemaining(unit?.dateApplied);
+                  const isExpiringSoon = daysRemaining !== null && daysRemaining <= 60 && daysRemaining > 0;
+                  const isOverdue = daysRemaining !== null && daysRemaining <= 0;
+
+                  return (
+                    <div className={`mb-5 p-4 rounded-2xl border transition-all ${
+                      isOverdue
+                        ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+                        : isExpiringSoon
+                        ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
+                        : 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50'
+                    }`}>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-2">
+                          <CalendarDays size={16} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
+                            {t('dashboard.validUntil', 'Valid Until')}
+                          </span>
+                        </div>
+                        <p className={`text-xs font-black ${isOverdue ? 'text-red-950 dark:text-red-200' : isExpiringSoon ? 'text-amber-950 dark:text-amber-200' : 'text-emerald-950 dark:text-emerald-200'}`}>
+                          {getExpirationDate(unit?.dateApplied)}
+                        </p>
+                      </div>
+
+                      {/* Traffic-Light Urgency Meter */}
+                      {daysRemaining !== null && (
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                              Status
+                            </span>
+                            <span className={`flex items-center gap-1 font-black ${
+                              isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-emerald-700 dark:text-emerald-400'
+                            }`}>
+                              {isOverdue 
+                                ? `⚠️ Overdue by ${Math.abs(daysRemaining)} days` 
+                                : isExpiringSoon 
+                                ? `⏳ Renewal Window Open • ${daysRemaining} days left` 
+                                : `✓ Active • ${daysRemaining} days remaining`}
+                            </span>
+                          </div>
+
+                          <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                isOverdue ? 'w-full bg-red-500' : isExpiringSoon ? 'w-3/4 bg-amber-500' : 'w-full bg-emerald-500'
+                              }`} 
+                            />
+                          </div>
+
+                          {isExpiringSoon && (
+                            <div className="pt-2 flex items-center justify-between">
+                              <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-tight">
+                                Within 60-day renewal window. Renew early to avoid penalties.
+                              </p>
+                              <button
+                                onClick={() => navigate(`/renew-franchise/${unit._id}`)}
+                                className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-xs transition-colors shrink-0 ml-2"
+                              >
+                                Renew Now
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {unit?.status === 'Ready for Pickup' && (
                   <div className="mb-5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-4 rounded-2xl flex items-start gap-3">
@@ -354,70 +437,19 @@ const OperatorDashboard = () => {
         </div>
       )}
 
-      {/* Document View & Download Modal */}
-      {isPrintOpen && selectedUnit && (
-        <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 flex flex-col">
-          <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
-            <h2 className="font-bold text-sm flex items-center gap-2">
-              <FileText size={18} className="text-[#D4AF37]" /> {t('dashboard.claimStubTitle', 'Payment & Claim Stub')}
-            </h2>
-            <div className="flex gap-2">
-              <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5"><X size={14} /> {t('dashboard.btnClose', 'Close')}</button>
-              <button onClick={() => window.print()} className="px-4 py-1.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
-                <Download size={14} /> {t('dashboard.savePdf', 'Save as PDF / Print')}
-              </button>
-            </div>
-          </div>
+      {/* Official Voucher Claim Stub (NO QR or Barcode) */}
+      <ClaimStubVoucher 
+        isOpen={isPrintOpen} 
+        onClose={() => setIsPrintOpen(false)} 
+        unit={selectedUnit} 
+        systemFranchiseFee={systemFranchiseFee} 
+      />
 
-          <div className="flex-1 overflow-y-auto p-4 sm:p-8 print:p-0 print:bg-white flex justify-center items-start">
-            <div id="printable-document" className="bg-white w-full max-w-[600px] border-2 border-dashed border-slate-300 shadow-xl p-8 sm:p-12 print:border-none print:shadow-none relative">
-              <div className="text-center mb-6 border-b-2 border-dashed border-slate-300 pb-6">
-                <div className="inline-flex justify-center items-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-4">
-                  <FileText size={32} />
-                </div>
-                <h1 className="text-2xl font-black uppercase tracking-widest text-[#7A1B22]">{t('dashboard.claimStubHeader', 'Franchise Claim Stub')}</h1>
-                <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">{t('dashboard.municipality', 'Municipality of Gasan')}</p>
-              </div>
-
-              <div className="text-center mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{t('dashboard.totalAmountDue', 'Total Amount Due')}</p>
-                <p className="text-5xl font-black text-slate-900">₱ {parseFloat(systemFranchiseFee).toFixed(2)}</p>
-                <p className="text-xs text-red-500 font-semibold mt-2">{t('dashboard.penaltyNote', '* Amount may vary if late penalties apply.')}</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-sm text-slate-500 font-bold uppercase">{t('dashboard.applicantName', 'Applicant Name')}</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.fullName}</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-sm text-slate-500 font-bold uppercase">{t('dashboard.plateNo', 'Tricycle Plate No.')}</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.plateNo || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-sm text-slate-500 font-bold uppercase">{t('dashboard.applicationType', 'Application Type')}</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.applicationType}</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span className="text-sm text-slate-500 font-bold uppercase">{t('dashboard.dateApproved', 'Date Approved')}</span>
-                  <span className="text-sm font-black text-slate-900 uppercase text-right">{selectedUnit?.updatedAt ? new Date(selectedUnit?.updatedAt).toLocaleDateString(language === 'fil' ? 'tl-PH' : 'en-US') : 'N/A'}</span>
-                </div>
-              </div>
-
-              <div className="mt-8 text-center bg-blue-50 border border-blue-200 p-4 rounded-xl">
-                <p className="text-xs font-bold text-blue-800 leading-relaxed uppercase">
-                  {t('dashboard.claimInstructions', 'Please present this stub (Digital or Printed) to the Municipal Cashier to process your payment and claim your Official Dry-Sealed Franchise Permit.')}
-                </p>
-              </div>
-              
-              <div className="mt-8 flex flex-col items-center justify-center opacity-60">
-                <div className="flex gap-1 h-10 w-48 bg-slate-800" style={{ background: 'repeating-linear-gradient(90deg, #1e293b, #1e293b 2px, transparent 2px, transparent 4px, #1e293b 4px, #1e293b 8px, transparent 8px, transparent 10px)' }}></div>
-                <p className="text-[10px] font-mono font-bold mt-1 tracking-widest">{selectedUnit?._id}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* TODA Route & Zone Guide Modal */}
+      <TodaZoneGuideModal
+        isOpen={isRouteGuideOpen}
+        onClose={() => setIsRouteGuideOpen(false)}
+      />
     </MainLayout>
   );
 };

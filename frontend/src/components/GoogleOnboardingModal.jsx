@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, User, Phone, MapPin, CheckCircle2, AlertCircle, Loader2, X, Sparkles } from 'lucide-react';
+import { ShieldCheck, User, Phone, MapPin, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
 
 const GASAN_BARANGAYS = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
@@ -45,13 +45,13 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
     setError('');
 
     if (!formData.fullName.trim()) {
-      return setError('Pakisulat ang iyong buong legal na pangalan.');
+      return setError('Please enter your full legal name.');
     }
 
     const trimmedContact = formData.contact.trim();
     const phoneRegex = /^(09|\+639)\d{9}$/;
     if (!phoneRegex.test(trimmedContact.replace(/[\s-]/g, ''))) {
-      return setError('Pakilagay ang wastong PH mobile number (hal. 09XXXXXXXXX).');
+      return setError('Please enter a valid PH mobile number (e.g. 09XXXXXXXXX).');
     }
 
     onSubmit({
@@ -84,7 +84,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
               </div>
               <div>
                 <h3 className="font-black text-base tracking-wide uppercase">
-                  Kumpletuhin ang Impormasyon
+                  Complete Profile Information
                 </h3>
                 <p className="text-[11px] text-white/80 font-medium">
                   G-TRAMS Operator Registration via Google
@@ -105,7 +105,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
           <div className="mt-3 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-2.5 flex items-center gap-2 text-[11px]">
             <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
             <span>
-              <strong>Matik na Verified ang Email:</strong> Hindi na kailangan ng OTP code para sa iyong Google Sign-In.
+              <strong>Google Email Verified:</strong> No OTP verification code required for Google Sign-In.
             </span>
           </div>
         </div>
@@ -136,10 +136,10 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[10px] font-black text-slate-800 uppercase tracking-wider">
-                Buong Legal na Pangalan (Full Legal Name) <span className="text-red-500">*</span>
+                Full Legal Name <span className="text-red-500">*</span>
               </label>
               <span className="text-[10px] font-bold text-[#7A1B22] uppercase tracking-wider">
-                Maaaring Baguhin
+                Editable
               </span>
             </div>
             
@@ -147,16 +147,19 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
               type="text"
               required
               value={formData.fullName}
-              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, fullName: e.target.value });
+                if (error) setError('');
+              }}
               className={inputClasses}
               placeholder="First Name, Middle Name, Last Name"
             />
 
             {/* Crucial user prompt as requested */}
             <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200/70 rounded-lg text-[11px] text-amber-900 font-medium flex items-start gap-1.5 leading-snug">
-              <span className="text-amber-600 font-bold shrink-0">ℹ️ Paalala:</span>
+              <span className="text-amber-600 font-bold shrink-0">ℹ️ Notice:</span>
               <span>
-                Pakisiguradong <strong>buong legal na pangalan</strong> ang ilalagay (First Name, Middle Name, Last Name) na tugma sa inyong Driver's License o Valid ID para sa opisyal na prangkisa.
+                Please ensure you enter your <strong>full legal name</strong> (First Name, Middle Name, Last Name) matching your Driver's License or Valid ID for official MTOP franchise records.
               </span>
             </div>
           </div>
@@ -164,7 +167,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
           {/* Address / Barangay */}
           <div>
             <label className="block text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">
-              Barangay sa Gasan <span className="text-red-500">*</span>
+              Barangay in Gasan <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.address}
@@ -186,12 +189,15 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
               type="text"
               required
               value={formData.contact}
-              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, contact: e.target.value });
+                if (error) setError('');
+              }}
               className={inputClasses}
               placeholder="09123456789"
             />
             <p className="text-[10px] text-slate-400 mt-1 font-medium">
-              Gagamitin para sa mga opisyal na abiso at SMS updates mula sa Munisipyo.
+              Used for official LGU franchise notifications and SMS updates.
             </p>
           </div>
 
@@ -221,11 +227,11 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
               {isLoading ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Kinukumpleto ang Rehistro...
+                  Completing Registration...
                 </>
               ) : (
                 <>
-                  Kumpletuhin at Magpatuloy (Sign In)
+                  Complete &amp; Continue to Dashboard
                 </>
               )}
             </button>

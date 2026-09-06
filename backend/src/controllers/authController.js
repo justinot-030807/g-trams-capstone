@@ -389,7 +389,7 @@ exports.getProfile = async (req, res) => {
 // Google OAuth Sign-In & Onboarding
 exports.googleAuth = async (req, res) => {
     try {
-        const { idToken, googleProfile, onboardingData } = req.body;
+        const { idToken, accessToken, googleProfile, onboardingData } = req.body;
 
         let email = '';
         let googleId = '';
@@ -408,6 +408,23 @@ exports.googleAuth = async (req, res) => {
                 }
             } catch (err) {
                 console.warn('Google tokeninfo verification warning:', err.message);
+            }
+        }
+
+        // If an accessToken is provided (e.g. from Google OAuth2 Token Client popup), verify via userinfo endpoint
+        if (!email && accessToken) {
+            try {
+                const userinfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                if (userinfoRes.data && userinfoRes.data.email) {
+                    email = userinfoRes.data.email.toLowerCase().trim();
+                    googleId = userinfoRes.data.sub;
+                    googleName = userinfoRes.data.name || '';
+                    googlePicture = userinfoRes.data.picture || '';
+                }
+            } catch (err) {
+                console.warn('Google userinfo verification warning:', err.message);
             }
         }
 
