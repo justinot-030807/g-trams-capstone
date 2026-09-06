@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2, Sparkles, FileText, ShieldCheck, Clock, Phone, ChevronRight } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
-import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,12 +15,6 @@ const Login = () => {
 
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
-
-  // Google Sign-In & Onboarding state
-  const [googleProfileData, setGoogleProfileData] = useState(null);
-  const [googleOnboardingOpen, setGoogleOnboardingOpen] = useState(false);
-  const [isOnboardingLoading, setIsOnboardingLoading] = useState(false);
-  const [onboardingError, setOnboardingError] = useState('');
 
   useEffect(() => {
     let timer;
@@ -122,34 +115,6 @@ const Login = () => {
       navigate('/admin-dashboard');
     } else {
       navigate('/operator-dashboard');
-    }
-  };
-
-  const handleOnboardingSubmit = async (onboardingData) => {
-    setIsOnboardingLoading(true);
-    setOnboardingError('');
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          googleProfile: googleProfileData,
-          onboardingData
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.token) {
-        setGoogleOnboardingOpen(false);
-        handleAuthSuccess(data);
-      } else {
-        setOnboardingError(data.message || 'Failed to complete registration.');
-      }
-    } catch (err) {
-      setOnboardingError('Cannot connect to the server. Please try again.');
-    } finally {
-      setIsOnboardingLoading(false);
     }
   };
 
@@ -397,13 +362,10 @@ const Login = () => {
             </form>
 
             {/* DIVIDER */}
-            <div className="relative my-4 animate-item-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                <span className="bg-white/95 px-2.5">OR CONTINUE WITH</span>
-              </div>
+            <div className="flex items-center gap-3 my-4 animate-item-4">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-xs font-semibold text-slate-400">or</span>
+              <div className="flex-1 h-px bg-slate-200" />
             </div>
 
             {/* GOOGLE SIGN IN BUTTON */}
@@ -412,9 +374,13 @@ const Login = () => {
                 text="Continue with Google"
                 onSuccess={handleAuthSuccess}
                 onNewUser={(profile) => {
-                  setOnboardingError('');
-                  setGoogleProfileData(profile);
-                  setGoogleOnboardingOpen(true);
+                  // Direct seamless navigation to register form with Google info prefilled
+                  navigate('/register', { 
+                    state: { 
+                      googleProfile: profile,
+                      fromGoogleLogin: true 
+                    } 
+                  });
                 }}
                 onError={(msg) => setError(msg)}
               />
@@ -433,16 +399,6 @@ const Login = () => {
         </div>
 
       </div>
-
-      {/* Google Onboarding Modal */}
-      <GoogleOnboardingModal 
-        isOpen={googleOnboardingOpen}
-        onClose={() => setGoogleOnboardingOpen(false)}
-        googleProfile={googleProfileData}
-        onSubmit={handleOnboardingSubmit}
-        isLoading={isOnboardingLoading}
-        errorMessage={onboardingError}
-      />
 
       {/* Footer */}
       <footer className="relative z-10 mt-6 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold">

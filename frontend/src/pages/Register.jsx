@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, Globe, X, Loader2, CheckCircle2, Sparkles, FileText, ShieldCheck, Clock, Phone, AlertCircle } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
-import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 
 const gasanBarangays = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", "Pinggan", "Tabionan", "Tapuyan", "Tiguion", "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
@@ -14,12 +13,20 @@ const TODA_LIST = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const incomingGoogle = location.state?.googleProfile;
+
   const [step, setStep] = useState(1); 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
   const [formData, setFormData] = useState({
-    name: '', address: '', contact: '', password: '', confirmPassword: '', todaAssociation: 'NON-TODA'
+    name: incomingGoogle?.name || '', 
+    address: '', 
+    contact: incomingGoogle?.email || '', 
+    password: '', 
+    confirmPassword: '', 
+    todaAssociation: 'NON-TODA'
   });
   const [otpCode, setOtpCode] = useState('');
 
@@ -31,11 +38,20 @@ const Register = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsLang, setTermsLang] = useState('en');
 
-  // Google Sign-In & Onboarding state
-  const [googleProfileData, setGoogleProfileData] = useState(null);
-  const [googleOnboardingOpen, setGoogleOnboardingOpen] = useState(false);
-  const [isOnboardingLoading, setIsOnboardingLoading] = useState(false);
-  const [onboardingError, setOnboardingError] = useState('');
+  // Google Sign-In state
+  const [googleProfileData, setGoogleProfileData] = useState(incomingGoogle || null);
+
+  useEffect(() => {
+    if (incomingGoogle) {
+      setGoogleProfileData(incomingGoogle);
+      setFormData(prev => ({
+        ...prev,
+        name: incomingGoogle.name || prev.name,
+        contact: incomingGoogle.email || prev.contact
+      }));
+      setSuccess(`Continuing registration with Google: ${incomingGoogle.email}`);
+    }
+  }, [incomingGoogle]);
 
   const isValidContact = (value) => {
     const trimmed = value.trim();
@@ -58,6 +74,62 @@ const Register = () => {
     setFormData({ ...formData, [name]: value });
     if (name === 'password') checkPasswordStrength(value);
     if (error) setError('');
+  };
+
+  const handleSubmitRegisterForm = async (e) => {
+    e.preventDefault();
+    setError(''); setSuccess('');
+
+    // If registering via Google: No OTP required, instant registration and login!
+    if (googleProfileData) {
+      if (!formData.name || !formData.name.trim()) {
+        return setError('PLEASE ENTER YOUR FULL LEGAL NAME.');
+      }
+      if (!formData.address) {
+        return setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
+      }
+      if (!formData.contact || !isValidContact(formData.contact)) {
+        return setError('PLEASE ENTER A VALID PH MOBILE (09XXXXXXXXX) OR EMAIL.');
+      }
+      if (!termsAccepted) {
+        return setError('PLEASE ACCEPT THE TERMS AND PRIVACY POLICY.');
+      }
+
+      setIsLoading(true);
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            googleProfile: googleProfileData,
+            onboardingData: {
+              fullName: formData.name.trim(),
+              address: formData.address.trim(),
+              contact: formData.contact.trim(),
+              todaAssociation: formData.todaAssociation || 'NON-TODA',
+              password: formData.password || ''
+            }
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.token) {
+          setSuccess('REGISTRATION SUCCESSFUL! LOGGING IN...');
+          handleGoogleSuccess(data);
+        } else {
+          setError(data.message || 'REGISTRATION FAILED.');
+        }
+      } catch (err) {
+        setError('CANNOT CONNECT TO THE SERVER.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Standard non-Google registration with OTP:
+    handleRequestOTP(e);
   };
 
   const handleRequestOTP = async (e) => {
@@ -341,7 +413,26 @@ const Register = () => {
             )}
 
             {step === 1 && (
-              <form onSubmit={handleRequestOTP} className="space-y-2.5">
+              <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5">
+                {googleProfileData && (
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-[11px] font-semibold flex items-center justify-between gap-2 animate-item-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                      <span className="truncate">Google Verified: <strong>{googleProfileData.email}</strong> (No OTP required)</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setGoogleProfileData(null);
+                        setSuccess('');
+                      }}
+                      className="text-slate-400 hover:text-red-500 text-[10px] font-bold underline shrink-0 cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+
                 <div className="animate-item-2">
                   <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
                   <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
@@ -372,7 +463,7 @@ const Register = () => {
                   <div>
                     <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
                     <div className="relative">
-                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
+                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
                         {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -381,7 +472,7 @@ const Register = () => {
                   <div>
                     <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
                     <div className="relative">
-                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
+                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
                         {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -426,7 +517,11 @@ const Register = () => {
                     {isLoading ? (
                       <>
                         <Loader2 size={15} className="animate-spin" />
-                        SENDING CODE...
+                        {googleProfileData ? 'COMPLETING REGISTRATION...' : 'SENDING CODE...'}
+                      </>
+                    ) : googleProfileData ? (
+                      <>
+                        <CheckCircle2 size={15} /> COMPLETE REGISTRATION
                       </>
                     ) : (
                       <>
@@ -441,13 +536,10 @@ const Register = () => {
             {step === 1 && (
               <>
                 {/* DIVIDER */}
-                <div className="relative my-3 animate-item-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200" />
-                  </div>
-                  <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                    <span className="bg-white/95 px-2.5">OR CONTINUE WITH</span>
-                  </div>
+                <div className="flex items-center gap-3 my-3 animate-item-4">
+                  <div className="flex-1 h-px bg-slate-200" />
+                  <span className="text-xs font-semibold text-slate-400">or</span>
+                  <div className="flex-1 h-px bg-slate-200" />
                 </div>
 
                 {/* GOOGLE SIGN UP BUTTON */}
@@ -456,9 +548,13 @@ const Register = () => {
                     text="Continue with Google"
                     onSuccess={handleGoogleSuccess}
                     onNewUser={(profile) => {
-                      setOnboardingError('');
                       setGoogleProfileData(profile);
-                      setGoogleOnboardingOpen(true);
+                      setFormData(prev => ({
+                        ...prev,
+                        name: prev.name || profile.name || '',
+                        contact: profile.email || prev.contact
+                      }));
+                      setSuccess(`Connected with Google: ${profile.email}. Complete your details above to finish.`);
                     }}
                     onError={(msg) => setError(msg)}
                   />
@@ -555,16 +651,6 @@ const Register = () => {
           </div>
         </div>
       )}
-
-      {/* Google Onboarding Modal */}
-      <GoogleOnboardingModal 
-        isOpen={googleOnboardingOpen}
-        onClose={() => setGoogleOnboardingOpen(false)}
-        googleProfile={googleProfileData}
-        onSubmit={handleOnboardingSubmit}
-        isLoading={isOnboardingLoading}
-        errorMessage={onboardingError}
-      />
 
       {/* Footer */}
       <footer className="relative z-10 mt-6 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold">

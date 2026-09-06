@@ -8,8 +8,8 @@ const OperatorBottomNav = () => {
 
   const navItems = [
     {
-      id: 'garage',
-      label: 'Garage',
+      id: 'dashboard',
+      label: 'Dashboard',
       icon: Home,
       path: '/operator-dashboard',
       active: location.pathname === '/operator-dashboard'

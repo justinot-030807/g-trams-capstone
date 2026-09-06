@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
-  CheckCircle, XCircle, Eye, FileText, AlertCircle, 
+  CheckCircle, CheckCircle2, XCircle, Eye, FileText, AlertCircle, 
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
-  CalendarDays, User, Clock
+  CalendarDays, User, Clock, ExternalLink, RefreshCw, CheckSquare, Square, 
+  ChevronRight
 } from 'lucide-react';
 import { QueueListSkeleton } from '../../components/skeleton';
 
@@ -21,7 +22,18 @@ const FranchiseApproval = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Workstation state
   const [selectedApp, setSelectedApp] = useState(null); 
+  const [activeDocKey, setActiveDocKey] = useState('orCr');
+  const [checklist, setChecklist] = useState({
+    orCr: false,
+    license: false,
+    toda: false,
+    brgy: false
+  });
+  const [mobilePane, setMobilePane] = useState('details'); // 'details' | 'document'
+
+  // Rejection & processing state
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState(REJECT_REASONS[0]);
   const [customReason, setCustomReason] = useState('');
@@ -31,7 +43,6 @@ const FranchiseApproval = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   // Document viewer state
-  const [previewDoc, setPreviewDoc] = useState(null);
   const [zoomScale, setZoomScale] = useState(1);
   const [rotation, setRotation] = useState(0);
 
@@ -104,10 +115,42 @@ const FranchiseApproval = () => {
     }
   };
 
-  const openDocPreview = (url, title) => {
-    setZoomScale(1); 
+  // Reset document controls & checklist when an application is opened
+  const handleOpenWorkstation = (app) => {
+    setSelectedApp(app);
+    setIsRejecting(false);
+    setZoomScale(1);
     setRotation(0);
-    setPreviewDoc({ url, title });
+    setMobilePane('details');
+
+    // Default active doc to the first one available
+    if (app.orCrUrl) setActiveDocKey('orCr');
+    else if (app.licenseUrl) setActiveDocKey('license');
+    else if (app.todaEndorsementUrl) setActiveDocKey('toda');
+    else if (app.brgyClearanceUrl) setActiveDocKey('brgy');
+    else setActiveDocKey('orCr');
+
+    // Initialize checklist based on whether app is renewal or new
+    setChecklist({
+      orCr: app.applicationType === 'Renewal',
+      license: app.applicationType === 'Renewal',
+      toda: app.applicationType === 'Renewal',
+      brgy: app.applicationType === 'Renewal'
+    });
+  };
+
+  const toggleChecklistItem = (key) => {
+    setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleAllChecklist = () => {
+    const allChecked = Object.values(checklist).every(Boolean);
+    setChecklist({
+      orCr: !allChecked,
+      license: !allChecked,
+      toda: !allChecked,
+      brgy: !allChecked
+    });
   };
 
   const getExpirationDate = (dateApplied) => {
@@ -129,8 +172,21 @@ const FranchiseApproval = () => {
   const filteredApps = applications.filter(app => 
     (app.fullName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (app.plateNo?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (app.motorNo?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    (app.motorNo?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (app.todaName?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
+
+  // Documents list for workstation
+  const docTabs = selectedApp ? [
+    { key: 'orCr', label: 'OR / CR Document', url: selectedApp.orCrUrl, short: 'OR/CR' },
+    { key: 'license', label: "Driver's License", url: selectedApp.licenseUrl, short: 'License' },
+    { key: 'toda', label: 'TODA Endorsement', url: selectedApp.todaEndorsementUrl, short: 'TODA' },
+    { key: 'brgy', label: 'Barangay Clearance', url: selectedApp.brgyClearanceUrl, short: 'Barangay' }
+  ] : [];
+
+  const currentDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
+  const verifiedCount = Object.values(checklist).filter(Boolean).length;
+  const isAllVerified = verifiedCount === 4;
 
   return (
     <MainLayout>
@@ -166,41 +222,6 @@ const FranchiseApproval = () => {
         </div>
       )}
 
-      {/* DOCUMENT PREVIEW MODAL */}
-      {previewDoc && (
-        <div className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200">
-          <div className="flex justify-between items-center bg-slate-900/80 px-6 py-3 rounded-2xl border border-white/10 text-white">
-            <div className="flex items-center gap-3">
-              <Eye size={20} className="text-[#D4AF37]" />
-              <h3 className="font-bold text-sm tracking-wide">{previewDoc.title || 'Document Preview'}</h3>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button onClick={() => setZoomScale(prev => Math.max(prev - 0.25, 0.5))} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80"><ZoomOut size={18} /></button>
-              <span className="text-xs font-mono px-2">{Math.round(zoomScale * 100)}%</span>
-              <button onClick={() => setZoomScale(prev => Math.min(prev + 0.25, 3))} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80"><ZoomIn size={18} /></button>
-              <button onClick={() => setRotation(prev => (prev + 90) % 360)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80"><RotateCw size={18} /></button>
-              <div className="h-4 w-px bg-white/20 mx-1" />
-              <button onClick={() => setPreviewDoc(null)} className="p-2 hover:bg-red-500 rounded-xl transition-colors text-white"><X size={20} /></button>
-            </div>
-          </div>
-
-          <div className="flex-1 my-4 flex items-center justify-center overflow-auto p-4 rounded-3xl bg-slate-900/40 border border-white/5">
-            {previewDoc.url.toLowerCase().includes('.pdf') ? (
-              <iframe src={previewDoc.url} className="w-full h-full max-w-4xl bg-white rounded-2xl shadow-2xl" title="PDF Previewer" />
-            ) : (
-              <div className="overflow-auto flex items-center justify-center w-full h-full">
-                <img 
-                  src={previewDoc.url} 
-                  alt="Requirements" 
-                  style={{ transform: `scale(${zoomScale}) rotate(${rotation}deg)`, transformOrigin: 'center', transition: 'transform 0.2s ease-out' }}
-                  className="max-h-[75vh] max-w-[85vw] object-contain rounded-xl shadow-2xl bg-slate-800" 
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* PRINT OFFICIAL PERMIT MODAL */}
       {isPrintOpen && selectedApp && (
@@ -373,136 +394,447 @@ const FranchiseApproval = () => {
               </div>
 
               <button 
-                onClick={() => { setSelectedApp(app); setIsRejecting(false); }} 
-                className="w-full md:w-auto bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#7A1B22] dark:hover:bg-[#7A1B22] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs"
+                onClick={() => handleOpenWorkstation(app)} 
+                className="w-full md:w-auto bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#7A1B22] dark:hover:bg-[#7A1B22] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs flex items-center justify-center gap-2"
               >
-                Review Application
+                Inspect Application <ChevronRight size={16} />
               </button>
             </div>
           ))}
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* 🖥️ SPLIT-SCREEN INSPECTION WORKSTATION (FULL MODAL WORKBENCH) */}
+      {/* ========================================================================= */}
       {selectedApp && !isPrintOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm" onClick={() => setSelectedApp(null)} />
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto z-10 animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-5 sm:p-6 flex justify-between items-center z-20 rounded-t-3xl">
-              <div>
-                <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Application Review</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Submitted on: {formatDate(selectedApp.dateApplied || selectedApp.createdAt)} &bull; ID: {selectedApp._id}</p>
-              </div>
-              <button onClick={() => setSelectedApp(null)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl transition-colors"><X size={22} /></button>
-            </div>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" 
+            onClick={() => setSelectedApp(null)} 
+          />
+          
+          <div className="relative w-full h-[96vh] max-w-[1500px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10">
             
-            <div className="p-5 sm:p-6 space-y-6">
-              <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700/80 rounded-2xl p-5">
-                <h3 className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] mb-4 uppercase tracking-wider flex items-center gap-2"><FileText size={16} /> Operator & Vehicle Details</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6 text-xs text-slate-700 dark:text-slate-300">
-                  <div className="col-span-2"><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Full Name</p><p className="font-bold text-slate-900 dark:text-white text-sm">{selectedApp.fullName}</p></div>
-                  <div className="col-span-2"><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Address</p><p className="font-bold text-slate-900 dark:text-white">{selectedApp.address}</p></div>
-                  <div><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">TODA</p><p className="font-bold text-slate-900 dark:text-white">{selectedApp.todaName}</p></div>
-                  <div><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Zone</p><p className="font-bold text-slate-900 dark:text-white">Zone {selectedApp.zone}</p></div>
-                  <div><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Make / Brand</p><p className="font-bold text-slate-900 dark:text-white">{selectedApp.make}</p></div>
-                  <div><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Year Made</p><p className="font-bold text-slate-900 dark:text-white">{selectedApp.made}</p></div>
-                  <div><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Plate No.</p><p className="font-black text-slate-900 dark:text-white">{selectedApp.plateNo || 'PENDING'}</p></div>
-                  <div><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Motor No.</p><p className="font-bold text-slate-900 dark:text-white font-mono">{selectedApp.motorNo}</p></div>
-                  <div className="col-span-2"><p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase">Chassis No.</p><p className="font-bold text-slate-900 dark:text-white font-mono">{selectedApp.chassisNo}</p></div>
+            {/* WORKSTATION TOP BAR */}
+            <div className="px-5 py-3.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 shrink-0 border-b border-white/10">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-[#7A1B22] flex items-center justify-center text-[#D4AF37] font-black text-xs shrink-0 shadow-sm border border-[#D4AF37]/30">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-black text-base text-white tracking-tight truncate">
+                      {selectedApp.fullName}
+                    </h2>
+                    <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-white/10 text-white/90 border border-white/15">
+                      {selectedApp.applicationType || 'New'} Application
+                    </span>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
+                      Plate: {selectedApp.plateNo || 'PENDING'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    {selectedApp.todaName} &bull; Zone {selectedApp.zone} &bull; Submitted: {formatDate(selectedApp.dateApplied || selectedApp.createdAt)}
+                  </p>
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-xs font-black text-slate-900 dark:text-white mb-3 border-b border-slate-100 dark:border-slate-800 pb-2 uppercase tracking-wider">Uploaded Requirements (Click to Preview)</h3>
-                {selectedApp.applicationType === 'Renewal' ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 italic">No new files required for Renewal application.</p>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { label: "OR/CR Document", url: selectedApp.orCrUrl },
-                      { label: "Driver's License", url: selectedApp.licenseUrl },
-                      { label: "TODA Endorsement", url: selectedApp.todaEndorsementUrl },
-                      { label: "Barangay Clearance", url: selectedApp.brgyClearanceUrl }
-                    ].map((doc, idx) => (
-                      <div key={idx}>
-                        {doc.url ? (
-                          <button 
-                            onClick={() => openDocPreview(doc.url, doc.label)} 
-                            type="button" 
-                            className="w-full flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl hover:bg-emerald-100 dark:hover:bg-emerald-950/60 transition-colors group"
+              {/* Mobile Pane Switcher (Tabs on < lg screens) */}
+              <div className="flex lg:hidden items-center bg-slate-800 p-1 rounded-xl border border-white/10 text-xs font-bold">
+                <button
+                  onClick={() => setMobilePane('details')}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'details' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                >
+                  Applicant Data
+                </button>
+                <button
+                  onClick={() => setMobilePane('document')}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'document' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                >
+                  Live Document
+                </button>
+              </div>
+
+              {/* Top Bar Actions */}
+              <div className="flex items-center gap-2">
+                {selectedApp.status === 'Ready for Pickup' && (
+                  <button
+                    onClick={() => setIsPrintOpen(true)}
+                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-white/15"
+                  >
+                    <Printer size={14} className="text-[#D4AF37]" /> Print MTOP
+                  </button>
+                )}
+                <button 
+                  onClick={() => setSelectedApp(null)} 
+                  className="p-1.5 bg-white/10 hover:bg-red-500 text-white rounded-xl transition-colors"
+                  title="Close Workstation (Esc)"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* WORKSTATION BODY: SPLIT VIEW */}
+            <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+              
+              {/* LEFT PANE: APPLICANT DATA & INSPECTION CHECKLIST (42% on desktop) */}
+              <div className={`w-full lg:w-[42%] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 ${
+                mobilePane === 'details' ? 'flex' : 'hidden lg:flex'
+              }`}>
+                <div className="p-5 sm:p-6 space-y-5 flex-1">
+                  
+                  {/* Operator & Vehicle Spec Strip */}
+                  <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4.5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-2">
+                        <User size={15} /> Operator & Vehicle Specs
+                      </h3>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
+                        ID: {selectedApp._id.slice(-6)}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Full Name</p>
+                        <p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedApp.fullName}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">TODA & Zone</p>
+                        <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedApp.todaName} (Zone {selectedApp.zone})</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Barangay Address</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{selectedApp.address}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-700/80 grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Make / Brand</p>
+                        <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedApp.make} ({selectedApp.made || 'N/A'})</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Plate Number</p>
+                        <p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedApp.plateNo || 'PENDING ASSIGNMENT'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Motor Number</p>
+                        <p className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded mt-0.5 border border-slate-200 dark:border-slate-700 select-all">
+                          {selectedApp.motorNo}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Chassis Number</p>
+                        <p className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded mt-0.5 border border-slate-200 dark:border-slate-700 select-all">
+                          {selectedApp.chassisNo}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* INTERACTIVE INSPECTION AUDITOR CHECKLIST */}
+                  <div className="bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckSquare size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Inspection Checklist
+                        </h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Cross-check vehicle info against uploaded attachments.
+                        </p>
+                      </div>
+                      <button
+                        onClick={toggleAllChecklist}
+                        className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                      >
+                        {isAllVerified ? 'Uncheck All' : 'Verify All'}
+                      </button>
+                    </div>
+
+                    {/* Progress indicator */}
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-300 ${isAllVerified ? 'bg-emerald-500' : 'bg-[#D4AF37]'}`}
+                        style={{ width: `${(verifiedCount / 4) * 100}%` }}
+                      />
+                    </div>
+
+                    <div className="space-y-2 pt-1">
+                      {[
+                        { key: 'orCr', label: 'OR/CR matches Make, Motor & Chassis No.', url: selectedApp.orCrUrl },
+                        { key: 'license', label: "Driver's License is Valid & Non-Expired", url: selectedApp.licenseUrl },
+                        { key: 'toda', label: `Endorsed by official ${selectedApp.todaName} Officer`, url: selectedApp.todaEndorsementUrl },
+                        { key: 'brgy', label: 'Barangay Clearance issued within Gasan', url: selectedApp.brgyClearanceUrl }
+                      ].map((item) => (
+                        <div 
+                          key={item.key}
+                          onClick={() => toggleChecklistItem(item.key)}
+                          className={`flex items-start gap-3 p-2.5 rounded-xl border cursor-pointer transition-all ${
+                            checklist[item.key] 
+                              ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200' 
+                              : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="mt-0.5 shrink-0">
+                            {checklist[item.key] ? (
+                              <CheckSquare size={16} className="text-emerald-600 dark:text-emerald-400" />
+                            ) : (
+                              <Square size={16} className="text-slate-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold leading-snug">{item.label}</p>
+                            {!item.url && selectedApp.applicationType !== 'Renewal' && (
+                              <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">⚠️ No file uploaded</p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDocKey(item.key);
+                              setMobilePane('document');
+                            }}
+                            className="text-[11px] text-[#7A1B22] dark:text-[#D4AF37] hover:underline font-bold px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shrink-0"
                           >
-                            <Eye size={22} className="text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                            <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 text-center">{doc.label}</span>
+                            Inspect &rarr;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* REJECTION REASON EXPANDABLE ACCORDION */}
+                  {isRejecting && (
+                    <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-4.5 animate-in fade-in slide-in-from-top-2 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-red-800 dark:text-red-300 font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
+                          <XCircle size={15} /> Specify Rejection Reason
+                        </h4>
+                        <button 
+                          onClick={() => setIsRejecting(false)} 
+                          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      <select 
+                        value={rejectReason} 
+                        onChange={(e) => setRejectReason(e.target.value)} 
+                        className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-200"
+                      >
+                        {REJECT_REASONS.map((r, i) => <option key={i} value={r}>{r}</option>)}
+                      </select>
+
+                      {rejectReason === 'Others (Please specify)' && (
+                        <textarea 
+                          placeholder="Type specific inspection defect or reason for the operator..." 
+                          value={customReason} 
+                          onChange={(e) => setCustomReason(e.target.value)} 
+                          className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white min-h-[70px] outline-none focus:ring-2 focus:ring-red-200" 
+                        />
+                      )}
+
+                      <div className="flex gap-2 pt-1">
+                        <button 
+                          onClick={() => handleUpdateStatus('Cancelled')} 
+                          disabled={isProcessing} 
+                          className="flex-1 bg-red-600 text-white hover:bg-red-700 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+                        >
+                          {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />} 
+                          Confirm Rejection
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* BOTTOM ACTION DOCK (LEFT PANE) */}
+                <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                  {!isRejecting && (
+                    <>
+                      {selectedApp.status === 'Pending' ? (
+                        <button 
+                          onClick={() => setIsRejecting(true)} 
+                          className="px-4 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors border border-red-200 dark:border-red-800/40"
+                        >
+                          <XCircle size={15} /> Reject
+                        </button>
+                      ) : (
+                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                          <Clock size={15} /> Awaiting Release
+                        </span>
+                      )}
+
+                      <div className="flex items-center gap-2 ml-auto">
+                        {selectedApp.status === 'Pending' ? (
+                          <button 
+                            onClick={() => handleUpdateStatus('Ready for Pickup')} 
+                            disabled={isProcessing} 
+                            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md"
+                          >
+                            {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                            Approve (Set to Ready for Pickup)
                           </button>
                         ) : (
-                          <div className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl opacity-60">
-                            <AlertCircle size={22} className="text-slate-400 dark:text-slate-500 mb-2" />
-                            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 text-center">Missing File</span>
-                          </div>
+                          <button 
+                            onClick={() => handleUpdateStatus('Active')} 
+                            disabled={isProcessing} 
+                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md"
+                          >
+                            {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                            Acknowledge Payment & Release
+                          </button>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
 
-              {isRejecting && (
-                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-5 animate-in fade-in slide-in-from-top-2">
-                  <h3 className="text-red-800 dark:text-red-300 font-bold mb-3 text-xs uppercase tracking-wider">Reason for Rejection</h3>
-                  <select value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-900 dark:text-white mb-3 outline-none focus:ring-2 focus:ring-red-200">
-                    {REJECT_REASONS.map((r, i) => <option key={i} value={r}>{r}</option>)}
-                  </select>
-                  {rejectReason === 'Others (Please specify)' && (
-                    <textarea placeholder="Type specific reason..." value={customReason} onChange={(e) => setCustomReason(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-4 py-3 text-xs font-medium text-slate-900 dark:text-white min-h-[80px] outline-none focus:ring-2 focus:ring-red-200" />
-                  )}
-                  <div className="flex gap-2 mt-4">
-                    <button onClick={() => handleUpdateStatus('Cancelled')} disabled={isProcessing} className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-xl text-xs font-bold flex items-center gap-2 active:scale-95 transition-all">
-                      {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />} Confirm Reject
+              {/* RIGHT PANE: DEDICATED LIVE DOCUMENT VIEWER CANVAS (58% on desktop) */}
+              <div className={`w-full lg:w-[58%] flex flex-col bg-slate-950 text-white overflow-hidden ${
+                mobilePane === 'document' ? 'flex' : 'hidden lg:flex'
+              }`}>
+                
+                {/* DOCUMENT SELECTOR TABS & TOOLBAR */}
+                <div className="px-4 py-2.5 bg-slate-900 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                  
+                  {/* Doc Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto py-1">
+                    {docTabs.map((tab) => {
+                      const isActive = tab.key === activeDocKey;
+                      const hasDoc = Boolean(tab.url);
+                      return (
+                        <button
+                          key={tab.key}
+                          onClick={() => {
+                            setActiveDocKey(tab.key);
+                            setZoomScale(1);
+                            setRotation(0);
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                            isActive
+                              ? 'bg-[#7A1B22] text-white shadow-sm border border-[#D4AF37]/40'
+                              : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5'
+                          }`}
+                        >
+                          <FileText size={13} className={isActive ? 'text-[#D4AF37]' : 'text-slate-400'} />
+                          <span>{tab.label}</span>
+                          {!hasDoc && selectedApp.applicationType !== 'Renewal' && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Missing attachment" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Interactive Controls (Zoom / Rotate / Reset / External) */}
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <button 
+                      onClick={() => setZoomScale(prev => Math.max(prev - 0.25, 0.5))} 
+                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut size={16} />
                     </button>
-                    <button onClick={() => setIsRejecting(false)} className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-6 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
+                    <span className="text-[11px] font-mono font-bold px-1 text-slate-400 min-w-[40px] text-center">
+                      {Math.round(zoomScale * 100)}%
+                    </span>
+                    <button 
+                      onClick={() => setZoomScale(prev => Math.min(prev + 0.25, 3))} 
+                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      title="Zoom In"
+                    >
+                      <ZoomIn size={16} />
+                    </button>
+                    <button 
+                      onClick={() => setRotation(prev => (prev + 90) % 360)} 
+                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      title="Rotate 90° Clockwise"
+                    >
+                      <RotateCw size={16} />
+                    </button>
+                    <button 
+                      onClick={() => { setZoomScale(1); setRotation(0); }} 
+                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      title="Reset View"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
+
+                    {currentDoc?.url && (
+                      <>
+                        <div className="h-4 w-px bg-white/20 mx-1" />
+                        <a
+                          href={currentDoc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 hover:bg-white/10 text-[#D4AF37] rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
+                          title="Open Original in New Tab"
+                        >
+                          <ExternalLink size={15} />
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* ACTION BUTTONS */}
-            {!isRejecting && (
-              <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6 flex flex-wrap justify-end gap-3 z-20 rounded-b-3xl">
-                {selectedApp.status === 'Pending' && (
-                  <button 
-                    onClick={() => setIsRejecting(true)} 
-                    className="px-5 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 border border-red-200/60 dark:border-red-800/40"
-                  >
-                    <XCircle size={16} /> Reject Application
-                  </button>
-                )}
-                
-                {selectedApp.status === 'Pending' ? (
-                  <button 
-                    onClick={() => handleUpdateStatus('Ready for Pickup')} 
-                    disabled={isProcessing} 
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
-                  >
-                    <CheckCircle size={16} /> Approve (Set to Ready for Pickup)
-                  </button>
-                ) : (
-                  <>
-                    <button 
-                      onClick={() => setIsPrintOpen(true)} 
-                      className="px-6 py-2.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
-                    >
-                      <Printer size={16} /> Print Official Form
-                    </button>
-                    <button 
-                      onClick={() => handleUpdateStatus('Active')} 
-                      disabled={isProcessing} 
-                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors active:scale-95 shadow-sm"
-                    >
-                      <CheckCircle size={16} /> Acknowledge Payment & Release
-                    </button>
-                  </>
-                )}
+                {/* WORKSPACE CANVAS / VIEWER */}
+                <div className="flex-1 relative flex items-center justify-center p-4 overflow-auto bg-slate-950/90 select-none">
+                  {selectedApp.applicationType === 'Renewal' && !currentDoc?.url ? (
+                    <div className="text-center p-8 max-w-md bg-slate-900/60 border border-white/10 rounded-2xl">
+                      <ShieldCheck size={36} className="mx-auto text-[#D4AF37] mb-3 opacity-70" />
+                      <h4 className="font-bold text-sm text-white">Renewal Application</h4>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                        This is a franchise renewal application. Historical vehicle records and original requirements are archived on file.
+                      </p>
+                    </div>
+                  ) : !currentDoc?.url ? (
+                    <div className="text-center p-8 max-w-md bg-slate-900/60 border border-white/10 rounded-2xl">
+                      <AlertCircle size={36} className="mx-auto text-amber-400 mb-3 opacity-70" />
+                      <h4 className="font-bold text-sm text-white">No Document Uploaded</h4>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                        The applicant has not uploaded an attachment for <strong className="text-amber-300">{currentDoc?.label}</strong>.
+                      </p>
+                    </div>
+                  ) : currentDoc.url.toLowerCase().includes('.pdf') ? (
+                    <iframe 
+                      src={currentDoc.url} 
+                      className="w-full h-full bg-white rounded-2xl shadow-2xl border border-white/10" 
+                      title="Inspection Document PDF" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center overflow-auto p-2">
+                      <img 
+                        src={currentDoc.url} 
+                        alt={currentDoc.label}
+                        style={{ 
+                          transform: `scale(${zoomScale}) rotate(${rotation}deg)`, 
+                          transformOrigin: 'center', 
+                          transition: 'transform 0.15s ease-out' 
+                        }}
+                        className="max-h-[82vh] max-w-[90%] object-contain rounded-xl shadow-2xl bg-slate-900 border border-white/10" 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* CANVAS BOTTOM INFO BAR */}
+                <div className="px-4 py-2 bg-slate-900/90 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Eye size={13} className="text-[#D4AF37]" /> Inspecting: <strong className="text-slate-200">{currentDoc?.label}</strong>
+                  </span>
+                  <span className="font-mono text-slate-500">
+                    Use controls in toolbar to inspect fine details
+                  </span>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

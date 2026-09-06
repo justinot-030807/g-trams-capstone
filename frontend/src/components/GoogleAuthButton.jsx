@@ -117,17 +117,39 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'Continue with
           }
 
           try {
+            // Directly fetch verified userinfo from Google's official endpoint
+            let directGoogleProfile = null;
+            try {
+              const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+              });
+              if (userInfoRes.ok) {
+                const uData = await userInfoRes.json();
+                directGoogleProfile = {
+                  email: uData.email,
+                  name: uData.name || '',
+                  picture: uData.picture || '',
+                  googleId: uData.sub
+                };
+              }
+            } catch (uErr) {
+              console.warn('Direct Google userinfo fetch warning:', uErr);
+            }
+
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ accessToken: tokenResponse.access_token })
+              body: JSON.stringify({ 
+                accessToken: tokenResponse.access_token,
+                googleProfile: directGoogleProfile
+              })
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Google authentication failed.');
 
             if (data.isNewUser) {
-              onNewUser(data.googleProfile);
+              onNewUser(data.googleProfile || directGoogleProfile);
             } else {
               onSuccess(data);
             }
