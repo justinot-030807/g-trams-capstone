@@ -7,14 +7,14 @@ const TODA_LIST = [
 ];
 
 const ValidateTODA = () => {
-  const [activeTab, setActiveTab] = useState('directory'); // 'directory' o 'validations'
+  const [activeTab, setActiveTab] = useState('directory');
   
   // States
   const [searchQuery, setSearchQuery] = useState('');
   const [submissions, setSubmissions] = useState([]);
   const [users, setUsers] = useState([]);
   
-  // Accordion State para sa Directory
+  // Accordion state for directory
   const [expandedToda, setExpandedToda] = useState(null);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const ValidateTODA = () => {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
       if (response.ok) {
         const allUsers = await response.json();
-        // Kunin lang ang mga operators at toda presidents
+        // Filter out admin users
         setUsers(allUsers.filter(u => u.role !== 'admin'));
       }
     } catch (error) { console.error(error); }
@@ -54,13 +54,13 @@ const ValidateTODA = () => {
     } catch (error) { alert('Cannot connect to server.'); }
   };
 
-  // Logic para ma-group ang mga users per TODA
+  // Group members by TODA association
   const groupedToda = TODA_LIST.map(todaName => {
     return {
       name: todaName,
       members: users.filter(u => (u.todaAssociation || 'NON-TODA') === todaName)
     };
-  }).filter(toda => toda.members.length > 0); // Ipakita lang yung mga TODA na may laman
+  }).filter(toda => toda.members.length > 0); // Include only associations with members
 
   const filteredSubmissions = submissions.filter(sub => 
     sub.presidentName.toLowerCase().includes(searchQuery.toLowerCase()) || sub.fileName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -99,7 +99,7 @@ const ValidateTODA = () => {
           </button>
         </div>
 
-        {/* CONTENT PARA SA LIVE DIRECTORY */}
+        {/* Live directory content */}
         {activeTab === 'directory' && (
           <div className="p-6">
             {groupedToda.length === 0 ? (
@@ -128,7 +128,7 @@ const ValidateTODA = () => {
                       </div>
                     </button>
                     
-                    {/* EXPANDED TABLE */}
+                    {/* Expanded member table */}
                     {expandedToda === toda.name && (
                       <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4">
                         <table className="w-full text-left border-collapse">
@@ -164,7 +164,7 @@ const ValidateTODA = () => {
           </div>
         )}
 
-        {/* CONTENT PARA SA DOCUMENT VALIDATIONS */}
+        {/* Document validations content */}
         {activeTab === 'validations' && (
           <>
             <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50 dark:bg-slate-800/60">

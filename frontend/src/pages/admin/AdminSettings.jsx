@@ -13,11 +13,11 @@ const AdminSettings = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
 
-  const [activeTab, setActiveTab] = useState('system'); // 'system' | 'account' | 'preferences'
+  const [activeTab, setActiveTab] = useState('system');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // TAB 1: SYSTEM & PLATFORM CONFIGURATION STATE
+  // System configuration state
   const [initialSystemConfig, setInitialSystemConfig] = useState(null);
   const [systemConfig, setSystemConfig] = useState({
     newFranchise: 3,
@@ -34,7 +34,7 @@ const AdminSettings = () => {
     newDocInput: ''
   });
 
-  // TAB 2: ACCOUNT & SECURITY STATE
+  // Account and security state
   const [accountData, setAccountData] = useState({
     name: 'Administrator',
     email: '',
@@ -49,14 +49,14 @@ const AdminSettings = () => {
     confirmPassword: ''
   });
 
-  // TAB 3: PREFERENCES STATE
+  // Preferences state
   const [preferences, setPreferences] = useState({
     theme: localStorage.getItem('theme') || 'light',
     language: localStorage.getItem('gtrams_lang') || language || 'en',
     inAppToastAlerts: localStorage.getItem('gtrams_toast_alerts') !== 'false'
   });
 
-  // CONFIRMATION MODAL & TOAST
+  // Modal and toast state
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, data: null });
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const toastTimerRef = useRef(null);
@@ -75,12 +75,12 @@ const AdminSettings = () => {
     };
   }, []);
 
-  // LOAD SAVED SYSTEM CONFIG & PROFILE ON MOUNT
+  // Load saved configuration and profile on mount
   useEffect(() => {
     const loadAllSettings = async () => {
       setIsLoading(true);
       try {
-        // 1. System Config from LocalStorage & Backend
+        // 1. Local configuration cache
         const savedNew = localStorage.getItem('validity_new');
         const savedRenew = localStorage.getItem('validity_renew');
         const savedFiscal = localStorage.getItem('fiscal_year');
@@ -112,7 +112,7 @@ const AdminSettings = () => {
           return newState;
         });
 
-        // Fetch authoritative settings from backend
+        // Fetch settings from backend
         try {
           const setRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
           if (setRes.ok) {
@@ -130,7 +130,7 @@ const AdminSettings = () => {
                   renewFranchise: d.validityRenew ?? prev.renewFranchise,
                   fiscalYear: d.fiscalYear || prev.fiscalYear,
                   franchiseFee: d.franchiseFee ?? prev.franchiseFee,
-                  penaltyFee: d.penaltyRate ?? prev.penaltyFee,
+                  penaltyRate: d.penaltyRate ?? prev.penaltyFee,
                   fareBase: d.baseFare ?? prev.fareBase,
                   maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
                   maintenanceMode: Boolean(d.maintenanceMode),
@@ -162,7 +162,7 @@ const AdminSettings = () => {
           inAppToastAlerts: localStorage.getItem('gtrams_toast_alerts') !== 'false'
         });
 
-        // 3. Admin Account Profile from Backend
+        // 3. Admin profile from backend
         const token = localStorage.getItem('token');
         if (token) {
           const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/profile`, {
@@ -268,47 +268,59 @@ const AdminSettings = () => {
       if (type === 'system') {
         const docsArray = Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : [];
 
-        // 1. Save System Settings to backend database
+        // 1. Save system settings to backend
         const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                validityNew: Number(systemConfig.newFranchise),
-                validityRenew: Number(systemConfig.renewFranchise),
-                fiscalYear: systemConfig.fiscalYear,
-                franchiseFee: Number(systemConfig.franchiseFee),
-                penaltyRate: Number(systemConfig.penaltyFee),
-                baseFare: Number(systemConfig.fareBase),
-                expiryWarningDays: Number(systemConfig.expiryWarningDays),
-                maxUnitsPerOperator: Number(systemConfig.maxUnitsPerOperator) || 2,
-                requiredDocs: docsArray,
-                docChecklist: docsArray.join(', '),
-                maintenanceMode: Boolean(systemConfig.maintenanceMode)
-              })
-            });
-          } catch (err) {
-            console.error('Failed to sync settings with backend:', err);
-          }
+        if (!token) {
+          showToast('Authentication error: You must be logged in as an administrator.', 'error');
+          setIsProcessing(false);
+          return;
         }
 
-        // 2. Save System Settings locally
-        localStorage.setItem('validity_new', systemConfig.newFranchise);
-        localStorage.setItem('validity_renew', systemConfig.renewFranchise);
-        localStorage.setItem('fiscal_year', systemConfig.fiscalYear);
-        localStorage.setItem('franchise_fee', systemConfig.franchiseFee);
-        localStorage.setItem('penalty_fee', systemConfig.penaltyFee);
-        localStorage.setItem('fare_base', systemConfig.fareBase);
-        localStorage.setItem('fare_per_km', systemConfig.farePerKm);
-        localStorage.setItem('max_units_per_operator', systemConfig.maxUnitsPerOperator);
-        localStorage.setItem('maintenance_mode', systemConfig.maintenanceMode ? 'true' : 'false');
-        localStorage.setItem('expiry_warning_days', systemConfig.expiryWarningDays);
-        localStorage.setItem('required_docs', JSON.stringify(docsArray));
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            validityNew: Number(systemConfig.newFranchise),
+            validityRenew: Number(systemConfig.renewFranchise),
+            fiscalYear: systemConfig.fiscalYear,
+            franchiseFee: Number(systemConfig.franchiseFee),
+            penaltyRate: Number(systemConfig.penaltyFee),
+            baseFare: Number(systemConfig.fareBase),
+            farePerKm: Number(systemConfig.farePerKm),
+            expiryWarningDays: Number(systemConfig.expiryWarningDays),
+            maxUnitsPerOperator: Number(systemConfig.maxUnitsPerOperator) || 2,
+            requiredDocs: docsArray,
+            docChecklist: docsArray.join(', '),
+            maintenanceMode: Boolean(systemConfig.maintenanceMode)
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || `Server responded with error ${res.status}`);
+        }
+
+        const resData = await res.json();
+        const savedBackend = resData.data || {};
+
+        // 2. Save system settings locally to cache
+        localStorage.setItem('validity_new', savedBackend.validityNew ?? systemConfig.newFranchise);
+        localStorage.setItem('validity_renew', savedBackend.validityRenew ?? systemConfig.renewFranchise);
+        localStorage.setItem('fiscal_year', savedBackend.fiscalYear || systemConfig.fiscalYear);
+        localStorage.setItem('franchise_fee', savedBackend.franchiseFee ?? systemConfig.franchiseFee);
+        localStorage.setItem('penalty_fee', savedBackend.penaltyRate ?? systemConfig.penaltyFee);
+        localStorage.setItem('fare_base', savedBackend.baseFare ?? systemConfig.fareBase);
+        localStorage.setItem('fare_per_km', savedBackend.farePerKm ?? systemConfig.farePerKm);
+        localStorage.setItem('max_units_per_operator', savedBackend.maxUnitsPerOperator ?? systemConfig.maxUnitsPerOperator);
+        localStorage.setItem('maintenance_mode', (savedBackend.maintenanceMode ?? systemConfig.maintenanceMode) ? 'true' : 'false');
+        localStorage.setItem('expiry_warning_days', savedBackend.expiryWarningDays ?? systemConfig.expiryWarningDays);
+        localStorage.setItem('required_docs', JSON.stringify(savedBackend.requiredDocs ?? docsArray));
+
+        // Notify other components of settings change immediately
+        window.dispatchEvent(new Event('gtrams_settings_updated'));
 
         setConfirmModal({ isOpen: false, type: null, data: null });
 
@@ -331,7 +343,7 @@ const AdminSettings = () => {
         if (changes.length > 0) {
           showToast(`Updated: ${changes.join(', ')}`, 'success');
         } else {
-          showToast('No settings were changed.', 'info');
+          showToast('Settings saved successfully.', 'info');
         }
       } 
       else if (type === 'account') {

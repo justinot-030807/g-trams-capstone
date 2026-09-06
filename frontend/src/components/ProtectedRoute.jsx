@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   let userRole = localStorage.getItem('role');
   const userStr = localStorage.getItem('user');
 
-  // Fallback: Kunin ang role sa loob ng 'user' object kung wala sa 'role' key
+  // Fallback: get role from user object if missing from storage key
   if (!userRole && userStr) {
     try {
       const userObj = JSON.parse(userStr);
@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     }
   }
 
-  // Kung walang token o walang role, sipain sa login
+  // Redirect to login if unauthenticated
   if (!token || !userRole) {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
@@ -31,11 +31,11 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Linisin ang text: Tanggalin ang spaces/underscores at gawing small letters lahat
+  // Normalize user role
   const safeUserRole = normalizeRole(userRole);
   const isAdmin = safeUserRole === 'admin' || safeUserRole === 'administrator';
 
-  // MAINTENANCE MODE CHECK: Block non-admins if active
+  // Block non-admins when maintenance mode is active
   const isMaintenanceActive = localStorage.getItem('maintenance_mode') === 'true';
   if (isMaintenanceActive && !isAdmin) {
     return <Navigate to="/maintenance" replace />;
@@ -43,13 +43,13 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   const safeAllowedRoles = allowedRoles.map(normalizeRole);
 
-  // Requirement: Treat 'toda president' and 'operator' interchangeably for all operator-level routes
+  // Treat toda president and operator interchangeably for operator routes
   const isOperatorAllowed = safeAllowedRoles.includes('operator') || safeAllowedRoles.includes('toda president');
   const isUserOperatorOrToda = safeUserRole === 'operator' || safeUserRole === 'toda president';
 
   const isAuthorized = safeAllowedRoles.includes(safeUserRole) || (isOperatorAllowed && isUserOperatorOrToda);
 
-  // Kung WALA sa allowed roles ang user, i-redirect sa tamang dashboard niya nang hindi sumisipa pabalik sa login
+  // Redirect unauthorized users to their appropriate dashboard
   if (!isAuthorized) {
     if (safeUserRole === 'admin' || safeUserRole === 'administrator') {
       return <Navigate to="/admin-dashboard" replace />;
@@ -64,7 +64,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     }
   }
 
-  // Kung tama ang role, papasukin
+  // Render route children when authorized
   return children;
 };
 

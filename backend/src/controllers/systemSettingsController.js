@@ -1,11 +1,9 @@
 const SystemSettings = require('../models/systemSettingsModel');
 
-// @desc    Get system settings (Public so frontend can check maintenance mode & configurations)
-// @route   GET /api/v1/settings
-// @access  Public
+// Get system settings
 const getSettings = async (req, res) => {
   try {
-    let settings = await SystemSettings.findOne().sort({ createdAt: -1 });
+    let settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
 
     if (!settings) {
       settings = await SystemSettings.create({
@@ -16,6 +14,7 @@ const getSettings = async (req, res) => {
         franchiseFee: 500,
         penaltyRate: 50,
         baseFare: 15,
+        farePerKm: 2.5,
         maxUnitsPerOperator: 2,
         requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
         docChecklist: 'Barangay Clearance, Driver\'s License, OR/CR, TODA Endorsement',
@@ -35,9 +34,7 @@ const getSettings = async (req, res) => {
   }
 };
 
-// @desc    Update system settings (Admin Only)
-// @route   PUT /api/v1/settings
-// @access  Private/Admin
+// Update system settings (Admin only)
 const updateSettings = async (req, res) => {
   try {
     const {
@@ -48,6 +45,7 @@ const updateSettings = async (req, res) => {
       franchiseFee,
       penaltyRate,
       baseFare,
+      farePerKm,
       maxUnitsPerOperator,
       requiredDocs,
       docChecklist,
@@ -55,7 +53,7 @@ const updateSettings = async (req, res) => {
       maintenanceMessage
     } = req.body;
 
-    let settings = await SystemSettings.findOne().sort({ createdAt: -1 });
+    let settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
 
     if (!settings) {
       settings = new SystemSettings();
@@ -68,6 +66,7 @@ const updateSettings = async (req, res) => {
     if (franchiseFee !== undefined) settings.franchiseFee = franchiseFee;
     if (penaltyRate !== undefined) settings.penaltyRate = penaltyRate;
     if (baseFare !== undefined) settings.baseFare = baseFare;
+    if (farePerKm !== undefined) settings.farePerKm = farePerKm;
     if (maxUnitsPerOperator !== undefined) settings.maxUnitsPerOperator = Number(maxUnitsPerOperator);
     if (requiredDocs !== undefined && Array.isArray(requiredDocs)) settings.requiredDocs = requiredDocs;
     if (docChecklist !== undefined) settings.docChecklist = docChecklist;
@@ -75,6 +74,9 @@ const updateSettings = async (req, res) => {
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
 
     await settings.save();
+
+    // Remove any stale older duplicates so there is always a single authoritative record
+    await SystemSettings.deleteMany({ _id: { $ne: settings._id } });
 
     res.status(200).json({
       success: true,

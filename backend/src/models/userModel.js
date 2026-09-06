@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, enum: ['operator', 'admin', 'administrator', 'toda_president', 'toda president'], default: 'operator' },
     
-    // BAGONG IDINAGDAG: TODA Association
+    // TODA association
     todaAssociation: { type: String, default: 'NON-TODA' },
 
     isVerified: { type: Boolean, default: false },

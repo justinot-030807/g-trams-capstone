@@ -3,18 +3,18 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./src/config/db');
 
-// TAMA NA ANG PATH NITO NGAYON (nilagyan natin ng /src)
+// Routes
 const todaRoutes = require('./src/routes/todaRoutes'); 
 
 const app = express();
 app.set('trust proxy', 1);
 connectDB();
 
-// configure cors for the deployed vercel frontend and local development
+// CORS configuration
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://g-trams-official.vercel.app' // <--- Ito ang bago mong Vercel domain
+        'https://g-trams-official.vercel.app'
     ],
     credentials: true
 }));
@@ -22,27 +22,27 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Para mabasa ang uploaded files mula sa frontend
+// Serve uploaded files statically
 app.use('/uploads', express.static('uploads')); 
 
 const PORT = process.env.PORT || 3000;
 const BASE_URI = process.env.BASE_URI || '/api/v1';
 
-// auth routes
+// Auth routes
 const authRoutes = require('./src/routes/authRoutes');
 app.use(`${BASE_URI}/auth`, authRoutes);
 
-// franchise routes
+// Franchise routes
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 app.use(`${BASE_URI}/franchises`, franchiseRoutes);
 
-// TODA Routes
+// TODA routes
 app.use(`${BASE_URI}/toda`, todaRoutes); 
 
-// SYSTEM SETTINGS & MAINTENANCE MODE ROUTE
+// System settings routes
 app.use(`${BASE_URI}/settings`, require('./src/routes/systemSettingsRoutes'));
 
-// server initialization
+// Start server
 app.listen(PORT, () => {
     console.log(`server running on port ${PORT}`);
 });

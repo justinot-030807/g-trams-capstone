@@ -6,13 +6,13 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Modals State
+  // Modal states
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [pendingRoleChange, setPendingRoleChange] = useState(null);
   
-  // Deactivation Modal State
+  // Account status modal state
   const [statusModal, setStatusModal] = useState({ isOpen: false, user: null });
 
   useEffect(() => {
@@ -34,7 +34,7 @@ const UserManagement = () => {
     }
   };
 
-  // --- ROLE MANAGEMENT LOGIC ---
+  // Role management
   const initiateRoleChange = (user, newRole) => {
     if (user.role === newRole) return; 
     setPendingRoleChange({ userId: user._id, userName: user.name, oldRole: user.role, newRole: newRole });
@@ -65,7 +65,7 @@ const UserManagement = () => {
     }
   };
 
-  // --- ACCOUNT ACTIVATION/DEACTIVATION LOGIC ---
+  // Account activation and deactivation
   const handleToggleStatus = async () => {
     if (!statusModal.user) return;
     
@@ -232,7 +232,7 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* --- CONFIRMATION MODAL PARA SA ACCOUNT STATUS (DEACTIVATE/ACTIVATE) --- */}
+      {/* Account status confirmation modal */}
       {statusModal.isOpen && statusModal.user && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm" onClick={() => setStatusModal({ isOpen: false, user: null })}></div>
@@ -272,7 +272,7 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* --- CONFIRMATION MODAL PARA SA ROLE CHANGE --- */}
+      {/* Role change confirmation modal */}
       {isConfirmOpen && pendingRoleChange && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsConfirmOpen(false)}></div>
@@ -295,7 +295,7 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* --- MORE DETAILS MODAL --- */}
+      {/* User details modal */}
       {isDetailsModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsDetailsModalOpen(false)}></div>

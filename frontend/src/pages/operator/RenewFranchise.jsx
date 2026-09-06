@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const RenewFranchise = () => {
   const navigate = useNavigate();
-  // Assume we get the franchise ID from the URL params
+  // Franchise ID from URL params
   const { id } = useParams(); 
 
-  // Empty state for actual database integration
+  // Renewal form state
   const [formData, setFormData] = useState({
     ctcNo: '',
     dateIssued: '',
@@ -14,21 +14,26 @@ const RenewFranchise = () => {
     orcrFile: null
   });
 
-  // Text input handler
+  // Handle text field changes
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let sanitized = value;
+    if (name === 'ctcNo') {
+      sanitized = value.replace(/\D/g, '');
+    }
+    setFormData({ ...formData, [name]: sanitized });
   };
 
-  // File input handler
+  // Handle document file selection
   const handleFileChange = (e) => {
     setFormData({ ...formData, orcrFile: e.target.files[0] });
   };
 
-  // Submit to backend
+  // Submit renewal request
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Using FormData for file uploads
+    // Build FormData with attachments
     const data = new FormData();
     data.append('ctcNo', formData.ctcNo);
     data.append('dateIssued', formData.dateIssued);
@@ -38,7 +43,7 @@ const RenewFranchise = () => {
     }
 
     try {
-      // Assuming your API endpoint for renewal includes the franchise ID
+      // Send renewal payload to API
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/renew`, {
         method: 'POST',
         headers: {
@@ -83,6 +88,8 @@ const RenewFranchise = () => {
                 <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">New CTC No.</label>
                 <input 
                   type="text" 
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   name="ctcNo" 
                   value={formData.ctcNo}
                   onChange={handleChange} 

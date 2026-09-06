@@ -29,11 +29,10 @@ const franchiseSchema = new mongoose.Schema({
     cedulaAddress: { type: String, required: true },
     cedulaSerialNo: { type: String, required: true },
     
-    // BINAGO: Idinagdag ang 'Revoked'
     status: { type: String, enum: ['Pending', 'Active', 'Expired', 'Cancelled', 'Revoked'], default: 'Pending' },
     applicationType: { type: String, default: 'New' },
     
-    // Dito mase-save ang violation/rason at ang ebidensya
+    // Cancellation or revocation reason and evidence
     cancelReason: { type: String, default: '' },
     evidenceUrl: { type: String, default: '' }, 
     

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
-// GINAMIT LANG ANG MGA STANDARD/SAFE ICONS PARA IWAS CRASH
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
@@ -37,7 +36,7 @@ const OperatorDashboard = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        // SAFE FALLBACK: Siguraduhing Array ang data bago i-set para iwas Fatal Error
+        // Ensure data is an array before updating state
         setFranchises(Array.isArray(data) ? data : []);
       } else {
         setFranchises([]);
@@ -66,7 +65,7 @@ const OperatorDashboard = () => {
     }, 500);
   };
 
-  // Safe Visual Application Tracker
+  // Visual application tracker
   const renderApplicationTracker = (status) => {
     if (status === 'Active') return null;
 
@@ -109,7 +108,7 @@ const OperatorDashboard = () => {
       <div className="mb-5 bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
         <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">{t('dashboard.appProgress', 'Application Progress')}</p>
         
-        {/* FIXED: Hinding-hindi na lalagpas ang background line sa circle nodes */}
+        {/* Step progress line */}
         <div className="relative flex items-center justify-between z-10 before:absolute before:left-0 before:top-3 before:w-full before:h-[3px] before:bg-slate-200 dark:before:bg-slate-700 before:-z-10">
           
           <div 

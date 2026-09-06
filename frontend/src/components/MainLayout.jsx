@@ -3,7 +3,7 @@ import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
 
 const MainLayout = ({ children }) => {
-  // Siguraduhing CLOSED agad sa mobile (<768px) pagka-open, at OPEN naman sa desktop
+  // Default closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth < 768) return false;

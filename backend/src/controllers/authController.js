@@ -2,13 +2,13 @@ const User = require('../models/userModel');
 const SystemSettings = require('../models/systemSettingsModel');
 const jwt = require('jsonwebtoken'); 
 const sendEmail = require('../utils/sendEmail'); 
-const axios = require('axios'); // Para sa Semaphore SMS
+const axios = require('axios');
 
-// 1. REGISTER & SEND OTP
+// Register user and send OTP
 exports.register = async (req, res) => {
     try {
-        // MAINTENANCE CHECK SA REGISTRATION
-        const sysSettings = await SystemSettings.findOne().sort({ createdAt: -1 });
+        // Check if maintenance mode is active
+        const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
         if (sysSettings && sysSettings.maintenanceMode === true) {
             return res.status(503).json({ 
                 message: 'Portal registration is temporarily disabled while scheduled system maintenance is active.',
@@ -61,7 +61,8 @@ exports.register = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
-// 2. VERIFY OTP
+
+// Verify OTP
 exports.verifyOTP = async (req, res) => {
     try {
         const { contact, otp } = req.body;
@@ -80,7 +81,7 @@ exports.verifyOTP = async (req, res) => {
     }
 };
 
-// 3. LOGIN (NILAGYAN NA NG HARANG PARA SA DEACTIVATED ACCOUNTS)
+// Login user
 exports.login = async (req, res) => {
     try {
         const { contact, password } = req.body; 
@@ -89,7 +90,7 @@ exports.login = async (req, res) => {
         if (!user) return res.status(400).json({ message: 'Invalid credentials' });
         if (!user.isVerified) return res.status(400).json({ message: 'Please verify your account first.' });
         
-        // HARANG: Kapag ang isActive ay naging false, i-block agad ang login!
+        // Block deactivated accounts
         if (user.isActive === false) {
             return res.status(403).json({ message: 'Your account has been deactivated. Please contact the administrator.' });
         }
@@ -97,11 +98,11 @@ exports.login = async (req, res) => {
         const isMatch = await user.matchPassword(password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-        // MAINTENANCE MODE HARANG: Kung naka-on ang maintenance mode, tanging ADMIN lamang ang makakalogin!
+        // Block non-admin users during maintenance mode
         const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
         const isAdminUser = normalizedRole === 'admin' || normalizedRole === 'administrator';
 
-        const sysSettings = await SystemSettings.findOne().sort({ createdAt: -1 });
+        const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
         if (sysSettings && sysSettings.maintenanceMode === true && !isAdminUser) {
             return res.status(503).json({ 
                 message: sysSettings.maintenanceMessage || 'Portal is currently undergoing system maintenance. Non-admin access is restricted. Please try again later.',
@@ -118,7 +119,7 @@ exports.login = async (req, res) => {
     }
 };
 
-// 4. GET USERS
+// Get all users
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.find().select('-password');
@@ -128,7 +129,7 @@ exports.getUsers = async (req, res) => {
     }
 };
 
-// 5. FORGOT PASSWORD
+// Send password reset OTP
 exports.forgotPassword = async (req, res) => {
     try {
         const { contact } = req.body; 
@@ -142,7 +143,7 @@ exports.forgotPassword = async (req, res) => {
 
         try {
             if (contact.includes('@')) {
-            // Walang bypass! Kapag nag-fail, mag-e-error talaga siya gaya ng dapat mangyari.
+            // Send OTP via email
             await sendEmail({ 
                 email: contact, 
                 subject: 'G-TRAMS: Account Verification OTP', 
@@ -150,7 +151,7 @@ exports.forgotPassword = async (req, res) => {
             });
             res.status(201).json({ message: 'OTP sent successfully' });
         } else {
-            // SMS Logic (Gumagana pa rin ito kapag may credits ka na)
+            // Send OTP via SMS
             await axios.post('https://api.semaphore.co/api/v4/messages', { 
                 apikey: 'b95803ab99f6bc85ea217d2e057c5f34', 
                 number: contact, 
@@ -166,12 +167,12 @@ exports.forgotPassword = async (req, res) => {
             return res.status(500).json({ message: 'Error sending OTP.' });
         }
     } catch (error) {
-        console.error("REGISTER ERROR:", error); // <-- Dinagdag para makita sa Render Logs
+        console.error("REGISTER ERROR:", error);
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
 
-// 6. RESET PASSWORD
+// Reset password
 exports.resetPassword = async (req, res) => {
     try {
         const { contact, otp, newPassword } = req.body; 
@@ -192,7 +193,7 @@ exports.resetPassword = async (req, res) => {
     }
 };
 
-// 7. CHANGE PASSWORD
+// Change password
 exports.changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
@@ -208,7 +209,7 @@ exports.changePassword = async (req, res) => {
     }
 };
 
-// 8. VERIFY ADMIN PASSWORD
+// Verify admin password
 exports.verifyAdminPassword = async (req, res) => {
     try {
         const { password } = req.body;
@@ -222,7 +223,7 @@ exports.verifyAdminPassword = async (req, res) => {
     }
 };
 
-// 9. UPDATE USER
+// Update user
 exports.updateUser = async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(
@@ -237,7 +238,7 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// 10. DELETE USER
+// Delete user
 exports.deleteUser = async (req, res) => {
     try {
         const user = await User.findByIdAndDelete(req.params.id);
@@ -248,7 +249,7 @@ exports.deleteUser = async (req, res) => {
     }
 };
 
-// 11. UPDATE PROFILE
+// Update profile
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.user.id; 
@@ -266,7 +267,6 @@ exports.updateProfile = async (req, res) => {
             updateData.profilePic = req.file.path; 
         }
 
-        // BINAGO: Pinalitan ng returnDocument: 'after' para mawala yung Mongoose Warning
         const updatedUser = await User.findByIdAndUpdate(
             userId, 
             updateData, 
@@ -279,7 +279,8 @@ exports.updateProfile = async (req, res) => {
         res.status(500).json({ message: 'Error updating profile' });
     }
 };
-// 12. TOGGLE ACCOUNT STATUS (ACTIVATE / DEACTIVATE)
+
+// Toggle account status (activate / deactivate)
 exports.toggleUserStatus = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
@@ -291,7 +292,6 @@ exports.toggleUserStatus = async (req, res) => {
 
         const newStatus = user.isActive === false ? true : false; 
 
-        // Gumagamit tayo ng findByIdAndUpdate para ma-bypass ang validation
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             { isActive: newStatus },
@@ -307,7 +307,7 @@ exports.toggleUserStatus = async (req, res) => {
     }
 };
 
-// 13. GET CURRENT USER PROFILE (Ibinabalik natin para gumana ang Autofill!)
+// Get current user profile
 exports.getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-password');

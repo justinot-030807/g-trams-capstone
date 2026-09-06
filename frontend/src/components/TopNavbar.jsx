@@ -34,6 +34,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   });
 
   const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length;
+  const [isMaintenanceActive, setIsMaintenanceActive] = useState(() => localStorage.getItem('maintenance_mode') === 'true');
 
   useEffect(() => {
     const fetchFreshUser = async () => {
@@ -81,7 +82,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
     fetchFreshUser();
 
-    // REAL-TIME NOTIFICATIONS FETCHER
+    // Fetch notifications periodically
     const fetchNotifications = async () => {
       const token = localStorage.getItem('token');
       const storedRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
@@ -91,7 +92,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         const notifs = [];
 
         if (storedRole === 'admin' || storedRole === 'administrator') {
-          // 1. Fetch pending approvals for Admin
+          // Fetch pending applications for admin
           const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -122,7 +123,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             }
           }
 
-          // 2. Fetch TODA Submissions for Admin
+          // Fetch TODA submissions for admin
           try {
             const tRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/submissions`, {
               headers: { 'Authorization': `Bearer ${token}` }
@@ -144,7 +145,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             }
           } catch {}
         } else {
-          // OPERATOR / TODA PRESIDENT NOTIFICATIONS
+          // Fetch notifications for operator or TODA president
           const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/my-franchises`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -196,20 +197,22 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
         setNotifications(notifs);
 
-        // LIVE SYSTEM SETTINGS SYNC (Including Maintenance Mode)
+        // Live system settings sync
         try {
           const setRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
           if (setRes.ok) {
             const setJson = await setRes.json();
             if (setJson.data) {
               const d = setJson.data;
-              localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
+              const isMaint = d.maintenanceMode === true;
+              setIsMaintenanceActive(isMaint);
+              localStorage.setItem('maintenance_mode', isMaint ? 'true' : 'false');
               if (d.fiscalYear) localStorage.setItem('fiscal_year', d.fiscalYear);
               if (d.franchiseFee) localStorage.setItem('franchise_fee', d.franchiseFee);
               if (d.validityNew) localStorage.setItem('validity_new', d.validityNew);
               if (d.validityRenew) localStorage.setItem('validity_renew', d.validityRenew);
               
-              if (d.maintenanceMode === true && storedRole !== 'admin' && storedRole !== 'administrator') {
+              if (isMaint && storedRole !== 'admin' && storedRole !== 'administrator') {
                 navigate('/maintenance');
               }
             }
@@ -224,7 +227,18 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     };
 
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000); // Changed to 10s for faster live updates
+    const interval = setInterval(fetchNotifications, 10000); // Poll every 10 seconds
+
+    const handleSettingsUpdate = () => {
+      const isMaint = localStorage.getItem('maintenance_mode') === 'true';
+      setIsMaintenanceActive(isMaint);
+      const storedRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+      if (isMaint && storedRole !== 'admin' && storedRole !== 'administrator') {
+        navigate('/maintenance');
+      }
+    };
+    window.addEventListener('gtrams_settings_updated', handleSettingsUpdate);
+    window.addEventListener('storage', handleSettingsUpdate);
 
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setIsNotifOpen(false);
@@ -233,6 +247,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('gtrams_settings_updated', handleSettingsUpdate);
+      window.removeEventListener('storage', handleSettingsUpdate);
       clearInterval(interval);
     };
   }, []);
@@ -298,9 +314,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate tracking-tight">
             {getBreadcrumbTitle()}
           </span>
-          {localStorage.getItem('maintenance_mode') === 'true' && (
-            <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse">
-              🛠️ Maintenance Active
+          {isMaintenanceActive && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse">
+              <span className="inline sm:hidden">🛠️ Maint</span>
+              <span className="hidden sm:inline">🛠️ Maintenance Active</span>
             </span>
           )}
         </div>

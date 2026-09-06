@@ -428,7 +428,7 @@ const FranchiseMasterlist = () => {
                 </div>
               </div>
 
-              {/* CANCELLATION / REVOCATION REASON (Kung meron) */}
+              {/* Cancellation or revocation reason */}
               {selectedFranchise.cancelReason && (
                 <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-4">
                   <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400 block mb-1">Reason for Rejection / Revocation:</span>

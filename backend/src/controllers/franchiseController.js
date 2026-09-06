@@ -1,7 +1,7 @@
 const Franchise = require('../models/franchiseModel');
 const cron = require('node-cron');
 
-// AUTO-ARCHIVE ENGINE: Tumatakbo araw-araw tuwing hatinggabi (Midnight)[cite: 34]
+// Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
     try {
         console.log('Running Auto-Archive Engine...');
@@ -92,7 +92,7 @@ const searchHistoricalFranchise = async (req, res) => {
     }
 };
 
-// SERVER-SIDE PAGINATED & SEARCH-OPTIMIZED MASTERLIST[cite: 34]
+// Get franchises with pagination, filter, and search
 const getAllFranchises = async (req, res) => {
     try {
         const { archived, page = 1, limit = 10, search = '', status = 'All' } = req.query;
@@ -101,10 +101,10 @@ const getAllFranchises = async (req, res) => {
         const limitNum = Math.max(1, parseInt(limit, 10) || 10);
         const skip = (pageNum - 1) * limitNum;
 
-        // 1. Archive Condition
+        // Archive filter
         let queryCondition = archived === 'true' ? { isArchived: true } : { isArchived: { $ne: true } };
 
-        // 2. Multi-Status Filter Condition ($in)
+        // Multi-status filter
         if (status && status !== 'All') {
             const statusList = status.split(',').filter(s => s && s.trim() !== 'All');
             if (statusList.length === 1) {
@@ -114,7 +114,7 @@ const getAllFranchises = async (req, res) => {
             }
         }
 
-        // 3. Multi-field Regular Expression Search
+        // Search query filter
         if (search && search.trim() !== '') {
             const searchRegex = { $regex: search.trim(), $options: 'i' };
             queryCondition.$or = [
@@ -226,7 +226,7 @@ const cancelMyFranchise = async (req, res) => {
         if (franchise.operator.toString() !== req.user._id.toString()) return res.status(401).json({ message: 'not authorized' });
         
         franchise.status = 'Cancelled';
-        franchise.cancelReason = req.body.cancelReason || 'kinansela ng operator';
+        franchise.cancelReason = req.body.cancelReason || 'Cancelled by operator';
         await franchise.save();
         res.status(200).json(franchise);
     } catch (error) {
@@ -234,7 +234,7 @@ const cancelMyFranchise = async (req, res) => {
     }
 };
 
-// MANUAL ARCHIVE LOGIC (Supports explicit state boolean updates)[cite: 34]
+// Toggle franchise archive status
 const toggleArchiveFranchise = async (req, res) => {
     try {
         const franchise = await Franchise.findById(req.params.id);

@@ -15,7 +15,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [userData, setUserData] = useState({ name: 'G-TRAMS', profilePic: null });
   const [pendingCount, setPendingCount] = useState(0);
   
-  // PERSISTENT SUBMENU STATE SA LOCALSTORAGE
+  // Persist open submenu state in localStorage
   const [openSubMenus, setOpenSubMenus] = useState(() => {
     try {
       const saved = localStorage.getItem('gtrams_open_submenus');
@@ -36,7 +36,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     role = 'admin';
   }
 
-  // Mobile Auto-close nang hindi nire-reset ang dropdown state
+  // Automatically close sidebar on mobile route navigation
   useEffect(() => {
     if (window.innerWidth < 768 && onClose) {
       onClose();

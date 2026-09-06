@@ -45,7 +45,7 @@ const Login = () => {
 
     setError('');
 
-    // Input Format Validation (PH Mobile / Email)
+    // Validate contact format (PH mobile number or email)
     if (!isValidContact(formData.contact)) {
       setError('Please enter a valid PH mobile (09XXXXXXXXX) or email address.');
       return;

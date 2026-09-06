@@ -18,12 +18,12 @@ const {
     getFranchiseReports 
 } = require('../controllers/franchiseController');
 
-// Lahat makakagamit nito
+// Search historical franchise records
 router.get('/search', protect, searchHistoricalFranchise);
 
-// API ROUTES:
+// Franchise application and masterlist
 router.route('/')
-    // OPERATOR AT TODA LANG ANG PWEDENG MAGPASA (Bawal Admin)
+    // Submit new franchise application (Operators and TODA Presidents)
     .post(
         protect, 
         authorize('operator', 'toda president'),
@@ -35,21 +35,21 @@ router.route('/')
         ]), 
         createFranchise
     )
-    // ADMIN LANG ANG PWEDENG KUMUHA NG MASTERLIST (Bawal Operator)
+    // Get franchise masterlist (Admin only)
     .get(protect, authorize('admin'), getAllFranchises);
 
-// ADMIN ONLY ROUTES
+// Admin routes
 router.get('/reports', protect, authorize('admin'), getFranchiseReports);
 router.put('/:id/archive', protect, authorize('admin'), toggleArchiveFranchise);
 router.put('/:id/revoke', protect, authorize('admin'), upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
 router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
 
-// OPERATOR ONLY ROUTES
+// Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
 router.put('/:id/renew', protect, authorize('operator', 'toda president'), renewFranchise);
 router.put('/:id/cancel', protect, authorize('operator', 'toda president'), cancelMyFranchise);
 
-// SHARED ROUTES (Basta sariling data / update lang)
+// Update and delete franchise
 router.route('/:id')
     .put(
         protect, 

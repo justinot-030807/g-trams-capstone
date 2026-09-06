@@ -16,9 +16,9 @@ const ManageRevocations = () => {
   const [franchises, setFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('active'); // 'active' o 'revoked'
+  const [activeTab, setActiveTab] = useState('active');
 
-  // Modal States
+  // Modal states
   const [selectedFranchise, setSelectedFranchise] = useState(null);
   const [violation, setViolation] = useState(VIOLATIONS_LIST[0]);
   const [evidenceFile, setEvidenceFile] = useState(null);
@@ -66,7 +66,7 @@ const ManageRevocations = () => {
         alert("Franchise successfully revoked.");
         setSelectedFranchise(null);
         setEvidenceFile(null);
-        fetchFranchises(); // Refresh list
+        fetchFranchises();
       } else {
         alert("Failed to revoke franchise.");
       }

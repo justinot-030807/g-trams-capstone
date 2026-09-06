@@ -20,11 +20,11 @@ const OperatorSettings = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
 
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'security' | 'preferences'
+  const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // TAB 1: PROFILE & CONTACT DETAILS
+  // Profile and contact details state
   const [profileData, setProfileData] = useState({
     name: '',
     contact: '',
@@ -34,20 +34,20 @@ const OperatorSettings = () => {
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
 
-  // TAB 2: SECURITY & PASSWORD
+  // Security and password state
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
-  // TAB 3: PREFERENCES
+  // Preferences state
   const [preferences, setPreferences] = useState({
     theme: localStorage.getItem('theme') || 'light',
     language: localStorage.getItem('gtrams_lang') || language || 'en'
   });
 
-  // CONFIRMATION MODAL & TOAST
+  // Confirmation modal and toast
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null });
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const toastTimerRef = useRef(null);
@@ -66,7 +66,7 @@ const OperatorSettings = () => {
     };
   }, []);
 
-  // LOAD PROFILE ON MOUNT
+  // Load profile on mount
   useEffect(() => {
     const fetchOperatorProfile = async () => {
       setIsLoading(true);

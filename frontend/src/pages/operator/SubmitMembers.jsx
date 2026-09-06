@@ -7,7 +7,7 @@ const SubmitMembers = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [submissions, setSubmissions] = useState([]); 
 
-  // ITO YUNG BAGONG DAGDAG: Kukunin ang history pag-load ng page!
+  // Load submission history on mount
   useEffect(() => {
     fetchMySubmissions();
   }, []);
@@ -21,7 +21,7 @@ const SubmitMembers = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setSubmissions(data); // Ilalagay na sa screen ang mga galing database
+        setSubmissions(data);
       }
     } catch (error) {
       console.error('Failed to fetch history:', error);
@@ -55,7 +55,7 @@ const SubmitMembers = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Idadagdag ang bagong upload sa itaas ng listahan nang hindi nag-rerefresh
+        // Prepend new submission to state
         setSubmissions([data.submission, ...submissions]);
         setFile(null);
         alert('File successfully submitted to the Administrator!');

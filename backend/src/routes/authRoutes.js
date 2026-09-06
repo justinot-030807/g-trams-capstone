@@ -18,7 +18,7 @@ const {
     deleteUser,
     updateProfile,
     toggleUserStatus,
-    getProfile // <-- IBINALIK NATIN ITO
+    getProfile
 } = require('../controllers/authController');
 
 // Rate limiters
@@ -26,25 +26,25 @@ const loginLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message
 const registerLimiter = authRateLimiter({ max: 10, windowMs: 15 * 60 * 1000, message: 'Too many registration attempts. Please try again after 15 minutes.' });
 const forgotLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many password reset requests. Please try again after 15 minutes.' });
 
-// PROFILE ROUTES
+// Profile routes
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, upload.single('profilePic'), updateProfile);
 
-// Authentication & Registration Routes
+// Auth and registration routes
 router.post('/register', registerLimiter, register);
 router.post('/verify-otp', registerLimiter, verifyOTP);
 router.post('/login', loginLimiter, login);
 router.get('/', protect, getUsers);
 
-// Password Management Routes
+// Password management routes
 router.post('/forgot-password', forgotLimiter, forgotPassword);
 router.post('/reset-password', resetPassword);
 router.put('/change-password', protect, changePassword);
 
-// Admin Routes
+// Admin routes
 router.post('/verify-password', protect, authorize('admin'), verifyAdminPassword);
 
-// Activate / Deactivate Account
+// Account status routes
 router.put('/:id/toggle-status', protect, authorize('admin'), toggleUserStatus);
 
 router.route('/:id')

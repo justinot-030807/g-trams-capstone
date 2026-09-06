@@ -36,7 +36,7 @@ const ApplyFranchise = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [fullPreview, setFullPreview] = useState(null);
 
-  // DYNAMIC SETTINGS: Max Units & Requirements List
+  // Dynamic settings: max units and requirements list
   const [maxAllowedUnits, setMaxAllowedUnits] = useState(() => {
     return Number(localStorage.getItem('max_units_per_operator')) || 2;
   });
@@ -87,7 +87,7 @@ const ApplyFranchise = () => {
   useEffect(() => {
     fetchMyFranchises();
 
-    // Fetch live system settings (Max Units & Required Docs)
+    // Fetch system settings for unit limits and document requirements
     const fetchSettings = async () => {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
@@ -276,6 +276,8 @@ const ApplyFranchise = () => {
     if (name === 'made') {
       sanitized = value.replace(/\D/g, '').slice(0, 4);
     } else if (name === 'zone') {
+      sanitized = value.replace(/\D/g, '');
+    } else if (name === 'cedulaSerialNo') {
       sanitized = value.replace(/\D/g, '');
     } else if (name === 'motorNo' || name === 'chassisNo' || name === 'plateNo') {
       sanitized = value.toUpperCase();
@@ -571,7 +573,7 @@ const ApplyFranchise = () => {
         </div>
       )}
 
-      {/* FIXED: MOBILE RESPONSIVE PREVIEW MODAL WITH FLOATING CLOSE BUTTON */}
+      {/* Document preview modal */}
       {fullPreview && (
         <div className="fixed inset-0 z-[200] bg-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-8 backdrop-blur-md animate-in fade-in">
           <button 
@@ -628,7 +630,7 @@ const ApplyFranchise = () => {
         )}
       </header>
 
-      {/* FIXED: ADJUSTED PROGRESS LINE TO PREVENT OVEREXTENSION */}
+      {/* Step progress bar */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs max-w-3xl mb-5 transition-colors">
         <div className="relative flex items-center justify-between px-4 sm:px-12">
           
@@ -715,12 +717,35 @@ const ApplyFranchise = () => {
               
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Route Zone</label>
-                <input type="text" name="zone" value={formData.zone} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. Zone 1" />
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  name="zone" 
+                  value={formData.zone} 
+                  onChange={handleInputChange} 
+                  className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                  required 
+                  readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                  placeholder="Hal. 1 o 2" 
+                />
               </div>
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Year Made</label>
-                <input type="text" name="made" value={formData.made} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. 2024" />
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  name="made" 
+                  value={formData.made} 
+                  onChange={handleInputChange} 
+                  className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                  required 
+                  readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                  placeholder="Hal. 2024" 
+                />
               </div>
 
               <div>
@@ -792,7 +817,17 @@ const ApplyFranchise = () => {
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Cedula Serial No.</label>
-                <input type="text" name="cedulaSerialNo" value={formData.cedulaSerialNo} onChange={handleInputChange} className={inputClasses} placeholder="Hal. 12345678" required />
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  name="cedulaSerialNo" 
+                  value={formData.cedulaSerialNo} 
+                  onChange={handleInputChange} 
+                  className={inputClasses} 
+                  placeholder="Hal. 12345678" 
+                  required 
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Lugar Kinuha (Cedula)</label>

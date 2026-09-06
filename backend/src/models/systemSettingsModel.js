@@ -8,6 +8,7 @@ const systemSettingsSchema = new mongoose.Schema({
   franchiseFee: { type: Number, default: 500 },
   penaltyRate: { type: Number, default: 50 },
   baseFare: { type: Number, default: 15 },
+  farePerKm: { type: Number, default: 2.5 },
   maxUnitsPerOperator: { type: Number, default: 2 },
   requiredDocs: { 
     type: [String], 

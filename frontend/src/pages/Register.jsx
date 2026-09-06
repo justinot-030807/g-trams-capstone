@@ -56,7 +56,7 @@ const Register = () => {
     e.preventDefault();
     setError(''); setSuccess('');
 
-    // Input Format Validation
+    // Validate contact format
     if (!isValidContact(formData.contact)) {
       return setError('PLEASE ENTER A VALID PH MOBILE (09XXXXXXXXX) OR EMAIL ADDRESS.');
     }

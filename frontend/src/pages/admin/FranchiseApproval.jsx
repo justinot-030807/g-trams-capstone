@@ -26,15 +26,15 @@ const FranchiseApproval = () => {
   const [customReason, setCustomReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Custom Toast Notification State
+  // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Document Viewer States
+  // Document viewer state
   const [previewDoc, setPreviewDoc] = useState(null);
   const [zoomScale, setZoomScale] = useState(1);
   const [rotation, setRotation] = useState(0);
 
-  // Print Modal State
+  // Print modal state
   const [isPrintOpen, setIsPrintOpen] = useState(false);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const FranchiseApproval = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        // Filter and sort by earliest submission date first (First-In, First-Out Queue)
+        // Sort by earliest submission date (FIFO queue)
         const queue = (Array.isArray(data) ? data : (data.data || []))
           .filter(app => app.status === 'Pending' || app.status === 'Ready for Pickup')
           .sort((a, b) => new Date(a.dateApplied || a.createdAt) - new Date(b.dateApplied || b.createdAt));
@@ -292,7 +292,7 @@ const FranchiseApproval = () => {
         </div>
       )}
 
-      {/* SECTION HEADER WITH MODERN VERTICAL LINE ACCENT */}
+      {/* Header */}
       <header className="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
