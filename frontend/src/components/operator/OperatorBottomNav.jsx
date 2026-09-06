@@ -1,8 +1,8 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, PlusCircle, Compass, Settings, User } from 'lucide-react';
+import { Home, PlusCircle, HelpCircle, Settings } from 'lucide-react';
 
-const OperatorBottomNav = ({ onOpenRouteGuide }) => {
+const OperatorBottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -22,11 +22,11 @@ const OperatorBottomNav = ({ onOpenRouteGuide }) => {
       active: location.pathname === '/apply-franchise' || location.pathname.startsWith('/renew-franchise')
     },
     {
-      id: 'routes',
-      label: 'Routes',
-      icon: Compass,
-      action: onOpenRouteGuide,
-      active: false
+      id: 'support',
+      label: 'Support',
+      icon: HelpCircle,
+      path: '/help-support',
+      active: location.pathname === '/help-support'
     },
     {
       id: 'settings',

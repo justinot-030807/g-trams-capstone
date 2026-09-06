@@ -3,13 +3,12 @@ import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, Star, ShieldAlert, Receipt, Compass
+  Check, FileText, Star, ShieldAlert, Receipt
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
-import TodaZoneGuideModal from '../../components/operator/TodaZoneGuideModal';
 
 const OperatorDashboard = () => {
   const { t, language } = useLanguage();
@@ -22,7 +21,6 @@ const OperatorDashboard = () => {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
-  const [isRouteGuideOpen, setIsRouteGuideOpen] = useState(false);
 
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 
@@ -203,14 +201,6 @@ const OperatorDashboard = () => {
           </div>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={() => setIsRouteGuideOpen(true)}
-            className="flex items-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] transition-all shadow-xs active:scale-95"
-          >
-            <Compass size={15} />
-            <span>TODA Routes &amp; Zones</span>
-          </button>
-
           <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
             <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
             {isLoading ? (
@@ -443,12 +433,6 @@ const OperatorDashboard = () => {
         onClose={() => setIsPrintOpen(false)} 
         unit={selectedUnit} 
         systemFranchiseFee={systemFranchiseFee} 
-      />
-
-      {/* TODA Route & Zone Guide Modal */}
-      <TodaZoneGuideModal
-        isOpen={isRouteGuideOpen}
-        onClose={() => setIsRouteGuideOpen(false)}
       />
     </MainLayout>
   );

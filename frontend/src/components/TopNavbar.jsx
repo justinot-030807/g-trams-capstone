@@ -302,7 +302,9 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         <button
           onClick={onToggleSidebar}
           title={isSidebarOpen ? "Hide Menu" : "Show Menu"}
-          className="p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl transition-colors focus:outline-none shrink-0"
+          className={`p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl transition-colors focus:outline-none shrink-0 ${
+            role === 'operator' ? 'hidden md:flex' : 'flex'
+          }`}
           aria-label="Toggle Sidebar"
         >
           {isSidebarOpen ? <Menu size={20} className="md:hidden" /> : <PanelLeftOpen size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />}
