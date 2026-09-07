@@ -93,34 +93,33 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
         if (storedRole === 'admin' || storedRole === 'administrator') {
           // Fetch pending applications for admin
-          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises`, {
+          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=100`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (fRes.ok) {
-            const fList = await fRes.json();
-            if (Array.isArray(fList)) {
-              fList.filter(item => item.status === 'Pending').slice(0, 10).forEach(item => {
-                notifs.push({
-                  id: `admin_pending_${item._id}`,
-                  title: 'New Franchise Application',
-                  desc: `${item.fullName} submitted a new application (${item.plateNo || 'Pending Plate'}) for ${item.todaName || 'TODA'}.`,
-                  time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent',
-                  type: 'pending',
-                  link: '/franchise-approval'
-                });
+            const fRaw = await fRes.json();
+            const fList = Array.isArray(fRaw) ? fRaw : (fRaw?.data || []);
+            fList.filter(item => item.status === 'Pending').slice(0, 10).forEach(item => {
+              notifs.push({
+                id: `admin_pending_${item._id}`,
+                title: 'New Franchise Application',
+                desc: `${item.fullName} submitted a new application (${item.plateNo || 'Pending Plate'}) for ${item.todaName || 'TODA'}.`,
+                time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent',
+                type: 'pending',
+                link: '/franchise-approval'
               });
+            });
 
-              fList.filter(item => item.status === 'Expired').slice(0, 5).forEach(item => {
-                notifs.push({
-                  id: `admin_expired_${item._id}`,
-                  title: 'Expired Franchise Alert',
-                  desc: `Unit ${item.plateNo || 'N/A'} of ${item.fullName} has expired and needs renewal.`,
-                  time: 'Notice',
-                  type: 'reminder',
-                  link: '/franchise-masterlist'
-                });
+            fList.filter(item => item.status === 'Expired').slice(0, 5).forEach(item => {
+              notifs.push({
+                id: `admin_expired_${item._id}`,
+                title: 'Expired Franchise Alert',
+                desc: `Unit ${item.plateNo || 'N/A'} of ${item.fullName} has expired and needs renewal.`,
+                time: 'Notice',
+                type: 'reminder',
+                link: '/franchise-masterlist'
               });
-            }
+            });
           }
 
           // Fetch TODA submissions for admin

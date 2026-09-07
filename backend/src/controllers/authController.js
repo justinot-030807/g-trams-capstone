@@ -469,7 +469,7 @@ exports.googleAuth = async (req, res) => {
                 });
             }
 
-            // Link googleId and email if not linked yet
+            // Link googleId, email, profilePic, and auto-verify immediately!
             let shouldSave = false;
             if (!user.googleId && googleId) {
                 user.googleId = googleId;
@@ -477,6 +477,21 @@ exports.googleAuth = async (req, res) => {
             }
             if (!user.email) {
                 user.email = email;
+                shouldSave = true;
+            }
+            if (!user.profilePic && googlePicture) {
+                user.profilePic = googlePicture;
+                shouldSave = true;
+            }
+            // Auto-verify since Google confirms email identity
+            if (!user.isVerified) {
+                user.isVerified = true;
+                user.otp = undefined;
+                user.otpExpire = undefined;
+                shouldSave = true;
+            }
+            if (user.authProvider !== 'google') {
+                user.authProvider = 'google';
                 shouldSave = true;
             }
             if (shouldSave) {
@@ -496,21 +511,7 @@ exports.googleAuth = async (req, res) => {
             });
         }
 
-        // If user does not exist yet:
-        // Did the user submit their onboarding profile completion form?
-        if (!onboardingData) {
-            return res.status(200).json({
-                isNewUser: true,
-                googleProfile: {
-                    email,
-                    name: googleName,
-                    picture: googlePicture,
-                    googleId
-                }
-            });
-        }
-
-        // User is completing onboarding:
+        // If user does not exist yet, auto-register immediately without any OTP code!
         if (isMaintenance) {
             return res.status(503).json({ 
                 message: 'Registration is temporarily disabled during system maintenance.',
@@ -518,40 +519,51 @@ exports.googleAuth = async (req, res) => {
             });
         }
 
-        const { fullName, address, contact, todaAssociation } = onboardingData;
+        const fullName = (onboardingData?.fullName || googleName || email.split('@')[0]).trim();
+        const address = (onboardingData?.address || 'Gasan, Marinduque').trim();
+        const contact = (onboardingData?.contact || email).trim();
+        const todaAssociation = onboardingData?.todaAssociation || 'NON-TODA';
 
-        if (!fullName || !fullName.trim()) {
-            return res.status(400).json({ message: 'Full legal name is required.' });
-        }
-        if (!address || !address.trim()) {
-            return res.status(400).json({ message: 'Barangay address in Gasan is required.' });
-        }
-        if (!contact || !contact.trim()) {
-            return res.status(400).json({ message: 'Mobile contact number is required.' });
-        }
-
-        const normalizedContact = String(contact).trim();
-
-        // Check if phone number is already used by another account
+        // Check if account with this contact already exists
         const existingContact = await User.findOne({
-            contact: { $regex: new RegExp(`^${normalizedContact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+            contact: { $regex: new RegExp(`^${contact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
         });
+
         if (existingContact) {
-            return res.status(400).json({ message: 'An account with this mobile number already exists. Please use a different contact number.' });
+            existingContact.googleId = googleId || existingContact.googleId || '';
+            existingContact.email = email;
+            existingContact.isVerified = true;
+            existingContact.otp = undefined;
+            existingContact.otpExpire = undefined;
+            existingContact.authProvider = 'google';
+            if (googlePicture && !existingContact.profilePic) existingContact.profilePic = googlePicture;
+            await existingContact.save();
+
+            const token = jwt.sign({ id: existingContact._id, role: existingContact.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            const userObj = existingContact.toObject();
+            delete userObj.password;
+
+            return res.status(200).json({
+                isNewUser: false,
+                token,
+                role: existingContact.role,
+                name: existingContact.name,
+                user: userObj
+            });
         }
 
-        // Create new operator user with isVerified: true (NO OTP NEEDED FOR GOOGLE!)
+        // Create new operator user with isVerified: true (100% NO 6-DIGIT OTP CODE REQUIRED!)
         const randomPass = Math.random().toString(36).slice(-8) + 'G!' + Math.floor(Math.random() * 90 + 10);
         user = new User({
-            name: fullName.trim(), // Edited full legal name!
-            address: address.trim(),
-            contact: normalizedContact,
+            name: fullName,
+            address: address,
+            contact: contact,
             email: email,
             googleId: googleId || '',
             password: randomPass,
             role: 'operator',
-            todaAssociation: todaAssociation || 'NON-TODA',
-            isVerified: true, // Auto-verified!
+            todaAssociation: todaAssociation,
+            isVerified: true, // Automatically verified via Google!
             profilePic: googlePicture || '',
             authProvider: 'google'
         });

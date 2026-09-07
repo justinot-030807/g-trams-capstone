@@ -28,16 +28,17 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=5000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      const data = await response.json();
+      const raw = await response.json();
       
       if (response.ok) {
+        const data = Array.isArray(raw) ? raw : (raw?.data || []);
         const activeCount = data.filter(f => f.status === 'Active').length;
-        const pendingCount = data.filter(f => f.status === 'Pending').length;
+        const pendingCount = data.filter(f => f.status === 'Pending' || f.status === 'Ready for Pickup').length;
         const expiredCount = data.filter(f => f.status === 'Expired').length;
-        const cancelledCount = data.filter(f => f.status === 'Cancelled').length;
+        const cancelledCount = data.filter(f => f.status === 'Cancelled' || f.status === 'Revoked').length;
         const newAppsCount = data.filter(f => f.applicationType === 'New').length;
         
         setStats({ 
@@ -49,10 +50,14 @@ const AdminDashboard = () => {
           newApps: newAppsCount 
         });
         
-        const pendingList = data.filter(f => f.status === 'Pending').slice(0, 5);
+        const pendingList = data.filter(f => f.status === 'Pending' || f.status === 'Ready for Pickup').slice(0, 5);
         setRecentApps(pendingList);
 
-        const sortedHistory = [...data].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 6);
+        const sortedHistory = [...data].sort((a, b) => {
+          const timeA = new Date(a.updatedAt || a.dateApplied || 0).getTime();
+          const timeB = new Date(b.updatedAt || b.dateApplied || 0).getTime();
+          return timeB - timeA;
+        }).slice(0, 6);
         setHistoryLogs(sortedHistory);
       }
     } catch (error) {
@@ -76,7 +81,7 @@ const AdminDashboard = () => {
     if (log.isArchived) return { text: `Archived record of ${name}`, color: 'text-slate-600 bg-slate-100 border-slate-200' };
     if (log.status === 'Active' && log.applicationType === 'Renewal') return { text: `Approved renewal for ${name}`, color: 'text-blue-700 bg-blue-50 border-blue-200' };
     if (log.status === 'Active') return { text: `Approved franchise of ${name}`, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
-    if (log.status === 'Cancelled') return { text: `Rejected application of ${name}`, color: 'text-red-700 bg-red-50 border-red-200' };
+    if (log.status === 'Cancelled') return { text: log.cancelReason ? `Cancelled (${log.cancelReason}) - ${name}` : `Cancelled application of ${name}`, color: 'text-red-700 bg-red-50 border-red-200' };
     if (log.status === 'Expired') return { text: `Flagged as expired for ${name}`, color: 'text-orange-700 bg-orange-50 border-orange-200' };
     return { text: `Updated pending record of ${name}`, color: 'text-amber-700 bg-amber-50 border-amber-200' };
   };

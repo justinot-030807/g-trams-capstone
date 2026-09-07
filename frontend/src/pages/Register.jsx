@@ -547,14 +547,18 @@ const Register = () => {
                   <GoogleAuthButton 
                     text="Continue with Google"
                     onSuccess={handleGoogleSuccess}
-                    onNewUser={(profile) => {
-                      setGoogleProfileData(profile);
-                      setFormData(prev => ({
-                        ...prev,
-                        name: prev.name || profile.name || '',
-                        contact: profile.email || prev.contact
-                      }));
-                      setSuccess(`Connected with Google: ${profile.email}. Complete your details above to finish.`);
+                    onNewUser={(data) => {
+                      if (data?.token) {
+                        handleGoogleSuccess(data);
+                      } else {
+                        setGoogleProfileData(data);
+                        setFormData(prev => ({
+                          ...prev,
+                          name: prev.name || data?.name || '',
+                          contact: data?.email || prev.contact
+                        }));
+                        setSuccess(`Connected with Google: ${data?.email || ''}. Complete your details above to finish.`);
+                      }
                     }}
                     onError={(msg) => setError(msg)}
                   />

@@ -33,12 +33,12 @@ const ManageRevocations = () => {
   const fetchFranchises = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=2000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
-        const data = await response.json();
-        setFranchises(data);
+        const raw = await response.json();
+        setFranchises(Array.isArray(raw) ? raw : (raw?.data || []));
       }
     } catch (error) {
       console.error('Failed to fetch records:', error);

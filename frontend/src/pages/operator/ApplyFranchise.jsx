@@ -3,7 +3,8 @@ import MainLayout from '../../components/MainLayout';
 import { 
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
-  ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw
+  ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw,
+  Save, XCircle, CheckCircle2, Clock, Sparkles
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -17,6 +18,14 @@ const GASAN_BARANGAYS = [
 ];
 
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
+
+const CANCEL_REASONS = [
+  "Nais baguhin ang detalye ng motor o tricycle",
+  "Kulang pa sa mga dokumento / Ipagpapaliban muna",
+  "May ibang kailangang asikasuhin / Personal na dahilan",
+  "Duplicate o nagkamaling submission",
+  "Iba pang dahilan (Pakilagay sa ibaba)"
+];
 
 const DEFAULT_REQUIREMENTS = [
   { id: 'orCrDocument', label: 'OR / CR ng Motor', fieldUrl: 'orCrUrl' },
@@ -34,6 +43,16 @@ const ApplyFranchise = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState(null);
+
+  // Cancellation modal state
+  const [cancelModal, setCancelModal] = useState({
+    isOpen: false,
+    unit: null,
+    reason: CANCEL_REASONS[0],
+    customReason: '',
+    isSubmitting: false
+  });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [fullPreview, setFullPreview] = useState(null);
@@ -128,14 +147,89 @@ const ApplyFranchise = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (formMode === 'New') {
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
-        formData,
-        currentStep
-      }));
+  const getDraftKey = () => {
+    if (formMode === 'Renewal' && selectedId) {
+      return `gtrams_renewal_draft_${selectedId}`;
     }
-  }, [formData, currentStep, formMode]);
+    return DRAFT_STORAGE_KEY;
+  };
+
+  const calculateProgress = () => {
+    if (formMode === 'Renewal') {
+      const vehicleFields = 8;
+      const cedulaFields = [
+        formData.dateApplied,
+        formData.cedulaDate,
+        formData.cedulaAddress,
+        formData.cedulaSerialNo
+      ].filter(Boolean).length;
+      const total = 12;
+      const done = vehicleFields + cedulaFields;
+      const pct = Math.round((done / total) * 100);
+      return { percentage: Math.min(pct, 100), completed: done, total, remaining: total - done };
+    }
+
+    const step1Fields = [
+      formData.fullName,
+      formData.address,
+      formData.zone,
+      formData.made,
+      formData.make,
+      formData.motorNo,
+      formData.chassisNo,
+      formData.plateNo
+    ].filter(Boolean).length;
+
+    const step2Fields = [
+      formData.dateApplied,
+      formData.cedulaDate,
+      formData.cedulaAddress,
+      formData.cedulaSerialNo
+    ].filter(Boolean).length;
+
+    const step3Files = requirementsList.filter(req => uploadedDocs[req.id] || filePreviews[req.id]).length;
+
+    const total = 8 + 4 + (requirementsList?.length || 4);
+    const done = step1Fields + step2Fields + step3Files;
+    const pct = Math.round((done / total) * 100);
+    return { percentage: Math.min(pct, 100), completed: done, total, remaining: total - done };
+  };
+
+  const handleSaveProgress = (isManual = true) => {
+    if (!formMode) return;
+    const key = getDraftKey();
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        formData,
+        currentStep,
+        savedAt: now.toISOString(),
+        timeFormatted: timeStr,
+        formMode,
+        selectedId
+      }));
+
+      setLastSavedTime(timeStr);
+      setHasDraftRestored(true);
+      if (isManual) {
+        showToast(`✓ Na-save ang iyong progress! (${timeStr})`, "success");
+      }
+    } catch (e) {
+      console.error('Error saving draft:', e);
+    }
+  };
+
+  // Background auto-save while typing
+  useEffect(() => {
+    if (formMode === 'New' || formMode === 'Renewal') {
+      const timer = setTimeout(() => {
+        handleSaveProgress(false);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [formData, currentStep, formMode, selectedId]);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -168,6 +262,7 @@ const ApplyFranchise = () => {
 
   const handleStartNewApplication = () => {
     setFormMode('New');
+    setSelectedId(null);
     setFilePreviews({});
     
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -181,7 +276,8 @@ const ApplyFranchise = () => {
           });
           setCurrentStep(parsedDraft.currentStep || 1);
           setHasDraftRestored(true);
-          showToast("Na-restore ang iyong dating nai-type na draft.", "success");
+          setLastSavedTime(parsedDraft.timeFormatted || null);
+          showToast("Na-restore ang iyong dating nai-save na draft.", "success");
           return;
         }
       } catch (e) {
@@ -190,6 +286,7 @@ const ApplyFranchise = () => {
     }
 
     setHasDraftRestored(false);
+    setLastSavedTime(null);
     setCurrentStep(1);
     setFormData({ 
       fullName: loggedInUserName, 
@@ -203,29 +300,53 @@ const ApplyFranchise = () => {
   };
 
   const handleClearDraft = () => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    const key = getDraftKey();
+    localStorage.removeItem(key);
     setHasDraftRestored(false);
+    setLastSavedTime(null);
     setCurrentStep(1);
-    setFormData({ 
-      fullName: loggedInUserName, 
-      address: loggedInAddress, 
-      zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
-      todaName: loggedInToda, 
-      dateApplied: '', cedulaDate: '', 
-      cedulaAddress: 'Gasan, Marinduque', 
-      cedulaSerialNo: '' 
-    });
-    setUploadedDocs({});
-    setFilePreviews({});
+    if (formMode === 'New') {
+      setFormData({ 
+        fullName: loggedInUserName, 
+        address: loggedInAddress, 
+        zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+        todaName: loggedInToda, 
+        dateApplied: '', cedulaDate: '', 
+        cedulaAddress: 'Gasan, Marinduque', 
+        cedulaSerialNo: '' 
+      });
+      setUploadedDocs({});
+      setFilePreviews({});
+    }
     showToast("Binura ang draft. Naka-reset na ang form.", "success");
   };
 
   const handleRenewClick = (franchise) => {
     setFormMode('Renewal');
     setSelectedId(franchise._id);
-    setCurrentStep(1);
     setFilePreviews({});
     
+    const renewDraftKey = `gtrams_renewal_draft_${franchise._id}`;
+    const savedDraft = localStorage.getItem(renewDraftKey);
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.formData) {
+          setFormData(parsed.formData);
+          setCurrentStep(parsed.currentStep || 1);
+          setHasDraftRestored(true);
+          setLastSavedTime(parsed.timeFormatted || null);
+          showToast("Na-restore ang iyong dating nai-save na renewal draft.", "success");
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    setHasDraftRestored(false);
+    setLastSavedTime(null);
+    setCurrentStep(1);
     setFormData({
       fullName: franchise.fullName || '',
       address: franchise.address || '',
@@ -237,9 +358,41 @@ const ApplyFranchise = () => {
       plateNo: franchise.plateNo || '',
       todaName: franchise.todaName || loggedInToda,
       dateApplied: '', cedulaDate: '', 
-      cedulaAddress: 'Gasan, Marinduque', 
-      cedulaSerialNo: ''
+      cedulaAddress: franchise.cedulaAddress || 'Gasan, Marinduque', 
+      cedulaSerialNo: franchise.cedulaSerialNo || ''
     });
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelModal.unit) return;
+    setCancelModal(prev => ({ ...prev, isSubmitting: true }));
+    const finalReason = cancelModal.reason === 'Iba pang dahilan (Pakilagay sa ibaba)' 
+      ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
+      : cancelModal.reason;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${cancelModal.unit._id}/cancel`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cancelReason: finalReason })
+      });
+
+      if (res.ok) {
+        showToast("Matagumpay na nai-cancel ang aplikasyon.", "success");
+        setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false });
+        fetchMyFranchises();
+      } else {
+        const d = await res.json();
+        showToast(d.message || "Hindi nai-cancel ang aplikasyon.", "error");
+        setCancelModal(prev => ({ ...prev, isSubmitting: false }));
+      }
+    } catch (err) {
+      showToast("Network error. Hindi makakonekta sa server.", "error");
+      setCancelModal(prev => ({ ...prev, isSubmitting: false }));
+    }
   };
 
   const handleReapplyClick = (franchise) => {
@@ -387,6 +540,9 @@ const ApplyFranchise = () => {
 
       if (response.ok) {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+        if (selectedId) {
+          localStorage.removeItem(`gtrams_renewal_draft_${selectedId}`);
+        }
         showToast("Matagumpay na naisumite ang aplikasyon!", "success");
         setFormMode(null);
         setCurrentStep(1);
@@ -441,13 +597,50 @@ const ApplyFranchise = () => {
           </div>
         </header>
 
+        {/* Draft Resume Alert Banner */}
+        {localStorage.getItem(DRAFT_STORAGE_KEY) && myFranchises.length < maxAllowedUnits && (
+          <div className="mb-6 max-w-5xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-slate-900 dark:text-white">May Hindi Natapos na Bagong Aplikasyon</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">May na-save kang draft ng aplikasyon. Maaari mo itong ipagpatuloy o i-reset.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem(DRAFT_STORAGE_KEY);
+                  showToast("Na-clear ang lumang draft.", "success");
+                }}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                I-clear
+              </button>
+              <button
+                type="button"
+                onClick={handleStartNewApplication}
+                className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
+              >
+                Ipagpatuloy <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="max-w-5xl">
             <GarageGridSkeleton count={2} baseDelay={50} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
-            {myFranchises.map((unit, index) => (
+            {myFranchises.map((unit, index) => {
+              const hasRenewalDraft = localStorage.getItem(`gtrams_renewal_draft_${unit._id}`);
+
+              return (
               <div 
                 key={unit._id} 
                 className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors"
@@ -461,7 +654,7 @@ const ApplyFranchise = () => {
                 </div>
                 
                 <div>
-                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2 gap-2 flex-wrap">
                     <span className={`px-3 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
                       unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                       unit.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
@@ -474,23 +667,40 @@ const ApplyFranchise = () => {
                       {unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
                     </span>
                     
-                    {unit.status === 'Expired' && (
-                      <button 
-                        onClick={() => handleRenewClick(unit)}
-                        className="text-xs font-bold bg-[#7A1B22] text-white px-4 py-2 rounded-xl hover:bg-[#5A1419] transition-colors flex items-center gap-2 shadow-xs active:scale-95"
-                      >
-                        <RefreshCw size={14} /> Renew Now
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {unit.status === 'Expired' && (
+                        <button 
+                          onClick={() => handleRenewClick(unit)}
+                          className="text-xs font-bold bg-[#7A1B22] text-white px-4 py-2 rounded-xl hover:bg-[#5A1419] transition-colors flex items-center gap-2 shadow-xs active:scale-95"
+                        >
+                          <RefreshCw size={14} /> {hasRenewalDraft ? 'Ipagpatuloy ang Renewal' : 'Renew Now'}
+                        </button>
+                      )}
 
-                    {unit.status === 'Cancelled' && (
-                      <button 
-                        onClick={() => handleReapplyClick(unit)}
-                        className="text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-xs active:scale-95"
-                      >
-                        <RefreshCw size={14} /> Fix Issues
-                      </button>
-                    )}
+                      {unit.status === 'Cancelled' && (
+                        <button 
+                          onClick={() => handleReapplyClick(unit)}
+                          className="text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-xs active:scale-95"
+                        >
+                          <RefreshCw size={14} /> Fix Issues
+                        </button>
+                      )}
+
+                      {(unit.status === 'Pending' || unit.status === 'Ready for Pickup') && (
+                        <button 
+                          onClick={() => setCancelModal({
+                            isOpen: true,
+                            unit,
+                            reason: CANCEL_REASONS[0],
+                            customReason: '',
+                            isSubmitting: false
+                          })}
+                          className="text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900/60 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 active:scale-95"
+                        >
+                          <XCircle size={14} /> I-cancel
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {unit.status === 'Active' && (
@@ -521,7 +731,8 @@ const ApplyFranchise = () => {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             {myFranchises.length < maxAllowedUnits ? (
               <button 
@@ -624,61 +835,127 @@ const ApplyFranchise = () => {
           </div>
         </div>
 
-        {formMode === 'New' && hasDraftRestored && (
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <button
             type="button"
-            onClick={handleClearDraft}
-            className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors w-fit"
-            title="Burahin ang draft at mag-umpisa ulit"
+            onClick={() => handleSaveProgress(true)}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] bg-red-50 dark:bg-amber-950/30 hover:bg-red-100 dark:hover:bg-amber-900/40 px-3 py-1.5 rounded-xl border border-red-200 dark:border-amber-800/60 transition-colors shadow-2xs active:scale-95"
+            title="I-save ang inyong progress upang balikan mamaya"
           >
-            <RotateCcw size={13} /> Reset Draft
+            <Save size={13} /> I-save ang Progress
           </button>
-        )}
+
+          {hasDraftRestored && (
+            <button
+              type="button"
+              onClick={handleClearDraft}
+              className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
+              title="Burahin ang draft at mag-umpisa ulit"
+            >
+              <RotateCcw size={13} /> Reset Draft
+            </button>
+          )}
+        </div>
       </header>
 
-      {/* Step progress bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs max-w-3xl mb-5 transition-colors">
-        <div className="relative flex items-center justify-between px-4 sm:px-12">
-          
-          <div className="absolute left-[15%] right-[15%] sm:left-[20%] sm:right-[20%] top-[14px] sm:top-[16px] h-[2px] bg-slate-200 dark:bg-slate-700 z-0" />
-          
-          <div 
-            className="absolute left-[15%] sm:left-[20%] top-[14px] sm:top-[16px] h-[2px] bg-[#7A1B22] dark:bg-[#D4AF37] transition-all duration-300 ease-out z-0"
-            style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '35%' : '70%' }}
-          />
-
-          {steps.map((step) => {
-            const isCompleted = currentStep > step.num;
-            const isCurrent = currentStep === step.num;
-
-            return (
-              <div key={step.num} className="relative z-10 flex flex-col items-center w-24 sm:w-32">
-                <div 
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-                    isCompleted 
-                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-md' 
-                      : isCurrent 
-                      ? 'bg-white dark:bg-slate-800 border-[3px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20' 
-                      : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700'
-                  }`}
-                >
-                  {isCompleted ? (
-                    <Check size={14} className="stroke-[3]" />
-                  ) : isCurrent ? (
-                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
-                  ) : null}
-                </div>
-                
-                <span className={`text-[10px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors ${
-                  isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+      {/* Dynamic Completion Progress Bar */}
+      {(() => {
+        const progress = calculateProgress();
+        return (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs max-w-3xl mb-5 transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${
+                  progress.percentage === 100 
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400' 
+                    : 'bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]'
                 }`}>
-                  {step.title}
-                </span>
+                  {progress.percentage === 100 ? <CheckCircle2 size={18} /> : `${progress.percentage}%`}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                      Progress ng Aplikasyon
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {progress.completed} sa {progress.total} detalye
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                    {progress.remaining > 0 
+                      ? (formMode === 'Renewal' ? `${progress.remaining} Cedula field pa ang kailangan` : `${progress.remaining} kulang na detalye / dokumento`)
+                      : '✓ Kumpleto na ang lahat ng kinakailangan!'}
+                  </p>
+                </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500 self-end sm:self-center">
+                <Clock size={12} />
+                <span>{lastSavedTime ? `Huling na-save: ${lastSavedTime}` : 'Awtomatikong nase-save'}</span>
+              </div>
+            </div>
+
+            {/* Visual Progress Bar Track */}
+            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/60 dark:border-slate-700/60 mb-4">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ease-out ${
+                  progress.percentage === 100
+                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                    : 'bg-gradient-to-r from-[#7A1B22] to-[#D4AF37]'
+                }`}
+                style={{ width: `${progress.percentage}%` }}
+              />
+            </div>
+
+            {/* Stepper Navigation */}
+            <div className="relative flex items-center justify-between px-2 sm:px-8 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="absolute left-[15%] right-[15%] sm:left-[20%] sm:right-[20%] top-[22px] sm:top-[24px] h-[2px] bg-slate-200 dark:bg-slate-700 z-0" />
+              <div 
+                className="absolute left-[15%] sm:left-[20%] top-[22px] sm:top-[24px] h-[2px] bg-[#7A1B22] dark:bg-[#D4AF37] transition-all duration-300 ease-out z-0"
+                style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '35%' : '70%' }}
+              />
+
+              {steps.map((step) => {
+                const isCompleted = currentStep > step.num;
+                const isCurrent = currentStep === step.num;
+
+                return (
+                  <button
+                    type="button"
+                    key={step.num}
+                    onClick={() => setCurrentStep(step.num)}
+                    className="relative z-10 flex flex-col items-center w-24 sm:w-32 group cursor-pointer focus:outline-hidden"
+                  >
+                    <div 
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isCompleted 
+                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-md group-hover:scale-105' 
+                          : isCurrent 
+                          ? 'bg-white dark:bg-slate-800 border-[3px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
+                          : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <Check size={14} className="stroke-[3]" />
+                      ) : isCurrent ? (
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+                      ) : (
+                        <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
+                      )}
+                    </div>
+                    
+                    <span className={`text-[10px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors ${
+                      isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+                    }`}>
+                      {step.title}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl">
         
@@ -790,7 +1067,15 @@ const ApplyFranchise = () => {
               </div>
             </div>
 
-            <div className="flex justify-end mt-6 border-t border-slate-100 dark:border-slate-800 pt-4">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
+              <button
+                type="button"
+                onClick={() => handleSaveProgress(true)}
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95"
+              >
+                <Save size={14} /> I-save ang Progress
+              </button>
+
               <button 
                 type="button" 
                 onClick={validateAndNext}
@@ -841,22 +1126,32 @@ const ApplyFranchise = () => {
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="flex items-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 <ChevronLeft size={15} /> Bumalik
               </button>
 
-              <button 
-                type="button" 
-                onClick={validateAndNext}
-                className="flex items-center gap-1.5 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-[#5A1419] transition-all shadow-xs active:scale-95"
-              >
-                Susunod <ChevronRight size={15} />
-              </button>
+              <div className="w-full sm:w-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveProgress(true)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95"
+                >
+                  <Save size={14} /> I-save ang Progress
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={validateAndNext}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-[#5A1419] transition-all shadow-xs active:scale-95"
+                >
+                  Susunod <ChevronRight size={15} />
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -904,25 +1199,35 @@ const ApplyFranchise = () => {
               </div>
             </div>
 
-            <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4 gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="flex items-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 <ChevronLeft size={15} /> Bumalik
               </button>
 
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs text-white transition-all shadow-xs active:scale-95 ${
-                  isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419]'
-                }`}
-              >
-                {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
-                {isSubmitting ? 'Isinusumite...' : formMode === 'Re-apply' ? 'Isumite ang Update' : `Isumite ang Aplikasyon`}
-              </button>
+              <div className="w-full sm:w-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveProgress(true)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95"
+                >
+                  <Save size={14} /> I-save ang Progress
+                </button>
+
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs text-white transition-all shadow-xs active:scale-95 ${
+                    isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419]'
+                  }`}
+                >
+                  {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                  {isSubmitting ? 'Isinusumite...' : formMode === 'Re-apply' ? 'Isumite ang Update' : `Isumite ang Aplikasyon`}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -966,6 +1271,107 @@ const ApplyFranchise = () => {
                   className="max-h-[65vh] w-auto object-contain rounded-xl shadow-xs" 
                 />
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Operator Application Cancellation Modal */}
+      {cancelModal.isOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" 
+            onClick={() => !cancelModal.isSubmitting && setCancelModal(prev => ({ ...prev, isOpen: false }))} 
+          />
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400">
+                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center shrink-0">
+                  <XCircle size={18} />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-white">I-cancel ang Aplikasyon</h3>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
+                </div>
+              </div>
+              <button 
+                disabled={cancelModal.isSubmitting}
+                onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))} 
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3.5 rounded-2xl flex items-start gap-2.5">
+                <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+                  Paalala: Kapag kinansela ang aplikasyong ito, babaguhin ang status nito bilang <b>Cancelled</b> at makikita ng LGU Admin ang dahilan sa audit records.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                  Pumili ng Dahilan sa Pag-cancel:
+                </label>
+                <div className="space-y-2">
+                  {CANCEL_REASONS.map((r, idx) => (
+                    <label 
+                      key={idx} 
+                      className={`flex items-start gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
+                        cancelModal.reason === r 
+                          ? 'border-red-500 bg-red-50/40 dark:bg-red-950/20 text-slate-900 dark:text-white font-bold' 
+                          : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="cancel_reason"
+                        checked={cancelModal.reason === r}
+                        onChange={() => setCancelModal(prev => ({ ...prev, reason: r }))}
+                        className="mt-0.5 text-red-600 focus:ring-red-500"
+                      />
+                      <span>{r}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {cancelModal.reason === "Iba pang dahilan (Pakilagay sa ibaba)" && (
+                <div className="animate-in fade-in duration-150">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Iba pang Detalye ng Dahilan:
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={cancelModal.customReason}
+                    onChange={(e) => setCancelModal(prev => ({ ...prev, customReason: e.target.value }))}
+                    placeholder="Ilagay ang dahilan kung bakit nais i-cancel..."
+                    className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                disabled={cancelModal.isSubmitting}
+                onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))}
+                className="px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Bumalik
+              </button>
+              <button
+                type="button"
+                disabled={cancelModal.isSubmitting || (cancelModal.reason === "Iba pang dahilan (Pakilagay sa ibaba)" && !cancelModal.customReason?.trim())}
+                onClick={handleConfirmCancel}
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cancelModal.isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                {cancelModal.isSubmitting ? 'Kinakansela...' : 'Kumpirmahin ang Pag-cancel'}
+              </button>
             </div>
           </div>
         </div>

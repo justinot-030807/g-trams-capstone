@@ -373,14 +373,17 @@ const Login = () => {
               <GoogleAuthButton 
                 text="Continue with Google"
                 onSuccess={handleAuthSuccess}
-                onNewUser={(profile) => {
-                  // Direct seamless navigation to register form with Google info prefilled
-                  navigate('/register', { 
-                    state: { 
-                      googleProfile: profile,
-                      fromGoogleLogin: true 
-                    } 
-                  });
+                onNewUser={(data) => {
+                  if (data?.token) {
+                    handleAuthSuccess(data);
+                  } else {
+                    navigate('/register', { 
+                      state: { 
+                        googleProfile: data,
+                        fromGoogleLogin: true 
+                      } 
+                    });
+                  }
                 }}
                 onError={(msg) => setError(msg)}
               />

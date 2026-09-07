@@ -295,12 +295,29 @@ const updateFranchiseStatus = async (req, res) => {
 const cancelMyFranchise = async (req, res) => {
     try {
         const franchise = await Franchise.findById(req.params.id);
-        if (!franchise) return res.status(404).json({ message: 'not found' });
-        if (franchise.operator.toString() !== req.user._id.toString()) return res.status(401).json({ message: 'not authorized' });
+        if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
+        if (franchise.operator.toString() !== req.user._id.toString()) return res.status(401).json({ message: 'Not authorized to cancel this application' });
         
+        if (franchise.status !== 'Pending' && franchise.status !== 'Ready for Pickup') {
+            return res.status(400).json({ message: 'Only pending applications can be cancelled.' });
+        }
+
+        const reason = (req.body.cancelReason || 'Cancelled by operator').trim();
         franchise.status = 'Cancelled';
-        franchise.cancelReason = req.body.cancelReason || 'Cancelled by operator';
+        franchise.cancelReason = reason;
         await franchise.save();
+
+        logAudit(req, {
+            action: 'FRANCHISE_CANCELLED_BY_OPERATOR',
+            targetType: 'Franchise',
+            targetId: req.params.id,
+            details: {
+                plateNo: franchise.plateNo || 'Pending',
+                fullName: franchise.fullName,
+                cancelReason: reason
+            }
+        });
+
         res.status(200).json(franchise);
     } catch (error) {
         res.status(500).json({ error: error.message });

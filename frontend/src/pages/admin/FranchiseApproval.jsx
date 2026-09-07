@@ -3,8 +3,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   CheckCircle, CheckCircle2, XCircle, Eye, FileText, AlertCircle, 
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
-  CalendarDays, User, Clock, ExternalLink, RefreshCw, CheckSquare, Square, 
-  ChevronRight
+  CalendarDays, User, Clock, ExternalLink, RefreshCw, ChevronRight, Shield
 } from 'lucide-react';
 import { QueueListSkeleton } from '../../components/skeleton';
 
@@ -25,12 +24,6 @@ const FranchiseApproval = () => {
   // Workstation state
   const [selectedApp, setSelectedApp] = useState(null); 
   const [activeDocKey, setActiveDocKey] = useState('orCr');
-  const [checklist, setChecklist] = useState({
-    orCr: false,
-    license: false,
-    toda: false,
-    brgy: false
-  });
   const [mobilePane, setMobilePane] = useState('details'); // 'details' | 'document'
 
   // Rejection & processing state
@@ -56,7 +49,7 @@ const FranchiseApproval = () => {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=2000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
@@ -115,7 +108,7 @@ const FranchiseApproval = () => {
     }
   };
 
-  // Reset document controls & checklist when an application is opened
+  // Reset document controls when an application is opened
   const handleOpenWorkstation = (app) => {
     setSelectedApp(app);
     setIsRejecting(false);
@@ -129,28 +122,6 @@ const FranchiseApproval = () => {
     else if (app.todaEndorsementUrl) setActiveDocKey('toda');
     else if (app.brgyClearanceUrl) setActiveDocKey('brgy');
     else setActiveDocKey('orCr');
-
-    // Initialize checklist based on whether app is renewal or new
-    setChecklist({
-      orCr: app.applicationType === 'Renewal',
-      license: app.applicationType === 'Renewal',
-      toda: app.applicationType === 'Renewal',
-      brgy: app.applicationType === 'Renewal'
-    });
-  };
-
-  const toggleChecklistItem = (key) => {
-    setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const toggleAllChecklist = () => {
-    const allChecked = Object.values(checklist).every(Boolean);
-    setChecklist({
-      orCr: !allChecked,
-      license: !allChecked,
-      toda: !allChecked,
-      brgy: !allChecked
-    });
   };
 
   const getExpirationDate = (dateApplied) => {
@@ -185,8 +156,6 @@ const FranchiseApproval = () => {
   ] : [];
 
   const currentDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
-  const verifiedCount = Object.values(checklist).filter(Boolean).length;
-  const isAllVerified = verifiedCount === 4;
 
   return (
     <MainLayout>
@@ -535,75 +504,59 @@ const FranchiseApproval = () => {
                     </div>
                   </div>
 
-                  {/* INTERACTIVE INSPECTION AUDITOR CHECKLIST */}
-                  <div className="bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 space-y-3.5">
+                  {/* SUBMITTED DOCUMENTS OVERVIEW (Clean & Elegant, Click to view on right pane) */}
+                  <div className="bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                          <CheckSquare size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Inspection Checklist
-                        </h4>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          Cross-check vehicle info against uploaded attachments.
-                        </p>
-                      </div>
-                      <button
-                        onClick={toggleAllChecklist}
-                        className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
-                      >
-                        {isAllVerified ? 'Uncheck All' : 'Verify All'}
-                      </button>
-                    </div>
-
-                    {/* Progress indicator */}
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all duration-300 ${isAllVerified ? 'bg-emerald-500' : 'bg-[#D4AF37]'}`}
-                        style={{ width: `${(verifiedCount / 4) * 100}%` }}
-                      />
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Submitted Documents
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-medium">Click to inspect</span>
                     </div>
 
                     <div className="space-y-2 pt-1">
-                      {[
-                        { key: 'orCr', label: 'OR/CR matches Make, Motor & Chassis No.', url: selectedApp.orCrUrl },
-                        { key: 'license', label: "Driver's License is Valid & Non-Expired", url: selectedApp.licenseUrl },
-                        { key: 'toda', label: `Endorsed by official ${selectedApp.todaName} Officer`, url: selectedApp.todaEndorsementUrl },
-                        { key: 'brgy', label: 'Barangay Clearance issued within Gasan', url: selectedApp.brgyClearanceUrl }
-                      ].map((item) => (
-                        <div 
-                          key={item.key}
-                          onClick={() => toggleChecklistItem(item.key)}
-                          className={`flex items-start gap-3 p-2.5 rounded-xl border cursor-pointer transition-all ${
-                            checklist[item.key] 
-                              ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200' 
-                              : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className="mt-0.5 shrink-0">
-                            {checklist[item.key] ? (
-                              <CheckSquare size={16} className="text-emerald-600 dark:text-emerald-400" />
-                            ) : (
-                              <Square size={16} className="text-slate-400" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold leading-snug">{item.label}</p>
-                            {!item.url && selectedApp.applicationType !== 'Renewal' && (
-                              <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">⚠️ No file uploaded</p>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveDocKey(item.key);
+                      {docTabs.map((tab) => {
+                        const isSelected = activeDocKey === tab.key;
+                        const hasFile = Boolean(tab.url);
+
+                        return (
+                          <div
+                            key={tab.key}
+                            onClick={() => {
+                              setActiveDocKey(tab.key);
                               setMobilePane('document');
                             }}
-                            className="text-[11px] text-[#7A1B22] dark:text-[#D4AF37] hover:underline font-bold px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shrink-0"
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-white dark:bg-slate-800 border-[#7A1B22] dark:border-[#D4AF37] shadow-sm ring-1 ring-[#7A1B22]/20 dark:ring-[#D4AF37]/20'
+                                : 'bg-white/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'
+                            }`}
                           >
-                            Inspect &rarr;
-                          </button>
-                        </div>
-                      ))}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-[#7A1B22] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>
+                                <FileText size={14} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className={`text-xs font-bold truncate ${isSelected ? 'text-[#7A1B22] dark:text-[#D4AF37]' : 'text-slate-800 dark:text-slate-200'}`}>
+                                  {tab.label}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {hasFile ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">
+                                  <CheckCircle2 size={11} /> Attached
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">
+                                  Missing
+                                </span>
+                              )}
+                              <ChevronRight size={14} className={`transition-colors ${isSelected ? 'text-[#7A1B22] dark:text-[#D4AF37]' : 'text-slate-300 dark:text-slate-600'}`} />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
