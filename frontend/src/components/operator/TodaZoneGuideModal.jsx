@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MapPin, Search, X, Compass, CheckCircle2, Shield, Info, Navigation, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MapPin, Search, X, Compass, CheckCircle2, Shield, Info, Navigation, Users, Map as MapIcon } from 'lucide-react';
 
 const TODA_DIRECTORY = [
   {
@@ -90,6 +91,7 @@ const QUICK_BARANGAYS = [
 ];
 
 const TodaZoneGuideModal = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrgyTag, setSelectedBrgyTag] = useState('All');
 
@@ -256,16 +258,31 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs shrink-0">
-          <p className="text-[11px] text-slate-500 font-medium">
-            Official Gasan TODA Route Network
-          </p>
-          <button
-            onClick={onClose}
-            className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 px-4 py-1.5 rounded-xl font-bold text-xs transition-colors"
-          >
-            Close Guide
-          </button>
+        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <p className="text-[11px] text-slate-500 font-medium">
+              Official Gasan TODA Route Network
+            </p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              onClick={() => {
+                onClose();
+                navigate('/route-plan-map');
+              }}
+              className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#8C2028] text-white px-3.5 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs"
+            >
+              <MapIcon size={14} className="text-[#D4AF37]" />
+              Buksan ang Interactive TRP Map
+            </button>
+            <button
+              onClick={onClose}
+              className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 px-3.5 py-1.5 rounded-xl font-bold text-xs transition-colors"
+            >
+              Close Guide
+            </button>
+          </div>
         </div>
 
       </div>

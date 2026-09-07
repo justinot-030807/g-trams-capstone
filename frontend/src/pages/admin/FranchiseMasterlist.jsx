@@ -8,6 +8,7 @@ import {
   Car, User, ShieldCheck, FileCheck, Phone, MapPin, Hash, ExternalLink
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
+import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'Active', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -38,6 +39,9 @@ const FranchiseMasterlist = () => {
   // View Details Modal State
   const [selectedFranchise, setSelectedFranchise] = useState(null);
   const [docPreviewUrl, setDocPreviewUrl] = useState(null);
+
+  // Printable MTOP Certificate State
+  const [printMtopUnit, setPrintMtopUnit] = useState(null);
 
   // Server-Side Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -443,6 +447,15 @@ const FranchiseMasterlist = () => {
 
             {/* Modal Footer */}
             <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-3xl">
+              {selectedFranchise.status === 'Active' && (
+                <button
+                  type="button"
+                  onClick={() => setPrintMtopUnit(selectedFranchise)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95"
+                >
+                  <Printer size={14} /> Print Official MTOP
+                </button>
+              )}
               <button 
                 type="button"
                 onClick={() => setSelectedFranchise(null)} 
@@ -767,6 +780,18 @@ const FranchiseMasterlist = () => {
                               <Eye size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Details
                             </button>
 
+                            {/* PRINT MTOP BUTTON FOR ACTIVE FRANCHISES */}
+                            {f.status === 'Active' && (
+                              <button
+                                type="button"
+                                onClick={() => setPrintMtopUnit(f)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all shadow-xs active:scale-95"
+                                title="Print Official MTOP Certificate"
+                              >
+                                <Printer size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> MTOP
+                              </button>
+                            )}
+
                             {/* ARCHIVE / RESTORE BUTTON */}
                             {!f.isArchived ? (
                               f.status === 'Active' ? (
@@ -903,6 +928,13 @@ const FranchiseMasterlist = () => {
           </div>
         </div>
       )}
+
+      {/* Official Printable MTOP Certificate Modal */}
+      <MtopCertificateModal 
+        isOpen={!!printMtopUnit} 
+        onClose={() => setPrintMtopUnit(null)} 
+        unit={printMtopUnit} 
+      />
     </MainLayout>
   );
 };

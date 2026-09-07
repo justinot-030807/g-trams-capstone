@@ -22,6 +22,7 @@ import RenewFranchise from './pages/operator/RenewFranchise';
 import OperatorSettings from './pages/operator/OperatorSettings';
 import SubmitMembers from './pages/operator/SubmitMembers';
 import HelpSupport from './pages/operator/HelpSupport';
+import RoutePlanMap from './pages/shared/RoutePlanMap';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -91,6 +92,7 @@ function App() {
           {/* SHARED SECURE ROUTES & REDIRECTS */}
           <Route path="/manage-profile" element={<ProfileRedirect />} />
           <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
+          <Route path="/route-plan-map" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><RoutePlanMap /></ProtectedRoute>} />
         </Routes>
       </LanguageProvider>
     </ThemeProvider>

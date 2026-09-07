@@ -2,16 +2,54 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
-  BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles 
+  BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles,
+  PieChart as PieChartIcon
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip 
+} from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { StatsCardsSkeleton, SkeletonElement } from '../../components/skeleton';
+
+const TODA_COLORS = [
+  '#7A1B22', // Maroon (Municipal Core)
+  '#D4AF37', // Gold (Accent)
+  '#2563EB', // Blue (BATODA)
+  '#059669', // Emerald (POB TODA)
+  '#D97706', // Amber (GT TODA)
+  '#7C3AED', // Purple (NBI TODA)
+  '#0D9488', // Teal (TAB TODA)
+  '#E11D48', // Rose (BANGBANG IPIL)
+  '#0284C7', // Sky (BAHI TODA)
+  '#4F46E5', // Indigo (GASAN CENTRAL)
+  '#64748B'  // Slate (NON-TODA / Others)
+];
+
+const CustomTodaTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 text-xs">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: data.color }} />
+          <span className="font-black text-slate-900 dark:text-white">{data.name}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-400">
+          <span>Units: <strong className="text-slate-800 dark:text-slate-200">{data.value}</strong></span>
+          <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37]">{data.percentage}% share</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ 
     total: 0, active: 0, pending: 0, expired: 0, cancelled: 0, newApps: 0 
   });
+  const [todaStats, setTodaStats] = useState([]);
   const [recentApps, setRecentApps] = useState([]);
   const [historyLogs, setHistoryLogs] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -49,6 +87,29 @@ const AdminDashboard = () => {
           cancelled: cancelledCount,
           newApps: newAppsCount 
         });
+
+        // Compute TODA distribution
+        const todaMap = {};
+        data.forEach(item => {
+          let name = item.todaName ? item.todaName.trim() : 'NON-TODA';
+          if (!name) name = 'NON-TODA';
+          todaMap[name] = (todaMap[name] || 0) + 1;
+        });
+
+        const todaList = Object.entries(todaMap)
+          .map(([name, count]) => ({
+            name,
+            value: count,
+            percentage: data.length > 0 ? Math.round((count / data.length) * 100) : 0
+          }))
+          .sort((a, b) => b.value - a.value);
+
+        const formattedTodaStats = todaList.map((item, idx) => ({
+          ...item,
+          color: TODA_COLORS[idx % TODA_COLORS.length]
+        }));
+
+        setTodaStats(formattedTodaStats);
         
         const pendingList = data.filter(f => f.status === 'Pending' || f.status === 'Ready for Pickup').slice(0, 5);
         setRecentApps(pendingList);
@@ -293,7 +354,120 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* 4. ACTIVITY LOGS & PENDING QUEUE */}
+      {/* TODA DISTRIBUTION DONUT CHART */}
+      {!isLoading && todaStats.length > 0 && (
+        <div 
+          className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
+          style={{ animationDelay: '0.32s' }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl">
+                <PieChartIcon size={18} />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">
+                  TODA Fleet Distribution &amp; Share
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  Breakdown of active tricycle units per transport association across Gasan
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] sm:text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700">
+                {todaStats.length} Transport Associations
+              </span>
+              <span className="text-[10px] sm:text-xs font-black bg-[#7A1B22]/10 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1.5 rounded-xl border border-[#7A1B22]/20">
+                {stats.total} Total Units
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+            {/* Donut Chart with Center Metric */}
+            <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+              <div className="w-full h-64 relative flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={todaStats}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={68}
+                      outerRadius={96}
+                      paddingAngle={3}
+                      dataKey="value"
+                      strokeWidth={2}
+                      stroke="transparent"
+                    >
+                      {todaStats.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTodaTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Center Badge in Donut Hole */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Fleet Share
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                    {stats.total}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    100% Tracked
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Top TODAs Legend with Percentage Bars */}
+            <div className="lg:col-span-7 space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {todaStats.map((toda, idx) => (
+                  <div 
+                    key={idx}
+                    className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span 
+                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" 
+                          style={{ backgroundColor: toda.color }} 
+                        />
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={toda.name}>
+                          {toda.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-xs font-black text-slate-900 dark:text-white">
+                          {toda.value}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                          ({toda.percentage}%)
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full bg-slate-200/80 dark:bg-slate-700/80 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-700 ease-out" 
+                        style={{ width: `${toda.percentage}%`, backgroundColor: toda.color }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. ACTIVITY LOGS & PENDING QUEUE */}
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '460ms' }}>
