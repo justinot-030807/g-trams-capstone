@@ -17,6 +17,8 @@ const MainLayout = ({ children }) => {
 
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
   const isOperator = role === 'operator';
+  const isTodaPresident = role === 'toda president' || role === 'toda_president';
+  const showBottomNav = isOperator || isTodaPresident;
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => {
@@ -52,16 +54,16 @@ const MainLayout = ({ children }) => {
           onToggleSidebar={toggleSidebar} 
         />
 
-        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden ${isOperator ? 'pb-24 md:pb-8' : ''}`}>
+        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden ${showBottomNav ? 'pb-24 md:pb-8' : ''}`}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Operator Mobile Bottom Navigation */}
-      {isOperator && (
-        <OperatorBottomNav />
+      {/* Mobile Bottom Navigation for Operator and TODA President */}
+      {showBottomNav && (
+        <OperatorBottomNav role={role} />
       )}
     </div>
   );

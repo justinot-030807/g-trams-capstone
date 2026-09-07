@@ -27,12 +27,7 @@ router.route('/')
     .post(
         protect, 
         authorize('operator', 'toda president'),
-        upload.fields([
-            { name: 'orCrDocument', maxCount: 1 },
-            { name: 'license', maxCount: 1 },
-            { name: 'todaEndorsement', maxCount: 1 },
-            { name: 'brgyClearance', maxCount: 1 }
-        ]), 
+        upload.any(), 
         createFranchise
     )
     // Get franchise masterlist (Admin only)
@@ -53,12 +48,7 @@ router.put('/:id/cancel', protect, authorize('operator', 'toda president'), canc
 router.route('/:id')
     .put(
         protect, 
-        upload.fields([
-            { name: 'orCrDocument', maxCount: 1 },
-            { name: 'license', maxCount: 1 },
-            { name: 'todaEndorsement', maxCount: 1 },
-            { name: 'brgyClearance', maxCount: 1 }
-        ]), 
+        upload.any(), 
         updateFranchise
     )
     .delete(protect, authorize('admin'), deleteFranchise);

@@ -1,12 +1,44 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, PlusCircle, HelpCircle, Settings } from 'lucide-react';
+import { Home, PlusCircle, HelpCircle, Settings, Users } from 'lucide-react';
 
-const OperatorBottomNav = () => {
+const OperatorBottomNav = ({ role }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
+  const currentRole = String(role || localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+  const isTodaPresident = currentRole === 'toda president' || currentRole === 'toda_president';
+
+  const navItems = isTodaPresident ? [
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: Home,
+      path: '/operator-dashboard',
+      active: location.pathname === '/operator-dashboard'
+    },
+    {
+      id: 'members',
+      label: 'Members',
+      icon: Users,
+      path: '/submit-members',
+      active: location.pathname === '/submit-members'
+    },
+    {
+      id: 'apply',
+      label: 'Apply',
+      icon: PlusCircle,
+      path: '/apply-franchise',
+      active: location.pathname === '/apply-franchise' || location.pathname.startsWith('/renew-franchise')
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Settings,
+      path: '/operator/settings',
+      active: location.pathname === '/operator/settings'
+    }
+  ] : [
     {
       id: 'dashboard',
       label: 'Dashboard',

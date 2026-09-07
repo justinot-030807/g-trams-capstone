@@ -280,7 +280,7 @@ const ValidateTODA = () => {
               {/* Match Feedback Badge */}
               {isSearching && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#7A1B22]/10 text-[#7A1B22] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] border border-[#7A1B22]/20 dark:border-[#D4AF37]/30 text-xs font-bold animate-in fade-in">
-                  <Sparkles size={14} />
+                  <Search size={14} />
                   <span>
                     Found {totalMatchingMembers} driver{totalMatchingMembers === 1 ? '' : 's'} across {groupedToda.length} TODA{groupedToda.length === 1 ? '' : 's'}
                   </span>

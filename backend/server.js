@@ -23,6 +23,8 @@ app.use(helmet({
 const ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5176',
     'http://localhost:3000',
     'https://g-trams-official.vercel.app'
 ];
@@ -34,6 +36,8 @@ app.use(cors({
         
         if (
             ALLOWED_ORIGINS.includes(origin) ||
+            origin.includes('localhost') ||
+            origin.includes('127.0.0.1') ||
             origin.endsWith('.vercel.app')
         ) {
             return callback(null, true);
@@ -74,6 +78,18 @@ app.use(`${BASE_URI}/settings`, require('./src/routes/systemSettingsRoutes'));
 
 // Audit logs routes (Admin only)
 app.use(`${BASE_URI}/audit-logs`, auditLogRoutes);
+
+// Global error handling middleware (handles Multer errors, validation errors, etc.)
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    if (err.name === 'MulterError') {
+        return res.status(400).json({ message: `File upload error: ${err.message}` });
+    }
+    if (err.message && err.message.includes('CORS policy')) {
+        return res.status(403).json({ message: err.message });
+    }
+    return res.status(500).json({ message: err.message || 'Internal server error' });
+});
 
 // Start server
 app.listen(PORT, () => {

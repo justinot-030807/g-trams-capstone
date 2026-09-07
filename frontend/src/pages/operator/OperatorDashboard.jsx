@@ -3,7 +3,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, Star, ShieldAlert, Receipt, XCircle
+  Check, FileText, User, ShieldAlert, Receipt, XCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,11 +11,11 @@ import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
 
 const CANCEL_REASONS = [
-  "Nais baguhin ang detalye ng motor o tricycle",
-  "Kulang pa sa mga dokumento / Ipagpapaliban muna",
-  "May ibang kailangang asikasuhin / Personal na dahilan",
-  "Duplicate o nagkamaling submission",
-  "Iba pang dahilan (Pakilagay sa ibaba)"
+  "Need to correct vehicle or tricycle details",
+  "Incomplete requirements / Postponing application",
+  "Personal reasons / Attending to other matters",
+  "Duplicate or accidental submission",
+  "Other reason (Please specify below)"
 ];
 
 const OperatorDashboard = () => {
@@ -96,7 +96,7 @@ const OperatorDashboard = () => {
   const handleConfirmCancel = async () => {
     if (!cancelModal.unit) return;
     setCancelModal(prev => ({ ...prev, isSubmitting: true }));
-    const finalReason = cancelModal.reason === 'Iba pang dahilan (Pakilagay sa ibaba)' 
+    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)' || cancelModal.reason === 'Iba pang dahilan (Pakilagay sa ibaba)')
       ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
       : cancelModal.reason;
 
@@ -115,11 +115,11 @@ const OperatorDashboard = () => {
         fetchMyFranchises();
       } else {
         const d = await res.json();
-        alert(d.message || "Hindi nai-cancel ang aplikasyon.");
+        alert(d.message || "Unable to cancel application.");
         setCancelModal(prev => ({ ...prev, isSubmitting: false }));
       }
     } catch (err) {
-      alert("Network error. Hindi makakonekta sa server.");
+      alert("Network error. Cannot connect to server.");
       setCancelModal(prev => ({ ...prev, isSubmitting: false }));
     }
   };
@@ -228,8 +228,8 @@ const OperatorDashboard = () => {
       <div className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]">
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
         <div className="relative z-10 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10">
-            <Star size={12} /> {t('dashboard.badge', 'Operator Portal')}
+          <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10 shadow-sm">
+            <User size={12} /> {t('dashboard.badge', 'Operator Portal')}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">{t('dashboard.welcome', 'Welcome')}, {loggedInUserName}!</h1>
           <p className="text-white/80 font-medium text-xs sm:text-sm">{t('dashboard.welcomeSub', 'Manage your active and pending franchises securely.')}</p>
@@ -558,7 +558,7 @@ const OperatorDashboard = () => {
                 </div>
               </div>
 
-              {cancelModal.reason === "Iba pang dahilan (Pakilagay sa ibaba)" && (
+              {cancelModal.reason === "Other reason (Please specify below)" && (
                 <div className="animate-in fade-in duration-150">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Other Reason Details:
@@ -585,7 +585,7 @@ const OperatorDashboard = () => {
               </button>
               <button
                 type="button"
-                disabled={cancelModal.isSubmitting || (cancelModal.reason === "Iba pang dahilan (Pakilagay sa ibaba)" && !cancelModal.customReason?.trim())}
+                disabled={cancelModal.isSubmitting || (cancelModal.reason === "Other reason (Please specify below)" && !cancelModal.customReason?.trim())}
                 onClick={handleConfirmCancel}
                 className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >

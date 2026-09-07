@@ -44,20 +44,37 @@ const createFranchise = async (req, res) => {
         }
         
         const files = req.files || {};
-        const orCrUrl = files.orCrDocument ? files.orCrDocument[0].path : '';
-        const licenseUrl = files.license ? files.license[0].path : '';
-        const todaEndorsementUrl = files.todaEndorsement ? files.todaEndorsement[0].path : '';
-        const brgyClearanceUrl = files.brgyClearance ? files.brgyClearance[0].path : '';
+        const findFilePath = (keys) => {
+            if (Array.isArray(files)) {
+                const found = files.find(f => keys.some(k => f.fieldname.toLowerCase() === k.toLowerCase() || f.fieldname.toLowerCase().includes(k.toLowerCase())));
+                return found ? (found.path || found.secure_url || found.url || '') : '';
+            }
+            for (const k of keys) {
+                if (files[k] && files[k][0]) return files[k][0].path || files[k][0].secure_url || files[k][0].url || '';
+            }
+            return '';
+        };
+
+        const orCrUrl = findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']);
+        const licenseUrl = findFilePath(['license', 'licenseUrl', 'doc_1']);
+        const todaEndorsementUrl = findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']);
+        const brgyClearanceUrl = findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']);
         
         const franchiseOwner = operator || req.user._id;
+        
+        // Safe date parsing to prevent Mongoose validation CastError
+        const parsedCedulaDate = cedulaDate && !isNaN(new Date(cedulaDate).getTime()) ? new Date(cedulaDate) : new Date();
+        const parsedDateApplied = dateApplied && !isNaN(new Date(dateApplied).getTime()) ? new Date(dateApplied) : new Date();
         
         let franchise = await Franchise.create({
             operator: franchiseOwner,
             fullName, address, zone, made, make, motorNo, chassisNo, plateNo, todaName,
-            cedulaDate, cedulaAddress, cedulaSerialNo,
+            cedulaDate: parsedCedulaDate,
+            cedulaAddress: cedulaAddress || 'Gasan, Marinduque',
+            cedulaSerialNo: cedulaSerialNo || '000000',
             applicationType: applicationType || 'New',
             status: status || 'Pending',
-            dateApplied: dateApplied || Date.now(),
+            dateApplied: parsedDateApplied,
             orCrUrl, licenseUrl, todaEndorsementUrl, brgyClearanceUrl,
             deficiencies: {
                 hasOrcr: !!orCrUrl,
@@ -70,7 +87,8 @@ const createFranchise = async (req, res) => {
         franchise = await franchise.populate('operator', 'name address contact');
         res.status(201).json(franchise);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error creating franchise:', error);
+        res.status(500).json({ message: error.message || 'Server error creating franchise application.' });
     }
 };
 
@@ -179,10 +197,26 @@ const updateFranchise = async (req, res) => {
 
         let updateData = { ...req.body };
         const files = req.files || {};
-        if (files.orCrDocument) updateData.orCrUrl = files.orCrDocument[0].path;
-        if (files.license) updateData.licenseUrl = files.license[0].path;
-        if (files.todaEndorsement) updateData.todaEndorsementUrl = files.todaEndorsement[0].path;
-        if (files.brgyClearance) updateData.brgyClearanceUrl = files.brgyClearance[0].path;
+        const findFilePath = (keys) => {
+            if (Array.isArray(files)) {
+                const found = files.find(f => keys.some(k => f.fieldname.toLowerCase() === k.toLowerCase() || f.fieldname.toLowerCase().includes(k.toLowerCase())));
+                return found ? (found.path || found.secure_url || found.url || '') : '';
+            }
+            for (const k of keys) {
+                if (files[k] && files[k][0]) return files[k][0].path || files[k][0].secure_url || files[k][0].url || '';
+            }
+            return '';
+        };
+
+        const orCr = findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']);
+        const lic = findFilePath(['license', 'licenseUrl', 'doc_1']);
+        const toda = findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']);
+        const brgy = findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']);
+
+        if (orCr) updateData.orCrUrl = orCr;
+        if (lic) updateData.licenseUrl = lic;
+        if (toda) updateData.todaEndorsementUrl = toda;
+        if (brgy) updateData.brgyClearanceUrl = brgy;
         
         const updatedFranchise = await Franchise.findByIdAndUpdate(req.params.id, updateData, { returnDocument: 'after' }).populate('operator', 'name address contact');
         

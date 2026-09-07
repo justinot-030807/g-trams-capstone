@@ -53,6 +53,7 @@ const AdminDashboard = () => {
   const [recentApps, setRecentApps] = useState([]);
   const [historyLogs, setHistoryLogs] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isGraphAnimated, setIsGraphAnimated] = useState(false);
   
   const navigate = useNavigate();
   const loggedInAdminName = localStorage.getItem('name') || 'Administrator';
@@ -62,6 +63,16 @@ const AdminDashboard = () => {
     fetchDashboardData();
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setIsGraphAnimated(false);
+      const timer = setTimeout(() => setIsGraphAnimated(true), 80);
+      return () => clearTimeout(timer);
+    } else {
+      setIsGraphAnimated(false);
+    }
+  }, [isLoading]);
 
   const fetchDashboardData = async () => {
     setIsLoading(true);
@@ -182,7 +193,7 @@ const AdminDashboard = () => {
 
         <div className="relative z-10 text-center md:text-left">
           <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10 shadow-sm">
-            <Sparkles size={12} /> Executive Overview
+            <BarChart3 size={12} /> Executive Overview
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
             Admin Overview, {loggedInAdminName}
@@ -308,7 +319,10 @@ const AdminDashboard = () => {
                   <div className="w-full bg-slate-100/80 dark:bg-slate-800 rounded-2xl h-36 flex items-end p-1 shadow-inner overflow-hidden">
                     <div 
                       className={`w-full rounded-xl bg-gradient-to-t ${bar.gradient} shadow-md smooth-bar-transition group-hover:brightness-110 group-hover:scale-[1.02]`} 
-                      style={{ height: getGraphHeight(bar.count) }}
+                      style={{ 
+                        height: isGraphAnimated ? getGraphHeight(bar.count) : '0%',
+                        transitionDelay: `${i * 100}ms`
+                      }} 
                     />
                   </div>
 
@@ -345,7 +359,13 @@ const AdminDashboard = () => {
                     <span className="text-slate-900 dark:text-white">{getPercentage(item.count)}%</span>
                   </div>
                   <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                    <div className={`${item.color} h-full rounded-full transition-all duration-1200 ease-out`} style={{ width: `${getPercentage(item.count)}%` }} />
+                    <div 
+                      className={`${item.color} h-full rounded-full transition-all duration-1000 ease-out`} 
+                      style={{ 
+                        width: isGraphAnimated ? `${getPercentage(item.count)}%` : '0%',
+                        transitionDelay: `${150 + i * 80}ms`
+                      }} 
+                    />
                   </div>
                 </div>
               ))}
@@ -456,7 +476,11 @@ const AdminDashboard = () => {
                     <div className="w-full bg-slate-200/80 dark:bg-slate-700/80 rounded-full h-1.5 overflow-hidden">
                       <div 
                         className="h-full rounded-full transition-all duration-700 ease-out" 
-                        style={{ width: `${toda.percentage}%`, backgroundColor: toda.color }}
+                        style={{ 
+                          width: isGraphAnimated ? `${toda.percentage}%` : '0%', 
+                          transitionDelay: `${200 + idx * 50}ms`,
+                          backgroundColor: toda.color 
+                        }}
                       />
                     </div>
                   </div>

@@ -194,11 +194,11 @@ const FranchiseApproval = () => {
 
       {/* PRINT OFFICIAL PERMIT MODAL */}
       {isPrintOpen && selectedApp && (
-        <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col">
-          <div className="bg-slate-900 p-4 flex justify-between items-center text-white print:hidden">
+        <div className="fixed inset-0 z-[100] bg-slate-100 dark:bg-slate-950 flex flex-col">
+          <div className="bg-white dark:bg-slate-900 p-4 flex justify-between items-center text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 print:hidden">
             <h2 className="font-bold text-sm">Official MTOP Permit</h2>
             <div className="flex gap-2">
-              <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"><X size={14} /> Close</button>
+              <button onClick={() => setIsPrintOpen(false)} className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-200 dark:border-slate-700"><X size={14} /> Close</button>
               <button onClick={() => window.print()} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
                 <Download size={14} /> Download / Save PDF
               </button>
@@ -386,40 +386,40 @@ const FranchiseApproval = () => {
           <div className="relative w-full h-[96vh] max-w-[1500px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10">
             
             {/* WORKSTATION TOP BAR */}
-            <div className="px-5 py-3.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 shrink-0 border-b border-white/10">
+            <div className="px-5 py-3.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white flex flex-wrap items-center justify-between gap-3 shrink-0 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-[#7A1B22] flex items-center justify-center text-[#D4AF37] font-black text-xs shrink-0 shadow-sm border border-[#D4AF37]/30">
                   <ShieldCheck size={18} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="font-black text-base text-white tracking-tight truncate">
+                    <h2 className="font-black text-base text-slate-900 dark:text-white tracking-tight truncate">
                       {selectedApp.fullName}
                     </h2>
-                    <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-white/10 text-white/90 border border-white/15">
+                    <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white/90 border border-slate-200 dark:border-white/15">
                       {selectedApp.applicationType || 'New'} Application
                     </span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#D4AF37]/15 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/40">
                       Plate: {selectedApp.plateNo || 'PENDING'}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     {selectedApp.todaName} &bull; Zone {selectedApp.zone} &bull; Submitted: {formatDate(selectedApp.dateApplied || selectedApp.createdAt)}
                   </p>
                 </div>
               </div>
 
               {/* Mobile Pane Switcher (Tabs on < lg screens) */}
-              <div className="flex lg:hidden items-center bg-slate-800 p-1 rounded-xl border border-white/10 text-xs font-bold">
+              <div className="flex lg:hidden items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold">
                 <button
                   onClick={() => setMobilePane('details')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'details' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'details' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                 >
                   Applicant Data
                 </button>
                 <button
                   onClick={() => setMobilePane('document')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'document' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'document' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                 >
                   Live Document
                 </button>
@@ -430,14 +430,14 @@ const FranchiseApproval = () => {
                 {selectedApp.status === 'Ready for Pickup' && (
                   <button
                     onClick={() => setIsPrintOpen(true)}
-                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-white/15"
+                    className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-white/15"
                   >
                     <Printer size={14} className="text-[#D4AF37]" /> Print MTOP
                   </button>
                 )}
                 <button 
                   onClick={() => setSelectedApp(null)} 
-                  className="p-1.5 bg-white/10 hover:bg-red-500 text-white rounded-xl transition-colors"
+                  className="p-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 dark:bg-white/10 dark:hover:bg-red-500 text-slate-600 dark:text-white rounded-xl transition-colors"
                   title="Close Workstation (Esc)"
                 >
                   <X size={20} />
@@ -650,12 +650,12 @@ const FranchiseApproval = () => {
               </div>
 
               {/* RIGHT PANE: DEDICATED LIVE DOCUMENT VIEWER CANVAS (58% on desktop) */}
-              <div className={`w-full lg:w-[58%] flex flex-col bg-slate-950 text-white overflow-hidden ${
+              <div className={`w-full lg:w-[58%] flex flex-col bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white overflow-hidden ${
                 mobilePane === 'document' ? 'flex' : 'hidden lg:flex'
               }`}>
                 
                 {/* DOCUMENT SELECTOR TABS & TOOLBAR */}
-                <div className="px-4 py-2.5 bg-slate-900 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="px-4 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
                   
                   {/* Doc Pills */}
                   <div className="flex items-center gap-1.5 overflow-x-auto py-1">
@@ -673,13 +673,13 @@ const FranchiseApproval = () => {
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
                             isActive
                               ? 'bg-[#7A1B22] text-white shadow-sm border border-[#D4AF37]/40'
-                              : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5'
+                              : 'bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/5'
                           }`}
                         >
-                          <FileText size={13} className={isActive ? 'text-[#D4AF37]' : 'text-slate-400'} />
+                          <FileText size={13} className={isActive ? 'text-[#D4AF37]' : 'text-slate-400 dark:text-slate-500'} />
                           <span>{tab.label}</span>
                           {!hasDoc && selectedApp.applicationType !== 'Renewal' && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Missing attachment" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Missing attachment" />
                           )}
                         </button>
                       );
@@ -690,31 +690,31 @@ const FranchiseApproval = () => {
                   <div className="flex items-center gap-1.5 ml-auto">
                     <button 
                       onClick={() => setZoomScale(prev => Math.max(prev - 0.25, 0.5))} 
-                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                       title="Zoom Out"
                     >
                       <ZoomOut size={16} />
                     </button>
-                    <span className="text-[11px] font-mono font-bold px-1 text-slate-400 min-w-[40px] text-center">
+                    <span className="text-[11px] font-mono font-bold px-1 text-slate-500 dark:text-slate-400 min-w-[40px] text-center">
                       {Math.round(zoomScale * 100)}%
                     </span>
                     <button 
                       onClick={() => setZoomScale(prev => Math.min(prev + 0.25, 3))} 
-                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                       title="Zoom In"
                     >
                       <ZoomIn size={16} />
                     </button>
                     <button 
                       onClick={() => setRotation(prev => (prev + 90) % 360)} 
-                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                       title="Rotate 90° Clockwise"
                     >
                       <RotateCw size={16} />
                     </button>
                     <button 
                       onClick={() => { setZoomScale(1); setRotation(0); }} 
-                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                       title="Reset View"
                     >
                       <RefreshCw size={14} />
@@ -722,12 +722,12 @@ const FranchiseApproval = () => {
 
                     {currentDoc?.url && (
                       <>
-                        <div className="h-4 w-px bg-white/20 mx-1" />
+                        <div className="h-4 w-px bg-slate-300 dark:bg-white/20 mx-1" />
                         <a
                           href={currentDoc.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 hover:bg-white/10 text-[#D4AF37] rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
+                          className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 text-[#7A1B22] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
                           title="Open Original in New Tab"
                         >
                           <ExternalLink size={15} />
@@ -738,27 +738,27 @@ const FranchiseApproval = () => {
                 </div>
 
                 {/* WORKSPACE CANVAS / VIEWER */}
-                <div className="flex-1 relative flex items-center justify-center p-4 overflow-auto bg-slate-950/90 select-none">
+                <div className="flex-1 relative flex items-center justify-center p-4 overflow-auto bg-slate-100 dark:bg-slate-950/90 select-none">
                   {selectedApp.applicationType === 'Renewal' && !currentDoc?.url ? (
-                    <div className="text-center p-8 max-w-md bg-slate-900/60 border border-white/10 rounded-2xl">
-                      <ShieldCheck size={36} className="mx-auto text-[#D4AF37] mb-3 opacity-70" />
-                      <h4 className="font-bold text-sm text-white">Renewal Application</h4>
-                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    <div className="text-center p-8 max-w-md bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
+                      <ShieldCheck size={36} className="mx-auto text-[#7A1B22] dark:text-[#D4AF37] mb-3 opacity-70" />
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">Renewal Application</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                         This is a franchise renewal application. Historical vehicle records and original requirements are archived on file.
                       </p>
                     </div>
                   ) : !currentDoc?.url ? (
-                    <div className="text-center p-8 max-w-md bg-slate-900/60 border border-white/10 rounded-2xl">
-                      <AlertCircle size={36} className="mx-auto text-amber-400 mb-3 opacity-70" />
-                      <h4 className="font-bold text-sm text-white">No Document Uploaded</h4>
-                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                        The applicant has not uploaded an attachment for <strong className="text-amber-300">{currentDoc?.label}</strong>.
+                    <div className="text-center p-8 max-w-md bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
+                      <AlertCircle size={36} className="mx-auto text-amber-500 mb-3 opacity-70" />
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Document Uploaded</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                        The applicant has not uploaded an attachment for <strong className="text-amber-600 dark:text-amber-300">{currentDoc?.label}</strong>.
                       </p>
                     </div>
                   ) : currentDoc.url.toLowerCase().includes('.pdf') ? (
                     <iframe 
                       src={currentDoc.url} 
-                      className="w-full h-full bg-white rounded-2xl shadow-2xl border border-white/10" 
+                      className="w-full h-full bg-white rounded-2xl shadow-xl border border-slate-200 dark:border-white/10" 
                       title="Inspection Document PDF" 
                     />
                   ) : (
@@ -771,18 +771,18 @@ const FranchiseApproval = () => {
                           transformOrigin: 'center', 
                           transition: 'transform 0.15s ease-out' 
                         }}
-                        className="max-h-[82vh] max-w-[90%] object-contain rounded-xl shadow-2xl bg-slate-900 border border-white/10" 
+                        className="max-h-[82vh] max-w-[90%] object-contain rounded-xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10" 
                       />
                     </div>
                   )}
                 </div>
 
                 {/* CANVAS BOTTOM INFO BAR */}
-                <div className="px-4 py-2 bg-slate-900/90 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+                <div className="px-4 py-2 bg-white dark:bg-slate-900/90 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                   <span className="flex items-center gap-1.5 font-medium">
-                    <Eye size={13} className="text-[#D4AF37]" /> Inspecting: <strong className="text-slate-200">{currentDoc?.label}</strong>
+                    <Eye size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Inspecting: <strong className="text-slate-800 dark:text-slate-200">{currentDoc?.label}</strong>
                   </span>
-                  <span className="font-mono text-slate-500">
+                  <span className="font-mono text-slate-400 dark:text-slate-500">
                     Use controls in toolbar to inspect fine details
                   </span>
                 </div>

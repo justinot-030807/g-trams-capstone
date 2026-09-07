@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
   FileCheck, ShieldAlert, LogOut, User, Printer, 
-  HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers, MapPin
+  HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -96,21 +96,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     { 
       type: 'link', 
-      name: 'TRP Route Map', 
-      path: '/route-plan-map', 
-      icon: <MapPin size={18} /> 
-    },
-    { 
-      type: 'link', 
       name: t('nav.settings', 'Settings'), 
       path: '/operator/settings', 
       icon: <Settings size={18} /> 
-    },
-    { 
-      type: 'link', 
-      name: t('nav.helpSupport', 'Help & Support'), 
-      path: '/help-support', 
-      icon: <HelpCircle size={18} /> 
     }
   ];
 
@@ -136,8 +124,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             icon: <FileCheck size={16} />, 
             badge: pendingCount > 0 ? pendingCount : null 
           },
-          { name: 'Revocations', path: '/manage-revocations', icon: <ShieldAlert size={16} /> },
-          { name: 'TRP Route Map', path: '/route-plan-map', icon: <MapPin size={16} /> }
+          { name: 'Revocations', path: '/manage-revocations', icon: <ShieldAlert size={16} /> }
         ]
       },
       {
@@ -175,12 +162,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         name: t('nav.applyRenew', 'Apply / Renew'), 
         path: '/apply-franchise', 
         icon: <FileText size={18} /> 
-      },
-      { 
-        type: 'link', 
-        name: 'TRP Route Map', 
-        path: '/route-plan-map', 
-        icon: <MapPin size={18} /> 
       },
       { 
         type: 'link', 

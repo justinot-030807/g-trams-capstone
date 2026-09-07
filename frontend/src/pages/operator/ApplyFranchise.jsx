@@ -20,17 +20,19 @@ const GASAN_BARANGAYS = [
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
 const CANCEL_REASONS = [
-  "Nais baguhin ang detalye ng motor o tricycle",
-  "Kulang pa sa mga dokumento / Ipagpapaliban muna",
-  "May ibang kailangang asikasuhin / Personal na dahilan",
-  "Duplicate o nagkamaling submission",
-  "Iba pang dahilan (Pakilagay sa ibaba)"
+  "Need to correct vehicle or tricycle details",
+  "Incomplete requirements / Postponing application",
+  "Personal reasons / Attending to other matters",
+  "Duplicate or accidental submission",
+  "Other reason (Please specify below)"
 ];
 
+const STANDARD_DOC_IDS = ['orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
+
 const DEFAULT_REQUIREMENTS = [
-  { id: 'orCrDocument', label: 'OR / CR ng Motor', fieldUrl: 'orCrUrl' },
+  { id: 'orCrDocument', label: 'Tricycle OR / CR Document', fieldUrl: 'orCrUrl' },
   { id: 'license', label: "Driver's License", fieldUrl: 'licenseUrl' },
-  { id: 'todaEndorsement', label: 'TODA Endorsement', fieldUrl: 'todaEndorsementUrl' },
+  { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
   { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
 ];
 
@@ -69,9 +71,9 @@ const ApplyFranchise = () => {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map((doc, idx) => ({
-            id: `doc_${idx}_${doc.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+            id: STANDARD_DOC_IDS[idx] || `doc_${idx}`,
             label: doc,
-            fieldUrl: `doc_${idx}Url`
+            fieldUrl: STANDARD_DOC_IDS[idx] ? `${STANDARD_DOC_IDS[idx]}Url` : `doc_${idx}Url`
           }));
         }
       }
@@ -122,9 +124,9 @@ const ApplyFranchise = () => {
             }
             if (Array.isArray(json.data.requiredDocs) && json.data.requiredDocs.length > 0) {
               const mapped = json.data.requiredDocs.map((doc, idx) => ({
-                id: `doc_${idx}_${doc.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+                id: STANDARD_DOC_IDS[idx] || `doc_${idx}`,
                 label: doc,
-                fieldUrl: `doc_${idx}Url`
+                fieldUrl: STANDARD_DOC_IDS[idx] ? `${STANDARD_DOC_IDS[idx]}Url` : `doc_${idx}Url`
               }));
               setRequirementsList(mapped);
               localStorage.setItem('required_docs', JSON.stringify(json.data.requiredDocs));
@@ -366,7 +368,7 @@ const ApplyFranchise = () => {
   const handleConfirmCancel = async () => {
     if (!cancelModal.unit) return;
     setCancelModal(prev => ({ ...prev, isSubmitting: true }));
-    const finalReason = cancelModal.reason === 'Iba pang dahilan (Pakilagay sa ibaba)' 
+    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)' || cancelModal.reason === 'Iba pang dahilan (Pakilagay sa ibaba)')
       ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
       : cancelModal.reason;
 
@@ -381,16 +383,16 @@ const ApplyFranchise = () => {
       });
 
       if (res.ok) {
-        showToast("Matagumpay na nai-cancel ang aplikasyon.", "success");
+        showToast("Application successfully cancelled.", "success");
         setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false });
         fetchMyFranchises();
       } else {
         const d = await res.json();
-        showToast(d.message || "Hindi nai-cancel ang aplikasyon.", "error");
+        showToast(d.message || "Unable to cancel application.", "error");
         setCancelModal(prev => ({ ...prev, isSubmitting: false }));
       }
     } catch (err) {
-      showToast("Network error. Hindi makakonekta sa server.", "error");
+      showToast("Network error. Cannot connect to server.", "error");
       setCancelModal(prev => ({ ...prev, isSubmitting: false }));
     }
   };
@@ -467,12 +469,12 @@ const ApplyFranchise = () => {
   const validateAndNext = () => {
     if (currentStep === 1) {
       if (!formData.fullName || !formData.address || !formData.zone || !formData.make || !formData.made || !formData.motorNo || !formData.chassisNo || !formData.plateNo) {
-        showToast("Pakipunan ang lahat ng impormasyon bago magpatuloy.", "error");
+        showToast("Please fill out all required vehicle and operator details.", "error");
         return;
       }
     } else if (currentStep === 2) {
       if (!formData.dateApplied || !formData.cedulaDate || !formData.cedulaSerialNo || !formData.cedulaAddress) {
-        showToast("Pakilagay ang kumpletong detalye ng Cedula.", "error");
+        showToast("Please provide complete Community Tax Certificate (Cedula) details.", "error");
         return;
       }
     }
@@ -491,7 +493,7 @@ const ApplyFranchise = () => {
     if (formMode === 'New') {
       const missing = requirementsList.filter(req => !uploadedDocs[req.id]);
       if (missing.length > 0) {
-        showToast(`Pakisiguradong kumpleto ang ${requirementsList.length} na requirements na in-upload.`, "error");
+        showToast(`Please ensure all ${requirementsList.length} required documents are uploaded.`, "error");
         return;
       }
     }
@@ -506,11 +508,27 @@ const ApplyFranchise = () => {
         submitData.append('applicationType', 'New');
         if (formMode === 'Re-apply') submitData.append('status', 'Pending');
 
-        Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
+        Object.keys(formData).forEach(key => {
+          if (formData[key] !== undefined && formData[key] !== null) {
+            submitData.append(key, formData[key]);
+          }
+        });
         
-        requirementsList.forEach(req => {
-          if (uploadedDocs[req.id]) {
-            submitData.append(req.id, uploadedDocs[req.id]);
+        // Ensure dates are not empty
+        if (!formData.dateApplied) {
+          submitData.append('dateApplied', new Date().toISOString().substring(0, 10));
+        }
+        if (!formData.cedulaDate) {
+          submitData.append('cedulaDate', new Date().toISOString().substring(0, 10));
+        }
+        
+        requirementsList.forEach((req, idx) => {
+          const file = uploadedDocs[req.id];
+          if (file) {
+            submitData.append(req.id, file);
+            if (STANDARD_DOC_IDS[idx] && STANDARD_DOC_IDS[idx] !== req.id) {
+              submitData.append(STANDARD_DOC_IDS[idx], file);
+            }
           }
         });
 
@@ -528,10 +546,10 @@ const ApplyFranchise = () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            dateApplied: formData.dateApplied,
-            cedulaDate: formData.cedulaDate,
-            cedulaAddress: formData.cedulaAddress,
-            cedulaSerialNo: formData.cedulaSerialNo
+            dateApplied: formData.dateApplied || new Date().toISOString().substring(0, 10),
+            cedulaDate: formData.cedulaDate || new Date().toISOString().substring(0, 10),
+            cedulaAddress: formData.cedulaAddress || 'Gasan, Marinduque',
+            cedulaSerialNo: formData.cedulaSerialNo || '000000'
           })
         });
       }
@@ -543,17 +561,18 @@ const ApplyFranchise = () => {
         if (selectedId) {
           localStorage.removeItem(`gtrams_renewal_draft_${selectedId}`);
         }
-        showToast("Matagumpay na naisumite ang aplikasyon!", "success");
+        showToast("Application submitted successfully!", "success");
         setFormMode(null);
         setCurrentStep(1);
         fetchMyFranchises(); 
         setUploadedDocs({});
         setFilePreviews({});
       } else {
-        showToast(data.message || data.error || 'Hindi naisumite ang aplikasyon.', 'error');
+        showToast(data.message || data.error || 'Failed to submit application. Please check the details.', 'error');
       }
     } catch (error) {
-      showToast('Network error. Hindi makakonekta sa server.', 'error');
+      console.error('Submission error:', error);
+      showToast(error.message ? `Submission error: ${error.message}` : 'Network error. Cannot connect to server.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -602,11 +621,11 @@ const ApplyFranchise = () => {
           <div className="mb-6 max-w-5xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Sparkles size={20} />
+                <FileText size={20} />
               </div>
               <div>
-                <h4 className="text-sm font-black text-slate-900 dark:text-white">May Hindi Natapos na Bagong Aplikasyon</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">May na-save kang draft ng aplikasyon. Maaari mo itong ipagpatuloy o i-reset.</p>
+                <h4 className="text-sm font-black text-slate-900 dark:text-white">Unfinished Application Draft Detected</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">You have a saved draft. You can resume editing where you left off or discard it.</p>
               </div>
             </div>
             <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
@@ -614,18 +633,18 @@ const ApplyFranchise = () => {
                 type="button"
                 onClick={() => {
                   localStorage.removeItem(DRAFT_STORAGE_KEY);
-                  showToast("Na-clear ang lumang draft.", "success");
+                  showToast("Draft discarded successfully.", "success");
                 }}
                 className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                I-clear
+                Discard Draft
               </button>
               <button
                 type="button"
                 onClick={handleStartNewApplication}
                 className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
               >
-                Ipagpatuloy <ChevronRight size={14} />
+                Resume Draft <ChevronRight size={14} />
               </button>
             </div>
           </div>
@@ -830,7 +849,7 @@ const ApplyFranchise = () => {
               {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
             </h1>
             <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {formMode === 'Renewal' ? 'Pakisuri ang inyong mga detalye at i-update ang impormasyon ng Cedula.' : 'Punan ang mga kinakailangang impormasyon at mag-upload ng mga dokumento.'}
+              {formMode === 'Renewal' ? 'Please review your records and update Community Tax Certificate (Cedula) details.' : 'Complete the required vehicle information and upload supporting documents.'}
             </p>
           </div>
         </div>
@@ -840,9 +859,9 @@ const ApplyFranchise = () => {
             type="button"
             onClick={() => handleSaveProgress(true)}
             className="flex items-center gap-1.5 text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] bg-red-50 dark:bg-amber-950/30 hover:bg-red-100 dark:hover:bg-amber-900/40 px-3 py-1.5 rounded-xl border border-red-200 dark:border-amber-800/60 transition-colors shadow-2xs active:scale-95"
-            title="I-save ang inyong progress upang balikan mamaya"
+            title="Save your progress to resume later"
           >
-            <Save size={13} /> I-save ang Progress
+            <Save size={13} /> Save Progress
           </button>
 
           {hasDraftRestored && (
@@ -850,7 +869,7 @@ const ApplyFranchise = () => {
               type="button"
               onClick={handleClearDraft}
               className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
-              title="Burahin ang draft at mag-umpisa ulit"
+              title="Clear draft and start fresh"
             >
               <RotateCcw size={13} /> Reset Draft
             </button>
@@ -875,16 +894,16 @@ const ApplyFranchise = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                      Progress ng Aplikasyon
+                      Application Progress
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {progress.completed} sa {progress.total} detalye
+                      {progress.completed} of {progress.total} completed
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     {progress.remaining > 0 
-                      ? (formMode === 'Renewal' ? `${progress.remaining} Cedula field pa ang kailangan` : `${progress.remaining} kulang na detalye / dokumento`)
-                      : '✓ Kumpleto na ang lahat ng kinakailangan!'}
+                      ? (formMode === 'Renewal' ? `${progress.remaining} Cedula field${progress.remaining > 1 ? 's' : ''} remaining` : `${progress.remaining} item${progress.remaining > 1 ? 's' : ''} remaining`)
+                      : '✓ All details and requirements completed!'}
                   </p>
                 </div>
               </div>
@@ -1205,7 +1224,7 @@ const ApplyFranchise = () => {
                 onClick={prevStep}
                 className="w-full sm:w-auto flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                <ChevronLeft size={15} /> Bumalik
+                <ChevronLeft size={15} /> Previous
               </button>
 
               <div className="w-full sm:w-auto flex items-center gap-2">
@@ -1214,7 +1233,7 @@ const ApplyFranchise = () => {
                   onClick={() => handleSaveProgress(true)}
                   className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95"
                 >
-                  <Save size={14} /> I-save ang Progress
+                  <Save size={14} /> Save Progress
                 </button>
 
                 <button 
@@ -1225,7 +1244,7 @@ const ApplyFranchise = () => {
                   }`}
                 >
                   {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
-                  {isSubmitting ? 'Isinusumite...' : formMode === 'Re-apply' ? 'Isumite ang Update' : `Isumite ang Aplikasyon`}
+                  {isSubmitting ? 'Submitting...' : formMode === 'Re-apply' ? 'Submit Update' : 'Submit Application'}
                 </button>
               </div>
             </div>
@@ -1290,7 +1309,7 @@ const ApplyFranchise = () => {
                   <XCircle size={18} />
                 </div>
                 <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-white">I-cancel ang Aplikasyon</h3>
+                  <h3 className="font-black text-base text-slate-900 dark:text-white">Cancel Application</h3>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
                 </div>
               </div>
@@ -1307,13 +1326,13 @@ const ApplyFranchise = () => {
               <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3.5 rounded-2xl flex items-start gap-2.5">
                 <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
-                  Paalala: Kapag kinansela ang aplikasyong ito, babaguhin ang status nito bilang <b>Cancelled</b> at makikita ng LGU Admin ang dahilan sa audit records.
+                  Notice: Cancelling this application will set its status to <b>Cancelled</b>. The reason provided will be recorded in audit logs for LGU Admin review.
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                  Pumili ng Dahilan sa Pag-cancel:
+                  Select Reason for Cancellation:
                 </label>
                 <div className="space-y-2">
                   {CANCEL_REASONS.map((r, idx) => (
@@ -1338,16 +1357,16 @@ const ApplyFranchise = () => {
                 </div>
               </div>
 
-              {cancelModal.reason === "Iba pang dahilan (Pakilagay sa ibaba)" && (
+              {cancelModal.reason === "Other reason (Please specify below)" && (
                 <div className="animate-in fade-in duration-150">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Iba pang Detalye ng Dahilan:
+                    Additional Reason Details:
                   </label>
                   <textarea
                     rows={3}
                     value={cancelModal.customReason}
                     onChange={(e) => setCancelModal(prev => ({ ...prev, customReason: e.target.value }))}
-                    placeholder="Ilagay ang dahilan kung bakit nais i-cancel..."
+                    placeholder="Enter details on why you wish to cancel..."
                     className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-500"
                   />
                 </div>
@@ -1361,16 +1380,16 @@ const ApplyFranchise = () => {
                 onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))}
                 className="px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                Bumalik
+                Close
               </button>
               <button
                 type="button"
-                disabled={cancelModal.isSubmitting || (cancelModal.reason === "Iba pang dahilan (Pakilagay sa ibaba)" && !cancelModal.customReason?.trim())}
+                disabled={cancelModal.isSubmitting || (cancelModal.reason === "Other reason (Please specify below)" && !cancelModal.customReason?.trim())}
                 onClick={handleConfirmCancel}
                 className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {cancelModal.isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                {cancelModal.isSubmitting ? 'Kinakansela...' : 'Kumpirmahin ang Pag-cancel'}
+                {cancelModal.isSubmitting ? 'Cancelling...' : 'Confirm Cancellation'}
               </button>
             </div>
           </div>
