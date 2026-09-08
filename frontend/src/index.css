@@ -5,8 +5,22 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    zoom: 0.9;
+  /* 90% comfortable zoom default for desktop/laptop displays */
+  @media (min-width: 769px) {
+    html {
+      zoom: 0.9;
+    }
+  }
+
+  /* 100% natural scaling for mobile screens to eliminate viewport gaps at bottom */
+  @media (max-width: 768px) {
+    html {
+      zoom: 1 !important;
+    }
+  }
+
+  html, body, #root {
+    min-height: 100%;
   }
 
   @media print {

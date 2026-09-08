@@ -121,7 +121,7 @@ const Login = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-6 sm:px-8 sm:py-8 lg:px-12 overflow-x-hidden select-none">
+    <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:px-8 sm:py-6 lg:px-12 overflow-x-hidden select-none">
       
       {/* ADVANCED LIQUID AURORA KEYFRAMES */}
       <style>{`
@@ -404,9 +404,9 @@ const Login = () => {
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 mt-6 text-center text-white/70 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold">
-        <p>G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
-        <p className="text-white/40 text-[8px] sm:text-[9px] normal-case font-normal">
+      <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">
+        <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
+        <p className="text-white/60 text-[8px] sm:text-[9px] normal-case font-medium">
           © 2026 Municipality of Gasan, Marinduque. All rights reserved.
         </p>
       </footer>

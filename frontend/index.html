@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" style="zoom: 0.9;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
    <link rel="icon" type="image/png" href="/gasan-logo.png" />
@@ -12,6 +12,11 @@
     <script>
       (function() {
         try {
+          if (window.innerWidth >= 769) {
+            document.documentElement.style.zoom = '0.9';
+          } else {
+            document.documentElement.style.zoom = '1';
+          }
           const savedTheme = localStorage.getItem('theme');
           if (savedTheme === 'dark') {
             document.documentElement.classList.add('dark');
