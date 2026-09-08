@@ -162,9 +162,11 @@ const FranchiseApproval = () => {
     <MainLayout>
       <style>{`
         @media print {
-          body * { visibility: hidden; }
-          #printable-document, #printable-document * { visibility: visible; }
-          #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
+          body:not(.printing-mtop) * { visibility: hidden; }
+          body:not(.printing-mtop) #printable-document,
+          body:not(.printing-mtop) #printable-document * { visibility: visible; }
+          body:not(.printing-mtop) #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
+          .print-hide { display: none !important; }
         }
       `}</style>
 

@@ -133,37 +133,69 @@ exports.login = async (req, res) => {
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.find().select('-password').sort({ createdAt: -1 });
-        const franchises = await Franchise.find({ isArchived: false })
+        const franchises = await Franchise.find({ isArchived: { $ne: true } })
             .select('operator fullName status plateNo make made motorNo chassisNo zone todaName');
 
         const userFranchisesMap = {};
+        const userByNameMap = {};
+
         franchises.forEach(f => {
-            const opId = f.operator ? f.operator.toString() : null;
+            const unitData = {
+                _id: f._id,
+                plateNo: f.plateNo,
+                make: f.make,
+                made: f.made,
+                motorNo: f.motorNo,
+                chassisNo: f.chassisNo,
+                status: f.status,
+                zone: f.zone,
+                todaName: f.todaName
+            };
+
+            const opId = f.operator ? (f.operator._id ? f.operator._id.toString() : f.operator.toString()) : null;
             if (opId) {
                 if (!userFranchisesMap[opId]) userFranchisesMap[opId] = [];
-                userFranchisesMap[opId].push({
-                    _id: f._id,
-                    plateNo: f.plateNo,
-                    make: f.make,
-                    made: f.made,
-                    motorNo: f.motorNo,
-                    chassisNo: f.chassisNo,
-                    status: f.status,
-                    zone: f.zone,
-                    todaName: f.todaName
-                });
+                userFranchisesMap[opId].push(unitData);
+            }
+
+            if (f.fullName && f.fullName.trim()) {
+                const normName = f.fullName.trim().toLowerCase();
+                if (!userByNameMap[normName]) userByNameMap[normName] = [];
+                userByNameMap[normName].push(unitData);
             }
         });
 
+        const now = Date.now();
         const enhancedUsers = users.map(u => {
             const uObj = u.toObject();
-            const userUnits = userFranchisesMap[u._id.toString()] || [];
+            const uIdStr = u._id.toString();
+            let userUnits = userFranchisesMap[uIdStr] || [];
+
+            // Fallback matching by name if operator reference was not explicitly linked
+            if (userUnits.length === 0 && u.name) {
+                const normName = u.name.trim().toLowerCase();
+                if (userByNameMap[normName]) {
+                    userUnits = userByNameMap[normName];
+                }
+            }
+
             uObj.unitsCount = userUnits.length;
             uObj.activeUnitsCount = userUnits.filter(unit => unit.status === 'Active').length;
             uObj.pendingUnitsCount = userUnits.filter(unit => unit.status === 'Pending' || unit.status === 'Ready for Pickup').length;
             uObj.expiredUnitsCount = userUnits.filter(unit => unit.status === 'Expired').length;
             uObj.cancelledUnitsCount = userUnits.filter(unit => unit.status === 'Cancelled' || unit.status === 'Revoked').length;
             uObj.units = userUnits;
+
+            // Server-side precise activity calculation (immune to client clock drift)
+            if (uObj.lastActive && uObj.isActive !== false) {
+                const diffSec = Math.max(0, Math.floor((now - new Date(uObj.lastActive).getTime()) / 1000));
+                uObj.lastActiveSecondsAgo = diffSec;
+                uObj.isOnline = diffSec < 150; // Active within last 2.5 minutes
+            } else {
+                uObj.lastActiveSecondsAgo = null;
+                uObj.isOnline = false;
+            }
+
             return uObj;
         });
 
@@ -178,9 +210,11 @@ exports.getUsers = async (req, res) => {
 exports.heartbeat = async (req, res) => {
     try {
         if (req.user && req.user._id) {
-            await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() });
+            const now = new Date();
+            await User.findByIdAndUpdate(req.user._id, { lastActive: now });
+            return res.status(200).json({ status: 'ok', lastActive: now });
         }
-        res.status(200).json({ status: 'ok', lastActive: new Date() });
+        res.status(200).json({ status: 'ok' });
     } catch (error) {
         res.status(200).json({ status: 'ok' });
     }

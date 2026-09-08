@@ -1,8 +1,16 @@
-import React from 'react';
-import { FileText, Download, X, Printer, CheckCircle2, ShieldCheck, Calendar, User, MapPin, Hash, AlertCircle } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { 
+  FileText, Download, X, Printer, CheckCircle2, ShieldCheck, 
+  User, AlertCircle, Loader2 
+} from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' }) => {
   if (!isOpen || !unit) return null;
+
+  const voucherRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -14,13 +22,96 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
   const refNumber = `GTRAMS-${String(unit?._id || '').slice(-8).toUpperCase()}`;
 
+  const handleDownloadImage = async () => {
+    if (!voucherRef.current || isDownloading) return;
+    setIsDownloading(true);
+    setDownloadSuccess(false);
+
+    try {
+      // Small pause to ensure layout has settled
+      await new Promise(r => setTimeout(r, 120));
+
+      const canvas = await html2canvas(voucherRef.current, {
+        scale: 2, // 2x high-resolution crisp image
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById('printable-document');
+          if (el) {
+            el.style.boxShadow = 'none';
+            el.style.transform = 'none';
+            el.style.borderRadius = '24px';
+          }
+        }
+      });
+
+      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      const link = document.createElement('a');
+      link.download = `GTRAMS_Claim_Stub_${refNumber}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error exporting voucher as image:', err);
+      alert('Could not download image. Please try "Print / Save PDF" instead.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex flex-col justify-start items-center p-2 sm:p-6 overflow-y-auto print:p-0 print:bg-white print:static print:inset-auto">
+    <div className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex flex-col justify-start items-center p-2.5 sm:p-6 pb-24 sm:pb-24 overflow-y-auto print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible">
       
+      {/* Scoped print & color preservation styles */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          body {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-document,
+          #printable-document * {
+            visibility: visible !important;
+          }
+          #printable-document {
+            position: absolute !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 650px !important;
+            box-shadow: none !important;
+            border: 2px solid #7A1B22 !important;
+            border-radius: 16px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          .print-hidden {
+            display: none !important;
+          }
+        }
+      `}</style>
+
       {/* Action Toolbar (Hidden during print) */}
-      <div className="w-full max-w-[620px] bg-slate-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 mb-4 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
+      <div className="w-full max-w-[620px] bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 sm:p-3.5 mb-3 sm:mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-white shadow-xl print:hidden sticky top-2 z-50">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37]">
+          <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
             <FileText size={16} />
           </div>
           <div>
@@ -29,18 +120,46 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end">
+          {/* Download as Image */}
+          <button
+            onClick={handleDownloadImage}
+            disabled={isDownloading}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-black transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+            title="Download claim stub directly to device gallery"
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : downloadSuccess ? (
+              <>
+                <CheckCircle2 size={14} className="text-emerald-900" />
+                <span>Saved!</span>
+              </>
+            ) : (
+              <>
+                <Download size={14} />
+                <span>Download Image</span>
+              </>
+            )}
+          </button>
+
+          {/* Print / Save PDF */}
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
           >
             <Printer size={14} />
-            <span>Print / Save PDF</span>
+            <span className="hidden sm:inline">Print / Save PDF</span>
+            <span className="sm:hidden">Print</span>
           </button>
 
           <button
             onClick={onClose}
-            className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors"
+            className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
+            title="Close"
           >
             <X size={18} />
           </button>
@@ -49,29 +168,30 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
       {/* Boarding Pass / Voucher Container */}
       <div 
+        ref={voucherRef}
         id="printable-document" 
         className="relative bg-white text-slate-900 w-full max-w-[620px] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden print:border-none print:shadow-none print:m-0 print:max-w-full"
       >
         {/* Top Header Banner */}
-        <div className="bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] p-6 text-white text-center relative border-b-4 border-[#D4AF37]">
+        <div className="bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] p-5 sm:p-6 text-white text-center relative border-b-4 border-[#D4AF37]">
           <div className="flex items-center justify-center gap-3 mb-2">
             <div className="w-12 h-12 bg-white rounded-full p-0.5 shadow-md flex items-center justify-center overflow-hidden shrink-0">
               <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-cover scale-105" />
             </div>
             <div className="text-left">
               <p className="text-[10px] font-black tracking-widest text-[#D4AF37] uppercase">MUNICIPALITY OF GASAN &bull; MARINDUQUE</p>
-              <h1 className="text-base sm:text-lg font-black tracking-wider uppercase">BPLO &amp; FRANCHISING REGULATORY BOARD</h1>
+              <h1 className="text-sm sm:text-lg font-black tracking-wider uppercase">BPLO &amp; FRANCHISING REGULATORY BOARD</h1>
               <p className="text-[9px] text-white/80 uppercase font-semibold">Tricycle Regulation &amp; Management System (G-TRAMS)</p>
             </div>
           </div>
 
-          <div className="mt-3 inline-block bg-white/10 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 text-[10px] font-black tracking-widest text-white uppercase">
+          <div className="mt-2 inline-block bg-white/10 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 text-[10px] font-black tracking-widest text-white uppercase">
             Official Franchise Claim Voucher
           </div>
         </div>
 
         {/* Voucher Top Body: Amount & Reference */}
-        <div className="p-6 bg-slate-50 border-b border-slate-200">
+        <div className="p-4 sm:p-6 bg-slate-50 border-b border-slate-200">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Voucher Reference No.</p>
@@ -90,14 +210,14 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
         </div>
 
         {/* Perforated Ticket Divider with Side Semicircular Notches */}
-        <div className="relative h-6 bg-slate-50 flex items-center">
-          <div className="absolute -left-3 w-6 h-6 bg-slate-950 rounded-full border-r border-slate-200 print:hidden" />
-          <div className="w-full border-t-2 border-dashed border-slate-300" />
-          <div className="absolute -right-3 w-6 h-6 bg-slate-950 rounded-full border-l border-slate-200 print:hidden" />
+        <div className="relative h-6 bg-slate-50 flex items-center overflow-hidden">
+          <div className="absolute -left-3 w-6 h-6 bg-slate-200 rounded-full border border-slate-300 print-hidden" />
+          <div className="w-full border-t-2 border-dashed border-slate-300 mx-4" />
+          <div className="absolute -right-3 w-6 h-6 bg-slate-200 rounded-full border border-slate-300 print-hidden" />
         </div>
 
         {/* Voucher Lower Body: Two-Column Metadata */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             
             {/* Operator Information */}

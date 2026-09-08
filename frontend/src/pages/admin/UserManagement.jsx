@@ -22,8 +22,12 @@ const UserManagement = () => {
   // Account status modal state
   const [statusModal, setStatusModal] = useState({ isOpen: false, user: null });
 
-  // Calculate real-time activity status
-  const getActivityStatus = (lastActive, isActive) => {
+  // Calculate real-time activity status using server presence + fallback
+  const getActivityStatus = (user) => {
+    if (!user) return { statusText: 'Offline', timeText: '', isOnline: false, isPulsing: false, badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700', dotClass: 'bg-slate-400' };
+    
+    const { lastActive, isActive, isOnline: serverOnline, lastActiveSecondsAgo } = user;
+
     if (isActive === false) {
       return {
         statusText: 'Deactivated',
@@ -46,12 +50,18 @@ const UserManagement = () => {
       };
     }
 
-    const now = new Date();
-    const activeDate = new Date(lastActive);
-    const diffSec = Math.max(0, Math.floor((now.getTime() - activeDate.getTime()) / 1000));
+    // Determine seconds ago with fallback to client computation
+    let diffSec;
+    if (typeof lastActiveSecondsAgo === 'number') {
+      diffSec = lastActiveSecondsAgo;
+    } else {
+      const now = Date.now();
+      const activeDate = new Date(lastActive).getTime();
+      diffSec = Math.max(0, Math.floor((now - activeDate) / 1000));
+    }
 
-    // Under 3 minutes (180s) is considered "Active Now"
-    if (diffSec < 180) {
+    // Active Now: server flagged online or active within 150 seconds (2.5 minutes)
+    if (serverOnline || diffSec < 150) {
       return {
         statusText: 'Active Now',
         timeText: 'Online',
@@ -110,11 +120,24 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers(true);
-    // Real-time polling every 20 seconds
+    // Real-time polling every 10 seconds
     const interval = setInterval(() => {
       fetchUsers(false);
-    }, 20000);
-    return () => clearInterval(interval);
+    }, 10000);
+
+    const onFocus = () => fetchUsers(false);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchUsers(false);
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, []);
 
   const fetchUsers = async (showSkeleton = true) => {
@@ -126,7 +149,10 @@ const UserManagement = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        const nonAdminUsers = data.filter(user => user.role !== 'admin');
+        const nonAdminUsers = data.filter(user => {
+          const r = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
+          return r !== 'admin' && r !== 'administrator';
+        });
         setUsers(nonAdminUsers);
         // Sync selectedUser if details modal is open
         setSelectedUser(prev => {
@@ -212,8 +238,8 @@ const UserManagement = () => {
     return nameMatch || contactMatch || todaMatch || plateMatch;
   });
 
-  const onlineUsersCount = users.filter(u => getActivityStatus(u.lastActive, u.isActive).isOnline).length;
-  const modalActivity = selectedUser ? getActivityStatus(selectedUser.lastActive, selectedUser.isActive) : null;
+  const onlineUsersCount = users.filter(u => getActivityStatus(u).isOnline).length;
+  const modalActivity = selectedUser ? getActivityStatus(selectedUser) : null;
 
   return (
     <MainLayout>
@@ -274,16 +300,16 @@ const UserManagement = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1050px]">
+          <table className="w-full text-left border-collapse min-w-[960px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
-                <th className="p-4 pl-6">Profile / User</th>
-                <th className="p-4">Contact</th>
-                <th className="p-4 text-center">Units / Fleet</th>
-                <th className="p-4">Activity Status</th>
-                <th className="p-4">Account Status</th>
-                <th className="p-4 text-center">Manage Role</th>
-                <th className="p-4 text-center pr-6">Actions</th>
+                <th className="py-3.5 pl-5 pr-3">Profile / User</th>
+                <th className="py-3.5 px-3">Contact &amp; TODA</th>
+                <th className="py-3.5 px-3 text-center">Units</th>
+                <th className="py-3.5 px-3">Activity Status</th>
+                <th className="py-3.5 px-3">Account Status</th>
+                <th className="py-3.5 px-3 text-center">Manage Role</th>
+                <th className="py-3.5 pr-5 pl-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -297,7 +323,7 @@ const UserManagement = () => {
                 </tr>
               ) : (
                 filteredUsers.map((user, uIdx) => {
-                  const activity = getActivityStatus(user.lastActive, user.isActive);
+                  const activity = getActivityStatus(user);
                   const unitsCount = user.unitsCount || 0;
                   const isMaxUnits = unitsCount >= 2;
 
@@ -308,21 +334,21 @@ const UserManagement = () => {
                       style={{ animationDelay: `${uIdx * 35}ms` }}
                     >
                       {/* Profile / User */}
-                      <td className="p-4 pl-6">
+                      <td className="py-3 pl-5 pr-3">
                         <div className="flex items-center gap-3">
                           <div className="relative shrink-0">
-                            <div className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 shadow-sm ${user.isActive === false ? 'border-red-300 dark:border-red-800 bg-red-100 dark:bg-red-950/50 text-red-400' : 'border-white dark:border-slate-700 bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                            <div className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 shadow-sm ${user.isActive === false ? 'border-red-300 dark:border-red-800 bg-red-100 dark:bg-red-950/50 text-red-400' : 'border-white dark:border-slate-700 bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
                               {user.profilePic ? (
                                 <img src={user.profilePic} alt={user.name} className="w-full h-full object-cover" />
                               ) : (
-                                <User size={18} />
+                                <User size={16} />
                               )}
                             </div>
                             {/* Live online dot */}
                             {activity.isOnline && (
-                              <span className="absolute bottom-0 right-0 flex h-3 w-3">
+                              <span className="absolute bottom-0 right-0 flex h-2.5 w-2.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
                               </span>
                             )}
                           </div>
@@ -333,35 +359,35 @@ const UserManagement = () => {
                         </div>
                       </td>
 
-                      {/* Contact */}
-                      <td className="p-4">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{user.contact}</p>
+                      {/* Contact & TODA */}
+                      <td className="py-3 px-3">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">{user.contact}</p>
+                        <p className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 inline-block px-1.5 py-0.5 rounded border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 mt-0.5">
+                          {user.todaAssociation || 'NON-TODA'}
+                        </p>
                       </td>
 
-                      {/* Units / Fleet */}
-                      <td className="p-4 text-center">
-                        <div className="inline-flex flex-col items-center">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border shadow-2xs ${
+                      {/* Units / Fleet (Compact Badge) */}
+                      <td className="py-3 px-3 text-center">
+                        <button 
+                          onClick={() => openDetailsModal(user)}
+                          title="Click to view registered units"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black border shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer ${
                             isMaxUnits 
-                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
+                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
                               : unitsCount === 1
-                              ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                          }`}>
-                            <Bike size={13} />
-                            {unitsCount}/2 Units
-                            {isMaxUnits && <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-300 ml-0.5">(MAX)</span>}
-                          </span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                            {unitsCount === 0 
-                              ? 'No units registered' 
-                              : `${user.activeUnitsCount || 0} Active${user.pendingUnitsCount ? ` • ${user.pendingUnitsCount} Pending` : ''}`}
-                          </span>
-                        </div>
+                              ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 hover:bg-blue-100'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+                          }`}
+                        >
+                          <Bike size={13} />
+                          <span>{unitsCount}/2</span>
+                          {isMaxUnits && <span className="text-[9px] font-extrabold text-amber-600 dark:text-amber-400 ml-0.5">MAX</span>}
+                        </button>
                       </td>
 
                       {/* Activity Status */}
-                      <td className="p-4">
+                      <td className="py-3 px-3">
                         <div className="flex items-center gap-2">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border shadow-2xs ${activity.badgeClass}`}>
                             <span className="relative flex h-2 w-2">
@@ -376,7 +402,7 @@ const UserManagement = () => {
                       </td>
                       
                       {/* Account Status */}
-                      <td className="p-4">
+                      <td className="py-3 px-3">
                         {user.isActive === false ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 text-[10px] font-bold uppercase tracking-wider border border-red-200 dark:border-red-800">
                             <ShieldAlert size={12} /> Deactivated
@@ -390,11 +416,11 @@ const UserManagement = () => {
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                               </svg>
-                              Verified using Google
+                              Verified (Google)
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60">
-                              <ShieldCheck size={12} /> Verified (SMS/OTP)
+                              <ShieldCheck size={12} /> Verified (SMS)
                             </span>
                           )
                         ) : (
@@ -405,12 +431,12 @@ const UserManagement = () => {
                       </td>
 
                       {/* Manage Role */}
-                      <td className="p-4 text-center">
+                      <td className="py-3 px-3 text-center">
                         <select
                           value={user.role}
                           disabled={user.isActive === false}
                           onChange={(e) => initiateRoleChange(user, e.target.value)}
-                          className={`border text-xs font-bold rounded-lg px-3 py-1.5 outline-none shadow-sm transition-colors ${
+                          className={`border text-xs font-bold rounded-lg px-2.5 py-1.5 outline-none shadow-sm transition-colors ${
                             user.isActive === false ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed' :
                             (user.role === 'toda_president' || user.role === 'toda president') ? 'bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border-[#D4AF37] cursor-pointer' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] cursor-pointer'
                           }`}
@@ -421,10 +447,10 @@ const UserManagement = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="p-4 pr-6 text-center space-x-2">
+                      <td className="py-3 pr-5 pl-3 text-center space-x-2">
                         <button 
                           onClick={() => openDetailsModal(user)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+                          className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer"
                           title="View Profile & Fleet Details"
                         >
                           <Info size={14} />
@@ -432,7 +458,7 @@ const UserManagement = () => {
 
                         <button 
                           onClick={() => setStatusModal({ isOpen: true, user: user })}
-                          className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-sm ${
+                          className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-sm cursor-pointer ${
                             user.isActive === false 
                             ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
                             : 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
@@ -440,7 +466,7 @@ const UserManagement = () => {
                           title={user.isActive === false ? "Restore Account" : "Deactivate Account"}
                         >
                           {user.isActive === false ? <UserCheck size={14} /> : <UserMinus size={14} />}
-                          {user.isActive === false ? 'Activate' : 'Deactivate'}
+                          <span className="hidden sm:inline">{user.isActive === false ? 'Activate' : 'Deactivate'}</span>
                         </button>
                       </td>
                     </tr>

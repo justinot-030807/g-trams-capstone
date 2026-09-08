@@ -36,12 +36,18 @@ const MainLayout = ({ children }) => {
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 90000);
+    const interval = setInterval(sendHeartbeat, 45000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') sendHeartbeat();
+    };
+
     window.addEventListener('focus', sendHeartbeat);
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('focus', sendHeartbeat);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
 
