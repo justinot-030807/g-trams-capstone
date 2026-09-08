@@ -3,7 +3,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   Users, Search, Info, MapPin, Phone, Calendar, ShieldCheck, X, 
   AlertTriangle, User, UserMinus, UserCheck, ShieldAlert,
-  Bike, Clock, Activity, RefreshCw, Radio, Building2
+  Clock, Activity, RefreshCw, Radio, Building2, CheckCircle2
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
@@ -12,6 +12,7 @@ const UserManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
   
   // Modal states
   const [selectedUser, setSelectedUser] = useState(null);
@@ -60,11 +61,11 @@ const UserManagement = () => {
       diffSec = Math.max(0, Math.floor((now - activeDate) / 1000));
     }
 
-    // Active Now: server flagged online or active within 150 seconds (2.5 minutes)
-    if (serverOnline || diffSec < 150) {
+    // Online: active within last 180 seconds (3 minutes) or server flagged online
+    if (serverOnline || diffSec < 180) {
       return {
-        statusText: 'Active Now',
-        timeText: 'Online',
+        statusText: 'Online',
+        timeText: 'Active now',
         isOnline: true,
         isPulsing: true,
         badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/80',
@@ -79,8 +80,8 @@ const UserManagement = () => {
         timeText: `${diffMin}m ago`,
         isOnline: false,
         isPulsing: false,
-        badgeClass: 'bg-emerald-50/60 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50',
-        dotClass: 'bg-emerald-400'
+        badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+        dotClass: 'bg-slate-400'
       };
     }
 
@@ -97,33 +98,22 @@ const UserManagement = () => {
     }
 
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) {
-      return {
-        statusText: 'Active yesterday',
-        timeText: 'Yesterday',
-        isOnline: false,
-        isPulsing: false,
-        badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
-        dotClass: 'bg-slate-400'
-      };
-    }
-
     return {
-      statusText: `Active ${diffDays}d ago`,
-      timeText: `${diffDays}d ago`,
+      statusText: 'Offline',
+      timeText: diffDays === 1 ? 'Yesterday' : `${diffDays}d ago`,
       isOnline: false,
       isPulsing: false,
-      badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+      badgeClass: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500 border-slate-200 dark:border-slate-700',
       dotClass: 'bg-slate-400'
     };
   };
 
   useEffect(() => {
     fetchUsers(true);
-    // Real-time polling every 10 seconds
+    // Fast real-time polling every 6 seconds
     const interval = setInterval(() => {
       fetchUsers(false);
-    }, 10000);
+    }, 6000);
 
     const onFocus = () => fetchUsers(false);
     const onVisibilityChange = () => {
@@ -144,20 +134,17 @@ const UserManagement = () => {
     if (showSkeleton) setIsLoading(true);
     setIsRefreshing(true);
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth?_t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        cache: 'no-store'
       });
       const data = await response.json();
-      if (response.ok) {
-        const nonAdminUsers = data.filter(user => {
-          const r = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
-          return r !== 'admin' && r !== 'administrator';
-        });
-        setUsers(nonAdminUsers);
+      if (response.ok && Array.isArray(data)) {
+        setUsers(data);
         // Sync selectedUser if details modal is open
         setSelectedUser(prev => {
           if (!prev) return null;
-          return nonAdminUsers.find(u => u._id === prev._id) || prev;
+          return data.find(u => u._id === prev._id) || prev;
         });
       }
     } catch (error) {
@@ -229,7 +216,31 @@ const UserManagement = () => {
     setIsDetailsModalOpen(true);
   };
 
+  const allCount = users.length;
+  const operatorCount = users.filter(u => {
+    const r = (u.role || '').toLowerCase();
+    return r === 'operator' || !r;
+  }).length;
+  const todaPresidentCount = users.filter(u => {
+    const r = (u.role || '').toLowerCase();
+    return r === 'toda_president' || r === 'toda president';
+  }).length;
+  const adminCount = users.filter(u => {
+    const r = (u.role || '').toLowerCase();
+    return r === 'admin' || r === 'administrator';
+  }).length;
+  const onlineUsersCount = users.filter(u => getActivityStatus(u).isOnline).length;
+
   const filteredUsers = users.filter(user => {
+    // Role filter
+    const r = (user.role || '').toLowerCase();
+    if (roleFilter === 'operator' && r !== 'operator' && r !== '') return false;
+    if (roleFilter === 'toda_president' && r !== 'toda_president' && r !== 'toda president') return false;
+    if (roleFilter === 'admin' && r !== 'admin' && r !== 'administrator') return false;
+    if (roleFilter === 'online' && !getActivityStatus(user).isOnline) return false;
+
+    // Search query
+    if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const nameMatch = user.name?.toLowerCase().includes(q);
     const contactMatch = user.contact?.toLowerCase().includes(q);
@@ -238,7 +249,6 @@ const UserManagement = () => {
     return nameMatch || contactMatch || todaMatch || plateMatch;
   });
 
-  const onlineUsersCount = users.filter(u => getActivityStatus(u).isOnline).length;
   const modalActivity = selectedUser ? getActivityStatus(selectedUser) : null;
 
   return (
@@ -254,13 +264,21 @@ const UserManagement = () => {
         
         <div className="flex items-center gap-2 flex-wrap">
           {/* Live Online Counter */}
-          <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-3.5 py-2 rounded-xl font-bold text-xs border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
+          <button
+            onClick={() => setRoleFilter(roleFilter === 'online' ? 'all' : 'online')}
+            title="Click to filter online users"
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs border transition-all cursor-pointer shadow-2xs ${
+              roleFilter === 'online'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-500/30'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-950/70'
+            }`}
+          >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             <span>{onlineUsersCount} Online Now</span>
-          </div>
+          </button>
 
           {/* Total Users Count */}
           <div className="flex items-center gap-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] px-4 py-2 rounded-xl font-bold text-sm border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 shadow-sm">
@@ -273,12 +291,67 @@ const UserManagement = () => {
             onClick={() => fetchUsers(false)} 
             disabled={isRefreshing}
             title="Refresh user list"
-            className="p-2.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs disabled:opacity-50"
+            className="p-2.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw size={16} className={isRefreshing ? "animate-spin text-[#7A1B22] dark:text-[#D4AF37]" : ""} />
           </button>
         </div>
       </header>
+
+      {/* Role Filter Tabs */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 text-xs">
+        <button
+          onClick={() => setRoleFilter('all')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
+            roleFilter === 'all'
+              ? 'bg-[#7A1B22] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+          }`}
+        >
+          All Users ({allCount})
+        </button>
+        <button
+          onClick={() => setRoleFilter('operator')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
+            roleFilter === 'operator'
+              ? 'bg-[#7A1B22] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+          }`}
+        >
+          Operators ({operatorCount})
+        </button>
+        <button
+          onClick={() => setRoleFilter('toda_president')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
+            roleFilter === 'toda_president'
+              ? 'bg-[#7A1B22] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+          }`}
+        >
+          TODA Presidents ({todaPresidentCount})
+        </button>
+        <button
+          onClick={() => setRoleFilter('admin')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
+            roleFilter === 'admin'
+              ? 'bg-[#7A1B22] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+          }`}
+        >
+          Administrators ({adminCount})
+        </button>
+        <button
+          onClick={() => setRoleFilter('online')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+            roleFilter === 'online'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          Online ({onlineUsersCount})
+        </button>
+      </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
         <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50 dark:bg-slate-800/60">
@@ -294,7 +367,7 @@ const UserManagement = () => {
           </div>
           
           <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             Auto-syncing active presence
           </div>
         </div>
@@ -318,7 +391,7 @@ const UserManagement = () => {
               ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="p-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
-                    No users found matching "{searchQuery}"
+                    No users found matching current filters
                   </td>
                 </tr>
               ) : (
@@ -326,6 +399,8 @@ const UserManagement = () => {
                   const activity = getActivityStatus(user);
                   const unitsCount = user.unitsCount || 0;
                   const isMaxUnits = unitsCount >= 2;
+                  const r = (user.role || '').toLowerCase();
+                  const isAdminUser = r === 'admin' || r === 'administrator';
 
                   return (
                     <tr 
@@ -367,23 +442,26 @@ const UserManagement = () => {
                         </p>
                       </td>
 
-                      {/* Units / Fleet (Compact Badge) */}
+                      {/* Units / Fleet (Compact Badge - No Logo) */}
                       <td className="py-3 px-3 text-center">
-                        <button 
-                          onClick={() => openDetailsModal(user)}
-                          title="Click to view registered units"
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black border shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer ${
-                            isMaxUnits 
-                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
-                              : unitsCount === 1
-                              ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 hover:bg-blue-100'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
-                          }`}
-                        >
-                          <Bike size={13} />
-                          <span>{unitsCount}/2</span>
-                          {isMaxUnits && <span className="text-[9px] font-extrabold text-amber-600 dark:text-amber-400 ml-0.5">MAX</span>}
-                        </button>
+                        {isAdminUser ? (
+                          <span className="text-slate-400 dark:text-slate-500 font-bold">—</span>
+                        ) : (
+                          <button 
+                            onClick={() => openDetailsModal(user)}
+                            title="Click to view registered units"
+                            className={`inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-bold border shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+                              isMaxUnits 
+                                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
+                                : unitsCount === 1
+                                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 hover:bg-blue-100'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+                            }`}
+                          >
+                            <span>{unitsCount}/2</span>
+                            {isMaxUnits && <span className="text-[9px] font-extrabold text-amber-600 dark:text-amber-400 ml-1">MAX</span>}
+                          </button>
+                        )}
                       </td>
 
                       {/* Activity Status */}
@@ -432,18 +510,24 @@ const UserManagement = () => {
 
                       {/* Manage Role */}
                       <td className="py-3 px-3 text-center">
-                        <select
-                          value={user.role}
-                          disabled={user.isActive === false}
-                          onChange={(e) => initiateRoleChange(user, e.target.value)}
-                          className={`border text-xs font-bold rounded-lg px-2.5 py-1.5 outline-none shadow-sm transition-colors ${
-                            user.isActive === false ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed' :
-                            (user.role === 'toda_president' || user.role === 'toda president') ? 'bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border-[#D4AF37] cursor-pointer' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] cursor-pointer'
-                          }`}
-                        >
-                          <option value="operator">Operator</option>
-                          <option value="toda_president">TODA President</option>
-                        </select>
+                        {isAdminUser ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] border border-[#7A1B22]/20 dark:border-[#7A1B22]/40">
+                            Administrator
+                          </span>
+                        ) : (
+                          <select
+                            value={user.role}
+                            disabled={user.isActive === false}
+                            onChange={(e) => initiateRoleChange(user, e.target.value)}
+                            className={`border text-xs font-bold rounded-lg px-2.5 py-1.5 outline-none shadow-sm transition-colors ${
+                              user.isActive === false ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed' :
+                              (user.role === 'toda_president' || user.role === 'toda president') ? 'bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border-[#D4AF37] cursor-pointer' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] cursor-pointer'
+                            }`}
+                          >
+                            <option value="operator">Operator</option>
+                            <option value="toda_president">TODA President</option>
+                          </select>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -456,18 +540,24 @@ const UserManagement = () => {
                           <Info size={14} />
                         </button>
 
-                        <button 
-                          onClick={() => setStatusModal({ isOpen: true, user: user })}
-                          className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-sm cursor-pointer ${
-                            user.isActive === false 
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
-                            : 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
-                          }`}
-                          title={user.isActive === false ? "Restore Account" : "Deactivate Account"}
-                        >
-                          {user.isActive === false ? <UserCheck size={14} /> : <UserMinus size={14} />}
-                          <span className="hidden sm:inline">{user.isActive === false ? 'Activate' : 'Deactivate'}</span>
-                        </button>
+                        {isAdminUser ? (
+                          <span className="inline-flex items-center px-2 py-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                            Protected
+                          </span>
+                        ) : (
+                          <button 
+                            onClick={() => setStatusModal({ isOpen: true, user: user })}
+                            className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg transition-colors border shadow-sm cursor-pointer ${
+                              user.isActive === false 
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
+                              : 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                            }`}
+                            title={user.isActive === false ? "Restore Account" : "Deactivate Account"}
+                          >
+                            {user.isActive === false ? <UserCheck size={14} /> : <UserMinus size={14} />}
+                            <span className="hidden sm:inline">{user.isActive === false ? 'Activate' : 'Deactivate'}</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -615,7 +705,6 @@ const UserManagement = () => {
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TODA Association</p>
                   <div className="mt-1">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] border border-[#7A1B22]/20 dark:border-[#7A1B22]/40">
-                      <Bike size={14} />
                       {selectedUser.todaAssociation || 'NON-TODA'}
                     </span>
                   </div>
@@ -662,7 +751,7 @@ const UserManagement = () => {
               <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-800/40">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Bike size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                    <span className="w-2 h-2 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]"></span>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                       Assigned Tricycle Units
                     </h4>

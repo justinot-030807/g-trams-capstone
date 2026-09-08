@@ -293,8 +293,11 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     return 'G-TRAMS';
   };
 
+  const normalizedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
+  const isOperatorOrToda = normalizedRole === 'operator' || normalizedRole === 'toda president' || normalizedRole === 'toda_president';
+
   return (
-    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm transition-colors">
+    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm transition-colors print:hidden print-hide">
       
       {/* Left: Sidebar Toggle & Dynamic Breadcrumb Title */}
       <div className="flex items-center gap-3 min-w-0">
@@ -302,7 +305,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           onClick={onToggleSidebar}
           title={isSidebarOpen ? "Hide Menu" : "Show Menu"}
           className={`p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl transition-colors focus:outline-none shrink-0 ${
-            role === 'operator' ? 'hidden md:flex' : 'flex'
+            isOperatorOrToda ? 'hidden md:flex' : 'flex'
           }`}
           aria-label="Toggle Sidebar"
         >

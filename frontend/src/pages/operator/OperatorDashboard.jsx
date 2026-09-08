@@ -3,7 +3,8 @@ import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, User, ShieldAlert, Receipt, XCircle
+  Check, FileText, User, ShieldAlert, Receipt, XCircle,
+  Sun, Moon, SunMedium, ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
@@ -229,6 +230,46 @@ const OperatorDashboard = () => {
     );
   };
 
+  const getOperatorGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour >= 5 && hour < 12) {
+      return { 
+        text: t('greeting.morning', 'Good morning'), 
+        tag: t('dashboard.badge', 'Operator Portal'),
+        icon: Sun, 
+        badgeColor: 'text-amber-300' 
+      };
+    } else if (hour >= 12 && hour < 18) {
+      return { 
+        text: t('greeting.afternoon', 'Good afternoon'), 
+        tag: t('dashboard.badge', 'Operator Portal'),
+        icon: SunMedium, 
+        badgeColor: 'text-orange-300' 
+      };
+    } else {
+      return { 
+        text: t('greeting.evening', 'Good evening'), 
+        tag: t('dashboard.badge', 'Operator Portal'),
+        icon: Moon, 
+        badgeColor: 'text-indigo-200' 
+      };
+    }
+  };
+
+  const getOperatorSubtext = () => {
+    const hasReady = franchises.some(f => f.status === 'Ready for Pickup');
+    const hasPending = franchises.some(f => f.status === 'Pending');
+    const hasActive = franchises.some(f => f.status === 'Active');
+
+    if (hasReady) return t('greeting.subReady', 'Welcome back! Your MTOP Certificate is ready for pickup at the Municipal Cashier.');
+    if (hasPending) return t('greeting.subPending', 'Welcome back! Your franchise application is currently under municipal review.');
+    if (hasActive) return t('greeting.subActive', 'Welcome back! Your registered tricycle franchise is active and road-authorized.');
+    return t('dashboard.welcomeSub', 'Welcome back! Manage your active and pending franchises securely.');
+  };
+
+  const opGreeting = getOperatorGreeting();
+  const OpGreetingIcon = opGreeting.icon;
+
   return (
     <MainLayout>
       <style>{`
@@ -244,18 +285,59 @@ const OperatorDashboard = () => {
         }
       `}</style>
 
-      <div className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
-        <div className="relative z-10 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10 shadow-sm">
-            <User size={12} /> {t('dashboard.badge', 'Operator Portal')}
+      {/* 1. HERO BANNER */}
+      <div 
+        className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] dark:bg-gradient-to-r dark:from-[#0d121f] dark:via-[#220c13] dark:to-[#0b0f19] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37] dark:border-slate-800/80 dark:border-l-8 dark:border-l-[#D4AF37] transition-colors duration-300"
+      >
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
+        
+        <div className="relative z-10 text-center md:text-left min-w-0">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
+            <OpGreetingIcon size={13} className={opGreeting.badgeColor} />
+            <span>{opGreeting.tag}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">{t('dashboard.welcome', 'Welcome')}, {loggedInUserName}!</h1>
-          <p className="text-white/80 font-medium text-xs sm:text-sm">{t('dashboard.welcomeSub', 'Manage your active and pending franchises securely.')}</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
+            {opGreeting.text}, {loggedInUserName}!
+          </h1>
+          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
+            {getOperatorSubtext()}
+          </p>
         </div>
-        <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 px-5 py-3.5 rounded-2xl text-center md:text-right shadow-sm shrink-0">
-          <p className="font-black text-sm sm:text-base tracking-wide text-white">{currentTime.toLocaleDateString(language === 'fil' ? 'tl-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
-          <p className="text-xs font-semibold text-white/80 flex items-center justify-center md:justify-end gap-1.5 mt-0.5"><Clock size={14} className="text-[#D4AF37]" />{currentTime.toLocaleTimeString(language === 'fil' ? 'tl-PH' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+
+        {/* Right Side: Interactive Shortcut & Compact Date (Replacing bulky clock) */}
+        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
+          {franchises.some(f => f.status === 'Ready for Pickup') ? (
+            <button
+              onClick={() => {
+                const target = franchises.find(f => f.status === 'Ready for Pickup');
+                if (target) setStubModal({ isOpen: true, unit: target });
+              }}
+              className="group flex items-center gap-2.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer"
+            >
+              <Receipt size={15} />
+              <span>Claim Stub Ready</span>
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          ) : franchises.length < 2 ? (
+            <button
+              onClick={() => navigate('/apply-franchise')}
+              className="group flex items-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer"
+            >
+              <PlusCircle size={15} />
+              <span>{t('dashboard.applyNew', 'Apply Franchise')}</span>
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
+              <ShieldCheck size={16} />
+              <span>Max Units Active</span>
+            </div>
+          )}
+
+          <div className="hidden sm:flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-white/90">
+            <OpGreetingIcon size={14} className={opGreeting.badgeColor} />
+            <span>{currentTime.toLocaleDateString(language === 'fil' ? 'tl-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+          </div>
         </div>
       </div>
 

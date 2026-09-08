@@ -33,6 +33,7 @@ const FranchiseApproval = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [batchApproveModal, setBatchApproveModal] = useState(false);
+  const [batchReleaseModal, setBatchReleaseModal] = useState(false);
 
   // Quick Action modals state
   const [quickApproveTarget, setQuickApproveTarget] = useState(null);
@@ -59,7 +60,7 @@ const FranchiseApproval = () => {
   const [rotation, setRotation] = useState(0);
 
   // Print modals state
-  const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [printTargetUnit, setPrintTargetUnit] = useState(null);
   const [isBatchPrintOpen, setIsBatchPrintOpen] = useState(false);
   const [isTransmittalOpen, setIsTransmittalOpen] = useState(false);
 
@@ -183,6 +184,36 @@ const FranchiseApproval = () => {
     } catch (error) {
       console.error('Error in batch approval:', error);
       showToast('Encountered an error while processing batch approval.', 'error');
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  // Batch Release Action (Activates Ready for Pickup units)
+  const handleConfirmBatchRelease = async () => {
+    if (selectedIds.length === 0) return;
+    setIsBatchProcessing(true);
+
+    try {
+      const promises = selectedIds.map(id =>
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
+          method: 'PUT',
+          headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: 'Active' })
+        })
+      );
+
+      await Promise.all(promises);
+      showToast(`Successfully released and activated ${selectedIds.length} franchise(s)!`, "success");
+      setSelectedIds([]);
+      setBatchReleaseModal(false);
+      fetchApplications();
+    } catch (error) {
+      console.error('Error in batch release:', error);
+      showToast('Encountered an error while processing batch release.', 'error');
     } finally {
       setIsBatchProcessing(false);
     }
@@ -327,9 +358,9 @@ const FranchiseApproval = () => {
 
       {/* Official Printable MTOP Certificate Modal */}
       <MtopCertificateModal 
-        isOpen={isPrintOpen} 
-        onClose={() => setIsPrintOpen(false)} 
-        unit={selectedApp} 
+        isOpen={Boolean(printTargetUnit)} 
+        onClose={() => setPrintTargetUnit(null)} 
+        unit={printTargetUnit} 
       />
 
       {/* Batch MTOP Multi-Certificate Modal */}
@@ -498,6 +529,56 @@ const FranchiseApproval = () => {
               >
                 {isBatchProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 <span>Approve All ({selectedIds.length})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Release Confirmation Modal */}
+      {batchReleaseModal && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">Confirm Batch Release</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  You are releasing and activating <strong>{selectedIds.length}</strong> franchise(s).
+                </p>
+              </div>
+            </div>
+
+            <div className="max-h-48 overflow-y-auto space-y-1.5 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+              {applications.filter(a => selectedIds.includes(a._id)).map((app, i) => (
+                <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-white dark:hover:bg-slate-800">
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{i + 1}. {app.fullName}</span>
+                  <span className="text-[11px] font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              All selected franchises will officially transition to <strong className="text-emerald-600 dark:text-emerald-400">Active</strong> status. MTOP certificates and official receipts are acknowledged as validated and released to operators.
+            </p>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={() => setBatchReleaseModal(false)}
+                disabled={isBatchProcessing}
+                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmBatchRelease}
+                disabled={isBatchProcessing}
+                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                {isBatchProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                <span>Release All ({selectedIds.length})</span>
               </button>
             </div>
           </div>
@@ -760,7 +841,7 @@ const FranchiseApproval = () => {
                   {/* Quick Print MTOP (If Ready for Pickup) */}
                   {app.status === 'Ready for Pickup' && (
                     <button
-                      onClick={() => { setSelectedApp(app); setIsPrintOpen(true); }}
+                      onClick={() => setPrintTargetUnit(app)}
                       className="px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-[#7A1B22] dark:text-[#D4AF37] border border-amber-300 dark:border-amber-700/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
                       title="Print Official MTOP Certificate"
                     >
@@ -801,65 +882,86 @@ const FranchiseApproval = () => {
       {/* ========================================================================= */}
       {/* 🚀 FLOATING BATCH ACTION BAR (Appears when 1+ applicants are selected) */}
       {/* ========================================================================= */}
-      {selectedIds.length > 0 && (
-        <div className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[100] max-w-2xl bg-slate-900/95 backdrop-blur-md text-white border border-white/10 rounded-2xl p-3 shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#D4AF37] text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
-              {selectedIds.length}
-            </div>
-            <div>
-              <p className="text-xs font-bold leading-tight">
-                {selectedIds.length} application{selectedIds.length > 1 ? 's' : ''} selected
-              </p>
-              <button 
-                onClick={() => setSelectedIds([])}
-                className="text-[10px] text-white/60 hover:text-white underline cursor-pointer"
-              >
-                Clear selection
-              </button>
+      {selectedIds.length > 0 && (() => {
+        const selectedUnits = applications.filter(a => selectedIds.includes(a._id));
+        const pendingUnitsCount = selectedUnits.filter(u => u.status === 'Pending').length;
+        const readyUnitsCount = selectedUnits.filter(u => u.status === 'Ready for Pickup').length;
+        const isReleasePrimary = activeTab === 'ready' || (readyUnitsCount > 0 && pendingUnitsCount === 0);
+
+        return (
+          <div className="fixed bottom-6 left-0 right-0 md:left-64 z-[100] flex justify-center pointer-events-none px-4">
+            <div className="pointer-events-auto w-full max-w-2xl bg-slate-900/95 backdrop-blur-md text-white border border-white/10 rounded-2xl p-3 shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#D4AF37] text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+                  {selectedIds.length}
+                </div>
+                <div>
+                  <p className="text-xs font-bold leading-tight">
+                    {selectedIds.length} unit{selectedIds.length > 1 ? 's' : ''} selected
+                  </p>
+                  <button 
+                    onClick={() => setSelectedIds([])}
+                    className="text-[10px] text-white/60 hover:text-white underline cursor-pointer"
+                  >
+                    Clear selection
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Dynamic Batch Approve / Batch Release Action */}
+                {isReleasePrimary ? (
+                  <button
+                    onClick={() => setBatchReleaseModal(true)}
+                    disabled={isBatchProcessing}
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    title="Acknowledge Payment and Release Active Franchises"
+                  >
+                    <CheckCircle2 size={14} />
+                    <span>Batch Release ({selectedIds.length})</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setBatchApproveModal(true)}
+                    disabled={isBatchProcessing}
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    title="Batch Approve selected applications to Ready for Pickup"
+                  >
+                    <CheckCircle2 size={14} />
+                    <span>Batch Approve ({selectedIds.length})</span>
+                  </button>
+                )}
+
+                {/* Batch Print MTOP */}
+                <button
+                  onClick={() => setIsBatchPrintOpen(true)}
+                  className="px-3.5 py-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  title="Print MTOP Certificates for all selected units in 1 continuous job"
+                >
+                  <Printer size={14} />
+                  <span>Batch Print MTOP</span>
+                </button>
+
+                {/* Print Transmittal Sheet */}
+                <button
+                  onClick={() => setIsTransmittalOpen(true)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-white/90 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-white/15 cursor-pointer"
+                  title="Print Official LGU Transmittal and Endorsement Record"
+                >
+                  <FileSpreadsheet size={14} />
+                  <span className="hidden sm:inline">Transmittal Sheet</span>
+                  <span className="sm:hidden">Summary</span>
+                </button>
+              </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Batch Approve button */}
-            <button
-              onClick={() => setBatchApproveModal(true)}
-              disabled={isBatchProcessing}
-              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-              title="Batch Approve selected applications to Ready for Pickup"
-            >
-              <CheckCircle2 size={14} />
-              <span>Batch Approve ({selectedIds.length})</span>
-            </button>
-
-            {/* Batch Print MTOP */}
-            <button
-              onClick={() => setIsBatchPrintOpen(true)}
-              className="px-3.5 py-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-              title="Print MTOP Certificates for all selected units in 1 continuous job"
-            >
-              <Printer size={14} />
-              <span>Batch Print MTOP</span>
-            </button>
-
-            {/* Print Transmittal Sheet */}
-            <button
-              onClick={() => setIsTransmittalOpen(true)}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-white/90 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-white/15 cursor-pointer"
-              title="Print Official LGU Transmittal and Endorsement Record"
-            >
-              <FileSpreadsheet size={14} />
-              <span className="hidden sm:inline">Transmittal Sheet</span>
-              <span className="sm:hidden">Summary</span>
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* 🖥️ SPLIT-SCREEN INSPECTION WORKSTATION (FULL MODAL WORKBENCH) */}
       {/* ========================================================================= */}
-      {selectedApp && !isPrintOpen && !isBatchPrintOpen && !isTransmittalOpen && (
+      {selectedApp && !printTargetUnit && !isBatchPrintOpen && !isTransmittalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
           <div 
             className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" 
@@ -935,7 +1037,7 @@ const FranchiseApproval = () => {
               <div className="flex items-center gap-2">
                 {(selectedApp.status === 'Ready for Pickup' || selectedApp.status === 'Active') && (
                   <button
-                    onClick={() => setIsPrintOpen(true)}
+                    onClick={() => setPrintTargetUnit(selectedApp)}
                     className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-white/15 cursor-pointer"
                   >
                     <Printer size={14} className="text-[#D4AF37]" /> Print MTOP

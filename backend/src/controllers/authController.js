@@ -132,6 +132,7 @@ exports.login = async (req, res) => {
 // Get all users with unit fleet counts and live activity info
 exports.getUsers = async (req, res) => {
     try {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         const users = await User.find().select('-password').sort({ createdAt: -1 });
         const franchises = await Franchise.find({ isArchived: { $ne: true } })
             .select('operator fullName status plateNo make made motorNo chassisNo zone todaName');
@@ -190,7 +191,7 @@ exports.getUsers = async (req, res) => {
             if (uObj.lastActive && uObj.isActive !== false) {
                 const diffSec = Math.max(0, Math.floor((now - new Date(uObj.lastActive).getTime()) / 1000));
                 uObj.lastActiveSecondsAgo = diffSec;
-                uObj.isOnline = diffSec < 150; // Active within last 2.5 minutes
+                uObj.isOnline = diffSec < 180; // Active within last 3 minutes
             } else {
                 uObj.lastActiveSecondsAgo = null;
                 uObj.isOnline = false;

@@ -20,6 +20,18 @@ const MainLayout = ({ children }) => {
   const isTodaPresident = role === 'toda president' || role === 'toda_president';
   const showBottomNav = isOperator || isTodaPresident;
 
+  // Ensure sidebar is closed on mobile when bottom navigation is active
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768 && showBottomNav) {
+        setIsSidebarOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showBottomNav]);
+
   // Real-time user heartbeat ping
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -36,7 +48,7 @@ const MainLayout = ({ children }) => {
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 45000);
+    const interval = setInterval(sendHeartbeat, 20000);
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') sendHeartbeat();
     };
@@ -69,14 +81,14 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 print:bg-white print:text-black print:block print:min-h-0">
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={closeSidebar} 
       />
 
       <div 
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out print:ml-0 print:p-0 print:m-0 print:w-full print:block ${
           isSidebarOpen ? 'md:ml-64' : 'md:ml-0'
         }`}
       >
@@ -85,8 +97,8 @@ const MainLayout = ({ children }) => {
           onToggleSidebar={toggleSidebar} 
         />
 
-        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden ${showBottomNav ? 'pb-24 md:pb-8' : ''}`}>
-          <div className="max-w-7xl mx-auto">
+        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${showBottomNav ? 'pb-24 md:pb-8' : ''}`}>
+          <div className="max-w-7xl mx-auto print:max-w-full print:m-0 print:p-0 print:w-full">
             {children}
           </div>
         </main>

@@ -150,15 +150,21 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                   position: relative !important;
                   width: 198mm !important;
                   max-width: 198mm !important;
+                  height: 312mm !important;
+                  min-height: 312mm !important;
+                  max-height: 312mm !important;
                   margin: 8mm auto !important;
                   box-sizing: border-box !important;
-                  padding: 16px 22px !important;
+                  padding: 22px 26px !important;
                   box-shadow: none !important;
                   background: #FFFDF9 !important;
                   border: 4px double #7A1B22 !important;
                   page-break-inside: avoid !important;
                   break-inside: avoid !important;
                   overflow: hidden !important;
+                  display: flex !important;
+                  flex-direction: column !important;
+                  justify-content: space-between !important;
                   -webkit-print-color-adjust: exact !important;
                   print-color-adjust: exact !important;
                   color-adjust: exact !important;
@@ -190,156 +196,165 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                   {/* Scrollable Container preserving Desktop Certificate Geometry on Mobile */}
                   <div className="w-full max-w-[780px] overflow-x-auto pb-2 custom-scrollbar flex justify-start sm:justify-center">
                     <div 
-                      className="batch-mtop-cert-card relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] shrink-0 rounded-2xl shadow-2xl p-6 sm:p-8 md:p-10 border-4 sm:border-8 border-double border-[#7A1B22] overflow-hidden print:border-[4px] print:border-double print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full"
+                      className="batch-mtop-cert-card relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] min-h-[880px] flex flex-col justify-between shrink-0 rounded-2xl shadow-2xl p-7 sm:p-9 md:p-10 border-4 sm:border-8 border-double border-[#7A1B22] overflow-hidden print:border-[4px] print:border-double print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full"
                       style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
                     >
                       {/* Municipal Seal Watermark */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-[0.035] pointer-events-none select-none">
-                        <img src="/gasan-logo.png" alt="Watermark" className="w-[320px] h-[320px] object-contain grayscale" />
+                        <img src="/gasan-logo.png" alt="Watermark" className="w-[360px] h-[360px] object-contain grayscale" />
                       </div>
 
-                      {/* Certificate Header */}
-                      <div className="text-center relative z-10 border-b-2 border-[#7A1B22]/30 pb-2.5 mb-2.5">
-                        <div className="flex items-center justify-center gap-3.5 mb-1.5">
-                          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden shrink-0 border border-[#D4AF37]">
-                            <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-cover" />
+                      {/* TOP SECTION: Header, Preamble, Grantee Box */}
+                      <div>
+                        {/* Certificate Header */}
+                        <div className="text-center relative z-10 border-b-2 border-[#7A1B22]/40 pb-3 mb-3">
+                          <div className="flex items-center justify-center gap-4 mb-2">
+                            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden shrink-0 border-2 border-[#D4AF37] shadow-xs">
+                              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
+                              <p className="text-[10px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
+                              <h2 className="text-lg sm:text-xl font-black text-[#7A1B22] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
+                              <p className="text-[9.5px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Municipal Vice Mayor / Sangguniang Bayan</p>
+                            </div>
+                            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden shrink-0 border-2 border-[#D4AF37] shadow-xs">
+                              <img src="/gasan-logo.png" alt="Gasan Seal Right" className="w-full h-full object-cover" />
+                            </div>
                           </div>
-                          <div className="text-center">
-                            <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
-                            <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
-                            <h2 className="text-base sm:text-lg font-black text-[#7A1B22] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
-                            <p className="text-[9px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Municipal Vice Mayor / Sangguniang Bayan</p>
-                          </div>
-                          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden shrink-0 border border-[#D4AF37]">
-                            <img src="/gasan-logo.png" alt="Gasan Seal Right" className="w-full h-full object-cover" />
+
+                          <div className="mt-1.5">
+                            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-wide uppercase font-serif">
+                              MOTORIZED TRICYCLE OPERATOR'S PERMIT
+                            </h1>
+                            <p className="text-[11px] font-bold tracking-widest text-[#7A1B22] uppercase font-sans mt-0.5">
+                              MUNICIPAL (TRICYCLE) FRANCHISE
+                            </p>
+                            <div className="inline-block mt-1.5 px-4 py-1 bg-amber-50 border border-amber-300 rounded text-xs sm:text-sm font-mono font-bold text-[#7A1B22] shadow-2xs">
+                              PERMIT NO: {mtopNumber}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="mt-1">
-                          <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase font-serif">
-                            MOTORIZED TRICYCLE OPERATOR'S PERMIT
-                          </h1>
-                          <p className="text-[10px] font-bold tracking-widest text-[#7A1B22] uppercase font-sans mt-0.5">
-                            MUNICIPAL (TRICYCLE) FRANCHISE
+                        {/* Grant Preamble */}
+                        <div className="relative z-10 text-xs leading-relaxed text-slate-800 mb-3 text-justify font-serif">
+                          <p className="font-bold text-xs sm:text-sm text-[#7A1B22] mb-1">TO WHOM IT MAY CONCERN:</p>
+                          <p>
+                            Pursuant to the provisions of Section 447 (a)(3)(vi) of <strong>Republic Act No. 7160</strong> (Local Government Code of 1991), 
+                            and existing Municipal Ordinances and Franchising Regulations of the Municipality of Gasan, Marinduque, authority and permission is hereby granted to:
                           </p>
-                          <div className="inline-block mt-1 px-3 py-0.5 bg-amber-50 border border-amber-300 rounded text-xs font-mono font-bold text-[#7A1B22]">
-                            PERMIT NO: {mtopNumber}
+                        </div>
+
+                        {/* Grantee & Authorization Box */}
+                        <div className="relative z-10 bg-amber-50/50 border border-[#D4AF37]/60 rounded-xl p-3.5 mb-3 text-xs sm:text-sm">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Name of Operator:</span>
+                              <span className="font-bold text-slate-900 text-xs sm:text-sm">{unit.fullName?.toUpperCase()}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Residential Address:</span>
+                              <span className="font-bold text-slate-800 text-xs sm:text-sm">{unit.address || 'Gasan, Marinduque'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Classification:</span>
+                              <span className="font-bold text-[#7A1B22] text-xs sm:text-sm">{unit.applicationType === 'Renewal' ? 'RENEWAL' : 'NEW APPLICATION'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Authorized Route &amp; Zone:</span>
+                              <span className="font-bold text-slate-800 text-xs sm:text-sm">Zone {unit.zone} &bull; {unit.todaName || 'NON-TODA'}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Grant Preamble */}
-                      <div className="relative z-10 text-[11px] leading-snug text-slate-800 mb-2.5 text-justify">
-                        <p className="font-bold text-xs text-[#7A1B22] mb-0.5 font-serif">TO WHOM IT MAY CONCERN:</p>
-                        <p>
-                          Pursuant to the provisions of Section 447 (a)(3)(vi) of <strong>Republic Act No. 7160</strong> (Local Government Code of 1991), 
-                          and existing Municipal Ordinances and Franchising Regulations of the Municipality of Gasan, Marinduque, authority and permission is hereby granted to:
-                        </p>
-                      </div>
-
-                      {/* Grantee & Authorization Box */}
-                      <div className="relative z-10 bg-amber-50/40 border border-[#D4AF37]/50 rounded-lg p-2.5 mb-2.5 text-xs">
-                        <div className="grid grid-cols-2 gap-2.5">
-                          <div>
-                            <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Name of Operator:</span>
-                            <span className="font-bold text-slate-900 text-xs sm:text-sm">{unit.fullName?.toUpperCase()}</span>
-                          </div>
-                          <div>
-                            <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Residential Address:</span>
-                            <span className="font-bold text-slate-800 text-xs">{unit.address || 'Gasan, Marinduque'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Classification:</span>
-                            <span className="font-bold text-[#7A1B22] text-xs">{unit.applicationType === 'Renewal' ? 'RENEWAL' : 'NEW APPLICATION'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Authorized Route &amp; Zone:</span>
-                            <span className="font-bold text-slate-800 text-xs">Zone {unit.zone} &bull; {unit.todaName || 'NON-TODA'}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Tricycle Technical Specifications */}
-                      <div className="relative z-10 mb-2.5">
-                        <p className="text-[9.5px] font-sans font-bold uppercase tracking-wider text-slate-600 mb-1">
-                          AUTHORIZED MOTORIZED TRICYCLE UNIT SPECIFICATIONS:
-                        </p>
-                        <table className="w-full border-collapse border border-slate-300 text-xs text-left">
-                          <thead>
-                            <tr className="bg-slate-100/80 font-sans text-[9.5px] uppercase font-bold text-slate-700">
-                              <th className="border border-slate-300 py-1.5 px-2.5 text-center">Make / Brand</th>
-                              <th className="border border-slate-300 py-1.5 px-2.5 text-center">Year / Model</th>
-                              <th className="border border-slate-300 py-1.5 px-2.5 text-center">Motor Number</th>
-                              <th className="border border-slate-300 py-1.5 px-2.5 text-center">Chassis Number</th>
-                              <th className="border border-slate-300 py-1.5 px-2.5 text-center">Plate Number</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="font-mono text-center font-bold text-slate-800 text-xs">
-                              <td className="border border-slate-300 py-1.5 px-2.5">{unit.make || 'N/A'}</td>
-                              <td className="border border-slate-300 py-1.5 px-2.5">{unit.made || 'N/A'}</td>
-                              <td className="border border-slate-300 py-1.5 px-2.5">{unit.motorNo || 'N/A'}</td>
-                              <td className="border border-slate-300 py-1.5 px-2.5">{unit.chassisNo || 'N/A'}</td>
-                              <td className="border border-slate-300 py-1.5 px-2.5 text-[#7A1B22] font-black">{unit.plateNo || 'PENDING'}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Standard 7 Legal Terms and Conditions (Appendix C) */}
-                      <div className="relative z-10 mb-2.5 bg-slate-50/70 p-2.5 rounded-lg border border-slate-200">
-                        <p className="text-[9px] font-sans font-black uppercase tracking-wider text-[#7A1B22] mb-1">
-                          TERMS AND CONDITIONS (APPENDIX C - MUNICIPAL FRANCHISE):
-                        </p>
-                        <ol className="list-decimal list-outside pl-3.5 space-y-0.5 text-[9px] sm:text-[9.5px] text-slate-700 leading-tight">
-                          <li>The operator and driver shall strictly comply with all national traffic laws, municipal ordinances, and road safety regulations promulgated by the Municipality of Gasan.</li>
-                          <li>This permit is strictly <strong>non-transferable</strong> and valid exclusively for the motorized tricycle unit specifically described herein.</li>
-                          <li>The unit shall operate strictly within its assigned <strong>authorized route and zone</strong> approved by the Sangguniang Bayan.</li>
-                          <li>The operator and designated driver shall charge only the authorized fare matrix prescribed by municipal ordinance and shall conspicuously display the fare schedule inside the passenger sidecar.</li>
-                          <li>The unit must maintain roadworthiness, safety equipment, functioning headlights, taillights, signal lights, and clean passenger accommodation at all times.</li>
-                          <li>Operation along national highways is strictly subject to the Tricycle Route Plan (TRP) and DOTr-DILG Joint Memorandum Circular 2020-036; travel is limited to authorized municipal intersection crossing points.</li>
-                          <li>Violation of any of the foregoing conditions, municipal ordinances, or terms of this franchise shall constitute sufficient grounds for the immediate suspension, fine, or revocation of this permit.</li>
-                        </ol>
-                      </div>
-
-                      {/* Validity and Grant Statement */}
-                      <div className="relative z-10 text-xs leading-relaxed text-slate-800 mb-3 flex items-center justify-between gap-2 border-t border-b border-slate-200 py-1.5">
-                        <div>
-                          <span className="text-[9px] font-sans font-bold text-slate-500 uppercase block">Effective Date:</span>
-                          <span className="font-bold text-slate-900 text-xs">{issueDate}</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] font-sans font-bold text-slate-500 uppercase block">Validity Period:</span>
-                          <span className="font-bold text-emerald-800 text-xs">One (1) Year Validity</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] font-sans font-bold text-slate-500 uppercase block">Expiration Date:</span>
-                          <span className="font-black text-[#7A1B22] text-xs">{expiryDate}</span>
-                        </div>
-                      </div>
-
-                      {/* Official Signatory Section */}
-                      <div className="relative z-10 pt-1 flex items-end justify-between gap-4">
-                        <div className="text-left font-sans text-[8.5px] text-slate-500 space-y-0.5">
-                          <p>Certified Official Copy</p>
-                          <p>G-TRAMS Electronic Authentication</p>
-                          <p className="font-mono text-[8px]">DOC-ID: {String(unit._id).toUpperCase()}</p>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-[9px] font-sans uppercase font-bold text-slate-600 mb-3.5">
-                            For and by Authority of the Sangguniang Bayan:
+                      {/* MIDDLE SECTION: Specifications & Terms and Conditions */}
+                      <div>
+                        {/* Tricycle Technical Specifications */}
+                        <div className="relative z-10 mb-3">
+                          <p className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                            AUTHORIZED MOTORIZED TRICYCLE UNIT SPECIFICATIONS:
                           </p>
-                          <div className="inline-block text-center border-t-2 border-slate-800 pt-1 min-w-[200px]">
-                            <p className="font-serif font-black text-xs sm:text-sm text-slate-900 tracking-wide">
-                              HON. LIDANY A. LAO-BALDO
+                          <table className="w-full border-collapse border border-slate-300 text-xs text-left">
+                            <thead>
+                              <tr className="bg-slate-100/90 font-sans text-[10px] uppercase font-bold text-slate-700">
+                                <th className="border border-slate-300 py-2 px-3 text-center">Make / Brand</th>
+                                <th className="border border-slate-300 py-2 px-3 text-center">Year / Model</th>
+                                <th className="border border-slate-300 py-2 px-3 text-center">Motor Number</th>
+                                <th className="border border-slate-300 py-2 px-3 text-center">Chassis Number</th>
+                                <th className="border border-slate-300 py-2 px-3 text-center">Plate Number</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="font-mono text-center font-bold text-slate-800 text-xs sm:text-sm">
+                                <td className="border border-slate-300 py-2 px-3">{unit.make || 'N/A'}</td>
+                                <td className="border border-slate-300 py-2 px-3">{unit.made || 'N/A'}</td>
+                                <td className="border border-slate-300 py-2 px-3">{unit.motorNo || 'N/A'}</td>
+                                <td className="border border-slate-300 py-2 px-3">{unit.chassisNo || 'N/A'}</td>
+                                <td className="border border-slate-300 py-2 px-3 text-[#7A1B22] font-black">{unit.plateNo || 'PENDING'}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Standard 7 Legal Terms and Conditions (Appendix C) */}
+                        <div className="relative z-10 mb-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200">
+                          <p className="text-[10px] font-sans font-black uppercase tracking-wider text-[#7A1B22] mb-1.5">
+                            TERMS AND CONDITIONS (APPENDIX C - MUNICIPAL FRANCHISE):
+                          </p>
+                          <ol className="list-decimal list-outside pl-4 space-y-1 text-[9.5px] sm:text-[10px] text-slate-700 leading-snug">
+                            <li>The operator and driver shall strictly comply with all national traffic laws, municipal ordinances, and road safety regulations promulgated by the Municipality of Gasan.</li>
+                            <li>This permit is strictly <strong>non-transferable</strong> and valid exclusively for the motorized tricycle unit specifically described herein.</li>
+                            <li>The unit shall operate strictly within its assigned <strong>authorized route and zone</strong> approved by the Sangguniang Bayan.</li>
+                            <li>The operator and designated driver shall charge only the authorized fare matrix prescribed by municipal ordinance and shall conspicuously display the fare schedule inside the passenger sidecar.</li>
+                            <li>The unit must maintain roadworthiness, safety equipment, functioning headlights, taillights, signal lights, and clean passenger accommodation at all times.</li>
+                            <li>Operation along national highways is strictly subject to the Tricycle Route Plan (TRP) and DOTr-DILG Joint Memorandum Circular 2020-036; travel is limited to authorized municipal intersection crossing points.</li>
+                            <li>Violation of any of the foregoing conditions, municipal ordinances, or terms of this franchise shall constitute sufficient grounds for the immediate suspension, fine, or revocation of this permit.</li>
+                          </ol>
+                        </div>
+                      </div>
+
+                      {/* BOTTOM SECTION: Validity & Official Signatory Block */}
+                      <div>
+                        {/* Validity and Grant Statement */}
+                        <div className="relative z-10 text-xs sm:text-sm leading-relaxed text-slate-800 mb-4 flex items-center justify-between gap-2 border-t border-b border-slate-200 py-2">
+                          <div>
+                            <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Effective Date:</span>
+                            <span className="font-bold text-slate-900 text-xs sm:text-sm">{issueDate}</span>
+                          </div>
+                          <div>
+                            <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Validity Period:</span>
+                            <span className="font-bold text-emerald-800 text-xs sm:text-sm">One (1) Year Validity</span>
+                          </div>
+                          <div>
+                            <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Expiration Date:</span>
+                            <span className="font-black text-[#7A1B22] text-xs sm:text-sm">{expiryDate}</span>
+                          </div>
+                        </div>
+
+                        {/* Official Signatory Section */}
+                        <div className="relative z-10 pt-2 flex items-end justify-between gap-4">
+                          <div className="text-left font-sans text-[9px] text-slate-500 space-y-1">
+                            <p className="font-semibold text-slate-600">Certified Official Copy</p>
+                            <p>G-TRAMS Electronic Authentication</p>
+                            <p className="font-mono text-[8.5px]">DOC-ID: {String(unit._id).toUpperCase()}</p>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-[10px] font-sans uppercase font-bold text-slate-600 mb-6 sm:mb-8 print:mb-8">
+                              For and by Authority of the Sangguniang Bayan:
                             </p>
-                            <p className="text-[9px] font-sans uppercase font-bold text-slate-600">
-                              Municipal Vice Mayor &amp; Presiding Officer
-                            </p>
-                            <p className="text-[8.5px] font-sans text-slate-500 italic">
-                              Municipality of Gasan, Marinduque
-                            </p>
+                            <div className="inline-block text-center border-t-2 border-slate-800 pt-1.5 min-w-[220px]">
+                              <p className="font-serif font-black text-sm sm:text-base text-slate-900 tracking-wide">
+                                HON. LIDANY A. LAO-BALDO
+                              </p>
+                              <p className="text-[10px] font-sans uppercase font-bold text-slate-600">
+                                Municipal Vice Mayor &amp; Presiding Officer
+                              </p>
+                              <p className="text-[9px] font-sans text-slate-500 italic">
+                                Municipality of Gasan, Marinduque
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>

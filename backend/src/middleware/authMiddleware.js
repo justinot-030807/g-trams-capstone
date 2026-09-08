@@ -13,9 +13,9 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
 
-            // Update lastActive timestamp (throttled to once per minute to optimize DB load)
+            // Update lastActive timestamp (throttled to once per 15s to optimize DB load)
             const now = Date.now();
-            if (!req.user.lastActive || (now - new Date(req.user.lastActive).getTime() > 60000)) {
+            if (!req.user.lastActive || (now - new Date(req.user.lastActive).getTime() > 15000)) {
                 User.findByIdAndUpdate(req.user._id, { lastActive: new Date() }).exec().catch(() => {});
                 req.user.lastActive = new Date();
             }

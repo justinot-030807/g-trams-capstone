@@ -36,6 +36,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     role = 'admin';
   }
 
+  const isOperatorOrToda = role === 'operator' || role === 'toda president' || role === 'toda_president';
+
   // Automatically close sidebar on mobile route navigation
   useEffect(() => {
     if (window.innerWidth < 768 && onClose) {
@@ -238,15 +240,17 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
       `}</style>
 
-      {isOpen && (
+      {isOpen && !isOperatorOrToda && (
         <div 
-          className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-300 print:hidden print-hide"
           onClick={onClose}
         />
       )}
 
       <aside 
-        className={`w-64 bg-[#7A1B22] h-[100dvh] fixed top-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 ${
+        className={`w-64 bg-[#7A1B22] h-[100dvh] fixed top-0 left-0 flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 print:hidden print-hide ${
+          isOperatorOrToda ? 'hidden md:flex' : 'flex'
+        } ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

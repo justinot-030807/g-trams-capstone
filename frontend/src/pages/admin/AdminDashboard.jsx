@@ -3,7 +3,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
   BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon, Sun, Moon, SunMedium
 } from 'lucide-react';
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip 
@@ -158,6 +158,42 @@ const AdminDashboard = () => {
     return { text: `Updated pending record of ${name}`, color: 'text-amber-700 bg-amber-50 border-amber-200' };
   };
 
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour >= 5 && hour < 12) {
+      return { 
+        text: 'Good morning', 
+        tag: 'Morning Briefing', 
+        icon: Sun, 
+        badgeColor: 'text-amber-300' 
+      };
+    } else if (hour >= 12 && hour < 18) {
+      return { 
+        text: 'Good afternoon', 
+        tag: 'Afternoon Overview', 
+        icon: SunMedium, 
+        badgeColor: 'text-orange-300' 
+      };
+    } else {
+      return { 
+        text: 'Good evening', 
+        tag: 'Evening Summary', 
+        icon: Moon, 
+        badgeColor: 'text-indigo-200' 
+      };
+    }
+  };
+
+  const getGreetingSubtext = () => {
+    if (stats.pending > 0) {
+      return `Welcome back! You have ${stats.pending} application${stats.pending > 1 ? 's' : ''} awaiting review in the approval queue.`;
+    }
+    return `Welcome back! All franchise queues and operations are up-to-date.`;
+  };
+
+  const greeting = getGreeting();
+  const GreetingIcon = greeting.icon;
+
   return (
     <MainLayout>
       {/* BUTTERY-SMOOTH CUSTOM ANIMATIONS */}
@@ -186,29 +222,52 @@ const AdminDashboard = () => {
 
       {/* 1. HERO BANNER */}
       <div 
-        className="animate-smooth-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37]"
+        className="animate-smooth-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] dark:bg-gradient-to-r dark:from-[#0d121f] dark:via-[#220c13] dark:to-[#0b0f19] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37] dark:border-slate-800/80 dark:border-l-8 dark:border-l-[#D4AF37] transition-colors duration-300"
         style={{ animationDelay: '0.05s' }}
       >
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
 
-        <div className="relative z-10 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/10 shadow-sm">
-            <BarChart3 size={12} /> Executive Overview
+        <div className="relative z-10 text-center md:text-left min-w-0">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
+            <GreetingIcon size={13} className={greeting.badgeColor} />
+            <span>{greeting.tag}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
-            Admin Overview, {loggedInAdminName}
+            {greeting.text}, {loggedInAdminName}!
           </h1>
-          <p className="text-white/80 font-medium text-xs sm:text-sm">Real-time system analytics and franchise monitoring.</p>
+          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
+            {getGreetingSubtext()}
+          </p>
         </div>
 
-        <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 px-5 py-3.5 rounded-2xl text-center md:text-right shadow-sm shrink-0">
-          <p className="font-black text-sm sm:text-base tracking-wide text-white">
-            {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-          </p>
-          <p className="text-xs font-semibold text-white/80 flex items-center justify-center md:justify-end gap-1.5 mt-0.5">
-            <Clock size={14} className="text-[#D4AF37]" />
-            {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-          </p>
+        {/* Right Side: Interactive Action Badge & Compact Date (Replacing bulky clock) */}
+        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
+          {stats.pending > 0 ? (
+            <button
+              onClick={() => navigate('/franchise-approval')}
+              className="group flex items-center gap-3 bg-white/15 hover:bg-white/25 dark:bg-amber-500/15 dark:hover:bg-amber-500/25 border border-white/20 dark:border-amber-400/30 px-4 py-2.5 rounded-2xl transition-all shadow-sm cursor-pointer active:scale-95 text-left"
+              title="Open Approvals Queue"
+            >
+              <div className="w-8 h-8 rounded-xl bg-amber-400/25 border border-amber-400/40 text-[#D4AF37] flex items-center justify-center shrink-0">
+                <Clock size={16} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
+                <p className="text-xs font-black text-white">{stats.pending} Pending Review</p>
+              </div>
+              <ArrowRight size={15} className="text-[#D4AF37] group-hover:translate-x-1 transition-transform ml-0.5" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-2.5 bg-white/10 dark:bg-emerald-950/40 border border-white/15 dark:border-emerald-800/50 px-4 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>All Queues Cleared</span>
+            </div>
+          )}
+
+          <div className="hidden sm:flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-white/90">
+            <GreetingIcon size={14} className={greeting.badgeColor} />
+            <span>{currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+          </div>
         </div>
       </div>
 

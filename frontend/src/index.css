@@ -5,6 +5,18 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    zoom: 0.9;
+  }
+
+  @media print {
+    html, body {
+      zoom: 1 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+  }
+
   :root {
     /* Brand (10% Accent) */
     --color-brand: #7A1B22;       /* Maroon - CTAs, Active States */
