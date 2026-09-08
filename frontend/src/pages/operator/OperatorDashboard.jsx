@@ -237,9 +237,10 @@ const OperatorDashboard = () => {
         .animate-dashboard-card { opacity: 0; animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-banner-orb { animation: floatSlow 8s ease-in-out infinite alternate; }
         @media print {
-          body * { visibility: hidden; }
-          #printable-document, #printable-document * { visibility: visible; }
-          #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
+          body:not(.printing-claim-stub) * { visibility: hidden; }
+          body:not(.printing-claim-stub) #printable-document, 
+          body:not(.printing-claim-stub) #printable-document * { visibility: visible; }
+          body:not(.printing-claim-stub) #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
         }
       `}</style>
 

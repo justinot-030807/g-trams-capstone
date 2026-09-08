@@ -84,19 +84,20 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
   return (
     <div 
       id="printable-mtop-modal-root" 
-      className="fixed inset-0 z-[120] bg-slate-950/85 backdrop-blur-md overflow-y-auto overscroll-contain flex flex-col items-center p-2 sm:p-6 print:p-0 print:bg-white print:static print:inset-auto print:overflow-hidden"
+      className="fixed inset-0 z-[120] bg-slate-950/85 backdrop-blur-md overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-hidden"
     >
-      <div className="w-full max-w-[780px] my-auto sm:my-4 flex flex-col items-center shrink-0 pb-16 print:pb-0 print:max-w-full print:m-0">
+      <div className="min-h-full w-full flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:p-0 print:m-0">
+        <div className="w-full max-w-[780px] flex flex-col items-center shrink-0 print:max-w-full print:m-0">
         
         {/* Action Toolbar (Hidden during print) */}
-        <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 sm:p-3.5 mb-4 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
-          <div className="flex items-center gap-2.5">
+        <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-2.5 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
+          <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
               <Award size={18} />
             </div>
             <div>
               <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
-                Official MTOP Certificate Preview
+                Official MTOP Certificate
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                   unit.status === 'Active' 
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
@@ -111,23 +112,23 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Download as Image Button */}
             <button
               onClick={handleDownloadImage}
               disabled={isDownloading}
-              className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-black transition-all shadow-md disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-black transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
               title="Download high-resolution image"
             >
               {isDownloading ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  <span>Saving...</span>
+                  <span className="hidden sm:inline">Saving...</span>
                 </>
               ) : downloadSuccess ? (
                 <>
                   <CheckCircle2 size={14} className="text-emerald-900" />
-                  <span>Saved!</span>
+                  <span className="hidden sm:inline">Saved!</span>
                 </>
               ) : (
                 <>
@@ -141,16 +142,17 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             {/* Print MTOP Button */}
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+              className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
               title="Print or Save as PDF (1 Page)"
             >
               <Printer size={14} />
-              <span>Print / Save PDF</span>
+              <span className="hidden sm:inline">Print / Save PDF</span>
+              <span className="sm:hidden">Print</span>
             </button>
 
             <button
               onClick={onClose}
-              className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer shrink-0"
               title="Close Preview (Esc)"
             >
               <X size={18} />
@@ -158,33 +160,42 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           </div>
         </div>
 
-        {/* Official Certificate Container */}
-        <div 
-          ref={certRef}
-          id="printable-mtop-certificate" 
-          className="relative bg-[#FFFDF9] text-slate-900 w-full rounded-2xl shadow-2xl p-5 sm:p-8 md:p-10 border-4 sm:border-8 border-double border-[#7A1B22] overflow-hidden print:border-[4px] print:border-double print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full"
-          style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
-        >
-          {/* Print Stylesheet - Precision 1-Page Fit & Suppress Browser Headers */}
+        {/* Mobile Swipe Hint */}
+        <div className="sm:hidden w-full flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-sans font-medium mb-2 bg-amber-950/60 border border-amber-500/30 px-3 py-1 rounded-full shadow-sm">
+          <span>&larr;</span>
+          <span>I-swipe pakaliwa o pakanan para makita nang buo</span>
+          <span>&rarr;</span>
+        </div>
+
+        {/* Scrollable Container preserving Exact Desktop Certificate Geometry on Mobile */}
+        <div className="w-full max-w-[780px] overflow-x-auto pb-4 custom-scrollbar flex justify-start sm:justify-center">
+          <div 
+            ref={certRef}
+            id="printable-mtop-certificate" 
+            className="relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] shrink-0 rounded-2xl shadow-2xl p-6 sm:p-8 md:p-10 border-4 sm:border-8 border-double border-[#7A1B22] overflow-hidden print:border-[4px] print:border-double print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full"
+            style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
+          >
+          {/* Print Stylesheet - Precision 1-Page Fit on Long Bond Paper (8.5 x 13 in) */}
           <style>{`
             @media print {
               @page {
-                size: A4 portrait;
-                margin: 0; /* CRITICAL: Suppresses browser headers (G-TRAMS, date/time) and footer URLs */
+                size: 8.5in 13in; /* Philippine Long Bond Paper (Folio / F4) */
+                margin: 0;        /* Suppresses browser headers (G-TRAMS, date/time) and footer URLs */
               }
               html, body {
                 margin: 0 !important;
                 padding: 0 !important;
+                width: 100% !important;
                 height: 100% !important;
-                overflow: hidden !important;
                 background: white !important;
+                overflow: hidden !important;
               }
               body.printing-mtop {
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
+                width: 100% !important;
+                height: 100% !important;
                 overflow: hidden !important;
               }
               body.printing-mtop * {
@@ -197,8 +208,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
-                height: 100% !important;
-                overflow: hidden !important;
+                overflow: visible !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
               }
@@ -207,16 +217,15 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 visibility: visible !important;
               }
               body.printing-mtop #printable-mtop-certificate {
-                position: absolute !important;
-                left: 50% !important;
-                top: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                width: 196mm !important;
-                max-width: 196mm !important;
-                height: 284mm !important;
-                max-height: 284mm !important;
+                position: relative !important;
+                left: 0 !important;
+                right: 0 !important;
+                top: 0 !important;
+                transform: none !important;
+                width: 198mm !important;
+                max-width: 198mm !important;
+                margin: 8mm auto !important;
                 box-sizing: border-box !important;
-                margin: 0 !important;
                 padding: 16px 22px !important;
                 box-shadow: none !important;
                 background: #FFFDF9 !important;
@@ -225,6 +234,8 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 break-inside: avoid !important;
                 page-break-after: avoid !important;
                 break-after: avoid !important;
+                page-break-before: avoid !important;
+                break-before: avoid !important;
                 overflow: hidden !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -258,8 +269,8 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 <h2 className="text-base sm:text-lg font-black text-[#7A1B22] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
                 <p className="text-[9px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Municipal Vice Mayor / Sangguniang Bayan</p>
               </div>
-              <div className="w-13 h-13 sm:w-14 sm:h-14 shrink-0 hidden sm:block">
-                <img src="/gasan-logo.png" alt="Gasan Seal Right" className="w-full h-full object-cover opacity-80" />
+              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden shrink-0 border border-[#D4AF37]">
+                <img src="/gasan-logo.png" alt="Gasan Seal Right" className="w-full h-full object-cover" />
               </div>
             </div>
 
@@ -287,7 +298,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
 
           {/* Grantee & Authorization Box */}
           <div className="relative z-10 bg-amber-50/40 border border-[#D4AF37]/50 rounded-lg p-2.5 mb-2.5 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Name of Operator:</span>
                 <span className="font-bold text-slate-900 text-xs sm:text-sm">{unit.fullName?.toUpperCase()}</span>
@@ -314,21 +325,21 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             </p>
             <table className="w-full border-collapse border border-slate-300 text-xs text-left">
               <thead>
-                <tr className="bg-slate-100/80 font-sans text-[9px] uppercase font-bold text-slate-700">
-                  <th className="border border-slate-300 py-1 px-2 text-center">Make / Brand</th>
-                  <th className="border border-slate-300 py-1 px-2 text-center">Year / Model</th>
-                  <th className="border border-slate-300 py-1 px-2 text-center">Motor Number</th>
-                  <th className="border border-slate-300 py-1 px-2 text-center">Chassis Number</th>
-                  <th className="border border-slate-300 py-1 px-2 text-center">Plate Number</th>
+                <tr className="bg-slate-100/80 font-sans text-[9.5px] uppercase font-bold text-slate-700">
+                  <th className="border border-slate-300 py-1.5 px-2.5 text-center">Make / Brand</th>
+                  <th className="border border-slate-300 py-1.5 px-2.5 text-center">Year / Model</th>
+                  <th className="border border-slate-300 py-1.5 px-2.5 text-center">Motor Number</th>
+                  <th className="border border-slate-300 py-1.5 px-2.5 text-center">Chassis Number</th>
+                  <th className="border border-slate-300 py-1.5 px-2.5 text-center">Plate Number</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="font-mono text-center font-bold text-slate-800 text-xs">
-                  <td className="border border-slate-300 py-1 px-2">{unit.make || 'N/A'}</td>
-                  <td className="border border-slate-300 py-1 px-2">{unit.made || 'N/A'}</td>
-                  <td className="border border-slate-300 py-1 px-2">{unit.motorNo || 'N/A'}</td>
-                  <td className="border border-slate-300 py-1 px-2">{unit.chassisNo || 'N/A'}</td>
-                  <td className="border border-slate-300 py-1 px-2 text-[#7A1B22] font-black">{unit.plateNo || 'PENDING'}</td>
+                  <td className="border border-slate-300 py-1.5 px-2.5">{unit.make || 'N/A'}</td>
+                  <td className="border border-slate-300 py-1.5 px-2.5">{unit.made || 'N/A'}</td>
+                  <td className="border border-slate-300 py-1.5 px-2.5">{unit.motorNo || 'N/A'}</td>
+                  <td className="border border-slate-300 py-1.5 px-2.5">{unit.chassisNo || 'N/A'}</td>
+                  <td className="border border-slate-300 py-1.5 px-2.5 text-[#7A1B22] font-black">{unit.plateNo || 'PENDING'}</td>
                 </tr>
               </tbody>
             </table>
@@ -351,7 +362,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           </div>
 
           {/* Validity and Grant Statement */}
-          <div className="relative z-10 text-xs leading-relaxed text-slate-800 mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-b border-slate-200 py-1.5">
+          <div className="relative z-10 text-xs leading-relaxed text-slate-800 mb-3 flex items-center justify-between gap-2 border-t border-b border-slate-200 py-1.5">
             <div>
               <span className="text-[9px] font-sans font-bold text-slate-500 uppercase block">Effective Date:</span>
               <span className="font-bold text-slate-900 text-xs">{issueDate}</span>
@@ -367,14 +378,14 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           </div>
 
           {/* Official Signatory Section */}
-          <div className="relative z-10 pt-1 flex flex-col sm:flex-row items-end justify-between gap-4">
+          <div className="relative z-10 pt-1 flex items-end justify-between gap-4">
             <div className="text-left font-sans text-[8.5px] text-slate-500 space-y-0.5">
               <p>Certified Official Copy</p>
               <p>G-TRAMS Electronic Authentication</p>
               <p className="font-mono text-[8px]">DOC-ID: {String(unit._id).toUpperCase()}</p>
             </div>
 
-            <div className="text-center sm:text-right">
+            <div className="text-right">
               <p className="text-[9px] font-sans uppercase font-bold text-slate-600 mb-3.5">
                 For and by Authority of the Sangguniang Bayan:
               </p>
@@ -392,9 +403,11 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             </div>
           </div>
 
+          </div>
         </div>
       </div>
     </div>
+  </div>
   );
 };
 
