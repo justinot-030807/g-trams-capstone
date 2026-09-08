@@ -3,10 +3,13 @@ import MainLayout from '../../components/MainLayout';
 import { 
   CheckCircle, CheckCircle2, XCircle, Eye, FileText, AlertCircle, 
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
-  CalendarDays, User, Clock, ExternalLink, RefreshCw, ChevronRight, Shield
+  CalendarDays, User, Clock, ExternalLink, RefreshCw, ChevronRight, ChevronLeft, Shield,
+  CheckSquare, Square, Filter, Users, Layers, FileSpreadsheet
 } from 'lucide-react';
 import { QueueListSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
+import BatchMtopModal from '../../components/admin/BatchMtopModal';
+import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal';
 
 const REJECT_REASONS = [
   "Incomplete Requirements",
@@ -22,12 +25,27 @@ const FranchiseApproval = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Queue Filtering state
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'ready' | 'all'
+  const [selectedToda, setSelectedToda] = useState('all');
+
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [batchApproveModal, setBatchApproveModal] = useState(false);
+
+  // Quick Action modals state
+  const [quickApproveTarget, setQuickApproveTarget] = useState(null);
+  const [quickRejectTarget, setQuickRejectTarget] = useState(null);
+  const [quickRejectReason, setQuickRejectReason] = useState(REJECT_REASONS[0]);
+  const [quickRejectCustom, setQuickRejectCustom] = useState('');
+
   // Workstation state
   const [selectedApp, setSelectedApp] = useState(null); 
   const [activeDocKey, setActiveDocKey] = useState('orCr');
   const [mobilePane, setMobilePane] = useState('details'); // 'details' | 'document'
 
-  // Rejection & processing state
+  // Workstation Rejection state
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState(REJECT_REASONS[0]);
   const [customReason, setCustomReason] = useState('');
@@ -40,8 +58,10 @@ const FranchiseApproval = () => {
   const [zoomScale, setZoomScale] = useState(1);
   const [rotation, setRotation] = useState(0);
 
-  // Print modal state
+  // Print modals state
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isBatchPrintOpen, setIsBatchPrintOpen] = useState(false);
+  const [isTransmittalOpen, setIsTransmittalOpen] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -74,9 +94,34 @@ const FranchiseApproval = () => {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
   };
 
-  const handleUpdateStatus = async (status) => {
+  // Document Completeness Evaluator
+  const getDocCompleteness = (app) => {
+    const isRenewal = app.applicationType === 'Renewal';
+    const docs = [
+      { name: 'OR/CR', uploaded: Boolean(app.orCrUrl) },
+      { name: "License", uploaded: Boolean(app.licenseUrl) },
+      { name: 'TODA', uploaded: Boolean(app.todaEndorsementUrl), optional: isRenewal },
+      { name: 'Barangay', uploaded: Boolean(app.brgyClearanceUrl), optional: isRenewal }
+    ];
+    const requiredDocs = docs.filter(d => !d.optional);
+    const totalRequired = requiredDocs.length;
+    const uploadedRequired = requiredDocs.filter(d => d.uploaded).length;
+    const allTotal = docs.length;
+    const allUploaded = docs.filter(d => d.uploaded).length;
+    const isComplete = uploadedRequired === totalRequired;
+    return {
+      isComplete,
+      uploadedCount: allUploaded,
+      totalCount: allTotal,
+      missing: docs.filter(d => !d.uploaded).map(d => d.name)
+    };
+  };
+
+  // Status Update for Single Unit (from Workstation or Quick Action)
+  const handleUpdateStatus = async (status, targetApp = selectedApp, customReasonText = '') => {
+    if (!targetApp) return;
     setIsProcessing(true);
-    const finalReason = status === 'Cancelled' ? (rejectReason === 'Others (Please specify)' ? customReason : rejectReason) : '';
+    const finalReason = status === 'Cancelled' ? customReasonText : '';
 
     if (status === 'Cancelled' && !finalReason.trim()) {
       showToast("Please provide a reason for rejection.", "error");
@@ -85,7 +130,7 @@ const FranchiseApproval = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedApp._id}/status`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${targetApp._id}/status`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -95,9 +140,13 @@ const FranchiseApproval = () => {
       });
 
       if (response.ok) {
-        showToast(`Application status updated to ${status}!`, "success");
-        setSelectedApp(null); 
-        setIsRejecting(false);
+        showToast(`Application for ${targetApp.fullName} updated to ${status}!`, "success");
+        if (selectedApp?._id === targetApp._id) {
+          setSelectedApp(null); 
+          setIsRejecting(false);
+        }
+        setQuickApproveTarget(null);
+        setQuickRejectTarget(null);
         fetchApplications(); 
       } else {
         showToast('Failed to update status. Please try again.', 'error');
@@ -109,7 +158,37 @@ const FranchiseApproval = () => {
     }
   };
 
-  // Reset document controls when an application is opened
+  // Batch Approval Action
+  const handleConfirmBatchApprove = async () => {
+    if (selectedIds.length === 0) return;
+    setIsBatchProcessing(true);
+
+    try {
+      const promises = selectedIds.map(id =>
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
+          method: 'PUT',
+          headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: 'Ready for Pickup' })
+        })
+      );
+
+      await Promise.all(promises);
+      showToast(`Successfully approved ${selectedIds.length} application(s) to Ready for Pickup!`, "success");
+      setSelectedIds([]);
+      setBatchApproveModal(false);
+      fetchApplications();
+    } catch (error) {
+      console.error('Error in batch approval:', error);
+      showToast('Encountered an error while processing batch approval.', 'error');
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  // Reset document controls when an application is opened in Workstation
   const handleOpenWorkstation = (app) => {
     setSelectedApp(app);
     setIsRejecting(false);
@@ -141,12 +220,64 @@ const FranchiseApproval = () => {
     });
   };
 
-  const filteredApps = applications.filter(app => 
+  // Count indicators
+  const pendingCount = applications.filter(a => a.status === 'Pending').length;
+  const readyCount = applications.filter(a => a.status === 'Ready for Pickup').length;
+  const allCount = applications.length;
+
+  // Extract unique TODAs for filter dropdown
+  const uniqueTodas = Array.from(new Set(applications.map(a => a.todaName || 'NON-TODA').filter(Boolean))).sort();
+
+  // Filter Pipeline: Tab Filter -> TODA Filter -> Search Filter
+  const tabFiltered = applications.filter(app => {
+    if (activeTab === 'pending') return app.status === 'Pending';
+    if (activeTab === 'ready') return app.status === 'Ready for Pickup';
+    return true;
+  });
+
+  const todaFiltered = tabFiltered.filter(app => {
+    if (selectedToda === 'all') return true;
+    return (app.todaName || 'NON-TODA').toLowerCase() === selectedToda.toLowerCase();
+  });
+
+  const filteredApps = todaFiltered.filter(app => 
     (app.fullName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (app.plateNo?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (app.motorNo?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (app.todaName?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
+
+  // Checkbox selection helpers
+  const isAllSelected = filteredApps.length > 0 && filteredApps.every(a => selectedIds.includes(a._id));
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      // Deselect visible
+      const visibleIds = filteredApps.map(a => a._id);
+      setSelectedIds(prev => prev.filter(id => !visibleIds.includes(id)));
+    } else {
+      // Select visible
+      const newIds = Array.from(new Set([...selectedIds, ...filteredApps.map(a => a._id)]));
+      setSelectedIds(newIds);
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  // Workstation Queue Navigator Helpers
+  const currentWorkstationIndex = filteredApps.findIndex(a => a._id === selectedApp?._id);
+  const hasPrevApp = currentWorkstationIndex > 0;
+  const hasNextApp = currentWorkstationIndex >= 0 && currentWorkstationIndex < filteredApps.length - 1;
+
+  const handlePrevApp = () => {
+    if (hasPrevApp) handleOpenWorkstation(filteredApps[currentWorkstationIndex - 1]);
+  };
+
+  const handleNextApp = () => {
+    if (hasNextApp) handleOpenWorkstation(filteredApps[currentWorkstationIndex + 1]);
+  };
 
   // Documents list for workstation
   const docTabs = selectedApp ? [
@@ -162,10 +293,10 @@ const FranchiseApproval = () => {
     <MainLayout>
       <style>{`
         @media print {
-          body:not(.printing-mtop) * { visibility: hidden; }
-          body:not(.printing-mtop) #printable-document,
-          body:not(.printing-mtop) #printable-document * { visibility: visible; }
-          body:not(.printing-mtop) #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
+          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) * { visibility: hidden; }
+          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) #printable-document,
+          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) #printable-document * { visibility: visible; }
+          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
           .print-hide { display: none !important; }
         }
       `}</style>
@@ -194,7 +325,6 @@ const FranchiseApproval = () => {
         </div>
       )}
 
-
       {/* Official Printable MTOP Certificate Modal */}
       <MtopCertificateModal 
         isOpen={isPrintOpen} 
@@ -202,100 +332,534 @@ const FranchiseApproval = () => {
         unit={selectedApp} 
       />
 
+      {/* Batch MTOP Multi-Certificate Modal */}
+      <BatchMtopModal
+        isOpen={isBatchPrintOpen}
+        onClose={() => setIsBatchPrintOpen(false)}
+        units={applications.filter(a => selectedIds.includes(a._id))}
+      />
+
+      {/* Official LGU Transmittal Summary Sheet Modal */}
+      <TransmittalSheetModal
+        isOpen={isTransmittalOpen}
+        onClose={() => setIsTransmittalOpen(false)}
+        units={applications.filter(a => selectedIds.includes(a._id))}
+      />
+
+      {/* Quick Approve Confirmation Modal */}
+      {quickApproveTarget && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  {quickApproveTarget.status === 'Pending' ? 'Approve Application?' : 'Acknowledge Payment & Release?'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {quickApproveTarget.status === 'Pending' ? 'Set status to Ready for Pickup' : 'Set status to Active Franchise'}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1.5">
+              <p><span className="font-bold text-slate-500">Operator:</span> <strong className="text-slate-900 dark:text-white">{quickApproveTarget.fullName}</strong></p>
+              <p><span className="font-bold text-slate-500">TODA / Zone:</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
+              <p><span className="font-bold text-slate-500">Plate Number:</span> <span className="font-mono font-bold text-[#7A1B22] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
+              {quickApproveTarget.status === 'Pending' && (
+                <p className="text-[11px] text-blue-600 dark:text-blue-400 pt-1 font-medium">
+                  &bull; A digital Claim Stub Voucher will be immediately generated for the operator.
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={() => setQuickApproveTarget(null)}
+                disabled={isProcessing}
+                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUpdateStatus(quickApproveTarget.status === 'Pending' ? 'Ready for Pickup' : 'Active', quickApproveTarget)}
+                disabled={isProcessing}
+                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                <span>Confirm {quickApproveTarget.status === 'Pending' ? 'Approval' : 'Release'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Reject Modal */}
+      {quickRejectTarget && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <XCircle size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">Reject Application</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Select reason for rejecting {quickRejectTarget.fullName}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Rejection Reason</label>
+              <select
+                value={quickRejectReason}
+                onChange={(e) => setQuickRejectReason(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-200"
+              >
+                {REJECT_REASONS.map((r, i) => <option key={i} value={r}>{r}</option>)}
+              </select>
+
+              {quickRejectReason === 'Others (Please specify)' && (
+                <textarea
+                  placeholder="Specify inspection defect or instruction for the operator..."
+                  value={quickRejectCustom}
+                  onChange={(e) => setQuickRejectCustom(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white min-h-[70px] outline-none focus:ring-2 focus:ring-red-200"
+                />
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={() => setQuickRejectTarget(null)}
+                disabled={isProcessing}
+                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const reasonText = quickRejectReason === 'Others (Please specify)' ? quickRejectCustom : quickRejectReason;
+                  handleUpdateStatus('Cancelled', quickRejectTarget, reasonText);
+                }}
+                disabled={isProcessing}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                <span>Confirm Rejection</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Approve Confirmation Modal */}
+      {batchApproveModal && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <Layers size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">Confirm Batch Approval</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  You are approving <strong>{selectedIds.length}</strong> application(s) at once.
+                </p>
+              </div>
+            </div>
+
+            <div className="max-h-48 overflow-y-auto space-y-1.5 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+              {applications.filter(a => selectedIds.includes(a._id)).map((app, i) => (
+                <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-white dark:hover:bg-slate-800">
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{i + 1}. {app.fullName}</span>
+                  <span className="text-[11px] font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              All selected applications will transition to <strong className="text-blue-600 dark:text-blue-400">Ready for Pickup</strong>. Operators will immediately be notified and can view their Claim Stub Voucher to pay at the Municipal Cashier.
+            </p>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={() => setBatchApproveModal(false)}
+                disabled={isBatchProcessing}
+                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmBatchApprove}
+                disabled={isBatchProcessing}
+                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                {isBatchProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                <span>Approve All ({selectedIds.length})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
           <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Pending Approvals</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Review and process franchise applications in queue (Oldest First).</p>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Franchise Approval Queue</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              Review, batch-approve, and generate official MTOPs and transmittal summaries.
+            </p>
           </div>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search Name or Plate No..." 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15"
-          />
+
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* TODA Association Filter */}
+          <div className="relative min-w-[160px]">
+            <select
+              value={selectedToda}
+              onChange={(e) => setSelectedToda(e.target.value)}
+              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#7A1B22] cursor-pointer"
+            >
+              <option value="all">All TODA Associations</option>
+              {uniqueTodas.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search Name or Plate..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]"
+            />
+          </div>
+
+          {/* Refresh Button */}
+          <button
+            onClick={fetchApplications}
+            disabled={isLoading}
+            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer"
+            title="Refresh Applications Queue"
+          >
+            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+          </button>
         </div>
       </header>
 
+      {/* Status Tabs Bar & Select All Control */}
+      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'pending'
+                ? 'bg-[#7A1B22] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <FileText size={14} />
+            <span>Needs Review (Pending)</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+              activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            }`}>
+              {pendingCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ready')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'ready'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Printer size={14} />
+            <span>Ready for Pickup / Cashier</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+              activeTab === 'ready' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            }`}>
+              {readyCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'all'
+                ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <span>All in Queue</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+              activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            }`}>
+              {allCount}
+            </span>
+          </button>
+        </div>
+
+        {/* Select All Toggle */}
+        {filteredApps.length > 0 && (
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer self-end sm:self-center"
+          >
+            {isAllSelected ? (
+              <CheckSquare size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            ) : (
+              <Square size={16} className="text-slate-400" />
+            )}
+            <span>Select All in View ({filteredApps.length})</span>
+          </button>
+        )}
+      </div>
+
+      {/* Applications List */}
       {isLoading ? (
         <QueueListSkeleton count={4} baseDelay={50} stepDelay={70} />
       ) : filteredApps.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 transition-colors">
           <CheckCircle size={48} className="mx-auto mb-4 text-emerald-400 opacity-50" />
-          <p className="font-bold text-base text-slate-800 dark:text-slate-200">All caught up!</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">There are no pending applications to review right now.</p>
+          <p className="font-bold text-base text-slate-800 dark:text-slate-200">No applications found!</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {searchQuery || selectedToda !== 'all' 
+              ? 'Try adjusting your search or TODA filter.' 
+              : activeTab === 'pending'
+              ? 'There are no pending applications awaiting inspection right now.'
+              : 'There are no applications currently in this queue view.'}
+          </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredApps.map((app, index) => (
-            <div 
-              key={app._id} 
-              className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30"
-              style={{ animationDelay: `${index * 40}ms` }}
-            >
-              
-              <div className="flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${app.status === 'Ready for Pickup' ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400' : 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'}`}>
-                  {app.status === 'Ready for Pickup' ? <Printer size={22} /> : <FileText size={22} />}
+        <div className="space-y-3.5 pb-24">
+          {filteredApps.map((app, index) => {
+            const isSelected = selectedIds.includes(app._id);
+            const comp = getDocCompleteness(app);
+
+            return (
+              <div 
+                key={app._id} 
+                className={`stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                  isSelected 
+                    ? 'border-[#7A1B22] dark:border-[#D4AF37] ring-2 ring-[#7A1B22]/15 dark:ring-[#D4AF37]/20 shadow-md' 
+                    : 'border-slate-200 dark:border-slate-800 shadow-xs hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30'
+                }`}
+                style={{ animationDelay: `${index * 30}ms` }}
+              >
+                <div className="flex items-start gap-3.5 min-w-0">
+                  {/* Selection Checkbox */}
+                  <button
+                    onClick={() => toggleSelect(app._id)}
+                    className="mt-1 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
+                    title={isSelected ? "Deselect" : "Select"}
+                  >
+                    {isSelected ? (
+                      <CheckSquare size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                    ) : (
+                      <Square size={20} className="text-slate-300 dark:text-slate-600 hover:text-slate-500" />
+                    )}
+                  </button>
+
+                  {/* Status Icon */}
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
+                    app.status === 'Ready for Pickup' 
+                      ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400' 
+                      : 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
+                  }`}>
+                    {app.status === 'Ready for Pickup' ? <Printer size={20} /> : <FileText size={20} />}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">
+                        Queue #{index + 1}
+                      </span>
+                      <h3 className="font-black text-slate-900 dark:text-white text-base sm:text-lg truncate">
+                        {app.fullName}
+                      </h3>
+                      
+                      {app.status === 'Ready for Pickup' ? (
+                        <span className="text-[10px] bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 uppercase font-black tracking-wider">
+                          Ready for Pickup
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 uppercase font-black tracking-wider">
+                          Pending Review
+                        </span>
+                      )}
+
+                      {/* Document Completeness Badge */}
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        comp.isComplete 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                          : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${comp.isComplete ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        {comp.isComplete ? `${comp.uploadedCount}/${comp.totalCount} Docs Complete` : `Missing: ${comp.missing.join(', ')}`}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1 font-bold text-slate-800 dark:text-slate-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> 
+                        Plate: {app.plateNo || 'PENDING'}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> 
+                        TODA: {app.todaName || 'NON-TODA'} (Zone {app.zone || 1})
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> 
+                        Type: {app.applicationType || 'New'}
+                      </span>
+                      <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-700">
+                        <CalendarDays size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> 
+                        Submitted: {formatDate(app.dateApplied || app.createdAt)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                      Queue #{index + 1}
-                    </span>
-                    <h3 className="font-black text-slate-900 dark:text-white text-lg">
-                      {app.fullName}
-                    </h3>
-                    {app.status === 'Ready for Pickup' && (
-                      <span className="text-[10px] bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 uppercase font-black tracking-wider">
-                        Awaiting Payment
-                      </span>
-                    )}
-                  </div>
+                {/* Quick Actions Cluster */}
+                <div className="flex items-center gap-2 justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+                  {/* Quick Approve (If Pending) */}
+                  {app.status === 'Pending' && (
+                    <button
+                      onClick={() => setQuickApproveTarget(app)}
+                      className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Quick Approve to Ready for Pickup"
+                    >
+                      <CheckCircle size={14} className="text-emerald-600" />
+                      <span className="hidden sm:inline">Quick Approve</span>
+                    </button>
+                  )}
 
-                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <span className="flex items-center gap-1 font-bold text-slate-800 dark:text-slate-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 
-                      Plate: {app.plateNo || 'PENDING'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 
-                      TODA: {app.todaName}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> 
-                      Type: {app.applicationType || 'New'}
-                    </span>
-                    <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-700">
-                      <CalendarDays size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> 
-                      Submitted: {formatDate(app.dateApplied || app.createdAt)}
-                    </span>
-                  </div>
+                  {/* Quick Reject (If Pending) */}
+                  {app.status === 'Pending' && (
+                    <button
+                      onClick={() => setQuickRejectTarget(app)}
+                      className="px-2.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 rounded-xl font-bold text-xs flex items-center gap-1 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Reject Application"
+                    >
+                      <XCircle size={14} />
+                      <span className="hidden sm:inline">Reject</span>
+                    </button>
+                  )}
+
+                  {/* Quick Print MTOP (If Ready for Pickup) */}
+                  {app.status === 'Ready for Pickup' && (
+                    <button
+                      onClick={() => { setSelectedApp(app); setIsPrintOpen(true); }}
+                      className="px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-[#7A1B22] dark:text-[#D4AF37] border border-amber-300 dark:border-amber-700/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Print Official MTOP Certificate"
+                    >
+                      <Printer size={14} />
+                      <span className="hidden sm:inline">Print MTOP</span>
+                    </button>
+                  )}
+
+                  {/* Quick Release / Payment (If Ready for Pickup) */}
+                  {app.status === 'Ready for Pickup' && (
+                    <button
+                      onClick={() => setQuickApproveTarget(app)}
+                      className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-xs cursor-pointer"
+                      title="Acknowledge Payment & Release Franchise"
+                    >
+                      <CheckCircle2 size={14} />
+                      <span className="hidden sm:inline">Release</span>
+                    </button>
+                  )}
+
+                  {/* Deep Inspection Workstation Button */}
+                  <button 
+                    onClick={() => handleOpenWorkstation(app)} 
+                    className="bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#7A1B22] dark:hover:bg-[#7A1B22] px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    title="Open Full Inspection Workbench"
+                  >
+                    <Eye size={14} />
+                    <span>Inspect</span>
+                    <ChevronRight size={14} className="hidden sm:inline" />
+                  </button>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
 
+      {/* ========================================================================= */}
+      {/* 🚀 FLOATING BATCH ACTION BAR (Appears when 1+ applicants are selected) */}
+      {/* ========================================================================= */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[100] max-w-2xl bg-slate-900/95 backdrop-blur-md text-white border border-white/10 rounded-2xl p-3 shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#D4AF37] text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+              {selectedIds.length}
+            </div>
+            <div>
+              <p className="text-xs font-bold leading-tight">
+                {selectedIds.length} application{selectedIds.length > 1 ? 's' : ''} selected
+              </p>
               <button 
-                onClick={() => handleOpenWorkstation(app)} 
-                className="w-full md:w-auto bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#7A1B22] dark:hover:bg-[#7A1B22] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs flex items-center justify-center gap-2"
+                onClick={() => setSelectedIds([])}
+                className="text-[10px] text-white/60 hover:text-white underline cursor-pointer"
               >
-                Inspect Application <ChevronRight size={16} />
+                Clear selection
               </button>
             </div>
-          ))}
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Batch Approve button */}
+            <button
+              onClick={() => setBatchApproveModal(true)}
+              disabled={isBatchProcessing}
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="Batch Approve selected applications to Ready for Pickup"
+            >
+              <CheckCircle2 size={14} />
+              <span>Batch Approve ({selectedIds.length})</span>
+            </button>
+
+            {/* Batch Print MTOP */}
+            <button
+              onClick={() => setIsBatchPrintOpen(true)}
+              className="px-3.5 py-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="Print MTOP Certificates for all selected units in 1 continuous job"
+            >
+              <Printer size={14} />
+              <span>Batch Print MTOP</span>
+            </button>
+
+            {/* Print Transmittal Sheet */}
+            <button
+              onClick={() => setIsTransmittalOpen(true)}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-white/90 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-white/15 cursor-pointer"
+              title="Print Official LGU Transmittal and Endorsement Record"
+            >
+              <FileSpreadsheet size={14} />
+              <span className="hidden sm:inline">Transmittal Sheet</span>
+              <span className="sm:hidden">Summary</span>
+            </button>
+          </div>
         </div>
       )}
 
       {/* ========================================================================= */}
       {/* 🖥️ SPLIT-SCREEN INSPECTION WORKSTATION (FULL MODAL WORKBENCH) */}
       {/* ========================================================================= */}
-      {selectedApp && !isPrintOpen && (
+      {selectedApp && !isPrintOpen && !isBatchPrintOpen && !isTransmittalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
           <div 
             className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" 
@@ -328,6 +892,29 @@ const FranchiseApproval = () => {
                 </div>
               </div>
 
+              {/* Queue Navigator: Previous & Next Applicant */}
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold">
+                <button
+                  onClick={handlePrevApp}
+                  disabled={!hasPrevApp}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  title="Previous Application"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-[11px] font-mono px-2 text-slate-600 dark:text-slate-300">
+                  {currentWorkstationIndex >= 0 ? currentWorkstationIndex + 1 : 1} / {filteredApps.length}
+                </span>
+                <button
+                  onClick={handleNextApp}
+                  disabled={!hasNextApp}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  title="Next Application"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
               {/* Mobile Pane Switcher (Tabs on < lg screens) */}
               <div className="flex lg:hidden items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold">
                 <button
@@ -349,14 +936,14 @@ const FranchiseApproval = () => {
                 {(selectedApp.status === 'Ready for Pickup' || selectedApp.status === 'Active') && (
                   <button
                     onClick={() => setIsPrintOpen(true)}
-                    className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-white/15"
+                    className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-white/15 cursor-pointer"
                   >
                     <Printer size={14} className="text-[#D4AF37]" /> Print MTOP
                   </button>
                 )}
                 <button 
                   onClick={() => setSelectedApp(null)} 
-                  className="p-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 dark:bg-white/10 dark:hover:bg-red-500 text-slate-600 dark:text-white rounded-xl transition-colors"
+                  className="p-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 dark:bg-white/10 dark:hover:bg-red-500 text-slate-600 dark:text-white rounded-xl transition-colors cursor-pointer"
                   title="Close Workstation (Esc)"
                 >
                   <X size={20} />
@@ -488,7 +1075,7 @@ const FranchiseApproval = () => {
                         </h4>
                         <button 
                           onClick={() => setIsRejecting(false)} 
-                          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold"
+                          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -513,9 +1100,12 @@ const FranchiseApproval = () => {
 
                       <div className="flex gap-2 pt-1">
                         <button 
-                          onClick={() => handleUpdateStatus('Cancelled')} 
+                          onClick={() => {
+                            const reasonText = rejectReason === 'Others (Please specify)' ? customReason : rejectReason;
+                            handleUpdateStatus('Cancelled', selectedApp, reasonText);
+                          }} 
                           disabled={isProcessing} 
-                          className="flex-1 bg-red-600 text-white hover:bg-red-700 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+                          className="flex-1 bg-red-600 text-white hover:bg-red-700 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
                         >
                           {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />} 
                           Confirm Rejection
@@ -532,7 +1122,7 @@ const FranchiseApproval = () => {
                       {selectedApp.status === 'Pending' ? (
                         <button 
                           onClick={() => setIsRejecting(true)} 
-                          className="px-4 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors border border-red-200 dark:border-red-800/40"
+                          className="px-4 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors border border-red-200 dark:border-red-800/40 cursor-pointer"
                         >
                           <XCircle size={15} /> Reject
                         </button>
@@ -545,18 +1135,18 @@ const FranchiseApproval = () => {
                       <div className="flex items-center gap-2 ml-auto">
                         {selectedApp.status === 'Pending' ? (
                           <button 
-                            onClick={() => handleUpdateStatus('Ready for Pickup')} 
+                            onClick={() => handleUpdateStatus('Ready for Pickup', selectedApp)} 
                             disabled={isProcessing} 
-                            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md"
+                            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md cursor-pointer"
                           >
                             {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
                             Approve (Set to Ready for Pickup)
                           </button>
                         ) : (
                           <button 
-                            onClick={() => handleUpdateStatus('Active')} 
+                            onClick={() => handleUpdateStatus('Active', selectedApp)} 
                             disabled={isProcessing} 
-                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md"
+                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md cursor-pointer"
                           >
                             {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
                             Acknowledge Payment & Release
@@ -589,7 +1179,7 @@ const FranchiseApproval = () => {
                             setZoomScale(1);
                             setRotation(0);
                           }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
                             isActive
                               ? 'bg-[#7A1B22] text-white shadow-sm border border-[#D4AF37]/40'
                               : 'bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/5'
@@ -609,7 +1199,7 @@ const FranchiseApproval = () => {
                   <div className="flex items-center gap-1.5 ml-auto">
                     <button 
                       onClick={() => setZoomScale(prev => Math.max(prev - 0.25, 0.5))} 
-                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                       title="Zoom Out"
                     >
                       <ZoomOut size={16} />
@@ -619,21 +1209,21 @@ const FranchiseApproval = () => {
                     </span>
                     <button 
                       onClick={() => setZoomScale(prev => Math.min(prev + 0.25, 3))} 
-                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                       title="Zoom In"
                     >
                       <ZoomIn size={16} />
                     </button>
                     <button 
                       onClick={() => setRotation(prev => (prev + 90) % 360)} 
-                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                       title="Rotate 90° Clockwise"
                     >
                       <RotateCw size={16} />
                     </button>
                     <button 
                       onClick={() => { setZoomScale(1); setRotation(0); }} 
-                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                       title="Reset View"
                     >
                       <RefreshCw size={14} />
