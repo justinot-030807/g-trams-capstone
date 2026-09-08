@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
-  FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, 
+  FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, CheckCircle2,
   Clock, AlertCircle, Loader2, X, CalendarDays, Printer,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag,
   ChevronDown, Check, CheckSquare, Square, RotateCcw, Eye,
@@ -213,9 +213,10 @@ const FranchiseMasterlist = () => {
     <MainLayout>
       <style>{`
         @media print {
-          body * { visibility: hidden; }
-          #printable-masterlist, #printable-masterlist * { visibility: visible; }
-          #printable-masterlist { position: absolute; left: 0; top: 0; width: 100%; }
+          body:not(.printing-mtop) * { visibility: hidden; }
+          body:not(.printing-mtop) #printable-masterlist,
+          body:not(.printing-mtop) #printable-masterlist * { visibility: visible; }
+          body:not(.printing-mtop) #printable-masterlist { position: absolute; left: 0; top: 0; width: 100%; }
           .print-hide { display: none !important; }
         }
       `}</style>

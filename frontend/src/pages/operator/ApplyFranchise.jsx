@@ -910,7 +910,7 @@ const ApplyFranchise = () => {
 
               <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500 self-end sm:self-center">
                 <Clock size={12} />
-                <span>{lastSavedTime ? `Huling na-save: ${lastSavedTime}` : 'Awtomatikong nase-save'}</span>
+                <span>{lastSavedTime ? `Last saved: ${lastSavedTime}` : 'Auto-saves progress'}</span>
               </div>
             </div>
 
@@ -927,14 +927,8 @@ const ApplyFranchise = () => {
             </div>
 
             {/* Stepper Navigation */}
-            <div className="relative flex items-center justify-between px-2 sm:px-8 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-              <div className="absolute left-[15%] right-[15%] sm:left-[20%] sm:right-[20%] top-[22px] sm:top-[24px] h-[2px] bg-slate-200 dark:bg-slate-700 z-0" />
-              <div 
-                className="absolute left-[15%] sm:left-[20%] top-[22px] sm:top-[24px] h-[2px] bg-[#7A1B22] dark:bg-[#D4AF37] transition-all duration-300 ease-out z-0"
-                style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '35%' : '70%' }}
-              />
-
-              {steps.map((step) => {
+            <div className="flex items-start w-full px-2 sm:px-6 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+              {steps.map((step, idx) => {
                 const isCompleted = currentStep > step.num;
                 const isCurrent = currentStep === step.num;
 
@@ -943,10 +937,23 @@ const ApplyFranchise = () => {
                     type="button"
                     key={step.num}
                     onClick={() => setCurrentStep(step.num)}
-                    className="relative z-10 flex flex-col items-center w-24 sm:w-32 group cursor-pointer focus:outline-hidden"
+                    className="relative flex-1 flex flex-col items-center group cursor-pointer focus:outline-hidden"
                   >
+                    {/* Seamless Connector Line to Next Step */}
+                    {idx < steps.length - 1 && (
+                      <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] -translate-y-1/2 z-0 pointer-events-none">
+                        <div className="w-full h-full bg-slate-200 dark:bg-slate-700 rounded-full" />
+                        <div 
+                          className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
+                            currentStep > step.num ? 'w-full' : 'w-0'
+                          }`} 
+                        />
+                      </div>
+                    )}
+
+                    {/* Step Circle */}
                     <div 
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                      className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                         isCompleted 
                           ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-md group-hover:scale-105' 
                           : isCurrent 
@@ -963,7 +970,7 @@ const ApplyFranchise = () => {
                       )}
                     </div>
                     
-                    <span className={`text-[10px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors ${
+                    <span className={`text-[10px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
                       isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
                     }`}>
                       {step.title}

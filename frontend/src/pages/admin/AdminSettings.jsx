@@ -4,7 +4,7 @@ import {
   Sliders, User, Lock, Camera, Save, Loader2, 
   CheckCircle2, AlertCircle, Moon, Sun, Globe, Clock, 
   Wallet, CalendarDays, AlertTriangle, ShieldCheck, 
-  Bell, FileCheck, Shield, ChevronRight, ChevronLeft, X, Search, RefreshCw
+  Bell, FileCheck, Shield, ChevronRight, ChevronLeft, X, Search, RefreshCw, Info
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';

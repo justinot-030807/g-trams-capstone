@@ -20,6 +20,31 @@ const MainLayout = ({ children }) => {
   const isTodaPresident = role === 'toda president' || role === 'toda_president';
   const showBottomNav = isOperator || isTodaPresident;
 
+  // Real-time user heartbeat ping
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const sendHeartbeat = () => {
+      fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/heartbeat`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }).catch(() => {});
+    };
+
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 90000);
+    window.addEventListener('focus', sendHeartbeat);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', sendHeartbeat);
+    };
+  }, []);
+
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => {
       const nextState = !prev;

@@ -1,10 +1,25 @@
-import React from 'react';
-import { Printer, X, Award, ShieldCheck, Calendar, CheckCircle2, Car, User, MapPin } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Printer, X, Award, ShieldCheck, Calendar, CheckCircle2, Car, User, MapPin, Download } from 'lucide-react';
 
 const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('printing-mtop');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.classList.remove('printing-mtop');
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.classList.remove('printing-mtop');
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen || !unit) return null;
 
   const handlePrint = () => {
+    document.body.classList.add('printing-mtop');
     window.print();
   };
 
@@ -29,68 +44,119 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
   const mtopNumber = `MTOP-GASAN-${unit.plateNo || String(unit._id).slice(-6).toUpperCase()}`;
 
   return (
-    <div className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-md flex flex-col justify-start items-center p-2 sm:p-6 overflow-y-auto print:p-0 print:bg-white print:static print:inset-auto">
-      
-      {/* Action Toolbar (Hidden during print) */}
-      <div className="w-full max-w-[760px] bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 mb-4 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37]">
-            <Award size={18} />
+    <div 
+      id="printable-mtop-modal-root" 
+      className="fixed inset-0 z-[120] bg-slate-950/85 backdrop-blur-md overflow-y-auto overscroll-contain flex flex-col items-center p-2 sm:p-6 print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible"
+    >
+      <div className="w-full max-w-[780px] my-auto sm:my-4 flex flex-col items-center shrink-0 pb-16 print:pb-0 print:max-w-full print:m-0">
+        
+        {/* Action Toolbar (Hidden during print) */}
+        <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 sm:p-3.5 mb-4 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
+              <Award size={18} />
+            </div>
+            <div>
+              <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
+                Official MTOP Certificate Preview
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  unit.status === 'Active' 
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                    : unit.status === 'Ready for Pickup'
+                    ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                }`}>
+                  {unit.status || 'Active Franchise'}
+                </span>
+              </h3>
+              <p className="text-[10px] text-white/60">Municipality of Gasan &bull; Appendix C Format</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
-              Official MTOP Certificate Preview
-              <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                Active Franchise
-              </span>
-            </h3>
-            <p className="text-[10px] text-white/60">Municipality of Gasan &bull; Appendix C Format</p>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
+              title="Save as PDF or print"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Save PDF /</span> Print
+            </button>
+
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
+            >
+              <Printer size={14} />
+              <span>Print MTOP</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors"
+              title="Close Preview (Esc)"
+            >
+              <X size={18} />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
-          >
-            <Printer size={14} />
-            <span>Print MTOP</span>
-          </button>
-
-          <button
-            onClick={onClose}
-            className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-      </div>
-
-      {/* Official Certificate Container */}
-      <div 
-        id="printable-mtop-certificate" 
-        className="relative bg-[#FFFDF9] text-slate-900 w-full max-w-[760px] rounded-2xl shadow-2xl p-8 sm:p-12 border-8 border-double border-[#7A1B22] overflow-hidden print:border-[5px] print:border-double print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full print:p-8"
-        style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
-      >
-        {/* Print Stylesheet */}
-        <style>{`
-          @media print {
-            body * { visibility: hidden; }
-            #printable-mtop-certificate, #printable-mtop-certificate * { visibility: visible; }
-            #printable-mtop-certificate {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-              margin: 0;
-              padding: 20px 28px !important;
-              box-shadow: none !important;
-              background: #FFFDF9 !important;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+        {/* Official Certificate Container */}
+        <div 
+          id="printable-mtop-certificate" 
+          className="relative bg-[#FFFDF9] text-slate-900 w-full rounded-2xl shadow-2xl p-6 sm:p-10 md:p-12 border-4 sm:border-8 border-double border-[#7A1B22] overflow-hidden print:border-[4px] print:border-double print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full print:p-6"
+          style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
+        >
+          {/* Print Stylesheet */}
+          <style>{`
+            @media print {
+              body.printing-mtop {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+              }
+              body.printing-mtop * {
+                visibility: hidden !important;
+              }
+              body.printing-mtop #printable-mtop-modal-root {
+                position: static !important;
+                display: block !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+              }
+              body.printing-mtop #printable-mtop-certificate,
+              body.printing-mtop #printable-mtop-certificate * {
+                visibility: visible !important;
+              }
+              body.printing-mtop #printable-mtop-certificate {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 24px 32px !important;
+                box-shadow: none !important;
+                background: #FFFDF9 !important;
+                border: 4px double #7A1B22 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              body.printing-mtop .print-hide,
+              body.printing-mtop #printable-masterlist,
+              body.printing-mtop #printable-document,
+              body.printing-mtop header,
+              body.printing-mtop nav {
+                display: none !important;
+                visibility: hidden !important;
+              }
             }
-          }
-        `}</style>
+          `}</style>
 
         {/* Municipal Seal Watermark */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none select-none">
@@ -245,7 +311,8 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
 
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default MtopCertificateModal;

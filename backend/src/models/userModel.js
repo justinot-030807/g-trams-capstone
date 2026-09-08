@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema({
     otp: { type: String },
     otpExpire: { type: Date },
     isActive: { type: Boolean, default: true },
+    lastActive: { type: Date, default: Date.now },
+    lastLogin: { type: Date, default: Date.now },
     language: { type: String, default: 'en' },
     theme: { type: String, default: 'light' }
 }, { timestamps: true });

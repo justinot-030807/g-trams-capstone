@@ -1,4 +1,5 @@
 const User = require('../models/userModel'); 
+const Franchise = require('../models/franchiseModel');
 const SystemSettings = require('../models/systemSettingsModel');
 const jwt = require('jsonwebtoken'); 
 const sendEmail = require('../utils/sendEmail'); 
@@ -115,6 +116,10 @@ exports.login = async (req, res) => {
             });
         }
         
+        user.lastActive = new Date();
+        user.lastLogin = new Date();
+        await user.save();
+
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
         const userObj = user.toObject();
         delete userObj.password;
@@ -124,13 +129,60 @@ exports.login = async (req, res) => {
     }
 };
 
-// Get all users
+// Get all users with unit fleet counts and live activity info
 exports.getUsers = async (req, res) => {
     try {
-        const users = await User.find().select('-password');
-        res.status(200).json(users);
+        const users = await User.find().select('-password').sort({ createdAt: -1 });
+        const franchises = await Franchise.find({ isArchived: false })
+            .select('operator fullName status plateNo make made motorNo chassisNo zone todaName');
+
+        const userFranchisesMap = {};
+        franchises.forEach(f => {
+            const opId = f.operator ? f.operator.toString() : null;
+            if (opId) {
+                if (!userFranchisesMap[opId]) userFranchisesMap[opId] = [];
+                userFranchisesMap[opId].push({
+                    _id: f._id,
+                    plateNo: f.plateNo,
+                    make: f.make,
+                    made: f.made,
+                    motorNo: f.motorNo,
+                    chassisNo: f.chassisNo,
+                    status: f.status,
+                    zone: f.zone,
+                    todaName: f.todaName
+                });
+            }
+        });
+
+        const enhancedUsers = users.map(u => {
+            const uObj = u.toObject();
+            const userUnits = userFranchisesMap[u._id.toString()] || [];
+            uObj.unitsCount = userUnits.length;
+            uObj.activeUnitsCount = userUnits.filter(unit => unit.status === 'Active').length;
+            uObj.pendingUnitsCount = userUnits.filter(unit => unit.status === 'Pending' || unit.status === 'Ready for Pickup').length;
+            uObj.expiredUnitsCount = userUnits.filter(unit => unit.status === 'Expired').length;
+            uObj.cancelledUnitsCount = userUnits.filter(unit => unit.status === 'Cancelled' || unit.status === 'Revoked').length;
+            uObj.units = userUnits;
+            return uObj;
+        });
+
+        res.status(200).json(enhancedUsers);
     } catch (error) {
-        res.status(500).json({ message: 'Error' });
+        console.error("GET USERS ERROR:", error);
+        res.status(500).json({ message: 'Error retrieving users: ' + error.message });
+    }
+};
+
+// Client heartbeat to update real-time active status
+exports.heartbeat = async (req, res) => {
+    try {
+        if (req.user && req.user._id) {
+            await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() });
+        }
+        res.status(200).json({ status: 'ok', lastActive: new Date() });
+    } catch (error) {
+        res.status(200).json({ status: 'ok' });
     }
 };
 
@@ -492,11 +544,10 @@ exports.googleAuth = async (req, res) => {
             }
             if (user.authProvider !== 'google') {
                 user.authProvider = 'google';
-                shouldSave = true;
             }
-            if (shouldSave) {
-                await user.save();
-            }
+            user.lastActive = new Date();
+            user.lastLogin = new Date();
+            await user.save();
 
             const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
             const userObj = user.toObject();
@@ -537,6 +588,8 @@ exports.googleAuth = async (req, res) => {
             existingContact.otpExpire = undefined;
             existingContact.authProvider = 'google';
             if (googlePicture && !existingContact.profilePic) existingContact.profilePic = googlePicture;
+            existingContact.lastActive = new Date();
+            existingContact.lastLogin = new Date();
             await existingContact.save();
 
             const token = jwt.sign({ id: existingContact._id, role: existingContact.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
@@ -565,7 +618,9 @@ exports.googleAuth = async (req, res) => {
             todaAssociation: todaAssociation,
             isVerified: true, // Automatically verified via Google!
             profilePic: googlePicture || '',
-            authProvider: 'google'
+            authProvider: 'google',
+            lastActive: new Date(),
+            lastLogin: new Date()
         });
 
         await user.save();

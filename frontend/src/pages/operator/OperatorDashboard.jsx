@@ -161,45 +161,63 @@ const OperatorDashboard = () => {
 
     let currentStepNum = 1;
     if (status === 'Pending') currentStepNum = 2;
-    if (status === 'Ready for Pickup') currentStepNum = 3;
+    else if (status === 'Ready for Pickup') currentStepNum = 3;
+    else if (status === 'Active') currentStepNum = 4;
 
     return (
       <div className="mb-5 bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">{t('dashboard.appProgress', 'Application Progress')}</p>
+        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
+          {t('dashboard.appProgress', 'Application Progress')}
+        </p>
         
-        {/* Step progress line */}
-        <div className="relative flex items-center justify-between z-10 before:absolute before:left-0 before:top-3 before:w-full before:h-[3px] before:bg-slate-200 dark:before:bg-slate-700 before:-z-10">
-          
-          <div 
-            className="absolute left-0 top-3 h-[3px] bg-[#7A1B22] dark:bg-[#D4AF37] transition-all duration-500 ease-out -z-10"
-            style={{ width: currentStepNum === 1 ? '0%' : currentStepNum === 2 ? '33.33%' : currentStepNum === 3 ? '66.66%' : '100%' }}
-          />
-          
-          {steps.map((step) => {
-            const isCompleted = currentStepNum > step.id;
-            const isCurrent = currentStepNum === step.id;
+        {/* Seamless Step progress track & nodes */}
+        <div className="flex items-start w-full">
+          {steps.map((step, idx) => {
+            const isCompleted = currentStepNum > step.id || (status === 'Active' && step.id === 4);
+            const isCurrent = currentStepNum === step.id && status !== 'Active';
 
             return (
-              <div key={step.id} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800/90 px-2 sm:px-3 rounded-lg">
+              <div key={step.id} className="relative flex-1 flex flex-col items-center group">
+                {/* Seamless Connector Line to Next Step */}
+                {idx < steps.length - 1 && (
+                  <div className="absolute top-3.5 left-1/2 w-full h-[3px] -translate-y-1/2 z-0 pointer-events-none">
+                    {/* Background Inactive Track */}
+                    <div className="w-full h-full bg-slate-200 dark:bg-slate-700/80 rounded-full" />
+                    {/* Active Progress Fill */}
+                    <div 
+                      className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-500 ease-out ${
+                        currentStepNum > step.id ? 'w-full' : 'w-0'
+                      }`} 
+                    />
+                  </div>
+                )}
+
+                {/* Step Circle Badge */}
                 <div 
-                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
                     isCompleted 
                       ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs' 
                       : isCurrent 
-                      ? 'bg-white dark:bg-slate-800 border-2 border-[#7A1B22] dark:border-[#D4AF37] ring-3 ring-[#7A1B22]/15 dark:ring-[#D4AF37]/20' 
+                      ? 'bg-white dark:bg-slate-800 border-2 border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/15 dark:ring-[#D4AF37]/20 shadow-xs' 
                       : 'bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   {isCompleted ? (
-                    <Check size={12} className="stroke-[3]" />
+                    <Check size={13} className="stroke-[3]" />
                   ) : isCurrent ? (
                     <div className="w-2 h-2 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full animate-pulse" />
                   ) : (
                     <div className="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
                   )}
                 </div>
-                <span className={`text-[10px] font-bold mt-1.5 tracking-tight text-center ${
-                  isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+
+                {/* Step Label */}
+                <span className={`text-[10px] font-bold mt-1.5 tracking-tight text-center truncate max-w-full px-1 transition-colors ${
+                  isCurrent 
+                    ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' 
+                    : isCompleted 
+                    ? 'text-slate-800 dark:text-slate-200' 
+                    : 'text-slate-400 dark:text-slate-500'
                 }`}>
                   {step.label}
                 </span>

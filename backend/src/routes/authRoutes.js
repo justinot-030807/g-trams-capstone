@@ -19,7 +19,8 @@ const {
     updateProfile,
     toggleUserStatus,
     getProfile,
-    googleAuth
+    googleAuth,
+    heartbeat
 } = require('../controllers/authController');
 
 // Rate limiters
@@ -28,9 +29,10 @@ const registerLimiter = authRateLimiter({ max: 10, windowMs: 15 * 60 * 1000, mes
 const forgotLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many password reset requests. Please try again after 15 minutes.' });
 const resetLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many password reset attempts. Please try again after 15 minutes.' });
 
-// Profile routes
+// Profile & Heartbeat routes
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, upload.single('profilePic'), updateProfile);
+router.post('/heartbeat', protect, heartbeat);
 
 // Google OAuth route
 router.post('/google', googleAuth);
