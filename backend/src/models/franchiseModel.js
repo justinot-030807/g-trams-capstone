@@ -29,7 +29,7 @@ const franchiseSchema = new mongoose.Schema({
     cedulaAddress: { type: String, required: true },
     cedulaSerialNo: { type: String, required: true },
     
-    status: { type: String, enum: ['Pending', 'Active', 'Expired', 'Cancelled', 'Revoked'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Ready for Pickup', 'Active', 'Expired', 'Cancelled', 'Revoked'], default: 'Pending' },
     applicationType: { type: String, default: 'New' },
     
     // Cancellation or revocation reason and evidence
