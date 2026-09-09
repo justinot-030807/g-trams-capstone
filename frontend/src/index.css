@@ -191,6 +191,29 @@
   animation: spring-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes smooth-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-smooth-in {
+  animation: smooth-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered Delay Utilities */
+.stagger-1 { animation-delay: 50ms !important; }
+.stagger-2 { animation-delay: 100ms !important; }
+.stagger-3 { animation-delay: 150ms !important; }
+.stagger-4 { animation-delay: 200ms !important; }
+.stagger-5 { animation-delay: 250ms !important; }
+.stagger-6 { animation-delay: 300ms !important; }
+
 .animate-pulse-beacon {
   animation: pulse-beacon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -206,4 +229,14 @@
 .glass-floating-bar {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+/* Native smooth elastic touch scrolling */
+html {
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  overscroll-behavior-y: auto;
 }

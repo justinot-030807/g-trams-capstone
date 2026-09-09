@@ -143,8 +143,8 @@ const HelpSupport = () => {
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header Banner */}
-        <div className="bg-gradient-to-r from-[#7A1B22] to-[#9B2A33] rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+        <div className="bg-gradient-to-br from-[#7A1B22] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
           <div className="relative z-10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] bg-white/10 px-3 py-1 rounded-full border border-white/10">
               {t('help.badge', 'Helpdesk & Support')}
@@ -152,7 +152,7 @@ const HelpSupport = () => {
             <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-2 mb-1">
               {t('help.title', 'Help Center & About Us')}
             </h1>
-            <p className="text-white/80 text-xs sm:text-sm font-medium max-w-2xl">
+            <p className="text-white/80 dark:text-slate-300 text-xs sm:text-sm font-medium max-w-2xl">
               {t('help.subtitle', 'Find system information, user guides, and official municipal contact details.')}
             </p>
           </div>
@@ -203,7 +203,7 @@ const HelpSupport = () => {
           </div>
 
           {/* Admin Contact Info Card */}
-          <div className="bg-gradient-to-br from-[#7A1B22] to-[#4D1115] text-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-between">
+          <div className="bg-gradient-to-br from-[#7A1B22] to-[#4D1115] dark:from-[#1b0d11] dark:to-[#0d121f] border border-transparent dark:border-slate-800 text-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <ShieldCheck size={20} className="text-[#D4AF37]" />

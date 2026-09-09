@@ -192,9 +192,8 @@ const AdminSettings = () => {
               profilePic: dbUser.profilePic || null
             });
             if (dbUser.profilePic) setProfilePicPreview(dbUser.profilePic);
-            if (dbUser.theme && dbUser.theme !== currentSavedTheme) {
-              setTheme(dbUser.theme);
-            }
+            const activeAdminTheme = localStorage.getItem('theme') || 'light';
+            setPreferences(prev => ({ ...prev, theme: activeAdminTheme }));
           }
         }
       } catch (err) {

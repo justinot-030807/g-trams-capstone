@@ -96,9 +96,9 @@ const OperatorSettings = () => {
               setLanguage(dbUser.language);
               setPreferences(prev => ({ ...prev, language: dbUser.language }));
             }
-            if (dbUser.theme && dbUser.theme !== savedTheme) {
-              setTheme(dbUser.theme);
-            }
+            // Keep preferences.theme in sync with client active theme
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            setPreferences(prev => ({ ...prev, theme: currentTheme }));
             localStorage.setItem('user', JSON.stringify(dbUser));
           }
         }
@@ -250,7 +250,7 @@ const OperatorSettings = () => {
 
       {/* Standard Slim Vertical Accent Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+        <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Settings</h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
@@ -402,7 +402,7 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('profile')}
-                  className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] text-white px-8 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
+                  className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
                 >
                   <Save size={16} /> {t('profile.saveBtn', 'Save Information')}
                 </button>
@@ -500,7 +500,7 @@ const OperatorSettings = () => {
                   type="button"
                   onClick={() => handleThemeToggle(isDark ? 'light' : 'dark')}
                   className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isDark ? 'bg-[#7A1B22]' : 'bg-slate-300'
+                    isDark ? 'bg-[#D4AF37]' : 'bg-slate-300'
                   }`}
                   role="switch"
                   aria-checked={isDark}

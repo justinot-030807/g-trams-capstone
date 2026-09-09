@@ -3,13 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
   User, LogOut, FileText, Menu, PanelLeftOpen, Settings,
-  Moon, Sun, HelpCircle
+  Moon, Sun, HelpCircle, ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
-  const { t } = useLanguage();
+  const { t, language, changeLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -295,37 +295,175 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
   const normalizedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
   const isOperatorOrToda = normalizedRole === 'operator' || normalizedRole === 'toda president' || normalizedRole === 'toda_president';
+  const isDashboard = location.pathname === '/operator-dashboard';
+
+  const toggleLanguage = () => {
+    const nextLang = language === 'fil' ? 'en' : 'fil';
+    if (changeLanguage) changeLanguage(nextLang);
+  };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm transition-colors print:hidden print-hide">
+    <header className={`sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 items-center justify-between shadow-xs transition-colors print:hidden print-hide ${
+      isOperatorOrToda && isDashboard ? 'hidden md:flex' : 'flex'
+    }`}>
       
-      {/* Left: Sidebar Toggle & Dynamic Breadcrumb Title */}
-      <div className="flex items-center gap-3 min-w-0">
-        <button
-          onClick={onToggleSidebar}
-          title={isSidebarOpen ? "Hide Menu" : "Show Menu"}
-          className={`p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl transition-colors focus:outline-none shrink-0 ${
-            isOperatorOrToda ? 'hidden md:flex' : 'flex'
-          }`}
-          aria-label="Toggle Sidebar"
-        >
-          {isSidebarOpen ? <Menu size={20} className="md:hidden" /> : <PanelLeftOpen size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />}
-        </button>
+      {/* 1. MOBILE NATIVE HEADER (For Operator/TODA on Inner Pages) */}
+      {isOperatorOrToda && !isDashboard && (
+        <div className="flex md:hidden items-center justify-between w-full">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              onClick={() => {
+                if (window.history.length > 2) {
+                  navigate(-1);
+                } else {
+                  navigate('/operator-dashboard');
+                }
+              }}
+              className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center active:scale-90 transition-all cursor-pointer shrink-0 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs"
+              title="Bumalik / Back"
+              aria-label="Back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <h1 className="text-base font-black text-slate-900 dark:text-white tracking-tight truncate">
+              {getBreadcrumbTitle()}
+            </h1>
+          </div>
 
-        <div className="hidden sm:block h-4 w-[1px] bg-slate-200 dark:bg-slate-700 shrink-0" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Quick Language Toggle Pill */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[10px] font-black tracking-wider uppercase text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer active:scale-95 shadow-2xs"
+              title="Palitan ang Wika / Switch Language"
+            >
+              {language === 'fil' ? '🇵🇭 FIL' : '🇺🇸 EN'}
+            </button>
 
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate tracking-tight">
-            {getBreadcrumbTitle()}
-          </span>
-          {isMaintenanceActive && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse">
-              <span className="inline sm:hidden">🛠️ Maint</span>
-              <span className="hidden sm:inline">🛠️ Maintenance Active</span>
-            </span>
-          )}
+            {/* Quick Theme Toggle Circle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={isDark ? "Light Mode" : "Dark Mode"}
+              className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-2xs"
+            >
+              {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-600 dark:text-indigo-400" />}
+            </button>
+
+            {/* Notification Bell with Popup */}
+            <div className="relative" ref={notifRef}>
+              <button
+                type="button"
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-2xs ${
+                  isNotifOpen 
+                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-[#7A1B22] dark:text-[#D4AF37]' 
+                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                <Bell size={17} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <div className="fixed inset-x-3 top-16 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-xs text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h3>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'unread update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
+                      </p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={markAllAsRead} 
+                        className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                      >
+                        {t('nav.markAllRead', 'Mark all read')}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center flex flex-col items-center justify-center">
+                        <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        const isRead = readIds.includes(notif.id);
+                        return (
+                          <div
+                            key={notif.id}
+                            onClick={() => handleNotificationClick(notif)}
+                            className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer ${
+                              !isRead ? 'bg-red-50/40 dark:bg-red-950/20' : ''
+                            }`}
+                          >
+                            <div className="mt-0.5 shrink-0">
+                              {notif.type === 'pending' && <Clock size={15} className="text-amber-500" />}
+                              {notif.type === 'success' && <CheckCircle2 size={15} className="text-emerald-500" />}
+                              {notif.type === 'info' && <FileText size={15} className="text-blue-500" />}
+                              {notif.type === 'reminder' && <AlertTriangle size={15} className="text-orange-500" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <p className={`text-xs truncate ${!isRead ? 'font-black text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
+                                  {notif.title}
+                                </p>
+                                {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif.desc}</p>
+                              <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif.time}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 2. DESKTOP / ADMIN STANDARD HEADER */}
+      <div className={`items-center justify-between w-full ${isOperatorOrToda && !isDashboard ? 'hidden md:flex' : 'flex'}`}>
+        {/* Left: Sidebar Toggle & Dynamic Breadcrumb Title */}
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={onToggleSidebar}
+            title={isSidebarOpen ? "Hide Menu" : "Show Menu"}
+            className={`p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl transition-colors focus:outline-none shrink-0 ${
+              isOperatorOrToda ? 'hidden md:flex' : 'flex'
+            }`}
+            aria-label="Toggle Sidebar"
+          >
+            {isSidebarOpen ? <Menu size={20} className="md:hidden" /> : <PanelLeftOpen size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />}
+          </button>
+
+          <div className="hidden sm:block h-4 w-[1px] bg-slate-200 dark:bg-slate-700 shrink-0" />
+
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate tracking-tight">
+              {getBreadcrumbTitle()}
+            </span>
+            {isMaintenanceActive && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse">
+                <span className="inline sm:hidden">🛠️ Maint</span>
+                <span className="hidden sm:inline">🛠️ Maintenance Active</span>
+              </span>
+            )}
+          </div>
+        </div>
 
       {/* Right: 1-Click Dark Mode Toggle, Notifications & User Profile */}
       <div className="flex items-center gap-2 sm:gap-3 ml-auto">
@@ -502,6 +640,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           )}
         </div>
 
+      </div>
       </div>
     </header>
   );

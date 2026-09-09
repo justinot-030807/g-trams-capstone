@@ -36,14 +36,6 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
         {/* Top Multi-Stop Luxury Gradient Ribbon */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
 
-        {/* Floating Top Badge */}
-        <div className="flex items-center justify-center mb-4">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#7A1B22]/10 via-[#D4AF37]/15 to-[#7A1B22]/10 dark:from-[#D4AF37]/15 dark:to-[#D4AF37]/5 border border-[#D4AF37]/30 text-[#7A1B22] dark:text-[#D4AF37] text-[10px] font-black uppercase tracking-widest shadow-2xs">
-            <Sparkles size={12} />
-            <span>GTRAMS System Onboarding</span>
-          </span>
-        </div>
-
         {/* Hero Icon with Ambient Ring */}
         <div className="relative w-16 h-16 mx-auto mb-4 flex items-center justify-center">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#7A1B22]/20 to-[#D4AF37]/30 dark:from-[#D4AF37]/20 dark:to-[#7A1B22]/20 blur-md" />
@@ -76,29 +68,33 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
                 : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40'
             }`}
           >
-            <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
               <div className="w-11 h-11 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-2xl shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
                 🇵🇭
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
                   <h3 className="text-sm font-black text-slate-900 dark:text-white">Filipino (Tagalog)</h3>
                   <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border border-[#7A1B22]/15 dark:border-[#D4AF37]/30">
                     Inirerekomenda
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                   Madaling gamitin para sa mga tsuper at operator
                 </p>
               </div>
             </div>
 
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${
               selectedLang === 'fil'
-                ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-sm scale-110'
-                : 'border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
+                ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-md ring-2 ring-[#7A1B22]/30 dark:ring-[#D4AF37]/30'
+                : 'border-2 border-slate-300 dark:border-slate-600 group-hover:border-slate-400 bg-transparent'
             }`}>
-              {selectedLang === 'fil' && <Check size={14} className="stroke-[3]" />}
+              {selectedLang === 'fil' ? (
+                <Check size={15} className="stroke-[3]" />
+              ) : (
+                <div className="w-2 h-2 rounded-full bg-transparent group-hover:bg-slate-300 dark:group-hover:bg-slate-600 transition-colors" />
+              )}
             </div>
           </button>
 
@@ -112,26 +108,30 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
                 : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40'
             }`}
           >
-            <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
               <div className="w-11 h-11 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-2xl shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
                 🇺🇸
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
                   <h3 className="text-sm font-black text-slate-900 dark:text-white">English</h3>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                   Official municipal and transport regulatory terms
                 </p>
               </div>
             </div>
 
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${
               selectedLang === 'en'
-                ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-sm scale-110'
-                : 'border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
+                ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-md ring-2 ring-[#7A1B22]/30 dark:ring-[#D4AF37]/30'
+                : 'border-2 border-slate-300 dark:border-slate-600 group-hover:border-slate-400 bg-transparent'
             }`}>
-              {selectedLang === 'en' && <Check size={14} className="stroke-[3]" />}
+              {selectedLang === 'en' ? (
+                <Check size={15} className="stroke-[3]" />
+              ) : (
+                <div className="w-2 h-2 rounded-full bg-transparent group-hover:bg-slate-300 dark:group-hover:bg-slate-600 transition-colors" />
+              )}
             </div>
           </button>
         </div>

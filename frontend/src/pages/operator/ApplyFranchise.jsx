@@ -609,7 +609,7 @@ const ApplyFranchise = () => {
         )}
 
         <header className="mb-6 flex items-center gap-3">
-          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
             <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">My Franchises</h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your active tricycle units and pending applications.</p>
@@ -635,14 +635,14 @@ const ApplyFranchise = () => {
                   localStorage.removeItem(DRAFT_STORAGE_KEY);
                   showToast("Draft discarded successfully.", "success");
                 }}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Discard Draft
               </button>
               <button
                 type="button"
                 onClick={handleStartNewApplication}
-                className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
+                className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 Resume Draft <ChevronRight size={14} />
               </button>
@@ -666,7 +666,7 @@ const ApplyFranchise = () => {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div>
-                  <div className="absolute top-0 right-0 w-2 h-full bg-[#7A1B22]" />
+                  <div className="absolute top-0 right-0 w-2 h-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
                   <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Unit {index + 1}</h3>
                   <div className="text-2xl font-black text-slate-900 dark:text-white mb-1">{unit.plateNo || 'PENDING PLATE'}</div>
                   <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
@@ -690,7 +690,7 @@ const ApplyFranchise = () => {
                       {unit.status === 'Expired' && (
                         <button 
                           onClick={() => handleRenewClick(unit)}
-                          className="text-xs font-bold bg-[#7A1B22] text-white px-4 py-2 rounded-xl hover:bg-[#5A1419] transition-colors flex items-center gap-2 shadow-xs active:scale-95"
+                          className="text-xs font-black bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-xs active:scale-95 cursor-pointer"
                         >
                           <RefreshCw size={14} /> {hasRenewalDraft ? 'Ipagpatuloy ang Renewal' : 'Renew Now'}
                         </button>
@@ -699,7 +699,7 @@ const ApplyFranchise = () => {
                       {unit.status === 'Cancelled' && (
                         <button 
                           onClick={() => handleReapplyClick(unit)}
-                          className="text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-xs active:scale-95"
+                          className="text-xs font-black bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-xs active:scale-95 cursor-pointer"
                         >
                           <RefreshCw size={14} /> Fix Issues
                         </button>

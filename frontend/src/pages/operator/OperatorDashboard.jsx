@@ -4,10 +4,12 @@ import {
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle,
-  Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle
+  Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
+  Bell, Settings, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
 import SpotlightTour from '../../components/operator/SpotlightTour';
@@ -22,7 +24,8 @@ const CANCEL_REASONS = [
 ];
 
 const OperatorDashboard = () => {
-  const { t, language } = useLanguage();
+  const { t, language, changeLanguage } = useLanguage();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [franchises, setFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -49,6 +52,30 @@ const OperatorDashboard = () => {
 
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 
+  const [profilePic, setProfilePic] = useState(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      return user.profilePic || user.profilePicUrl || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [readNotifIds, setReadNotifIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('gtrams_read_notification_ids')) || [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleLanguage = () => {
+    const nextLang = language === 'fil' ? 'en' : 'fil';
+    if (changeLanguage) changeLanguage(nextLang);
+  };
+
   const calculateDaysRemaining = (dateApplied) => {
     if (!dateApplied) return null;
     const expDate = new Date(dateApplied);
@@ -56,6 +83,51 @@ const OperatorDashboard = () => {
     const today = new Date();
     const diffTime = expDate.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // Sync notifications with franchise updates
+  useEffect(() => {
+    const notifs = [];
+    franchises.forEach(item => {
+      if (item.status === 'Ready for Pickup') {
+        notifs.push({
+          id: `op_ready_${item._id}`,
+          title: language === 'fil' ? 'Aprubado na ang Prangkisa!' : 'Franchise Approved!',
+          desc: language === 'fil' ? `Ang prangkisa para sa unit ${item.plateNo || ''} ay aprubado na. Pumunta sa BPLO para sa Claim Stub.` : `Franchise for unit ${item.plateNo || ''} is approved. Proceed to BPLO cashier.`,
+          time: 'Action Required',
+          type: 'success',
+          link: '/operator-dashboard'
+        });
+      } else if (item.status === 'Cancelled') {
+        notifs.push({
+          id: `op_cancelled_${item._id}`,
+          title: language === 'fil' ? 'Kailangang Ayusin ang Aplikasyon' : 'Application Returned / Needs Revision',
+          desc: item.cancelReason ? `LGU Note: ${item.cancelReason}` : 'Your application was returned for correction. Click to fix.',
+          time: 'Attention',
+          type: 'reminder',
+          link: '/apply-franchise'
+        });
+      } else if (item.status === 'Expired') {
+        notifs.push({
+          id: `op_expired_${item._id}`,
+          title: language === 'fil' ? 'Paso na ang Prangkisa' : 'Franchise Expired Alert',
+          desc: language === 'fil' ? `Ang permit para sa ${item.plateNo || 'unit'} ay expired na. Mag-renew agad.` : `Unit ${item.plateNo || 'N/A'} has expired and requires renewal.`,
+          time: 'Renewal',
+          type: 'reminder',
+          link: '/apply-franchise'
+        });
+      }
+    });
+    setNotifications(notifs);
+  }, [franchises, language]);
+
+  const unreadNotifCount = notifications.filter(n => !readNotifIds.includes(n.id)).length;
+
+  const markAllNotifsRead = () => {
+    const allIds = notifications.map(n => n.id);
+    const updated = Array.from(new Set([...readNotifIds, ...allIds]));
+    setReadNotifIds(updated);
+    localStorage.setItem('gtrams_read_notification_ids', JSON.stringify(updated));
   };
 
   useEffect(() => {
@@ -462,142 +534,382 @@ const OperatorDashboard = () => {
         }
       `}</style>
 
-      {/* 1. HERO BANNER - Sleek, Minimalist, Mobile-Friendly */}
+      {/* 1. ELEVATED MOBILE & DESKTOP HERO APP HEADER (Matching media_1788958383307.jpg) */}
       <div 
         id="tour-hero-banner"
-        className="animate-spring-in bg-gradient-to-br from-[#7A1B22] via-[#871F27] to-[#4A0E13] dark:bg-gradient-to-br dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-5 sm:p-7 mb-6 text-white shadow-lg dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 border-l-6 sm:border-l-8 border-[#D4AF37] dark:border-slate-800/80 dark:border-l-6 sm:dark:border-l-8 dark:border-l-[#D4AF37] transition-all"
+        className="animate-spring-in bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-4 sm:p-7 mb-6 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden border border-[#D4AF37]/30 transition-all"
       >
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
         
-        <div className="relative z-10 min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/15 dark:border-white/10 shadow-2xs">
-            <OpGreetingIcon size={13} className={opGreeting.badgeColor} />
+        {/* Top Native Mobile Header Bar: Avatar + Greeting + Micro-actions */}
+        <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Circular Avatar */}
+            <div className="w-11 h-11 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#520f14] flex items-center justify-center shrink-0">
+              {profilePic ? (
+                <img src={profilePic} alt="User" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[#D4AF37] font-black text-base">
+                  {loggedInUserName.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+
+            {/* Greeting & Bold User Name */}
+            <div className="flex flex-col min-w-0">
+              <span className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">
+                {opGreeting.text},
+              </span>
+              <span className="text-base sm:text-xl font-black text-white tracking-tight truncate">
+                {loggedInUserName}!
+              </span>
+            </div>
+          </div>
+
+          {/* Micro Action Buttons in Frosted Glass Circles */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Quick Language Toggle Pill */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-[10px] font-black text-[#D4AF37] uppercase tracking-wider backdrop-blur-md transition-all shadow-2xs cursor-pointer"
+              title="Palitan ang Wika / Switch Language"
+            >
+              {language === 'fil' ? '🇵🇭 FIL' : '🇺🇸 EN'}
+            </button>
+
+            {/* Quick Theme Toggle Circle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={isDark ? "Light Mode" : "Dark Mode"}
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer"
+            >
+              {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-200" />}
+            </button>
+
+            {/* Notification Bell Circle */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="relative w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer"
+              >
+                <Bell size={17} />
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                    {unreadNotifCount}
+                  </span>
+                )}
+              </button>
+
+              {/* In-Header Notification Dropdown */}
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-2 w-72 sm:w-84 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-xs text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h4>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
+                      </p>
+                    </div>
+                    {unreadNotifCount > 0 && (
+                      <button 
+                        onClick={markAllNotifsRead} 
+                        className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                      >
+                        {t('nav.markAllRead', 'Mark all read')}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center">
+                        <Bell size={20} className="text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
+                      </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div
+                          key={notif.id}
+                          onClick={() => {
+                            if (notif.action) notif.action();
+                            else if (notif.link) navigate(notif.link);
+                            setIsNotifOpen(false);
+                          }}
+                          className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
+                        >
+                          <p className="text-xs font-bold truncate text-slate-900 dark:text-white">{notif.title}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{notif.desc}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Hero Bold Title & Subtitle */}
+        <div className="relative z-10 pt-4 pb-2">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-0.5 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/15 dark:border-white/10 shadow-2xs">
+            <OpGreetingIcon size={12} className={opGreeting.badgeColor} />
             <span>{opGreeting.tag}</span>
           </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight mb-1 text-white">
-            {opGreeting.text}, {loggedInUserName}!
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-1 text-white">
+            {language === 'fil' ? 'Pamahalaang Bayan ng Gasan' : 'Gasan Municipal Transport'}
           </h1>
           <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
             {getOperatorSubtext()}
           </p>
         </div>
 
-        {/* Right Side: Quick Action & Date Tag */}
-        <div className="relative z-10 flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
+        {/* Circular Quick Actions Row (Directly inspired by media_1788958383307.jpg) */}
+        <div className="relative z-10 pt-4 pb-2 flex items-center justify-between sm:justify-start sm:gap-7 overflow-x-auto scrollbar-none">
+          {/* Action 1: Apply / Renew */}
+          <button 
+            id="tour-hero-apply"
+            onClick={() => navigate('/apply-franchise')}
+            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
+          >
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-[#D4AF37] shadow-md group-hover:scale-105 transition-all">
+              <PlusCircle size={22} className="stroke-[2.5]" />
+            </div>
+            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
+              {language === 'fil' ? 'Mag-apply' : 'Apply'}
+            </span>
+          </button>
+
+          {/* Action 2: Claim Stub */}
+          <button 
+            onClick={() => {
+              const target = franchises.find(f => f.status === 'Ready for Pickup') || franchises[0];
+              if (target) {
+                setSelectedUnit(target);
+                setIsPrintOpen(true);
+              } else {
+                navigate('/apply-franchise');
+              }
+            }}
+            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
+          >
+            <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full border flex items-center justify-center shadow-md group-hover:scale-105 transition-all ${
+              franchises.some(f => f.status === 'Ready for Pickup')
+                ? 'bg-[#D4AF37] text-slate-950 border-[#D4AF37] ring-4 ring-[#D4AF37]/30 animate-pulse'
+                : 'bg-white/15 hover:bg-white/25 border-white/20 text-white'
+            }`}>
+              <Receipt size={22} className="stroke-[2.5]" />
+            </div>
+            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
+              Claim Stub
+            </span>
+          </button>
+
+          {/* Action 3: TODA Hub */}
+          <button 
+            id="tour-toda-hub"
+            onClick={() => navigate(isTodaPresident ? '/submit-members' : '/help-support')}
+            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
+          >
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-all">
+              <Users size={22} className="stroke-[2.5]" />
+            </div>
+            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
+              TODA Hub
+            </span>
+          </button>
+
+          {/* Action 4: Gabay / Tour */}
+          <button 
+            id="tour-replay-btn"
+            onClick={() => setIsTourOpen(true)}
+            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
+          >
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-amber-300 shadow-md group-hover:scale-105 transition-all">
+              <Sparkles size={22} className="stroke-[2.5]" />
+            </div>
+            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
+              {language === 'fil' ? 'Gabay' : 'Tour'}
+            </span>
+          </button>
+
+          {/* Action 5: Settings */}
+          <button 
+            onClick={() => navigate('/operator/settings')}
+            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
+          >
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-all">
+              <Settings size={22} className="stroke-[2.5]" />
+            </div>
+            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
+              Settings
+            </span>
+          </button>
+        </div>
+
+        {/* Action Status Banner (Matching media_1788958383307.jpg "Complete Your Profile") */}
+        <div className="relative z-10 mt-3 pt-3 border-t border-white/10">
           {franchises.some(f => f.status === 'Ready for Pickup') ? (
-            <button
-              id="tour-hero-apply"
-              onClick={() => {
-                const target = franchises.find(f => f.status === 'Ready for Pickup');
-                if (target) {
-                  setSelectedUnit(target);
-                  setIsPrintOpen(true);
-                }
-              }}
-              className="group flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer"
-            >
-              <Receipt size={15} />
-              <span>Claim Stub Ready</span>
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          ) : franchises.length < 2 ? (
-            <button
-              id="tour-hero-apply"
-              onClick={() => navigate('/apply-franchise')}
-              className="group flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer"
-            >
-              <PlusCircle size={15} />
-              <span>{t('dashboard.applyNew', 'Apply Franchise')}</span>
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-3.5 flex items-center justify-between shadow-lg backdrop-blur-md border border-white/20">
+              <div className="flex items-center gap-3 min-w-0 pr-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Receipt size={18} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-black truncate">
+                    {language === 'fil' ? 'Aprubado na ang Prangkisa!' : 'Franchise Approved!'}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    {language === 'fil' ? 'Handa na ang Claim Stub para sa Municipal Cashier' : 'Claim Stub is ready for Municipal Cashier'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const target = franchises.find(f => f.status === 'Ready for Pickup');
+                  if (target) {
+                    setSelectedUnit(target);
+                    setIsPrintOpen(true);
+                  }
+                }}
+                className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 shadow-xs cursor-pointer"
+              >
+                {language === 'fil' ? 'Kunin ang Stub' : 'Get Voucher'}
+              </button>
+            </div>
+          ) : franchises.some(f => f.status === 'Cancelled') ? (
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-3.5 flex items-center justify-between shadow-lg backdrop-blur-md border border-red-300 dark:border-red-900/60">
+              <div className="flex items-center gap-3 min-w-0 pr-2">
+                <div className="w-9 h-9 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                  <AlertCircle size={18} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-black truncate">
+                    {language === 'fil' ? 'Kailangang Ayusin ang Aplikasyon' : 'Application Needs Attention'}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    {language === 'fil' ? 'Pakitugunan ang puna ng LGU evaluator' : 'Review remarks and submit corrected documents'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/apply-franchise')}
+                className="bg-red-600 hover:bg-red-700 text-white font-black text-xs px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 shadow-xs cursor-pointer"
+              >
+                {language === 'fil' ? 'Ayusin' : 'Fix Issues'}
+              </button>
+            </div>
           ) : (
-            <div id="tour-hero-apply" className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
-              <ShieldCheck size={16} />
-              <span>Max Units (2/2)</span>
+            <div className="bg-white/10 dark:bg-white/5 text-white rounded-2xl p-3.5 flex items-center justify-between backdrop-blur-md border border-white/15">
+              <div className="flex items-center gap-3 min-w-0 pr-2">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-black truncate">
+                    {franchises.length >= 2 
+                      ? (language === 'fil' ? 'Kumpleto ang Kapasidad (2/2 Units)' : 'Maximum Fleet Capacity (2/2)')
+                      : (language === 'fil' ? 'May Bakanteng Slot Para sa Prangkisa' : 'Available Franchise Slot')}
+                  </h4>
+                  <p className="text-[11px] text-white/80 truncate">
+                    {franchises.length >= 2
+                      ? (language === 'fil' ? 'Lahat ng pinapayagang 2 units ay rehistrado' : 'Both allowed tricycle units are currently active')
+                      : (language === 'fil' ? 'Maaari kang mag-rehistro ng hanggang 2 units sa Gasan' : 'Registered operators may register up to 2 units in Gasan')}
+                  </p>
+                </div>
+              </div>
+              {franchises.length < 2 && (
+                <button
+                  onClick={() => navigate('/apply-franchise')}
+                  className="bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 shadow-xs cursor-pointer"
+                >
+                  {language === 'fil' ? 'Mag-apply' : 'Apply Now'}
+                </button>
+              )}
             </div>
           )}
+        </div>
+      </div>
 
-          <div className="flex items-center gap-1.5 bg-white/10 dark:bg-white/5 border border-white/15 px-3 py-2 rounded-2xl text-xs font-semibold text-white/90">
-            <OpGreetingIcon size={13} className={opGreeting.badgeColor} />
-            <span>{currentTime.toLocaleDateString(language === 'fil' ? 'tl-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+      {/* 2. TWIN METRIC SUMMARY CARDS (Matching media_1788958383245.jpg) */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-6 animate-spring-in">
+        {/* Card 1: Fleet Capacity */}
+        <div 
+          id="tour-capacity-pill"
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs transition-colors flex flex-col justify-between"
+        >
+          <div>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t('dashboard.unitCapacity', 'Fleet Capacity')}
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight my-1">
+              {franchises.length} / 2 <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Units</span>
+            </div>
+          </div>
+
+          <div>
+            {/* Visual Indicator Pills */}
+            <div className="flex items-center gap-1.5 my-2">
+              <div className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-800'}`} />
+              <div className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-800'}`} />
+            </div>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate">
+              {language === 'fil' ? 'Limitasyon ng Munisipyo' : 'Municipal Max Ordinance'}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Regulatory Standing */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs transition-colors flex flex-col justify-between">
+          <div>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {language === 'fil' ? 'Katayuan sa LGU' : 'Regulatory Standing'}
+            </span>
+            <div className="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 my-1.5 truncate">
+              <CheckCircle size={18} className="shrink-0" />
+              <span className="truncate">
+                {franchises.some(f => f.status === 'Active') 
+                  ? (language === 'fil' ? 'Aktibo' : 'Good Standing') 
+                  : franchises.some(f => f.status === 'Ready for Pickup')
+                  ? (language === 'fil' ? 'Handa nang Kunin' : 'Ready for Pickup')
+                  : franchises.some(f => f.status === 'Pending')
+                  ? (language === 'fil' ? 'Sinusuri' : 'In Review')
+                  : (language === 'fil' ? 'Bakante' : 'Ready to Register')}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 truncate max-w-full">
+              BPLO Gasan Verified
+            </span>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate mt-1">
+              MTOP Official Registry
+            </p>
           </div>
         </div>
       </div>
 
-      {/* 2. TODA PRESIDENT EXCLUSIVE HUB (If logged-in user is TODA President) */}
-      {isTodaPresident && (
-        <div 
-          id="tour-toda-hub"
-          className="animate-spring-in mb-6 bg-gradient-to-r from-slate-900 via-[#1b0d11] to-slate-900 dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-5 sm:p-6 text-white border border-[#D4AF37]/30 shadow-lg relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
-        >
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shrink-0">
-              <Users size={22} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#D4AF37] bg-[#D4AF37]/15 px-2 py-0.5 rounded-full border border-[#D4AF37]/25">
-                  TODA President Association Hub
-                </span>
-              </div>
-              <h3 className="text-base font-black tracking-tight text-white">
-                Member Roster & Driver Registry
-              </h3>
-              <p className="text-xs text-slate-300 dark:text-slate-400 font-medium max-w-lg mt-0.5">
-                Manage your association group, view member units, and submit rosters directly to the Municipal Administrator.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/submit-members')}
-            className="shrink-0 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer self-start sm:self-auto"
-          >
-            <Users size={15} />
-            <span>Association Hub</span>
-            <ArrowRight size={14} />
-          </button>
-        </div>
-      )}
-
-      {/* 3. GARAGE HEADER */}
+      {/* 3. GARAGE SECTION HEADER */}
       <header className="animate-spring-in mb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-1 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+          <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{t('dashboard.garageTitle', 'My Franchise Garage')}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{t('dashboard.garageSub', 'Assigned tricycle units under your account')}</p>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              {t('dashboard.garageTitle', 'My Franchise Garage')}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              {t('dashboard.garageSub', 'Assigned tricycle units under your account')}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          {/* Replay Tour / Gabay Button */}
-          <button
-            id="tour-replay-btn"
-            type="button"
-            onClick={() => setIsTourOpen(true)}
-            className="flex items-center gap-1.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xs text-slate-700 dark:text-slate-200 text-xs font-bold transition-all touch-bounce active:scale-95 cursor-pointer"
-            title={language === 'fil' ? 'Simulan ang Interactive Tour' : 'Start Interactive Tour'}
-          >
-            <HelpCircle size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-            <span>{language === 'fil' ? 'Gabay' : 'Tour'}</span>
-          </button>
 
-          <div 
-            id="tour-capacity-pill"
-            className="flex items-center gap-2.5 bg-white dark:bg-slate-800/80 px-3.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xs transition-colors"
-          >
-            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
-            {isLoading ? (
-              <SkeletonElement height="14px" className="w-16" rounded="rounded-full" delay={40} />
-            ) : (
-              <>
-                <div className="flex gap-1.5">
-                  <div className={`w-5 h-2 rounded-full transition-all duration-300 ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                  <div className={`w-5 h-2 rounded-full transition-all duration-300 ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                </div>
-                <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37]">{franchises.length}/2</span>
-              </>
-            )}
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+            {franchises.length} {language === 'fil' ? 'Nakatala' : 'Registered'}
+          </span>
         </div>
       </header>
 
@@ -612,7 +924,7 @@ const OperatorDashboard = () => {
           <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3.5 text-[#7A1B22] dark:text-[#D4AF37]"><PlusCircle size={28} /></div>
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">{t('dashboard.noUnitsTitle', 'No Franchise Units Found')}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-sm">{t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}</p>
-          <button onClick={() => navigate('/apply-franchise')} className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-95 touch-bounce">{t('dashboard.applyNew', 'Apply New Franchise')}</button>
+          <button onClick={() => navigate('/apply-franchise')} className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-white px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-sm active:scale-95 touch-bounce cursor-pointer">{t('dashboard.applyNew', 'Apply New Franchise')}</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">

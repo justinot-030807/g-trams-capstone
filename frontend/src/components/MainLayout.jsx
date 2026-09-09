@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
 import OperatorBottomNav from './operator/OperatorBottomNav';
 
 const MainLayout = ({ children }) => {
+  // Elastic Rubber-band Overscroll Touch Stretch Effect for mobile
+  const [stretchOffset, setStretchOffset] = useState(0);
+  const [isStretching, setIsStretching] = useState(false);
+  const touchStartY = useRef(0);
+  const isAtEdge = useRef(false);
   // Default closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -98,6 +103,63 @@ const MainLayout = ({ children }) => {
     };
   }, []);
 
+  // Native-feel touch stretch event listener
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartY.current = e.touches[0].clientY;
+      const isTop = window.scrollY <= 2;
+      const isBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 5;
+      isAtEdge.current = isTop || isBottom;
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isAtEdge.current || e.touches.length !== 1) return;
+      const currentY = e.touches[0].clientY;
+      const deltaY = currentY - touchStartY.current;
+
+      const isTop = window.scrollY <= 2;
+      const isBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 5;
+
+      if (isTop && deltaY > 0) {
+        // Pulling down past top edge
+        const stretch = Math.min(Math.pow(deltaY, 0.72) * 0.55, 45);
+        setStretchOffset(stretch);
+        setIsStretching(true);
+      } else if (isBottom && deltaY < 0) {
+        // Pulling up past bottom edge
+        const stretch = -Math.min(Math.pow(Math.abs(deltaY), 0.72) * 0.55, 45);
+        setStretchOffset(stretch);
+        setIsStretching(true);
+      } else {
+        if (stretchOffset !== 0) {
+          setStretchOffset(0);
+          setIsStretching(false);
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (isStretching || stretchOffset !== 0) {
+        setStretchOffset(0);
+        setIsStretching(false);
+      }
+      isAtEdge.current = false;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [isStretching, stretchOffset]);
+
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => {
       const nextState = !prev;
@@ -132,7 +194,16 @@ const MainLayout = ({ children }) => {
           onToggleSidebar={toggleSidebar} 
         />
 
-        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}>
+        <main 
+          style={{
+            transform: stretchOffset !== 0 
+              ? `translateY(${stretchOffset}px) scaleY(${1 + Math.abs(stretchOffset) / 800})` 
+              : 'translateY(0px) scaleY(1)',
+            transformOrigin: stretchOffset >= 0 ? 'top center' : 'bottom center',
+            transition: isStretching ? 'none' : 'transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          }}
+          className={`p-3.5 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block will-change-transform ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}
+        >
           <div className="max-w-7xl mx-auto print:max-w-full print:m-0 print:p-0 print:w-full">
             {children}
           </div>
