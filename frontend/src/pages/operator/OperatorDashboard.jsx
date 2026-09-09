@@ -4,7 +4,7 @@ import {
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle,
-  Sun, Moon, SunMedium, ArrowRight
+  Sun, Moon, SunMedium, ArrowRight, Users, Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
@@ -27,6 +27,9 @@ const OperatorDashboard = () => {
   const navigate = useNavigate();
 
   const loggedInUserName = localStorage.getItem('name') || 'Operator';
+  const currentRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+  const isTodaPresident = currentRole === 'toda president' || currentRole === 'toda_president';
+
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
@@ -232,24 +235,28 @@ const OperatorDashboard = () => {
 
   const getOperatorGreeting = () => {
     const hour = currentTime.getHours();
+    const portalTag = isTodaPresident 
+      ? t('dashboard.badgeToda', 'TODA President Portal') 
+      : t('dashboard.badge', 'Operator Portal');
+
     if (hour >= 5 && hour < 12) {
       return { 
         text: t('greeting.morning', 'Good morning'), 
-        tag: t('dashboard.badge', 'Operator Portal'),
+        tag: portalTag,
         icon: Sun, 
         badgeColor: 'text-amber-300' 
       };
     } else if (hour >= 12 && hour < 18) {
       return { 
         text: t('greeting.afternoon', 'Good afternoon'), 
-        tag: t('dashboard.badge', 'Operator Portal'),
+        tag: portalTag,
         icon: SunMedium, 
         badgeColor: 'text-orange-300' 
       };
     } else {
       return { 
         text: t('greeting.evening', 'Good evening'), 
-        tag: t('dashboard.badge', 'Operator Portal'),
+        tag: portalTag,
         icon: Moon, 
         badgeColor: 'text-indigo-200' 
       };
@@ -285,18 +292,18 @@ const OperatorDashboard = () => {
         }
       `}</style>
 
-      {/* 1. HERO BANNER */}
+      {/* 1. HERO BANNER - Sleek, Minimalist, Mobile-Friendly */}
       <div 
-        className="animate-dashboard-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] dark:bg-gradient-to-r dark:from-[#0d121f] dark:via-[#220c13] dark:to-[#0b0f19] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37] dark:border-slate-800/80 dark:border-l-8 dark:border-l-[#D4AF37] transition-colors duration-300"
+        className="animate-spring-in bg-gradient-to-br from-[#7A1B22] via-[#871F27] to-[#4A0E13] dark:bg-gradient-to-br dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-5 sm:p-7 mb-6 text-white shadow-lg dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 border-l-6 sm:border-l-8 border-[#D4AF37] dark:border-slate-800/80 dark:border-l-6 sm:dark:border-l-8 dark:border-l-[#D4AF37] transition-all"
       >
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
         
-        <div className="relative z-10 text-center md:text-left min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
+        <div className="relative z-10 min-w-0">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/15 dark:border-white/10 shadow-2xs">
             <OpGreetingIcon size={13} className={opGreeting.badgeColor} />
             <span>{opGreeting.tag}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight mb-1 text-white">
             {opGreeting.text}, {loggedInUserName}!
           </h1>
           <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
@@ -304,15 +311,18 @@ const OperatorDashboard = () => {
           </p>
         </div>
 
-        {/* Right Side: Interactive Shortcut & Compact Date (Replacing bulky clock) */}
-        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
+        {/* Right Side: Quick Action & Date Tag */}
+        <div className="relative z-10 flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
           {franchises.some(f => f.status === 'Ready for Pickup') ? (
             <button
               onClick={() => {
                 const target = franchises.find(f => f.status === 'Ready for Pickup');
-                if (target) setStubModal({ isOpen: true, unit: target });
+                if (target) {
+                  setSelectedUnit(target);
+                  setIsPrintOpen(true);
+                }
               }}
-              className="group flex items-center gap-2.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer"
+              className="group flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer"
             >
               <Receipt size={15} />
               <span>Claim Stub Ready</span>
@@ -321,44 +331,77 @@ const OperatorDashboard = () => {
           ) : franchises.length < 2 ? (
             <button
               onClick={() => navigate('/apply-franchise')}
-              className="group flex items-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer"
+              className="group flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer"
             >
               <PlusCircle size={15} />
               <span>{t('dashboard.applyNew', 'Apply Franchise')}</span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>
           ) : (
-            <div className="flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
+            <div className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
               <ShieldCheck size={16} />
-              <span>Max Units Active</span>
+              <span>Max Units (2/2)</span>
             </div>
           )}
 
-          <div className="hidden sm:flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-white/90">
-            <OpGreetingIcon size={14} className={opGreeting.badgeColor} />
+          <div className="flex items-center gap-1.5 bg-white/10 dark:bg-white/5 border border-white/15 px-3 py-2 rounded-2xl text-xs font-semibold text-white/90">
+            <OpGreetingIcon size={13} className={opGreeting.badgeColor} />
             <span>{currentTime.toLocaleDateString(language === 'fil' ? 'tl-PH' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
           </div>
         </div>
       </div>
 
-      <header className="animate-dashboard-card mb-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+      {/* 2. TODA PRESIDENT EXCLUSIVE HUB (If logged-in user is TODA President) */}
+      {isTodaPresident && (
+        <div className="animate-spring-in mb-6 bg-gradient-to-r from-slate-900 via-[#1b0d11] to-slate-900 dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-5 sm:p-6 text-white border border-[#D4AF37]/30 shadow-lg relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shrink-0">
+              <Users size={22} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#D4AF37] bg-[#D4AF37]/15 px-2 py-0.5 rounded-full border border-[#D4AF37]/25">
+                  TODA President Association Hub
+                </span>
+              </div>
+              <h3 className="text-base font-black tracking-tight text-white">
+                Member Roster & Driver Registry
+              </h3>
+              <p className="text-xs text-slate-300 dark:text-slate-400 font-medium max-w-lg mt-0.5">
+                Submit and manage your official association member masterlist directly to the Municipal Administrator.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/submit-members')}
+            className="shrink-0 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer self-start sm:self-auto"
+          >
+            <Users size={15} />
+            <span>Submit Members</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* 3. GARAGE HEADER */}
+      <header className="animate-spring-in mb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div className="w-1 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
             <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{t('dashboard.garageTitle', 'My Franchise Garage')}</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{t('dashboard.garageSub', 'Assigned tricycle units under your account')}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
-            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 bg-white dark:bg-slate-800/80 px-3.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xs transition-colors">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
             {isLoading ? (
               <SkeletonElement height="14px" className="w-16" rounded="rounded-full" delay={40} />
             ) : (
               <>
                 <div className="flex gap-1.5">
-                  <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                  <div className={`w-6 h-2 rounded-full transition-all ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                  <div className={`w-5 h-2 rounded-full transition-all duration-300 ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                  <div className={`w-5 h-2 rounded-full transition-all duration-300 ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-700'}`} />
                 </div>
                 <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37]">{franchises.length}/2</span>
               </>
@@ -367,23 +410,25 @@ const OperatorDashboard = () => {
         </div>
       </header>
 
+      {/* 4. GARAGE UNITS LIST / EMPTY STATE */}
       {isLoading ? (
         <GarageGridSkeleton count={2} baseDelay={70} />
       ) : franchises.length === 0 ? (
-        <div className="animate-dashboard-card bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[300px] transition-colors">
-          <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 text-[#7A1B22] dark:text-[#D4AF37]"><PlusCircle size={32} /></div>
+        <div className="animate-spring-in bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[280px] transition-colors">
+          <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3.5 text-[#7A1B22] dark:text-[#D4AF37]"><PlusCircle size={28} /></div>
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">{t('dashboard.noUnitsTitle', 'No Franchise Units Found')}</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 max-w-sm">{t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}</p>
-          <button onClick={() => navigate('/apply-franchise')} className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-95">{t('dashboard.applyNew', 'Apply New Franchise')}</button>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-sm">{t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}</p>
+          <button onClick={() => navigate('/apply-franchise')} className="bg-[#7A1B22] hover:bg-[#5A1419] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-95 touch-bounce">{t('dashboard.applyNew', 'Apply New Franchise')}</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
           {franchises.map((unit, unitIndex) => (
             <div 
               key={unit?._id} 
-              className="animate-dashboard-card bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all"
-              style={{ animationDelay: `${0.06 + unitIndex * 0.09}s` }}
+              className="animate-spring-in bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group"
+              style={{ animationDelay: `${0.04 + unitIndex * 0.08}s` }}
             >
+              {/* Top Accent Strip */}
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
                 unit?.status === 'Active' ? 'bg-emerald-500' :
                 unit?.status === 'Ready for Pickup' ? 'bg-blue-500' :
@@ -392,23 +437,26 @@ const OperatorDashboard = () => {
               }`} />
 
               <div>
-                <div className="flex justify-between items-start mb-5 mt-1">
-                  <div>
-                    <h3 className="font-black text-2xl text-slate-900 dark:text-white tracking-wider mb-0.5">{unit?.plateNo || t('dashboard.pendingPlate', 'PENDING PLATE')}</h3>
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{unit?.todaName} &bull; {unit?.make} ({unit?.made})</p>
-                  </div>
-                  
-                  <span className={`px-3 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-sm ${
+                {/* Header Row: TODA tag & Status Badge */}
+                <div className="flex justify-between items-center mb-3 mt-0.5 gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-[11px] font-black uppercase tracking-wider border border-slate-200/60 dark:border-slate-700/60 truncate">
+                    <Users size={12} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                    <span className="truncate">{unit?.todaName || 'TODA'}</span>
+                  </span>
+
+                  <span className={`px-2.5 py-1 text-[10px] font-black rounded-xl uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs shrink-0 ${
                     unit?.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                     unit?.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
                     unit?.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
                     unit?.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
                     'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
                   }`}>
-                    {unit?.status === 'Active' && <CheckCircle size={13}/>}
-                    {unit?.status === 'Ready for Pickup' && <FileText size={13}/>}
-                    {unit?.status === 'Pending' && <Clock size={13} className="animate-pulse"/>}
-                    {(unit?.status === 'Cancelled' || unit?.status === 'Expired') && <AlertCircle size={13}/>}
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${
+                      unit?.status === 'Active' ? 'bg-emerald-500' :
+                      unit?.status === 'Ready for Pickup' ? 'bg-blue-500 animate-pulse-beacon' :
+                      unit?.status === 'Expired' ? 'bg-orange-500' :
+                      unit?.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-500 animate-pulse-beacon'
+                    }`} />
                     {unit?.status === 'Active' ? t('dashboard.statusActive', 'Active') :
                      unit?.status === 'Ready for Pickup' ? t('dashboard.statusReadyPickup', 'Awaiting Payment') :
                      unit?.status === 'Expired' ? t('dashboard.statusExpired', 'Expired') :
@@ -417,24 +465,54 @@ const OperatorDashboard = () => {
                   </span>
                 </div>
 
-                {renderApplicationTracker(unit?.status)}
+                {/* Modern Government MTOP Plate Box */}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 dark:from-slate-800/70 dark:to-slate-800/30 border border-slate-200/90 dark:border-slate-700/80 mb-4 flex items-center justify-between relative overflow-hidden">
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400 truncate">
+                        MUNICIPALITY OF GASAN &bull; MTOP
+                      </p>
+                    </div>
+                    <h3 className="font-mono text-2xl sm:text-3xl font-black tracking-wider text-slate-900 dark:text-white truncate">
+                      {unit?.plateNo || t('dashboard.pendingPlate', 'PENDING')}
+                    </h3>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800">
-                    <MapPin className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" size={16} />
-                    <div>
-                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('dashboard.routeZone', 'Route Zone')}</p>
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{unit?.zone}</p>
+                  <div className="text-right shrink-0">
+                    <span className="inline-block px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight shadow-2xs">
+                      {unit?.make || 'Tricycle'}
+                    </span>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-1 uppercase">
+                      {unit?.made || 'Model'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Minimalist 2x2 Specs Grid */}
+                <div className="grid grid-cols-2 gap-2.5 mb-4">
+                  <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-xl bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                      <MapPin size={13} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{unit?.zone || 'N/A'}</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800">
-                    <Hash className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" size={16} />
-                    <div>
-                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('dashboard.motorNumber', 'Motor Number')}</p>
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{unit?.motorNo}</p>
+
+                  <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-xl bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                      <Hash size={13} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.motorNumber', 'Motor Number')}</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{unit?.motorNo || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
+
+                {renderApplicationTracker(unit?.status)}
 
                 {unit?.status === 'Active' && (() => {
                   const daysRemaining = calculateDaysRemaining(unit?.dateApplied);
@@ -442,16 +520,16 @@ const OperatorDashboard = () => {
                   const isOverdue = daysRemaining !== null && daysRemaining <= 0;
 
                   return (
-                    <div className={`mb-5 p-4 rounded-2xl border transition-all ${
+                    <div className={`mb-4 p-3.5 rounded-2xl border transition-all ${
                       isOverdue
                         ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
                         : isExpiringSoon
                         ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
                         : 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50'
                     }`}>
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="flex items-center gap-2">
-                          <CalendarDays size={16} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
+                      <div className="flex justify-between items-center mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <CalendarDays size={14} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
                           <span className={`text-[10px] font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
                             {t('dashboard.validUntil', 'Valid Until')}
                           </span>
@@ -494,7 +572,7 @@ const OperatorDashboard = () => {
                               </p>
                               <button
                                 onClick={() => navigate(`/renew-franchise/${unit._id}`)}
-                                className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-xs transition-colors shrink-0 ml-2"
+                                className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-xs transition-colors shrink-0 ml-2 touch-bounce active:scale-95 cursor-pointer"
                               >
                                 Renew Now
                               </button>
@@ -507,40 +585,50 @@ const OperatorDashboard = () => {
                 })()}
 
                 {unit?.status === 'Ready for Pickup' && (
-                  <div className="mb-5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-4 rounded-2xl flex items-start gap-3">
-                    <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={20} />
+                  <div className="mb-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3.5 rounded-2xl flex items-start gap-2.5">
+                    <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={18} />
                     <div>
-                      <h4 className="text-blue-900 dark:text-blue-200 font-black text-xs uppercase mb-1">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
-                      <p className="text-xs font-medium text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                      <h4 className="text-blue-900 dark:text-blue-200 font-black text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
+                      <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2.5 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+              {/* Action Buttons Row */}
+              <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-3.5 border-t border-slate-100 dark:border-slate-800">
                 {unit?.status === 'Expired' ? (
-                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-98"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
+                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
-                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                 ) : unit?.status === 'Ready for Pickup' ? (
-                  <div className="flex flex-col sm:flex-row w-full gap-2.5">
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
-                    <div className="flex flex-1 gap-2">
-                      <button onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} className="flex-1 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-2.5 rounded-xl font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 active:scale-98">
-                        <Eye size={14} /> {t('dashboard.btnViewStub', 'View Stub')}
-                      </button>
-                      <button onClick={() => handleDirectDownload(unit)} className="flex-1 bg-blue-600 text-white hover:bg-blue-700 px-3 py-2.5 rounded-xl font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-98">
-                        <Download size={14} /> {t('dashboard.btnDownload', 'Download')}
-                      </button>
-                    </div>
+                  <div className="flex flex-col sm:flex-row w-full gap-2">
+                    <button 
+                      onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} 
+                      className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#c59f2c] text-slate-950 hover:opacity-95 font-black text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 touch-bounce cursor-pointer"
+                    >
+                      <Receipt size={14} /> {t('dashboard.btnViewStub', 'Claim Stub')}
+                    </button>
+                    <button 
+                      onClick={() => handleDirectDownload(unit)} 
+                      className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer"
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button 
+                      onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                      className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-95 touch-bounce cursor-pointer"
+                    >
+                      {t('dashboard.btnViewDetails', 'Details')}
+                    </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 active:scale-98">
+                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer">
                     <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                   </button>
                 ) : (
-                  <div className="flex flex-col sm:flex-row w-full gap-2">
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-98">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <div className="flex items-center w-full gap-2">
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                     {(unit?.status === 'Pending' || unit?.status === 'Ready for Pickup') && (
                       <button 
                         onClick={() => setCancelModal({
@@ -550,7 +638,7 @@ const OperatorDashboard = () => {
                           customReason: '',
                           isSubmitting: false
                         })}
-                        className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-98"
+                        className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer shrink-0"
                       >
                         <XCircle size={14} /> Cancel
                       </button>

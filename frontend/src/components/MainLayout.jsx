@@ -132,7 +132,7 @@ const MainLayout = ({ children }) => {
           onToggleSidebar={toggleSidebar} 
         />
 
-        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${showBottomNav ? 'pb-24 md:pb-8' : ''}`}>
+        <main className={`p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}>
           <div className="max-w-7xl mx-auto print:max-w-full print:m-0 print:p-0 print:w-full">
             {children}
           </div>
