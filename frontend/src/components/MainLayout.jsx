@@ -43,7 +43,8 @@ const MainLayout = ({ children }) => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        cache: 'no-store'
       }).catch(() => {});
     };
 

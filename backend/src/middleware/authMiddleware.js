@@ -16,7 +16,7 @@ const protect = async (req, res, next) => {
             // Update lastActive timestamp (throttled to once per 15s to optimize DB load)
             const now = Date.now();
             if (!req.user.lastActive || (now - new Date(req.user.lastActive).getTime() > 15000)) {
-                User.findByIdAndUpdate(req.user._id, { lastActive: new Date() }).exec().catch(() => {});
+                await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() }).catch(() => {});
                 req.user.lastActive = new Date();
             }
 

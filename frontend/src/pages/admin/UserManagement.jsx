@@ -40,14 +40,23 @@ const UserManagement = () => {
       };
     }
 
-    if (!lastActive) {
+    // Current logged-in user actively viewing this page is ALWAYS online
+    let isCurrentViewer = false;
+    try {
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      if (stored._id && String(stored._id) === String(user._id)) isCurrentViewer = true;
+      if (stored.contact && user.contact && String(stored.contact).toLowerCase() === String(user.contact).toLowerCase()) isCurrentViewer = true;
+      if (stored.email && user.email && String(stored.email).toLowerCase() === String(user.email).toLowerCase()) isCurrentViewer = true;
+    } catch {}
+
+    if (isCurrentViewer) {
       return {
-        statusText: 'Offline',
-        timeText: 'No recent activity',
-        isOnline: false,
-        isPulsing: false,
-        badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
-        dotClass: 'bg-slate-400'
+        statusText: 'Online (You)',
+        timeText: 'Active now',
+        isOnline: true,
+        isPulsing: true,
+        badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 font-black',
+        dotClass: 'bg-emerald-500'
       };
     }
 
@@ -55,14 +64,14 @@ const UserManagement = () => {
     let diffSec;
     if (typeof lastActiveSecondsAgo === 'number') {
       diffSec = lastActiveSecondsAgo;
-    } else {
+    } else if (lastActive) {
       const now = Date.now();
       const activeDate = new Date(lastActive).getTime();
       diffSec = Math.max(0, Math.floor((now - activeDate) / 1000));
     }
 
     // Online: active within last 180 seconds (3 minutes) or server flagged online
-    if (serverOnline || diffSec < 180) {
+    if (serverOnline === true || (typeof diffSec === 'number' && diffSec < 180)) {
       return {
         statusText: 'Online',
         timeText: 'Active now',
@@ -70,6 +79,17 @@ const UserManagement = () => {
         isPulsing: true,
         badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/80',
         dotClass: 'bg-emerald-500'
+      };
+    }
+
+    if (!lastActive || typeof diffSec !== 'number') {
+      return {
+        statusText: 'Offline',
+        timeText: 'No recent activity',
+        isOnline: false,
+        isPulsing: false,
+        badgeClass: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500 border-slate-200 dark:border-slate-700',
+        dotClass: 'bg-slate-400'
       };
     }
 

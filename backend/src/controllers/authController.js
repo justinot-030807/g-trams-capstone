@@ -133,6 +133,12 @@ exports.login = async (req, res) => {
 exports.getUsers = async (req, res) => {
     try {
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
+        // Immediately update caller's lastActive timestamp so their record in MongoDB is fresh
+        if (req.user && req.user._id) {
+            await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() }).catch(() => {});
+        }
+
         const users = await User.find().select('-password').sort({ createdAt: -1 });
         const franchises = await Franchise.find({ isArchived: { $ne: true } })
             .select('operator fullName status plateNo make made motorNo chassisNo zone todaName');
@@ -187,8 +193,14 @@ exports.getUsers = async (req, res) => {
             uObj.cancelledUnitsCount = userUnits.filter(unit => unit.status === 'Cancelled' || unit.status === 'Revoked').length;
             uObj.units = userUnits;
 
-            // Server-side precise activity calculation (immune to client clock drift)
-            if (uObj.lastActive && uObj.isActive !== false) {
+            // Real-time online presence calculation
+            const isCaller = req.user && req.user._id && uIdStr === req.user._id.toString();
+
+            if (isCaller) {
+                uObj.isOnline = true;
+                uObj.lastActiveSecondsAgo = 0;
+                uObj.lastActive = new Date();
+            } else if (uObj.lastActive && uObj.isActive !== false) {
                 const diffSec = Math.max(0, Math.floor((now - new Date(uObj.lastActive).getTime()) / 1000));
                 uObj.lastActiveSecondsAgo = diffSec;
                 uObj.isOnline = diffSec < 180; // Active within last 3 minutes
