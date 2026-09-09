@@ -248,7 +248,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside 
-        className={`w-64 bg-[#7A1B22] h-[100dvh] fixed top-0 left-0 flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 print:hidden print-hide ${
+        className={`w-64 bg-[#7A1B22] fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 print:hidden print-hide ${
           isOperatorOrToda ? 'hidden md:flex' : 'flex'
         } ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
@@ -366,7 +366,50 @@ const Sidebar = ({ isOpen, onClose }) => {
           })}
         </nav>
 
-        <div className="p-3 border-t border-white/10 shrink-0 bg-[#651419]">
+        {/* Sidebar Footer & User Profile */}
+        <div className="p-3 border-t border-white/10 shrink-0 bg-black/20 space-y-2">
+          {/* User Profile Tile */}
+          <div className="flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl bg-white/5 border border-white/10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative shrink-0">
+                {userData.profilePic ? (
+                  <img 
+                    src={userData.profilePic} 
+                    alt={userData.name} 
+                    className="w-8 h-8 rounded-full object-cover ring-1 ring-white/25" 
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-white/15 border border-[#D4AF37]/60 flex items-center justify-center text-white text-xs font-black shadow-inner">
+                    {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#7A1B22]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-white text-xs font-bold truncate leading-tight">
+                  {userData.name}
+                </span>
+                <span className="text-[#D4AF37] text-[10px] font-semibold tracking-wide uppercase truncate">
+                  {role === 'admin' ? 'Administrator' : role === 'toda president' ? 'TODA President' : 'Operator'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                localStorage.removeItem('name');
+                localStorage.removeItem('user');
+                navigate('/login');
+              }}
+              title={t('nav.logOut', 'Log Out')}
+              className="p-1.5 text-white/70 hover:text-white hover:bg-red-500/80 rounded-lg transition-all duration-150 shrink-0"
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+
           <button 
             onClick={() => { 
               localStorage.removeItem('token');
@@ -375,10 +418,10 @@ const Sidebar = ({ isOpen, onClose }) => {
               localStorage.removeItem('user');
               navigate('/login'); 
             }}
-            className="w-full flex items-center justify-center gap-2 bg-white/10 text-white/90 py-2.5 rounded-xl hover:bg-red-600 hover:text-white transition-colors text-xs font-black uppercase tracking-wider"
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-white/80 hover:text-white hover:bg-white/10 active:bg-white/15 transition-all duration-150 border border-white/10 hover:border-white/20"
           >
-            <LogOut size={15} />
-            {t('nav.logOut', 'Log Out')}
+            <LogOut size={14} className="text-white/70" />
+            <span>{t('nav.logOut', 'Log Out')}</span>
           </button>
         </div>
       </aside>

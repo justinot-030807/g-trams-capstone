@@ -34,32 +34,51 @@ const MainLayout = ({ children }) => {
 
   // Real-time user heartbeat ping
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     const sendHeartbeat = () => {
-      fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/heartbeat`, {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+      if (!baseUrl) return;
+
+      // Primary: Heartbeat endpoint
+      fetch(`${baseUrl}/api/v1/auth/heartbeat`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         cache: 'no-store'
-      }).catch(() => {});
+      })
+      .then(res => {
+        // Fallback: If heartbeat returned 404 (e.g. backend awaiting fresh redeploy), ping /auth/profile
+        if (res.status === 404) {
+          fetch(`${baseUrl}/api/v1/auth/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 20000);
+    const interval = setInterval(sendHeartbeat, 15000);
+
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') sendHeartbeat();
     };
 
     window.addEventListener('focus', sendHeartbeat);
+    window.addEventListener('pageshow', sendHeartbeat);
+    window.addEventListener('online', sendHeartbeat);
     document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('focus', sendHeartbeat);
+      window.removeEventListener('pageshow', sendHeartbeat);
+      window.removeEventListener('online', sendHeartbeat);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
