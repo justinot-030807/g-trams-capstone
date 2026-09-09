@@ -4,12 +4,14 @@ import {
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle,
-  Sun, Moon, SunMedium, ArrowRight, Users, Sparkles
+  Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
+import SpotlightTour from '../../components/operator/SpotlightTour';
+import LanguagePreferenceModal from '../../components/operator/LanguagePreferenceModal';
 
 const CANCEL_REASONS = [
   "Need to correct vehicle or tricycle details",
@@ -33,6 +35,8 @@ const OperatorDashboard = () => {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
   // Application cancellation state
   const [cancelModal, setCancelModal] = useState({
@@ -79,6 +83,129 @@ const OperatorDashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Sequence first-time onboarding: Language preference selection first, then tour
+  useEffect(() => {
+    if (!isLoading) {
+      const hasSelectedLang = localStorage.getItem('gtrams_lang_selected');
+      if (!hasSelectedLang) {
+        const timer = setTimeout(() => {
+          setIsLangModalOpen(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      } else {
+        const tourKey = 'gtrams_operator_tour_done';
+        const hasSeenTour = localStorage.getItem(tourKey);
+        if (!hasSeenTour) {
+          const timer = setTimeout(() => {
+            setIsTourOpen(true);
+          }, 800);
+          return () => clearTimeout(timer);
+        }
+      }
+    }
+  }, [isLoading]);
+
+  const handleLanguageConfirmed = () => {
+    localStorage.setItem('gtrams_lang_selected', 'true');
+    setIsLangModalOpen(false);
+
+    // After language is chosen, launch the spotlight tour if not yet completed
+    const tourKey = 'gtrams_operator_tour_done';
+    const hasSeenTour = localStorage.getItem(tourKey);
+    if (!hasSeenTour) {
+      setTimeout(() => {
+        setIsTourOpen(true);
+      }, 500);
+    }
+  };
+
+  const handleCloseTour = () => {
+    setIsTourOpen(false);
+    localStorage.setItem('gtrams_operator_tour_done', 'true');
+  };
+
+  const getTourSteps = () => {
+    const steps = [
+      {
+        targetId: 'tour-hero-banner',
+        title: 'Welcome to Operator Portal',
+        titleFil: 'Maligayang Pagdating sa Portal',
+        description: 'This is your primary command dashboard displaying your account greeting, active status notices, and quick actions.',
+        descriptionFil: 'Ito ang iyong pangunahing dashboard kung saan makikita ang iyong account greeting, paunawa sa prangkisa, at mabilisang shortcuts.',
+        icon: Sparkles
+      }
+    ];
+
+    if (isTodaPresident) {
+      steps.push({
+        targetId: 'tour-toda-hub',
+        title: 'TODA President Association Hub',
+        titleFil: 'TODA President Association Hub',
+        description: 'As TODA President, use this hub to upload and submit official member & driver rosters directly to the Municipal LGU.',
+        descriptionFil: 'Bilang TODA President, gamitin ang hub na ito upang mag-upload at magsumite ng opisyal na listahan ng inyong mga miyembro at drayber sa Munisipyo.',
+        icon: Users
+      });
+    }
+
+    steps.push({
+      targetId: 'tour-capacity-pill',
+      title: 'Franchise Fleet Capacity',
+      titleFil: 'Kapasidad ng Prangkisa',
+      description: 'Municipal regulations allow up to 2 registered tricycle units per operator. This counter tracks your active slots.',
+      descriptionFil: 'Pinapayagan ng ordinansa ang hanggang 2 rehistradong tricycle bawat operator. Sinusubaybayan nito ang iyong bakanteng slot.',
+      icon: ShieldCheck
+    });
+
+    if (franchises.length > 0) {
+      steps.push({
+        targetId: 'tour-mtop-plate',
+        title: 'Digital MTOP Tricycle Pass',
+        titleFil: 'Digital MTOP Plaka at Pass',
+        description: 'View your official Municipal MTOP Plate, assigned TODA, route zone, and motorcycle specifications.',
+        descriptionFil: 'Suriin ang iyong opisyal na MTOP Plate number, kinabibilangang TODA, ruta/zone, at mga detalye ng motorsiklo.',
+        icon: Hash
+      });
+
+      steps.push({
+        targetId: 'tour-tracker-section',
+        title: 'Live Application Tracker & Urgency',
+        titleFil: 'Live Application & Urgency Tracker',
+        description: 'Real-time step progression from Submitted to Active, plus countdown alerts for yearly franchise renewals.',
+        descriptionFil: 'Masusubaybayan ang antas ng iyong aplikasyon (Submitted ➔ Review ➔ Payment ➔ Active) at paalala bago mag-expire ang permit.',
+        icon: Clock
+      });
+
+      steps.push({
+        targetId: 'tour-card-actions',
+        title: 'Claim Stub Voucher & Actions',
+        titleFil: 'Claim Stub Voucher at Mga Aksyon',
+        description: 'When approved (Awaiting Payment), tap Claim Stub to download or print your official payment voucher for the Municipal Cashier.',
+        descriptionFil: 'Kapag Awaiting Payment na, pindutin ang Claim Stub upang i-download o i-print ang voucher na ipapakita sa Municipal Cashier para magbayad.',
+        icon: Receipt
+      });
+    } else {
+      steps.push({
+        targetId: 'tour-empty-garage',
+        title: 'Register Your First Tricycle Unit',
+        titleFil: 'Irehistro ang Iyong Unang Tricycle',
+        description: 'Your garage is currently empty. Tap "Apply New Franchise" to begin submitting requirements online.',
+        descriptionFil: 'Wala pang nakatalang tricycle. Pindutin ang "Apply New Franchise" upang magsumite ng inyong requirements online.',
+        icon: PlusCircle
+      });
+    }
+
+    steps.push({
+      targetId: 'tour-bottom-nav',
+      title: 'Floating Mobile Navigation Dock',
+      titleFil: 'Floating Mobile Navigation Dock',
+      description: 'Easily navigate between Dashboard, Franchise Application, Help Support, and Account Settings.',
+      descriptionFil: 'Madaling lumipat sa Dashboard, Pag-apply ng prangkisa, Gabay/Suporta, at Account Settings gamit ang dock na ito.',
+      icon: ArrowRight
+    });
+
+    return steps;
   };
 
   const getExpirationDate = (dateApplied) => {
@@ -294,6 +421,7 @@ const OperatorDashboard = () => {
 
       {/* 1. HERO BANNER - Sleek, Minimalist, Mobile-Friendly */}
       <div 
+        id="tour-hero-banner"
         className="animate-spring-in bg-gradient-to-br from-[#7A1B22] via-[#871F27] to-[#4A0E13] dark:bg-gradient-to-br dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-5 sm:p-7 mb-6 text-white shadow-lg dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 border-l-6 sm:border-l-8 border-[#D4AF37] dark:border-slate-800/80 dark:border-l-6 sm:dark:border-l-8 dark:border-l-[#D4AF37] transition-all"
       >
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
@@ -353,7 +481,10 @@ const OperatorDashboard = () => {
 
       {/* 2. TODA PRESIDENT EXCLUSIVE HUB (If logged-in user is TODA President) */}
       {isTodaPresident && (
-        <div className="animate-spring-in mb-6 bg-gradient-to-r from-slate-900 via-[#1b0d11] to-slate-900 dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-5 sm:p-6 text-white border border-[#D4AF37]/30 shadow-lg relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+        <div 
+          id="tour-toda-hub"
+          className="animate-spring-in mb-6 bg-gradient-to-r from-slate-900 via-[#1b0d11] to-slate-900 dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-5 sm:p-6 text-white border border-[#D4AF37]/30 shadow-lg relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
+        >
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shrink-0">
               <Users size={22} />
@@ -392,8 +523,22 @@ const OperatorDashboard = () => {
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{t('dashboard.garageSub', 'Assigned tricycle units under your account')}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2.5 bg-white dark:bg-slate-800/80 px-3.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xs transition-colors">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {/* Replay Tour / Gabay Button */}
+          <button
+            type="button"
+            onClick={() => setIsTourOpen(true)}
+            className="flex items-center gap-1.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xs text-slate-700 dark:text-slate-200 text-xs font-bold transition-all touch-bounce active:scale-95 cursor-pointer"
+            title={language === 'fil' ? 'Simulan ang Interactive Tour' : 'Start Interactive Tour'}
+          >
+            <HelpCircle size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            <span>{language === 'fil' ? 'Gabay' : 'Tour'}</span>
+          </button>
+
+          <div 
+            id="tour-capacity-pill"
+            className="flex items-center gap-2.5 bg-white dark:bg-slate-800/80 px-3.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xs transition-colors"
+          >
             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{t('dashboard.unitCapacity', 'Unit Capacity')}</span>
             {isLoading ? (
               <SkeletonElement height="14px" className="w-16" rounded="rounded-full" delay={40} />
@@ -414,7 +559,10 @@ const OperatorDashboard = () => {
       {isLoading ? (
         <GarageGridSkeleton count={2} baseDelay={70} />
       ) : franchises.length === 0 ? (
-        <div className="animate-spring-in bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[280px] transition-colors">
+        <div 
+          id="tour-empty-garage"
+          className="animate-spring-in bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[280px] transition-colors"
+        >
           <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3.5 text-[#7A1B22] dark:text-[#D4AF37]"><PlusCircle size={28} /></div>
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">{t('dashboard.noUnitsTitle', 'No Franchise Units Found')}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-sm">{t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}</p>
@@ -466,7 +614,10 @@ const OperatorDashboard = () => {
                 </div>
 
                 {/* Modern Government MTOP Plate Box */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 dark:from-slate-800/70 dark:to-slate-800/30 border border-slate-200/90 dark:border-slate-700/80 mb-4 flex items-center justify-between relative overflow-hidden">
+                <div 
+                  id={unitIndex === 0 ? "tour-mtop-plate" : undefined}
+                  className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 dark:from-slate-800/70 dark:to-slate-800/30 border border-slate-200/90 dark:border-slate-700/80 mb-4 flex items-center justify-between relative overflow-hidden"
+                >
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
@@ -512,91 +663,96 @@ const OperatorDashboard = () => {
                   </div>
                 </div>
 
-                {renderApplicationTracker(unit?.status)}
+                <div id={unitIndex === 0 ? "tour-tracker-section" : undefined}>
+                  {renderApplicationTracker(unit?.status)}
 
-                {unit?.status === 'Active' && (() => {
-                  const daysRemaining = calculateDaysRemaining(unit?.dateApplied);
-                  const isExpiringSoon = daysRemaining !== null && daysRemaining <= 60 && daysRemaining > 0;
-                  const isOverdue = daysRemaining !== null && daysRemaining <= 0;
+                  {unit?.status === 'Active' && (() => {
+                    const daysRemaining = calculateDaysRemaining(unit?.dateApplied);
+                    const isExpiringSoon = daysRemaining !== null && daysRemaining <= 60 && daysRemaining > 0;
+                    const isOverdue = daysRemaining !== null && daysRemaining <= 0;
 
-                  return (
-                    <div className={`mb-4 p-3.5 rounded-2xl border transition-all ${
-                      isOverdue
-                        ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
-                        : isExpiringSoon
-                        ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
-                        : 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50'
-                    }`}>
-                      <div className="flex justify-between items-center mb-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <CalendarDays size={14} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
-                            {t('dashboard.validUntil', 'Valid Until')}
-                          </span>
+                    return (
+                      <div className={`mb-4 p-3.5 rounded-2xl border transition-all ${
+                        isOverdue
+                          ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+                          : isExpiringSoon
+                          ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
+                          : 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50'
+                      }`}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <CalendarDays size={14} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
+                              {t('dashboard.validUntil', 'Valid Until')}
+                            </span>
+                          </div>
+                          <p className={`text-xs font-black ${isOverdue ? 'text-red-950 dark:text-red-200' : isExpiringSoon ? 'text-amber-950 dark:text-amber-200' : 'text-emerald-950 dark:text-emerald-200'}`}>
+                            {getExpirationDate(unit?.dateApplied)}
+                          </p>
                         </div>
-                        <p className={`text-xs font-black ${isOverdue ? 'text-red-950 dark:text-red-200' : isExpiringSoon ? 'text-amber-950 dark:text-amber-200' : 'text-emerald-950 dark:text-emerald-200'}`}>
-                          {getExpirationDate(unit?.dateApplied)}
-                        </p>
-                      </div>
 
-                      {/* Traffic-Light Urgency Meter */}
-                      {daysRemaining !== null && (
-                        <div className="space-y-1.5 pt-1">
-                          <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                              Status
-                            </span>
-                            <span className={`flex items-center gap-1 font-black ${
-                              isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-emerald-700 dark:text-emerald-400'
-                            }`}>
-                              {isOverdue 
-                                ? `⚠️ Overdue by ${Math.abs(daysRemaining)} days` 
-                                : isExpiringSoon 
-                                ? `⏳ Renewal Window Open • ${daysRemaining} days left` 
-                                : `✓ Active • ${daysRemaining} days remaining`}
-                            </span>
-                          </div>
-
-                          <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                isOverdue ? 'w-full bg-red-500' : isExpiringSoon ? 'w-3/4 bg-amber-500' : 'w-full bg-emerald-500'
-                              }`} 
-                            />
-                          </div>
-
-                          {isExpiringSoon && (
-                            <div className="pt-2 flex items-center justify-between">
-                              <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-tight">
-                                Within 60-day renewal window. Renew early to avoid penalties.
-                              </p>
-                              <button
-                                onClick={() => navigate(`/renew-franchise/${unit._id}`)}
-                                className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-xs transition-colors shrink-0 ml-2 touch-bounce active:scale-95 cursor-pointer"
-                              >
-                                Renew Now
-                              </button>
+                        {/* Traffic-Light Urgency Meter */}
+                        {daysRemaining !== null && (
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between items-center text-[10px] font-bold">
+                              <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                Status
+                              </span>
+                              <span className={`flex items-center gap-1 font-black ${
+                                isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-emerald-700 dark:text-emerald-400'
+                              }`}>
+                                {isOverdue 
+                                  ? `⚠️ Overdue by ${Math.abs(daysRemaining)} days` 
+                                  : isExpiringSoon 
+                                  ? `⏳ Renewal Window Open • ${daysRemaining} days left` 
+                                  : `✓ Active • ${daysRemaining} days remaining`}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
 
-                {unit?.status === 'Ready for Pickup' && (
-                  <div className="mb-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3.5 rounded-2xl flex items-start gap-2.5">
-                    <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={18} />
-                    <div>
-                      <h4 className="text-blue-900 dark:text-blue-200 font-black text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
-                      <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                            <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  isOverdue ? 'w-full bg-red-500' : isExpiringSoon ? 'w-3/4 bg-amber-500' : 'w-full bg-emerald-500'
+                                }`} 
+                              />
+                            </div>
+
+                            {isExpiringSoon && (
+                              <div className="pt-2 flex items-center justify-between">
+                                <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-tight">
+                                  Within 60-day renewal window. Renew early to avoid penalties.
+                                </p>
+                                <button
+                                  onClick={() => navigate(`/renew-franchise/${unit._id}`)}
+                                  className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-xs transition-colors shrink-0 ml-2 touch-bounce active:scale-95 cursor-pointer"
+                                >
+                                  Renew Now
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {unit?.status === 'Ready for Pickup' && (
+                    <div className="mb-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3.5 rounded-2xl flex items-start gap-2.5">
+                      <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={18} />
+                      <div>
+                        <h4 className="text-blue-900 dark:text-blue-200 font-black text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
+                        <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Action Buttons Row */}
-              <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-3.5 border-t border-slate-100 dark:border-slate-800">
+              <div 
+                id={unitIndex === 0 ? "tour-card-actions" : undefined}
+                className="flex flex-col sm:flex-row gap-2 mt-auto pt-3.5 border-t border-slate-100 dark:border-slate-800"
+              >
                 {unit?.status === 'Expired' ? (
                   <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
@@ -785,6 +941,19 @@ const OperatorDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* First-Time Login Language Preference Modal */}
+      <LanguagePreferenceModal 
+        isOpen={isLangModalOpen} 
+        onConfirm={handleLanguageConfirmed} 
+      />
+
+      {/* Interactive Spotlight Walkthrough Tour */}
+      <SpotlightTour 
+        isOpen={isTourOpen} 
+        onClose={handleCloseTour} 
+        steps={getTourSteps()} 
+      />
     </MainLayout>
   );
 };

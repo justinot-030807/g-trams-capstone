@@ -72,7 +72,7 @@ const OperatorBottomNav = ({ role }) => {
   return (
     <div className="fixed bottom-3 inset-x-3.5 sm:inset-x-6 z-40 md:hidden print:hidden max-w-md mx-auto pointer-events-none animate-spring-in">
       {/* Floating Glass Dock Container */}
-      <nav className="pointer-events-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800/90 shadow-[0_10px_35px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] rounded-3xl sm:rounded-full px-2 py-1.5 flex items-center justify-around transition-all">
+      <nav id="tour-bottom-nav" className="pointer-events-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800/90 shadow-[0_10px_35px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] rounded-3xl sm:rounded-full px-2 py-1.5 flex items-center justify-around transition-all">
         {navItems.map((item) => {
           const Icon = item.icon;
 
