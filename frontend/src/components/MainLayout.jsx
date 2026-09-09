@@ -51,15 +51,30 @@ const MainLayout = ({ children }) => {
         cache: 'no-store'
       })
       .then(res => {
-        // Fallback: If heartbeat returned 404 (e.g. backend awaiting fresh redeploy), ping /auth/profile
+        // Fallback: If heartbeat returned 404 (e.g. backend awaiting fresh redeploy), touch profile to update MongoDB updatedAt
         if (res.status === 404) {
           fetch(`${baseUrl}/api/v1/auth/profile`, {
-            headers: { 'Authorization': `Bearer ${token}` },
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ language: localStorage.getItem('gtrams_lang') || 'en' }),
             cache: 'no-store'
           }).catch(() => {});
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        fetch(`${baseUrl}/api/v1/auth/profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ language: localStorage.getItem('gtrams_lang') || 'en' }),
+          cache: 'no-store'
+        }).catch(() => {});
+      });
     };
 
     sendHeartbeat();

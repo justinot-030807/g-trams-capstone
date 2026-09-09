@@ -111,6 +111,33 @@ const Login = () => {
       }
     }
 
+    // Immediately dispatch initial presence ping
+    if (data.token) {
+      const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+      if (baseUrl) {
+        fetch(`${baseUrl}/api/v1/auth/heartbeat`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${data.token}`, 'Content-Type': 'application/json' }
+        })
+        .then(res => {
+          if (res.status === 404) {
+            fetch(`${baseUrl}/api/v1/auth/profile`, {
+              method: 'PUT',
+              headers: { 'Authorization': `Bearer ${data.token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ language: localStorage.getItem('gtrams_lang') || 'en' })
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {
+          fetch(`${baseUrl}/api/v1/auth/profile`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${data.token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: localStorage.getItem('gtrams_lang') || 'en' })
+          }).catch(() => {});
+        });
+      }
+    }
+
     if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
       navigate('/admin-dashboard');
     } else {

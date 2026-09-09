@@ -367,49 +367,34 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* Sidebar Footer & User Profile */}
-        <div className="p-3 border-t border-white/10 shrink-0 bg-black/20 space-y-2">
+        <div className="p-3 border-t border-white/10 shrink-0 bg-black/20 space-y-2.5">
           {/* User Profile Tile */}
-          <div className="flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl bg-white/5 border border-white/10">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="relative shrink-0">
-                {userData.profilePic ? (
-                  <img 
-                    src={userData.profilePic} 
-                    alt={userData.name} 
-                    className="w-8 h-8 rounded-full object-cover ring-1 ring-white/25" 
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-white/15 border border-[#D4AF37]/60 flex items-center justify-center text-white text-xs font-black shadow-inner">
-                    {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                )}
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#7A1B22]" />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-white text-xs font-bold truncate leading-tight">
-                  {userData.name}
-                </span>
-                <span className="text-[#D4AF37] text-[10px] font-semibold tracking-wide uppercase truncate">
-                  {role === 'admin' ? 'Administrator' : role === 'toda president' ? 'TODA President' : 'Operator'}
-                </span>
-              </div>
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10">
+            <div className="relative shrink-0">
+              {userData.profilePic ? (
+                <img 
+                  src={userData.profilePic} 
+                  alt={userData.name} 
+                  className="w-8 h-8 rounded-full object-cover ring-1 ring-white/25" 
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-white/15 border border-[#D4AF37]/60 flex items-center justify-center text-white text-xs font-black shadow-inner">
+                  {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#7A1B22]" />
             </div>
-
-            <button
-              onClick={() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('role');
-                localStorage.removeItem('name');
-                localStorage.removeItem('user');
-                navigate('/login');
-              }}
-              title={t('nav.logOut', 'Log Out')}
-              className="p-1.5 text-white/70 hover:text-white hover:bg-red-500/80 rounded-lg transition-all duration-150 shrink-0"
-            >
-              <LogOut size={15} />
-            </button>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-white text-xs font-bold truncate leading-tight">
+                {userData.name}
+              </span>
+              <span className="text-[#D4AF37] text-[10px] font-semibold tracking-wide uppercase truncate">
+                {role === 'admin' ? 'Administrator' : role === 'toda president' ? 'TODA President' : 'Operator'}
+              </span>
+            </div>
           </div>
 
+          {/* Single Sleek Log Out Button */}
           <button 
             onClick={() => { 
               localStorage.removeItem('token');
@@ -418,9 +403,9 @@ const Sidebar = ({ isOpen, onClose }) => {
               localStorage.removeItem('user');
               navigate('/login'); 
             }}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-white/80 hover:text-white hover:bg-white/10 active:bg-white/15 transition-all duration-150 border border-white/10 hover:border-white/20"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-white/85 hover:text-white bg-white/5 hover:bg-red-600/85 active:scale-[0.99] transition-all duration-150 border border-white/10 hover:border-red-500/50 shadow-sm"
           >
-            <LogOut size={14} className="text-white/70" />
+            <LogOut size={15} />
             <span>{t('nav.logOut', 'Log Out')}</span>
           </button>
         </div>

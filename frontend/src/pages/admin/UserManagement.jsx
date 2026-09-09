@@ -64,10 +64,15 @@ const UserManagement = () => {
     let diffSec;
     if (typeof lastActiveSecondsAgo === 'number') {
       diffSec = lastActiveSecondsAgo;
-    } else if (lastActive) {
-      const now = Date.now();
-      const activeDate = new Date(lastActive).getTime();
-      diffSec = Math.max(0, Math.floor((now - activeDate) / 1000));
+    } else {
+      const timestamp = lastActive || user.updatedAt;
+      if (timestamp) {
+        const now = Date.now();
+        const activeDate = new Date(timestamp).getTime();
+        if (!isNaN(activeDate)) {
+          diffSec = Math.max(0, Math.floor((now - activeDate) / 1000));
+        }
+      }
     }
 
     // Online: active within last 180 seconds (3 minutes) or server flagged online
@@ -82,7 +87,7 @@ const UserManagement = () => {
       };
     }
 
-    if (!lastActive || typeof diffSec !== 'number') {
+    if (typeof diffSec !== 'number') {
       return {
         statusText: 'Offline',
         timeText: 'No recent activity',
@@ -154,17 +159,82 @@ const UserManagement = () => {
     if (showSkeleton) setIsLoading(true);
     setIsRefreshing(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth?_t=${Date.now()}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        cache: 'no-store'
-      });
-      const data = await response.json();
-      if (response.ok && Array.isArray(data)) {
-        setUsers(data);
+      const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+      const token = localStorage.getItem('token');
+
+      // Fetch users and masterlist franchises in parallel
+      const [usersRes, franchisesRes] = await Promise.all([
+        fetch(`${baseUrl}/api/v1/auth?_t=${Date.now()}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
+        }),
+        fetch(`${baseUrl}/api/v1/franchises?limit=2000&archived=false`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
+        }).catch(() => null)
+      ]);
+
+      const data = await usersRes.json();
+      let franchisesList = [];
+      if (franchisesRes && franchisesRes.ok) {
+        try {
+          const fData = await franchisesRes.json();
+          franchisesList = Array.isArray(fData) ? fData : (fData.data || []);
+        } catch {}
+      }
+
+      if (usersRes.ok && Array.isArray(data)) {
+        // Cross-reference masterlist franchises with users to guarantee 100% accurate units count
+        const enhancedUsers = data.map(user => {
+          const uId = String(user._id || '');
+          const uName = String(user.name || '').trim().toLowerCase();
+          const uContact = String(user.contact || '').trim().toLowerCase();
+
+          const matchedFranchises = franchisesList.filter(f => {
+            const opId = f.operator?._id ? String(f.operator._id) : (f.operator ? String(f.operator) : '');
+            if (opId && opId === uId) return true;
+            if (f.fullName && uName && f.fullName.trim().toLowerCase() === uName) return true;
+            const opContact = f.operator?.contact ? String(f.operator.contact).trim().toLowerCase() : '';
+            if (opContact && uContact && opContact === uContact) return true;
+            return false;
+          });
+
+          // Format unit objects consistently
+          const formattedMatched = matchedFranchises.map(f => ({
+            _id: f._id,
+            plateNo: f.plateNo,
+            make: f.make,
+            made: f.made,
+            motorNo: f.motorNo,
+            chassisNo: f.chassisNo,
+            status: f.status,
+            zone: f.zone,
+            todaName: f.todaName
+          }));
+
+          const userUnits = (user.units && user.units.length > 0) ? user.units : formattedMatched;
+          const unitsCount = userUnits.length;
+          const activeUnitsCount = userUnits.filter(u => u.status === 'Active').length;
+          const pendingUnitsCount = userUnits.filter(u => u.status === 'Pending' || u.status === 'Ready for Pickup').length;
+          const expiredUnitsCount = userUnits.filter(u => u.status === 'Expired').length;
+          const cancelledUnitsCount = userUnits.filter(u => u.status === 'Cancelled' || u.status === 'Revoked').length;
+
+          return {
+            ...user,
+            units: userUnits,
+            unitsCount,
+            activeUnitsCount,
+            pendingUnitsCount,
+            expiredUnitsCount,
+            cancelledUnitsCount
+          };
+        });
+
+        setUsers(enhancedUsers);
         // Sync selectedUser if details modal is open
         setSelectedUser(prev => {
           if (!prev) return null;
-          return data.find(u => u._id === prev._id) || prev;
+          return enhancedUsers.find(u => u._id === prev._id) || prev;
         });
       }
     } catch (error) {
