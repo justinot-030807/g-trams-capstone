@@ -40,6 +40,7 @@ const Register = () => {
 
   // Google Sign-In state
   const [googleProfileData, setGoogleProfileData] = useState(incomingGoogle || null);
+  const [showGoogleToast, setShowGoogleToast] = useState(false);
 
   useEffect(() => {
     if (incomingGoogle) {
@@ -49,7 +50,11 @@ const Register = () => {
         name: incomingGoogle.name || prev.name,
         contact: incomingGoogle.email || prev.contact
       }));
-      setSuccess(`Continuing registration with Google: ${incomingGoogle.email}`);
+      setShowGoogleToast(true);
+      const timer = setTimeout(() => {
+        setShowGoogleToast(false);
+      }, 4000);
+      return () => clearTimeout(timer);
     }
   }, [incomingGoogle]);
 
@@ -262,6 +267,25 @@ const Register = () => {
   return (
     <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:px-8 sm:py-6 lg:px-12 overflow-x-hidden select-none">
       
+      {/* Centered Floating Auto-Dismiss Toast for Google Account */}
+      {showGoogleToast && googleProfileData && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-sm w-[92%] sm:w-auto px-4 py-2.5 rounded-2xl bg-slate-900/95 text-white border border-emerald-500/40 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 animate-spring-in">
+          <div className="flex items-center gap-2 min-w-0">
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <span className="text-xs font-semibold truncate">
+              Connected with Google: <strong className="text-emerald-300">{googleProfileData.email}</strong>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowGoogleToast(false)}
+            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* ADVANCED LIQUID AURORA KEYFRAMES */}
       <style>{`
         @keyframes liquidOrbit1 {
@@ -414,25 +438,6 @@ const Register = () => {
 
             {step === 1 && (
               <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5">
-                {googleProfileData && (
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-[11px] font-semibold flex items-center justify-between gap-2 animate-item-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                      <span className="truncate">Google Verified: <strong>{googleProfileData.email}</strong> (No OTP required)</span>
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setGoogleProfileData(null);
-                        setSuccess('');
-                      }}
-                      className="text-slate-400 hover:text-red-500 text-[10px] font-bold underline shrink-0 cursor-pointer"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-
                 <div className="animate-item-2">
                   <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
                   <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
@@ -529,6 +534,30 @@ const Register = () => {
                       </>
                     )}
                   </button>
+
+                  {googleProfileData && (
+                    <div className="text-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGoogleProfileData(null);
+                          setFormData({
+                            name: '',
+                            address: '',
+                            contact: '',
+                            password: '',
+                            confirmPassword: '',
+                            todaAssociation: 'NON-TODA'
+                          });
+                          setError('');
+                          setShowGoogleToast(false);
+                        }}
+                        className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        Cancel Google Sign-in & Register Manually
+                      </button>
+                    </div>
+                  )}
                 </div>
               </form>
             )}
@@ -557,7 +586,8 @@ const Register = () => {
                           name: prev.name || data?.name || '',
                           contact: data?.email || prev.contact
                         }));
-                        setSuccess(`Connected with Google: ${data?.email || ''}. Complete your details above to finish.`);
+                        setShowGoogleToast(true);
+                        setTimeout(() => setShowGoogleToast(false), 4000);
                       }
                     }}
                     onError={(msg) => setError(msg)}

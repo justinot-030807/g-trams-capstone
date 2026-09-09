@@ -52,14 +52,18 @@ exports.register = async (req, res) => {
         
         await user.save();
 
-        if (normalizedContact.includes('@')) {
-            await sendEmail({ email: normalizedContact, subject: 'G-TRAMS: Account Verification OTP', message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` });
-        } else {
-            await axios.post('https://api.semaphore.co/api/v4/messages', { 
-                apikey: process.env.SEMAPHORE_API_KEY, 
-                number: normalizedContact, 
-                message: `G-TRAMS: Ang iyong verification code ay ${otp}. Huwag itong i-share kaninuman.` 
-            });
+        try {
+            if (normalizedContact.includes('@')) {
+                await sendEmail({ email: normalizedContact, subject: 'G-TRAMS: Account Verification OTP', message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` });
+            } else {
+                await axios.post('https://api.semaphore.co/api/v4/messages', { 
+                    apikey: process.env.SEMAPHORE_API_KEY, 
+                    number: normalizedContact, 
+                    message: `G-TRAMS: Ang iyong verification code ay ${otp}. Huwag itong i-share kaninuman.` 
+                });
+            }
+        } catch (sendErr) {
+            console.error("OTP Delivery Warning (email/SMS):", sendErr.message);
         }
         res.status(201).json({ message: 'OTP sent successfully' });
     } catch (error) {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
   User, Lock, Camera, Save, Loader2, Phone, 
   CheckCircle2, AlertCircle, Moon, Sun, Globe, 
-  ShieldCheck, MapPin, Hash, Shield, Car, Check
+  ShieldCheck, MapPin, Hash, Shield, Car, Check, LogOut
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -18,12 +19,22 @@ const GASAN_BARANGAYS = [
 ];
 
 const OperatorSettings = () => {
+  const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
 
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('name');
+    navigate('/login');
+  };
 
   // Profile and contact details state
   const [profileData, setProfileData] = useState({
@@ -538,6 +549,31 @@ const OperatorSettings = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ACCOUNT SESSION & LOGOUT SECTION */}
+      {!isLoading && (
+        <div className="mt-6 p-4 sm:p-5 rounded-3xl bg-red-50/60 dark:bg-red-950/20 border border-red-200/80 dark:border-red-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div>
+            <h4 className="text-sm font-black text-red-700 dark:text-red-400 flex items-center gap-2">
+              <LogOut size={16} className="stroke-[2.5]" />
+              {language === 'fil' ? 'Sesyon ng Account' : 'Account Session'}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              {language === 'fil' 
+                ? 'Ligtas na mag-logout upang tapusin ang iyong kasalukuyang sesyon sa portal.' 
+                : 'Safely log out to end your current active portal session on this device.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="px-4 py-2.5 rounded-xl font-black text-xs text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all shadow-sm shrink-0 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <LogOut size={14} className="stroke-[2.5]" />
+            <span>{language === 'fil' ? 'Mag-logout sa Portal' : 'Log Out of Portal'}</span>
+          </button>
         </div>
       )}
 

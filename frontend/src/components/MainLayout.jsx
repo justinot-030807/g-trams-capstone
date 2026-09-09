@@ -195,14 +195,12 @@ const MainLayout = ({ children }) => {
         />
 
         <main 
-          style={{
-            transform: stretchOffset !== 0 
-              ? `translateY(${stretchOffset}px) scaleY(${1 + Math.abs(stretchOffset) / 800})` 
-              : 'translateY(0px) scaleY(1)',
+          style={stretchOffset !== 0 ? {
+            transform: `translateY(${stretchOffset}px) scaleY(${1 + Math.abs(stretchOffset) / 800})`,
             transformOrigin: stretchOffset >= 0 ? 'top center' : 'bottom center',
             transition: isStretching ? 'none' : 'transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-          }}
-          className={`p-3.5 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block will-change-transform ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}
+          } : undefined}
+          className={`p-3.5 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${stretchOffset !== 0 ? 'will-change-transform' : ''} ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}
         >
           <div className="max-w-7xl mx-auto print:max-w-full print:m-0 print:p-0 print:w-full">
             {children}

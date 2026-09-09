@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sparkles, ArrowRight, ArrowLeft, X, Check, HelpCircle } from 'lucide-react';
+import ReactDOM from 'react-dom';
+import { Sparkles, ArrowRight, ArrowLeft, X, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
@@ -29,7 +30,6 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
         });
       };
       measure();
-      // Re-measure as smooth scroll settles
       const t1 = setTimeout(measure, 150);
       const t2 = setTimeout(measure, 350);
       return () => {
@@ -37,7 +37,6 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
         clearTimeout(t2);
       };
     } else {
-      // If target element is not found on screen, fallback to center of screen
       setTargetRect(null);
     }
   }, [isOpen, currentStep]);
@@ -51,7 +50,6 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Small delay to allow layout or modal transition
     const timer = setTimeout(updateTargetRect, 200);
 
     const handleScrollOrResize = () => {
@@ -111,40 +109,36 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
 
   const StepIcon = currentStep.icon || Sparkles;
 
-  // Compute position for tooltip dialog (Mobile intelligently avoids blocking targets; Desktop dynamically positions)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  // Responsive dynamic positioning
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : true;
   let dialogStyle = {};
-  let mobilePositionClass = 'bottom-20 inset-x-3 max-w-sm mx-auto';
+  let mobilePositionClass = 'bottom-24 inset-x-3.5 max-w-sm mx-auto';
 
-  if (targetRect) {
+  if (targetRect && typeof window !== 'undefined') {
     const vh = window.innerHeight;
     const targetCenterY = (targetRect.top + targetRect.bottom) / 2;
-    // If target is in the lower 55% of the viewport on mobile, place the dialog at the top so it NEVER covers the element or action buttons!
     const isTargetInLowerHalf = targetCenterY > vh * 0.45;
 
     if (isMobile) {
       mobilePositionClass = isTargetInLowerHalf
-        ? 'top-4 inset-x-3 max-w-sm mx-auto'
-        : 'bottom-20 inset-x-3 max-w-sm mx-auto';
+        ? 'top-4 inset-x-3.5 max-w-sm mx-auto'
+        : 'bottom-24 inset-x-3.5 max-w-sm mx-auto';
     } else {
       const spaceBelow = vh - targetRect.bottom;
       const spaceAbove = targetRect.top;
-      const dialogHeight = 220; // Estimated height
+      const dialogHeight = 220;
 
       if (spaceBelow >= dialogHeight + 20) {
-        // Place below
         dialogStyle = {
           top: `${Math.min(targetRect.bottom + 16, vh - dialogHeight - 16)}px`,
-          left: `${Math.max(16, Math.min(targetRect.left, window.innerWidth - 420))}px`
+          left: `${Math.max(20, Math.min(targetRect.left, window.innerWidth - 420))}px`
         };
       } else if (spaceAbove >= dialogHeight + 20) {
-        // Place above
         dialogStyle = {
           bottom: `${Math.min(vh - targetRect.top + 16, vh - 30)}px`,
-          left: `${Math.max(16, Math.min(targetRect.left, window.innerWidth - 420))}px`
+          left: `${Math.max(20, Math.min(targetRect.left, window.innerWidth - 420))}px`
         };
       } else {
-        // Center on screen if space is tight
         dialogStyle = {
           top: '50%',
           left: '50%',
@@ -153,7 +147,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
       }
     }
   } else if (isMobile) {
-    mobilePositionClass = 'bottom-20 inset-x-3 max-w-sm mx-auto';
+    mobilePositionClass = 'bottom-24 inset-x-3.5 max-w-sm mx-auto';
   } else {
     dialogStyle = {
       top: '50%',
@@ -162,18 +156,18 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
     };
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] overflow-hidden">
-      {/* 1. Backdrop with cut-out box shadow */}
+  const tourPortalContent = (
+    <div className="fixed inset-0 z-[99999] pointer-events-auto overflow-hidden">
+      {/* 1. Backdrop with Spotlight Hole */}
       {targetRect ? (
         <div 
-          className="fixed transition-all duration-300 pointer-events-none rounded-2xl sm:rounded-3xl ring-4 ring-[#D4AF37] ring-offset-2 ring-offset-slate-900 shadow-[0_0_35px_rgba(212,175,55,0.4)]"
+          className="fixed transition-all duration-300 pointer-events-none rounded-3xl ring-4 ring-[#D4AF37] ring-offset-2 ring-offset-slate-900 shadow-[0_0_40px_rgba(212,175,55,0.45)]"
           style={{
             top: `${Math.max(0, targetRect.top - 8)}px`,
             left: `${Math.max(0, targetRect.left - 8)}px`,
             width: `${targetRect.width + 16}px`,
             height: `${targetRect.height + 16}px`,
-            boxShadow: '0 0 0 9999px rgba(11, 15, 25, 0.78)'
+            boxShadow: '0 0 0 9999px rgba(11, 15, 25, 0.82)'
           }}
         />
       ) : (
@@ -185,33 +179,32 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
 
       {/* 2. Interactive Dialog Tooltip Card */}
       <div 
-        className={`fixed z-[105] pointer-events-auto transition-all duration-300 ${
+        className={`fixed z-[100000] pointer-events-auto transition-all duration-300 ${
           isMobile 
             ? mobilePositionClass 
             : 'max-w-md w-full'
         }`}
         style={dialogStyle}
       >
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.7)] p-5 sm:p-6 animate-spring-in relative overflow-hidden">
-          {/* Subtle top color gradient bar */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.4)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-4 sm:p-5 animate-spring-in relative overflow-hidden flex flex-col">
+          {/* Subtle top gold accent bar */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
 
           {/* Header Row: Step counter pill & Close button */}
-          <div className="flex items-center justify-between mb-3 pt-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] text-[10px] font-black uppercase tracking-wider">
-                <StepIcon size={12} />
-                <span>
-                  {isFilipino 
-                    ? `Hakbang ${currentStepIndex + 1} ng ${steps.length}` 
-                    : `Step ${currentStepIndex + 1} of ${steps.length}`}
-                </span>
+          <div className="flex items-center justify-between mb-2.5 pt-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] text-[10px] font-black uppercase tracking-wider">
+              <StepIcon size={12} />
+              <span>
+                {isFilipino 
+                  ? `Hakbang ${currentStepIndex + 1} ng ${steps.length}` 
+                  : `Step ${currentStepIndex + 1} of ${steps.length}`}
               </span>
-            </div>
+            </span>
 
             <button
+              type="button"
               onClick={handleFinish}
-              className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors touch-bounce cursor-pointer"
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title={isFilipino ? "Laktawan ang Gabay" : "Skip Tour"}
             >
               <X size={16} />
@@ -219,11 +212,11 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
           </div>
 
           {/* Step Title & Description */}
-          <div className="mb-4">
-            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight mb-1 flex items-center gap-2">
+          <div className="mb-3.5">
+            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight mb-1">
               {isFilipino ? (currentStep.titleFil || currentStep.title) : currentStep.title}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
               {isFilipino ? (currentStep.descriptionFil || currentStep.description) : currentStep.description}
             </p>
           </div>
@@ -231,13 +224,13 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
           {/* Stepper Dots & Action Buttons */}
           <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 gap-3">
             {/* Dots indicator */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               {steps.map((_, sIdx) => (
                 <div
                   key={sIdx}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     sIdx === currentStepIndex
-                      ? 'w-6 bg-[#7A1B22] dark:bg-[#D4AF37]'
+                      ? 'w-5 bg-[#7A1B22] dark:bg-[#D4AF37]'
                       : 'w-1.5 bg-slate-200 dark:bg-slate-700'
                   }`}
                 />
@@ -250,7 +243,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="px-3 py-1.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors touch-bounce active:scale-95 flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-2 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
                 >
                   <ArrowLeft size={13} />
                   <span>{isFilipino ? 'Bumalik' : 'Back'}</span>
@@ -260,14 +253,14 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-4 py-2 rounded-xl font-black text-xs text-slate-950 bg-[#D4AF37] hover:bg-[#c29e2f] transition-all shadow-sm touch-bounce active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl font-black text-xs text-slate-950 bg-[#D4AF37] hover:bg-[#c29e2f] transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer ring-2 ring-[#D4AF37]/40"
               >
                 <span>
                   {isLastStep 
                     ? (isFilipino ? 'Tapusin' : 'Finish') 
                     : (isFilipino ? 'Susunod' : 'Next')}
                 </span>
-                {isLastStep ? <Check size={14} className="stroke-[3]" /> : <ArrowRight size={14} />}
+                {isLastStep ? <Check size={14} className="stroke-[3]" /> : <ArrowRight size={14} className="stroke-[2.5]" />}
               </button>
             </div>
           </div>
@@ -275,6 +268,10 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? ReactDOM.createPortal(tourPortalContent, document.body)
+    : null;
 };
 
 export default SpotlightTour;

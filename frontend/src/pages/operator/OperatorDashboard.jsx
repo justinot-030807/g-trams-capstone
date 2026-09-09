@@ -5,7 +5,7 @@ import {
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle,
   Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
-  Bell, Settings, ChevronRight
+  Bell, Settings, ChevronRight, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
@@ -40,6 +40,16 @@ const OperatorDashboard = () => {
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('name');
+    navigate('/login');
+  };
 
   // Application cancellation state
   const [cancelModal, setCancelModal] = useState({
@@ -222,103 +232,51 @@ const OperatorDashboard = () => {
         targetId: 'tour-hero-banner',
         title: 'Welcome to Operator Portal',
         titleFil: 'Maligayang Pagdating sa Portal',
-        description: 'This is your primary command dashboard displaying your account greeting, active status notices, and quick actions.',
-        descriptionFil: 'Ito ang iyong pangunahing dashboard kung saan makikita ang iyong account greeting, paunawa sa prangkisa, at mabilisang shortcuts.',
+        description: 'This is your primary command dashboard displaying your account greeting, active status notices, and profile quick access.',
+        descriptionFil: 'Ito ang iyong pangunahing dashboard kung saan makikita ang iyong account greeting, paunawa sa prangkisa, at profile shortcuts.',
         icon: Sparkles
       },
       {
-        targetId: 'tour-hero-apply',
-        title: 'Quick Apply & Claim Access',
-        titleFil: 'Mabilisang Pag-apply at Claim Stub',
-        description: 'Apply for a new franchise with one tap, or access your approved Claim Stub voucher directly from this button.',
-        descriptionFil: 'Mag-apply para sa bagong prangkisa sa isang pindot lang, o kunin ang aprubadong Claim Stub voucher diretso rito.',
-        icon: PlusCircle
+        targetId: 'tour-hero-action',
+        title: 'Franchise Action Banner',
+        titleFil: 'Aksyon at Katayuan ng Prangkisa',
+        description: 'Track real-time franchise alerts, apply for open slots, or access approved Claim Stub vouchers directly here.',
+        descriptionFil: 'Subaybayan ang paunawa sa prangkisa, mag-apply sa bakanteng slot, o kunin ang aprubadong Claim Stub dito.',
+        icon: ShieldCheck
       },
       {
-        targetId: 'tour-capacity-pill',
+        targetId: 'tour-capacity-card',
         title: 'Franchise Fleet Capacity',
         titleFil: 'Kapasidad ng Prangkisa',
         description: 'Municipal regulations allow up to 2 registered tricycle units per operator. This counter tracks your active slots.',
         descriptionFil: 'Pinapayagan ng ordinansa ang hanggang 2 rehistradong tricycle bawat operator. Sinusubaybayan nito ang iyong bakanteng slot.',
         icon: ShieldCheck
+      },
+      {
+        targetId: 'tour-regulatory-card',
+        title: 'LGU Regulatory Standing',
+        titleFil: 'Katayuan sa Munisipyo at BPLO',
+        description: 'Official verification status from the Gasan Business Permits and Licensing Office (BPLO).',
+        descriptionFil: 'Opisyal na katayuan ng beripikasyon mula sa Tanggapan ng BPLO sa Munisipyo ng Gasan.',
+        icon: CheckCircle
+      },
+      {
+        targetId: 'tour-garage-section',
+        title: 'My Franchise Garage',
+        titleFil: 'Garahe ng Aking Prangkisa',
+        description: 'Review your registered tricycle units, official MTOP plate, route zones, and renewal schedules.',
+        descriptionFil: 'Suriin ang iyong mga rehistradong tricycle, MTOP plate number, ruta, at iskedyul ng renewal.',
+        icon: Hash
+      },
+      {
+        targetId: 'tour-bottom-nav',
+        title: 'Floating Mobile Navigation Dock',
+        titleFil: 'Floating Mobile Navigation Dock',
+        description: 'Easily navigate between Dashboard, Franchise Application, Help Support, and Account Settings.',
+        descriptionFil: 'Madaling lumipat sa Dashboard, Pag-apply ng prangkisa, Gabay/Suporta, at Account Settings gamit ang dock na ito.',
+        icon: ArrowRight
       }
     ];
-
-    if (isTodaPresident) {
-      steps.push({
-        targetId: 'tour-toda-hub',
-        title: 'TODA President Association Hub',
-        titleFil: 'TODA President Association Hub & Grupo',
-        description: 'As TODA President, manage your association members, view all member tricycle units, and submit official documents to the LGU.',
-        descriptionFil: 'Bilang TODA President, pamahalaan ang buong listahan ng inyong grupo, tingnan ang mga miyembro, at magsumite ng opisyal na dokumento sa Munisipyo.',
-        icon: Users
-      });
-    }
-
-    if (franchises.length > 0) {
-      steps.push({
-        targetId: 'tour-mtop-plate',
-        title: 'Digital MTOP Tricycle Pass',
-        titleFil: 'Digital MTOP Plaka at Pass',
-        description: 'View your official Municipal MTOP Plate, assigned TODA, route zone, and motorcycle specifications.',
-        descriptionFil: 'Suriin ang iyong opisyal na MTOP Plate number, kinabibilangang TODA, ruta/zone, at mga detalye ng motorsiklo.',
-        icon: Hash
-      });
-
-      steps.push({
-        targetId: 'tour-specs-grid',
-        title: 'Unit Specs & Route Zone',
-        titleFil: 'Mga Detalye ng Unit at Ruta',
-        description: 'Quickly verify your assigned route zone, engine number, and chassis serials registered in the municipal database.',
-        descriptionFil: 'Mabilisang kumpirmahin ang iyong itinalagang ruta/zone, numero ng motor, at chassis number na nakarehistro sa LGU.',
-        icon: MapPin
-      });
-
-      steps.push({
-        targetId: 'tour-tracker-section',
-        title: 'Live Application Tracker & Urgency',
-        titleFil: 'Live Application & Urgency Tracker',
-        description: 'Real-time step progression from Submitted to Active, plus countdown alerts for yearly franchise renewals.',
-        descriptionFil: 'Masusubaybayan ang antas ng iyong aplikasyon (Submitted ➔ Review ➔ Payment ➔ Active) at paalala bago mag-expire ang permit.',
-        icon: Clock
-      });
-
-      steps.push({
-        targetId: 'tour-card-actions',
-        title: 'Claim Stub Voucher & Actions',
-        titleFil: 'Claim Stub Voucher at Mga Aksyon',
-        description: 'When approved (Awaiting Payment), tap Claim Stub to download or print your official payment voucher for the Municipal Cashier.',
-        descriptionFil: 'Kapag Awaiting Payment na, pindutin ang Claim Stub upang i-download o i-print ang voucher na ipapakita sa Municipal Cashier para magbayad.',
-        icon: Receipt
-      });
-    } else {
-      steps.push({
-        targetId: 'tour-empty-garage',
-        title: 'Register Your First Tricycle Unit',
-        titleFil: 'Irehistro ang Iyong Unang Tricycle',
-        description: 'Your garage is currently empty. Tap "Apply New Franchise" to begin submitting requirements online.',
-        descriptionFil: 'Wala pang nakatalang tricycle. Pindutin ang "Apply New Franchise" upang magsumite ng inyong requirements online.',
-        icon: PlusCircle
-      });
-    }
-
-    steps.push({
-      targetId: 'tour-replay-btn',
-      title: 'Need Help? Replay Tour Anytime',
-      titleFil: 'Kailangan ng Gabay? Panoorin Ulit',
-      description: 'Whenever you need a refresher on portal tools, tap this Tour/Gabay button to start the walkthrough again.',
-      descriptionFil: 'Kahit kailan mo kailangan ng tulong o gabay sa portal, pindutin lamang ang "Gabay" button na ito upang ulitin ang walkthrough.',
-      icon: HelpCircle
-    });
-
-    steps.push({
-      targetId: 'tour-bottom-nav',
-      title: 'Floating Mobile Navigation Dock',
-      titleFil: 'Floating Mobile Navigation Dock',
-      description: 'Easily navigate between Dashboard, Franchise Application, Help Support, and Account Settings.',
-      descriptionFil: 'Madaling lumipat sa Dashboard, Pag-apply ng prangkisa, Gabay/Suporta, at Account Settings gamit ang dock na ito.',
-      icon: ArrowRight
-    });
 
     return steps;
   };
@@ -541,17 +499,103 @@ const OperatorDashboard = () => {
       >
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
         
-        {/* Top Native Mobile Header Bar: Avatar + Greeting + Micro-actions */}
+        {/* Top Native Mobile Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
         <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Circular Avatar */}
-            <div className="w-11 h-11 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#520f14] flex items-center justify-center shrink-0">
-              {profilePic ? (
-                <img src={profilePic} alt="User" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[#D4AF37] font-black text-base">
-                  {loggedInUserName.charAt(0).toUpperCase()}
-                </span>
+            {/* Interactive Circular Avatar with Profile Popover */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen(prev => !prev)}
+                className="w-11 h-11 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#520f14] flex items-center justify-center shrink-0 active:scale-95 transition-all cursor-pointer ring-2 ring-white/20 hover:ring-[#D4AF37]/50"
+                title={language === 'fil' ? 'Aking Account at Logout' : 'My Account & Logout'}
+              >
+                {profilePic ? (
+                  <img src={profilePic} alt="User" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[#D4AF37] font-black text-base">
+                    {loggedInUserName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </button>
+
+              {/* Profile / Account Dropdown Menu with LOGOUT */}
+              {isProfileMenuOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsProfileMenuOpen(false)} 
+                  />
+                  <div className="absolute left-0 mt-2 w-64 sm:w-72 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl mb-2">
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <div className="w-9 h-9 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 font-black flex items-center justify-center text-sm shadow-xs shrink-0">
+                          {loggedInUserName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-black text-xs text-slate-900 dark:text-white truncate">
+                            {loggedInUserName}
+                          </p>
+                          <span className="inline-block text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]">
+                            {isTodaPresident ? 'TODA President' : 'Operator'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          navigate('/operator/settings');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                      >
+                        <Settings size={15} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{language === 'fil' ? 'Mga Setting ng Account' : 'Account Settings'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          setIsTourOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer text-left"
+                      >
+                        <Sparkles size={15} className="shrink-0" />
+                        <span className="truncate">{language === 'fil' ? 'Panoorin ang Gabay (Tour)' : 'Replay Walkthrough Tour'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          navigate('/help-support');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                      >
+                        <HelpCircle size={15} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{language === 'fil' ? 'Gabay at Suporta' : 'Help & Support'}</span>
+                      </button>
+
+                      <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer active:scale-95 text-left"
+                        >
+                          <LogOut size={15} className="stroke-[2.5] shrink-0" />
+                          <span className="truncate">{language === 'fil' ? 'Mag-logout sa Account' : 'Log Out'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
 
@@ -566,18 +610,8 @@ const OperatorDashboard = () => {
             </div>
           </div>
 
-          {/* Micro Action Buttons in Frosted Glass Circles */}
+          {/* Micro Action Buttons in Frosted Glass Circles (Theme & Bell only) */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Quick Language Toggle Pill */}
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-[10px] font-black text-[#D4AF37] uppercase tracking-wider backdrop-blur-md transition-all shadow-2xs cursor-pointer"
-              title="Palitan ang Wika / Switch Language"
-            >
-              {language === 'fil' ? '🇵🇭 FIL' : '🇺🇸 EN'}
-            </button>
-
             {/* Quick Theme Toggle Circle */}
             <button
               type="button"
@@ -666,91 +700,8 @@ const OperatorDashboard = () => {
           </p>
         </div>
 
-        {/* Circular Quick Actions Row (Directly inspired by media_1788958383307.jpg) */}
-        <div className="relative z-10 pt-4 pb-2 flex items-center justify-between sm:justify-start sm:gap-7 overflow-x-auto scrollbar-none">
-          {/* Action 1: Apply / Renew */}
-          <button 
-            id="tour-hero-apply"
-            onClick={() => navigate('/apply-franchise')}
-            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
-          >
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-[#D4AF37] shadow-md group-hover:scale-105 transition-all">
-              <PlusCircle size={22} className="stroke-[2.5]" />
-            </div>
-            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
-              {language === 'fil' ? 'Mag-apply' : 'Apply'}
-            </span>
-          </button>
-
-          {/* Action 2: Claim Stub */}
-          <button 
-            onClick={() => {
-              const target = franchises.find(f => f.status === 'Ready for Pickup') || franchises[0];
-              if (target) {
-                setSelectedUnit(target);
-                setIsPrintOpen(true);
-              } else {
-                navigate('/apply-franchise');
-              }
-            }}
-            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
-          >
-            <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full border flex items-center justify-center shadow-md group-hover:scale-105 transition-all ${
-              franchises.some(f => f.status === 'Ready for Pickup')
-                ? 'bg-[#D4AF37] text-slate-950 border-[#D4AF37] ring-4 ring-[#D4AF37]/30 animate-pulse'
-                : 'bg-white/15 hover:bg-white/25 border-white/20 text-white'
-            }`}>
-              <Receipt size={22} className="stroke-[2.5]" />
-            </div>
-            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
-              Claim Stub
-            </span>
-          </button>
-
-          {/* Action 3: TODA Hub */}
-          <button 
-            id="tour-toda-hub"
-            onClick={() => navigate(isTodaPresident ? '/submit-members' : '/help-support')}
-            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
-          >
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-all">
-              <Users size={22} className="stroke-[2.5]" />
-            </div>
-            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
-              TODA Hub
-            </span>
-          </button>
-
-          {/* Action 4: Gabay / Tour */}
-          <button 
-            id="tour-replay-btn"
-            onClick={() => setIsTourOpen(true)}
-            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
-          >
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-amber-300 shadow-md group-hover:scale-105 transition-all">
-              <Sparkles size={22} className="stroke-[2.5]" />
-            </div>
-            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
-              {language === 'fil' ? 'Gabay' : 'Tour'}
-            </span>
-          </button>
-
-          {/* Action 5: Settings */}
-          <button 
-            onClick={() => navigate('/operator/settings')}
-            className="flex flex-col items-center group cursor-pointer active:scale-90 transition-all shrink-0"
-          >
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-all">
-              <Settings size={22} className="stroke-[2.5]" />
-            </div>
-            <span className="text-[11px] font-black mt-1.5 text-white tracking-tight">
-              Settings
-            </span>
-          </button>
-        </div>
-
-        {/* Action Status Banner (Matching media_1788958383307.jpg "Complete Your Profile") */}
-        <div className="relative z-10 mt-3 pt-3 border-t border-white/10">
+        {/* Action Status Banner */}
+        <div id="tour-hero-action" className="relative z-10 mt-3 pt-3 border-t border-white/10">
           {franchises.some(f => f.status === 'Ready for Pickup') ? (
             <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-3.5 flex items-center justify-between shadow-lg backdrop-blur-md border border-white/20">
               <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -837,7 +788,7 @@ const OperatorDashboard = () => {
       <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-6 animate-spring-in">
         {/* Card 1: Fleet Capacity */}
         <div 
-          id="tour-capacity-pill"
+          id="tour-capacity-card"
           className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs transition-colors flex flex-col justify-between"
         >
           <div>
@@ -862,21 +813,24 @@ const OperatorDashboard = () => {
         </div>
 
         {/* Card 2: Regulatory Standing */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs transition-colors flex flex-col justify-between">
+        <div 
+          id="tour-regulatory-card" 
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs transition-colors flex flex-col justify-between"
+        >
           <div>
             <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {language === 'fil' ? 'Katayuan sa LGU' : 'Regulatory Standing'}
             </span>
-            <div className="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 my-1.5 truncate">
-              <CheckCircle size={18} className="shrink-0" />
-              <span className="truncate">
+            <div className="text-xs sm:text-base font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 my-1.5 leading-tight break-words">
+              <CheckCircle size={16} className="shrink-0" />
+              <span>
                 {franchises.some(f => f.status === 'Active') 
-                  ? (language === 'fil' ? 'Aktibo' : 'Good Standing') 
+                  ? (language === 'fil' ? 'Aktibong Permit' : 'Active Permit') 
                   : franchises.some(f => f.status === 'Ready for Pickup')
-                  ? (language === 'fil' ? 'Handa nang Kunin' : 'Ready for Pickup')
+                  ? (language === 'fil' ? 'Handang Kunin' : 'Ready to Claim')
                   : franchises.some(f => f.status === 'Pending')
                   ? (language === 'fil' ? 'Sinusuri' : 'In Review')
-                  : (language === 'fil' ? 'Bakante' : 'Ready to Register')}
+                  : (language === 'fil' ? 'May Bakante' : 'Available')}
               </span>
             </div>
           </div>
@@ -893,7 +847,7 @@ const OperatorDashboard = () => {
       </div>
 
       {/* 3. GARAGE SECTION HEADER */}
-      <header className="animate-spring-in mb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
+      <header id="tour-garage-section" className="animate-spring-in mb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
