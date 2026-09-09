@@ -85,17 +85,33 @@ const OperatorDashboard = () => {
     }
   };
 
-  // Sequence first-time onboarding: Language preference selection first, then tour
+  const getCurrentUserId = () => {
+    try {
+      const id = localStorage.getItem('userId');
+      if (id) return id;
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user._id || user.id) return user._id || user.id;
+      if (user.email) return user.email;
+      const name = localStorage.getItem('name');
+      if (name) return name;
+    } catch (e) {}
+    return 'default';
+  };
+
+  // Sequence first-time onboarding: Language preference selection first, then tour (user-scoped)
   useEffect(() => {
     if (!isLoading) {
-      const hasSelectedLang = localStorage.getItem('gtrams_lang_selected');
+      const uid = getCurrentUserId();
+      const langKey = `gtrams_lang_selected_${uid}`;
+      const tourKey = `gtrams_operator_tour_done_${uid}`;
+
+      const hasSelectedLang = localStorage.getItem(langKey);
       if (!hasSelectedLang) {
         const timer = setTimeout(() => {
           setIsLangModalOpen(true);
         }, 500);
         return () => clearTimeout(timer);
       } else {
-        const tourKey = 'gtrams_operator_tour_done';
         const hasSeenTour = localStorage.getItem(tourKey);
         if (!hasSeenTour) {
           const timer = setTimeout(() => {
@@ -108,11 +124,12 @@ const OperatorDashboard = () => {
   }, [isLoading]);
 
   const handleLanguageConfirmed = () => {
-    localStorage.setItem('gtrams_lang_selected', 'true');
+    const uid = getCurrentUserId();
+    localStorage.setItem(`gtrams_lang_selected_${uid}`, 'true');
     setIsLangModalOpen(false);
 
-    // After language is chosen, launch the spotlight tour if not yet completed
-    const tourKey = 'gtrams_operator_tour_done';
+    // After language is chosen, launch the spotlight tour if not yet completed for this account
+    const tourKey = `gtrams_operator_tour_done_${uid}`;
     const hasSeenTour = localStorage.getItem(tourKey);
     if (!hasSeenTour) {
       setTimeout(() => {
@@ -122,8 +139,9 @@ const OperatorDashboard = () => {
   };
 
   const handleCloseTour = () => {
+    const uid = getCurrentUserId();
     setIsTourOpen(false);
-    localStorage.setItem('gtrams_operator_tour_done', 'true');
+    localStorage.setItem(`gtrams_operator_tour_done_${uid}`, 'true');
   };
 
   const getTourSteps = () => {
@@ -135,6 +153,22 @@ const OperatorDashboard = () => {
         description: 'This is your primary command dashboard displaying your account greeting, active status notices, and quick actions.',
         descriptionFil: 'Ito ang iyong pangunahing dashboard kung saan makikita ang iyong account greeting, paunawa sa prangkisa, at mabilisang shortcuts.',
         icon: Sparkles
+      },
+      {
+        targetId: 'tour-hero-apply',
+        title: 'Quick Apply & Claim Access',
+        titleFil: 'Mabilisang Pag-apply at Claim Stub',
+        description: 'Apply for a new franchise with one tap, or access your approved Claim Stub voucher directly from this button.',
+        descriptionFil: 'Mag-apply para sa bagong prangkisa sa isang pindot lang, o kunin ang aprubadong Claim Stub voucher diretso rito.',
+        icon: PlusCircle
+      },
+      {
+        targetId: 'tour-capacity-pill',
+        title: 'Franchise Fleet Capacity',
+        titleFil: 'Kapasidad ng Prangkisa',
+        description: 'Municipal regulations allow up to 2 registered tricycle units per operator. This counter tracks your active slots.',
+        descriptionFil: 'Pinapayagan ng ordinansa ang hanggang 2 rehistradong tricycle bawat operator. Sinusubaybayan nito ang iyong bakanteng slot.',
+        icon: ShieldCheck
       }
     ];
 
@@ -142,21 +176,12 @@ const OperatorDashboard = () => {
       steps.push({
         targetId: 'tour-toda-hub',
         title: 'TODA President Association Hub',
-        titleFil: 'TODA President Association Hub',
-        description: 'As TODA President, use this hub to upload and submit official member & driver rosters directly to the Municipal LGU.',
-        descriptionFil: 'Bilang TODA President, gamitin ang hub na ito upang mag-upload at magsumite ng opisyal na listahan ng inyong mga miyembro at drayber sa Munisipyo.',
+        titleFil: 'TODA President Association Hub & Grupo',
+        description: 'As TODA President, manage your association members, view all member tricycle units, and submit official documents to the LGU.',
+        descriptionFil: 'Bilang TODA President, pamahalaan ang buong listahan ng inyong grupo, tingnan ang mga miyembro, at magsumite ng opisyal na dokumento sa Munisipyo.',
         icon: Users
       });
     }
-
-    steps.push({
-      targetId: 'tour-capacity-pill',
-      title: 'Franchise Fleet Capacity',
-      titleFil: 'Kapasidad ng Prangkisa',
-      description: 'Municipal regulations allow up to 2 registered tricycle units per operator. This counter tracks your active slots.',
-      descriptionFil: 'Pinapayagan ng ordinansa ang hanggang 2 rehistradong tricycle bawat operator. Sinusubaybayan nito ang iyong bakanteng slot.',
-      icon: ShieldCheck
-    });
 
     if (franchises.length > 0) {
       steps.push({
@@ -166,6 +191,15 @@ const OperatorDashboard = () => {
         description: 'View your official Municipal MTOP Plate, assigned TODA, route zone, and motorcycle specifications.',
         descriptionFil: 'Suriin ang iyong opisyal na MTOP Plate number, kinabibilangang TODA, ruta/zone, at mga detalye ng motorsiklo.',
         icon: Hash
+      });
+
+      steps.push({
+        targetId: 'tour-specs-grid',
+        title: 'Unit Specs & Route Zone',
+        titleFil: 'Mga Detalye ng Unit at Ruta',
+        description: 'Quickly verify your assigned route zone, engine number, and chassis serials registered in the municipal database.',
+        descriptionFil: 'Mabilisang kumpirmahin ang iyong itinalagang ruta/zone, numero ng motor, at chassis number na nakarehistro sa LGU.',
+        icon: MapPin
       });
 
       steps.push({
@@ -195,6 +229,15 @@ const OperatorDashboard = () => {
         icon: PlusCircle
       });
     }
+
+    steps.push({
+      targetId: 'tour-replay-btn',
+      title: 'Need Help? Replay Tour Anytime',
+      titleFil: 'Kailangan ng Gabay? Panoorin Ulit',
+      description: 'Whenever you need a refresher on portal tools, tap this Tour/Gabay button to start the walkthrough again.',
+      descriptionFil: 'Kahit kailan mo kailangan ng tulong o gabay sa portal, pindutin lamang ang "Gabay" button na ito upang ulitin ang walkthrough.',
+      icon: HelpCircle
+    });
 
     steps.push({
       targetId: 'tour-bottom-nav',
@@ -443,6 +486,7 @@ const OperatorDashboard = () => {
         <div className="relative z-10 flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
           {franchises.some(f => f.status === 'Ready for Pickup') ? (
             <button
+              id="tour-hero-apply"
               onClick={() => {
                 const target = franchises.find(f => f.status === 'Ready for Pickup');
                 if (target) {
@@ -458,6 +502,7 @@ const OperatorDashboard = () => {
             </button>
           ) : franchises.length < 2 ? (
             <button
+              id="tour-hero-apply"
               onClick={() => navigate('/apply-franchise')}
               className="group flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer"
             >
@@ -466,7 +511,7 @@ const OperatorDashboard = () => {
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>
           ) : (
-            <div className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
+            <div id="tour-hero-apply" className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
               <ShieldCheck size={16} />
               <span>Max Units (2/2)</span>
             </div>
@@ -499,7 +544,7 @@ const OperatorDashboard = () => {
                 Member Roster & Driver Registry
               </h3>
               <p className="text-xs text-slate-300 dark:text-slate-400 font-medium max-w-lg mt-0.5">
-                Submit and manage your official association member masterlist directly to the Municipal Administrator.
+                Manage your association group, view member units, and submit rosters directly to the Municipal Administrator.
               </p>
             </div>
           </div>
@@ -508,7 +553,7 @@ const OperatorDashboard = () => {
             className="shrink-0 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md touch-bounce cursor-pointer self-start sm:self-auto"
           >
             <Users size={15} />
-            <span>Submit Members</span>
+            <span>Association Hub</span>
             <ArrowRight size={14} />
           </button>
         </div>
@@ -526,6 +571,7 @@ const OperatorDashboard = () => {
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Replay Tour / Gabay Button */}
           <button
+            id="tour-replay-btn"
             type="button"
             onClick={() => setIsTourOpen(true)}
             className="flex items-center gap-1.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xs text-slate-700 dark:text-slate-200 text-xs font-bold transition-all touch-bounce active:scale-95 cursor-pointer"
@@ -641,7 +687,10 @@ const OperatorDashboard = () => {
                 </div>
 
                 {/* Minimalist 2x2 Specs Grid */}
-                <div className="grid grid-cols-2 gap-2.5 mb-4">
+                <div 
+                  id={unitIndex === 0 ? "tour-specs-grid" : undefined}
+                  className="grid grid-cols-2 gap-2.5 mb-4"
+                >
                   <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-xl bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
                       <MapPin size={13} />

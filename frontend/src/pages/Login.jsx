@@ -99,6 +99,9 @@ const Login = () => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('role', normalizedRole);
 
+    const currentUserId = data.user?._id || data.user?.id || data._id || data.id || '';
+    if (currentUserId) localStorage.setItem('userId', currentUserId);
+
     if (data.name) localStorage.setItem('name', data.name);
     if (data.fullName) localStorage.setItem('name', data.fullName);
     if (data.user) {

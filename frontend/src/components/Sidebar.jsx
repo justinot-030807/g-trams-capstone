@@ -401,6 +401,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               localStorage.removeItem('role');
               localStorage.removeItem('name');
               localStorage.removeItem('user');
+              localStorage.removeItem('userId');
               navigate('/login'); 
             }}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-white/85 hover:text-white bg-white/5 hover:bg-red-600/85 active:scale-[0.99] transition-all duration-150 border border-white/10 hover:border-red-500/50 shadow-sm"

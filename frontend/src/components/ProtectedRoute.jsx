@@ -28,6 +28,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     localStorage.removeItem('role');
     localStorage.removeItem('name');
     localStorage.removeItem('user');
+    localStorage.removeItem('userId');
     return <Navigate to="/login" replace />;
   }
 
@@ -60,6 +61,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       localStorage.removeItem('role');
       localStorage.removeItem('name');
       localStorage.removeItem('user');
+      localStorage.removeItem('userId');
       return <Navigate to="/login" replace />;
     }
   }

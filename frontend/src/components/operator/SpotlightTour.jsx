@@ -17,15 +17,25 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
     const el = document.getElementById(currentStep.targetId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const rect = el.getBoundingClientRect();
-      setTargetRect({
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-        bottom: rect.bottom,
-        right: rect.right
-      });
+      const measure = () => {
+        const rect = el.getBoundingClientRect();
+        setTargetRect({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+          bottom: rect.bottom,
+          right: rect.right
+        });
+      };
+      measure();
+      // Re-measure as smooth scroll settles
+      const t1 = setTimeout(measure, 150);
+      const t2 = setTimeout(measure, 350);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     } else {
       // If target element is not found on screen, fallback to center of screen
       setTargetRect(null);
@@ -101,35 +111,55 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
 
   const StepIcon = currentStep.icon || Sparkles;
 
-  // Compute position for tooltip dialog (Mobile pinned at bottom, Desktop dynamically positioned)
+  // Compute position for tooltip dialog (Mobile intelligently avoids blocking targets; Desktop dynamically positions)
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   let dialogStyle = {};
+  let mobilePositionClass = 'bottom-20 inset-x-3 max-w-sm mx-auto';
 
-  if (!isMobile && targetRect) {
-    const spaceBelow = window.innerHeight - targetRect.bottom;
-    const spaceAbove = targetRect.top;
-    const dialogHeight = 220; // Estimated height
+  if (targetRect) {
+    const vh = window.innerHeight;
+    const targetCenterY = (targetRect.top + targetRect.bottom) / 2;
+    // If target is in the lower 55% of the viewport on mobile, place the dialog at the top so it NEVER covers the element or action buttons!
+    const isTargetInLowerHalf = targetCenterY > vh * 0.45;
 
-    if (spaceBelow >= dialogHeight + 20) {
-      // Place below
-      dialogStyle = {
-        top: `${Math.min(targetRect.bottom + 16, window.innerHeight - dialogHeight - 16)}px`,
-        left: `${Math.max(16, Math.min(targetRect.left, window.innerWidth - 420))}px`
-      };
-    } else if (spaceAbove >= dialogHeight + 20) {
-      // Place above
-      dialogStyle = {
-        bottom: `${Math.min(window.innerHeight - targetRect.top + 16, window.innerHeight - 30)}px`,
-        left: `${Math.max(16, Math.min(targetRect.left, window.innerWidth - 420))}px`
-      };
+    if (isMobile) {
+      mobilePositionClass = isTargetInLowerHalf
+        ? 'top-4 inset-x-3 max-w-sm mx-auto'
+        : 'bottom-20 inset-x-3 max-w-sm mx-auto';
     } else {
-      // Center on screen if space is tight
-      dialogStyle = {
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)'
-      };
+      const spaceBelow = vh - targetRect.bottom;
+      const spaceAbove = targetRect.top;
+      const dialogHeight = 220; // Estimated height
+
+      if (spaceBelow >= dialogHeight + 20) {
+        // Place below
+        dialogStyle = {
+          top: `${Math.min(targetRect.bottom + 16, vh - dialogHeight - 16)}px`,
+          left: `${Math.max(16, Math.min(targetRect.left, window.innerWidth - 420))}px`
+        };
+      } else if (spaceAbove >= dialogHeight + 20) {
+        // Place above
+        dialogStyle = {
+          bottom: `${Math.min(vh - targetRect.top + 16, vh - 30)}px`,
+          left: `${Math.max(16, Math.min(targetRect.left, window.innerWidth - 420))}px`
+        };
+      } else {
+        // Center on screen if space is tight
+        dialogStyle = {
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        };
+      }
     }
+  } else if (isMobile) {
+    mobilePositionClass = 'bottom-20 inset-x-3 max-w-sm mx-auto';
+  } else {
+    dialogStyle = {
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)'
+    };
   }
 
   return (
@@ -157,7 +187,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
       <div 
         className={`fixed z-[105] pointer-events-auto transition-all duration-300 ${
           isMobile 
-            ? 'bottom-20 inset-x-3 max-w-sm mx-auto' 
+            ? mobilePositionClass 
             : 'max-w-md w-full'
         }`}
         style={dialogStyle}
