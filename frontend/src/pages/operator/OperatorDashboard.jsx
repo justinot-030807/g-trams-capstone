@@ -384,7 +384,7 @@ const OperatorDashboard = () => {
               <div key={step.id} className="relative flex-1 flex flex-col items-center group">
                 {/* Seamless Connector Line to Next Step */}
                 {idx < steps.length - 1 && (
-                  <div className="absolute top-3.5 left-1/2 w-full h-[3px] -translate-y-1/2 z-0 pointer-events-none">
+                  <div className="absolute top-4 left-1/2 w-full h-[3px] -translate-y-1/2 z-0 pointer-events-none">
                     {/* Background Inactive Track */}
                     <div className="w-full h-full bg-slate-200 dark:bg-slate-700/80 rounded-full" />
                     {/* Active Progress Fill */}
@@ -398,7 +398,7 @@ const OperatorDashboard = () => {
 
                 {/* Step Circle Badge */}
                 <div 
-                  className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                     isCompleted 
                       ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs' 
                       : isCurrent 
@@ -407,21 +407,21 @@ const OperatorDashboard = () => {
                   }`}
                 >
                   {isCompleted ? (
-                    <Check size={13} className="stroke-[3]" />
+                    <Check size={16} className="stroke-[3]" />
                   ) : isCurrent ? (
-                    <div className="w-2 h-2 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full animate-pulse" />
+                    <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full animate-pulse" />
                   ) : (
-                    <div className="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                    <div className="w-2 h-2 bg-slate-300 dark:bg-slate-700 rounded-full" />
                   )}
                 </div>
 
                 {/* Step Label */}
-                <span className={`text-[10px] font-bold mt-1.5 tracking-tight text-center truncate max-w-full px-1 transition-colors ${
+                <span className={`text-xs mt-2 tracking-tight text-center truncate max-w-full px-0.5 transition-colors ${
                   isCurrent 
                     ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' 
                     : isCompleted 
-                    ? 'text-slate-800 dark:text-slate-200' 
-                    : 'text-slate-400 dark:text-slate-500'
+                    ? 'text-slate-800 dark:text-slate-200 font-bold' 
+                    : 'text-slate-400 dark:text-slate-500 font-semibold'
                 }`}>
                   {step.label}
                 </span>
@@ -703,16 +703,16 @@ const OperatorDashboard = () => {
         {/* Action Status Banner */}
         <div id="tour-hero-action" className="relative z-10 mt-3 pt-3 border-t border-white/10">
           {franchises.some(f => f.status === 'Ready for Pickup') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-3.5 flex items-center justify-between shadow-lg backdrop-blur-md border border-white/20">
-              <div className="flex items-center gap-3 min-w-0 pr-2">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  <Receipt size={18} />
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-white/20">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Receipt size={22} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-black truncate">
+                  <h4 className="text-sm font-black truncate">
                     {language === 'fil' ? 'Aprubado na ang Prangkisa!' : 'Franchise Approved!'}
                   </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {language === 'fil' ? 'Handa na ang Claim Stub para sa Municipal Cashier' : 'Claim Stub is ready for Municipal Cashier'}
                   </p>
                 </div>
@@ -725,46 +725,48 @@ const OperatorDashboard = () => {
                     setIsPrintOpen(true);
                   }
                 }}
-                className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 shadow-xs cursor-pointer"
+                className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-black text-sm px-5 py-3 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-2"
               >
-                {language === 'fil' ? 'Kunin ang Stub' : 'Get Voucher'}
+                <Receipt size={16} />
+                <span>{language === 'fil' ? 'Kunin ang Claim Stub' : 'Get Voucher'}</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'Cancelled') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-3.5 flex items-center justify-between shadow-lg backdrop-blur-md border border-red-300 dark:border-red-900/60">
-              <div className="flex items-center gap-3 min-w-0 pr-2">
-                <div className="w-9 h-9 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                  <AlertCircle size={18} />
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-red-300 dark:border-red-900/60">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                  <AlertCircle size={22} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-black truncate">
+                  <h4 className="text-sm font-black truncate">
                     {language === 'fil' ? 'Kailangang Ayusin ang Aplikasyon' : 'Application Needs Attention'}
                   </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {language === 'fil' ? 'Pakitugunan ang puna ng LGU evaluator' : 'Review remarks and submit corrected documents'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => navigate('/apply-franchise')}
-                className="bg-red-600 hover:bg-red-700 text-white font-black text-xs px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 shadow-xs cursor-pointer"
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-black text-sm px-5 py-3 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-2"
               >
-                {language === 'fil' ? 'Ayusin' : 'Fix Issues'}
+                <RefreshCw size={16} />
+                <span>{language === 'fil' ? 'Ayusin Ngayon' : 'Fix Issues'}</span>
               </button>
             </div>
           ) : (
-            <div className="bg-white/10 dark:bg-white/5 text-white rounded-2xl p-3.5 flex items-center justify-between backdrop-blur-md border border-white/15">
-              <div className="flex items-center gap-3 min-w-0 pr-2">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={18} />
+            <div className="bg-white/10 dark:bg-white/5 text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md border border-white/15">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={22} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-black truncate">
+                  <h4 className="text-sm font-black truncate">
                     {franchises.length >= 2 
                       ? (language === 'fil' ? 'Kumpleto ang Kapasidad (2/2 Units)' : 'Maximum Fleet Capacity (2/2)')
                       : (language === 'fil' ? 'May Bakanteng Slot Para sa Prangkisa' : 'Available Franchise Slot')}
                   </h4>
-                  <p className="text-[11px] text-white/80 truncate">
+                  <p className="text-xs text-white/80">
                     {franchises.length >= 2
                       ? (language === 'fil' ? 'Lahat ng pinapayagang 2 units ay rehistrado' : 'Both allowed tricycle units are currently active')
                       : (language === 'fil' ? 'Maaari kang mag-rehistro ng hanggang 2 units sa Gasan' : 'Registered operators may register up to 2 units in Gasan')}
@@ -774,9 +776,10 @@ const OperatorDashboard = () => {
               {franchises.length < 2 && (
                 <button
                   onClick={() => navigate('/apply-franchise')}
-                  className="bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-black text-sm px-5 py-3 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-2"
                 >
-                  {language === 'fil' ? 'Mag-apply' : 'Apply Now'}
+                  <PlusCircle size={16} />
+                  <span>{language === 'fil' ? 'Mag-apply ng Prangkisa' : 'Apply Now'}</span>
                 </button>
               )}
             </div>
@@ -1066,40 +1069,42 @@ const OperatorDashboard = () => {
               {/* Action Buttons Row */}
               <div 
                 id={unitIndex === 0 ? "tour-card-actions" : undefined}
-                className="flex flex-col sm:flex-row gap-2 mt-auto pt-3.5 border-t border-slate-100 dark:border-slate-800"
+                className="flex flex-col sm:flex-row gap-2.5 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800"
               >
                 {unit?.status === 'Expired' ? (
-                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
+                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-5 py-3.5 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer shadow-sm"><RefreshCw size={16} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
-                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-5 py-3.5 rounded-2xl font-black text-sm transition-all active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                 ) : unit?.status === 'Ready for Pickup' ? (
-                  <div className="flex flex-col sm:flex-row w-full gap-2">
+                  <div className="flex flex-col sm:flex-row w-full gap-2.5">
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} 
-                      className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#c59f2c] text-slate-950 hover:opacity-95 font-black text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 touch-bounce cursor-pointer"
+                      className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#c59f2c] text-slate-950 hover:opacity-95 font-black text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm active:scale-95 touch-bounce cursor-pointer"
                     >
-                      <Receipt size={14} /> {t('dashboard.btnViewStub', 'Claim Stub')}
+                      <Receipt size={16} /> {t('dashboard.btnViewStub', 'Claim Stub')}
                     </button>
                     <button 
                       onClick={() => handleDirectDownload(unit)} 
-                      className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer"
+                      className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-4 py-3.5 rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer"
+                      title="Download PDF"
                     >
-                      <Download size={14} />
+                      <Download size={16} />
+                      <span className="sm:hidden font-black">Download</span>
                     </button>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-95 touch-bounce cursor-pointer"
+                      className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-3.5 rounded-2xl font-black text-sm transition-colors active:scale-95 touch-bounce cursor-pointer"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer">
-                    <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
+                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-5 py-3.5 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer shadow-sm">
+                    <RefreshCw size={16} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                   </button>
                 ) : (
-                  <div className="flex items-center w-full gap-2">
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="flex-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <div className="flex flex-col sm:flex-row items-center w-full gap-2.5">
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-5 py-3.5 rounded-2xl font-black text-sm transition-colors active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                     {(unit?.status === 'Pending' || unit?.status === 'Ready for Pickup') && (
                       <button 
                         onClick={() => setCancelModal({
@@ -1109,9 +1114,9 @@ const OperatorDashboard = () => {
                           customReason: '',
                           isSubmitting: false
                         })}
-                        className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 px-3 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer shrink-0"
+                        className="w-full sm:w-auto bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 px-4 py-3.5 rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer shrink-0"
                       >
-                        <XCircle size={14} /> Cancel
+                        <XCircle size={16} /> Cancel
                       </button>
                     )}
                   </div>
@@ -1126,24 +1131,24 @@ const OperatorDashboard = () => {
       {isDetailsOpen && selectedUnit && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-md rounded-3xl shadow-2xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-base font-black text-slate-900 dark:text-white">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
-              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500"><X size={18} /></button>
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-6 sm:p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
+              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"><X size={20} /></button>
             </div>
-            <div className="grid grid-cols-2 gap-y-3 text-xs text-slate-700 dark:text-slate-300">
-              <div className="col-span-2">
-                <p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.operator', 'Operator')}</p>
-                <p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.fullName}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-700 dark:text-slate-300">
+              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl">
+                <p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
+                <p className="font-black text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.fullName}</p>
               </div>
-              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.todaName}</p></div>
-              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.zone}</p></div>
-              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-black text-slate-900 dark:text-white">{selectedUnit?.plateNo || 'N/A'}</p></div>
-              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
-              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.motorNo}</p></div>
-              <div><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-[10px]">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-bold text-slate-900 dark:text-white">{selectedUnit?.chassisNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-black text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-black text-lg text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-bold text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-bold text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
             </div>
-            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs transition-colors">{t('dashboard.btnClose', 'Close')}</button>
+            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-6 py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-black rounded-2xl text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
           </div>
         </div>
       )}

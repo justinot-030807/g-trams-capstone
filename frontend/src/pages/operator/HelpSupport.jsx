@@ -140,20 +140,20 @@ const HelpSupport = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8 pb-28 sm:pb-24">
         
         {/* Header Banner */}
-        <div className="bg-gradient-to-br from-[#7A1B22] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#7A1B22] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
           <div className="relative z-10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] bg-white/10 px-3 py-1 rounded-full border border-white/10">
+            <span className="text-xs font-black uppercase tracking-widest text-slate-950 bg-[#D4AF37] px-3.5 py-1 rounded-lg">
               {t('help.badge', 'Helpdesk & Support')}
             </span>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-2 mb-1">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-3 mb-1.5">
               {t('help.title', 'Help Center & About Us')}
             </h1>
-            <p className="text-white/80 dark:text-slate-300 text-xs sm:text-sm font-medium max-w-2xl">
-              {t('help.subtitle', 'Find system information, user guides, and official municipal contact details.')}
+            <p className="text-white/90 dark:text-slate-300 text-xs sm:text-sm font-medium max-w-2xl leading-relaxed">
+              {t('help.subtitle', 'Mga gabay sa paggamit, madalas itanong (FAQ), at opisyal na kontak ng Munisipyo.')}
             </p>
           </div>
         </div>
@@ -162,25 +162,25 @@ const HelpSupport = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* About Us Card */}
-          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] rounded-2xl">
-                  <Info size={24} />
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="p-3 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] rounded-2xl shrink-0">
+                  <Info size={28} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                    {t('help.aboutTitle', 'About G-TRAMS Portal')}
+                  <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {t('help.aboutTitle', 'Tungkol sa G-TRAMS Portal')}
                   </h2>
-                  <p className="text-xs text-[#7A1B22] dark:text-[#D4AF37] font-bold">
-                    {t('help.aboutSub', 'A Web-Based Tricycle Franchise Management System for the Municipality of Gasan, Marinduque')}
+                  <p className="text-xs sm:text-sm text-[#7A1B22] dark:text-[#D4AF37] font-black">
+                    {t('help.aboutSub', 'Web-Based Tricycle Franchise Management System &bull; Gasan, Marinduque')}
                   </p>
                 </div>
               </div>
-              <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
+              <p className="text-slate-700 dark:text-slate-200 text-sm sm:text-base leading-relaxed mb-6 font-medium">
                 {currentLang === 'fil' ? (
                   <>
-                    Ang <strong>G-TRAMS</strong> (Gasan Tricycle Records and Application Management System) ay isang <strong>Web-Based Tricycle Franchise Management System para sa Bayan ng Gasan, Marinduque</strong>. Binuo ito upang gawing digital, mabilis, at transparent ang pagpaparehistro, pag-renew, pag-verify ng mga talaan, at pag-monitor ng prangkisa ng tricycle para sa bawat operator at TODA.
+                    Ang <strong>G-TRAMS</strong> (Gasan Tricycle Records and Application Management System) ay isang opisyal na <strong>Tricycle Franchise Management System para sa Bayan ng Gasan, Marinduque</strong>. Binuo ito upang maging madali, mabilis, at maginhawa para sa mga drayber at operator na mag-apply ng bagong prangkisa, mag-renew taon-taon, at maiwasan ang mahabang pila sa Munisipyo.
                   </>
                 ) : (
                   <>
@@ -190,48 +190,67 @@ const HelpSupport = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                <Building size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-5 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                <Building size={20} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                 <span>{t('help.deptBplo', 'Sangguniang Bayan Office / BPLO')}</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                <MapPin size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+              <div className="flex items-center gap-3 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                <MapPin size={20} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                 <span>{t('help.location', 'Municipal Hall, Gasan, Marinduque')}</span>
               </div>
             </div>
           </div>
 
           {/* Admin Contact Info Card */}
-          <div className="bg-gradient-to-br from-[#7A1B22] to-[#4D1115] dark:from-[#1b0d11] dark:to-[#0d121f] border border-transparent dark:border-slate-800 text-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-between">
+          <div className="bg-gradient-to-br from-[#7A1B22] to-[#4D1115] dark:from-[#1b0d11] dark:to-[#0d121f] border border-transparent dark:border-slate-800 text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <ShieldCheck size={20} className="text-[#D4AF37]" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                  {t('help.adminBadge', 'Admin Helpdesk')}
+                <ShieldCheck size={22} className="text-[#D4AF37]" />
+                <span className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">
+                  {t('help.adminBadge', 'Tulong ng Munisipyo')}
                 </span>
               </div>
-              <h2 className="text-xl font-black mb-2 tracking-tight">
-                {t('help.haveQuestions', 'Have questions or concerns?')}
+              <h2 className="text-xl sm:text-2xl font-black mb-2 tracking-tight">
+                {currentLang === 'fil' ? 'May mga Katanungan o Aberya?' : t('help.haveQuestions', 'Have questions or concerns?')}
               </h2>
-              <p className="text-white/80 text-xs leading-relaxed mb-6">
-                {t('help.contactDesc', 'You may reach out to municipal officers and BPLO staff through the following official channels:')}
+              <p className="text-white/90 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
+                {currentLang === 'fil' 
+                  ? 'Maaaring tawagan agad ang BPLO staff o mag-email sa mga sumusunod na opisyal na linya:' 
+                  : t('help.contactDesc', 'You may reach out to municipal officers and BPLO staff through the following official channels:')}
               </p>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <a href="tel:09123456789" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/10 transition-colors">
-                <Phone size={16} className="text-[#D4AF37]" />
+            <div className="space-y-3.5 text-xs sm:text-sm">
+              <a 
+                href="tel:09123456789" 
+                className="flex items-center gap-3.5 bg-white/15 hover:bg-white/25 active:scale-95 p-4 rounded-2xl border border-white/20 transition-all min-h-[56px] shadow-sm cursor-pointer"
+                title="Pindutin para tawagan ang BPLO"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
+                  <Phone size={20} />
+                </div>
                 <div>
-                  <p className="text-[10px] text-white/60 uppercase font-bold">{t('help.hotline', 'Hotline (Office Hours)')}</p>
-                  <p className="font-bold tracking-wide">+63 (042) 342-1234 / 0912 345 6789</p>
+                  <p className="text-[11px] text-[#D4AF37] uppercase font-black tracking-wider">
+                    {currentLang === 'fil' ? 'Tawagan ang Hotline (Pindutin)' : t('help.hotline', 'Hotline (Office Hours)')}
+                  </p>
+                  <p className="font-black text-sm tracking-wide mt-0.5">+63 (042) 342-1234 / 0912 345 6789</p>
                 </div>
               </a>
-              <a href="mailto:bplo@gasan.gov.ph" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/10 transition-colors">
-                <Mail size={16} className="text-[#D4AF37]" />
+
+              <a 
+                href="mailto:bplo@gasan.gov.ph" 
+                className="flex items-center gap-3.5 bg-white/15 hover:bg-white/25 active:scale-95 p-4 rounded-2xl border border-white/20 transition-all min-h-[56px] shadow-sm cursor-pointer"
+                title="Pindutin para mag-email"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
+                  <Mail size={20} />
+                </div>
                 <div>
-                  <p className="text-[10px] text-white/60 uppercase font-bold">{t('help.emailSupport', 'Email Support')}</p>
-                  <p className="font-bold tracking-wide">bplo@gasan.gov.ph</p>
+                  <p className="text-[11px] text-[#D4AF37] uppercase font-black tracking-wider">
+                    {currentLang === 'fil' ? 'Opisyal na Email' : t('help.emailSupport', 'Email Support')}
+                  </p>
+                  <p className="font-black text-sm tracking-wide mt-0.5">bplo@gasan.gov.ph</p>
                 </div>
               </a>
             </div>
@@ -240,70 +259,74 @@ const HelpSupport = () => {
         </div>
 
         {/* Dynamic FAQ Module */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <HelpCircle className="text-[#7A1B22] dark:text-[#D4AF37]" size={24} /> {t('help.faqTitle', 'Frequently Asked Questions (FAQ)')}
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                <HelpCircle className="text-[#7A1B22] dark:text-[#D4AF37]" size={28} /> 
+                <span>{currentLang === 'fil' ? 'Madalas Itanong (Mga Sagot sa FAQ)' : t('help.faqTitle', 'Frequently Asked Questions (FAQ)')}</span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {t('help.faqSubtitle', 'Ranked by trending and frequently accessed topics')}
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                {currentLang === 'fil' ? 'Pindutin ang alinmang katanungan upang mabasa ang paliwanag.' : t('help.faqSubtitle', 'Ranked by trending and frequently accessed topics')}
               </p>
             </div>
 
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
+            <div className="relative w-full md:w-88">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('help.searchPlaceholder', 'Search help topics (e.g. renewal, permit, requirements)...')}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all"
+                placeholder={currentLang === 'fil' ? 'Maghanap (Hal. renewal, permit, requirements)...' : t('help.searchPlaceholder', 'Search help topics (e.g. renewal, permit, requirements)...')}
+                className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400"
               />
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {filteredAndSortedFaqs.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                {t('help.noResults', 'No matching questions found. Try different search keywords.')}
+              <div className="p-10 text-center text-slate-500 dark:text-slate-400 text-sm font-bold bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                {currentLang === 'fil' ? 'Walang nahanap na tugmang katanungan. Subukang baguhin ang salita.' : t('help.noResults', 'No matching questions found. Try different search keywords.')}
               </div>
             ) : (
               filteredAndSortedFaqs.map((faq, idx) => (
                 <div 
                   key={faq.id}
-                  className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700"
+                  className="border-2 border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
                 >
                   <button
                     onClick={() => handleFaqClick(faq.id)}
-                    className="w-full p-4 sm:p-5 flex items-center justify-between text-left bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    className="w-full p-4 sm:p-5 flex items-center justify-between text-left bg-slate-50/70 dark:bg-slate-800/50 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors cursor-pointer min-h-[56px]"
                   >
-                    <div className="flex items-center gap-3 pr-4">
+                    <div className="flex items-center gap-3 pr-4 flex-wrap sm:flex-nowrap">
                       {idx === 0 && !searchQuery && (
-                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-200 dark:border-amber-800/80">
-                          <Flame size={12} className="text-amber-600 dark:text-amber-400" /> {t('help.topFaq', 'Top FAQ')}
+                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0 border border-amber-300 dark:border-amber-800/80">
+                          <Flame size={14} className="text-amber-600 dark:text-amber-400" /> 
+                          <span>{currentLang === 'fil' ? 'Pangunahin' : t('help.topFaq', 'Top FAQ')}</span>
                         </span>
                       )}
-                      <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{faq.question}</span>
+                      <span className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 leading-snug">
+                        {faq.question}
+                      </span>
                     </div>
                     <ChevronDown 
-                      size={18} 
-                      className={`text-slate-400 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#7A1B22] dark:text-[#D4AF37]' : ''}`} 
+                      size={22} 
+                      className={`text-slate-500 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#7A1B22] dark:text-[#D4AF37]' : ''}`} 
                     />
                   </button>
 
                   {expandedFaq === faq.id && (
-                    <div className="p-5 bg-white dark:bg-slate-900/90 border-t border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-3">
-                      <p>{faq.answer}</p>
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800">
-                        <div className="flex gap-1.5 flex-wrap">
+                    <div className="p-5 sm:p-6 bg-white dark:bg-slate-900/90 border-t border-slate-200/70 dark:border-slate-800 text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed space-y-4">
+                      <p className="font-medium">{faq.answer}</p>
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           {faq.tags.map(tag => (
-                            <span key={tag} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded">
+                            <span key={tag} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded-lg">
                               #{tag}
                             </span>
                           ))}
                         </div>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-bold">
                           {faq.views} {t('help.views', 'views')}
                         </span>
                       </div>

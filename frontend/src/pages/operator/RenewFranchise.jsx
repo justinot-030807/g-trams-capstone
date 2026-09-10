@@ -155,31 +155,31 @@ const RenewFranchise = () => {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto pb-24 sm:pb-12">
         {/* Back Link */}
         <button
           onClick={() => navigate('/operator-dashboard')}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] mb-4 transition-colors group cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-black text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] mb-4 p-2 -ml-2 rounded-xl transition-colors group cursor-pointer"
         >
-          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Garage Dashboard</span>
+          <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Bumalik sa Dashboard (Back)</span>
         </button>
 
         {/* Card Container */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
           
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#7A1B22] to-[#5A1419] p-6 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-r from-[#7A1B22] to-[#5A1419] p-5 sm:p-7 text-white relative overflow-hidden">
             <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="bg-[#D4AF37] text-slate-950 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md">
-                  Annual Renewal
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="bg-[#D4AF37] text-slate-950 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-lg">
+                  Annual Renewal / Pag-renew
                 </span>
-                <span className="text-white/70 text-xs font-medium">G-TRAMS Municipal Franchising</span>
+                <span className="text-white/80 text-xs sm:text-sm font-bold">G-TRAMS Municipal Franchising</span>
               </div>
-              <h1 className="text-2xl font-black tracking-tight">Renew Tricycle Franchise</h1>
-              <p className="text-xs text-white/80 mt-1 max-w-xl">
-                Submit your updated Cedula (CTC) and valid documents to renew your franchise validity for another calendar year.
+              <h1 className="text-xl sm:text-3xl font-black tracking-tight">Renew Tricycle Franchise</h1>
+              <p className="text-xs sm:text-sm text-white/90 mt-1.5 max-w-xl leading-relaxed">
+                Magsumite ng panibagong Cedula (CTC) at dokumento upang ma-renew ang prangkisa para sa taong ito.
               </p>
             </div>
             <RefreshCw size={140} className="absolute -right-6 -bottom-8 text-white/10 rotate-12 pointer-events-none" />
@@ -187,68 +187,70 @@ const RenewFranchise = () => {
 
           {/* Franchise Summary Pill */}
           {franchise && (
-            <div className="p-4 sm:p-6 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2.5">
-                Vehicle To Renew
+            <div className="p-4 sm:p-6 bg-slate-50/90 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
+              <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+                Impormasyon ng Prangkisang Ire-renew (Vehicle to Renew)
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Plate Number</span>
-                  <span className="text-sm font-black text-slate-900 dark:text-white truncate block">{franchise.plateNo}</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">Plate Number</span>
+                  <span className="text-base sm:text-lg font-black text-[#7A1B22] dark:text-[#D4AF37] truncate block mt-0.5">{franchise.plateNo}</span>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">TODA Association</span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.todaName || 'N/A'}</span>
+                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">TODA Association</span>
+                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate block mt-0.5">{franchise.todaName || 'N/A'}</span>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Zone Route</span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">Zone {franchise.zone || 'N/A'}</span>
+                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">Zone Route</span>
+                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate block mt-0.5">Zone {franchise.zone || 'N/A'}</span>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Make / Year</span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.make} ({franchise.made})</span>
+                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">Make / Year</span>
+                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate block mt-0.5">{franchise.make} ({franchise.made})</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Renewal Form */}
-          <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-6 sm:space-y-8">
             
             {/* Step 1: Updated Cedula Information */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-black text-xs">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-black text-sm">
                   1
                 </div>
-                <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
                   Community Tax Certificate (Cedula)
                 </h2>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                Provide your latest Community Tax Certificate (CTC) issued for this renewal year.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-4 ml-0 sm:ml-10">
+                Ilagay ang pinakabagong Cedula (CTC) na kinuha ngayong taon para sa renewal.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    New CTC / Cedula No. <span className="text-red-500">*</span>
+                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    Bagong CTC / Cedula No. <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
                     inputMode="numeric"
+                    pattern="[0-9]*"
                     name="ctcNo" 
                     value={formData.ctcNo}
                     onChange={handleChange} 
                     required 
-                    className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all" 
-                    placeholder="e.g. 08123456"
+                    className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400" 
+                    placeholder="Hal. 08123456"
                   />
+                  <p className="text-[11px] font-bold text-slate-400 mt-1">Mga numero lamang (Digits only)</p>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Date Issued <span className="text-red-500">*</span>
+                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    Petsa ng Pagkuha (Date Issued) <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="date" 
@@ -256,13 +258,13 @@ const RenewFranchise = () => {
                     value={formData.dateIssued}
                     onChange={handleChange} 
                     required 
-                    className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all" 
+                    className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[52px]" 
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Place Issued <span className="text-red-500">*</span>
+                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    Lugar ng Pagkuha (Place Issued) <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -270,7 +272,7 @@ const RenewFranchise = () => {
                     value={formData.placeIssued}
                     onChange={handleChange} 
                     required 
-                    className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all" 
+                    className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs" 
                     placeholder="Gasan, Marinduque"
                   />
                 </div>
@@ -278,20 +280,20 @@ const RenewFranchise = () => {
             </div>
 
             {/* Step 2: Vehicle Document (Mobile-first Camera Upload) */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-black text-xs">
+            <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-black text-sm">
                   2
                 </div>
-                <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
                   Updated Vehicle OR/CR Document
                 </h2>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                Capture with your mobile camera or upload an updated Official Receipt & Certificate of Registration (OR/CR) from LTO.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-4 ml-0 sm:ml-10">
+                Kuhanan ng litrato gamit ang cellphone camera o mag-upload ng updated Official Receipt & Certificate of Registration (OR/CR) galing sa LTO.
               </p>
 
-              <div className="max-w-md">
+              <div className="max-w-xl">
                 <DocumentUploadCard
                   id="orcrFile"
                   label="Official Receipt / Certificate of Registration (OR/CR)"
@@ -306,42 +308,42 @@ const RenewFranchise = () => {
             </div>
 
             {/* Renewal Fee & Reminder */}
-            <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-2xl p-4 flex items-start gap-3">
-              <ShieldCheck size={20} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/90 dark:border-amber-900/60 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5">
+              <ShieldCheck size={24} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300">Renewal Fee & Verification</h4>
-                <p className="text-[11px] text-amber-800 dark:text-amber-400 mt-0.5 leading-relaxed">
-                  Upon online submission, your renewal request is placed in review. Once approved, present your Claim Stub Voucher and official renewal fee of <strong>₱500.00</strong> at the Municipal Treasury / Franchising Office to receive your renewed sticker.
+                <h4 className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200">Paalala sa Bayarin at Pagproseso (Renewal Fee)</h4>
+                <p className="text-xs sm:text-sm text-amber-900/90 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
+                  Matapos i-submit online, susuriin ng BPLO ang iyong aplikasyon. Kapag aprubado na, dalhin lamang ang inyong Claim Stub Voucher at bayad na <strong>₱500.00</strong> sa Municipal Treasury / Franchising Office para kunin ang bagong sticker.
                 </p>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800 gap-3">
               <button 
                 type="button" 
                 onClick={() => navigate('/operator-dashboard')} 
-                className="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[48px] flex items-center justify-center active:scale-95"
               >
-                Cancel
+                Kanselahin (Cancel)
               </button>
 
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs text-white transition-all shadow-xs active:scale-95 cursor-pointer ${
-                  isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419]'
+                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[48px] ${
+                  isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419] shadow-[#7A1B22]/20'
                 }`}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={15} className="animate-spin" />
-                    <span>Submitting Renewal...</span>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Ipinapadala ang Renewal...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 size={15} />
-                    <span>Submit Renewal Application</span>
+                    <CheckCircle2 size={18} />
+                    <span>I-submit ang Renewal Application</span>
                   </>
                 )}
               </button>

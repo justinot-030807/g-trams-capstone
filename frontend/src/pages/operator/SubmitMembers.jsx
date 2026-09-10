@@ -145,230 +145,231 @@ const SubmitMembers = () => {
 
   return (
     <MainLayout>
-      {/* Top Header */}
-      <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-spring-in">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/operator-dashboard')}
-            className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:white shadow-2xs touch-bounce active:scale-90 cursor-pointer"
-            title={isFilipino ? "Bumalik sa Dashboard" : "Back to Dashboard"}
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full border border-[#7A1B22]/15 dark:border-[#D4AF37]/25">
-                {todaData.todaName || 'TODA Association'}
-              </span>
+      <div className="pb-28 sm:pb-24">
+        {/* Top Header */}
+        <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/operator-dashboard')}
+              className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white shadow-2xs active:scale-95 cursor-pointer shrink-0"
+              title={isFilipino ? "Bumalik sa Dashboard" : "Back to Dashboard"}
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-black uppercase tracking-widest text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-3 py-0.5 rounded-full border border-[#7A1B22]/15 dark:border-[#D4AF37]/25">
+                  {todaData.todaName || 'TODA Association'}
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                {isFilipino ? 'TODA Hub: Mga Miyembro at Yunit' : 'TODA Association & Member Roster'}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
+                {isFilipino 
+                  ? 'Tingnan ang lahat ng miyembro, rehistradong tricycle units, o magsumite ng bagong opisyal na listahan.' 
+                  : 'View all association members, registered units, or submit official rosters to the LGU.'}
+              </p>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {isFilipino ? 'TODA Hub: Mga Miyembro at Yunit' : 'TODA Association & Member Roster'}
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {isFilipino 
-                ? 'Tingnan ang lahat ng miyembro, rehistradong tricycle units, o magsumite ng bagong opisyal na listahan.' 
-                : 'View all association members, registered units, or submit official rosters to the LGU.'}
-            </p>
           </div>
-        </div>
 
-        {/* Refresh & Print buttons */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Refresh & Print buttons */}
+          <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+            <button
+              onClick={() => { fetchMyMembers(); fetchMySubmissions(); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs active:scale-95 cursor-pointer min-h-[44px]"
+              title="Refresh Data"
+            >
+              <RefreshCw size={16} className={isLoadingMembers ? "animate-spin" : ""} />
+              <span>{isFilipino ? 'I-refresh' : 'Refresh'}</span>
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs active:scale-95 cursor-pointer min-h-[44px]"
+              title="Print Roster"
+            >
+              <Printer size={16} />
+              <span>{isFilipino ? 'I-print ang Roster' : 'Print Roster'}</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Modern Tabs Navigation Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
           <button
-            onClick={() => { fetchMyMembers(); fetchMySubmissions(); }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs touch-bounce active:scale-95 cursor-pointer"
-            title="Refresh Data"
+            type="button"
+            onClick={() => setActiveTab('roster')}
+            className={`flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[48px] active:scale-95 ${
+              activeTab === 'roster'
+                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-md'
+                : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+            }`}
           >
-            <RefreshCw size={14} className={isLoadingMembers ? "animate-spin" : ""} />
-            <span className="hidden sm:inline">{isFilipino ? 'I-refresh' : 'Refresh'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs touch-bounce active:scale-95 cursor-pointer"
-            title="Print Roster"
-          >
-            <Printer size={14} />
-            <span>{isFilipino ? 'I-print ang Roster' : 'Print Roster'}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Modern Tabs Navigation Bar */}
-      <div className="flex items-center gap-2 mb-6 border-b border-slate-200/80 dark:border-slate-800 pb-3 overflow-x-auto scrollbar-none">
-        <button
-          type="button"
-          onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all touch-bounce cursor-pointer shrink-0 ${
-            activeTab === 'roster'
-              ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-md scale-100'
-              : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60'
-          }`}
-        >
-          <Users size={16} />
-          <span>{isFilipino ? 'Direktoryo ng Grupo at Miyembro' : 'Member Roster & Units'}</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-            activeTab === 'roster'
-              ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
-              : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-          }`}>
-            {todaData.stats?.totalMembers || 0}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('upload')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all touch-bounce cursor-pointer shrink-0 ${
-            activeTab === 'upload'
-              ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-md scale-100'
-              : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60'
-          }`}
-        >
-          <UploadCloud size={16} />
-          <span>{isFilipino ? 'Magsumite ng Opisyal na Listahan' : 'Submit Document Roster'}</span>
-          {submissions.length > 0 && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-              activeTab === 'upload'
+            <Users size={18} />
+            <span>{isFilipino ? 'Direktoryo ng Grupo at Miyembro' : 'Member Roster & Units'}</span>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+              activeTab === 'roster'
                 ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
             }`}>
-              {submissions.length}
+              {todaData.stats?.totalMembers || 0}
             </span>
-          )}
-        </button>
-      </div>
+          </button>
 
-      {/* TAB 1: TODA MEMBER GROUP DIRECTORY */}
-      {activeTab === 'roster' && (
-        <div className="space-y-6">
-          {/* Association Statistics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0">
-                <Users size={20} />
+          <button
+            type="button"
+            onClick={() => setActiveTab('upload')}
+            className={`flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[48px] active:scale-95 ${
+              activeTab === 'upload'
+                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-md'
+                : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            <UploadCloud size={18} />
+            <span>{isFilipino ? 'Magsumite ng Opisyal na Listahan' : 'Submit Document Roster'}</span>
+            {submissions.length > 0 && (
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+                activeTab === 'upload'
+                  ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+              }`}>
+                {submissions.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* TAB 1: TODA MEMBER GROUP DIRECTORY */}
+        {activeTab === 'roster' && (
+          <div className="space-y-6">
+            {/* Association Statistics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0">
+                  <Users size={22} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                    {isFilipino ? 'Miyembro' : 'Total Members'}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5">
+                    {todaData.stats?.totalMembers || 0}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">
-                  {isFilipino ? 'Kabuuang Miyembro' : 'Total Members'}
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                  {todaData.stats?.totalMembers || 0}
-                </p>
+
+              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <CheckCircle2 size={22} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                    {isFilipino ? 'Aktibong Yunit' : 'Active Units'}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {todaData.stats?.activeUnits || 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                  <Clock3 size={22} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                    {isFilipino ? 'Pending' : 'Pending'}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
+                    {todaData.stats?.pendingUnits || 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                  <ShieldCheck size={22} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                    {isFilipino ? 'Kabuuang Yunit' : 'Total Fleet'}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5">
+                    {todaData.stats?.totalUnits || 0}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                <CheckCircle2 size={20} />
+            {/* Search & Filter Controls */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder={isFilipino ? "Maghanap sa pangalan, plaka, contact..." : "Search by member name, plate #, contact..."}
+                  className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 shadow-2xs"
+                />
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">
-                  {isFilipino ? 'Aktibong Yunit' : 'Active Units'}
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                  {todaData.stats?.activeUnits || 0}
-                </p>
-              </div>
-            </div>
 
-            <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                <Clock3 size={20} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">
-                  {isFilipino ? 'Pending / Review' : 'Pending Review'}
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
-                  {todaData.stats?.pendingUnits || 0}
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-                <ShieldCheck size={20} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">
-                  {isFilipino ? 'Kabuuang Yunit' : 'Total Fleet'}
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                  {todaData.stats?.totalUnits || 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Search & Filter Controls */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={isFilipino ? "Maghanap sa pangalan, plaka, contact, o zone..." : "Search by member name, plate #, contact, or zone..."}
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#7A1B22] dark:focus:ring-[#D4AF37]"
-              />
-              {searchTerm && (
-                <button 
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              {/* Status Filter Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none shrink-0 py-1">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('all')}
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                    statusFilter === 'all'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
                 >
-                  <X size={14} />
+                  {isFilipino ? 'Lahat (All)' : 'All'}
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('active')}
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                    statusFilter === 'active'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {isFilipino ? 'Aktibo (Active)' : 'Active'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('pending')}
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                    statusFilter === 'pending'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {isFilipino ? 'Pending' : 'Pending'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('expired')}
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                    statusFilter === 'expired'
+                      ? 'bg-orange-600 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {isFilipino ? 'Expired' : 'Expired'}
+                </button>
+              </div>
             </div>
-
-            {/* Status Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
-              <button
-                type="button"
-                onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  statusFilter === 'all'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {isFilipino ? 'Lahat' : 'All'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('active')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  statusFilter === 'active'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {isFilipino ? 'Aktibo' : 'Active'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('pending')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  statusFilter === 'pending'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {isFilipino ? 'Pending' : 'Pending'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('expired')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  statusFilter === 'expired'
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {isFilipino ? 'Expired' : 'Expired'}
-              </button>
-            </div>
-          </div>
 
           {/* Member Roster List */}
           {isLoadingMembers ? (
@@ -403,48 +404,48 @@ const SubmitMembers = () => {
               {filteredMembers.map((member, mIdx) => (
                 <div
                   key={member._id || mIdx}
-                  className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
+                  className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
                 >
                   {/* Top Subtle Border Highlight */}
                   {member.isPresident && (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
                   )}
 
                   <div>
                     {/* Member Header: Photo/Avatar, Name, Role Tag */}
-                    <div className="flex items-start justify-between gap-3 mb-3.5">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3.5 min-w-0">
                         {member.profilePic ? (
                           <img
                             src={member.profilePic}
                             alt={member.name}
-                            className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                            className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-black text-base shrink-0">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border-2 border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-black text-lg shrink-0 shadow-2xs">
                             {member.name.charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
                               {member.name}
                             </h3>
                             {member.isCurrentUser && (
-                              <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                {isFilipino ? 'Ikaw' : 'You'}
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                {isFilipino ? 'Ikaw (You)' : 'You'}
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex items-center gap-2 mt-1">
                             {member.isPresident ? (
-                              <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
-                                <Sparkles size={10} />
+                              <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                <Sparkles size={12} />
                                 TODA President
                               </span>
                             ) : (
-                              <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                 {isFilipino ? 'Miyembro / Operator' : 'Operator / Member'}
                               </span>
                             )}
@@ -453,27 +454,32 @@ const SubmitMembers = () => {
                       </div>
 
                       {/* Units count pill */}
-                      <span className="px-2.5 py-1 rounded-xl bg-slate-50 dark:bg-slate-800 text-[10px] font-black text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 shrink-0">
+                      <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0">
                         {member.units.length} {member.units.length === 1 ? (isFilipino ? 'Yunit' : 'Unit') : (isFilipino ? 'mga Yunit' : 'Units')}
                       </span>
                     </div>
 
                     {/* Contact & Address Bar */}
-                    <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 space-y-1.5 mb-4 text-xs">
-                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <Phone size={13} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-2 mb-4 text-xs sm:text-sm">
+                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                        <Phone size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                         {member.contact && member.contact !== 'N/A' ? (
-                          <a href={`tel:${member.contact}`} className="hover:underline font-semibold text-slate-800 dark:text-slate-200">
-                            {member.contact}
+                          <a 
+                            href={`tel:${member.contact}`} 
+                            className="inline-flex items-center gap-1.5 font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                            title="Tawagan ang miyembro"
+                          >
+                            <span>{member.contact}</span>
+                            <span className="text-[10px] uppercase font-black bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2 py-0.5 rounded-md">Tawagan</span>
                           </a>
                         ) : (
-                          <span className="text-slate-400 italic">No contact provided</span>
+                          <span className="text-slate-400 italic">Walang nakalagay na numero</span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <MapPin size={13} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                        <span className="truncate text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <MapPin size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                        <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-400">
                           {member.address || 'Address not listed'}
                         </span>
                       </div>
@@ -481,12 +487,12 @@ const SubmitMembers = () => {
 
                     {/* Member's Registered Units Roster */}
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-                        {isFilipino ? 'Rehistradong Tricycle Units' : 'Registered Tricycle Units'}
+                      <p className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
+                        {isFilipino ? 'Mga Nakarehistrong Tricycle (Units)' : 'Registered Tricycle Units'}
                       </p>
 
                       {member.units.length === 0 ? (
-                        <div className="p-3 rounded-xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-medium">
+                        <div className="p-3.5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-bold">
                           {isFilipino ? 'Wala pang naipapasang prangkisa' : 'No franchise applied yet'}
                         </div>
                       ) : (
@@ -494,23 +500,23 @@ const SubmitMembers = () => {
                           {member.units.map((unit, uIdx) => (
                             <div
                               key={unit._id || uIdx}
-                              className="p-3 rounded-2xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between gap-2"
+                              className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between gap-2 shadow-2xs"
                             >
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                  <span className="font-mono text-xs font-black text-slate-900 dark:text-white">
+                                  <span className="font-mono text-sm font-black text-slate-900 dark:text-white">
                                     {unit.plateNo || 'NO PLATE'}
                                   </span>
-                                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+                                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
                                     &bull; {unit.make || 'Tricycle'}
                                   </span>
                                 </div>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate">
-                                  Zone: {unit.zone || 'N/A'} {unit.motorNo ? `| Motor: ${unit.motorNo}` : ''}
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate">
+                                  Zone {unit.zone || 'N/A'} {unit.motorNo ? `| Motor: ${unit.motorNo}` : ''}
                                 </p>
                               </div>
 
-                              <span className={`px-2 py-0.5 text-[9px] font-black rounded-lg uppercase tracking-wider shrink-0 ${
+                              <span className={`px-2.5 py-1 text-xs font-black rounded-xl uppercase tracking-wider shrink-0 ${
                                 unit.status === 'Active'
                                   ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
                                   : unit.status === 'Ready for Pickup'
@@ -536,29 +542,29 @@ const SubmitMembers = () => {
 
       {/* TAB 2: DOCUMENT SUBMISSION & HISTORY (Preserved Original Features) */}
       {activeTab === 'upload' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 animate-spring-in">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
           {/* Upload Card */}
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-7 transition-colors">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-black text-slate-900 dark:text-white">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
                   {isFilipino ? 'Mag-upload ng Masterlist' : 'Upload Member Roster Document'}
                 </h2>
-                <span className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-3 py-1 rounded-lg">
                   PDF &bull; Excel &bull; CSV
                 </span>
               </div>
               
               <form onSubmit={handleUpload}>
-                <div className="border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-2xl p-6 sm:p-8 text-center hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors relative group">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center mx-auto mb-3 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs group-hover:scale-105 transition-transform">
-                    <UploadCloud size={28} />
+                <div className="border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-10 text-center hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors relative group">
+                  <div className="w-16 h-16 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-3 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
+                    <UploadCloud size={32} />
                   </div>
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
-                    {isFilipino ? 'I-drag at i-drop ang file dito, o pindutin sa ibaba' : 'Drag and drop your file here, or tap below'}
+                  <p className="text-base font-black text-slate-800 dark:text-slate-200 mb-1">
+                    {isFilipino ? 'I-drag ang file dito o pumili mula sa cellphone' : 'Drag and drop your file here, or tap below'}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-5">
-                    {isFilipino ? 'Tinatanggap na format: PDF, Excel (.xlsx, .csv)' : 'Supported formats: PDF, Excel (.xlsx, .csv)'}
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
+                    {isFilipino ? 'Tinatanggap: PDF, Excel (.xlsx, .csv)' : 'Supported formats: PDF, Excel (.xlsx, .csv)'}
                   </p>
                   
                   <input 
@@ -570,21 +576,21 @@ const SubmitMembers = () => {
                   />
                   <label 
                     htmlFor="file-upload"
-                    className="inline-flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 px-5 py-2 rounded-xl font-bold text-xs cursor-pointer transition-colors shadow-2xs touch-bounce active:scale-95"
+                    className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-7 py-3.5 rounded-2xl font-black text-sm cursor-pointer transition-colors shadow-sm active:scale-95 min-h-[48px]"
                   >
-                    {isFilipino ? 'Pumili ng File' : 'Browse Files'}
+                    {isFilipino ? 'Pumili ng File mula sa Cellphone' : 'Browse Files on Device'}
                   </label>
 
                   {file && (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 py-2 px-3 rounded-xl inline-flex animate-spring-in border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
-                      <FileSpreadsheet size={15} />
+                    <div className="mt-5 flex items-center justify-center gap-2 text-xs sm:text-sm font-black text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 py-3 px-4 rounded-2xl inline-flex border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
+                      <FileSpreadsheet size={18} />
                       <span className="truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
                       <button 
                         type="button" 
                         onClick={() => setFile(null)} 
-                        className="text-slate-400 hover:text-red-500 ml-1 p-0.5 cursor-pointer"
+                        className="text-slate-400 hover:text-red-500 ml-1 p-1 cursor-pointer rounded-lg"
                       >
-                        <X size={14} />
+                        <X size={16} />
                       </button>
                     </div>
                   )}
@@ -593,15 +599,15 @@ const SubmitMembers = () => {
                 <button 
                   type="submit" 
                   disabled={!file || isUploading}
-                  className={`w-full mt-5 py-3.5 rounded-2xl font-bold text-xs text-white transition-all shadow-sm flex items-center justify-center gap-2 touch-bounce active:scale-98 ${
+                  className={`w-full mt-5 py-4 rounded-2xl font-black text-sm text-white transition-all shadow-md flex items-center justify-center gap-2 min-h-[50px] active:scale-95 ${
                     !file || isUploading 
                     ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-600 cursor-not-allowed' 
-                    : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:text-slate-950 dark:hover:bg-[#c29e2f] cursor-pointer'
+                    : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:text-slate-950 dark:hover:bg-[#c29e2f] cursor-pointer shadow-[#7A1B22]/20'
                   }`}
                 >
                   {isUploading ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin" />
                       <span>{isFilipino ? 'Ipinapasa sa Database...' : 'Uploading to Database...'}</span>
                     </>
                   ) : (
@@ -619,37 +625,36 @@ const SubmitMembers = () => {
                 {isFilipino ? 'Mga Naunang Naisumite' : 'Recent Submissions'}
               </h2>
               
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {isLoadingHistory ? (
                   <SubmissionCardsSkeleton count={3} baseDelay={30} stepDelay={45} />
                 ) : submissions.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs font-medium bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs font-bold bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
                     {isFilipino ? 'Wala pang naisumite.' : 'No submissions yet.'}
                   </div>
                 ) : (
                   submissions.map((sub, sIdx) => (
                     <div 
                       key={sub._id || sIdx} 
-                      className="stagger-reveal p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-800/40 flex flex-col gap-1.5"
-                      style={{ animationDelay: `${sIdx * 35}ms` }}
+                      className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-800/40 flex flex-col gap-1.5 shadow-2xs"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 min-w-0">
-                          <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                        <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 min-w-0">
+                          <FileText size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                           <span className="truncate">{sub.fileName}</span>
                         </div>
                         
                         {/* Dynamic Badge Status */}
-                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg uppercase flex items-center gap-1 shrink-0 ${
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase flex items-center gap-1 shrink-0 ${
                           sub.status === 'Approved' 
                           ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60' 
                           : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60'
                         }`}>
-                          {sub.status === 'Approved' ? <CheckCircle2 size={10} /> : <Clock3 size={10} />}
+                          {sub.status === 'Approved' ? <CheckCircle2 size={12} /> : <Clock3 size={12} />}
                           {sub.status}
                         </span>
                       </div>
-                      <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-6">
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 pl-6">
                         Submitted on {new Date(sub.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -660,6 +665,7 @@ const SubmitMembers = () => {
           </div>
         </div>
       )}
+      </div>
     </MainLayout>
   );
 };

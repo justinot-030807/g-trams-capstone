@@ -578,8 +578,8 @@ const ApplyFranchise = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all";
-  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none";
+  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs";
+  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none";
 
   if (formMode === null) {
     return (
@@ -995,9 +995,9 @@ const ApplyFranchise = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4.5 pt-1">
               <div className="sm:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Pangalan ng Operator</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Pangalan ng Operator</label>
                 <input 
                   type="text" 
                   name="fullName" 
@@ -1011,7 +1011,7 @@ const ApplyFranchise = () => {
               </div>
               
               <div className="sm:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Barangay</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Barangay</label>
                 {formMode === 'Renewal' || formMode === 'Re-apply' ? (
                   <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly />
                 ) : (
@@ -1025,7 +1025,7 @@ const ApplyFranchise = () => {
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Route Zone</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Route Zone</label>
                 <input 
                   type="text" 
                   inputMode="numeric"
@@ -1041,7 +1041,7 @@ const ApplyFranchise = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Year Made</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Year Made</label>
                 <input 
                   type="text" 
                   inputMode="numeric"
@@ -1058,14 +1058,14 @@ const ApplyFranchise = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Make / Brand</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Make / Brand</label>
                 <input type="text" name="make" value={formData.make} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. Honda / Kawasaki" />
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TODA Association</label>
-                  <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800">Registered</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">TODA Association</label>
+                  <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">Registered</span>
                 </div>
                 <input 
                   type="text" 
@@ -1078,36 +1078,37 @@ const ApplyFranchise = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Motor Number</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Motor Number</label>
                 <input type="text" name="motorNo" value={formData.motorNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Motor Serial No." />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Chassis Number</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Chassis Number</label>
                 <input type="text" name="chassisNo" value={formData.chassisNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Chassis Serial No." />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Plate Number</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Plate Number</label>
                 <input type="text" name="plateNo" value={formData.plateNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. 123-ABC" />
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
               <button
                 type="button"
                 onClick={() => handleSaveProgress(true)}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer"
               >
-                <Save size={14} /> I-save ang Progress
+                <Save size={16} /> I-save ang Progress
               </button>
 
               <button 
                 type="button" 
                 onClick={validateAndNext}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-[#5A1419] transition-all shadow-xs active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
               >
-                Susunod <ChevronRight size={15} />
+                <span>Susunod</span>
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
@@ -1116,24 +1117,24 @@ const ApplyFranchise = () => {
         {currentStep === 2 && (
           <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in duration-150 transition-colors">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <FileText className="text-[#7A1B22] dark:text-[#D4AF37]" size={18} />
+              <FileText className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} />
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Impormasyon ng Cedula</h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Ilagay ang pinakabagong Community Tax Certificate</p>
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">Impormasyon ng Cedula</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ilagay ang pinakabagong Community Tax Certificate (CTC)</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4.5 pt-1">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Petsa ng Pag-apply</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Petsa ng Pag-apply</label>
                 <input type="date" name="dateApplied" value={formData.dateApplied} onChange={handleInputChange} className={inputClasses} required />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Petsa Kinuha (Cedula)</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Petsa Kinuha (Cedula)</label>
                 <input type="date" name="cedulaDate" value={formData.cedulaDate} onChange={handleInputChange} className={inputClasses} required />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Cedula Serial No.</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Cedula Serial No.</label>
                 <input 
                   type="text" 
                   inputMode="numeric"
@@ -1147,35 +1148,36 @@ const ApplyFranchise = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Lugar Kinuha (Cedula)</label>
+                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Lugar Kinuha (Cedula)</label>
                 <input type="text" name="cedulaAddress" value={formData.cedulaAddress} onChange={handleInputChange} className={inputClasses} required />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                <ChevronLeft size={15} /> Bumalik
+                <ChevronLeft size={18} /> Bumalik
               </button>
 
-              <div className="w-full sm:w-auto flex items-center gap-2">
+              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer"
                 >
-                  <Save size={14} /> I-save ang Progress
+                  <Save size={16} /> I-save ang Progress
                 </button>
 
                 <button 
                   type="button" 
                   onClick={validateAndNext}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#7A1B22] text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-[#5A1419] transition-all shadow-xs active:scale-95"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
                 >
-                  Susunod <ChevronRight size={15} />
+                  <span>Susunod</span>
+                  <ChevronRight size={18} />
                 </button>
               </div>
             </div>
@@ -1185,20 +1187,20 @@ const ApplyFranchise = () => {
         {currentStep === 3 && (
           <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in duration-150 transition-colors">
             <div className="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <UploadCloud className="text-[#7A1B22] dark:text-[#D4AF37]" size={18} />
+              <UploadCloud className="text-[#7A1B22] dark:text-[#D4AF37]" size={22} />
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Upload ng mga Dokumento</h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">I-upload ang mga larawan o PDF ng requirements</p>
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">Upload ng mga Dokumento</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Kumuha ng litrato gamit ang camera o pumili ng PDF</p>
               </div>
             </div>
 
             {formMode === 'Renewal' ? (
-              <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 rounded-2xl text-xs font-semibold mb-5 flex items-start gap-2.5">
-                <Info size={17} className="shrink-0 mt-0.5" />
+              <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 rounded-2xl text-xs sm:text-sm font-semibold mb-5 flex items-start gap-3">
+                <Info size={20} className="shrink-0 mt-0.5" />
                 <p className="leading-relaxed">Hindi na kailangang mag-upload ng mga bagong file para sa renewal. Pakisuri ang buod sa ibaba bago i-submit.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 {requirementsList.map((req) => (
                   <DocumentUploadCard
                     key={req.id}
@@ -1215,43 +1217,57 @@ const ApplyFranchise = () => {
               </div>
             )}
 
-            <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 mb-6">
-              <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2.5">Buod ng Aplikasyon</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div><span className="text-slate-400 dark:text-slate-500 font-bold block text-[9px]">Operator</span><span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.fullName}</span></div>
-                <div><span className="text-slate-400 dark:text-slate-500 font-bold block text-[9px]">Plate No.</span><span className="font-black text-slate-900 dark:text-white truncate block">{formData.plateNo}</span></div>
-                <div><span className="text-slate-400 dark:text-slate-500 font-bold block text-[9px]">TODA</span><span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.todaName || loggedInToda}</span></div>
-                <div><span className="text-slate-400 dark:text-slate-500 font-bold block text-[9px]">Zone</span><span className="font-bold text-slate-800 dark:text-slate-200 truncate block">Zone {formData.zone}</span></div>
+            <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-6">
+              <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Buod ng Aplikasyon</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Operator</span>
+                  <span className="font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">{formData.fullName}</span>
+                </div>
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Plate No.</span>
+                  <span className="font-mono font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">{formData.plateNo}</span>
+                </div>
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">TODA</span>
+                  <span className="font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">{formData.todaName || loggedInToda}</span>
+                </div>
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Zone</span>
+                  <span className="font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">Zone {formData.zone}</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                <ChevronLeft size={15} /> Previous
+                <ChevronLeft size={18} /> Bumalik
               </button>
 
-              <div className="w-full sm:w-auto flex items-center gap-2">
+              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer"
                 >
-                  <Save size={14} /> Save Progress
+                  <Save size={16} /> I-save ang Progress
                 </button>
 
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs text-white transition-all shadow-xs active:scale-95 ${
-                    isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419]'
+                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm sm:text-base text-white transition-all shadow-md active:scale-95 cursor-pointer ${
+                    isSubmitting 
+                      ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' 
+                      : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
                   }`}
                 >
-                  {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
-                  {isSubmitting ? 'Submitting...' : formMode === 'Re-apply' ? 'Submit Update' : 'Submit Application'}
+                  {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                  <span>{isSubmitting ? 'Isinusumite...' : formMode === 'Re-apply' ? 'Isumite ang Rebisyon' : 'Isumite ang Aplikasyon'}</span>
                 </button>
               </div>
             </div>

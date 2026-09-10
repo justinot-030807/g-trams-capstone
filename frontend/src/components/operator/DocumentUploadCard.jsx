@@ -30,7 +30,7 @@ const DocumentUploadCard = ({
   };
 
   return (
-    <div className={`relative border-2 rounded-2xl p-3 transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
+    <div className={`relative border-2 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
       hasFile 
         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 shadow-xs' 
         : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
@@ -54,13 +54,13 @@ const DocumentUploadCard = ({
       />
 
       {/* Card Header: Label & Status */}
-      <div className="flex items-start justify-between gap-1 mb-2">
+      <div className="flex items-start justify-between gap-2 mb-2.5">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate leading-tight">
+          <p className="text-sm font-black text-slate-800 dark:text-slate-100 truncate leading-snug">
             {label} {required && <span className="text-red-500">*</span>}
           </p>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">
-            {hasFile ? 'Document captured' : 'Photo or PDF required'}
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            {hasFile ? '✓ Dokumentong napili' : 'Kumuha ng litrato o pumili ng file'}
           </p>
         </div>
 
@@ -71,50 +71,50 @@ const DocumentUploadCard = ({
               e.preventDefault();
               onFileRemove(id);
             }}
-            className="text-slate-400 hover:text-red-500 p-1 rounded-lg transition-colors shrink-0"
-            title="Remove document"
+            className="text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer"
+            title="Tanggalin ang dokumento"
           >
-            <X size={15} />
+            <X size={18} />
           </button>
         )}
       </div>
 
       {/* Middle Body */}
       {!hasFile ? (
-        <div className="my-2 py-4 px-2 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center text-center">
-          <div className="flex items-center gap-2 mb-2.5">
+        <div className="my-2 py-4 px-3 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center bg-white/60 dark:bg-slate-900/40">
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full justify-center mb-2.5">
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#8E2028] text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95"
+              className="flex-1 flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#8E2028] text-white px-3.5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-black transition-all shadow-xs active:scale-95 cursor-pointer"
             >
-              <Camera size={13} />
-              <span>Take Photo</span>
+              <Camera size={16} />
+              <span>Camera</span>
             </button>
 
             <button
               type="button"
               onClick={() => galleryInputRef.current?.click()}
-              className="flex items-center gap-1.5 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+              className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 px-3.5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-black transition-all active:scale-95 cursor-pointer shadow-2xs"
             >
-              <Upload size={13} />
-              <span>Gallery</span>
+              <Upload size={16} />
+              <span>Files / Gallery</span>
             </button>
           </div>
-          <p className="text-[9px] text-slate-400 leading-tight">
-            Clear, well-lit photo of document
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+            Malinaw na litrato ng dokumento
           </p>
         </div>
       ) : (
-        <div className="my-1 relative rounded-xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[110px]">
+        <div className="my-1.5 relative rounded-2xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[130px]">
           {isPdf ? (
-            <div className="p-3 text-center flex flex-col items-center">
-              <FileCheck size={28} className="text-emerald-600 dark:text-emerald-400 mb-1" />
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">PDF Document</span>
-              <span className="text-[9px] text-emerald-600 font-semibold mt-0.5">Ready for review</span>
+            <div className="p-4 text-center flex flex-col items-center">
+              <FileCheck size={32} className="text-emerald-600 dark:text-emerald-400 mb-1" />
+              <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200">Dokumentong PDF</span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">Handa nang isumite</span>
             </div>
           ) : (
-            <div className="w-full h-24 relative overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+            <div className="w-full h-28 relative overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800">
               <img 
                 src={previewUrl} 
                 alt={label} 
@@ -123,34 +123,34 @@ const DocumentUploadCard = ({
               <button
                 type="button"
                 onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label })}
-                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1 text-xs font-bold"
+                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs sm:text-sm font-black cursor-pointer"
               >
-                <ZoomIn size={16} />
-                <span>Inspect</span>
+                <ZoomIn size={18} />
+                <span>Tingnan</span>
               </button>
             </div>
           )}
 
           {/* Quick Retake Action */}
-          <div className="w-full bg-emerald-100/70 dark:bg-emerald-950/60 p-1.5 flex items-center justify-between text-[10px] border-t border-emerald-200 dark:border-emerald-900/60 px-2">
-            <span className="flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-300">
-              <CheckCircle2 size={12} /> Ready
+          <div className="w-full bg-emerald-100/80 dark:bg-emerald-950/70 py-2 px-3 flex items-center justify-between text-xs border-t border-emerald-200 dark:border-emerald-900/60">
+            <span className="flex items-center gap-1.5 font-black text-emerald-800 dark:text-emerald-300">
+              <CheckCircle2 size={14} /> Handa na
             </span>
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="text-[#7A1B22] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1"
+              className="text-[#7A1B22] dark:text-[#D4AF37] font-black hover:underline flex items-center gap-1 cursor-pointer"
             >
-              <RotateCcw size={10} /> Retake
+              <RotateCcw size={12} /> Palitan
             </button>
           </div>
         </div>
       )}
 
       {/* Footer Helper */}
-      <div className="mt-1 flex items-center justify-between text-[9px] text-slate-400">
-        <span>JPG, PNG, or PDF</span>
-        <span>Max 10MB</span>
+      <div className="mt-1.5 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 font-medium">
+        <span>JPG, PNG, o PDF</span>
+        <span>Hanggang 10MB</span>
       </div>
 
     </div>
