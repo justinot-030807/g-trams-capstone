@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, Phone, ShieldCheck, Clock, ChevronRight, Lock } from 'lucide-react';
-import AuthLayout from '../components/AuthLayout';
+import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -101,125 +100,100 @@ const ForgotPassword = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/90 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
-
-  // LEFT HERO SECTION (Desktop showcase)
-  const leftHero = (
-    <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1.5 shadow-xl border-2 border-[#D4AF37] ring-4 ring-[#D4AF37]/25 shrink-0">
-          <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
-        </div>
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
-          <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1.5">Municipality of Gasan • Province of Marinduque</p>
-        </div>
-      </div>
-
-      <h2 className="text-xl font-bold text-white/95 tracking-tight leading-snug drop-shadow-sm">
-        Account Recovery & Security Assistance
-      </h2>
-      <p className="text-white/75 text-xs sm:text-sm mt-2.5 leading-relaxed font-medium">
-        Quickly regain access to your official G-TRAMS operator or TODA account through secure one-time password (OTP) verification.
-      </p>
-
-      {/* 3 FEATURE CARDS */}
-      <div className="grid grid-cols-1 gap-3 mt-6">
-        <div className="flex items-start justify-between gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/15 transition-colors group cursor-default">
-          <div className="flex items-start gap-3.5">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#7A1B22] to-[#5A1419] text-[#D4AF37] border border-[#D4AF37]/30 shadow-md shrink-0">
-              <Clock size={18} />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs text-white group-hover:text-amber-300 transition-colors">Fast OTP Verification</h3>
-              <p className="text-[11px] text-white/70 leading-tight mt-0.5">Receive an instant 6-digit confirmation code via registered mobile number or email.</p>
-            </div>
-          </div>
-          <ChevronRight size={16} className="text-white/40 group-hover:text-[#D4AF37] transition-colors shrink-0 mt-1" />
-        </div>
-
-        <div className="flex items-start justify-between gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/15 transition-colors group cursor-default">
-          <div className="flex items-start gap-3.5">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#7A1B22] to-[#5A1419] text-[#D4AF37] border border-[#D4AF37]/30 shadow-md shrink-0">
-              <ShieldCheck size={18} />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs text-white group-hover:text-amber-300 transition-colors">Encrypted Security Standard</h3>
-              <p className="text-[11px] text-white/70 leading-tight mt-0.5">Your credentials and franchise records remain protected under municipal data privacy rules.</p>
-            </div>
-          </div>
-          <ChevronRight size={16} className="text-white/40 group-hover:text-[#D4AF37] transition-colors shrink-0 mt-1" />
-        </div>
-
-        <div className="flex items-start justify-between gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/15 transition-colors group cursor-default">
-          <div className="flex items-start gap-3.5">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#7A1B22] to-[#5A1419] text-[#D4AF37] border border-[#D4AF37]/30 shadow-md shrink-0">
-              <Lock size={18} />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs text-white group-hover:text-amber-300 transition-colors">BPLO Technical Support</h3>
-              <p className="text-[11px] text-white/70 leading-tight mt-0.5">Need help updating your registered contact number? Contact the BPLO Helpdesk team during office hours.</p>
-            </div>
-          </div>
-          <ChevronRight size={16} className="text-white/40 group-hover:text-[#D4AF37] transition-colors shrink-0 mt-1" />
-        </div>
-      </div>
-
-      {/* LGU HELPDESK FOOTER BADGE */}
-      <div className="flex items-center gap-2.5 mt-6 pt-4 border-t border-white/15 text-white/70 text-xs">
-        <Phone size={14} className="text-[#D4AF37]" />
-        <span>BPLO Helpdesk Hotline: <strong className="text-white font-bold">(042) 342-1234</strong> • <strong className="text-white font-bold">bplo@gasan.gov.ph</strong></span>
-      </div>
-    </div>
-  );
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <AuthLayout leftHero={leftHero}>
+    <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:p-6 overflow-hidden select-none">
       
-      {/* RIGHT AUTH CARD */}
-      <div className="w-full max-w-[350px] sm:max-w-[400px] shrink-0 animate-card-entrance">
-        <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/60 p-6 sm:p-8 overflow-hidden">
-          
-          {/* Decorative Gold Top-Right Corner Accent */}
-          <div 
-            className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[#D4AF37] via-[#F3E5AB] to-transparent pointer-events-none opacity-90"
-            style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
-          />
-          <div 
-            className="absolute top-0 right-0 w-10 h-10 bg-gradient-to-bl from-[#B8860B] to-[#D4AF37] pointer-events-none opacity-95"
-            style={{ clipPath: 'polygon(100% 0, 25% 0, 100% 75%)' }}
-          />
+      {/* ADVANCED LIQUID AURORA KEYFRAMES */}
+      <style>{`
+        @keyframes liquidOrbit1 {
+          0% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+          33% { transform: translate(90px, -60px) rotate(60deg) scale(1.22); }
+          66% { transform: translate(-40px, 80px) rotate(120deg) scale(0.92); }
+          100% { transform: translate(0px, 0px) rotate(180deg) scale(1); }
+        }
+        @keyframes liquidOrbit2 {
+          0% { transform: translate(0px, 0px) rotate(0deg) scale(1.05); }
+          33% { transform: translate(-80px, 70px) rotate(-60deg) scale(1.28); }
+          66% { transform: translate(70px, -50px) rotate(-120deg) scale(0.88); }
+          100% { transform: translate(0px, 0px) rotate(-180deg) scale(1.05); }
+        }
+        @keyframes liquidOrbit3 {
+          0% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
+          50% { transform: translate(-60px, -50px) scale(1.3); opacity: 0.65; }
+          100% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
+        }
+        @keyframes goldenPulseGlow {
+          0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.65; transform: translate(-45%, -55%) scale(1.35); }
+        }
+        @keyframes entranceCard {
+          0% { opacity: 0; transform: scale(0.94) translateY(20px); }
+          100% { opacity: 1; transform: scale(1) translateY(0px); }
+        }
+        @keyframes logoPop {
+          0% { opacity: 0; transform: scale(0.6) rotate(-8deg); }
+          70% { transform: scale(1.08) rotate(2deg); }
+          100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes itemFadeUp {
+          0% { opacity: 0; transform: translateY(12px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
 
-          {/* Header */}
-          <div className="flex flex-col items-center mb-5 text-center">
-            <div className="w-13 h-13 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-md flex items-center justify-center mb-2.5 ring-4 ring-[#D4AF37]/25 shrink-0 p-2.5">
-              {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={24} /> : <KeyRound className="text-[#7A1B22]" size={24} />}
+        .animate-liquid-1 { animation: liquidOrbit1 16s ease-in-out infinite alternate; }
+        .animate-liquid-2 { animation: liquidOrbit2 20s ease-in-out infinite alternate; }
+        .animate-liquid-3 { animation: liquidOrbit3 14s ease-in-out infinite alternate; }
+        .animate-golden-glow { animation: goldenPulseGlow 11s ease-in-out infinite alternate; }
+
+        .animate-card-entrance { animation: entranceCard 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-logo-entrance { animation: logoPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-item-1 { animation: itemFadeUp 0.5s ease-out 0.15s both; }
+        .animate-item-2 { animation: itemFadeUp 0.5s ease-out 0.25s both; }
+        .animate-item-3 { animation: itemFadeUp 0.5s ease-out 0.35s both; }
+        .animate-item-4 { animation: itemFadeUp 0.5s ease-out 0.45s both; }
+      `}</style>
+
+      {/* Dynamic Background Mesh */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
+        <div className="absolute bottom-[-15%] right-[-15%] w-[620px] h-[620px] bg-gradient-to-tl from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[95px] opacity-85 animate-liquid-2" />
+        <div className="absolute top-[25%] right-[10%] w-[420px] h-[420px] bg-gradient-to-bl from-[#E03144]/60 via-[#8A141E] to-transparent rounded-full blur-[75px] animate-liquid-3" />
+        <div className="absolute top-1/2 left-1/2 w-[480px] h-[480px] bg-gradient-to-r from-[#D4AF37]/35 via-[#F39C12]/20 to-transparent rounded-full blur-[105px] animate-golden-glow" />
+
+        <div 
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.9) 1px, transparent 0)',
+            backgroundSize: '24px 24px'
+          }}
+        />
+      </div>
+
+      {/* Card Container */}
+      <div className="w-full max-w-[350px] sm:max-w-[390px] my-auto relative z-10 animate-card-entrance">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-7">
+          
+          <div className="flex flex-col items-center mb-4 text-center">
+            <div className="w-12 h-12 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-md flex items-center justify-center mb-2 ring-4 ring-[#D4AF37]/25 shrink-0 animate-logo-entrance">
+              {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={22} /> : <KeyRound className="text-[#7A1B22]" size={22} />}
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">
               {step === 1 ? 'FORGOT PASSWORD?' : 'RESET PASSWORD'}
             </h2>
-            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest">
+            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
               {step === 1 ? 'ENTER REGISTERED CONTACT' : 'CREATE A NEW PASSWORD'}
             </p>
           </div>
 
-          {error && (
-            <div className="mb-3.5 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="mb-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
-              {success}
-            </div>
-          )}
+          {error && <div className="mb-3.5 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">{error}</div>}
+          {success && <div className="mb-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">{success}</div>}
 
           {step === 1 && (
-            <form onSubmit={handleRequestOTP} className="space-y-3.5">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  EMAIL OR PHONE NUMBER
-                </label>
+            <form onSubmit={handleRequestOTP} className="space-y-3">
+              <div className="animate-item-2">
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">EMAIL OR PHONE NUMBER</label>
                 <input 
                   type="text" 
                   value={contact}
@@ -230,28 +204,16 @@ const ForgotPassword = () => {
                 />
               </div>
               
-              <div className="pt-1">
+              <div className="animate-item-3 pt-1">
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-3 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider ${
-                    isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'
-                  }`}
+                  className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-2.5 sm:py-3 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin" size={15} /> 
-                      SENDING CODE...
-                    </>
-                  ) : (
-                    'SEND RESET CODE'
-                  )}
+                  {isLoading ? <><Loader2 className="animate-spin" size={15} /> SENDING CODE...</> : 'SEND RESET CODE'}
                 </button>
 
-                <Link 
-                  to="/login" 
-                  className="w-full flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-4 transition-colors uppercase tracking-wider"
-                >
+                <Link to="/login" className="w-full flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-3 transition-colors uppercase tracking-wider">
                   <ArrowLeft size={13} /> BACK TO LOGIN
                 </Link>
               </div>
@@ -259,11 +221,9 @@ const ForgotPassword = () => {
           )}
 
           {step === 2 && (
-            <form onSubmit={handleResetPassword} className="space-y-3">
+            <form onSubmit={handleResetPassword} className="space-y-2.5 animate-item-2">
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">
-                  ENTER 6-DIGIT CODE
-                </label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">ENTER 6-DIGIT CODE</label>
                 <input 
                   type="text" 
                   maxLength="6" 
@@ -276,9 +236,7 @@ const ForgotPassword = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
-                  NEW PASSWORD
-                </label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">NEW PASSWORD</label>
                 <input 
                   type="password" 
                   value={newPassword}
@@ -290,9 +248,7 @@ const ForgotPassword = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
-                  CONFIRM PASSWORD
-                </label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM PASSWORD</label>
                 <input 
                   type="password" 
                   value={confirmPassword}
@@ -306,28 +262,12 @@ const ForgotPassword = () => {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2.5 rounded-xl text-xs font-black shadow-md transition-all mt-1 uppercase tracking-wider ${
-                  isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-105 active:scale-[0.98]'
-                }`}
+                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2.5 rounded-xl text-xs font-black shadow-md transition-all mt-1 uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-105 active:scale-[0.98]'}`}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin" size={15} /> 
-                    PROCESSING...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw size={15} /> 
-                    RESET PASSWORD
-                  </>
-                )}
+                {isLoading ? <><Loader2 className="animate-spin" size={15} /> PROCESSING...</> : <><RefreshCw size={15} /> RESET PASSWORD</>}
               </button>
               
-              <button 
-                type="button" 
-                onClick={() => setStep(1)} 
-                className="w-full text-center text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-2 transition-colors uppercase tracking-wider"
-              >
+              <button type="button" onClick={() => setStep(1)} className="w-full text-center text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-1 transition-colors uppercase tracking-wider">
                 ← CHANGE CONTACT INFO
               </button>
             </form>
@@ -336,7 +276,15 @@ const ForgotPassword = () => {
         </div>
       </div>
 
-    </AuthLayout>
+      {/* Footer */}
+      <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">
+        <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
+        <p className="text-white/60 text-[8px] sm:text-[9px] normal-case font-medium">
+          © 2026 Municipality of Gasan, Marinduque. All rights reserved.
+        </p>
+      </footer>
+
+    </div>
   );
 };
 

@@ -1,12 +1,11 @@
 G-TRAMS: Gasan Tricycle Franchise Records and Monitoring System 
 
-Team Members (Capstone Project)
+Team Members 
 
-Justine S. Lachica - Lead Programmer / Developer 1 (Full-Stack System Architect)
-Ian Simon Francis M. Rey - Leader / Project Manager
-Jhude Michail Martin - Programmer / Developer 2
-Jay Vincent G. Motol - Researcher / Documentation
-Jhon Kyn Axix H. Cabrigas - System / Business Analyst
+Jhon Kyn Axix H. Cabrigas - Lead Backend Developer 
+Justine S. Lachica - Frontend Developer 
+Jay Vincent G. Motol - QA 
+Ian Simon Francis M. Rey - DevOps 
 
 Deployment Links
 Frontend Web Application (Vercel): https://g-trams-web2.vercel.app
