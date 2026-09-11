@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
+import FeedbackModal from '../../components/common/FeedbackModal';
 import { 
   RefreshCw, ArrowLeft, CheckCircle2, AlertCircle, Loader2, 
   X, FileCheck, ShieldCheck, Car, Calendar, MapPin, Hash, Sparkles
@@ -26,6 +27,16 @@ const RenewFranchise = () => {
   const [fullPreview, setFullPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Centered Feedback Modal state
+  const [feedbackModal, setFeedbackModal] = useState({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+    confirmText: 'OK',
+    onConfirm: null
+  });
 
   // Fetch the franchise details to show operator what they are renewing
   useEffect(() => {
@@ -87,7 +98,7 @@ const RenewFranchise = () => {
     e.preventDefault();
 
     if (!formData.ctcNo || !formData.dateIssued || !formData.placeIssued) {
-      showToast('Pakipunan ang lahat ng impormasyon sa Cedula / CTC.', 'error');
+      showToast('Please fill out all Community Tax Certificate (CTC) fields.', 'error');
       return;
     }
 
@@ -118,16 +129,30 @@ const RenewFranchise = () => {
       const resData = await response.json();
 
       if (response.ok) {
-        showToast('Matagumpay na naisumite ang renewal application!', 'success');
-        setTimeout(() => {
-          navigate('/operator-dashboard');
-        }, 1200);
+        setFeedbackModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Renewal Application Submitted!',
+          message: 'Your franchise renewal has been submitted to the BPLO for verification. You can track your renewal status on the dashboard.',
+          confirmText: 'OK',
+          onConfirm: () => {
+            setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+            navigate('/operator-dashboard');
+          }
+        });
       } else {
-        showToast(resData.message || resData.error || 'Nabigong isumite ang renewal application.', 'error');
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Submission Failed',
+          message: resData.message || resData.error || 'Failed to submit renewal application.',
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
       }
     } catch (err) {
       console.error('Server error:', err);
-      showToast('Network error. Hindi makakonekta sa server.', 'error');
+      showToast('Network error. Cannot connect to the server.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -162,7 +187,7 @@ const RenewFranchise = () => {
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] mb-4 p-2 -ml-2 rounded-xl transition-colors group cursor-pointer active:scale-95"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-          <span>Bumalik sa Dashboard (Back)</span>
+          <span>Back to Dashboard</span>
         </button>
 
         {/* Card Container */}
@@ -173,13 +198,13 @@ const RenewFranchise = () => {
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="bg-[#D4AF37] text-slate-950 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-2xs">
-                  Taunang Pag-renew (Annual Renewal)
+                  Annual Renewal
                 </span>
-                <span className="text-white/80 text-xs sm:text-sm font-medium">G-TRAMS Pamahalaang Bayan ng Gasan</span>
+                <span className="text-white/80 text-xs sm:text-sm font-medium">G-TRAMS Municipality of Gasan</span>
               </div>
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight">Mag-renew ng Prangkisa</h1>
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight">Franchise Renewal</h1>
               <p className="text-xs sm:text-sm text-white/90 mt-1 max-w-xl leading-relaxed font-medium">
-                I-update ang inyong Cedula (CTC) at OR/CR para mapanatiling aktibo ang inyong rehistro sa munisipyo.
+                Update your Community Tax Certificate (CTC / Cedula) and OR/CR to keep your franchise registration active.
               </p>
             </div>
             <RefreshCw size={120} className="absolute -right-4 -bottom-6 text-white/10 rotate-12 pointer-events-none" />
@@ -200,10 +225,10 @@ const RenewFranchise = () => {
                 <AlertCircle size={28} />
               </div>
               <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                Hindi Natagpuan ang Prangkisa
+                Franchise Record Not Found
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto font-medium">
-                Maaaring nabura o nailipat ang rekord na ito. Mangyaring bumalik sa dashboard.
+                This franchise record could not be located. Please return to your dashboard.
               </p>
               <button
                 type="button"
@@ -211,7 +236,7 @@ const RenewFranchise = () => {
                 className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-sm hover:bg-[#5A1419] cursor-pointer active:scale-95"
               >
                 <ArrowLeft size={15} />
-                <span>Bumalik sa Dashboard</span>
+                <span>Back to Dashboard</span>
               </button>
             </div>
           )}
@@ -222,7 +247,7 @@ const RenewFranchise = () => {
               <div className="flex items-center justify-between gap-2 mb-2.5">
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Car size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                  Opisyal na Detalye ng Tricycle (Transport Pass)
+                  Official Tricycle Details (Transport Pass)
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   {franchise.status || 'Active'}
@@ -238,7 +263,7 @@ const RenewFranchise = () => {
                       GT
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider">Pamahalaang Bayan ng Gasan &bull; MTOP</p>
+                      <p className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider">Municipality of Gasan &bull; MTOP</p>
                       <p className="text-xs font-semibold text-white/90">Tricycle Franchise Renewal Pass</p>
                     </div>
                   </div>
@@ -253,7 +278,7 @@ const RenewFranchise = () => {
                   {/* Plate Number & Model */}
                   <div className="sm:col-span-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                      Plaka ng Sasakyan (Plate No.)
+                      Plate Number
                     </span>
                     <div className="inline-flex items-center gap-2.5 bg-slate-100 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-xl border border-slate-300/80 dark:border-slate-700 shadow-inner">
                       <span className="font-mono text-xl sm:text-2xl font-bold tracking-wider text-slate-900 dark:text-white">
@@ -266,20 +291,20 @@ const RenewFranchise = () => {
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mt-1.5 flex items-center gap-1.5">
                       <span className="font-semibold">{franchise.make || 'Tricycle'}</span>
                       <span className="text-slate-300 dark:text-slate-600">&bull;</span>
-                      <span className="text-slate-500 dark:text-slate-400">Model Taon {franchise.made || 'N/A'}</span>
+                      <span className="text-slate-500 dark:text-slate-400">Model Year {franchise.made || 'N/A'}</span>
                     </p>
                   </div>
 
                   {/* Route & Toda Info Card */}
                   <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
                     <div>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">TODA Samahan</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">TODA Association</span>
                       <span className="text-xs sm:text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37] truncate block mt-0.5">
                         {franchise.todaName || 'NON-TODA'}
                       </span>
                     </div>
                     <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Ruta / Zone</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Route / Zone</span>
                       <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
                         Zone {franchise.zone || 'N/A'} (Gasan)
                       </span>
@@ -310,7 +335,7 @@ const RenewFranchise = () => {
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-semibold text-[#7A1B22] dark:text-[#D4AF37] flex items-center gap-1">
                     <ShieldCheck size={13} />
-                    Opisyal na Rehistro ng BPLO
+                    Official BPLO Registry
                   </span>
                 </div>
               </div>
@@ -329,10 +354,10 @@ const RenewFranchise = () => {
                   </div>
                   <div>
                     <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                      Hakbang 1: Pinakabagong Cedula (Community Tax Certificate)
+                      Step 1: Latest Community Tax Certificate (CTC)
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      Ilagay ang detalye ng inyong bagong Cedula (CTC) na kinuha ngayong taon.
+                      Enter details of your current Community Tax Certificate issued for this year.
                     </p>
                   </div>
                 </div>
@@ -340,7 +365,7 @@ const RenewFranchise = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Bagong CTC / Cedula No. <span className="text-red-500">*</span>
+                      CTC / Cedula Serial No. <span className="text-red-500">*</span>
                     </label>
                     <input 
                       type="text" 
@@ -351,14 +376,14 @@ const RenewFranchise = () => {
                       onChange={handleChange} 
                       required 
                       className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400 min-h-[42px]" 
-                      placeholder="Hal. 08123456"
+                      placeholder="e.g. 08123456"
                     />
-                    <p className="text-[11px] font-medium text-slate-400 mt-1">Mga numero lamang (Digits only)</p>
+                    <p className="text-[11px] font-medium text-slate-400 mt-1">Digits only</p>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Petsa ng Pagkuha (Date Issued) <span className="text-red-500">*</span>
+                      Date Issued <span className="text-red-500">*</span>
                     </label>
                     <input 
                       type="date" 
@@ -372,7 +397,7 @@ const RenewFranchise = () => {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Lugar ng Pagkuha (Place Issued) <span className="text-red-500">*</span>
+                      Place Issued <span className="text-red-500">*</span>
                     </label>
                     <input 
                       type="text" 
@@ -395,10 +420,10 @@ const RenewFranchise = () => {
                   </div>
                   <div>
                     <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                      Hakbang 2: Pinakabagong OR/CR ng Tricycle (LTO)
+                      Step 2: Latest Tricycle OR/CR (LTO)
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      Kuhanan ng litrato gamit ang camera o mag-upload ng updated Official Receipt & Certificate of Registration mula sa LTO.
+                      Take a photo or upload your latest Official Receipt & Certificate of Registration from LTO.
                     </p>
                   </div>
                 </div>
@@ -422,10 +447,10 @@ const RenewFranchise = () => {
                 <ShieldCheck size={20} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-200">
-                    Paalala sa Bayarin at Pagproseso (Renewal Fee Notice)
+                    Renewal Fee & Processing Notice
                   </h4>
                   <p className="text-xs text-slate-700 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                    Walang babayaran sa pagsumite online. Matapos ma-verify ng BPLO ang inyong renewal, dalhin lamang ang Claim Stub Voucher at bayad na <strong>₱500.00</strong> sa Municipal Treasury / BPLO Office sa Munisipyo upang makuha ang inyong bagong sticker.
+                    Online submission is free of charge. Once verified by BPLO, bring your Claim Voucher and renewal fee of <strong>₱500.00</strong> to the Municipal Treasury / BPLO Office to receive your updated permit sticker.
                   </p>
                 </div>
               </div>
@@ -437,7 +462,7 @@ const RenewFranchise = () => {
                   onClick={() => navigate('/operator-dashboard')} 
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95"
                 >
-                  Kanselahin (Cancel)
+                  Cancel
                 </button>
 
                 <button 
@@ -450,12 +475,12 @@ const RenewFranchise = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      <span>Ipinapadala ang Renewal...</span>
+                      <span>Submitting Renewal...</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle2 size={16} />
-                      <span>I-submit ang Renewal Application</span>
+                      <span>Submit Renewal Application</span>
                     </>
                   )}
                 </button>
@@ -507,6 +532,17 @@ const RenewFranchise = () => {
           </div>
         </div>
       )}
+
+      {/* Centered Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        type={feedbackModal.type}
+        title={feedbackModal.title}
+        message={feedbackModal.message}
+        confirmText={feedbackModal.confirmText || 'OK'}
+        onConfirm={feedbackModal.onConfirm || (() => setFeedbackModal(prev => ({ ...prev, isOpen: false })))}
+        onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </MainLayout>
   );
 };

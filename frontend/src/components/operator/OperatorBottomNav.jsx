@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, PlusCircle, HelpCircle, Settings, Users } from 'lucide-react';
+import { Home, PlusCircle, Settings, Users } from 'lucide-react';
 
 const OperatorBottomNav = ({ role }) => {
   const location = useLocation();
@@ -52,13 +52,6 @@ const OperatorBottomNav = ({ role }) => {
       icon: PlusCircle,
       path: '/apply-franchise',
       active: location.pathname === '/apply-franchise' || location.pathname.startsWith('/renew-franchise')
-    },
-    {
-      id: 'support',
-      label: 'Support',
-      icon: HelpCircle,
-      path: '/help-support',
-      active: location.pathname === '/help-support'
     },
     {
       id: 'settings',

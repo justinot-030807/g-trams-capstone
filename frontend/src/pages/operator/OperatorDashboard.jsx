@@ -108,8 +108,8 @@ const OperatorDashboard = () => {
       if (item.status === 'Ready for Pickup') {
         notifs.push({
           id: `op_ready_${item._id}`,
-          title: language === 'fil' ? 'Aprubado na ang Prangkisa!' : 'Franchise Approved!',
-          desc: language === 'fil' ? `Ang prangkisa para sa unit ${item.plateNo || ''} ay aprubado na. Pumunta sa BPLO para sa Claim Stub.` : `Franchise for unit ${item.plateNo || ''} is approved. Proceed to BPLO cashier.`,
+          title: 'Franchise Approved!',
+          desc: `Franchise for unit ${item.plateNo || ''} is approved. Proceed to BPLO cashier to settle payment.`,
           time: 'Action Required',
           type: 'success',
           link: '/operator-dashboard'
@@ -117,7 +117,7 @@ const OperatorDashboard = () => {
       } else if (item.status === 'Cancelled') {
         notifs.push({
           id: `op_cancelled_${item._id}`,
-          title: language === 'fil' ? 'Kailangang Ayusin ang Aplikasyon' : 'Application Returned / Needs Revision',
+          title: 'Application Returned / Needs Revision',
           desc: item.cancelReason ? `LGU Note: ${item.cancelReason}` : 'Your application was returned for correction. Click to fix.',
           time: 'Attention',
           type: 'reminder',
@@ -126,8 +126,8 @@ const OperatorDashboard = () => {
       } else if (item.status === 'Expired') {
         notifs.push({
           id: `op_expired_${item._id}`,
-          title: language === 'fil' ? 'Paso na ang Prangkisa' : 'Franchise Expired Alert',
-          desc: language === 'fil' ? `Ang permit para sa ${item.plateNo || 'unit'} ay expired na. Mag-renew agad.` : `Unit ${item.plateNo || 'N/A'} has expired and requires renewal.`,
+          title: 'Franchise Expired Alert',
+          desc: `Unit ${item.plateNo || 'N/A'} has expired and requires annual renewal.`,
           time: 'Renewal',
           type: 'reminder',
           link: '/apply-franchise'
@@ -135,7 +135,7 @@ const OperatorDashboard = () => {
       }
     });
     setNotifications(notifs);
-  }, [franchises, language]);
+  }, [franchises]);
 
   const unreadNotifCount = notifications.filter(n => !readNotifIds.includes(n.id)).length;
 
@@ -526,7 +526,7 @@ const OperatorDashboard = () => {
                 type="button"
                 onClick={() => setIsProfileMenuOpen(prev => !prev)}
                 className="w-11 h-11 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#520f14] flex items-center justify-center shrink-0 active:scale-95 transition-all cursor-pointer ring-2 ring-white/20 hover:ring-[#D4AF37]/50"
-                title={language === 'fil' ? 'Aking Account at Logout' : 'My Account & Logout'}
+                title="My Account & Logout"
               >
                 {profilePic ? (
                   <img src={profilePic} alt="User" className="w-full h-full object-cover" />
@@ -600,10 +600,10 @@ const OperatorDashboard = () => {
                           </div>
                           <div>
                             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                              {language === 'fil' ? 'Mga Setting ng Account' : 'Account Settings'}
+                              Account Settings
                             </p>
                             <p className="text-[10px] sm:text-[11px] text-slate-400">
-                              {language === 'fil' ? 'Profile, password at seguridad' : 'Profile, password & security'}
+                              Personal info, password, and preferences
                             </p>
                           </div>
                         </div>
@@ -616,22 +616,22 @@ const OperatorDashboard = () => {
                           setIsProfileMenuOpen(false);
                           setIsTourOpen(true);
                         }}
-                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all cursor-pointer group text-left"
+                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all cursor-pointer group text-left"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                          <div className="w-9 h-9 rounded-xl bg-amber-500/10 dark:bg-amber-400/15 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:bg-amber-500/20 transition-colors">
                             <Sparkles size={18} />
                           </div>
                           <div>
-                            <p className="text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-400">
-                              {language === 'fil' ? 'Panoorin ang Gabay (Tour)' : 'Replay Walkthrough Tour'}
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                              Explore Portal Tour
                             </p>
                             <p className="text-[10px] sm:text-[11px] text-slate-400">
-                              {language === 'fil' ? 'Alamin ang mga features ng portal' : 'Quick visual guide of portal features'}
+                              Quick visual guide of portal features
                             </p>
                           </div>
                         </div>
-                        <ChevronRight size={16} className="text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+                        <ChevronRight size={16} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                       </button>
 
                       <button
@@ -648,10 +648,10 @@ const OperatorDashboard = () => {
                           </div>
                           <div>
                             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                              {language === 'fil' ? 'Gabay at Suporta' : 'Help & Support'}
+                              Help &amp; Support
                             </p>
                             <p className="text-[10px] sm:text-[11px] text-slate-400">
-                              {language === 'fil' ? 'FAQs, hotline at impormasyon' : 'FAQs, hotline & info'}
+                              FAQs, hotline &amp; info
                             </p>
                           </div>
                         </div>
@@ -670,7 +670,7 @@ const OperatorDashboard = () => {
                         className="w-full flex items-center justify-center gap-2.5 p-3 rounded-2xl text-xs sm:text-sm font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 transition-all cursor-pointer active:scale-98"
                       >
                         <LogOut size={16} className="stroke-[2.5]" />
-                        <span>{language === 'fil' ? 'Mag-logout sa Account' : 'Log Out of Account'}</span>
+                        <span>Log Out of Account</span>
                       </button>
                     </div>
                   </div>
@@ -745,7 +745,7 @@ const OperatorDashboard = () => {
                           </h4>
                         </div>
                         <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                          {unreadNotifCount > 0 ? `${unreadNotifCount} ${language === 'fil' ? 'bagong abiso' : 'update(s)'}` : t('nav.allCaughtUp', 'All caught up')}
+                          {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
                         </p>
                       </div>
 
@@ -778,7 +778,7 @@ const OperatorDashboard = () => {
                             <Bell size={22} />
                           </div>
                           <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                          <p className="text-[11px] text-slate-400 mt-1 max-w-xs">{language === 'fil' ? 'Lilitaw dito ang mga update sa prangkisa at mga anunsyo.' : 'Franchise updates and announcements will appear here.'}</p>
+                          <p className="text-[11px] text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
                         </div>
                       ) : (
                         notifications.map(notif => (
@@ -812,7 +812,7 @@ const OperatorDashboard = () => {
             <span>{opGreeting.tag}</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-1 text-white">
-            {language === 'fil' ? 'Pamahalaang Bayan ng Gasan' : 'Gasan Municipal Transport'}
+            Gasan Municipal Transport
           </h1>
           <p className="text-white/80 dark:text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
             {getOperatorSubtext()}
@@ -829,10 +829,10 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold truncate">
-                    {language === 'fil' ? 'Aprubado na ang Prangkisa!' : 'Franchise Approved!'}
+                    Franchise Approved!
                   </h4>
                   <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                    {language === 'fil' ? 'Handa na ang Claim Stub para sa Municipal Cashier' : 'Claim Stub is ready for Municipal Cashier'}
+                    Claim Stub is ready for Municipal Cashier
                   </p>
                 </div>
               </div>
@@ -847,7 +847,7 @@ const OperatorDashboard = () => {
                 className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Receipt size={15} />
-                <span>{language === 'fil' ? 'Kunin ang Claim Stub' : 'Get Voucher'}</span>
+                <span>Get Voucher</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'Cancelled') ? (
@@ -858,10 +858,10 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold truncate">
-                    {language === 'fil' ? 'Kailangang Ayusin ang Aplikasyon' : 'Application Needs Attention'}
+                    Application Needs Attention
                   </h4>
                   <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                    {language === 'fil' ? 'Pakitugunan ang puna ng LGU evaluator' : 'Review remarks and submit corrected documents'}
+                    Review remarks and submit corrected documents
                   </p>
                 </div>
               </div>
@@ -870,27 +870,22 @@ const OperatorDashboard = () => {
                 className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <RefreshCw size={15} />
-                <span>{language === 'fil' ? 'Ayusin Ngayon' : 'Fix Issues'}</span>
+                <span>Fix Issues</span>
               </button>
             </div>
           ) : (
             <div className="bg-white/10 dark:bg-white/5 text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md border border-white/15">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={18} />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-xs sm:text-sm font-bold truncate">
-                    {franchises.length >= maxUnits 
-                      ? (language === 'fil' ? `Kumpleto ang Kapasidad (${maxUnits}/${maxUnits} Yunit)` : `Maximum Fleet Capacity (${maxUnits}/${maxUnits})`)
-                      : (language === 'fil' ? 'May Bakanteng Slot Para sa Prangkisa' : 'Available Franchise Slot')}
-                  </h4>
-                  <p className="text-[11px] sm:text-xs text-white/80 mt-0.5">
-                    {franchises.length >= maxUnits
-                      ? (language === 'fil' ? `Lahat ng pinapayagang ${maxUnits} units ay rehistrado` : `All allowed ${maxUnits} units are currently registered`)
-                      : (language === 'fil' ? `Maaari kang mag-rehistro ng hanggang ${maxUnits} units sa Gasan` : `Registered operators may register up to ${maxUnits} units in Gasan`)}
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <h4 className="text-xs sm:text-sm font-bold truncate">
+                  {franchises.length >= maxUnits 
+                    ? `Maximum Fleet Capacity (${maxUnits}/${maxUnits})`
+                    : 'Available Franchise Slot'}
+                </h4>
+                <p className="text-[11px] sm:text-xs text-white/80 mt-0.5">
+                  {franchises.length >= maxUnits
+                    ? `All allowed ${maxUnits} units are currently registered`
+                    : `Registered operators may register up to ${maxUnits} units in Gasan`}
+                </p>
               </div>
               {franchises.length < maxUnits && (
                 <button
@@ -898,7 +893,7 @@ const OperatorDashboard = () => {
                   className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <PlusCircle size={15} />
-                  <span>{language === 'fil' ? 'Mag-apply ng Prangkisa' : 'Apply Now'}</span>
+                  <span>Apply Now</span>
                 </button>
               )}
             </div>
@@ -914,7 +909,7 @@ const OperatorDashboard = () => {
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {language === 'fil' ? 'Kapasidad ng Prangkisa' : 'Fleet Capacity'}
+              Fleet Capacity
             </span>
             <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
               {franchises.length} / {maxUnits}
@@ -923,8 +918,8 @@ const OperatorDashboard = () => {
 
           <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
             {franchises.length >= maxUnits 
-              ? (language === 'fil' ? 'Puno na ang Slots' : 'Slots Full') 
-              : (language === 'fil' ? `May ${maxUnits - franchises.length} Bakanteng Slot` : `${maxUnits - franchises.length} Slot(s) Available`)}
+              ? 'Slots Full' 
+              : `${maxUnits - franchises.length} Slot(s) Available`}
           </span>
         </div>
 
@@ -959,14 +954,14 @@ const OperatorDashboard = () => {
               {t('dashboard.garageTitle', 'My Franchise Garage')}
             </h2>
             <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
-              {language === 'fil' ? 'Mga nakatalang motor at prangkisa sa ilalim ng iyong account' : t('dashboard.garageSub', 'Assigned tricycle units under your account')}
+              {t('dashboard.garageSub', 'Assigned tricycle units under your account')}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
-            {franchises.length} {language === 'fil' ? 'Nakatala' : 'Registered'}
+            {franchises.length} Registered
           </span>
         </div>
       </header>
@@ -988,12 +983,10 @@ const OperatorDashboard = () => {
           </div>
 
           <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1">
-            {language === 'fil' ? 'Wala Ka Pang Nakatalang Tricycle' : t('dashboard.noUnitsTitle', 'No Franchise Units Found')}
+            {t('dashboard.noUnitsTitle', 'No Franchise Units Found')}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-sm leading-relaxed">
-            {language === 'fil' 
-              ? 'Magsimula sa pamamagitan ng pagpaparehistro ng iyong unang tricycle unit upang makakuha ng opisyal na prangkisa mula sa Munisipyo ng Gasan.' 
-              : t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}
+            {t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}
           </p>
 
           <button 
@@ -1001,7 +994,7 @@ const OperatorDashboard = () => {
             className="inline-flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             <PlusCircle size={16} />
-            <span>{language === 'fil' ? 'Mag-apply ng Bagong Prangkisa' : t('dashboard.applyNew', 'Apply New Franchise')}</span>
+            <span>{t('dashboard.applyNew', 'Apply New Franchise')}</span>
           </button>
         </div>
       ) : (

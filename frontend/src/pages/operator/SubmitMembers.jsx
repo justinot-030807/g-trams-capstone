@@ -9,10 +9,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { SubmissionCardsSkeleton } from '../../components/skeleton';
 import { useLanguage } from '../../context/LanguageContext';
+import FeedbackModal from '../../components/common/FeedbackModal';
 
 const SubmitMembers = () => {
   const { t, language } = useLanguage();
-  const isFilipino = language === 'fil' || language === 'tl';
   const navigate = useNavigate();
 
   // Tab State: 'roster' (Member Group Directory) or 'upload' (Document Submission)
@@ -33,6 +33,7 @@ const SubmitMembers = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [submissions, setSubmissions] = useState([]); 
+  const [feedbackModal, setFeedbackModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const showToast = (message, type = 'success') => {
@@ -111,13 +112,28 @@ const SubmitMembers = () => {
       if (response.ok) {
         setSubmissions(prev => [data.submission, ...prev]);
         setFile(null);
-        showToast(isFilipino ? 'Matagumpay na naisumite ang listahan sa Munisipyo!' : 'File successfully submitted to the Administrator!', 'success');
+        setFeedbackModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Roster Document Submitted',
+          message: 'Your official TODA member roster document has been successfully submitted to the LGU BPLO office for review.'
+        });
       } else {
-        showToast(data.message || (isFilipino ? 'Nabigo ang pag-upload' : 'Upload failed'), 'error');
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Upload Failed',
+          message: data.message || 'Unable to upload the roster document. Please ensure the file format is valid.'
+        });
       }
     } catch (error) {
       console.error('Upload error:', error);
-      showToast(isFilipino ? 'Hindi makakonekta sa server.' : 'Cannot connect to the server.', 'error');
+      setFeedbackModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Unable to connect to the server. Please check your network connection and try again.'
+      });
     } finally {
       setIsUploading(false);
     }
@@ -179,7 +195,7 @@ const SubmitMembers = () => {
             <button 
               onClick={() => navigate('/operator-dashboard')}
               className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white shadow-2xs active:scale-95 cursor-pointer shrink-0"
-              title={isFilipino ? "Bumalik sa Dashboard" : "Back to Dashboard"}
+              title="Back to Dashboard"
             >
               <ArrowLeft size={18} />
             </button>
@@ -190,12 +206,10 @@ const SubmitMembers = () => {
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                {isFilipino ? 'TODA Hub: Direktoryo ng mga Miyembro' : 'TODA Association & Member Roster'}
+                TODA Association &amp; Member Roster
               </h1>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-                {isFilipino 
-                  ? 'Tingnan ang lahat ng miyembro, rehistradong tricycle units, o magsumite ng opisyal na listahan sa BPLO.' 
-                  : 'View all association members, registered units, or submit official rosters to the LGU.'}
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                View all association members, registered units, or submit official rosters to the LGU.
               </p>
             </div>
           </div>
@@ -208,7 +222,7 @@ const SubmitMembers = () => {
               title="Refresh Data"
             >
               <RefreshCw size={14} className={isLoadingMembers ? "animate-spin" : ""} />
-              <span>{isFilipino ? 'I-refresh' : 'Refresh'}</span>
+              <span>Refresh</span>
             </button>
             <button
               onClick={() => window.print()}
@@ -216,7 +230,7 @@ const SubmitMembers = () => {
               title="Print Roster"
             >
               <Printer size={14} />
-              <span>{isFilipino ? 'I-print ang Roster' : 'Print Roster'}</span>
+              <span>Print Roster</span>
             </button>
           </div>
         </header>
@@ -233,7 +247,7 @@ const SubmitMembers = () => {
             }`}
           >
             <Users size={16} />
-            <span>{isFilipino ? 'Direktoryo ng Grupo at Miyembro' : 'Member Roster & Units'}</span>
+            <span>Member Roster &amp; Units</span>
             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
               activeTab === 'roster'
                 ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
@@ -253,7 +267,7 @@ const SubmitMembers = () => {
             }`}
           >
             <UploadCloud size={16} />
-            <span>{isFilipino ? 'Magsumite ng Opisyal na Listahan' : 'Submit Document Roster'}</span>
+            <span>Submit Document Roster</span>
             {submissions.length > 0 && (
               <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                 activeTab === 'upload'
@@ -271,13 +285,13 @@ const SubmitMembers = () => {
           <div className="space-y-5">
             {/* Association Statistics Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0">
                   <Users size={18} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
-                    {isFilipino ? 'Miyembro' : 'Total Members'}
+                    Total Members
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
                     {todaData.stats?.totalMembers || 0}
@@ -285,13 +299,13 @@ const SubmitMembers = () => {
                 </div>
               </div>
 
-              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                   <CheckCircle2 size={18} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
-                    {isFilipino ? 'Aktibong Yunit' : 'Active Units'}
+                    Active Units
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                     {todaData.stats?.activeUnits || 0}
@@ -299,13 +313,13 @@ const SubmitMembers = () => {
                 </div>
               </div>
 
-              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                   <Clock3 size={18} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
-                    {isFilipino ? 'Pending' : 'Pending'}
+                    Pending
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
                     {todaData.stats?.pendingUnits || 0}
@@ -313,13 +327,13 @@ const SubmitMembers = () => {
                 </div>
               </div>
 
-              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                   <ShieldCheck size={18} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
-                    {isFilipino ? 'Kabuuang Yunit' : 'Total Fleet'}
+                    Total Fleet
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
                     {todaData.stats?.totalUnits || 0}
@@ -329,14 +343,14 @@ const SubmitMembers = () => {
             </div>
 
             {/* Search & Filter Controls */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={isFilipino ? "Maghanap sa pangalan, plaka, contact..." : "Search by member name, plate #, contact..."}
+                  placeholder="Search by member name, plate #, contact..."
                   className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 shadow-2xs min-h-[42px]"
                 />
                 {searchTerm && (
@@ -360,7 +374,7 @@ const SubmitMembers = () => {
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
-                  {isFilipino ? 'Lahat (All)' : 'All'}
+                  All
                 </button>
                 <button
                   type="button"
@@ -371,7 +385,7 @@ const SubmitMembers = () => {
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
-                  {isFilipino ? 'Aktibo (Active)' : 'Active'}
+                  Active
                 </button>
                 <button
                   type="button"
@@ -382,7 +396,7 @@ const SubmitMembers = () => {
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
-                  {isFilipino ? 'Pending' : 'Pending'}
+                  Pending
                 </button>
                 <button
                   type="button"
@@ -393,7 +407,7 @@ const SubmitMembers = () => {
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
-                  {isFilipino ? 'Expired' : 'Expired'}
+                  Expired
                 </button>
               </div>
             </div>
@@ -409,12 +423,12 @@ const SubmitMembers = () => {
                   <Users size={28} />
                 </div>
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">
-                  {searchTerm ? (isFilipino ? 'Walang nahanap na miyembro' : 'No matching members found') : (isFilipino ? 'Wala pang nakatalang miyembro' : 'No registered members found')}
+                  {searchTerm ? 'No matching members found' : 'No registered members found'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
                   {searchTerm
-                    ? (isFilipino ? 'Subukang baguhin ang iyong keyword o filter.' : 'Try changing your search keywords or filter pills.')
-                    : (isFilipino ? 'Kapag nagrehistro ang mga operator sa ilalim ng inyong TODA, dito sila awtomatikong lalabas.' : 'When operators register under your TODA, they will automatically appear here.')}
+                    ? 'Try changing your search keywords or filter pills.'
+                    : 'When operators register under your TODA, they will automatically appear here.'}
                 </p>
                 {searchTerm && (
                   <button
@@ -422,7 +436,7 @@ const SubmitMembers = () => {
                     onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
                     className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
                   >
-                    {isFilipino ? 'I-clear ang Search' : 'Clear Search'}
+                    Clear Search
                   </button>
                 )}
               </div>
@@ -431,7 +445,7 @@ const SubmitMembers = () => {
                 {filteredMembers.map((member, mIdx) => (
                   <div
                     key={member._id || mIdx}
-                    className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
+                    className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
                   >
                     {/* Top Subtle Gold/Maroon Highlight for President */}
                     {member.isPresident && (
@@ -440,40 +454,40 @@ const SubmitMembers = () => {
 
                     <div>
                       {/* Member Header: Photo/Avatar, Name, Role Tag */}
-                      <div className="flex items-start justify-between gap-3 mb-4">
-                        <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex items-start justify-between gap-3 mb-3.5">
+                        <div className="flex items-center gap-3 min-w-0">
                           {member.profilePic ? (
                             <img
                               src={member.profilePic}
                               alt={member.name}
-                              className="w-11 h-11 rounded-xl object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
+                              className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
                             />
                           ) : (
-                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-bold text-sm shrink-0 shadow-2xs">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-bold text-xs shrink-0 shadow-2xs">
                               {member.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                              <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
                                 {member.name}
                               </h3>
                               {member.isCurrentUser && (
                                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                  {isFilipino ? 'Ikaw (You)' : 'You'}
+                                  You
                                 </span>
                               )}
                             </div>
 
                             <div className="flex items-center gap-2 mt-0.5">
                               {member.isPresident ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
-                                  <Sparkles size={11} />
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                  <Sparkles size={10} />
                                   TODA President
                                 </span>
                               ) : (
-                                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                  {isFilipino ? 'Miyembro / Operator' : 'Operator / Member'}
+                                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                  Operator / Member
                                 </span>
                               )}
                             </div>
@@ -482,30 +496,30 @@ const SubmitMembers = () => {
 
                         {/* Units count pill */}
                         <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0">
-                          {member.units.length} {member.units.length === 1 ? (isFilipino ? 'Yunit' : 'Unit') : (isFilipino ? 'mga Yunit' : 'Units')}
+                          {member.units.length} {member.units.length === 1 ? 'Unit' : 'Units'}
                         </span>
                       </div>
 
                       {/* Contact & Address Bar */}
-                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-1.5 mb-3.5 text-xs sm:text-sm">
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-1 mb-3 text-xs">
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                          <Phone size={14} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <Phone size={13} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                           {member.contact && member.contact !== 'N/A' ? (
                             <a 
                               href={`tel:${member.contact}`} 
                               className="inline-flex items-center gap-1.5 font-semibold text-[#7A1B22] dark:text-[#D4AF37] hover:underline text-xs"
-                              title="Tawagan ang miyembro"
+                              title="Call member"
                             >
                               <span>{member.contact}</span>
-                              <span className="text-[10px] uppercase font-bold bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Tawagan</span>
+                              <span className="text-[10px] uppercase font-bold bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Call</span>
                             </a>
                           ) : (
-                            <span className="text-slate-400 italic text-xs">Walang nakalagay na numero</span>
+                            <span className="text-slate-400 italic text-xs">No contact number listed</span>
                           )}
                         </div>
 
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                          <MapPin size={14} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <MapPin size={13} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                           <span className="truncate text-xs font-normal text-slate-600 dark:text-slate-400">
                             {member.address || 'Address not listed'}
                           </span>
@@ -514,14 +528,14 @@ const SubmitMembers = () => {
 
                       {/* Member's Registered Units Roster */}
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
                           <Car size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                          {isFilipino ? 'Mga Nakarehistrong Tricycle (Units)' : 'Registered Tricycle Units'}
+                          <span>Registered Tricycle Units</span>
                         </p>
 
                         {member.units.length === 0 ? (
-                          <div className="p-3 rounded-xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-medium">
-                            {isFilipino ? 'Wala pang naipapasang prangkisa' : 'No franchise applied yet'}
+                          <div className="p-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-medium">
+                            No franchise applied yet
                           </div>
                         ) : (
                           <div className="space-y-1.5">
@@ -540,7 +554,7 @@ const SubmitMembers = () => {
                                     </span>
                                   </div>
                                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate">
-                                    Zone {unit.zone || 'N/A'} {unit.motorNo ? `&bull; Motor: ${unit.motorNo}` : ''}
+                                    Zone {unit.zone || 'N/A'} {unit.motorNo ? `• Motor: ${unit.motorNo}` : ''}
                                   </p>
                                 </div>
 
@@ -579,10 +593,10 @@ const SubmitMembers = () => {
               <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 transition-colors">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    {isFilipino ? 'Mag-upload ng Masterlist' : 'Upload Member Roster Document'}
+                    Upload Member Roster Document
                   </h2>
                   <span className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-lg">
-                    PDF &bull; Excel &bull; CSV
+                    PDF • Excel • CSV
                   </span>
                 </div>
                 
@@ -592,10 +606,10 @@ const SubmitMembers = () => {
                       <UploadCloud size={24} />
                     </div>
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-0.5">
-                      {isFilipino ? 'Pumili ng file mula sa inyong cellphone o kompyuter' : 'Select a file from your device'}
+                      Select a file from your device
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 font-normal">
-                      {isFilipino ? 'Tinatanggap: PDF, Excel (.xlsx, .xls, .csv)' : 'Supported formats: PDF, Excel (.xlsx, .csv)'}
+                      Supported formats: PDF, Excel (.xlsx, .csv)
                     </p>
                     
                     <input 
@@ -609,7 +623,7 @@ const SubmitMembers = () => {
                       htmlFor="file-upload"
                       className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm cursor-pointer transition-colors shadow-xs active:scale-95 min-h-[42px]"
                     >
-                      {isFilipino ? 'Pumili ng File' : 'Browse Files on Device'}
+                      Browse Files on Device
                     </label>
 
                     {file && (
@@ -639,10 +653,10 @@ const SubmitMembers = () => {
                     {isUploading ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        <span>{isFilipino ? 'Ipinapasa sa Database...' : 'Uploading to Database...'}</span>
+                        <span>Uploading to Database...</span>
                       </>
                     ) : (
-                      <span>{isFilipino ? 'Isumite ang Listahan ng Miyembro' : 'Submit Member List'}</span>
+                      <span>Submit Member List</span>
                     )}
                   </button>
                 </form>
@@ -653,7 +667,7 @@ const SubmitMembers = () => {
             <div className="lg:col-span-1">
               <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 transition-colors">
                 <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-3">
-                  {isFilipino ? 'Mga Naunang Naisumite' : 'Recent Submissions'}
+                  Recent Submissions
                 </h2>
                 
                 <div className="space-y-2.5">
@@ -661,7 +675,7 @@ const SubmitMembers = () => {
                     <SubmissionCardsSkeleton count={3} baseDelay={30} stepDelay={45} />
                   ) : submissions.length === 0 ? (
                     <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-medium bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                      {isFilipino ? 'Wala pang naisumite.' : 'No submissions yet.'}
+                      No submissions yet.
                     </div>
                   ) : (
                     submissions.map((sub, sIdx) => (
@@ -686,7 +700,7 @@ const SubmitMembers = () => {
                           </span>
                         </div>
                         <p className="text-[11px] font-normal text-slate-500 dark:text-slate-400 pl-5">
-                          Naisumite noong {new Date(sub.createdAt).toLocaleDateString()}
+                          Submitted on {new Date(sub.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     ))
@@ -697,6 +711,15 @@ const SubmitMembers = () => {
           </div>
         )}
       </div>
+
+      {/* Centered Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
+        type={feedbackModal.type}
+        title={feedbackModal.title}
+        message={feedbackModal.message}
+      />
     </MainLayout>
   );
 };

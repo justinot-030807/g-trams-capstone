@@ -5,7 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
   const { language, changeLanguage } = useLanguage();
-  const [selectedLang, setSelectedLang] = useState(language || 'fil');
+  const [selectedLang, setSelectedLang] = useState(language || 'en');
 
   if (!isOpen) return null;
 

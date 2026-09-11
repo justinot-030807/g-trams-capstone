@@ -60,7 +60,7 @@ const DocumentUploadCard = ({
             {label} {required && <span className="text-red-500">*</span>}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            {hasFile ? '✓ Dokumentong napili' : 'Kumuha ng litrato o pumili ng file'}
+            {hasFile ? '✓ Document selected' : 'Take photo or select file'}
           </p>
         </div>
 
@@ -72,7 +72,7 @@ const DocumentUploadCard = ({
               onFileRemove(id);
             }}
             className="text-slate-400 hover:text-red-500 p-1.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer"
-            title="Tanggalin ang dokumento"
+            title="Remove document"
           >
             <X size={16} />
           </button>
@@ -102,7 +102,7 @@ const DocumentUploadCard = ({
             </button>
           </div>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-            Malinaw na litrato ng dokumento
+            Clear photo or scanned copy
           </p>
         </div>
       ) : (
@@ -110,8 +110,8 @@ const DocumentUploadCard = ({
           {isPdf ? (
             <div className="p-3 text-center flex flex-col items-center">
               <FileCheck size={28} className="text-emerald-600 dark:text-emerald-400 mb-1" />
-              <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Dokumentong PDF</span>
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Handa nang isumite</span>
+              <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">PDF Document</span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Ready to submit</span>
             </div>
           ) : (
             <div className="w-full h-28 relative overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800">
@@ -126,7 +126,7 @@ const DocumentUploadCard = ({
                 className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs font-bold cursor-pointer"
               >
                 <ZoomIn size={16} />
-                <span>Tingnan</span>
+                <span>Preview</span>
               </button>
             </div>
           )}
@@ -134,14 +134,14 @@ const DocumentUploadCard = ({
           {/* Quick Retake Action */}
           <div className="w-full bg-emerald-100/80 dark:bg-emerald-950/70 py-1.5 px-3 flex items-center justify-between text-xs border-t border-emerald-200 dark:border-emerald-900/60">
             <span className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300 text-xs">
-              <CheckCircle2 size={13} /> Handa na
+              <CheckCircle2 size={13} /> Ready
             </span>
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
               className="text-[#7A1B22] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer text-xs"
             >
-              <RotateCcw size={11} /> Palitan
+              <RotateCcw size={11} /> Change
             </button>
           </div>
         </div>
@@ -149,8 +149,8 @@ const DocumentUploadCard = ({
 
       {/* Footer Helper */}
       <div className="mt-1.5 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 font-medium">
-        <span>JPG, PNG, o PDF</span>
-        <span>Hanggang 10MB</span>
+        <span>JPG, PNG, or PDF</span>
+        <span>Up to 10MB</span>
       </div>
 
     </div>

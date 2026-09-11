@@ -213,7 +213,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
         {/* Scissors Cutout Indicator for Paper Printing */}
         <div className="w-full max-w-[500px] mb-1.5 hidden print:flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-widest border-b border-dashed border-slate-400 pb-1">
-          <span className="flex items-center gap-1"><Scissors size={12} /> Gupitin Dito (Cut along line)</span>
+          <span className="flex items-center gap-1"><Scissors size={12} /> Cut along line</span>
           <span>Official Voucher Slip</span>
         </div>
 
@@ -321,13 +321,13 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
             <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-2.5">
               <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
                 <AlertCircle size={12} className="text-amber-600" />
-                Mga Dadalhin sa Munisipyo ng Gasan (Checklist)
+                What to Bring to the Municipal Hall (Checklist)
               </h4>
 
               <ul className="space-y-1 text-[10px] text-amber-950 font-medium">
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 size={11} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>1. Itong Claim Stub Voucher:</strong> Naka-print o nasa cellphone.</span>
+                  <span><strong>1. Claim Stub Voucher:</strong> Digital on mobile or printed slip.</span>
                 </li>
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 size={11} className="text-emerald-600 shrink-0 mt-0.5" />
@@ -335,11 +335,11 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
                 </li>
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 size={11} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>3. Eksaktong Bayad (₱{parseFloat(systemFranchiseFee).toFixed(2)})</strong> sa Cashier.</span>
+                  <span><strong>3. Exact Fee Payment (₱{parseFloat(systemFranchiseFee).toFixed(2)})</strong> for Cashier.</span>
                 </li>
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 size={11} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>4. Tricycle Unit</strong> para sa stenciling at MTOP sticker.</span>
+                  <span><strong>4. Tricycle Unit</strong> for stenciling and MTOP inspection.</span>
                 </li>
               </ul>
             </div>

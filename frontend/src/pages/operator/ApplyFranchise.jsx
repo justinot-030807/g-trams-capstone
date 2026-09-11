@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
+import FeedbackModal from '../../components/common/FeedbackModal';
 
 const GASAN_BARANGAYS = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
@@ -54,6 +55,16 @@ const ApplyFranchise = () => {
     reason: CANCEL_REASONS[0],
     customReason: '',
     isSubmitting: false
+  });
+
+  // Centered Feedback Modal state
+  const [feedbackModal, setFeedbackModal] = useState({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+    confirmText: 'OK',
+    onConfirm: null
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -216,7 +227,14 @@ const ApplyFranchise = () => {
       setLastSavedTime(timeStr);
       setHasDraftRestored(true);
       if (isManual) {
-        showToast(`✓ Na-save ang iyong progress! (${timeStr})`, "success");
+        setFeedbackModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Progress Saved',
+          message: `Your application draft has been saved (${timeStr}). You can safely return and continue anytime.`,
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
       }
     } catch (e) {
       console.error('Error saving draft:', e);
@@ -320,7 +338,14 @@ const ApplyFranchise = () => {
       setUploadedDocs({});
       setFilePreviews({});
     }
-    showToast("Binura ang draft. Naka-reset na ang form.", "success");
+    setFeedbackModal({
+      isOpen: true,
+      type: 'info',
+      title: 'Draft Cleared',
+      message: 'Your application draft has been cleared and the form has been reset.',
+      confirmText: 'OK',
+      onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+    });
   };
 
   const handleRenewClick = (franchise) => {
@@ -561,14 +586,30 @@ const ApplyFranchise = () => {
         if (selectedId) {
           localStorage.removeItem(`gtrams_renewal_draft_${selectedId}`);
         }
-        showToast("Application submitted successfully!", "success");
-        setFormMode(null);
-        setCurrentStep(1);
-        fetchMyFranchises(); 
-        setUploadedDocs({});
-        setFilePreviews({});
+        setFeedbackModal({
+          isOpen: true,
+          type: 'success',
+          title: formMode === 'Re-apply' ? 'Revision Submitted!' : formMode === 'Renewal' ? 'Renewal Submitted!' : 'Application Submitted!',
+          message: 'Your application has been received by the BPLO office for evaluation. You can track the status directly on your dashboard.',
+          confirmText: 'OK',
+          onConfirm: () => {
+            setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+            setFormMode(null);
+            setCurrentStep(1);
+            fetchMyFranchises(); 
+            setUploadedDocs({});
+            setFilePreviews({});
+          }
+        });
       } else {
-        showToast(data.message || data.error || 'Failed to submit application. Please check the details.', 'error');
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Submission Failed',
+          message: data.message || data.error || 'Failed to submit application. Please check your inputs and requirements.',
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
       }
     } catch (error) {
       console.error('Submission error:', error);
@@ -835,159 +876,81 @@ const ApplyFranchise = () => {
         </div>
       )}
 
-      <header className="mb-6 max-w-3xl flex flex-col sm:flex-row justify-between sm:items-end gap-2">
+      <header className="mb-5 max-w-3xl flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
+          <div className="w-1.5 h-7 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
-            <button 
-              onClick={() => { setFormMode(null); setCurrentStep(1); }} 
-              className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-1"
-            >
-              <ArrowLeft size={15} /> Back to My Units
-            </button>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
             </h1>
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {formMode === 'Renewal' ? 'Please review your records and update Community Tax Certificate (Cedula) details.' : 'Complete the required vehicle information and upload supporting documents.'}
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              {formMode === 'Renewal' ? 'Please review your records and update Community Tax Certificate (CTC) details.' : 'Complete the required vehicle information and upload supporting documents.'}
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          <button
-            type="button"
-            onClick={() => handleSaveProgress(true)}
-            className="flex items-center gap-1.5 text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] bg-red-50 dark:bg-amber-950/30 hover:bg-red-100 dark:hover:bg-amber-900/40 px-3 py-1.5 rounded-xl border border-red-200 dark:border-amber-800/60 transition-colors shadow-2xs active:scale-95"
-            title="Save your progress to resume later"
-          >
-            <Save size={13} /> Save Progress
-          </button>
-
-          {hasDraftRestored && (
-            <button
-              type="button"
-              onClick={handleClearDraft}
-              className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
-              title="Clear draft and start fresh"
-            >
-              <RotateCcw size={13} /> Reset Draft
-            </button>
-          )}
-        </div>
       </header>
 
-      {/* Dynamic Completion Progress Bar */}
-      {(() => {
-        const progress = calculateProgress();
-        return (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs max-w-3xl mb-5 transition-colors">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
-                  progress.percentage === 100 
-                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400' 
-                    : 'bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]'
-                }`}>
-                  {progress.percentage === 100 ? <CheckCircle2 size={16} /> : `${progress.percentage}%`}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                      Application Progress
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {progress.completed} of {progress.total} completed
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
-                    {progress.remaining > 0 
-                      ? (formMode === 'Renewal' ? `${progress.remaining} Cedula field${progress.remaining > 1 ? 's' : ''} remaining` : `${progress.remaining} item${progress.remaining > 1 ? 's' : ''} remaining`)
-                      : '✓ All details and requirements completed!'}
-                  </p>
-                </div>
-              </div>
+      {/* Clean Stepper Navigation */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs max-w-3xl mb-5 transition-colors">
+        <div className="flex items-start w-full px-2 sm:px-6">
+          {steps.map((step, idx) => {
+            const isCompleted = currentStep > step.num;
+            const isCurrent = currentStep === step.num;
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500 self-end sm:self-center">
-                <Clock size={12} />
-                <span>{lastSavedTime ? `Last saved: ${lastSavedTime}` : 'Auto-saves progress'}</span>
-              </div>
-            </div>
-
-            {/* Visual Progress Bar Track */}
-            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/60 dark:border-slate-700/60 mb-3.5">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ease-out ${
-                  progress.percentage === 100
-                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
-                    : 'bg-gradient-to-r from-[#7A1B22] to-[#D4AF37]'
-                }`}
-                style={{ width: `${progress.percentage}%` }}
-              />
-            </div>
-
-            {/* Stepper Navigation */}
-            <div className="flex items-start w-full px-2 sm:px-6 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-              {steps.map((step, idx) => {
-                const isCompleted = currentStep > step.num;
-                const isCurrent = currentStep === step.num;
-
-                return (
-                  <button
-                    type="button"
-                    key={step.num}
-                    onClick={() => setCurrentStep(step.num)}
-                    className="relative flex-1 flex flex-col items-center group cursor-pointer focus:outline-hidden"
-                  >
-                    {/* Seamless Connector Line to Next Step */}
-                    {idx < steps.length - 1 && (
-                      <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] -translate-y-1/2 z-0 pointer-events-none">
-                        <div className="w-full h-full bg-slate-200 dark:bg-slate-700 rounded-full" />
-                        <div 
-                          className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
-                            currentStep > step.num ? 'w-full' : 'w-0'
-                          }`} 
-                        />
-                      </div>
-                    )}
-
-                    {/* Step Circle */}
+            return (
+              <button
+                type="button"
+                key={step.num}
+                onClick={() => setCurrentStep(step.num)}
+                className="relative flex-1 flex flex-col items-center group cursor-pointer focus:outline-hidden"
+              >
+                {/* Seamless Connector Line to Next Step */}
+                {idx < steps.length - 1 && (
+                  <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] -translate-y-1/2 z-0 pointer-events-none">
+                    <div className="w-full h-full bg-slate-200 dark:bg-slate-700 rounded-full" />
                     <div 
-                      className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-                        isCompleted 
-                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs group-hover:scale-105' 
-                          : isCurrent 
-                          ? 'bg-white dark:bg-slate-800 border-[2.5px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
-                          : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <Check size={13} className="stroke-[3]" />
-                      ) : isCurrent ? (
-                        <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
-                      ) : (
-                        <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
-                      )}
-                    </div>
-                    
-                    <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
-                      isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-bold' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
-                    }`}>
-                      {step.title}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+                      className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
+                        currentStep > step.num ? 'w-full' : 'w-0'
+                      }`} 
+                    />
+                  </div>
+                )}
+
+                {/* Step Circle */}
+                <div 
+                  className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    isCompleted 
+                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs group-hover:scale-105' 
+                      : isCurrent 
+                      ? 'bg-white dark:bg-slate-800 border-[2.5px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
+                      : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <Check size={13} className="stroke-[3]" />
+                  ) : isCurrent ? (
+                    <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+                  ) : (
+                    <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
+                  )}
+                </div>
+                
+                <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                  isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-bold' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+                }`}>
+                  {step.title}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-3xl">
         
         {currentStep === 1 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* Section 1: Operator / May-ari */}
+            {/* Section 1: Operator Information */}
             <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
               <div className="flex items-center gap-2.5 mb-3.5 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
@@ -995,10 +958,10 @@ const ApplyFranchise = () => {
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    1. Impormasyon ng Operator (May-ari)
+                    1. Operator Information (Owner)
                   </h2>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
-                    Personal na detalye ng rehistradong may-ari ng prangkisa
+                    Personal details of the registered franchise owner
                   </p>
                 </div>
               </div>
@@ -1006,7 +969,7 @@ const ApplyFranchise = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Buong Pangalan ng Operator <span className="text-red-500">*</span>
+                    Operator Full Name <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1016,19 +979,19 @@ const ApplyFranchise = () => {
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Hal. Juan Dela Cruz"
+                    placeholder="e.g. Juan Dela Cruz"
                   />
                 </div>
                 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Barangay sa Gasan <span className="text-red-500">*</span>
+                    Barangay in Gasan <span className="text-red-500">*</span>
                   </label>
                   {formMode === 'Renewal' || formMode === 'Re-apply' ? (
                     <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly />
                   ) : (
                     <select name="address" value={formData.address} onChange={handleInputChange} className={inputClasses} required>
-                      <option value="">Pumili ng Barangay...</option>
+                      <option value="">Select Barangay...</option>
                       {GASAN_BARANGAYS.map((brgy, i) => (
                         <option key={i} value={brgy}>{brgy}, Gasan</option>
                       ))}
@@ -1039,10 +1002,10 @@ const ApplyFranchise = () => {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Samahan ng TODA
+                      TODA Association
                     </label>
                     <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                      Nakatala
+                      Registered
                     </span>
                   </div>
                   <input 
@@ -1051,13 +1014,13 @@ const ApplyFranchise = () => {
                     value={formData.todaName || loggedInToda || 'NON-TODA'} 
                     readOnly 
                     className={disabledClasses} 
-                    title="Awtomatikong nakabase sa inyong account."
+                    title="Assigned automatically based on your account."
                   />
                 </div>
               </div>
             </div>
 
-            {/* Section 2: Detalye ng Sasakyan / Motor */}
+            {/* Section 2: Vehicle Details */}
             <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
               <div className="flex items-center gap-2.5 mb-3.5 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
@@ -1065,10 +1028,10 @@ const ApplyFranchise = () => {
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    2. Detalye ng Sasakyan (Tricycle / Motor)
+                    2. Vehicle Details (Tricycle / Motorcycle)
                   </h2>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
-                    Impormasyon ayon sa opisyal na LTO OR/CR ng sasakyan
+                    Official vehicle details according to LTO OR/CR
                   </p>
                 </div>
               </div>
@@ -1076,7 +1039,7 @@ const ApplyFranchise = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Brand / Modelo <span className="text-red-500">*</span>
+                    Make / Brand <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1086,13 +1049,13 @@ const ApplyFranchise = () => {
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Hal. Honda TMX 125" 
+                    placeholder="e.g. Honda TMX 125" 
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Taon (Model Year) <span className="text-red-500">*</span>
+                    Model Year <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1105,13 +1068,13 @@ const ApplyFranchise = () => {
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Hal. 2024" 
+                    placeholder="e.g. 2024" 
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Ruta / Zone <span className="text-red-500">*</span>
+                    Route / Zone <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1123,7 +1086,7 @@ const ApplyFranchise = () => {
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Hal. 1 o 2" 
+                    placeholder="e.g. 1 or 2" 
                   />
                 </div>
 
@@ -1139,13 +1102,13 @@ const ApplyFranchise = () => {
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Hal. 123-ABC" 
+                    placeholder="e.g. 123-ABC" 
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Motor Serial No. <span className="text-red-500">*</span>
+                    Engine / Motor No. <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1155,7 +1118,7 @@ const ApplyFranchise = () => {
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Numero ng Motor" 
+                    placeholder="Motor Serial Number" 
                   />
                 </div>
                 
@@ -1171,30 +1134,45 @@ const ApplyFranchise = () => {
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Numero ng Chassis" 
+                    placeholder="Chassis Serial Number" 
                   />
                 </div>
               </div>
 
-              {/* Step Navigation Buttons */}
-              <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-5 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[42px]"
-                >
-                  <Save size={15} />
-                  <span>I-save ang Progress</span>
-                </button>
+              {/* Step Navigation & Action Buttons */}
+              <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+                <div className="flex items-center justify-end">
+                  <button 
+                    type="button" 
+                    onClick={validateAndNext}
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px]"
+                  >
+                    <span>Continue to Step 2 (CTC / Cedula)</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
 
-                <button 
-                  type="button" 
-                  onClick={validateAndNext}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px]"
-                >
-                  <span>Susunod (Hakbang 2: Cedula)</span>
-                  <ChevronRight size={16} />
-                </button>
+                {/* Secondary buttons below continue */}
+                <div className="flex items-center justify-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveProgress(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <Save size={13} />
+                    <span>Save Draft</span>
+                  </button>
+                  {hasDraftRestored && (
+                    <button
+                      type="button"
+                      onClick={handleClearDraft}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw size={13} />
+                      <span>Reset Draft</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1208,10 +1186,10 @@ const ApplyFranchise = () => {
               </div>
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Impormasyon ng Cedula (Community Tax Certificate)
+                  Community Tax Certificate (CTC / Cedula)
                 </h2>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                  Ilagay ang pinakabagong CTC na kinuha mula sa Ingat-Yaman ng Munisipyo
+                  Enter the latest CTC details issued by the Municipal Treasurer
                 </p>
               </div>
             </div>
@@ -1219,7 +1197,7 @@ const ApplyFranchise = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Cedula / CTC Serial No. <span className="text-red-500">*</span>
+                  CTC / Cedula Serial No. <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="text" 
@@ -1229,15 +1207,15 @@ const ApplyFranchise = () => {
                   value={formData.cedulaSerialNo} 
                   onChange={handleInputChange} 
                   className={inputClasses} 
-                  placeholder="Hal. 08123456" 
+                  placeholder="e.g. 08123456" 
                   required 
                 />
-                <p className="text-[11px] font-medium text-slate-400 mt-1">Mga numero lamang sa itaas ng resibo</p>
+                <p className="text-[11px] font-medium text-slate-400 mt-1">Digits printed on top of the certificate</p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Petsa kung Kailan Kinuha <span className="text-red-500">*</span>
+                  Date Issued <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="date" 
@@ -1251,7 +1229,7 @@ const ApplyFranchise = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Lugar kung Saan Kinuha <span className="text-red-500">*</span>
+                  Place Issued <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="text" 
@@ -1266,7 +1244,7 @@ const ApplyFranchise = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Petsa ng Pag-apply sa Portal <span className="text-red-500">*</span>
+                  Application Date <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="date" 
@@ -1279,22 +1257,15 @@ const ApplyFranchise = () => {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-5 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
-              <button 
-                type="button" 
-                onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px]"
-              >
-                <ChevronLeft size={16} /> Bumalik sa Motor
-              </button>
-
-              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[42px]"
+            {/* Step Navigation & Action Buttons */}
+            <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+              <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
+                <button 
+                  type="button" 
+                  onClick={prevStep}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px]"
                 >
-                  <Save size={15} /> I-save ang Progress
+                  <ChevronLeft size={16} /> Back: Vehicle Info
                 </button>
 
                 <button 
@@ -1302,9 +1273,31 @@ const ApplyFranchise = () => {
                   onClick={validateAndNext}
                   className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px]"
                 >
-                  <span>Susunod (Hakbang 3: Dokumento)</span>
+                  <span>Continue to Step 3 (Documents)</span>
                   <ChevronRight size={16} />
                 </button>
+              </div>
+
+              {/* Secondary buttons below continue */}
+              <div className="flex items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleSaveProgress(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <Save size={13} />
+                  <span>Save Draft</span>
+                </button>
+                {hasDraftRestored && (
+                  <button
+                    type="button"
+                    onClick={handleClearDraft}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Reset Draft</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1318,10 +1311,10 @@ const ApplyFranchise = () => {
               </div>
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Hakbang 3: Upload ng mga Kinakailangang Dokumento
+                  Step 3: Upload Required Documents
                 </h2>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                  Kumuha ng malinaw na litrato gamit ang cellphone camera o pumili ng file mula sa gallery
+                  Take a clear photo with your mobile camera or upload from device gallery
                 </p>
               </div>
             </div>
@@ -1329,7 +1322,7 @@ const ApplyFranchise = () => {
             {formMode === 'Renewal' ? (
               <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 rounded-2xl text-xs sm:text-sm font-semibold mb-5 flex items-start gap-3">
                 <Info size={18} className="shrink-0 mt-0.5" />
-                <p className="leading-relaxed">Hindi na kailangang mag-upload ng mga bagong file para sa renewal. Pakisuri ang buod sa ibaba bago i-submit.</p>
+                <p className="leading-relaxed">No new document uploads required for renewal. Please review the summary below before submitting.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -1351,7 +1344,7 @@ const ApplyFranchise = () => {
 
             <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-5">
               <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                Buod ng Aplikasyon Bago I-sumite
+                Application Summary Before Submission
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
@@ -1373,22 +1366,14 @@ const ApplyFranchise = () => {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
-              <button 
-                type="button" 
-                onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px]"
-              >
-                <ChevronLeft size={16} /> Bumalik sa Cedula
-              </button>
-
-              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[42px]"
+            <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+              <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
+                <button 
+                  type="button" 
+                  onClick={prevStep}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px]"
                 >
-                  <Save size={15} /> I-save ang Progress
+                  <ChevronLeft size={16} /> Back: CTC / Cedula
                 </button>
 
                 <button 
@@ -1401,8 +1386,30 @@ const ApplyFranchise = () => {
                   }`}
                 >
                   {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                  <span>{isSubmitting ? 'Isinusumite...' : formMode === 'Re-apply' ? 'Isumite ang Rebisyon' : 'Isumite ang Aplikasyon'}</span>
+                  <span>{isSubmitting ? 'Submitting...' : formMode === 'Re-apply' ? 'Submit Revision' : 'Submit Application'}</span>
                 </button>
+              </div>
+
+              {/* Secondary buttons below submit */}
+              <div className="flex items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleSaveProgress(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <Save size={13} />
+                  <span>Save Draft</span>
+                </button>
+                {hasDraftRestored && (
+                  <button
+                    type="button"
+                    onClick={handleClearDraft}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Reset Draft</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1552,6 +1559,17 @@ const ApplyFranchise = () => {
           </div>
         </div>
       )}
+
+      {/* Centered Feedback Modal */}
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        type={feedbackModal.type}
+        title={feedbackModal.title}
+        message={feedbackModal.message}
+        confirmText={feedbackModal.confirmText || 'OK'}
+        onConfirm={feedbackModal.onConfirm || (() => setFeedbackModal(prev => ({ ...prev, isOpen: false })))}
+        onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </MainLayout>
   );
 };
