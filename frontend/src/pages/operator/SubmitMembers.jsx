@@ -3,7 +3,8 @@ import MainLayout from '../../components/MainLayout';
 import { 
   UploadCloud, FileText, CheckCircle2, Clock3, ArrowLeft, X, Loader2, 
   FileSpreadsheet, Users, ShieldCheck, Phone, MapPin, Hash, Search, 
-  Filter, Printer, Sparkles, RefreshCw, AlertCircle, Check, ChevronRight
+  Filter, Printer, Sparkles, RefreshCw, AlertCircle, Check, ChevronRight,
+  Car
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SubmissionCardsSkeleton } from '../../components/skeleton';
@@ -11,7 +12,7 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const SubmitMembers = () => {
   const { t, language } = useLanguage();
-  const isFilipino = language === 'fil';
+  const isFilipino = language === 'fil' || language === 'tl';
   const navigate = useNavigate();
 
   // Tab State: 'roster' (Member Group Directory) or 'upload' (Document Submission)
@@ -32,6 +33,12 @@ const SubmitMembers = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [submissions, setSubmissions] = useState([]); 
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
 
   useEffect(() => {
     fetchMyMembers();
@@ -104,13 +111,13 @@ const SubmitMembers = () => {
       if (response.ok) {
         setSubmissions(prev => [data.submission, ...prev]);
         setFile(null);
-        alert(isFilipino ? 'Matagumpay na naisumite ang listahan sa Munisipyo!' : 'File successfully submitted to the Administrator!');
+        showToast(isFilipino ? 'Matagumpay na naisumite ang listahan sa Munisipyo!' : 'File successfully submitted to the Administrator!', 'success');
       } else {
-        alert(data.message || (isFilipino ? 'Nabigo ang pag-upload' : 'Upload failed'));
+        showToast(data.message || (isFilipino ? 'Nabigo ang pag-upload' : 'Upload failed'), 'error');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert(isFilipino ? 'Hindi makakonekta sa server.' : 'Cannot connect to the server.');
+      showToast(isFilipino ? 'Hindi makakonekta sa server.' : 'Cannot connect to the server.', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -145,7 +152,27 @@ const SubmitMembers = () => {
 
   return (
     <MainLayout>
-      <div className="pb-28 sm:pb-24">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+              toast.type === 'error'
+                ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+            }`}>
+              {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                {toast.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="pb-28 sm:pb-24 animate-in fade-in duration-300">
         {/* Top Header */}
         <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -163,11 +190,11 @@ const SubmitMembers = () => {
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                {isFilipino ? 'TODA Hub: Mga Miyembro at Yunit' : 'TODA Association & Member Roster'}
+                {isFilipino ? 'TODA Hub: Direktoryo ng mga Miyembro' : 'TODA Association & Member Roster'}
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
                 {isFilipino 
-                  ? 'Tingnan ang lahat ng miyembro, rehistradong tricycle units, o magsumite ng bagong opisyal na listahan.' 
+                  ? 'Tingnan ang lahat ng miyembro, rehistradong tricycle units, o magsumite ng opisyal na listahan sa BPLO.' 
                   : 'View all association members, registered units, or submit official rosters to the LGU.'}
               </p>
             </div>
@@ -310,7 +337,7 @@ const SubmitMembers = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={isFilipino ? "Maghanap sa pangalan, plaka, contact..." : "Search by member name, plate #, contact..."}
-                  className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 shadow-2xs"
+                  className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 shadow-2xs min-h-[48px]"
                 />
                 {searchTerm && (
                   <button 
@@ -327,9 +354,9 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'all'
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -338,9 +365,9 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('active')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'active'
-                      ? 'bg-emerald-600 text-white shadow-sm'
+                      ? 'bg-emerald-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -349,9 +376,9 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('pending')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'pending'
-                      ? 'bg-amber-600 text-white shadow-sm'
+                      ? 'bg-amber-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -360,9 +387,9 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('expired')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[40px] flex items-center justify-center ${
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'expired'
-                      ? 'bg-orange-600 text-white shadow-sm'
+                      ? 'bg-orange-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -371,303 +398,307 @@ const SubmitMembers = () => {
               </div>
             </div>
 
-          {/* Member Roster List */}
-          {isLoadingMembers ? (
-            <div className="space-y-4">
-              <SubmissionCardsSkeleton count={4} baseDelay={30} stepDelay={45} />
-            </div>
-          ) : filteredMembers.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-dashed border-slate-300 dark:border-slate-700">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                <Users size={28} />
+            {/* Member Roster List */}
+            {isLoadingMembers ? (
+              <div className="space-y-4">
+                <SubmissionCardsSkeleton count={4} baseDelay={30} stepDelay={45} />
               </div>
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">
-                {searchTerm ? (isFilipino ? 'Walang nahanap na miyembro' : 'No matching members found') : (isFilipino ? 'Wala pang nakatalang miyembro' : 'No registered members found')}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
-                {searchTerm
-                  ? (isFilipino ? 'Subukang baguhin ang iyong keyword o filter.' : 'Try changing your search keywords or filter pills.')
-                  : (isFilipino ? 'Kapag nagrehistro ang mga operator sa ilalim ng inyong TODA, dito sila awtomatikong lalabas.' : 'When operators register under your TODA, they will automatically appear here.')}
-              </p>
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
-                >
-                  {isFilipino ? 'I-clear ang Search' : 'Clear Search'}
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-              {filteredMembers.map((member, mIdx) => (
-                <div
-                  key={member._id || mIdx}
-                  className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
-                >
-                  {/* Top Subtle Border Highlight */}
-                  {member.isPresident && (
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
-                  )}
-
-                  <div>
-                    {/* Member Header: Photo/Avatar, Name, Role Tag */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        {member.profilePic ? (
-                          <img
-                            src={member.profilePic}
-                            alt={member.name}
-                            className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border-2 border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-black text-lg shrink-0 shadow-2xs">
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
-                              {member.name}
-                            </h3>
-                            {member.isCurrentUser && (
-                              <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                {isFilipino ? 'Ikaw (You)' : 'You'}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2 mt-1">
-                            {member.isPresident ? (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
-                                <Sparkles size={12} />
-                                TODA President
-                              </span>
-                            ) : (
-                              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                {isFilipino ? 'Miyembro / Operator' : 'Operator / Member'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Units count pill */}
-                      <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0">
-                        {member.units.length} {member.units.length === 1 ? (isFilipino ? 'Yunit' : 'Unit') : (isFilipino ? 'mga Yunit' : 'Units')}
-                      </span>
-                    </div>
-
-                    {/* Contact & Address Bar */}
-                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-2 mb-4 text-xs sm:text-sm">
-                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                        <Phone size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                        {member.contact && member.contact !== 'N/A' ? (
-                          <a 
-                            href={`tel:${member.contact}`} 
-                            className="inline-flex items-center gap-1.5 font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
-                            title="Tawagan ang miyembro"
-                          >
-                            <span>{member.contact}</span>
-                            <span className="text-[10px] uppercase font-black bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2 py-0.5 rounded-md">Tawagan</span>
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 italic">Walang nakalagay na numero</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                        <MapPin size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                        <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-400">
-                          {member.address || 'Address not listed'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Member's Registered Units Roster */}
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
-                        {isFilipino ? 'Mga Nakarehistrong Tricycle (Units)' : 'Registered Tricycle Units'}
-                      </p>
-
-                      {member.units.length === 0 ? (
-                        <div className="p-3.5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-bold">
-                          {isFilipino ? 'Wala pang naipapasang prangkisa' : 'No franchise applied yet'}
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {member.units.map((unit, uIdx) => (
-                            <div
-                              key={unit._id || uIdx}
-                              className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between gap-2 shadow-2xs"
-                            >
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                  <span className="font-mono text-sm font-black text-slate-900 dark:text-white">
-                                    {unit.plateNo || 'NO PLATE'}
-                                  </span>
-                                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
-                                    &bull; {unit.make || 'Tricycle'}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate">
-                                  Zone {unit.zone || 'N/A'} {unit.motorNo ? `| Motor: ${unit.motorNo}` : ''}
-                                </p>
-                              </div>
-
-                              <span className={`px-2.5 py-1 text-xs font-black rounded-xl uppercase tracking-wider shrink-0 ${
-                                unit.status === 'Active'
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
-                                  : unit.status === 'Ready for Pickup'
-                                  ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60'
-                                  : unit.status === 'Expired'
-                                  ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60'
-                                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
-                              }`}>
-                                {unit.status}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            ) : filteredMembers.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-dashed border-slate-300 dark:border-slate-700">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                  <Users size={28} />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 2: DOCUMENT SUBMISSION & HISTORY (Preserved Original Features) */}
-      {activeTab === 'upload' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
-          {/* Upload Card */}
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-7 transition-colors">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                  {isFilipino ? 'Mag-upload ng Masterlist' : 'Upload Member Roster Document'}
-                </h2>
-                <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-3 py-1 rounded-lg">
-                  PDF &bull; Excel &bull; CSV
-                </span>
-              </div>
-              
-              <form onSubmit={handleUpload}>
-                <div className="border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-10 text-center hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors relative group">
-                  <div className="w-16 h-16 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-3 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
-                    <UploadCloud size={32} />
-                  </div>
-                  <p className="text-base font-black text-slate-800 dark:text-slate-200 mb-1">
-                    {isFilipino ? 'I-drag ang file dito o pumili mula sa cellphone' : 'Drag and drop your file here, or tap below'}
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
-                    {isFilipino ? 'Tinatanggap: PDF, Excel (.xlsx, .csv)' : 'Supported formats: PDF, Excel (.xlsx, .csv)'}
-                  </p>
-                  
-                  <input 
-                    type="file" 
-                    id="file-upload" 
-                    className="hidden" 
-                    accept=".pdf, .xlsx, .csv"
-                    onChange={handleFileChange}
-                  />
-                  <label 
-                    htmlFor="file-upload"
-                    className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-7 py-3.5 rounded-2xl font-black text-sm cursor-pointer transition-colors shadow-sm active:scale-95 min-h-[48px]"
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">
+                  {searchTerm ? (isFilipino ? 'Walang nahanap na miyembro' : 'No matching members found') : (isFilipino ? 'Wala pang nakatalang miyembro' : 'No registered members found')}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
+                  {searchTerm
+                    ? (isFilipino ? 'Subukang baguhin ang iyong keyword o filter.' : 'Try changing your search keywords or filter pills.')
+                    : (isFilipino ? 'Kapag nagrehistro ang mga operator sa ilalim ng inyong TODA, dito sila awtomatikong lalabas.' : 'When operators register under your TODA, they will automatically appear here.')}
+                </p>
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
+                    className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
                   >
-                    {isFilipino ? 'Pumili ng File mula sa Cellphone' : 'Browse Files on Device'}
-                  </label>
-
-                  {file && (
-                    <div className="mt-5 flex items-center justify-center gap-2 text-xs sm:text-sm font-black text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 py-3 px-4 rounded-2xl inline-flex border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
-                      <FileSpreadsheet size={18} />
-                      <span className="truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => setFile(null)} 
-                        className="text-slate-400 hover:text-red-500 ml-1 p-1 cursor-pointer rounded-lg"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={!file || isUploading}
-                  className={`w-full mt-5 py-4 rounded-2xl font-black text-sm text-white transition-all shadow-md flex items-center justify-center gap-2 min-h-[50px] active:scale-95 ${
-                    !file || isUploading 
-                    ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-600 cursor-not-allowed' 
-                    : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:text-slate-950 dark:hover:bg-[#c29e2f] cursor-pointer shadow-[#7A1B22]/20'
-                  }`}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      <span>{isFilipino ? 'Ipinapasa sa Database...' : 'Uploading to Database...'}</span>
-                    </>
-                  ) : (
-                    <span>{isFilipino ? 'Isumite ang Listahan ng Miyembro' : 'Submit Member List'}</span>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* History Card */}
-          <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 transition-colors">
-              <h2 className="text-base font-black text-slate-900 dark:text-white mb-3.5">
-                {isFilipino ? 'Mga Naunang Naisumite' : 'Recent Submissions'}
-              </h2>
-              
-              <div className="space-y-3">
-                {isLoadingHistory ? (
-                  <SubmissionCardsSkeleton count={3} baseDelay={30} stepDelay={45} />
-                ) : submissions.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs font-bold bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    {isFilipino ? 'Wala pang naisumite.' : 'No submissions yet.'}
-                  </div>
-                ) : (
-                  submissions.map((sub, sIdx) => (
-                    <div 
-                      key={sub._id || sIdx} 
-                      className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-800/40 flex flex-col gap-1.5 shadow-2xs"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 min-w-0">
-                          <FileText size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                          <span className="truncate">{sub.fileName}</span>
-                        </div>
-                        
-                        {/* Dynamic Badge Status */}
-                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase flex items-center gap-1 shrink-0 ${
-                          sub.status === 'Approved' 
-                          ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60' 
-                          : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60'
-                        }`}>
-                          {sub.status === 'Approved' ? <CheckCircle2 size={12} /> : <Clock3 size={12} />}
-                          {sub.status}
-                        </span>
-                      </div>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 pl-6">
-                        Submitted on {new Date(sub.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))
+                    {isFilipino ? 'I-clear ang Search' : 'Clear Search'}
+                  </button>
                 )}
               </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                {filteredMembers.map((member, mIdx) => (
+                  <div
+                    key={member._id || mIdx}
+                    className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
+                  >
+                    {/* Top Subtle Gold/Maroon Highlight for President */}
+                    {member.isPresident && (
+                      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
+                    )}
+
+                    <div>
+                      {/* Member Header: Photo/Avatar, Name, Role Tag */}
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          {member.profilePic ? (
+                            <img
+                              src={member.profilePic}
+                              alt={member.name}
+                              className="w-13 h-13 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
+                            />
+                          ) : (
+                            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border-2 border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-black text-base shrink-0 shadow-2xs">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-base font-black text-slate-900 dark:text-white truncate">
+                                {member.name}
+                              </h3>
+                              {member.isCurrentUser && (
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                  {isFilipino ? 'Ikaw (You)' : 'You'}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 mt-1">
+                              {member.isPresident ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                  <Sparkles size={11} />
+                                  TODA President
+                                </span>
+                              ) : (
+                                <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                  {isFilipino ? 'Miyembro / Operator' : 'Operator / Member'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Units count pill */}
+                        <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0">
+                          {member.units.length} {member.units.length === 1 ? (isFilipino ? 'Yunit' : 'Unit') : (isFilipino ? 'mga Yunit' : 'Units')}
+                        </span>
+                      </div>
+
+                      {/* Contact & Address Bar */}
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-2 mb-4 text-xs sm:text-sm">
+                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                          <Phone size={15} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          {member.contact && member.contact !== 'N/A' ? (
+                            <a 
+                              href={`tel:${member.contact}`} 
+                              className="inline-flex items-center gap-1.5 font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                              title="Tawagan ang miyembro"
+                            >
+                              <span>{member.contact}</span>
+                              <span className="text-[10px] uppercase font-black bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2 py-0.5 rounded-md">Tawagan</span>
+                            </a>
+                          ) : (
+                            <span className="text-slate-400 italic">Walang nakalagay na numero</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                          <MapPin size={15} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-400">
+                            {member.address || 'Address not listed'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Member's Registered Units Roster (Slide 9 compact data chips) */}
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-1.5">
+                          <Car size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                          {isFilipino ? 'Mga Nakarehistrong Tricycle (Units)' : 'Registered Tricycle Units'}
+                        </p>
+
+                        {member.units.length === 0 ? (
+                          <div className="p-3.5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-bold">
+                            {isFilipino ? 'Wala pang naipapasang prangkisa' : 'No franchise applied yet'}
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {member.units.map((unit, uIdx) => (
+                              <div
+                                key={unit._id || uIdx}
+                                className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between gap-2 shadow-2xs"
+                              >
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                    <span className="font-mono text-sm font-black text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                      {unit.plateNo || 'NO PLATE'}
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 truncate">
+                                      {unit.make || 'Tricycle'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                                    Zone {unit.zone || 'N/A'} {unit.motorNo ? `&bull; Motor: ${unit.motorNo}` : ''}
+                                  </p>
+                                </div>
+
+                                <span className={`px-2.5 py-1 text-[11px] font-black rounded-xl uppercase tracking-wider shrink-0 flex items-center gap-1.5 ${
+                                  unit.status === 'Active'
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
+                                    : unit.status === 'Ready for Pickup'
+                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60'
+                                    : unit.status === 'Expired'
+                                    ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60'
+                                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
+                                }`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${
+                                    unit.status === 'Active' ? 'bg-emerald-500' : unit.status === 'Expired' ? 'bg-orange-500' : 'bg-amber-500'
+                                  }`} />
+                                  <span>{unit.status}</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: DOCUMENT SUBMISSION & HISTORY */}
+        {activeTab === 'upload' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+            {/* Upload Card */}
+            <div className="lg:col-span-2">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-7 transition-colors">
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                    {isFilipino ? 'Mag-upload ng Masterlist' : 'Upload Member Roster Document'}
+                  </h2>
+                  <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-3 py-1 rounded-lg">
+                    PDF &bull; Excel &bull; CSV
+                  </span>
+                </div>
+                
+                <form onSubmit={handleUpload}>
+                  <div className="border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-10 text-center hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors relative group">
+                    <div className="w-16 h-16 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-3 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
+                      <UploadCloud size={32} />
+                    </div>
+                    <p className="text-base font-black text-slate-800 dark:text-slate-200 mb-1">
+                      {isFilipino ? 'Pumili ng file mula sa inyong cellphone o kompyuter' : 'Select a file from your device'}
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
+                      {isFilipino ? 'Tinatanggap: PDF, Excel (.xlsx, .xls, .csv)' : 'Supported formats: PDF, Excel (.xlsx, .csv)'}
+                    </p>
+                    
+                    <input 
+                      type="file" 
+                      id="file-upload" 
+                      className="hidden" 
+                      accept=".pdf, .xlsx, .csv, .xls"
+                      onChange={handleFileChange}
+                    />
+                    <label 
+                      htmlFor="file-upload"
+                      className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-7 py-3.5 rounded-2xl font-black text-sm cursor-pointer transition-colors shadow-sm active:scale-95 min-h-[50px]"
+                    >
+                      {isFilipino ? 'Pumili ng File' : 'Browse Files on Device'}
+                    </label>
+
+                    {file && (
+                      <div className="mt-5 flex items-center justify-center gap-2 text-xs sm:text-sm font-black text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 py-3 px-4 rounded-2xl inline-flex border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
+                        <FileSpreadsheet size={18} />
+                        <span className="truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => setFile(null)} 
+                          className="text-slate-400 hover:text-red-500 ml-1 p-1 cursor-pointer rounded-lg"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={!file || isUploading}
+                    className={`w-full mt-5 py-4 rounded-2xl font-black text-sm text-white transition-all shadow-md flex items-center justify-center gap-2 min-h-[50px] active:scale-95 ${
+                      !file || isUploading 
+                      ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-600 cursor-not-allowed' 
+                      : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:text-slate-950 dark:hover:bg-[#c29e2f] cursor-pointer shadow-[#7A1B22]/20'
+                    }`}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>{isFilipino ? 'Ipinapasa sa Database...' : 'Uploading to Database...'}</span>
+                      </>
+                    ) : (
+                      <span>{isFilipino ? 'Isumite ang Listahan ng Miyembro' : 'Submit Member List'}</span>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* History Card */}
+            <div className="lg:col-span-1">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 transition-colors">
+                <h2 className="text-base font-black text-slate-900 dark:text-white mb-3.5">
+                  {isFilipino ? 'Mga Naunang Naisumite' : 'Recent Submissions'}
+                </h2>
+                
+                <div className="space-y-3">
+                  {isLoadingHistory ? (
+                    <SubmissionCardsSkeleton count={3} baseDelay={30} stepDelay={45} />
+                  ) : submissions.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs font-bold bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      {isFilipino ? 'Wala pang naisumite.' : 'No submissions yet.'}
+                    </div>
+                  ) : (
+                    submissions.map((sub, sIdx) => (
+                      <div 
+                        key={sub._id || sIdx} 
+                        className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-800/40 flex flex-col gap-1.5 shadow-2xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 min-w-0">
+                            <FileText size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                            <span className="truncate">{sub.fileName}</span>
+                          </div>
+                          
+                          {/* Dynamic Badge Status */}
+                          <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase flex items-center gap-1 shrink-0 ${
+                            sub.status === 'Approved' 
+                            ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60' 
+                            : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60'
+                          }`}>
+                            {sub.status === 'Approved' ? <CheckCircle2 size={12} /> : <Clock3 size={12} />}
+                            {sub.status}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 pl-6">
+                          Naisumite noong {new Date(sub.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </MainLayout>
   );
 };
 
-export default SubmitMembers;
+export default SubmitMembers;

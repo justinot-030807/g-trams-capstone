@@ -87,7 +87,7 @@ const RenewFranchise = () => {
     e.preventDefault();
 
     if (!formData.ctcNo || !formData.dateIssued || !formData.placeIssued) {
-      showToast('Please fill out all Cedula / CTC details.', 'error');
+      showToast('Pakipunan ang lahat ng impormasyon sa Cedula / CTC.', 'error');
       return;
     }
 
@@ -118,16 +118,16 @@ const RenewFranchise = () => {
       const resData = await response.json();
 
       if (response.ok) {
-        showToast('Franchise renewal application submitted successfully!', 'success');
+        showToast('Matagumpay na naisumite ang renewal application!', 'success');
         setTimeout(() => {
           navigate('/operator-dashboard');
         }, 1200);
       } else {
-        showToast(resData.message || resData.error || 'Failed to submit renewal application.', 'error');
+        showToast(resData.message || resData.error || 'Nabigong isumite ang renewal application.', 'error');
       }
     } catch (err) {
       console.error('Server error:', err);
-      showToast('Network error. Failed to reach server.', 'error');
+      showToast('Network error. Hindi makakonekta sa server.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -155,201 +155,314 @@ const RenewFranchise = () => {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto pb-24 sm:pb-12">
+      <div className="max-w-3xl mx-auto pb-28 sm:pb-16 animate-in fade-in duration-300">
         {/* Back Link */}
         <button
           onClick={() => navigate('/operator-dashboard')}
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-black text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] mb-4 p-2 -ml-2 rounded-xl transition-colors group cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-black text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] mb-4 p-2 -ml-2 rounded-xl transition-colors group cursor-pointer active:scale-95"
         >
           <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
           <span>Bumalik sa Dashboard (Back)</span>
         </button>
 
         {/* Card Container */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden">
           
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#7A1B22] to-[#5A1419] p-5 sm:p-7 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-r from-[#7A1B22] via-[#65151c] to-[#4d1015] p-5 sm:p-7 text-white relative overflow-hidden">
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="bg-[#D4AF37] text-slate-950 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-lg">
-                  Annual Renewal / Pag-renew
+                <span className="bg-[#D4AF37] text-slate-950 text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-lg shadow-2xs">
+                  Taunang Pag-renew (Annual Renewal)
                 </span>
-                <span className="text-white/80 text-xs sm:text-sm font-bold">G-TRAMS Municipal Franchising</span>
+                <span className="text-white/80 text-xs sm:text-sm font-bold">G-TRAMS Pamahalaang Bayan ng Gasan</span>
               </div>
-              <h1 className="text-xl sm:text-3xl font-black tracking-tight">Renew Tricycle Franchise</h1>
-              <p className="text-xs sm:text-sm text-white/90 mt-1.5 max-w-xl leading-relaxed">
-                Magsumite ng panibagong Cedula (CTC) at dokumento upang ma-renew ang prangkisa para sa taong ito.
+              <h1 className="text-xl sm:text-3xl font-black tracking-tight">Mag-renew ng Prangkisa</h1>
+              <p className="text-xs sm:text-sm text-white/90 mt-1.5 max-w-xl leading-relaxed font-medium">
+                I-update ang inyong Cedula (CTC) at OR/CR para mapanatiling aktibo ang inyong rehistro sa munisipyo.
               </p>
             </div>
             <RefreshCw size={140} className="absolute -right-6 -bottom-8 text-white/10 rotate-12 pointer-events-none" />
           </div>
 
-          {/* Franchise Summary Pill */}
-          {franchise && (
-            <div className="p-4 sm:p-6 bg-slate-50/90 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
-              <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
-                Impormasyon ng Prangkisang Ire-renew (Vehicle to Renew)
+          {/* Loading Skeleton */}
+          {loadingFranchise && (
+            <div className="p-6 sm:p-8 space-y-4">
+              <div className="h-28 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse" />
+              <div className="h-44 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse" />
+            </div>
+          )}
+
+          {/* If Franchise Not Found */}
+          {!loadingFranchise && !franchise && (
+            <div className="p-8 sm:p-12 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
+                <AlertCircle size={32} />
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                Hindi Natagpuan ang Prangkisa
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                Maaaring nabura o nailipat ang rekord na ito. Mangyaring bumalik sa dashboard.
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">Plate Number</span>
-                  <span className="text-base sm:text-lg font-black text-[#7A1B22] dark:text-[#D4AF37] truncate block mt-0.5">{franchise.plateNo}</span>
+              <button
+                type="button"
+                onClick={() => navigate('/operator-dashboard')}
+                className="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#7A1B22] text-white font-black text-xs sm:text-sm shadow-sm hover:bg-[#5A1419] cursor-pointer active:scale-95"
+              >
+                <ArrowLeft size={16} />
+                <span>Bumalik sa Dashboard</span>
+              </button>
+            </div>
+          )}
+
+          {/* Transport Boarding Pass Style Summary (Slide 7 inspiration) */}
+          {!loadingFranchise && franchise && (
+            <div className="p-4 sm:p-7 bg-slate-50/70 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Car size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  Opisyal na Detalye ng Tricycle (Transport Pass)
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  {franchise.status || 'Active'}
+                </span>
+              </div>
+
+              {/* The Pass Card */}
+              <div className="relative bg-white dark:bg-slate-800/95 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-xs overflow-hidden">
+                {/* Top Pass Header */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-white px-5 py-3.5 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#D4AF37] flex items-center justify-center text-slate-950 font-black text-xs shadow-2xs">
+                      GT
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-wider">Pamahalaang Bayan ng Gasan &bull; MTOP</p>
+                      <p className="text-xs font-bold text-white/90">Tricycle Franchise Renewal Pass</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-xl text-xs font-mono font-bold text-white/90">
+                    <Hash size={13} className="text-[#D4AF37]" />
+                    <span>{franchise.mtopNo ? `MTOP #${franchise.mtopNo}` : `ID: ${franchise._id ? franchise._id.slice(-6).toUpperCase() : 'N/A'}`}</span>
+                  </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">TODA Association</span>
-                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate block mt-0.5">{franchise.todaName || 'N/A'}</span>
+
+                {/* Main Pass Body */}
+                <div className="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                  {/* Plate Number & Model */}
+                  <div className="sm:col-span-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                      Plaka ng Sasakyan (Plate No.)
+                    </span>
+                    <div className="inline-flex items-center gap-3 bg-slate-100 dark:bg-slate-900/90 px-4 py-2 rounded-2xl border-2 border-slate-300/80 dark:border-slate-700 shadow-inner">
+                      <span className="font-mono text-2xl sm:text-3xl font-black tracking-wider text-slate-900 dark:text-white">
+                        {franchise.plateNo}
+                      </span>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-[#7A1B22] text-white">
+                        GASAN
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mt-2 flex items-center gap-2">
+                      <span>{franchise.make || 'Tricycle'}</span>
+                      <span className="text-slate-300 dark:text-slate-600">&bull;</span>
+                      <span className="text-slate-500 dark:text-slate-400">Model Taon {franchise.made || 'N/A'}</span>
+                    </p>
+                  </div>
+
+                  {/* Route & Toda Info Card */}
+                  <div className="space-y-2 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-2xl border border-slate-200/70 dark:border-slate-700/60">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">TODA Samahan</span>
+                      <span className="text-xs sm:text-sm font-black text-[#7A1B22] dark:text-[#D4AF37] truncate block mt-0.5">
+                        {franchise.todaName || 'NON-TODA'}
+                      </span>
+                    </div>
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Ruta / Zone</span>
+                      <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                        Zone {franchise.zone || 'N/A'} (Gasan)
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">Zone Route</span>
-                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate block mt-0.5">Zone {franchise.zone || 'N/A'}</span>
+
+                {/* Perforated Divider with Circular Notches */}
+                <div className="relative flex items-center justify-between px-2">
+                  <div className="w-5 h-5 rounded-full bg-slate-50 dark:bg-[#0b0f19] -ml-4.5 border-r border-slate-200/80 dark:border-slate-700"></div>
+                  <div className="w-full border-t-2 border-dashed border-slate-200 dark:border-slate-700 mx-1"></div>
+                  <div className="w-5 h-5 rounded-full bg-slate-50 dark:bg-[#0b0f19] -mr-4.5 border-l border-slate-200/80 dark:border-slate-700"></div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider block">Make / Year</span>
-                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate block mt-0.5">{franchise.make} ({franchise.made})</span>
+
+                {/* Pass Footer / Stub Details */}
+                <div className="px-5 py-3 bg-slate-50/70 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {franchise.motorNo && (
+                      <span className="text-slate-500 dark:text-slate-400 font-medium text-[11px] sm:text-xs">
+                        <strong className="text-slate-700 dark:text-slate-300 font-bold">Motor:</strong> {franchise.motorNo}
+                      </span>
+                    )}
+                    {franchise.chassisNo && (
+                      <span className="text-slate-500 dark:text-slate-400 font-medium text-[11px] sm:text-xs">
+                        <strong className="text-slate-700 dark:text-slate-300 font-bold">Chassis:</strong> {franchise.chassisNo}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] flex items-center gap-1">
+                    <ShieldCheck size={14} />
+                    Opisyal na Rehistro ng BPLO
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Renewal Form */}
-          <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-6 sm:space-y-8">
-            
-            {/* Step 1: Updated Cedula Information */}
-            <div>
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-black text-sm">
-                  1
+          {!loadingFranchise && franchise && (
+            <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-6 sm:space-y-8">
+              
+              {/* Step 1: Updated Cedula Information */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-9 h-9 rounded-2xl bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                    1
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      Hakbang 1: Pinakabagong Cedula (Community Tax Certificate)
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Ilagay ang detalye ng inyong bagong Cedula (CTC) na kinuha ngayong taon.
+                    </p>
+                  </div>
                 </div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                  Community Tax Certificate (Cedula)
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-4 ml-0 sm:ml-10">
-                Ilagay ang pinakabagong Cedula (CTC) na kinuha ngayong taon para sa renewal.
-              </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                    Bagong CTC / Cedula No. <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    name="ctcNo" 
-                    value={formData.ctcNo}
-                    onChange={handleChange} 
-                    required 
-                    className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400" 
-                    placeholder="Hal. 08123456"
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Bagong CTC / Cedula No. <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      name="ctcNo" 
+                      value={formData.ctcNo}
+                      onChange={handleChange} 
+                      required 
+                      className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400 min-h-[50px]" 
+                      placeholder="Hal. 08123456"
+                    />
+                    <p className="text-[11px] font-bold text-slate-400 mt-1">Mga numero lamang (Digits only)</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Petsa ng Pagkuha (Date Issued) <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="date" 
+                      name="dateIssued" 
+                      value={formData.dateIssued}
+                      onChange={handleChange} 
+                      required 
+                      className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[50px]" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Lugar ng Pagkuha (Place Issued) <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      name="placeIssued" 
+                      value={formData.placeIssued}
+                      onChange={handleChange} 
+                      required 
+                      className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[50px]" 
+                      placeholder="Gasan, Marinduque"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Vehicle Document (Mobile-first Camera Upload) */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-9 h-9 rounded-2xl bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                    2
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      Hakbang 2: Pinakabagong OR/CR ng Tricycle (LTO)
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Kuhanan ng litrato gamit ang camera o mag-upload ng updated Official Receipt & Certificate of Registration mula sa LTO.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="max-w-xl mt-5">
+                  <DocumentUploadCard
+                    id="orcrFile"
+                    label="Official Receipt / Certificate of Registration (OR/CR)"
+                    file={orcrFile}
+                    previewUrl={previewUrl || franchise?.orCrUrl}
+                    onFileSelect={handleFileSelect}
+                    onFileRemove={handleFileRemove}
+                    onPreviewZoom={setFullPreview}
+                    required={false}
                   />
-                  <p className="text-[11px] font-bold text-slate-400 mt-1">Mga numero lamang (Digits only)</p>
                 </div>
+              </div>
 
+              {/* Renewal Fee & Reminder */}
+              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-900/60 rounded-3xl p-4 sm:p-5 flex items-start gap-3.5">
+                <ShieldCheck size={24} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                    Petsa ng Pagkuha (Date Issued) <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="date" 
-                    name="dateIssued" 
-                    value={formData.dateIssued}
-                    onChange={handleChange} 
-                    required 
-                    className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[52px]" 
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                    Lugar ng Pagkuha (Place Issued) <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    name="placeIssued" 
-                    value={formData.placeIssued}
-                    onChange={handleChange} 
-                    required 
-                    className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all shadow-2xs" 
-                    placeholder="Gasan, Marinduque"
-                  />
+                  <h4 className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200">
+                    Paalala sa Bayarin at Pagproseso (Renewal Fee Notice)
+                  </h4>
+                  <p className="text-xs sm:text-sm text-amber-900/90 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
+                    Walang babayaran sa pagsumite online. Matapos ma-verify ng BPLO ang inyong renewal, dalhin lamang ang Claim Stub Voucher at bayad na <strong>₱500.00</strong> sa Municipal Treasury / BPLO Office sa Munisipyo upang makuha ang inyong bagong sticker.
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Step 2: Vehicle Document (Mobile-first Camera Upload) */}
-            <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-black text-sm">
-                  2
-                </div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                  Updated Vehicle OR/CR Document
-                </h2>
+              {/* Actions */}
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => navigate('/operator-dashboard')} 
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[50px] flex items-center justify-center active:scale-95"
+                >
+                  Kanselahin (Cancel)
+                </button>
+
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[50px] ${
+                    isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419] shadow-[#7A1B22]/20'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Ipinapadala ang Renewal...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      <span>I-submit ang Renewal Application</span>
+                    </>
+                  )}
+                </button>
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-4 ml-0 sm:ml-10">
-                Kuhanan ng litrato gamit ang cellphone camera o mag-upload ng updated Official Receipt & Certificate of Registration (OR/CR) galing sa LTO.
-              </p>
 
-              <div className="max-w-xl">
-                <DocumentUploadCard
-                  id="orcrFile"
-                  label="Official Receipt / Certificate of Registration (OR/CR)"
-                  file={orcrFile}
-                  previewUrl={previewUrl || franchise?.orCrUrl}
-                  onFileSelect={handleFileSelect}
-                  onFileRemove={handleFileRemove}
-                  onPreviewZoom={setFullPreview}
-                  required={false}
-                />
-              </div>
-            </div>
-
-            {/* Renewal Fee & Reminder */}
-            <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/90 dark:border-amber-900/60 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5">
-              <ShieldCheck size={24} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200">Paalala sa Bayarin at Pagproseso (Renewal Fee)</h4>
-                <p className="text-xs sm:text-sm text-amber-900/90 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                  Matapos i-submit online, susuriin ng BPLO ang iyong aplikasyon. Kapag aprubado na, dalhin lamang ang inyong Claim Stub Voucher at bayad na <strong>₱500.00</strong> sa Municipal Treasury / Franchising Office para kunin ang bagong sticker.
-                </p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800 gap-3">
-              <button 
-                type="button" 
-                onClick={() => navigate('/operator-dashboard')} 
-                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[48px] flex items-center justify-center active:scale-95"
-              >
-                Kanselahin (Cancel)
-              </button>
-
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[48px] ${
-                  isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419] shadow-[#7A1B22]/20'
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    <span>Ipinapadala ang Renewal...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 size={18} />
-                    <span>I-submit ang Renewal Application</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-          </form>
+            </form>
+          )}
         </div>
       </div>
 
@@ -370,7 +483,7 @@ const RenewFranchise = () => {
               </h4>
               <button 
                 onClick={() => setFullPreview(null)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>

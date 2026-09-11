@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, User, ShieldAlert, Receipt, XCircle,
+  Check, FileText, User, ShieldAlert, Receipt, XCircle, Car,
   Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
   Bell, Settings, ChevronRight, LogOut
 } from 'lucide-react';
@@ -251,14 +252,6 @@ const OperatorDashboard = () => {
         description: 'Municipal regulations allow up to 2 registered tricycle units per operator. This counter tracks your active slots.',
         descriptionFil: 'Pinapayagan ng ordinansa ang hanggang 2 rehistradong tricycle bawat operator. Sinusubaybayan nito ang iyong bakanteng slot.',
         icon: ShieldCheck
-      },
-      {
-        targetId: 'tour-regulatory-card',
-        title: 'LGU Regulatory Standing',
-        titleFil: 'Katayuan sa Munisipyo at BPLO',
-        description: 'Official verification status from the Gasan Business Permits and Licensing Office (BPLO).',
-        descriptionFil: 'Opisyal na katayuan ng beripikasyon mula sa Tanggapan ng BPLO sa Munisipyo ng Gasan.',
-        icon: CheckCircle
       },
       {
         targetId: 'tour-garage-section',
@@ -519,41 +512,77 @@ const OperatorDashboard = () => {
                 )}
               </button>
 
-              {/* Profile / Account Dropdown Menu with LOGOUT */}
-              {isProfileMenuOpen && (
-                <>
+              {/* Profile / Account Bottom Sheet Modal via Portal */}
+              {isProfileMenuOpen && ReactDOM.createPortal(
+                <div className="fixed inset-0 z-[120] flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4">
+                  {/* Backdrop */}
                   <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setIsProfileMenuOpen(false)} 
+                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+                    onClick={() => setIsProfileMenuOpen(false)}
                   />
-                  <div className="absolute left-0 mt-2 w-64 sm:w-72 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
-                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl mb-2">
-                      <div className="flex items-center gap-2.5 mb-1.5">
-                        <div className="w-9 h-9 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 font-black flex items-center justify-center text-sm shadow-xs shrink-0">
+                  
+                  {/* Sheet / Modal Dialog */}
+                  <div 
+                    role="dialog"
+                    aria-modal="true"
+                    className="relative z-10 w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 p-5 sm:p-6 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:zoom-in-95 duration-250 pb-8 sm:pb-6"
+                  >
+                    {/* Mobile drag handle */}
+                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-4 sm:hidden" />
+
+                    {/* Header with user info and close button */}
+                    <div className="flex items-center justify-between pb-4 mb-3 border-b border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7A1B22] to-[#9E2A2B] dark:from-[#D4AF37] dark:to-[#B8860B] text-white dark:text-slate-950 font-black flex items-center justify-center text-lg shadow-md shrink-0">
                           {loggedInUserName.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-black text-xs text-slate-900 dark:text-white truncate">
+                          <h3 className="font-black text-base text-slate-900 dark:text-white truncate">
                             {loggedInUserName}
-                          </p>
-                          <span className="inline-block text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]">
-                            {isTodaPresident ? 'TODA President' : 'Operator'}
-                          </span>
+                          </h3>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]">
+                              {isTodaPresident ? 'TODA President' : 'Operator'}
+                            </span>
+                            <span className="text-[11px] text-slate-400">G-TRAMS Gasan</span>
+                          </div>
                         </div>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                        aria-label="Close"
+                      >
+                        <X size={18} />
+                      </button>
                     </div>
 
-                    <div className="space-y-1">
+                    {/* Quick navigation actions */}
+                    <div className="space-y-1.5">
                       <button
                         type="button"
                         onClick={() => {
                           setIsProfileMenuOpen(false);
                           navigate('/operator/settings');
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all cursor-pointer group text-left"
                       >
-                        <Settings size={15} className="text-slate-400 shrink-0" />
-                        <span className="truncate">{language === 'fil' ? 'Mga Setting ng Account' : 'Account Settings'}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-[#7A1B22]/10 group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
+                            <Settings size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                              {language === 'fil' ? 'Mga Setting ng Account' : 'Account Settings'}
+                            </p>
+                            <p className="text-[10px] sm:text-[11px] text-slate-400">
+                              {language === 'fil' ? 'Profile, password at seguridad' : 'Profile, password & security'}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                       </button>
 
                       <button
@@ -562,10 +591,22 @@ const OperatorDashboard = () => {
                           setIsProfileMenuOpen(false);
                           setIsTourOpen(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all cursor-pointer group text-left"
                       >
-                        <Sparkles size={15} className="shrink-0" />
-                        <span className="truncate">{language === 'fil' ? 'Panoorin ang Gabay (Tour)' : 'Replay Walkthrough Tour'}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                            <Sparkles size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-400">
+                              {language === 'fil' ? 'Panoorin ang Gabay (Tour)' : 'Replay Walkthrough Tour'}
+                            </p>
+                            <p className="text-[10px] sm:text-[11px] text-slate-400">
+                              {language === 'fil' ? 'Alamin ang mga features ng portal' : 'Quick visual guide of portal features'}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className="text-amber-400 group-hover:translate-x-0.5 transition-transform" />
                       </button>
 
                       <button
@@ -574,28 +615,42 @@ const OperatorDashboard = () => {
                           setIsProfileMenuOpen(false);
                           navigate('/help-support');
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all cursor-pointer group text-left"
                       >
-                        <HelpCircle size={15} className="text-slate-400 shrink-0" />
-                        <span className="truncate">{language === 'fil' ? 'Gabay at Suporta' : 'Help & Support'}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <HelpCircle size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                              {language === 'fil' ? 'Gabay at Suporta' : 'Help & Support'}
+                            </p>
+                            <p className="text-[10px] sm:text-[11px] text-slate-400">
+                              {language === 'fil' ? 'FAQs, hotline at impormasyon' : 'FAQs, hotline & info'}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight size={16} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                       </button>
+                    </div>
 
-                      <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsProfileMenuOpen(false);
-                            handleLogout();
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-black text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer active:scale-95 text-left"
-                        >
-                          <LogOut size={15} className="stroke-[2.5] shrink-0" />
-                          <span className="truncate">{language === 'fil' ? 'Mag-logout sa Account' : 'Log Out'}</span>
-                        </button>
-                      </div>
+                    {/* Prominent Log Out */}
+                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center justify-center gap-2.5 p-3 rounded-2xl text-xs sm:text-sm font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 transition-all cursor-pointer active:scale-98"
+                      >
+                        <LogOut size={16} className="stroke-[2.5]" />
+                        <span>{language === 'fil' ? 'Mag-logout sa Account' : 'Log Out of Account'}</span>
+                      </button>
                     </div>
                   </div>
-                </>
+                </div>,
+                document.body
               )}
             </div>
 
@@ -637,50 +692,89 @@ const OperatorDashboard = () => {
                 )}
               </button>
 
-              {/* In-Header Notification Dropdown */}
-              {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-84 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-xs text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium">
-                        {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
-                      </p>
-                    </div>
-                    {unreadNotifCount > 0 && (
-                      <button 
-                        onClick={markAllNotifsRead} 
-                        className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
-                      >
-                        {t('nav.markAllRead', 'Mark all read')}
-                      </button>
-                    )}
-                  </div>
+              {/* In-Header Notification Modal via Portal */}
+              {isNotifOpen && ReactDOM.createPortal(
+                <div className="fixed inset-0 z-[120] flex flex-col justify-end sm:justify-start sm:items-end p-0 sm:p-4 sm:pt-16 sm:pr-8">
+                  {/* Backdrop */}
+                  <div 
+                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200" 
+                    onClick={() => setIsNotifOpen(false)} 
+                  />
 
-                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
-                    {notifications.length === 0 ? (
-                      <div className="p-6 text-center">
-                        <Bell size={20} className="text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
-                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                      </div>
-                    ) : (
-                      notifications.map(notif => (
-                        <div
-                          key={notif.id}
-                          onClick={() => {
-                            if (notif.action) notif.action();
-                            else if (notif.link) navigate(notif.link);
-                            setIsNotifOpen(false);
-                          }}
-                          className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
-                        >
-                          <p className="text-xs font-bold truncate text-slate-900 dark:text-white">{notif.title}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{notif.desc}</p>
+                  {/* Notification Card */}
+                  <div 
+                    role="dialog"
+                    aria-modal="true"
+                    className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col"
+                  >
+                    {/* Mobile drag bar */}
+                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
+
+                    {/* Header */}
+                    <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white">
+                            {t('nav.notifications', 'Notifications')}
+                          </h4>
                         </div>
-                      ))
-                    )}
+                        <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                          {unreadNotifCount > 0 ? `${unreadNotifCount} ${language === 'fil' ? 'bagong abiso' : 'update(s)'}` : t('nav.allCaughtUp', 'All caught up')}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {unreadNotifCount > 0 && (
+                          <button 
+                            type="button"
+                            onClick={markAllNotifsRead} 
+                            className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                          >
+                            {t('nav.markAllRead', 'Mark all read')}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsNotifOpen(false)}
+                          className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                          aria-label="Close"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Notification List */}
+                    <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 flex-1 max-h-[60vh] overscroll-contain">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center flex flex-col items-center justify-center">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-2.5">
+                            <Bell size={22} />
+                          </div>
+                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
+                          <p className="text-[11px] text-slate-400 mt-1 max-w-xs">{language === 'fil' ? 'Lilitaw dito ang mga update sa prangkisa at mga anunsyo.' : 'Franchise updates and announcements will appear here.'}</p>
+                        </div>
+                      ) : (
+                        notifications.map(notif => (
+                          <div
+                            key={notif.id}
+                            onClick={() => {
+                              if (notif.action) notif.action();
+                              else if (notif.link) navigate(notif.link);
+                              setIsNotifOpen(false);
+                            }}
+                            className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
+                          >
+                            <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{notif.title}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.desc}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
             </div>
           </div>
@@ -787,70 +881,80 @@ const OperatorDashboard = () => {
         </div>
       </div>
 
-      {/* 2. TWIN METRIC SUMMARY CARDS (Matching media_1788958383245.jpg) */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-6 animate-spring-in">
-        {/* Card 1: Fleet Capacity */}
-        <div 
-          id="tour-capacity-card"
-          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs transition-colors flex flex-col justify-between"
-        >
-          <div>
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {t('dashboard.unitCapacity', 'Fleet Capacity')}
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight my-1">
-              {franchises.length} / 2 <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Units</span>
+      {/* 2. FLEET CAPACITY SMART CARD (Slide 3 inspiration: Clean, driver-friendly, no jargon) */}
+      <div 
+        id="tour-capacity-card"
+        className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xs mb-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 duration-300"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
+              franchises.length === 0 
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60' 
+                : franchises.length === 1 
+                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60' 
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60'
+            }`}>
+              <Car size={24} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {language === 'fil' ? 'Kapasidad ng Prangkisa' : 'Franchise Fleet Capacity'}
+                </span>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {language === 'fil' ? 'Hanggang 2 Motor Bawat Operator' : 'Max 2 Units Per Operator'}
+                </span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
+                {franchises.length === 0 
+                  ? (language === 'fil' ? 'Wala pang nakatalang tricycle (0 / 2)' : 'No units registered yet (0 / 2)')
+                  : franchises.length === 1 
+                  ? (language === 'fil' ? '1 sa 2 Tricycle ang Rehistrado (1 / 2)' : '1 of 2 Units Registered (1 / 2)')
+                  : (language === 'fil' ? 'Kumpleto ang Kapasidad (2 / 2)' : 'Maximum Capacity Reached (2 / 2)')}
+              </h3>
             </div>
           </div>
 
-          <div>
-            {/* Visual Indicator Pills */}
-            <div className="flex items-center gap-1.5 my-2">
-              <div className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-800'}`} />
-              <div className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-800'}`} />
-            </div>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate">
-              {language === 'fil' ? 'Limitasyon ng Munisipyo' : 'Municipal Max Ordinance'}
-            </p>
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border shadow-2xs ${
+              franchises.length < 2
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${franchises.length < 2 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+              {franchises.length < 2 
+                ? (language === 'fil' ? `May ${2 - franchises.length} Bakanteng Slot` : `${2 - franchises.length} Slot(s) Available`)
+                : (language === 'fil' ? 'Puno na ang Slots' : 'Slots Full')}
+            </span>
           </div>
         </div>
 
-        {/* Card 2: Regulatory Standing */}
-        <div 
-          id="tour-regulatory-card" 
-          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs transition-colors flex flex-col justify-between"
-        >
-          <div>
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {language === 'fil' ? 'Katayuan sa LGU' : 'Regulatory Standing'}
-            </span>
-            <div className="text-xs sm:text-base font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 my-1.5 leading-tight break-words">
-              <CheckCircle size={16} className="shrink-0" />
-              <span>
-                {franchises.some(f => f.status === 'Active') 
-                  ? (language === 'fil' ? 'Aktibong Permit' : 'Active Permit') 
-                  : franchises.some(f => f.status === 'Ready for Pickup')
-                  ? (language === 'fil' ? 'Handang Kunin' : 'Ready to Claim')
-                  : franchises.some(f => f.status === 'Pending')
-                  ? (language === 'fil' ? 'Sinusuri' : 'In Review')
-                  : (language === 'fil' ? 'May Bakante' : 'Available')}
-              </span>
+        {/* Visual Progress Bar Track with friendly step labels */}
+        <div className="space-y-1.5 pt-1">
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="relative">
+              <div className={`h-2.5 rounded-full transition-all duration-500 ${
+                franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+              }`} />
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5">
+                {language === 'fil' ? 'Unang Tricycle (Unit 1)' : 'Unit 1 Slot'}
+              </p>
             </div>
-          </div>
-
-          <div>
-            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 truncate max-w-full">
-              BPLO Gasan Verified
-            </span>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate mt-1">
-              MTOP Official Registry
-            </p>
+            <div className="relative">
+              <div className={`h-2.5 rounded-full transition-all duration-500 ${
+                franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+              }`} />
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5">
+                {language === 'fil' ? 'Pangalawang Tricycle (Unit 2)' : 'Unit 2 Slot'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* 3. GARAGE SECTION HEADER */}
-      <header id="tour-garage-section" className="animate-spring-in mb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
+      <header id="tour-garage-section" className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75 mb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
@@ -858,7 +962,7 @@ const OperatorDashboard = () => {
               {t('dashboard.garageTitle', 'My Franchise Garage')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-              {t('dashboard.garageSub', 'Assigned tricycle units under your account')}
+              {language === 'fil' ? 'Mga nakatalang motor at prangkisa sa ilalim ng iyong account' : t('dashboard.garageSub', 'Assigned tricycle units under your account')}
             </p>
           </div>
         </div>
@@ -870,18 +974,38 @@ const OperatorDashboard = () => {
         </div>
       </header>
 
-      {/* 4. GARAGE UNITS LIST / EMPTY STATE */}
+      {/* 4. GARAGE UNITS LIST / EMPTY STATE (Slide 1 pattern: Clear glowing halo & clear call to action) */}
       {isLoading ? (
         <GarageGridSkeleton count={2} baseDelay={70} />
       ) : franchises.length === 0 ? (
         <div 
           id="tour-empty-garage"
-          className="animate-spring-in bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[280px] transition-colors"
+          className="animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-8 sm:p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[300px] transition-colors shadow-xs"
         >
-          <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-3.5 text-[#7A1B22] dark:text-[#D4AF37]"><PlusCircle size={28} /></div>
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">{t('dashboard.noUnitsTitle', 'No Franchise Units Found')}</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-sm">{t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}</p>
-          <button onClick={() => navigate('/apply-franchise')} className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-white px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-sm active:scale-95 touch-bounce cursor-pointer">{t('dashboard.applyNew', 'Apply New Franchise')}</button>
+          {/* Glowing Halo Icon Container */}
+          <div className="relative mb-4">
+            <div className="absolute inset-0 bg-[#7A1B22]/15 dark:bg-[#D4AF37]/20 rounded-full blur-xl scale-150 animate-pulse pointer-events-none" />
+            <div className="relative w-16 h-16 bg-gradient-to-br from-red-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 rounded-3xl border border-red-200/60 dark:border-amber-800/40 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shadow-sm">
+              <Car size={32} />
+            </div>
+          </div>
+
+          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-1.5">
+            {language === 'fil' ? 'Wala Ka Pang Nakatalang Tricycle' : t('dashboard.noUnitsTitle', 'No Franchise Units Found')}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md leading-relaxed">
+            {language === 'fil' 
+              ? 'Magsimula sa pamamagitan ng pagpaparehistro ng iyong unang tricycle unit upang makakuha ng opisyal na prangkisa mula sa Munisipyo ng Gasan.' 
+              : t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}
+          </p>
+
+          <button 
+            onClick={() => navigate('/apply-franchise')} 
+            className="inline-flex items-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-3.5 rounded-2xl font-black text-sm transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            <PlusCircle size={18} />
+            <span>{language === 'fil' ? 'Mag-apply ng Bagong Prangkisa' : t('dashboard.applyNew', 'Apply New Franchise')}</span>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">

@@ -297,11 +297,6 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const isOperatorOrToda = normalizedRole === 'operator' || normalizedRole === 'toda president' || normalizedRole === 'toda_president';
   const isDashboard = location.pathname === '/operator-dashboard';
 
-  const toggleLanguage = () => {
-    const nextLang = language === 'fil' ? 'en' : 'fil';
-    if (changeLanguage) changeLanguage(nextLang);
-  };
-
   return (
     <header className={`sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 items-center justify-between shadow-xs transition-colors print:hidden print-hide ${
       isOperatorOrToda && isDashboard ? 'hidden md:flex' : 'flex'
@@ -331,16 +326,6 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Quick Language Toggle Pill */}
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[10px] font-black tracking-wider uppercase text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer active:scale-95 shadow-2xs"
-              title="Palitan ang Wika / Switch Language"
-            >
-              {language === 'fil' ? '🇵🇭 FIL' : '🇺🇸 EN'}
-            </button>
-
             {/* Quick Theme Toggle Circle */}
             <button
               type="button"
@@ -371,7 +356,12 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               </button>
 
               {isNotifOpen && (
-                <div className="fixed inset-x-3 top-16 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <>
+                  <div 
+                    className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-40" 
+                    onClick={() => setIsNotifOpen(false)} 
+                  />
+                  <div className="fixed inset-x-3 top-16 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-xs text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h3>
@@ -429,10 +419,11 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     )}
                   </div>
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
+      </div>
       )}
 
       {/* 2. DESKTOP / ADMIN STANDARD HEADER */}

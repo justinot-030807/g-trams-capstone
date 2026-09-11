@@ -4,7 +4,7 @@ import {
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw,
-  Save, XCircle, CheckCircle2, Clock, Sparkles
+  Save, XCircle, CheckCircle2, Clock, Sparkles, User
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -578,8 +578,8 @@ const ApplyFranchise = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs";
-  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none";
+  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[50px]";
+  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[50px]";
 
   if (formMode === null) {
     return (
@@ -986,155 +986,241 @@ const ApplyFranchise = () => {
       <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl">
         
         {currentStep === 1 && (
-          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in duration-150 transition-colors">
-            <div className="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <Car className="text-[#7A1B22] dark:text-[#D4AF37]" size={18} />
-              <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Impormasyon ng Operator at Motor</h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Ipasok ang tamang mga detalye ng sasakyan</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4.5 pt-1">
-              <div className="sm:col-span-2">
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Pangalan ng Operator</label>
-                <input 
-                  type="text" 
-                  name="fullName" 
-                  value={formData.fullName} 
-                  onChange={handleInputChange} 
-                  className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
-                  required 
-                  readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                  placeholder="Hal. Juan Dela Cruz"
-                />
-              </div>
-              
-              <div className="sm:col-span-2">
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Barangay</label>
-                {formMode === 'Renewal' || formMode === 'Re-apply' ? (
-                  <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly />
-                ) : (
-                  <select name="address" value={formData.address} onChange={handleInputChange} className={inputClasses} required>
-                    <option value="">Pumili ng Barangay...</option>
-                    {GASAN_BARANGAYS.map((brgy, i) => (
-                      <option key={i} value={brgy}>{brgy}, Gasan</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Route Zone</label>
-                <input 
-                  type="text" 
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  name="zone" 
-                  value={formData.zone} 
-                  onChange={handleInputChange} 
-                  className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
-                  required 
-                  readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                  placeholder="Hal. 1 o 2" 
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Year Made</label>
-                <input 
-                  type="text" 
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={4}
-                  name="made" 
-                  value={formData.made} 
-                  onChange={handleInputChange} 
-                  className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
-                  required 
-                  readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                  placeholder="Hal. 2024" 
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Make / Brand</label>
-                <input type="text" name="make" value={formData.make} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. Honda / Kawasaki" />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">TODA Association</label>
-                  <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">Registered</span>
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Section 1: Operator / May-ari */}
+            <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
+              <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                  <User size={18} />
                 </div>
-                <input 
-                  type="text" 
-                  name="todaName" 
-                  value={formData.todaName || loggedInToda || 'NON-TODA'} 
-                  readOnly 
-                  className={disabledClasses} 
-                  title="Ang inyong TODA ay awtomatikong nakabase sa inyong registered account."
-                />
+                <div>
+                  <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    1. Impormasyon ng Operator (May-ari)
+                  </h2>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                    Personal na detalye ng rehistradong may-ari ng prangkisa
+                  </p>
+                </div>
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Motor Number</label>
-                <input type="text" name="motorNo" value={formData.motorNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Motor Serial No." />
-              </div>
-              
-              <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Chassis Number</label>
-                <input type="text" name="chassisNo" value={formData.chassisNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Chassis Serial No." />
-              </div>
-              
-              <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Plate Number</label>
-                <input type="text" name="plateNo" value={formData.plateNo} onChange={handleInputChange} className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} required readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} placeholder="Hal. 123-ABC" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Buong Pangalan ng Operator <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="fullName" 
+                    value={formData.fullName} 
+                    onChange={handleInputChange} 
+                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    required 
+                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    placeholder="Hal. Juan Dela Cruz"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Barangay sa Gasan <span className="text-red-500">*</span>
+                  </label>
+                  {formMode === 'Renewal' || formMode === 'Re-apply' ? (
+                    <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly />
+                  ) : (
+                    <select name="address" value={formData.address} onChange={handleInputChange} className={inputClasses} required>
+                      <option value="">Pumili ng Barangay...</option>
+                      {GASAN_BARANGAYS.map((brgy, i) => (
+                        <option key={i} value={brgy}>{brgy}, Gasan</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Samahan ng TODA
+                    </label>
+                    <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                      Nakatala
+                    </span>
+                  </div>
+                  <input 
+                    type="text" 
+                    name="todaName" 
+                    value={formData.todaName || loggedInToda || 'NON-TODA'} 
+                    readOnly 
+                    className={disabledClasses} 
+                    title="Awtomatikong nakabase sa inyong account."
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
-              <button
-                type="button"
-                onClick={() => handleSaveProgress(true)}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer"
-              >
-                <Save size={16} /> I-save ang Progress
-              </button>
+            {/* Section 2: Detalye ng Sasakyan / Motor */}
+            <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
+              <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                  <Car size={18} />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    2. Detalye ng Sasakyan (Tricycle / Motor)
+                  </h2>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                    Impormasyon ayon sa opisyal na LTO OR/CR ng sasakyan
+                  </p>
+                </div>
+              </div>
 
-              <button 
-                type="button" 
-                onClick={validateAndNext}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
-              >
-                <span>Susunod</span>
-                <ChevronRight size={18} />
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Brand / Modelo <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="make" 
+                    value={formData.make} 
+                    onChange={handleInputChange} 
+                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    required 
+                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    placeholder="Hal. Honda TMX 125" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Taon (Model Year) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    name="made" 
+                    value={formData.made} 
+                    onChange={handleInputChange} 
+                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    required 
+                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    placeholder="Hal. 2024" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Ruta / Zone <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    name="zone" 
+                    value={formData.zone} 
+                    onChange={handleInputChange} 
+                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    required 
+                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    placeholder="Hal. 1 o 2" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Plate Number <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="plateNo" 
+                    value={formData.plateNo} 
+                    onChange={handleInputChange} 
+                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    required 
+                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    placeholder="Hal. 123-ABC" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Motor Serial No. <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="motorNo" 
+                    value={formData.motorNo} 
+                    onChange={handleInputChange} 
+                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    required 
+                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    placeholder="Numero ng Motor" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Chassis Serial No. <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="chassisNo" 
+                    value={formData.chassisNo} 
+                    onChange={handleInputChange} 
+                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    required 
+                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    placeholder="Numero ng Chassis" 
+                  />
+                </div>
+              </div>
+
+              {/* Step Navigation Buttons */}
+              <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleSaveProgress(true)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[48px]"
+                >
+                  <Save size={16} />
+                  <span>I-save ang Progress</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={validateAndNext}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer min-h-[48px]"
+                >
+                  <span>Susunod (Hakbang 2: Cedula)</span>
+                  <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {currentStep === 2 && (
-          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in duration-150 transition-colors">
-            <div className="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <FileText className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} />
+          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300 transition-colors">
+            <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <FileText size={18} />
+              </div>
               <div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">Impormasyon ng Cedula</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ilagay ang pinakabagong Community Tax Certificate (CTC)</p>
+                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                  Impormasyon ng Cedula (Community Tax Certificate)
+                </h2>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  Ilagay ang pinakabagong CTC na kinuha mula sa Ingat-Yaman ng Munisipyo
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Petsa ng Pag-apply</label>
-                <input type="date" name="dateApplied" value={formData.dateApplied} onChange={handleInputChange} className={inputClasses} required />
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Petsa Kinuha (Cedula)</label>
-                <input type="date" name="cedulaDate" value={formData.cedulaDate} onChange={handleInputChange} className={inputClasses} required />
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Cedula Serial No.</label>
+                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Cedula / CTC Serial No. <span className="text-red-500">*</span>
+                </label>
                 <input 
                   type="text" 
                   inputMode="numeric"
@@ -1143,13 +1229,53 @@ const ApplyFranchise = () => {
                   value={formData.cedulaSerialNo} 
                   onChange={handleInputChange} 
                   className={inputClasses} 
-                  placeholder="Hal. 12345678" 
+                  placeholder="Hal. 08123456" 
+                  required 
+                />
+                <p className="text-[11px] font-medium text-slate-400 mt-1">Mga numero lamang sa itaas ng resibo</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Petsa kung Kailan Kinuha <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  name="cedulaDate" 
+                  value={formData.cedulaDate} 
+                  onChange={handleInputChange} 
+                  className={inputClasses} 
                   required 
                 />
               </div>
+
               <div>
-                <label className="block text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Lugar Kinuha (Cedula)</label>
-                <input type="text" name="cedulaAddress" value={formData.cedulaAddress} onChange={handleInputChange} className={inputClasses} required />
+                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Lugar kung Saan Kinuha <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="cedulaAddress" 
+                  value={formData.cedulaAddress} 
+                  onChange={handleInputChange} 
+                  className={inputClasses} 
+                  placeholder="Gasan, Marinduque"
+                  required 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Petsa ng Pag-apply sa Portal <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  name="dateApplied" 
+                  value={formData.dateApplied} 
+                  onChange={handleInputChange} 
+                  className={inputClasses} 
+                  required 
+                />
               </div>
             </div>
 
@@ -1157,16 +1283,16 @@ const ApplyFranchise = () => {
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[48px]"
               >
-                <ChevronLeft size={18} /> Bumalik
+                <ChevronLeft size={18} /> Bumalik sa Motor
               </button>
 
               <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[48px]"
                 >
                   <Save size={16} /> I-save ang Progress
                 </button>
@@ -1174,9 +1300,9 @@ const ApplyFranchise = () => {
                 <button 
                   type="button" 
                   onClick={validateAndNext}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer min-h-[48px]"
                 >
-                  <span>Susunod</span>
+                  <span>Susunod (Hakbang 3: Dokumento)</span>
                   <ChevronRight size={18} />
                 </button>
               </div>
@@ -1185,12 +1311,18 @@ const ApplyFranchise = () => {
         )}
 
         {currentStep === 3 && (
-          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in duration-150 transition-colors">
-            <div className="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <UploadCloud className="text-[#7A1B22] dark:text-[#D4AF37]" size={22} />
+          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300 transition-colors">
+            <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <UploadCloud size={18} />
+              </div>
               <div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">Upload ng mga Dokumento</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Kumuha ng litrato gamit ang camera o pumili ng PDF</p>
+                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                  3. Upload ng mga Kinakailangang Dokumento
+                </h2>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  Kumuha ng malinaw na litrato gamit ang cellphone camera o pumili ng file mula sa gallery
+                </p>
               </div>
             </div>
 
@@ -1218,7 +1350,9 @@ const ApplyFranchise = () => {
             )}
 
             <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-6">
-              <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Buod ng Aplikasyon</h3>
+              <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+                Buod ng Aplikasyon Bago I-sumite
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Operator</span>
@@ -1243,16 +1377,16 @@ const ApplyFranchise = () => {
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[48px]"
               >
-                <ChevronLeft size={18} /> Bumalik
+                <ChevronLeft size={18} /> Bumalik sa Cedula
               </button>
 
               <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[48px]"
                 >
                   <Save size={16} /> I-save ang Progress
                 </button>
@@ -1260,7 +1394,7 @@ const ApplyFranchise = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm sm:text-base text-white transition-all shadow-md active:scale-95 cursor-pointer ${
+                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm sm:text-base text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[48px] ${
                     isSubmitting 
                       ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' 
                       : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
