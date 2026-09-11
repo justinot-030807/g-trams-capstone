@@ -13,18 +13,31 @@ const DocumentUploadCard = ({
 }) => {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const [sizeError, setSizeError] = useState(false);
 
   const hasFile = !!file || !!previewUrl;
   const isPdf = previewUrl?.toLowerCase().includes('.pdf') || (file && file.type === 'application/pdf');
 
   const handleCameraChange = (e) => {
     if (e.target.files && e.target.files[0]) {
+      if (e.target.files[0].size > 10 * 1024 * 1024) {
+        setSizeError(true);
+        setTimeout(() => setSizeError(false), 4000);
+        return;
+      }
+      setSizeError(false);
       onFileSelect(id, e.target.files[0]);
     }
   };
 
   const handleGalleryChange = (e) => {
     if (e.target.files && e.target.files[0]) {
+      if (e.target.files[0].size > 10 * 1024 * 1024) {
+        setSizeError(true);
+        setTimeout(() => setSizeError(false), 4000);
+        return;
+      }
+      setSizeError(false);
       onFileSelect(id, e.target.files[0]);
     }
   };
@@ -152,6 +165,12 @@ const DocumentUploadCard = ({
         <span>JPG, PNG, or PDF</span>
         <span>Up to 10MB</span>
       </div>
+      
+      {sizeError && (
+        <p className="mt-1.5 text-[11px] font-bold text-red-600 dark:text-red-400">
+          File exceeds 10MB limit. Please choose a smaller file.
+        </p>
+      )}
 
     </div>
   );

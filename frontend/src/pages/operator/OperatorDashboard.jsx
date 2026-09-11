@@ -15,6 +15,8 @@ import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
 import SpotlightTour from '../../components/operator/SpotlightTour';
 import LanguagePreferenceModal from '../../components/operator/LanguagePreferenceModal';
+import FeedbackModal from '../../components/common/FeedbackModal';
+import { useNotifications } from '../../context/NotificationContext';
 
 const CANCEL_REASONS = [
   "Need to correct vehicle or tricycle details",
@@ -61,6 +63,15 @@ const OperatorDashboard = () => {
     isSubmitting: false
   });
 
+  const [feedbackModal, setFeedbackModal] = useState({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+    confirmText: 'OK',
+    onConfirm: null
+  });
+
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 
   const [maxUnits, setMaxUnits] = useState(() => {
@@ -78,14 +89,7 @@ const OperatorDashboard = () => {
   });
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [readNotifIds, setReadNotifIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('gtrams_read_notification_ids')) || [];
-    } catch {
-      return [];
-    }
-  });
+  const { notifications, unreadCount: unreadNotifCount, markAllRead, markAsRead } = useNotifications();
 
   const toggleLanguage = () => {
     const nextLang = language === 'fil' ? 'en' : 'fil';
@@ -101,50 +105,19 @@ const OperatorDashboard = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Sync notifications with franchise updates
-  useEffect(() => {
-    const notifs = [];
-    franchises.forEach(item => {
-      if (item.status === 'Ready for Pickup') {
-        notifs.push({
-          id: `op_ready_${item._id}`,
-          title: 'Franchise Approved!',
-          desc: `Franchise for unit ${item.plateNo || ''} is approved. Proceed to BPLO cashier to settle payment.`,
-          time: 'Action Required',
-          type: 'success',
-          link: '/operator-dashboard'
-        });
-      } else if (item.status === 'Cancelled') {
-        notifs.push({
-          id: `op_cancelled_${item._id}`,
-          title: 'Application Returned / Needs Revision',
-          desc: item.cancelReason ? `LGU Note: ${item.cancelReason}` : 'Your application was returned for correction. Click to fix.',
-          time: 'Attention',
-          type: 'reminder',
-          link: '/apply-franchise'
-        });
-      } else if (item.status === 'Expired') {
-        notifs.push({
-          id: `op_expired_${item._id}`,
-          title: 'Franchise Expired Alert',
-          desc: `Unit ${item.plateNo || 'N/A'} has expired and requires annual renewal.`,
-          time: 'Renewal',
-          type: 'reminder',
-          link: '/apply-franchise'
-        });
-      }
-    });
-    setNotifications(notifs);
-  }, [franchises]);
-
-  const unreadNotifCount = notifications.filter(n => !readNotifIds.includes(n.id)).length;
-
   const markAllNotifsRead = () => {
-    const allIds = notifications.map(n => n.id);
-    const updated = Array.from(new Set([...readNotifIds, ...allIds]));
-    setReadNotifIds(updated);
-    localStorage.setItem('gtrams_read_notification_ids', JSON.stringify(updated));
+    markAllRead();
   };
+
+  // Re-fetch franchises if we get a status_change notification
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const latest = notifications[0];
+      if (latest.type === 'status_change' && !latest.isRead) {
+        fetchMyFranchises();
+      }
+    }
+  }, [notifications]);
 
   useEffect(() => {
     fetchMyFranchises();
@@ -155,7 +128,7 @@ const OperatorDashboard = () => {
 
   const fetchSystemSettings = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/system-settings`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
@@ -165,6 +138,10 @@ const OperatorDashboard = () => {
           const num = Number(count) || 2;
           setMaxUnits(num);
           localStorage.setItem('max_units_per_operator', num);
+        }
+        const fee = json.data?.franchiseFee ?? json.franchiseFee;
+        if (fee !== undefined && fee !== null) {
+          localStorage.setItem('franchise_fee', fee);
         }
       }
     } catch (err) {
@@ -318,7 +295,7 @@ const OperatorDashboard = () => {
   const handleConfirmCancel = async () => {
     if (!cancelModal.unit) return;
     setCancelModal(prev => ({ ...prev, isSubmitting: true }));
-    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)' || cancelModal.reason === 'Iba pang dahilan (Pakilagay sa ibaba)')
+    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)')
       ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
       : cancelModal.reason;
 
@@ -337,11 +314,25 @@ const OperatorDashboard = () => {
         fetchMyFranchises();
       } else {
         const d = await res.json();
-        alert(d.message || "Unable to cancel application.");
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Cancellation Failed',
+          message: d.message || "Unable to cancel application.",
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
         setCancelModal(prev => ({ ...prev, isSubmitting: false }));
       }
     } catch (err) {
-      alert("Network error. Cannot connect to server.");
+      setFeedbackModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Network Error',
+        message: "Cannot connect to server.",
+        confirmText: 'OK',
+        onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+      });
       setCancelModal(prev => ({ ...prev, isSubmitting: false }));
     }
   };
@@ -783,16 +774,16 @@ const OperatorDashboard = () => {
                       ) : (
                         notifications.map(notif => (
                           <div
-                            key={notif.id}
+                            key={notif._id}
                             onClick={() => {
-                              if (notif.action) notif.action();
-                              else if (notif.link) navigate(notif.link);
+                              markAsRead(notif._id);
+                              if (notif.relatedFranchise) navigate('/operator-dashboard');
                               setIsNotifOpen(false);
                             }}
-                            className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
+                            className={`p-4 cursor-pointer transition-colors ${notif.isRead ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60' : 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
                           >
-                            <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{notif.title}</p>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.desc}</p>
+                            <p className={`text-xs text-slate-900 dark:text-white line-clamp-1 ${notif.isRead ? 'font-semibold' : 'font-black'}`}>{notif.title}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
                           </div>
                         ))
                       )}
@@ -959,7 +950,15 @@ const OperatorDashboard = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+          {franchises.filter(f => f.status === 'Expired' || f.status === 'Active').length >= 2 && (
+            <button
+              onClick={() => navigate('/batch-renewal')}
+              className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors shadow-2xs flex items-center gap-1 cursor-pointer"
+            >
+              <RefreshCw size={14} /> Batch Renew
+            </button>
+          )}
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
             {franchises.length} Registered
           </span>
@@ -1387,6 +1386,16 @@ const OperatorDashboard = () => {
         isOpen={isTourOpen} 
         onClose={handleCloseTour} 
         steps={getTourSteps()} 
+      />
+
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        type={feedbackModal.type}
+        title={feedbackModal.title}
+        message={feedbackModal.message}
+        confirmText={feedbackModal.confirmText || 'OK'}
+        onConfirm={feedbackModal.onConfirm || (() => setFeedbackModal(prev => ({ ...prev, isOpen: false })))}
+        onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
       />
     </MainLayout>
   );

@@ -1,15 +1,18 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const connectDB = require('./src/config/db');
 const mongoSanitize = require('./src/middleware/sanitize');
+const { initSocket } = require('./src/config/socket');
 
 // Routes
 const todaRoutes = require('./src/routes/todaRoutes'); 
 const auditLogRoutes = require('./src/routes/auditLogRoutes');
 
 const app = express();
+const server = http.createServer(app);
 app.set('trust proxy', 1);
 connectDB();
 
@@ -79,6 +82,10 @@ app.use(`${BASE_URI}/settings`, require('./src/routes/systemSettingsRoutes'));
 // Audit logs routes (Admin only)
 app.use(`${BASE_URI}/audit-logs`, auditLogRoutes);
 
+// Notification and Chat routes
+app.use(`${BASE_URI}/notifications`, require('./src/routes/notificationRoutes'));
+app.use(`${BASE_URI}/chat`, require('./src/routes/chatRoutes'));
+
 // Global error handling middleware (handles Multer errors, validation errors, etc.)
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
@@ -91,7 +98,10 @@ app.use((err, req, res, next) => {
     return res.status(500).json({ message: err.message || 'Internal server error' });
 });
 
+// Initialize Socket.IO
+initSocket(server);
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`server running on port ${PORT}`);
 });

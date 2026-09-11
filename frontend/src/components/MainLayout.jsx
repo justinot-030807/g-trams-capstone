@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
 import OperatorBottomNav from './operator/OperatorBottomNav';
+import ChatWidget from './operator/ChatWidget';
 
 const MainLayout = ({ children }) => {
   // Elastic Rubber-band Overscroll Touch Stretch Effect for mobile
@@ -210,7 +211,10 @@ const MainLayout = ({ children }) => {
 
       {/* Mobile Bottom Navigation for Operator and TODA President */}
       {showBottomNav && (
-        <OperatorBottomNav role={role} />
+        <>
+          <ChatWidget />
+          <OperatorBottomNav role={role} />
+        </>
       )}
     </div>
   );

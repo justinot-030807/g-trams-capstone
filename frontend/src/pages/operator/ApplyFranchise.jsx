@@ -9,6 +9,7 @@ import {
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
+import TodaZoneGuideModal from '../../components/operator/TodaZoneGuideModal';
 
 const GASAN_BARANGAYS = [
   "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
@@ -37,7 +38,10 @@ const DEFAULT_REQUIREMENTS = [
   { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
 ];
 
+import { useNavigate } from 'react-router-dom';
+
 const ApplyFranchise = () => {
+  const navigate = useNavigate();
   const [myFranchises, setMyFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [formMode, setFormMode] = useState(null); 
@@ -69,6 +73,7 @@ const ApplyFranchise = () => {
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [fullPreview, setFullPreview] = useState(null);
+  const [showTodaGuide, setShowTodaGuide] = useState(false);
 
   // Dynamic settings: max units and requirements list
   const [maxAllowedUnits, setMaxAllowedUnits] = useState(() => {
@@ -297,7 +302,7 @@ const ApplyFranchise = () => {
           setCurrentStep(parsedDraft.currentStep || 1);
           setHasDraftRestored(true);
           setLastSavedTime(parsedDraft.timeFormatted || null);
-          showToast("Na-restore ang iyong dating nai-save na draft.", "success");
+          showToast("Your saved draft has been restored.", "success");
           return;
         }
       } catch (e) {
@@ -349,51 +354,13 @@ const ApplyFranchise = () => {
   };
 
   const handleRenewClick = (franchise) => {
-    setFormMode('Renewal');
-    setSelectedId(franchise._id);
-    setFilePreviews({});
-    
-    const renewDraftKey = `gtrams_renewal_draft_${franchise._id}`;
-    const savedDraft = localStorage.getItem(renewDraftKey);
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.formData) {
-          setFormData(parsed.formData);
-          setCurrentStep(parsed.currentStep || 1);
-          setHasDraftRestored(true);
-          setLastSavedTime(parsed.timeFormatted || null);
-          showToast("Na-restore ang iyong dating nai-save na renewal draft.", "success");
-          return;
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    setHasDraftRestored(false);
-    setLastSavedTime(null);
-    setCurrentStep(1);
-    setFormData({
-      fullName: franchise.fullName || '',
-      address: franchise.address || '',
-      zone: franchise.zone || '',
-      made: franchise.made || '', 
-      make: franchise.make || '',
-      motorNo: franchise.motorNo || '',
-      chassisNo: franchise.chassisNo || '',
-      plateNo: franchise.plateNo || '',
-      todaName: franchise.todaName || loggedInToda,
-      dateApplied: '', cedulaDate: '', 
-      cedulaAddress: franchise.cedulaAddress || 'Gasan, Marinduque', 
-      cedulaSerialNo: franchise.cedulaSerialNo || ''
-    });
+    navigate('/renew-franchise/' + franchise._id);
   };
 
   const handleConfirmCancel = async () => {
     if (!cancelModal.unit) return;
     setCancelModal(prev => ({ ...prev, isSubmitting: true }));
-    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)' || cancelModal.reason === 'Iba pang dahilan (Pakilagay sa ibaba)')
+    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)')
       ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
       : cancelModal.reason;
 
@@ -563,20 +530,6 @@ const ApplyFranchise = () => {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: submitData
         });
-      } else if (formMode === 'Renewal') {
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}/renew`, {
-          method: 'PUT',
-          headers: { 
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            dateApplied: formData.dateApplied || new Date().toISOString().substring(0, 10),
-            cedulaDate: formData.cedulaDate || new Date().toISOString().substring(0, 10),
-            cedulaAddress: formData.cedulaAddress || 'Gasan, Marinduque',
-            cedulaSerialNo: formData.cedulaSerialNo || '000000'
-          })
-        });
       }
 
       const data = await response.json();
@@ -733,7 +686,7 @@ const ApplyFranchise = () => {
                           onClick={() => handleRenewClick(unit)}
                           className="text-xs font-bold bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
                         >
-                          <RefreshCw size={13} /> {hasRenewalDraft ? 'Ipagpatuloy ang Renewal' : 'Renew Now'}
+                          <RefreshCw size={13} /> {hasRenewalDraft ? 'Continue Renewal' : 'Renew Now'}
                         </button>
                       )}
 
@@ -757,7 +710,7 @@ const ApplyFranchise = () => {
                           })}
                           className="text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900/60 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 active:scale-95"
                         >
-                          <XCircle size={13} /> I-cancel
+                          <XCircle size={13} /> Cancel
                         </button>
                       )}
                     </div>
@@ -850,31 +803,7 @@ const ApplyFranchise = () => {
         </div>
       )}
 
-      {/* Document preview modal */}
-      {fullPreview && (
-        <div className="fixed inset-0 z-[200] bg-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-8 backdrop-blur-md animate-in fade-in">
-          <button 
-            onClick={() => setFullPreview(null)} 
-            className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 text-white bg-red-500/80 hover:bg-red-500 p-2 sm:p-2.5 rounded-full shadow-lg transition-all"
-          >
-            <X size={20} />
-          </button>
-          
-          <div className="w-full max-w-5xl mb-3 mt-8 sm:mt-0 text-center">
-            <h3 className="text-white font-bold text-sm sm:text-lg flex items-center justify-center gap-2">
-              <ShieldCheck size={20} className="text-[#D4AF37]" /> {fullPreview.title}
-            </h3>
-          </div>
 
-          <div className="w-full max-w-5xl h-[75vh] flex items-center justify-center relative">
-            {fullPreview.url.toLowerCase().includes('.pdf') ? (
-              <iframe src={fullPreview.url} className="w-full h-full bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
-            ) : (
-              <img src={fullPreview.url} alt="Preview" className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl bg-slate-800" />
-            )}
-          </div>
-        </div>
-      )}
 
       <header className="mb-5 max-w-3xl flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
@@ -1073,9 +1002,14 @@ const ApplyFranchise = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Route / Zone <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Route / Zone <span className="text-red-500">*</span>
+                    </label>
+                    <button type="button" onClick={() => setShowTodaGuide(true)} className="p-1 rounded-xl text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="View TODA Zone Guide">
+                      <Info size={16} />
+                    </button>
+                  </div>
                   <input 
                     type="text" 
                     inputMode="numeric"
@@ -1570,6 +1504,8 @@ const ApplyFranchise = () => {
         onConfirm={feedbackModal.onConfirm || (() => setFeedbackModal(prev => ({ ...prev, isOpen: false })))}
         onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
       />
+
+      <TodaZoneGuideModal isOpen={showTodaGuide} onClose={() => setShowTodaGuide(false)} />
     </MainLayout>
   );
 };

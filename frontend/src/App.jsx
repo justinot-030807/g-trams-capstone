@@ -21,9 +21,13 @@ import ApplyFranchise from './pages/operator/ApplyFranchise';
 import RenewFranchise from './pages/operator/RenewFranchise';
 import OperatorSettings from './pages/operator/OperatorSettings';
 import SubmitMembers from './pages/operator/SubmitMembers';
+import BatchRenewal from './pages/operator/BatchRenewal';
 import HelpSupport from './pages/operator/HelpSupport';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+
+import { SocketProvider } from './context/SocketContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 const ProfileRedirect = () => {
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
@@ -60,38 +64,46 @@ function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <Routes>
-          {/* PUBLIC ROUTES */}
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/maintenance" element={<MaintenanceMode />} />
+        <SocketProvider>
+          <NotificationProvider>
+            <Routes>
+              {/* PUBLIC ROUTES */}
+              <Route path="/" element={<Navigate to="/login" />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/maintenance" element={<MaintenanceMode />} />
 
-          {/* ADMIN SECURE ROUTES */}
-          <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseMasterlist /></ProtectedRoute>} />
-          <Route path="/user-management" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
-          <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
-          <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseApproval /></ProtectedRoute>} />
-          <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['admin']}><ManageRevocations /></ProtectedRoute>} />
-          <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
-          <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
+              {/* ADMIN SECURE ROUTES */}
+              <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseMasterlist /></ProtectedRoute>} />
+              <Route path="/user-management" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
+              <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
+              <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
+              <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseApproval /></ProtectedRoute>} />
+              <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['admin']}><ManageRevocations /></ProtectedRoute>} />
+              <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
+              <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
 
-          {/* TODA PRESIDENT SECURE ROUTES */}
-          <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><SubmitMembers /></ProtectedRoute>} />
-          
-          {/* OPERATOR & TODA SECURE ROUTES */}
-          <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorDashboard /></ProtectedRoute>} />
-          <Route path="/apply-franchise" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><ApplyFranchise /></ProtectedRoute>} />
-          <Route path="/renew-franchise/:id" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><RenewFranchise /></ProtectedRoute>} />
-          <Route path="/operator/settings" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorSettings /></ProtectedRoute>} />
-          
-          {/* SHARED SECURE ROUTES & REDIRECTS */}
-          <Route path="/manage-profile" element={<ProfileRedirect />} />
-          <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
-        </Routes>
+              {/* TODA PRESIDENT SECURE ROUTES */}
+              <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><SubmitMembers /></ProtectedRoute>} />
+              
+              {/* OPERATOR & TODA SECURE ROUTES */}
+              <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorDashboard /></ProtectedRoute>} />
+              <Route path="/apply-franchise" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><ApplyFranchise /></ProtectedRoute>} />
+              <Route path="/renew-franchise/:id" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><RenewFranchise /></ProtectedRoute>} />
+              <Route path="/batch-renewal" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><BatchRenewal /></ProtectedRoute>} />
+              <Route path="/operator/settings" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorSettings /></ProtectedRoute>} />
+              
+              {/* SHARED SECURE ROUTES & REDIRECTS */}
+              <Route path="/manage-profile" element={<ProfileRedirect />} />
+              <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
+
+              {/* CATCH-ALL 404 ROUTE */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </NotificationProvider>
+        </SocketProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

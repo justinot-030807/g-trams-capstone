@@ -168,6 +168,23 @@ const SubmitMembers = () => {
 
   return (
     <MainLayout>
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #print-roster-area, #print-roster-area * {
+            visibility: visible;
+          }
+          #print-roster-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+        }
+      `}</style>
+      
       {/* Toast Notification */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -188,13 +205,13 @@ const SubmitMembers = () => {
         </div>
       )}
 
-      <div className="pb-28 sm:pb-24 animate-in fade-in duration-300">
+      <div id="print-roster-area" className="pb-28 sm:pb-24 animate-in fade-in duration-300">
         {/* Top Header */}
         <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/operator-dashboard')}
-              className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white shadow-2xs active:scale-95 cursor-pointer shrink-0"
+              className="print:hidden w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white shadow-2xs active:scale-95 cursor-pointer shrink-0"
               title="Back to Dashboard"
             >
               <ArrowLeft size={18} />
@@ -208,14 +225,14 @@ const SubmitMembers = () => {
               <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                 TODA Association &amp; Member Roster
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              <p className="print:hidden text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                 View all association members, registered units, or submit official rosters to the LGU.
               </p>
             </div>
           </div>
 
           {/* Refresh & Print buttons */}
-          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <div className="print:hidden flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <button
               onClick={() => { fetchMyMembers(); fetchMySubmissions(); }}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs active:scale-95 cursor-pointer min-h-[38px]"
@@ -236,7 +253,7 @@ const SubmitMembers = () => {
         </header>
 
         {/* Modern Tabs Navigation Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+        <div className="print:hidden grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
           <button
             type="button"
             onClick={() => setActiveTab('roster')}
@@ -343,7 +360,7 @@ const SubmitMembers = () => {
             </div>
 
             {/* Search & Filter Controls */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="print:hidden bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input

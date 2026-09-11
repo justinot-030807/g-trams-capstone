@@ -15,7 +15,8 @@ const {
     searchHistoricalFranchise,
     toggleArchiveFranchise,
     revokeFranchise,
-    getFranchiseReports 
+    getFranchiseReports,
+    batchRenewFranchises
 } = require('../controllers/franchiseController');
 
 // Search historical franchise records
@@ -41,6 +42,7 @@ router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
+router.put('/batch-renew', protect, authorize('operator', 'toda president'), upload.any(), batchRenewFranchises);
 router.put('/:id/renew', protect, authorize('operator', 'toda president'), upload.fields([{ name: 'orcrFile', maxCount: 1 }]), renewFranchise);
 router.put('/:id/cancel', protect, authorize('operator', 'toda president'), cancelMyFranchise);
 

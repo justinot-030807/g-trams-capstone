@@ -1,6 +1,8 @@
 const Franchise = require('../models/franchiseModel');
 const cron = require('node-cron');
 const { logAudit } = require('../utils/auditLogger');
+const Notification = require('../models/notificationModel');
+const { emitToUser } = require('../config/socket');
 
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -307,6 +309,17 @@ const updateFranchiseStatus = async (req, res) => {
             { returnDocument: 'after' }
         ).populate('operator', 'name address contact');
 
+        if (updatedFranchise.operator) {
+            const notification = await Notification.create({
+                recipient: updatedFranchise.operator._id,
+                type: 'status_change',
+                title: `Franchise ${status}`,
+                message: `Your franchise application for ${updatedFranchise.plateNo} has been updated to: ${status}`,
+                relatedFranchise: updatedFranchise._id
+            });
+            emitToUser(String(updatedFranchise.operator._id), 'notification', notification);
+        }
+
         logAudit(req, {
             action: 'FRANCHISE_STATUS_UPDATE',
             targetType: 'Franchise',
@@ -471,6 +484,68 @@ const getFranchiseReports = async (req, res) => {
     }
 };
 
+const batchRenewFranchises = async (req, res) => {
+    try {
+        let franchiseIds = [];
+        try {
+            franchiseIds = JSON.parse(req.body.franchiseIds);
+        } catch (e) {
+            return res.status(400).json({ message: 'Invalid franchiseIds format' });
+        }
+
+        const { cedulaSerialNo, cedulaDate, cedulaAddress, dateApplied } = req.body;
+        const results = [];
+
+        for (const id of franchiseIds) {
+            try {
+                const franchise = await Franchise.findById(id);
+                if (!franchise) {
+                    results.push({ id, status: 'failed', reason: 'Franchise not found' });
+                    continue;
+                }
+
+                const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
+                const isAdmin = role === 'admin' || role === 'administrator';
+                const isOwner = franchise.operator && franchise.operator.toString() === req.user._id.toString();
+
+                if (!isAdmin && !isOwner) {
+                    results.push({ id, status: 'failed', reason: 'Access denied' });
+                    continue;
+                }
+
+                if (franchise.status !== 'Expired' && franchise.status !== 'Active') {
+                    results.push({ id, status: 'failed', reason: `Status is ${franchise.status}, cannot renew` });
+                    continue;
+                }
+
+                const updateData = {
+                    status: 'Pending',
+                    applicationType: 'Renewal',
+                    dateApplied: dateApplied || new Date().toISOString(),
+                    cedulaSerialNo: cedulaSerialNo || franchise.cedulaSerialNo,
+                    cedulaDate: cedulaDate || franchise.cedulaDate,
+                    cedulaAddress: cedulaAddress || franchise.cedulaAddress
+                };
+
+                const files = req.files || [];
+                const orcrFile = files.find(f => f.fieldname === `orcrFile_${id}`);
+                if (orcrFile) {
+                    updateData.orCrUrl = orcrFile.path || orcrFile.secure_url || orcrFile.url;
+                }
+
+                await Franchise.findByIdAndUpdate(id, updateData);
+                results.push({ id, status: 'success' });
+            } catch (err) {
+                results.push({ id, status: 'failed', reason: err.message });
+            }
+        }
+
+        res.status(200).json({ results });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = { 
     createFranchise, 
     searchHistoricalFranchise,
@@ -483,5 +558,6 @@ module.exports = {
     cancelMyFranchise,
     toggleArchiveFranchise,
     revokeFranchise,
-    getFranchiseReports
+    getFranchiseReports,
+    batchRenewFranchises
 };

@@ -9,6 +9,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
   const voucherRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -71,7 +72,8 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
       setTimeout(() => setDownloadSuccess(false), 3000);
     } catch (err) {
       console.error('Error exporting voucher as image:', err);
-      alert('Could not download image. Please try "Print / Save PDF" instead.');
+      setDownloadError(true);
+      setTimeout(() => setDownloadError(false), 4000);
     } finally {
       setIsDownloading(false);
     }
@@ -210,6 +212,13 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
             </button>
           </div>
         </div>
+
+        {downloadError && (
+          <div className="w-full max-w-[500px] mb-3 print:hidden bg-red-50 text-red-600 px-3 py-2 rounded-xl text-xs font-bold border border-red-200 flex items-center gap-2">
+            <AlertCircle size={14} />
+            <span>Could not download image. Please try "Print / Save PDF" instead.</span>
+          </div>
+        )}
 
         {/* Scissors Cutout Indicator for Paper Printing */}
         <div className="w-full max-w-[500px] mb-1.5 hidden print:flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-widest border-b border-dashed border-slate-400 pb-1">

@@ -195,9 +195,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] text-[10px] font-black uppercase tracking-wider">
               <StepIcon size={12} />
               <span>
-                {isFilipino 
-                  ? `Hakbang ${currentStepIndex + 1} ng ${steps.length}` 
-                  : `Step ${currentStepIndex + 1} of ${steps.length}`}
+                {`Step ${currentStepIndex + 1} of ${steps.length}`}
               </span>
             </span>
 
@@ -205,7 +203,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
               type="button"
               onClick={handleFinish}
               className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title={isFilipino ? "Laktawan ang Gabay" : "Skip Tour"}
+              title="Skip Tour"
             >
               <X size={16} />
             </button>
@@ -246,7 +244,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
                   className="px-3 py-2 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
                 >
                   <ArrowLeft size={13} />
-                  <span>{isFilipino ? 'Bumalik' : 'Back'}</span>
+                  <span>Back</span>
                 </button>
               )}
 
@@ -256,9 +254,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
                 className="px-4 py-2 rounded-xl font-black text-xs text-slate-950 bg-[#D4AF37] hover:bg-[#c29e2f] transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer ring-2 ring-[#D4AF37]/40"
               >
                 <span>
-                  {isLastStep 
-                    ? (isFilipino ? 'Tapusin' : 'Finish') 
-                    : (isFilipino ? 'Susunod' : 'Next')}
+                  {isLastStep ? 'Finish' : 'Next'}
                 </span>
                 {isLastStep ? <Check size={14} className="stroke-[3]" /> : <ArrowRight size={14} className="stroke-[2.5]" />}
               </button>
