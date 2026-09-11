@@ -86,10 +86,18 @@ const ChatWidget = () => {
     setIsSending(true);
 
     try {
+      const payload = { message: messageText };
+      if (activeThread) {
+        const otherParticipant = activeThread.participants?.find(p => String(p._id || p) !== String(currentUser._id));
+        if (otherParticipant) {
+          payload.recipientId = otherParticipant._id || otherParticipant;
+        }
+      }
+
       const res = await fetch(`${API_URL}/api/v1/chat/messages`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -217,8 +225,8 @@ const ChatWidget = () => {
   };
 
   const isCurrentUser = (senderId) => {
-    const sid = typeof senderId === 'object' ? senderId._id : senderId;
-    return sid === currentUser._id;
+    const sid = typeof senderId === 'object' && senderId !== null ? senderId._id : senderId;
+    return String(sid) === String(currentUser._id);
   };
 
   return (
@@ -290,7 +298,7 @@ const ChatWidget = () => {
                   <p className="text-center text-xs text-slate-500 mt-4">No active conversations.</p>
                 ) : (
                   threads.map(t => {
-                    const otherParticipants = t.participants?.filter(p => p._id !== currentUser._id) || [];
+                    const otherParticipants = t.participants?.filter(p => String(p._id || p) !== String(currentUser._id)) || [];
                     const names = otherParticipants.map(p => p.name).join(', ') || 'Unknown User';
                     return (
                       <button
@@ -385,34 +393,36 @@ const ChatWidget = () => {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-slate-200 dark:border-slate-800 p-2.5 bg-white dark:bg-slate-900 shrink-0">
-            <div className="flex items-end gap-2">
-              <textarea
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your message..."
-                rows={1}
-                className="flex-1 resize-none border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/30 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] min-h-[38px] max-h-[80px] transition-colors"
-                style={{ fieldSizing: 'content' }}
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || isSending}
-                className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                  input.trim() && !isSending
-                    ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:opacity-90 active:scale-90 shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                {isSending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Send size={16} />
-                )}
-              </button>
+          {(!(!activeThread && String(currentUser.role).toLowerCase().includes('admin'))) && (
+            <div className="border-t border-slate-200 dark:border-slate-800 p-2.5 bg-white dark:bg-slate-900 shrink-0">
+              <div className="flex items-end gap-2">
+                <textarea
+                  value={input}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type your message..."
+                  rows={1}
+                  className="flex-1 resize-none border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/30 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] min-h-[38px] max-h-[80px] transition-colors"
+                  style={{ fieldSizing: 'content' }}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isSending}
+                  className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                    input.trim() && !isSending
+                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:opacity-90 active:scale-90 shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  {isSending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </>

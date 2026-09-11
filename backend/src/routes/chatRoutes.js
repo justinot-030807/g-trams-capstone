@@ -46,8 +46,17 @@ router.get('/messages/:threadId', async (req, res) => {
 
 router.post('/messages', async (req, res) => {
   try {
-    const { recipientId, message } = req.body;
-    if (!recipientId || !message) return res.status(400).json({ message: 'Missing recipientId or message' });
+    let { recipientId, message } = req.body;
+    
+    if (!message) return res.status(400).json({ message: 'Missing message' });
+    
+    // If no recipientId is provided, and the user is an operator, default to sending to an admin.
+    if (!recipientId) {
+      const User = require('../models/userModel');
+      const admin = await User.findOne({ role: { $in: ['admin', 'Administrator'] } });
+      if (!admin) return res.status(400).json({ message: 'No admin found to receive message' });
+      recipientId = admin._id.toString();
+    }
 
     let thread = await ChatThread.findOne({
       participants: { $all: [req.user._id, recipientId] }
