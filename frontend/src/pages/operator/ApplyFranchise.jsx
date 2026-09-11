@@ -578,8 +578,8 @@ const ApplyFranchise = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[50px]";
-  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-base font-bold text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[50px]";
+  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[42px]";
+  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[42px]";
 
   if (formMode === null) {
     return (
@@ -611,8 +611,8 @@ const ApplyFranchise = () => {
         <header className="mb-6 flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">My Franchises</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your active tricycle units and pending applications.</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">My Franchises</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Manage your active tricycle units and pending applications.</p>
           </div>
         </header>
 
@@ -624,7 +624,7 @@ const ApplyFranchise = () => {
                 <FileText size={20} />
               </div>
               <div>
-                <h4 className="text-sm font-black text-slate-900 dark:text-white">Unfinished Application Draft Detected</h4>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Unfinished Application Draft Detected</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">You have a saved draft. You can resume editing where you left off or discard it.</p>
               </div>
             </div>
@@ -642,7 +642,7 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={handleStartNewApplication}
-                className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 Resume Draft <ChevronRight size={14} />
               </button>
@@ -662,19 +662,19 @@ const ApplyFranchise = () => {
               return (
               <div 
                 key={unit._id} 
-                className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors"
+                className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div>
                   <div className="absolute top-0 right-0 w-2 h-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
                   <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Unit {index + 1}</h3>
-                  <div className="text-2xl font-black text-slate-900 dark:text-white mb-1">{unit.plateNo || 'PENDING PLATE'}</div>
+                  <div className="text-lg sm:text-xl font-mono font-bold text-slate-900 dark:text-white mb-1">{unit.plateNo || 'PENDING PLATE'}</div>
                   <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
                 </div>
                 
                 <div>
                   <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2 gap-2 flex-wrap">
-                    <span className={`px-3 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
+                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
                       unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                       unit.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
                       unit.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
@@ -690,18 +690,18 @@ const ApplyFranchise = () => {
                       {unit.status === 'Expired' && (
                         <button 
                           onClick={() => handleRenewClick(unit)}
-                          className="text-xs font-black bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-xs active:scale-95 cursor-pointer"
+                          className="text-xs font-bold bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
                         >
-                          <RefreshCw size={14} /> {hasRenewalDraft ? 'Ipagpatuloy ang Renewal' : 'Renew Now'}
+                          <RefreshCw size={13} /> {hasRenewalDraft ? 'Ipagpatuloy ang Renewal' : 'Renew Now'}
                         </button>
                       )}
 
                       {unit.status === 'Cancelled' && (
                         <button 
                           onClick={() => handleReapplyClick(unit)}
-                          className="text-xs font-black bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-xs active:scale-95 cursor-pointer"
+                          className="text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white px-3.5 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
                         >
-                          <RefreshCw size={14} /> Fix Issues
+                          <RefreshCw size={13} /> Fix Issues
                         </button>
                       )}
 
@@ -714,34 +714,34 @@ const ApplyFranchise = () => {
                             customReason: '',
                             isSubmitting: false
                           })}
-                          className="text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900/60 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 active:scale-95"
+                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900/60 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 active:scale-95"
                         >
-                          <XCircle size={14} /> I-cancel
+                          <XCircle size={13} /> I-cancel
                         </button>
                       )}
                     </div>
                   </div>
 
                   {unit.status === 'Active' && (
-                    <div className="mt-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-3.5 rounded-2xl flex items-center justify-between">
+                    <div className="mt-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-3 rounded-2xl flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <CalendarDays size={16} className="text-emerald-600 dark:text-emerald-400" />
+                        <CalendarDays size={15} className="text-emerald-600 dark:text-emerald-400" />
                         <div>
                           <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Validity</p>
-                          <p className="text-xs font-black text-emerald-900 dark:text-emerald-300">1 Year</p>
+                          <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">1 Year</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Expires On</p>
-                        <p className="text-xs font-black text-emerald-900 dark:text-emerald-300">{getExpirationDate(unit.dateApplied)}</p>
+                        <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">{getExpirationDate(unit.dateApplied)}</p>
                       </div>
                     </div>
                   )}
 
                   {unit.status === 'Cancelled' && (
-                    <div className="mt-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 p-4 rounded-2xl">
-                      <h4 className="text-red-900 dark:text-red-300 font-black text-[10px] uppercase mb-1 flex items-center gap-1.5">
-                        <AlertCircle size={14} className="text-red-600 dark:text-red-400" /> Reason for Rejection
+                    <div className="mt-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 p-3.5 rounded-2xl">
+                      <h4 className="text-red-900 dark:text-red-300 font-bold text-[10px] uppercase mb-1 flex items-center gap-1.5">
+                        <AlertCircle size={13} className="text-red-600 dark:text-red-400" /> Reason for Rejection
                       </h4>
                       <p className="text-xs font-medium text-red-700 dark:text-red-300 leading-snug">
                         {unit.cancelReason || 'LGU did not provide a specific reason. Please visit the office.'}
@@ -756,18 +756,18 @@ const ApplyFranchise = () => {
             {myFranchises.length < maxAllowedUnits ? (
               <button 
                 onClick={handleStartNewApplication}
-                className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] hover:border-[#7A1B22]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[200px] group active:scale-98"
+                className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] hover:border-[#7A1B22]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[190px] group active:scale-98 cursor-pointer"
               >
-                <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:border-[#7A1B22]/30 dark:group-hover:border-[#D4AF37]/30 transition-all">
-                  <PlusCircle size={30} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:border-[#7A1B22]/30 dark:group-hover:border-[#D4AF37]/30 transition-all">
+                  <PlusCircle size={26} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                 </div>
-                <span className="font-black text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
-                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
+                <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
+                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
               </button>
             ) : (
-              <div className="bg-red-50/60 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-3xl p-6 flex flex-col items-center justify-center text-red-700 dark:text-red-300 min-h-[200px] text-center">
-                <AlertCircle size={32} className="mb-2.5 opacity-60 text-red-600 dark:text-red-400" />
-                <span className="font-black text-sm text-red-900 dark:text-red-200">Maximum Limit Reached</span>
+              <div className="bg-red-50/60 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-3xl p-6 flex flex-col items-center justify-center text-red-700 dark:text-red-300 min-h-[190px] text-center">
+                <AlertCircle size={28} className="mb-2 opacity-60 text-red-600 dark:text-red-400" />
+                <span className="font-bold text-xs sm:text-sm text-red-900 dark:text-red-200">Maximum Limit Reached</span>
                 <span className="text-xs font-medium mt-1 px-4 text-red-600 dark:text-red-400 leading-snug">You have reached the maximum allowed limit of {maxAllowedUnits} registered tricycle units per operator.</span>
               </div>
             )}
@@ -845,7 +845,7 @@ const ApplyFranchise = () => {
             >
               <ArrowLeft size={15} /> Back to My Units
             </button>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
             </h1>
             <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -884,23 +884,23 @@ const ApplyFranchise = () => {
           <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs max-w-3xl mb-5 transition-colors">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
                   progress.percentage === 100 
                     ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400' 
                     : 'bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]'
                 }`}>
-                  {progress.percentage === 100 ? <CheckCircle2 size={18} /> : `${progress.percentage}%`}
+                  {progress.percentage === 100 ? <CheckCircle2 size={16} /> : `${progress.percentage}%`}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                       Application Progress
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                       {progress.completed} of {progress.total} completed
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
                     {progress.remaining > 0 
                       ? (formMode === 'Renewal' ? `${progress.remaining} Cedula field${progress.remaining > 1 ? 's' : ''} remaining` : `${progress.remaining} item${progress.remaining > 1 ? 's' : ''} remaining`)
                       : '✓ All details and requirements completed!'}
@@ -915,7 +915,7 @@ const ApplyFranchise = () => {
             </div>
 
             {/* Visual Progress Bar Track */}
-            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/60 dark:border-slate-700/60 mb-4">
+            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/60 dark:border-slate-700/60 mb-3.5">
               <div 
                 className={`h-full rounded-full transition-all duration-500 ease-out ${
                   progress.percentage === 100
@@ -955,23 +955,23 @@ const ApplyFranchise = () => {
                     <div 
                       className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                         isCompleted 
-                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-md group-hover:scale-105' 
+                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs group-hover:scale-105' 
                           : isCurrent 
-                          ? 'bg-white dark:bg-slate-800 border-[3px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
+                          ? 'bg-white dark:bg-slate-800 border-[2.5px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
                           : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
                       }`}
                     >
                       {isCompleted ? (
-                        <Check size={14} className="stroke-[3]" />
+                        <Check size={13} className="stroke-[3]" />
                       ) : isCurrent ? (
-                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+                        <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
                       ) : (
                         <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
                       )}
                     </div>
                     
-                    <span className={`text-[10px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
-                      isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+                    <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                      isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-bold' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
                     }`}>
                       {step.title}
                     </span>
@@ -983,29 +983,29 @@ const ApplyFranchise = () => {
         );
       })()}
 
-      <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-3xl">
         
         {currentStep === 1 && (
-          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Section 1: Operator / May-ari */}
-            <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
-              <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                  <User size={18} />
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
+              <div className="flex items-center gap-2.5 mb-3.5 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                  <User size={16} />
                 </div>
                 <div>
-                  <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     1. Impormasyon ng Operator (May-ari)
                   </h2>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
                     Personal na detalye ng rehistradong may-ari ng prangkisa
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Buong Pangalan ng Operator <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1021,7 +1021,7 @@ const ApplyFranchise = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Barangay sa Gasan <span className="text-red-500">*</span>
                   </label>
                   {formMode === 'Renewal' || formMode === 'Re-apply' ? (
@@ -1038,10 +1038,10 @@ const ApplyFranchise = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Samahan ng TODA
                     </label>
-                    <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
                       Nakatala
                     </span>
                   </div>
@@ -1058,24 +1058,24 @@ const ApplyFranchise = () => {
             </div>
 
             {/* Section 2: Detalye ng Sasakyan / Motor */}
-            <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
-              <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                  <Car size={18} />
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
+              <div className="flex items-center gap-2.5 mb-3.5 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                  <Car size={16} />
                 </div>
                 <div>
-                  <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     2. Detalye ng Sasakyan (Tricycle / Motor)
                   </h2>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
                     Impormasyon ayon sa opisyal na LTO OR/CR ng sasakyan
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Brand / Modelo <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1091,7 +1091,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Taon (Model Year) <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1110,7 +1110,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Ruta / Zone <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1128,7 +1128,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Plate Number <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1144,7 +1144,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Motor Serial No. <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1160,7 +1160,7 @@ const ApplyFranchise = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Chassis Serial No. <span className="text-red-500">*</span>
                   </label>
                   <input 
@@ -1177,23 +1177,23 @@ const ApplyFranchise = () => {
               </div>
 
               {/* Step Navigation Buttons */}
-              <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
+              <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-5 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[48px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[42px]"
                 >
-                  <Save size={16} />
+                  <Save size={15} />
                   <span>I-save ang Progress</span>
                 </button>
 
                 <button 
                   type="button" 
                   onClick={validateAndNext}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer min-h-[48px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px]"
                 >
                   <span>Susunod (Hakbang 2: Cedula)</span>
-                  <ChevronRight size={18} />
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -1207,7 +1207,7 @@ const ApplyFranchise = () => {
                 <FileText size={18} />
               </div>
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Impormasyon ng Cedula (Community Tax Certificate)
                 </h2>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
@@ -1218,7 +1218,7 @@ const ApplyFranchise = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Cedula / CTC Serial No. <span className="text-red-500">*</span>
                 </label>
                 <input 
@@ -1236,7 +1236,7 @@ const ApplyFranchise = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Petsa kung Kailan Kinuha <span className="text-red-500">*</span>
                 </label>
                 <input 
@@ -1250,7 +1250,7 @@ const ApplyFranchise = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Lugar kung Saan Kinuha <span className="text-red-500">*</span>
                 </label>
                 <input 
@@ -1265,7 +1265,7 @@ const ApplyFranchise = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Petsa ng Pag-apply sa Portal <span className="text-red-500">*</span>
                 </label>
                 <input 
@@ -1279,31 +1279,31 @@ const ApplyFranchise = () => {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-5 border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[48px]"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px]"
               >
-                <ChevronLeft size={18} /> Bumalik sa Motor
+                <ChevronLeft size={16} /> Bumalik sa Motor
               </button>
 
-              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2.5">
+              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[48px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[42px]"
                 >
-                  <Save size={16} /> I-save ang Progress
+                  <Save size={15} /> I-save ang Progress
                 </button>
 
                 <button 
                   type="button" 
                   onClick={validateAndNext}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-sm active:scale-95 cursor-pointer min-h-[48px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px]"
                 >
                   <span>Susunod (Hakbang 3: Dokumento)</span>
-                  <ChevronRight size={18} />
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -1317,8 +1317,8 @@ const ApplyFranchise = () => {
                 <UploadCloud size={18} />
               </div>
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
-                  3. Upload ng mga Kinakailangang Dokumento
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  Hakbang 3: Upload ng mga Kinakailangang Dokumento
                 </h2>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                   Kumuha ng malinaw na litrato gamit ang cellphone camera o pumili ng file mula sa gallery
@@ -1328,7 +1328,7 @@ const ApplyFranchise = () => {
 
             {formMode === 'Renewal' ? (
               <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 rounded-2xl text-xs sm:text-sm font-semibold mb-5 flex items-start gap-3">
-                <Info size={20} className="shrink-0 mt-0.5" />
+                <Info size={18} className="shrink-0 mt-0.5" />
                 <p className="leading-relaxed">Hindi na kailangang mag-upload ng mga bagong file para sa renewal. Pakisuri ang buod sa ibaba bago i-submit.</p>
               </div>
             ) : (
@@ -1349,58 +1349,58 @@ const ApplyFranchise = () => {
               </div>
             )}
 
-            <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-6">
-              <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+            <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-5">
+              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
                 Buod ng Aplikasyon Bago I-sumite
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Operator</span>
-                  <span className="font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">{formData.fullName}</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">Operator</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.fullName}</span>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Plate No.</span>
-                  <span className="font-mono font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">{formData.plateNo}</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">Plate No.</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.plateNo}</span>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">TODA</span>
-                  <span className="font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">{formData.todaName || loggedInToda}</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">TODA</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.todaName || loggedInToda}</span>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Zone</span>
-                  <span className="font-black text-slate-900 dark:text-white truncate block text-sm mt-0.5">Zone {formData.zone}</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">Zone</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">Zone {formData.zone}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-5 gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-4 gap-2.5">
               <button 
                 type="button" 
                 onClick={prevStep}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[48px]"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px]"
               >
-                <ChevronLeft size={18} /> Bumalik sa Cedula
+                <ChevronLeft size={16} /> Bumalik sa Cedula
               </button>
 
-              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2.5">
+              <div className="w-full sm:w-auto flex flex-col-reverse sm:flex-row items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[48px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer min-h-[42px]"
                 >
-                  <Save size={16} /> I-save ang Progress
+                  <Save size={15} /> I-save ang Progress
                 </button>
 
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm sm:text-base text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[48px] ${
+                  className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px] ${
                     isSubmitting 
                       ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' 
                       : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
                   }`}
                 >
-                  {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                   <span>{isSubmitting ? 'Isinusumite...' : formMode === 'Re-apply' ? 'Isumite ang Rebisyon' : 'Isumite ang Aplikasyon'}</span>
                 </button>
               </div>

@@ -178,18 +178,18 @@ const SubmitMembers = () => {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/operator-dashboard')}
-              className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white shadow-2xs active:scale-95 cursor-pointer shrink-0"
+              className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white shadow-2xs active:scale-95 cursor-pointer shrink-0"
               title={isFilipino ? "Bumalik sa Dashboard" : "Back to Dashboard"}
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-black uppercase tracking-widest text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-3 py-0.5 rounded-full border border-[#7A1B22]/15 dark:border-[#D4AF37]/25">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full border border-[#7A1B22]/15 dark:border-[#D4AF37]/25">
                   {todaData.todaName || 'TODA Association'}
                 </span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {isFilipino ? 'TODA Hub: Direktoryo ng mga Miyembro' : 'TODA Association & Member Roster'}
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
@@ -201,40 +201,40 @@ const SubmitMembers = () => {
           </div>
 
           {/* Refresh & Print buttons */}
-          <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <button
               onClick={() => { fetchMyMembers(); fetchMySubmissions(); }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs active:scale-95 cursor-pointer min-h-[44px]"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs active:scale-95 cursor-pointer min-h-[38px]"
               title="Refresh Data"
             >
-              <RefreshCw size={16} className={isLoadingMembers ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={isLoadingMembers ? "animate-spin" : ""} />
               <span>{isFilipino ? 'I-refresh' : 'Refresh'}</span>
             </button>
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs active:scale-95 cursor-pointer min-h-[44px]"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs active:scale-95 cursor-pointer min-h-[38px]"
               title="Print Roster"
             >
-              <Printer size={16} />
+              <Printer size={14} />
               <span>{isFilipino ? 'I-print ang Roster' : 'Print Roster'}</span>
             </button>
           </div>
         </header>
 
         {/* Modern Tabs Navigation Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
           <button
             type="button"
             onClick={() => setActiveTab('roster')}
-            className={`flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[48px] active:scale-95 ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[42px] active:scale-95 ${
               activeTab === 'roster'
-                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-md'
+                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs'
                 : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
           >
-            <Users size={18} />
+            <Users size={16} />
             <span>{isFilipino ? 'Direktoryo ng Grupo at Miyembro' : 'Member Roster & Units'}</span>
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
               activeTab === 'roster'
                 ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
@@ -246,16 +246,16 @@ const SubmitMembers = () => {
           <button
             type="button"
             onClick={() => setActiveTab('upload')}
-            className={`flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[48px] active:scale-95 ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[42px] active:scale-95 ${
               activeTab === 'upload'
-                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-md'
+                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs'
                 : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
           >
-            <UploadCloud size={18} />
+            <UploadCloud size={16} />
             <span>{isFilipino ? 'Magsumite ng Opisyal na Listahan' : 'Submit Document Roster'}</span>
             {submissions.length > 0 && (
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                 activeTab === 'upload'
                   ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
@@ -268,60 +268,60 @@ const SubmitMembers = () => {
 
         {/* TAB 1: TODA MEMBER GROUP DIRECTORY */}
         {activeTab === 'roster' && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Association Statistics Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0">
-                  <Users size={22} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0">
+                  <Users size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     {isFilipino ? 'Miyembro' : 'Total Members'}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5">
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
                     {todaData.stats?.totalMembers || 0}
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                  <CheckCircle2 size={22} />
+              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <CheckCircle2 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     {isFilipino ? 'Aktibong Yunit' : 'Active Units'}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                     {todaData.stats?.activeUnits || 0}
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                  <Clock3 size={22} />
+              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                  <Clock3 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     {isFilipino ? 'Pending' : 'Pending'}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
+                  <p className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
                     {todaData.stats?.pendingUnits || 0}
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-                  <ShieldCheck size={22} />
+              <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                  <ShieldCheck size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     {isFilipino ? 'Kabuuang Yunit' : 'Total Fleet'}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5">
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
                     {todaData.stats?.totalUnits || 0}
                   </p>
                 </div>
@@ -329,32 +329,32 @@ const SubmitMembers = () => {
             </div>
 
             {/* Search & Filter Controls */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={isFilipino ? "Maghanap sa pangalan, plaka, contact..." : "Search by member name, plate #, contact..."}
-                  className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-700 text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-4 focus:ring-[#7A1B22]/15 shadow-2xs min-h-[48px]"
+                  className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 shadow-2xs min-h-[42px]"
                 />
                 {searchTerm && (
                   <button 
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
                   >
-                    <X size={16} />
+                    <X size={15} />
                   </button>
                 )}
               </div>
 
               {/* Status Filter Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none shrink-0 py-1">
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0 py-0.5">
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'all'
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -365,7 +365,7 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('active')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'active'
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -376,7 +376,7 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('pending')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'pending'
                       ? 'bg-amber-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -387,7 +387,7 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setStatusFilter('expired')}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'expired'
                       ? 'bg-orange-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -446,33 +446,33 @@ const SubmitMembers = () => {
                             <img
                               src={member.profilePic}
                               alt={member.name}
-                              className="w-13 h-13 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
+                              className="w-11 h-11 rounded-xl object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
                             />
                           ) : (
-                            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border-2 border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-black text-base shrink-0 shadow-2xs">
+                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-bold text-sm shrink-0 shadow-2xs">
                               {member.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-base font-black text-slate-900 dark:text-white truncate">
+                              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
                                 {member.name}
                               </h3>
                               {member.isCurrentUser && (
-                                <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                   {isFilipino ? 'Ikaw (You)' : 'You'}
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-2 mt-0.5">
                               {member.isPresident ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
                                   <Sparkles size={11} />
                                   TODA President
                                 </span>
                               ) : (
-                                <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                   {isFilipino ? 'Miyembro / Operator' : 'Operator / Member'}
                                 </span>
                               )}
@@ -481,70 +481,70 @@ const SubmitMembers = () => {
                         </div>
 
                         {/* Units count pill */}
-                        <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0">
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0">
                           {member.units.length} {member.units.length === 1 ? (isFilipino ? 'Yunit' : 'Unit') : (isFilipino ? 'mga Yunit' : 'Units')}
                         </span>
                       </div>
 
                       {/* Contact & Address Bar */}
-                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-2 mb-4 text-xs sm:text-sm">
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-1.5 mb-3.5 text-xs sm:text-sm">
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                          <Phone size={15} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <Phone size={14} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                           {member.contact && member.contact !== 'N/A' ? (
                             <a 
                               href={`tel:${member.contact}`} 
-                              className="inline-flex items-center gap-1.5 font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                              className="inline-flex items-center gap-1.5 font-semibold text-[#7A1B22] dark:text-[#D4AF37] hover:underline text-xs"
                               title="Tawagan ang miyembro"
                             >
                               <span>{member.contact}</span>
-                              <span className="text-[10px] uppercase font-black bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2 py-0.5 rounded-md">Tawagan</span>
+                              <span className="text-[10px] uppercase font-bold bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Tawagan</span>
                             </a>
                           ) : (
-                            <span className="text-slate-400 italic">Walang nakalagay na numero</span>
+                            <span className="text-slate-400 italic text-xs">Walang nakalagay na numero</span>
                           )}
                         </div>
 
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                          <MapPin size={15} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                          <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-400">
+                          <MapPin size={14} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <span className="truncate text-xs font-normal text-slate-600 dark:text-slate-400">
                             {member.address || 'Address not listed'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Member's Registered Units Roster (Slide 9 compact data chips) */}
+                      {/* Member's Registered Units Roster */}
                       <div>
-                        <p className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-1.5">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
                           <Car size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                           {isFilipino ? 'Mga Nakarehistrong Tricycle (Units)' : 'Registered Tricycle Units'}
                         </p>
 
                         {member.units.length === 0 ? (
-                          <div className="p-3.5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-bold">
+                          <div className="p-3 rounded-xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-medium">
                             {isFilipino ? 'Wala pang naipapasang prangkisa' : 'No franchise applied yet'}
                           </div>
                         ) : (
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             {member.units.map((unit, uIdx) => (
                               <div
                                 key={unit._id || uIdx}
-                                className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between gap-2 shadow-2xs"
+                                className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between gap-2 shadow-2xs"
                               >
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                    <span className="font-mono text-sm font-black text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                    <span className="font-mono text-xs font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs">
                                       {unit.plateNo || 'NO PLATE'}
                                     </span>
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 truncate">
+                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300 truncate">
                                       {unit.make || 'Tricycle'}
                                     </span>
                                   </div>
-                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate">
                                     Zone {unit.zone || 'N/A'} {unit.motorNo ? `&bull; Motor: ${unit.motorNo}` : ''}
                                   </p>
                                 </div>
 
-                                <span className={`px-2.5 py-1 text-[11px] font-black rounded-xl uppercase tracking-wider shrink-0 flex items-center gap-1.5 ${
+                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg uppercase tracking-wider shrink-0 flex items-center gap-1 ${
                                   unit.status === 'Active'
                                     ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
                                     : unit.status === 'Ready for Pickup'
@@ -573,28 +573,28 @@ const SubmitMembers = () => {
 
         {/* TAB 2: DOCUMENT SUBMISSION & HISTORY */}
         {activeTab === 'upload' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Upload Card */}
             <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-7 transition-colors">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 transition-colors">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     {isFilipino ? 'Mag-upload ng Masterlist' : 'Upload Member Roster Document'}
                   </h2>
-                  <span className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-3 py-1 rounded-lg">
+                  <span className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-lg">
                     PDF &bull; Excel &bull; CSV
                   </span>
                 </div>
                 
                 <form onSubmit={handleUpload}>
-                  <div className="border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-10 text-center hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors relative group">
-                    <div className="w-16 h-16 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-3 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
-                      <UploadCloud size={32} />
+                  <div className="border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 sm:p-8 text-center hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors relative group">
+                    <div className="w-12 h-12 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-2.5 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
+                      <UploadCloud size={24} />
                     </div>
-                    <p className="text-base font-black text-slate-800 dark:text-slate-200 mb-1">
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-0.5">
                       {isFilipino ? 'Pumili ng file mula sa inyong cellphone o kompyuter' : 'Select a file from your device'}
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 font-normal">
                       {isFilipino ? 'Tinatanggap: PDF, Excel (.xlsx, .xls, .csv)' : 'Supported formats: PDF, Excel (.xlsx, .csv)'}
                     </p>
                     
@@ -607,21 +607,21 @@ const SubmitMembers = () => {
                     />
                     <label 
                       htmlFor="file-upload"
-                      className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-7 py-3.5 rounded-2xl font-black text-sm cursor-pointer transition-colors shadow-sm active:scale-95 min-h-[50px]"
+                      className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm cursor-pointer transition-colors shadow-xs active:scale-95 min-h-[42px]"
                     >
                       {isFilipino ? 'Pumili ng File' : 'Browse Files on Device'}
                     </label>
 
                     {file && (
-                      <div className="mt-5 flex items-center justify-center gap-2 text-xs sm:text-sm font-black text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 py-3 px-4 rounded-2xl inline-flex border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
-                        <FileSpreadsheet size={18} />
+                      <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 py-2 px-3 rounded-xl inline-flex border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
+                        <FileSpreadsheet size={16} />
                         <span className="truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
                         <button 
                           type="button" 
                           onClick={() => setFile(null)} 
-                          className="text-slate-400 hover:text-red-500 ml-1 p-1 cursor-pointer rounded-lg"
+                          className="text-slate-400 hover:text-red-500 ml-1 p-0.5 cursor-pointer rounded"
                         >
-                          <X size={16} />
+                          <X size={14} />
                         </button>
                       </div>
                     )}
@@ -630,7 +630,7 @@ const SubmitMembers = () => {
                   <button 
                     type="submit" 
                     disabled={!file || isUploading}
-                    className={`w-full mt-5 py-4 rounded-2xl font-black text-sm text-white transition-all shadow-md flex items-center justify-center gap-2 min-h-[50px] active:scale-95 ${
+                    className={`w-full mt-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs flex items-center justify-center gap-1.5 min-h-[42px] active:scale-95 ${
                       !file || isUploading 
                       ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-600 cursor-not-allowed' 
                       : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:text-slate-950 dark:hover:bg-[#c29e2f] cursor-pointer shadow-[#7A1B22]/20'
@@ -638,7 +638,7 @@ const SubmitMembers = () => {
                   >
                     {isUploading ? (
                       <>
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2 size={16} className="animate-spin" />
                         <span>{isFilipino ? 'Ipinapasa sa Database...' : 'Uploading to Database...'}</span>
                       </>
                     ) : (
@@ -651,41 +651,41 @@ const SubmitMembers = () => {
 
             {/* History Card */}
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 transition-colors">
-                <h2 className="text-base font-black text-slate-900 dark:text-white mb-3.5">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 transition-colors">
+                <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-3">
                   {isFilipino ? 'Mga Naunang Naisumite' : 'Recent Submissions'}
                 </h2>
                 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {isLoadingHistory ? (
                     <SubmissionCardsSkeleton count={3} baseDelay={30} stepDelay={45} />
                   ) : submissions.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs font-bold bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-medium bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
                       {isFilipino ? 'Wala pang naisumite.' : 'No submissions yet.'}
                     </div>
                   ) : (
                     submissions.map((sub, sIdx) => (
                       <div 
                         key={sub._id || sIdx} 
-                        className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-800/40 flex flex-col gap-1.5 shadow-2xs"
+                        className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-800/40 flex flex-col gap-1 shadow-2xs"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 min-w-0">
-                            <FileText size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 min-w-0">
+                            <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                             <span className="truncate">{sub.fileName}</span>
                           </div>
                           
                           {/* Dynamic Badge Status */}
-                          <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase flex items-center gap-1 shrink-0 ${
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${
                             sub.status === 'Approved' 
                             ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60' 
                             : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60'
                           }`}>
-                            {sub.status === 'Approved' ? <CheckCircle2 size={12} /> : <Clock3 size={12} />}
+                            {sub.status === 'Approved' ? <CheckCircle2 size={11} /> : <Clock3 size={11} />}
                             {sub.status}
                           </span>
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 pl-6">
+                        <p className="text-[11px] font-normal text-slate-500 dark:text-slate-400 pl-5">
                           Naisumite noong {new Date(sub.createdAt).toLocaleDateString()}
                         </p>
                       </div>

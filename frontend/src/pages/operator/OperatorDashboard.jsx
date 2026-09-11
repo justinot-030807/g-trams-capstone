@@ -63,6 +63,11 @@ const OperatorDashboard = () => {
 
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 
+  const [maxUnits, setMaxUnits] = useState(() => {
+    const saved = localStorage.getItem('max_units_per_operator');
+    return saved ? parseInt(saved, 10) || 2 : 2;
+  });
+
   const [profilePic, setProfilePic] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -143,9 +148,29 @@ const OperatorDashboard = () => {
 
   useEffect(() => {
     fetchMyFranchises();
+    fetchSystemSettings();
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  const fetchSystemSettings = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/system-settings`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const count = json.data?.maxUnitsPerOperator ?? json.maxUnitsPerOperator;
+        if (count !== undefined && count !== null) {
+          const num = Number(count) || 2;
+          setMaxUnits(num);
+          localStorage.setItem('max_units_per_operator', num);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load system settings:', err);
+    }
+  };
 
   const fetchMyFranchises = async () => {
     setIsLoading(true);
@@ -780,16 +805,16 @@ const OperatorDashboard = () => {
           </div>
         </div>
 
-        {/* Hero Bold Title & Subtitle */}
+        {/* Hero Title & Subtitle */}
         <div className="relative z-10 pt-4 pb-2">
           <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-0.5 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/15 dark:border-white/10 shadow-2xs">
             <OpGreetingIcon size={12} className={opGreeting.badgeColor} />
             <span>{opGreeting.tag}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-1 text-white">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-1 text-white">
             {language === 'fil' ? 'Pamahalaang Bayan ng Gasan' : 'Gasan Municipal Transport'}
           </h1>
-          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
+          <p className="text-white/80 dark:text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
             {getOperatorSubtext()}
           </p>
         </div>
@@ -799,14 +824,14 @@ const OperatorDashboard = () => {
           {franchises.some(f => f.status === 'Ready for Pickup') ? (
             <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-white/20">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  <Receipt size={22} />
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Receipt size={18} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-black truncate">
+                  <h4 className="text-xs sm:text-sm font-bold truncate">
                     {language === 'fil' ? 'Aprubado na ang Prangkisa!' : 'Franchise Approved!'}
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                     {language === 'fil' ? 'Handa na ang Claim Stub para sa Municipal Cashier' : 'Claim Stub is ready for Municipal Cashier'}
                   </p>
                 </div>
@@ -819,60 +844,60 @@ const OperatorDashboard = () => {
                     setIsPrintOpen(true);
                   }
                 }}
-                className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-black text-sm px-5 py-3 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Receipt size={16} />
+                <Receipt size={15} />
                 <span>{language === 'fil' ? 'Kunin ang Claim Stub' : 'Get Voucher'}</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'Cancelled') ? (
             <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-red-300 dark:border-red-900/60">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                  <AlertCircle size={22} />
+                <div className="w-9 h-9 rounded-xl bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                  <AlertCircle size={18} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-black truncate">
+                  <h4 className="text-xs sm:text-sm font-bold truncate">
                     {language === 'fil' ? 'Kailangang Ayusin ang Aplikasyon' : 'Application Needs Attention'}
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                     {language === 'fil' ? 'Pakitugunan ang puna ng LGU evaluator' : 'Review remarks and submit corrected documents'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => navigate('/apply-franchise')}
-                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-black text-sm px-5 py-3 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <RefreshCw size={16} />
+                <RefreshCw size={15} />
                 <span>{language === 'fil' ? 'Ayusin Ngayon' : 'Fix Issues'}</span>
               </button>
             </div>
           ) : (
             <div className="bg-white/10 dark:bg-white/5 text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md border border-white/15">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={22} />
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={18} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-black truncate">
-                    {franchises.length >= 2 
-                      ? (language === 'fil' ? 'Kumpleto ang Kapasidad (2/2 Units)' : 'Maximum Fleet Capacity (2/2)')
+                  <h4 className="text-xs sm:text-sm font-bold truncate">
+                    {franchises.length >= maxUnits 
+                      ? (language === 'fil' ? `Kumpleto ang Kapasidad (${maxUnits}/${maxUnits} Yunit)` : `Maximum Fleet Capacity (${maxUnits}/${maxUnits})`)
                       : (language === 'fil' ? 'May Bakanteng Slot Para sa Prangkisa' : 'Available Franchise Slot')}
                   </h4>
-                  <p className="text-xs text-white/80">
-                    {franchises.length >= 2
-                      ? (language === 'fil' ? 'Lahat ng pinapayagang 2 units ay rehistrado' : 'Both allowed tricycle units are currently active')
-                      : (language === 'fil' ? 'Maaari kang mag-rehistro ng hanggang 2 units sa Gasan' : 'Registered operators may register up to 2 units in Gasan')}
+                  <p className="text-[11px] sm:text-xs text-white/80 mt-0.5">
+                    {franchises.length >= maxUnits
+                      ? (language === 'fil' ? `Lahat ng pinapayagang ${maxUnits} units ay rehistrado` : `All allowed ${maxUnits} units are currently registered`)
+                      : (language === 'fil' ? `Maaari kang mag-rehistro ng hanggang ${maxUnits} units sa Gasan` : `Registered operators may register up to ${maxUnits} units in Gasan`)}
                   </p>
                 </div>
               </div>
-              {franchises.length < 2 && (
+              {franchises.length < maxUnits && (
                 <button
                   onClick={() => navigate('/apply-franchise')}
-                  className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-black text-sm px-5 py-3 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <PlusCircle size={16} />
+                  <PlusCircle size={15} />
                   <span>{language === 'fil' ? 'Mag-apply ng Prangkisa' : 'Apply Now'}</span>
                 </button>
               )}
@@ -881,119 +906,91 @@ const OperatorDashboard = () => {
         </div>
       </div>
 
-      {/* 2. FLEET CAPACITY SMART CARD (Slide 3 inspiration: Clean, driver-friendly, no jargon) */}
+      {/* 2. FLEET CAPACITY SLOTS (Dynamic with Admin Settings, Clean & Minimal) */}
       <div 
         id="tour-capacity-card"
-        className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xs mb-6 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-2xs mb-5 transition-all"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
-              franchises.length === 0 
-                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60' 
-                : franchises.length === 1 
-                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60' 
-                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60'
-            }`}>
-              <Car size={24} />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  {language === 'fil' ? 'Kapasidad ng Prangkisa' : 'Franchise Fleet Capacity'}
-                </span>
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                  {language === 'fil' ? 'Hanggang 2 Motor Bawat Operator' : 'Max 2 Units Per Operator'}
-                </span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
-                {franchises.length === 0 
-                  ? (language === 'fil' ? 'Wala pang nakatalang tricycle (0 / 2)' : 'No units registered yet (0 / 2)')
-                  : franchises.length === 1 
-                  ? (language === 'fil' ? '1 sa 2 Tricycle ang Rehistrado (1 / 2)' : '1 of 2 Units Registered (1 / 2)')
-                  : (language === 'fil' ? 'Kumpleto ang Kapasidad (2 / 2)' : 'Maximum Capacity Reached (2 / 2)')}
-              </h3>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border shadow-2xs ${
-              franchises.length < 2
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${franchises.length < 2 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-              {franchises.length < 2 
-                ? (language === 'fil' ? `May ${2 - franchises.length} Bakanteng Slot` : `${2 - franchises.length} Slot(s) Available`)
-                : (language === 'fil' ? 'Puno na ang Slots' : 'Slots Full')}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {language === 'fil' ? 'Kapasidad ng Prangkisa' : 'Fleet Capacity'}
+            </span>
+            <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
+              {franchises.length} / {maxUnits}
             </span>
           </div>
+
+          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            {franchises.length >= maxUnits 
+              ? (language === 'fil' ? 'Puno na ang Slots' : 'Slots Full') 
+              : (language === 'fil' ? `May ${maxUnits - franchises.length} Bakanteng Slot` : `${maxUnits - franchises.length} Slot(s) Available`)}
+          </span>
         </div>
 
-        {/* Visual Progress Bar Track with friendly step labels */}
-        <div className="space-y-1.5 pt-1">
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="relative">
-              <div className={`h-2.5 rounded-full transition-all duration-500 ${
-                franchises.length >= 1 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
-              }`} />
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5">
-                {language === 'fil' ? 'Unang Tricycle (Unit 1)' : 'Unit 1 Slot'}
-              </p>
-            </div>
-            <div className="relative">
-              <div className={`h-2.5 rounded-full transition-all duration-500 ${
-                franchises.length >= 2 ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
-              }`} />
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5">
-                {language === 'fil' ? 'Pangalawang Tricycle (Unit 2)' : 'Unit 2 Slot'}
-              </p>
-            </div>
-          </div>
+        {/* Dynamic Slot Bars */}
+        <div 
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${maxUnits}, minmax(0, 1fr))` }}
+        >
+          {Array.from({ length: maxUnits }).map((_, idx) => {
+            const isFilled = idx < franchises.length;
+            return (
+              <div key={idx} className="relative">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    isFilled 
+                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' 
+                      : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+                  }`} 
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* 3. GARAGE SECTION HEADER */}
-      <header id="tour-garage-section" className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75 mb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
+      <header id="tour-garage-section" className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75 mb-4 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+          <div className="w-1.5 h-5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
           <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               {t('dashboard.garageTitle', 'My Franchise Garage')}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
               {language === 'fil' ? 'Mga nakatalang motor at prangkisa sa ilalim ng iyong account' : t('dashboard.garageSub', 'Assigned tricycle units under your account')}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
             {franchises.length} {language === 'fil' ? 'Nakatala' : 'Registered'}
           </span>
         </div>
       </header>
 
-      {/* 4. GARAGE UNITS LIST / EMPTY STATE (Slide 1 pattern: Clear glowing halo & clear call to action) */}
+      {/* 4. GARAGE UNITS LIST / EMPTY STATE */}
       {isLoading ? (
         <GarageGridSkeleton count={2} baseDelay={70} />
       ) : franchises.length === 0 ? (
         <div 
           id="tour-empty-garage"
-          className="animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-8 sm:p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[300px] transition-colors shadow-xs"
+          className="animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-6 sm:p-10 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[260px] transition-colors shadow-2xs"
         >
           {/* Glowing Halo Icon Container */}
-          <div className="relative mb-4">
-            <div className="absolute inset-0 bg-[#7A1B22]/15 dark:bg-[#D4AF37]/20 rounded-full blur-xl scale-150 animate-pulse pointer-events-none" />
-            <div className="relative w-16 h-16 bg-gradient-to-br from-red-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 rounded-3xl border border-red-200/60 dark:border-amber-800/40 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shadow-sm">
-              <Car size={32} />
+          <div className="relative mb-3">
+            <div className="absolute inset-0 bg-[#7A1B22]/15 dark:bg-[#D4AF37]/20 rounded-full blur-lg scale-125 animate-pulse pointer-events-none" />
+            <div className="relative w-14 h-14 bg-gradient-to-br from-red-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-red-200/60 dark:border-amber-800/40 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
+              <Car size={26} />
             </div>
           </div>
 
-          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-1.5">
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1">
             {language === 'fil' ? 'Wala Ka Pang Nakatalang Tricycle' : t('dashboard.noUnitsTitle', 'No Franchise Units Found')}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-sm leading-relaxed">
             {language === 'fil' 
               ? 'Magsimula sa pamamagitan ng pagpaparehistro ng iyong unang tricycle unit upang makakuha ng opisyal na prangkisa mula sa Munisipyo ng Gasan.' 
               : t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}
@@ -1001,9 +998,9 @@ const OperatorDashboard = () => {
 
           <button 
             onClick={() => navigate('/apply-franchise')} 
-            className="inline-flex items-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-3.5 rounded-2xl font-black text-sm transition-all shadow-md active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            <PlusCircle size={18} />
+            <PlusCircle size={16} />
             <span>{language === 'fil' ? 'Mag-apply ng Bagong Prangkisa' : t('dashboard.applyNew', 'Apply New Franchise')}</span>
           </button>
         </div>
@@ -1055,25 +1052,25 @@ const OperatorDashboard = () => {
                 {/* Modern Government MTOP Plate Box */}
                 <div 
                   id={unitIndex === 0 ? "tour-mtop-plate" : undefined}
-                  className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 dark:from-slate-800/70 dark:to-slate-800/30 border border-slate-200/90 dark:border-slate-700/80 mb-4 flex items-center justify-between relative overflow-hidden"
+                  className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 dark:from-slate-800/70 dark:to-slate-800/30 border border-slate-200/90 dark:border-slate-700/80 mb-3.5 flex items-center justify-between relative overflow-hidden"
                 >
                   <div className="min-w-0 pr-2">
-                    <div className="flex items-center gap-1.5 mb-1">
+                    <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400 truncate">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 truncate">
                         MUNICIPALITY OF GASAN &bull; MTOP
                       </p>
                     </div>
-                    <h3 className="font-mono text-2xl sm:text-3xl font-black tracking-wider text-slate-900 dark:text-white truncate">
+                    <h3 className="font-mono text-lg sm:text-xl font-bold tracking-wider text-slate-900 dark:text-white truncate">
                       {unit?.plateNo || t('dashboard.pendingPlate', 'PENDING')}
                     </h3>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="inline-block px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight shadow-2xs">
+                    <span className="inline-block px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight shadow-2xs">
                       {unit?.make || 'Tricycle'}
                     </span>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-1 uppercase">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 uppercase">
                       {unit?.made || 'Model'}
                     </p>
                   </div>
@@ -1082,25 +1079,25 @@ const OperatorDashboard = () => {
                 {/* Minimalist 2x2 Specs Grid */}
                 <div 
                   id={unitIndex === 0 ? "tour-specs-grid" : undefined}
-                  className="grid grid-cols-2 gap-2.5 mb-4"
+                  className="grid grid-cols-2 gap-2.5 mb-3.5"
                 >
-                  <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-xl bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
-                      <MapPin size={13} />
+                  <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                      <MapPin size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{unit?.zone || 'N/A'}</p>
+                      <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{unit?.zone || 'N/A'}</p>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-xl bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
-                      <Hash size={13} />
+                  <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                      <Hash size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.motorNumber', 'Motor Number')}</p>
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{unit?.motorNo || 'N/A'}</p>
+                      <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.motorNumber', 'Motor Number')}</p>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{unit?.motorNo || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -1114,7 +1111,7 @@ const OperatorDashboard = () => {
                     const isOverdue = daysRemaining !== null && daysRemaining <= 0;
 
                     return (
-                      <div className={`mb-4 p-3.5 rounded-2xl border transition-all ${
+                      <div className={`mb-3.5 p-3 rounded-2xl border transition-all ${
                         isOverdue
                           ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
                           : isExpiringSoon
@@ -1123,24 +1120,24 @@ const OperatorDashboard = () => {
                       }`}>
                         <div className="flex justify-between items-center mb-1.5">
                           <div className="flex items-center gap-1.5">
-                            <CalendarDays size={14} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
+                            <CalendarDays size={13} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
                             <span className={`text-[10px] font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
                               {t('dashboard.validUntil', 'Valid Until')}
                             </span>
                           </div>
-                          <p className={`text-xs font-black ${isOverdue ? 'text-red-950 dark:text-red-200' : isExpiringSoon ? 'text-amber-950 dark:text-amber-200' : 'text-emerald-950 dark:text-emerald-200'}`}>
+                          <p className={`text-xs font-bold ${isOverdue ? 'text-red-950 dark:text-red-200' : isExpiringSoon ? 'text-amber-950 dark:text-amber-200' : 'text-emerald-950 dark:text-emerald-200'}`}>
                             {getExpirationDate(unit?.dateApplied)}
                           </p>
                         </div>
 
                         {/* Traffic-Light Urgency Meter */}
                         {daysRemaining !== null && (
-                          <div className="space-y-1.5 pt-1">
-                            <div className="flex justify-between items-center text-[10px] font-bold">
+                          <div className="space-y-1 pt-0.5">
+                            <div className="flex justify-between items-center text-[10px] font-semibold">
                               <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                 Status
                               </span>
-                              <span className={`flex items-center gap-1 font-black ${
+                              <span className={`flex items-center gap-1 font-bold ${
                                 isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-emerald-700 dark:text-emerald-400'
                               }`}>
                                 {isOverdue 
@@ -1160,13 +1157,13 @@ const OperatorDashboard = () => {
                             </div>
 
                             {isExpiringSoon && (
-                              <div className="pt-2 flex items-center justify-between">
+                              <div className="pt-1.5 flex items-center justify-between">
                                 <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-tight">
                                   Within 60-day renewal window. Renew early to avoid penalties.
                                 </p>
                                 <button
                                   onClick={() => navigate(`/renew-franchise/${unit._id}`)}
-                                  className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-xs transition-colors shrink-0 ml-2 touch-bounce active:scale-95 cursor-pointer"
+                                  className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shadow-2xs transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer"
                                 >
                                   Renew Now
                                 </button>
@@ -1179,11 +1176,11 @@ const OperatorDashboard = () => {
                   })()}
 
                   {unit?.status === 'Ready for Pickup' && (
-                    <div className="mb-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3.5 rounded-2xl flex items-start gap-2.5">
-                      <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={18} />
+                    <div className="mb-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3 rounded-2xl flex items-start gap-2.5">
+                      <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
                       <div>
-                        <h4 className="text-blue-900 dark:text-blue-200 font-black text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
-                        <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                        <h4 className="text-blue-900 dark:text-blue-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
+                        <p className="text-[11px] font-normal text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
                       </div>
                     </div>
                   )}
@@ -1193,42 +1190,42 @@ const OperatorDashboard = () => {
               {/* Action Buttons Row */}
               <div 
                 id={unitIndex === 0 ? "tour-card-actions" : undefined}
-                className="flex flex-col sm:flex-row gap-2.5 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800"
+                className="flex flex-col sm:flex-row gap-2 mt-auto pt-3 border-t border-slate-100 dark:border-slate-800"
               >
                 {unit?.status === 'Expired' ? (
-                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-5 py-3.5 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer shadow-sm"><RefreshCw size={16} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
+                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
-                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-5 py-3.5 rounded-2xl font-black text-sm transition-all active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                 ) : unit?.status === 'Ready for Pickup' ? (
-                  <div className="flex flex-col sm:flex-row w-full gap-2.5">
+                  <div className="flex flex-col sm:flex-row w-full gap-2">
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} 
-                      className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#c59f2c] text-slate-950 hover:opacity-95 font-black text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm active:scale-95 touch-bounce cursor-pointer"
+                      className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#c59f2c] text-slate-950 hover:opacity-95 font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
                     >
-                      <Receipt size={16} /> {t('dashboard.btnViewStub', 'Claim Stub')}
+                      <Receipt size={14} /> {t('dashboard.btnViewStub', 'Claim Stub')}
                     </button>
                     <button 
                       onClick={() => handleDirectDownload(unit)} 
-                      className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-4 py-3.5 rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer"
+                      className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                       title="Download PDF"
                     >
-                      <Download size={16} />
-                      <span className="sm:hidden font-black">Download</span>
+                      <Download size={14} />
+                      <span className="sm:hidden font-bold">Download</span>
                     </button>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-3.5 rounded-2xl font-black text-sm transition-colors active:scale-95 touch-bounce cursor-pointer"
+                      className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-5 py-3.5 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 touch-bounce cursor-pointer shadow-sm">
-                    <RefreshCw size={16} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
+                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs">
+                    <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                   </button>
                 ) : (
-                  <div className="flex flex-col sm:flex-row items-center w-full gap-2.5">
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-5 py-3.5 rounded-2xl font-black text-sm transition-colors active:scale-95 touch-bounce cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <div className="flex flex-col sm:flex-row items-center w-full gap-2">
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                     {(unit?.status === 'Pending' || unit?.status === 'Ready for Pickup') && (
                       <button 
                         onClick={() => setCancelModal({
@@ -1238,9 +1235,9 @@ const OperatorDashboard = () => {
                           customReason: '',
                           isSubmitting: false
                         })}
-                        className="w-full sm:w-auto bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 px-4 py-3.5 rounded-2xl font-black text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 touch-bounce cursor-pointer shrink-0"
+                        className="w-full sm:w-auto bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
                       >
-                        <XCircle size={16} /> Cancel
+                        <XCircle size={14} /> Cancel
                       </button>
                     )}
                   </div>
@@ -1255,24 +1252,24 @@ const OperatorDashboard = () => {
       {isDetailsOpen && selectedUnit && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-6 sm:p-8 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-lg font-black text-slate-900 dark:text-white">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
-              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"><X size={20} /></button>
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-5 sm:p-7 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
+              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"><X size={18} /></button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-700 dark:text-slate-300">
-              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl">
-                <p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
-                <p className="font-black text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.fullName}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
+                <p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.operator', 'Operator')}</p>
+                <p className="font-bold text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.fullName}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-black text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-black text-lg text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-bold text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl"><p className="text-slate-400 dark:text-slate-500 font-bold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-bold text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
             </div>
-            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-6 py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-black rounded-2xl text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
+            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
           </div>
         </div>
       )}
