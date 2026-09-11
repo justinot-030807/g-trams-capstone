@@ -114,8 +114,15 @@ const ChatWidget = () => {
         // Refresh threads
         fetchThreads();
         scrollToBottom();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error('Chat error:', errData);
+        alert('Failed to send message: ' + (errData.message || 'Unknown error'));
       }
-    } catch (err) { /* silent */ }
+    } catch (err) { 
+      console.error('Network error:', err);
+      alert('Network error sending message.');
+    }
     
     setIsSending(false);
   };

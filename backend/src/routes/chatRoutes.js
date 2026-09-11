@@ -53,7 +53,7 @@ router.post('/messages', async (req, res) => {
     // If no recipientId is provided, and the user is an operator, default to sending to an admin.
     if (!recipientId) {
       const User = require('../models/userModel');
-      const admin = await User.findOne({ role: { $in: ['admin', 'Administrator'] } });
+      const admin = await User.findOne({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
       if (!admin) return res.status(400).json({ message: 'No admin found to receive message' });
       recipientId = admin._id.toString();
     }
@@ -88,7 +88,9 @@ router.post('/messages', async (req, res) => {
     });
     emitToUser(recipientId, 'notification', notification);
 
-    res.status(201).json(populatedMessage);
+    const populatedThread = await ChatThread.findById(thread._id).populate('participants', 'name profilePic role');
+
+    res.status(201).json({ message: populatedMessage, thread: populatedThread });
   } catch (error) {
     res.status(500).json({ message: 'Error sending message', error: error.message });
   }
