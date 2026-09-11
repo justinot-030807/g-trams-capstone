@@ -210,11 +210,9 @@ const MainLayout = ({ children }) => {
       </div>
 
       {/* Mobile Bottom Navigation for Operator and TODA President */}
+      <ChatWidget />
       {showBottomNav && (
-        <>
-          <ChatWidget />
-          <OperatorBottomNav role={role} />
-        </>
+        <OperatorBottomNav role={role} />
       )}
     </div>
   );

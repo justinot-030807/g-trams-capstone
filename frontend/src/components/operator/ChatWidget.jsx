@@ -34,12 +34,20 @@ const ChatWidget = () => {
         const data = await res.json();
         const threadList = data.threads || data;
         setThreads(threadList);
+        
+        // Auto-select thread for operator if they have one
+        const role = String(currentUser.role || '').toLowerCase().replace(/_/g, ' ');
+        const isAdmin = role === 'admin' || role === 'administrator';
+        if (!isAdmin && threadList.length > 0 && !activeThread) {
+          setActiveThread(threadList[0]);
+        }
+
         // Calculate total unread
         const total = threadList.reduce((sum, t) => sum + (t.unreadCount || 0), 0);
         setUnreadCount(total);
       }
     } catch (err) { /* silent */ }
-  }, [API_URL]);
+  }, [API_URL, currentUser.role, activeThread]);
 
   // Fetch messages for active thread
   const fetchMessages = useCallback(async (threadId) => {
@@ -223,7 +231,7 @@ const ChatWidget = () => {
             ? 'bg-slate-800 dark:bg-slate-700 text-white rotate-0'
             : 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:scale-105'
         }`}
-        title="Chat with BPLO Support"
+        title="Chat with GTRAMS Admin"
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {!isOpen && unreadCount > 0 && (
@@ -240,15 +248,29 @@ const ChatWidget = () => {
           {/* Header */}
           <div className="bg-[#7A1B22] dark:bg-slate-800 text-white px-4 py-3 flex items-center justify-between shrink-0">
             <div>
-              <h3 className="font-bold text-sm">BPLO Support Chat</h3>
-              <p className="text-[10px] text-white/70 font-medium">Municipal Licensing Office</p>
+              <h3 className="font-bold text-sm">
+                {activeThread ? (String(currentUser.role).toLowerCase().includes('admin') ? 'Chat with Operator' : 'GTRAMS Admin Support') : 'Messages'}
+              </h3>
+              <p className="text-[10px] text-white/70 font-medium">
+                {activeThread ? 'Online' : 'GTRAMS Communications'}
+              </p>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {activeThread && String(currentUser.role).toLowerCase().includes('admin') && (
+                <button
+                  onClick={() => setActiveThread(null)}
+                  className="text-[10px] font-medium px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors cursor-pointer"
+                >
+                  Back to List
+                </button>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -261,6 +283,35 @@ const ChatWidget = () => {
               <div className="flex items-center justify-center h-full">
                 <Loader2 size={24} className="animate-spin text-slate-400" />
               </div>
+            ) : !activeThread && String(currentUser.role).toLowerCase().includes('admin') ? (
+              // Thread list for admin
+              <div className="space-y-2">
+                {threads.length === 0 ? (
+                  <p className="text-center text-xs text-slate-500 mt-4">No active conversations.</p>
+                ) : (
+                  threads.map(t => {
+                    const otherParticipants = t.participants?.filter(p => p._id !== currentUser._id) || [];
+                    const names = otherParticipants.map(p => p.name).join(', ') || 'Unknown User';
+                    return (
+                      <button
+                        key={t._id}
+                        onClick={() => setActiveThread(t)}
+                        className="w-full text-left p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between"
+                      >
+                        <div className="overflow-hidden pr-2">
+                          <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{names}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{t.lastMessage?.message || 'No messages yet'}</p>
+                        </div>
+                        {t.unreadCount > 0 && (
+                          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                            {t.unreadCount}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })
+                )}
+              </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
                 <div className="w-14 h-14 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-3">
@@ -268,7 +319,7 @@ const ChatWidget = () => {
                 </div>
                 <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">Start a Conversation</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Send a message to the BPLO office. They'll respond during office hours.
+                  Send a message to GTRAMS Admin. They'll respond during office hours.
                 </p>
               </div>
             ) : (

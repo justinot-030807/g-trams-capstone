@@ -23,6 +23,7 @@ import OperatorSettings from './pages/operator/OperatorSettings';
 import SubmitMembers from './pages/operator/SubmitMembers';
 import BatchRenewal from './pages/operator/BatchRenewal';
 import HelpSupport from './pages/operator/HelpSupport';
+import About from './pages/shared/About';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -98,6 +99,7 @@ function App() {
               {/* SHARED SECURE ROUTES & REDIRECTS */}
               <Route path="/manage-profile" element={<ProfileRedirect />} />
               <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
+              <Route path="/about" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><About /></ProtectedRoute>} />
 
               {/* CATCH-ALL 404 ROUTE */}
               <Route path="*" element={<Navigate to="/" replace />} />

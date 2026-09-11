@@ -2,15 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
-  User, LogOut, FileText, Menu, PanelLeftOpen, Settings,
+  User, Users, LogOut, FileText, Menu, PanelLeftOpen, Settings,
   Moon, Sun, HelpCircle, ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { useNotifications } from '../context/NotificationContext';
 
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const { t, language, changeLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { 
+    notifications: ctxNotifs, 
+    markAsRead: ctxMarkRead, 
+    markAllRead: ctxMarkAllRead 
+  } = useNotifications();
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,7 +31,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const profileRef = useRef(null);
 
   const storageKey = 'gtrams_read_notification_ids';
-  const [notifications, setNotifications] = useState([]);
+  const [localNotifications, setLocalNotifications] = useState([]);
   const [readIds, setReadIds] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -33,7 +40,21 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     }
   });
 
-  const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length;
+  // Map context notifications to the shape TopNavbar expects
+  const activeCtxNotifs = (ctxNotifs || []).filter(n => !n.isRead).map(n => ({
+    id: n._id,
+    isCtx: true,
+    title: n.title,
+    desc: n.message,
+    time: new Date(n.createdAt).toLocaleDateString(),
+    type: n.type === 'status_change' ? 'pending' : n.type === 'approval' ? 'success' : 'info',
+    link: role.includes('admin') ? '/franchise-masterlist' : '/operator-dashboard'
+  }));
+
+  const activeLocalNotifs = localNotifications.filter(n => !readIds.includes(n.id));
+  const allActiveNotifs = [...activeCtxNotifs, ...activeLocalNotifs];
+  const unreadCount = allActiveNotifs.length;
+
   const [isMaintenanceActive, setIsMaintenanceActive] = useState(() => localStorage.getItem('maintenance_mode') === 'true');
 
   useEffect(() => {
@@ -194,7 +215,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           }
         }
 
-        setNotifications(notifs);
+        setLocalNotifications(notifs);
 
         // Live system settings sync
         try {
@@ -253,14 +274,19 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   }, []);
 
   const markAllAsRead = () => {
-    const allIds = notifications.map(n => n.id);
+    // Clear context ones
+    ctxMarkAllRead();
+    // Clear local ones
+    const allIds = localNotifications.map(n => n.id);
     const updated = Array.from(new Set([...readIds, ...allIds]));
     setReadIds(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const handleNotificationClick = (notif) => {
-    if (!readIds.includes(notif.id)) {
+    if (notif.isCtx) {
+      ctxMarkRead(notif.id);
+    } else if (!readIds.includes(notif.id)) {
       const updated = [...readIds, notif.id];
       setReadIds(updated);
       localStorage.setItem(storageKey, JSON.stringify(updated));
@@ -314,11 +340,14 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   navigate('/operator-dashboard');
                 }
               }}
-              className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center active:scale-90 transition-all cursor-pointer shrink-0 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs"
+              className="group flex items-center gap-1.5 pl-2 pr-3 py-1.5 rounded-full bg-slate-100/80 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-xs shrink-0"
               title="Bumalik / Back"
               aria-label="Back"
             >
-              <ArrowLeft size={18} />
+              <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 shadow-xs flex items-center justify-center group-hover:-translate-x-0.5 transition-transform">
+                <ArrowLeft size={14} className="text-slate-700 dark:text-slate-200" />
+              </div>
+              <span className="text-[10px] font-bold tracking-wide uppercase hidden sm:block">Back</span>
             </button>
             <h1 className="text-base font-black text-slate-900 dark:text-white tracking-tight truncate">
               {getBreadcrumbTitle()}
@@ -380,15 +409,15 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   </div>
 
                   <div className="max-h-72 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
-                    {notifications.length === 0 ? (
+                    {allActiveNotifs.length === 0 ? (
                       <div className="p-8 text-center flex flex-col items-center justify-center">
                         <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
                       </div>
                     ) : (
-                      notifications.map((notif) => {
-                        const isRead = readIds.includes(notif.id);
+                      allActiveNotifs.map((notif) => {
+                        const isRead = notif.isCtx ? false : readIds.includes(notif.id);
                         return (
                           <div
                             key={notif.id}
@@ -609,6 +638,16 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
                 >
                   <HelpCircle size={15} className="text-slate-400" /> {t('nav.helpSupport', 'Help & Support')}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    navigate('/about');
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
+                >
+                  <Users size={15} className="text-blue-500" /> About Developers
                 </button>
               </div>
 
