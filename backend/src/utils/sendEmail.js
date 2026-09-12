@@ -1,28 +1,29 @@
-const axios = require('axios');
+const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
     try {
-        // Send transactional email via Brevo API
-        await axios.post('https://api.brevo.com/v3/smtp/email', {
-            sender: { 
-                name: "G-TRAMS Admin", 
-                email: "justinelachica114@gmail.com"
-            },
-            to: [{ email: options.email }],
-            subject: options.subject,
-            textContent: options.message
-        }, {
-            headers: {
-                'accept': 'application/json',
-                'api-key': process.env.SMTP_API_KEY,
-                'content-type': 'application/json'
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
-        
-        // Log delivery confirmation
-        console.log(`[SMTP Relay] OTP Email successfully delivered to: ${options.email}`);
+
+        const mailOptions = {
+            from: `"G-TRAMS Admin" <${process.env.EMAIL_USER}>`,
+            to: options.email,
+            subject: options.subject,
+            text: options.message,
+            html: options.html // optionally support HTML
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[SMTP Relay] Email successfully delivered to: ${options.email} (Message ID: ${info.messageId})`);
     } catch (error) {
-        console.error("[SMTP Relay Error]: Connection failed or blocked by provider.");
+        console.error("[SMTP Relay Error]: Connection failed or blocked by provider.", error.message);
         throw new Error("Failed to process email delivery");
     }
 };

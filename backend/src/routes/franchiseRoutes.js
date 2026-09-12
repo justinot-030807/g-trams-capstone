@@ -20,7 +20,7 @@ const {
 } = require('../controllers/franchiseController');
 
 // Search historical franchise records
-router.get('/search', protect, searchHistoricalFranchise);
+router.get('/search', protect, authorize('admin'), searchHistoricalFranchise);
 
 // Franchise application and masterlist
 router.route('/')

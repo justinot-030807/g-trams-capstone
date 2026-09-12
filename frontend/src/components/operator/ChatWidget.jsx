@@ -6,6 +6,7 @@ const ChatWidget = () => {
   const { socket } = useSocket();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [isBroadcast, setIsBroadcast] = useState(false);
   const [threads, setThreads] = useState([]);
   const [activeThread, setActiveThread] = useState(null);
   const [input, setInput] = useState('');
@@ -18,8 +19,9 @@ const ChatWidget = () => {
   const messagesContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || '';
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUserId = currentUser._id || currentUser.id || localStorage.getItem('userId');
 
   const getHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -86,9 +88,28 @@ const ChatWidget = () => {
     setIsSending(true);
 
     try {
+      if (isBroadcast) {
+        const res = await fetch(`${API_URL}/api/v1/chat/broadcast`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ message: messageText }),
+        });
+        
+        if (res.ok) {
+          alert('Broadcast sent successfully!');
+          setIsBroadcast(false);
+          fetchThreads();
+        } else {
+          const rawText = await res.text().catch(() => '');
+          alert(`Failed to broadcast: ${rawText.substring(0, 50)}`);
+        }
+        setIsSending(false);
+        return;
+      }
+
       const payload = { message: messageText };
       if (activeThread) {
-        const otherParticipant = activeThread.participants?.find(p => String(p._id || p) !== String(currentUser._id));
+        const otherParticipant = activeThread.participants?.find(p => String(p._id || p) !== String(currentUserId));
         if (otherParticipant) {
           payload.recipientId = otherParticipant._id || otherParticipant;
         }
@@ -238,7 +259,7 @@ const ChatWidget = () => {
 
   const isCurrentUser = (senderId) => {
     const sid = typeof senderId === 'object' && senderId !== null ? senderId._id : senderId;
-    return String(sid) === String(currentUser._id);
+    return String(sid) === String(currentUserId);
   };
 
   return (
@@ -269,16 +290,16 @@ const ChatWidget = () => {
           <div className="bg-[#7A1B22] dark:bg-slate-800 text-white px-4 py-3 flex items-center justify-between shrink-0">
             <div>
               <h3 className="font-bold text-sm">
-                {activeThread ? (String(currentUser.role).toLowerCase().includes('admin') ? 'Chat with Operator' : 'GTRAMS Admin Support') : 'Messages'}
+                {isBroadcast ? 'Broadcast Announcement' : activeThread ? (String(currentUser.role).toLowerCase().includes('admin') ? 'Chat with Operator' : 'GTRAMS Admin Support') : 'Messages'}
               </h3>
               <p className="text-[10px] text-white/70 font-medium">
-                {activeThread ? 'Online' : 'GTRAMS Communications'}
+                {isBroadcast ? 'Send to all operators & TODA' : activeThread ? 'Online' : 'GTRAMS Communications'}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {activeThread && String(currentUser.role).toLowerCase().includes('admin') && (
+              {(activeThread || isBroadcast) && String(currentUser.role).toLowerCase().includes('admin') && (
                 <button
-                  onClick={() => setActiveThread(null)}
+                  onClick={() => { setActiveThread(null); setIsBroadcast(false); }}
                   className="text-[10px] font-medium px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors cursor-pointer"
                 >
                   Back to List
@@ -303,14 +324,20 @@ const ChatWidget = () => {
               <div className="flex items-center justify-center h-full">
                 <Loader2 size={24} className="animate-spin text-slate-400" />
               </div>
-            ) : !activeThread && String(currentUser.role).toLowerCase().includes('admin') ? (
+            ) : !activeThread && !isBroadcast && String(currentUser.role).toLowerCase().includes('admin') ? (
               // Thread list for admin
               <div className="space-y-2">
+                <button
+                  onClick={() => setIsBroadcast(true)}
+                  className="w-full mb-3 flex items-center justify-center gap-2 p-3 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl font-bold text-xs hover:bg-[#7A1B22]/20 transition-colors"
+                >
+                  <MessageCircle size={16} /> Broadcast Announcement
+                </button>
                 {threads.length === 0 ? (
                   <p className="text-center text-xs text-slate-500 mt-4">No active conversations.</p>
                 ) : (
                   threads.map(t => {
-                    const otherParticipants = t.participants?.filter(p => String(p._id || p) !== String(currentUser._id)) || [];
+                    const otherParticipants = t.participants?.filter(p => String(p._id || p) !== String(currentUserId)) || [];
                     const names = otherParticipants.map(p => p.name).join(', ') || 'Unknown User';
                     return (
                       <button
@@ -320,7 +347,7 @@ const ChatWidget = () => {
                       >
                         <div className="overflow-hidden pr-2">
                           <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{names}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{t.lastMessage?.message || 'No messages yet'}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{t.lastMessage || 'No messages yet'}</p>
                         </div>
                         {t.unreadCount > 0 && (
                           <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
@@ -332,15 +359,32 @@ const ChatWidget = () => {
                   })
                 )}
               </div>
-            ) : messages.length === 0 ? (
+            ) : isBroadcast || messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
                 <div className="w-14 h-14 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-3">
                   <MessageCircle size={24} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                 </div>
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">Start a Conversation</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Send a message to GTRAMS Admin. They'll respond during office hours.
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
+                  {isBroadcast ? 'Broadcast Announcement' : 'Start a Conversation'}
                 </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                  {isBroadcast 
+                    ? 'Type your announcement below. It will be sent as a direct message to all Operators and TODA Presidents.' 
+                    : 'Send a message to GTRAMS Admin. They\'ll respond during office hours.'}
+                </p>
+                {!isBroadcast && !String(currentUser.role).toLowerCase().includes('admin') && (
+                  <div className="w-full space-y-2 mt-2">
+                    {['Paano mag-renew ng prangkisa?', 'Ano ang requirements para sa bagong prangkisa?', 'Saan kukunin ang Claim Stub?'].map((q, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setInput(q); }}
+                        className="block w-full p-2 text-[11px] text-left text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-colors"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <>

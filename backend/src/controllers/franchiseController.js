@@ -99,10 +99,12 @@ const searchHistoricalFranchise = async (req, res) => {
         const { query } = req.query;
         if (!query) return res.status(400).json({ message: 'Search query is required' });
         
+        const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedQuery = escapeRegex(query);
         const record = await Franchise.findOne({
             $or: [
-                { fullName: { $regex: query, $options: 'i' } },
-                { plateNo: { $regex: query, $options: 'i' } }
+                { fullName: { $regex: escapedQuery, $options: 'i' } },
+                { plateNo: { $regex: escapedQuery, $options: 'i' } }
             ]
         }).sort({ createdAt: -1 }).populate('operator', 'name address contact');
         
@@ -137,7 +139,8 @@ const getAllFranchises = async (req, res) => {
 
         // Search query filter
         if (search && search.trim() !== '') {
-            const searchRegex = { $regex: search.trim(), $options: 'i' };
+            const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const searchRegex = { $regex: escapeRegex(search.trim()), $options: 'i' };
             queryCondition.$or = [
                 { fullName: searchRegex },
                 { plateNo: searchRegex },
@@ -198,6 +201,14 @@ const updateFranchise = async (req, res) => {
         }
 
         let updateData = { ...req.body };
+        if (!isAdmin) {
+            delete updateData.status;
+            delete updateData.operator;
+            delete updateData.isArchived;
+            delete updateData.eSigned;
+            delete updateData.releaseDate;
+            delete updateData.deficiencies;
+        }
         const files = req.files || {};
         const findFilePath = (keys) => {
             if (Array.isArray(files)) {
@@ -462,7 +473,10 @@ const getFranchiseReports = async (req, res) => {
 
         if (status) query.status = status;
         if (todaName) query.todaName = todaName;
-        if (barangay) query.address = { $regex: barangay, $options: 'i' };
+        if (barangay) {
+            const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            query.address = { $regex: escapeRegex(barangay), $options: 'i' };
+        }
 
         const reports = await Franchise.find(query)
             .populate('operator', 'name contact')

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileText, CheckCircle, CheckCircle2, Search, Eye, FolderTree,
@@ -7,9 +8,7 @@ import {
 } from 'lucide-react';
 import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 
-const TODA_LIST = [
-  "BATODA", "POB TODA", "NBI TODA", "GT TODA", "TIGUION TODA", "BANGBANG IPIL TODA", "TAB TODA", "LUG TODA", "MASIGA TODA", "4B TODA", "CT TODA", "TG TODA", "GC TODA", "MA TODA", "PG TODA", "MAT TODA", "DPAB TODA", "MGN TODA", "GSTODA", "GS TODA", "TTODA", "TC TODA", "NORTH TODA", "GASAN CENTRAL TODA", "BAHI TODA", "ILAYA TODA", "GTF TODA", "NON-TODA"
-];
+
 
 const ValidateTODA = () => {
   const [activeTab, setActiveTab] = useState('directory');

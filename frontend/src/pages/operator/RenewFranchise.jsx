@@ -85,11 +85,13 @@ const RenewFranchise = () => {
   const handleFileSelect = (fieldId, file) => {
     if (file) {
       setOrcrFile(file);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
   const handleFileRemove = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setOrcrFile(null);
     setPreviewUrl('');
   };

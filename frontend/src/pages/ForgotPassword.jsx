@@ -28,7 +28,7 @@ const ForgotPassword = () => {
     setError(''); setSuccess('');
 
     if (!isValidContact(contact)) {
-      return setError('PLEASE ENTER A VALID PH MOBILE (09XXXXXXXXX) OR EMAIL ADDRESS.');
+      return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
     }
 
     setIsLoading(true);

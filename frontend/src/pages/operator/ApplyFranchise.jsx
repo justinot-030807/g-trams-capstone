@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
@@ -11,23 +12,11 @@ import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import TodaZoneGuideModal from '../../components/operator/TodaZoneGuideModal';
 
-const GASAN_BARANGAYS = [
-  "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
-  "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", 
-  "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", 
-  "Pinggan", "Tabionan", "Tiguion", "Tremol", "Tulingon", 
-  "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
-];
+
 
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
-const CANCEL_REASONS = [
-  "Need to correct vehicle or tricycle details",
-  "Incomplete requirements / Postponing application",
-  "Personal reasons / Attending to other matters",
-  "Duplicate or accidental submission",
-  "Other reason (Please specify below)"
-];
+
 
 const STANDARD_DOC_IDS = ['orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
 
@@ -436,8 +425,11 @@ const ApplyFranchise = () => {
 
   const handleFileChange = (reqId, file) => {
     if (file) {
+      setFilePreviews(prev => {
+        if (prev[reqId]) URL.revokeObjectURL(prev[reqId]);
+        return { ...prev, [reqId]: URL.createObjectURL(file) };
+      });
       setUploadedDocs(prev => ({ ...prev, [reqId]: file }));
-      setFilePreviews(prev => ({ ...prev, [reqId]: URL.createObjectURL(file) }));
     }
   };
 
@@ -452,6 +444,7 @@ const ApplyFranchise = () => {
     });
     
     setFilePreviews(prev => {
+      if (prev[reqId]) URL.revokeObjectURL(prev[reqId]);
       const copy = { ...prev };
       delete copy[reqId];
       return copy;

@@ -75,7 +75,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'Continue with
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Google authentication failed.');
+      if (!res.ok) { if (data.accountDeactivated) { if (onError) onError(data); return; } throw new Error(data.message || 'Google authentication failed.'); }
 
       if (data.isNewUser) {
         onNewUser(data.googleProfile);
@@ -146,7 +146,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'Continue with
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Google authentication failed.');
+            if (!res.ok) { if (data.accountDeactivated) { if (onError) onError(data); return; } throw new Error(data.message || 'Google authentication failed.'); }
 
             if (data.isNewUser) {
               onNewUser(data.googleProfile || directGoogleProfile);

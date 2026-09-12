@@ -41,17 +41,18 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   });
 
   // Map context notifications to the shape TopNavbar expects
-  const activeCtxNotifs = (ctxNotifs || []).filter(n => !n.isRead).map(n => ({
-    id: n._id,
+  const safeCtxNotifs = Array.isArray(ctxNotifs) ? ctxNotifs : [];
+  const activeCtxNotifs = safeCtxNotifs.filter(n => !n?.isRead).map(n => ({
+    id: n?._id || Math.random().toString(),
     isCtx: true,
-    title: n.title,
-    desc: n.message,
-    time: new Date(n.createdAt).toLocaleDateString(),
-    type: n.type === 'status_change' ? 'pending' : n.type === 'approval' ? 'success' : 'info',
-    link: role.includes('admin') ? '/franchise-masterlist' : '/operator-dashboard'
+    title: n?.title || 'Notification',
+    desc: n?.message || '',
+    time: n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
+    type: n?.type === 'status_change' ? 'pending' : n?.type === 'approval' ? 'success' : 'info',
+    link: String(role || '').includes('admin') ? '/franchise-masterlist' : '/operator-dashboard'
   }));
 
-  const activeLocalNotifs = localNotifications.filter(n => !readIds.includes(n.id));
+  const activeLocalNotifs = Array.isArray(localNotifications) ? localNotifications.filter(n => n && !readIds.includes(n.id)) : [];
   const allActiveNotifs = [...activeCtxNotifs, ...activeLocalNotifs];
   const unreadCount = allActiveNotifs.length;
 
@@ -435,12 +436,12 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-1">
                                 <p className={`text-xs truncate ${!isRead ? 'font-black text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
-                                  {notif.title}
+                                  {notif?.title || 'Notification'}
                                 </p>
                                 {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif.desc}</p>
-                              <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif.time}</span>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
+                              <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif?.time}</span>
                             </div>
                           </div>
                         );
@@ -539,14 +540,14 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               </div>
 
               <div className="max-h-72 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
-                {notifications.length === 0 ? (
+                {allActiveNotifs.length === 0 ? (
                   <div className="p-8 text-center flex flex-col items-center justify-center">
                     <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
                   </div>
                 ) : (
-                  notifications.map((notif) => {
+                  allActiveNotifs.map((notif) => {
                     const isRead = readIds.includes(notif.id);
                     return (
                       <div
@@ -562,16 +563,16 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                           {notif.type === 'info' && <FileText size={15} className="text-blue-500" />}
                           {notif.type === 'reminder' && <AlertTriangle size={15} className="text-orange-500" />}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1">
-                            <p className={`text-xs truncate ${!isRead ? 'font-black text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
-                              {notif.title}
-                            </p>
-                            {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
-                          </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif.desc}</p>
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif.time}</span>
-                        </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <p className={`text-xs truncate ${!isRead ? 'font-black text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
+                                  {notif?.title || 'Notification'}
+                                </p>
+                                {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
+                              <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif?.time}</span>
+                            </div>
                       </div>
                     );
                   })

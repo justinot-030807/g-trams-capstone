@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
+import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, Award, Layers } from 'lucide-react';
 
 const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
@@ -346,7 +347,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                             </p>
                             <div className="inline-block text-center border-t-2 border-slate-800 pt-1.5 min-w-[220px]">
                               <p className="font-serif font-black text-sm sm:text-base text-slate-900 tracking-wide">
-                                HON. LIDANY A. LAO-BALDO
+                                {MUNICIPAL_SIGNATORY}
                               </p>
                               <p className="text-[10px] font-sans uppercase font-bold text-slate-600">
                                 Municipal Vice Mayor &amp; Presiding Officer

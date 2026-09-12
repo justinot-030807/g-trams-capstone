@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, FileSpreadsheet, ShieldCheck } from 'lucide-react';
 
 const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Date() }) => {
@@ -262,7 +263,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                   </p>
                   <div className="border-t border-slate-800 pt-1 inline-block min-w-[200px]">
                     <p className="font-black text-xs text-slate-900 uppercase font-serif">
-                      HON. LIDANY A. LAO-BALDO
+                      {MUNICIPAL_SIGNATORY}
                     </p>
                     <p className="text-[8.5px] uppercase font-bold text-slate-600">
                       Municipal Vice Mayor &amp; Presiding Officer

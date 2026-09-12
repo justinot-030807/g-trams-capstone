@@ -277,27 +277,54 @@ const UserManagement = () => {
   };
 
   // Account activation and deactivation
+  const [deactivateReason, setDeactivateReason] = useState('');
+
   const handleToggleStatus = async () => {
     if (!statusModal.user) return;
     
     try {
+      const isDeactivating = statusModal.user.isActive !== false;
+      if (isDeactivating && !deactivateReason.trim()) {
+        alert('Please provide a reason for deactivation.');
+        return;
+      }
+      
+      const bodyData = isDeactivating ? { reason: deactivateReason } : {};
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/${statusModal.user._id}/toggle-status`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyData)
       });
 
       if (response.ok) {
         const updatedStatus = statusModal.user.isActive === false ? true : false;
-        setUsers(users.map(u => u._id === statusModal.user._id ? { ...u, isActive: updatedStatus } : u));
+        // reset appeal fields if activated
+        const updateFields = { isActive: updatedStatus };
+        if (updatedStatus) {
+            updateFields.deactivationReason = '';
+            updateFields.appealStatus = 'none';
+            updateFields.appealMessage = '';
+        } else {
+            updateFields.deactivationReason = deactivateReason;
+        }
+
+        setUsers(users.map(u => u._id === statusModal.user._id ? { ...u, ...updateFields } : u));
         setStatusModal({ isOpen: false, user: null });
+        setDeactivateReason('');
       } else {
         const errorData = await response.json();
         alert(`Failed: ${errorData.message}`);
         setStatusModal({ isOpen: false, user: null });
+        setDeactivateReason('');
       }
     } catch (error) {
       alert('Network Error.');
       setStatusModal({ isOpen: false, user: null });
+      setDeactivateReason('');
     }
   };
 
@@ -672,15 +699,30 @@ const UserManagement = () => {
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
               {statusModal.user.isActive === false ? 'Reactivate Account?' : 'Deactivate Account?'}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
               Are you sure you want to {statusModal.user.isActive === false ? 'restore access for ' : 'revoke system access from '} 
               <strong className="text-slate-800 dark:text-slate-200">{statusModal.user.name}</strong>?
               {statusModal.user.isActive !== false && <span className="block mt-2 text-xs text-red-500 font-medium">This will prevent the user from logging in.</span>}
             </p>
 
+            {statusModal.user.isActive !== false && (
+              <div className="mb-6 text-left">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                  Reason for Deactivation
+                </label>
+                <textarea
+                  value={deactivateReason}
+                  onChange={(e) => setDeactivateReason(e.target.value)}
+                  placeholder="Enter reason..."
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/10 transition-all min-h-[80px] resize-none"
+                  required
+                />
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button 
-                onClick={() => setStatusModal({ isOpen: false, user: null })}
+                onClick={() => { setStatusModal({ isOpen: false, user: null }); setDeactivateReason(''); }}
                 className="flex-1 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm"
               >
                 Cancel
@@ -836,6 +878,33 @@ const UserManagement = () => {
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{new Date(selectedUser.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
               </div>
+
+              {selectedUser.isActive === false && (
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50">
+                  <ShieldAlert className="text-red-500 mt-0.5" size={20} />
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wider mb-1">Deactivation Reason</p>
+                    <p className="text-sm font-medium text-red-900 dark:text-red-200 bg-white/50 dark:bg-black/20 p-2.5 rounded-lg border border-red-100 dark:border-red-900/30">
+                      {selectedUser.deactivationReason || 'No reason provided.'}
+                    </p>
+
+                    {selectedUser.appealStatus === 'pending' && selectedUser.appealMessage && (
+                      <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-900/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="flex h-2 w-2 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                          </span>
+                          <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Appeal Pending Review</p>
+                        </div>
+                        <p className="text-sm font-medium text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 italic">
+                          "{selectedUser.appealMessage}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Assigned Tricycle Units / Fleet Section */}
               <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-800/40">

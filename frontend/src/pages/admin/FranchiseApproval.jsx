@@ -165,16 +165,18 @@ const FranchiseApproval = () => {
     setIsBatchProcessing(true);
 
     try {
-      const promises = selectedIds.map(id =>
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
+      const promises = selectedIds.map(async (id) => {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ status: 'Ready for Pickup' })
-        })
-      );
+        });
+        if (!res.ok) throw new Error(`Failed to approve ${id}`);
+        return res;
+      });
 
       await Promise.all(promises);
       showToast(`Successfully approved ${selectedIds.length} application(s) to Ready for Pickup!`, "success");
@@ -195,16 +197,18 @@ const FranchiseApproval = () => {
     setIsBatchProcessing(true);
 
     try {
-      const promises = selectedIds.map(id =>
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
+      const promises = selectedIds.map(async (id) => {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ status: 'Active' })
-        })
-      );
+        });
+        if (!res.ok) throw new Error(`Failed to release ${id}`);
+        return res;
+      });
 
       await Promise.all(promises);
       showToast(`Successfully released and activated ${selectedIds.length} franchise(s)!`, "success");

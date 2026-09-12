@@ -17,10 +17,23 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.pdf' || ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
+        cb(null, true);
+    } else {
+        cb(new Error('Only PDF and image files are allowed'), false);
+    }
+};
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 // Upload member list (TODA President)
-router.post('/upload', protect, upload.single('file'), async (req, res) => {
+router.post('/upload', protect, authorize('admin', 'toda president', 'toda_president'), upload.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 

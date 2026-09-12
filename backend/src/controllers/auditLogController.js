@@ -18,7 +18,8 @@ exports.getAuditLogs = async (req, res) => {
         }
 
         if (req.query.search && req.query.search.trim() !== '') {
-            const searchRegex = new RegExp(req.query.search.trim(), 'i');
+            const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const searchRegex = new RegExp(escapeRegex(req.query.search.trim()), 'i');
             filter.$or = [
                 { actorName: searchRegex },
                 { action: searchRegex },

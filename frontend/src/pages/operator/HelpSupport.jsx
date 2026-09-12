@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   HelpCircle, Phone, Mail, Building, ChevronDown, 
-  Search, Flame, Info, ShieldCheck, MapPin 
+  Search, Flame, Info, ShieldCheck, MapPin, GraduationCap, Users, Code, Server, Heart 
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -245,7 +245,36 @@ const HelpSupport = () => {
               </a>
             </div>
           </div>
+        </div>
 
+        {/* MarSU Capstone Developers Info */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <GraduationCap size={24} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">About the Developers</h2>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-6">
+            GTRAMS was proudly developed by the Capstone Team from <strong>Marinduque State University (MarSU)</strong> to digitize and streamline the franchise renewal and application process for the local government of Gasan.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            {[
+              { name: "John Doe", role: "Project Manager", icon: <Users size={16} className="text-blue-500" /> },
+              { name: "Jane Smith", role: "Frontend Dev", icon: <Code size={16} className="text-emerald-500" /> },
+              { name: "Juan Dela Cruz", role: "Backend Dev", icon: <Server size={16} className="text-amber-500" /> },
+              { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={16} className="text-rose-500" /> },
+              { name: "Pedro Penduko", role: "QA/Security", icon: <ShieldCheck size={16} className="text-indigo-500" /> },
+            ].map((dev, idx) => (
+              <div key={idx} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col items-center gap-2 hover:shadow-sm transition-shadow">
+                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center">
+                  {dev.icon}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-xs">{dev.name}</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{dev.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Dynamic FAQ Module */}

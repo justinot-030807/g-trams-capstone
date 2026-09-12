@@ -50,20 +50,26 @@ router.post('/messages', async (req, res) => {
     
     if (!message) return res.status(400).json({ message: 'Missing message' });
     
-    // If no recipientId is provided, and the user is an operator, default to sending to an admin.
+    const User = require('../models/userModel');
+    let recipients = [];
+    
+    // If no recipientId is provided, default to ALL admins.
     if (!recipientId) {
-      const User = require('../models/userModel');
-      const admin = await User.findOne({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
-      if (!admin) return res.status(400).json({ message: 'No admin found to receive message' });
-      recipientId = admin._id.toString();
+      const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+      if (!admins.length) return res.status(400).json({ message: 'No admin found to receive message' });
+      recipients = admins.map(a => a._id);
+    } else {
+      recipients = [recipientId];
     }
 
+    const participants = [req.user._id, ...recipients];
+
     let thread = await ChatThread.findOne({
-      participants: { $all: [req.user._id, recipientId] }
+      participants: { $all: participants, $size: participants.length }
     });
 
     if (!thread) {
-      thread = await ChatThread.create({ participants: [req.user._id, recipientId] });
+      thread = await ChatThread.create({ participants });
     }
 
     const newMessage = await ChatMessage.create({
@@ -78,15 +84,18 @@ router.post('/messages', async (req, res) => {
 
     const populatedMessage = await ChatMessage.findById(newMessage._id).populate('sender', 'name profilePic role');
 
-    emitToUser(recipientId, 'chat_message', populatedMessage);
+    // Notify all recipients
+    for (const recId of recipients) {
+      emitToUser(recId, 'chat_message', populatedMessage);
 
-    const notification = await Notification.create({
-      recipient: recipientId,
-      type: 'chat',
-      title: 'New Message',
-      message: `You received a new message from ${req.user.name}`
-    });
-    emitToUser(recipientId, 'notification', notification);
+      const notification = await Notification.create({
+        recipient: recId,
+        type: 'chat',
+        title: 'New Message',
+        message: `You received a new message from ${req.user.name}`
+      });
+      emitToUser(recId, 'notification', notification);
+    }
 
     const populatedThread = await ChatThread.findById(thread._id).populate('participants', 'name profilePic role');
 
@@ -109,6 +118,63 @@ router.put('/messages/:threadId/read', async (req, res) => {
     res.json({ message: 'Messages marked as read' });
   } catch (error) {
     res.status(500).json({ message: 'Error marking messages as read', error: error.message });
+  }
+});
+
+router.post('/broadcast', async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ message: 'Missing message' });
+
+    // Ensure only admins can broadcast
+    const role = String(req.user.role || '').toLowerCase().replace(/_/g, ' ');
+    if (role !== 'admin' && role !== 'administrator') {
+      return res.status(403).json({ message: 'Only admins can broadcast messages' });
+    }
+
+    const User = require('../models/userModel');
+    // Find all operators and TODA presidents
+    const users = await User.find({ role: { $in: ['operator', 'toda_president', 'toda president'] } });
+
+    for (const user of users) {
+      // Find or create thread
+      let thread = await ChatThread.findOne({
+        participants: { $all: [req.user._id, user._id] }
+      });
+      if (!thread) {
+        thread = await ChatThread.create({ participants: [req.user._id, user._id] });
+      }
+
+      // Create message
+      const newMessage = await ChatMessage.create({
+        thread: thread._id,
+        sender: req.user._id,
+        message: `[ANNOUNCEMENT]\n\n${message}`
+      });
+
+      thread.lastMessage = `[ANNOUNCEMENT]\n\n${message}`;
+      thread.lastMessageAt = new Date();
+      await thread.save();
+
+      // Emit to each user
+      const populatedMessage = await ChatMessage.findById(newMessage._id).populate('sender', 'name profilePic role');
+      const { emitToUser } = require('../config/socket');
+      emitToUser(user._id.toString(), 'chat_message', populatedMessage);
+
+      // Create notification
+      const Notification = require('../models/notificationModel');
+      const notification = await Notification.create({
+        recipient: user._id,
+        type: 'chat',
+        title: 'System Announcement',
+        message: `Admin broadcasted an announcement`
+      });
+      emitToUser(user._id.toString(), 'notification', notification);
+    }
+
+    res.status(200).json({ message: 'Broadcast sent successfully to ' + users.length + ' users.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error broadcasting message', error: error.message });
   }
 });
 

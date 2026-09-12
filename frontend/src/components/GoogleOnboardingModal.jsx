@@ -1,21 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, User, Phone, MapPin, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
+import { GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS, VIOLATIONS_LIST } from '../utils/constants';
 
-const GASAN_BARANGAYS = [
-  "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
-  "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", 
-  "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", 
-  "Pinggan", "Tabionan", "Tapuyan", "Tiguion", 
-  "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
-];
 
-const TODA_LIST = [
-  "NON-TODA", "BATODA", "POB TODA", "NBI TODA", "GT TODA", "TIGUION TODA", 
-  "BANGBANG IPIL TODA", "TAB TODA", "LUG TODA", "MASIGA TODA", "4B TODA", 
-  "CT TODA", "TG TODA", "GC TODA", "MA TODA", "PG TODA", "MAT TODA", 
-  "DPAB TODA", "MGN TODA", "GSTODA", "GS TODA", "TTODA", "TC TODA", 
-  "NORTH TODA", "GASAN CENTRAL TODA", "BAHI TODA", "ILAYA TODA", "GTF TODA"
-];
+
+
 
 const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoading, errorMessage = '' }) => {
   const [formData, setFormData] = useState({

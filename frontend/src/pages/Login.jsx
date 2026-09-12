@@ -48,7 +48,7 @@ const Login = () => {
 
     // Validate contact format (PH mobile number or email)
     if (!isValidContact(formData.contact)) {
-      setError('Please enter a valid PH mobile (09XXXXXXXXX) or email address.');
+      setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
       return;
     }
 
@@ -68,6 +68,8 @@ const Login = () => {
       } else {
         if (response.status === 503) {
           setError(data.message || 'The system is undergoing maintenance. Access is restricted for non-admin users.');
+        } else if (response.status === 403 && data.accountDeactivated === true) {
+          navigate('/account-deactivated', { state: { contact: data.contact, reason: data.reason, appealStatus: data.appealStatus } });
         } else if (response.status === 429) {
           const secs = data.retryAfterSeconds || 60;
           setLockoutSeconds(secs);
@@ -415,7 +417,19 @@ const Login = () => {
                     });
                   }
                 }}
-                onError={(msg) => setError(msg)}
+                onError={(err) => {
+                  if (err && err.accountDeactivated) {
+                    navigate('/account-deactivated', {
+                      state: {
+                        contact: err.contact || formData.contact,
+                        reason: err.reason,
+                        appealStatus: err.appealStatus
+                      }
+                    });
+                  } else {
+                    setError(typeof err === 'string' ? err : err.message || 'Google Auth Error');
+                  }
+                }}
               />
             </div>
 

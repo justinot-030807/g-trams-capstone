@@ -20,7 +20,8 @@ const {
     toggleUserStatus,
     getProfile,
     googleAuth,
-    heartbeat
+    heartbeat,
+    submitAppeal
 } = require('../controllers/authController');
 
 // Rate limiters
@@ -45,7 +46,7 @@ router.get('/google-client-id', (req, res) => {
 router.post('/register', registerLimiter, register);
 router.post('/verify-otp', registerLimiter, verifyOTP);
 router.post('/login', loginLimiter, login);
-router.get('/', protect, getUsers);
+router.get('/', protect, authorize('admin'), getUsers);
 
 // Password management routes
 router.post('/forgot-password', forgotLimiter, forgotPassword);
@@ -57,6 +58,7 @@ router.post('/verify-password', protect, authorize('admin'), verifyAdminPassword
 
 // Account status routes
 router.put('/:id/toggle-status', protect, authorize('admin'), toggleUserStatus);
+router.post('/appeal', submitAppeal);
 
 router.route('/:id')
     .put(protect, authorize('admin'), updateUser)

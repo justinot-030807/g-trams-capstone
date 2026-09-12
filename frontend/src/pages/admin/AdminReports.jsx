@@ -1,25 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { Printer, Filter, CheckCircle, Clock, AlertTriangle, XCircle, FileText, Ban, Loader2 } from 'lucide-react';
 import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 
-const TODA_LIST = [
-  "BATODA", "POB TODA", "NBI TODA", "GT TODA", "TIGUION TODA", 
-  "BANGBANG–IPIL TODA", "TAB TODA", "LUG TODA (incl. LUGTODA)", 
-  "MASIGA TODA", "4B TODA", "CT TODA", "TG TODA", "GC TODA", 
-  "MA TODA", "PG TODA", "MAT TODA (incl. MATODA / MAT. GASAN TODA)", 
-  "DPAB TODA", "MGN TODA", "GSTODA", "GS TODA", "TTODA", 
-  "TC TODA", "NORTH TODA", "GASAN CENTRAL TODA", "BAHI TODA", 
-  "ILAYA TODA", "GTF TODA", "NON-TODA"
-];
 
-const GASAN_BARANGAYS = [
-  "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
-  "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", 
-  "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", 
-  "Pinggan", "Tabionan", "Tiguion", "Tremol", "Tulingon", 
-  "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
-];
+
+
 
 const AdminReports = () => {
   const [reports, setReports] = useState([]);

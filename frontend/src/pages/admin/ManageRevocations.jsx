@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { VIOLATIONS_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, CheckCircle, FileText, Eye } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
-const VIOLATIONS_LIST = [
-  "Operating outside authorized routes",
-  "Overcharging",
-  "Driving without a valid license",
-  "Unauthorized use of franchise",
-  "Reckless driving",
-  "Failure to comply with safety mandates",
-  "Non-payment of fees"
-];
+
 
 const ManageRevocations = () => {
   const [franchises, setFranchises] = useState([]);

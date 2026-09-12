@@ -102,7 +102,13 @@ exports.login = async (req, res) => {
         
         // Block deactivated accounts
         if (user.isActive === false) {
-            return res.status(403).json({ message: 'Your account has been deactivated. Please contact the administrator.' });
+            return res.status(403).json({ 
+                message: 'Your account has been deactivated.', 
+                accountDeactivated: true, 
+                reason: user.deactivationReason, 
+                appealStatus: user.appealStatus, 
+                contact: user.contact 
+            });
         }
         
         const isMatch = await user.matchPassword(password);
@@ -456,9 +462,18 @@ exports.toggleUserStatus = async (req, res) => {
 
         const newStatus = user.isActive === false ? true : false; 
 
+        const updateData = { isActive: newStatus };
+        if (newStatus === false) {
+            updateData.deactivationReason = req.body.reason || 'No reason provided';
+        } else {
+            updateData.deactivationReason = '';
+            updateData.appealMessage = '';
+            updateData.appealStatus = 'none';
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
-            { isActive: newStatus },
+            updateData,
             { new: true }
         );
 
@@ -531,13 +546,7 @@ exports.googleAuth = async (req, res) => {
             }
         }
 
-        // Fallback to client-provided googleProfile if supplied
-        if (!email && googleProfile && googleProfile.email) {
-            email = googleProfile.email.toLowerCase().trim();
-            googleId = googleProfile.googleId || googleProfile.sub || '';
-            googleName = googleProfile.name || '';
-            googlePicture = googleProfile.picture || '';
-        }
+
 
         if (!email) {
             return res.status(400).json({ message: 'Valid Google email is required.' });
@@ -559,7 +568,13 @@ exports.googleAuth = async (req, res) => {
         if (user) {
             // Block deactivated accounts
             if (user.isActive === false) {
-                return res.status(403).json({ message: 'Your account has been deactivated. Please contact the administrator.' });
+                return res.status(403).json({ 
+                    message: 'Your account has been deactivated.', 
+                    accountDeactivated: true, 
+                    reason: user.deactivationReason, 
+                    appealStatus: user.appealStatus, 
+                    contact: user.contact 
+                });
             }
 
             const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
@@ -697,5 +712,43 @@ exports.googleAuth = async (req, res) => {
     } catch (error) {
         console.error('GOOGLE AUTH ERROR:', error);
         res.status(500).json({ message: 'Google authentication error: ' + error.message });
+    }
+};
+
+// Submit an appeal for a deactivated account
+exports.submitAppeal = async (req, res) => {
+    try {
+        const { contact, password, message } = req.body;
+        
+        if (!contact || !password || !message) {
+            return res.status(400).json({ message: 'Contact, password, and appeal message are required.' });
+        }
+
+        const normalizedContact = String(contact).trim();
+        const user = await User.findOne({ 
+            contact: { $regex: new RegExp(`^${normalizedContact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } 
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        if (user.isActive) {
+            return res.status(400).json({ message: 'Account is not deactivated.' });
+        }
+
+        const isMatch = await user.matchPassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid password.' });
+        }
+
+        user.appealMessage = message;
+        user.appealStatus = 'pending';
+        await user.save();
+
+        res.status(200).json({ message: 'Appeal submitted successfully' });
+    } catch (error) {
+        console.error('SUBMIT APPEAL ERROR:', error);
+        res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };

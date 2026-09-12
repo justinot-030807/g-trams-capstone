@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -12,13 +13,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { SettingsSkeleton } from '../../components/skeleton';
 import FeedbackModal from '../../components/common/FeedbackModal';
 
-const GASAN_BARANGAYS = [
-  "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
-  "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", 
-  "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", 
-  "Pinggan", "Tabionan", "Tiguion", "Tremol", "Tulingon", 
-  "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
-];
+
 
 const OperatorSettings = () => {
   const navigate = useNavigate();
@@ -362,7 +357,7 @@ const OperatorSettings = () => {
                     Operator Information
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Update personal details and registered contact numbers
+                    Update personal details and registered Contact Phone Number
                   </p>
                 </div>
               </div>
@@ -417,7 +412,7 @@ const OperatorSettings = () => {
                       placeholder="e.g. 0912 345 6789"
                     />
                   </div>
-                  <p className="text-[11px] font-medium text-slate-400 mt-1">BPLO will use this contact number for notices and official updates.</p>
+                  <p className="text-[11px] font-medium text-slate-400 mt-1">BPLO will use this Contact Phone Number for notices and official updates.</p>
                 </div>
 
                 <div>

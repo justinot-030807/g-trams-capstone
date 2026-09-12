@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, Globe, X, Loader2, CheckCircle2, Sparkles, FileText, ShieldCheck, Clock, Phone, AlertCircle } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 
-const gasanBarangays = [
-  "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", "Pinggan", "Tabionan", "Tapuyan", "Tiguion", "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
-];
 
-const TODA_LIST = [
-  "NON-TODA", "BATODA", "POB TODA", "NBI TODA", "GT TODA", "TIGUION TODA", "BANGBANG IPIL TODA", "TAB TODA", "LUG TODA", "MASIGA TODA", "4B TODA", "CT TODA", "TG TODA", "GC TODA", "MA TODA", "PG TODA", "MAT TODA", "DPAB TODA", "MGN TODA", "GSTODA", "GS TODA", "TTODA", "TC TODA", "NORTH TODA", "GASAN CENTRAL TODA", "BAHI TODA", "ILAYA TODA", "GTF TODA"
-];
+
+
 
 const Register = () => {
   const navigate = useNavigate();
@@ -94,7 +91,7 @@ const Register = () => {
         return setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
       }
       if (!formData.contact || !isValidContact(formData.contact)) {
-        return setError('PLEASE ENTER A VALID PH MOBILE (09XXXXXXXXX) OR EMAIL.');
+        return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
       }
       if (!termsAccepted) {
         return setError('PLEASE ACCEPT THE TERMS AND PRIVACY POLICY.');
@@ -143,7 +140,7 @@ const Register = () => {
 
     // Validate contact format
     if (!isValidContact(formData.contact)) {
-      return setError('PLEASE ENTER A VALID PH MOBILE (09XXXXXXXXX) OR EMAIL ADDRESS.');
+      return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
     }
 
     if (passwordStrength < 3) {
@@ -448,7 +445,7 @@ const Register = () => {
                     <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">BARANGAY</label>
                     <select name="address" value={formData.address} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
                       <option value="" disabled>Select Brgy</option>
-                      {gasanBarangays.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
+                      {GASAN_BARANGAYS.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
                     </select>
                   </div>
                   <div>

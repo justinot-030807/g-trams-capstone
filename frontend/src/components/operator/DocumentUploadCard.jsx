@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, FileText } from 'lucide-react';
 
 const DocumentUploadCard = ({ 

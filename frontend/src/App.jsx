@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -11,6 +12,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import FranchiseMasterlist from './pages/admin/FranchiseMasterlist';
 import UserManagement from './pages/admin/UserManagement';
 import AdminSettings from './pages/admin/AdminSettings';
+import AccountDeactivated from './pages/AccountDeactivated';
 import FranchiseApproval from './pages/admin/FranchiseApproval';
 import ManageRevocations from './pages/admin/ManageRevocations';
 import ValidateTODA from './pages/admin/ValidateTODA';
@@ -24,6 +26,7 @@ import SubmitMembers from './pages/operator/SubmitMembers';
 import BatchRenewal from './pages/operator/BatchRenewal';
 import HelpSupport from './pages/operator/HelpSupport';
 import About from './pages/shared/About';
+import NotFound from './pages/shared/NotFound';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -70,9 +73,10 @@ function App() {
             <Routes>
               {/* PUBLIC ROUTES */}
               <Route path="/" element={<Navigate to="/login" />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+              <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+              <Route path="/account-deactivated" element={<PublicRoute><AccountDeactivated /></PublicRoute>} />
               <Route path="/maintenance" element={<MaintenanceMode />} />
 
               {/* ADMIN SECURE ROUTES */}
@@ -87,7 +91,7 @@ function App() {
               <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
 
               {/* TODA PRESIDENT SECURE ROUTES */}
-              <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><SubmitMembers /></ProtectedRoute>} />
+              <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['toda president']}><SubmitMembers /></ProtectedRoute>} />
               
               {/* OPERATOR & TODA SECURE ROUTES */}
               <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorDashboard /></ProtectedRoute>} />
@@ -102,7 +106,7 @@ function App() {
               <Route path="/about" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><About /></ProtectedRoute>} />
 
               {/* CATCH-ALL 404 ROUTE */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </NotificationProvider>
         </SocketProvider>
