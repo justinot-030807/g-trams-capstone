@@ -2,14 +2,9 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // SSL direct handshake is much faster than STARTTLS port 587
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
-    connectionTimeout: 8000,
-    greetingTimeout: 6000,
-    socketTimeout: 12000,
+    port: 587,
+    secure: false, // true for 465, false for other ports like 587
+    requireTLS: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -31,7 +26,7 @@ const sendEmail = async (options) => {
         return info;
     } catch (error) {
         console.error("[SMTP Relay Error]: Connection failed or blocked by provider.", error.message);
-        throw new Error("Failed to process email delivery");
+        throw new Error(error.message || "Failed to process email delivery");
     }
 };
 

@@ -202,7 +202,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                     >
                       {/* Municipal Seal Watermark */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-[0.035] pointer-events-none select-none">
-                        <img src="/gasan-logo.png" alt="Watermark" className="w-[360px] h-[360px] object-contain grayscale" />
+                        <img src="/gasan-logo.png" alt="Gasan Seal" className="w-[360px] h-[360px] object-contain grayscale" />
                       </div>
 
                       {/* TOP SECTION: Header, Preamble, Grantee Box */}

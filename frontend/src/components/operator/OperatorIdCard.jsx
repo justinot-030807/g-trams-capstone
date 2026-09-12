@@ -39,7 +39,7 @@ const OperatorIdCard = ({ user }) => {
                 <p className="text-[#D4AF37] text-[10px] font-semibold uppercase tracking-widest">Digital Operator ID</p>
               </div>
             </div>
-            <img src="/marinduque_logo.png" alt="LGU" className="w-10 h-10 object-contain opacity-90" onError={(e) => e.target.style.display = 'none'} />
+            <img src="/gasan-logo.png" alt="LGU Gasan" className="w-10 h-10 object-contain opacity-90" onError={(e) => e.target.style.display = 'none'} />
           </div>
 
           {/* Photo & Name */}

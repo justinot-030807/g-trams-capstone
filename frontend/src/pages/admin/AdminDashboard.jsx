@@ -225,9 +225,6 @@ const AdminDashboard = () => {
         className="animate-smooth-card bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#D4AF37]/30 transition-colors duration-300"
         style={{ animationDelay: '0.05s' }}
       >
-        <div className="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none opacity-[0.07] dark:opacity-[0.05] grayscale mix-blend-overlay">
-          <img src="/marinduque_logo.png" alt="Watermark" className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl" />
-        </div>
         <div className="relative z-10 text-center md:text-left min-w-0">
           <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
             <GreetingIcon size={13} className={greeting.badgeColor} />

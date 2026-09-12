@@ -414,15 +414,15 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   </div>
 
                   <div className="max-h-72 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
-                    {allActiveNotifs.length === 0 ? (
+                    {allNotifs.length === 0 ? (
                       <div className="p-8 text-center flex flex-col items-center justify-center">
                         <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
                       </div>
                     ) : (
-                      allActiveNotifs.map((notif) => {
-                        const isRead = notif.isCtx ? false : readIds.includes(notif.id);
+                      allNotifs.map((notif) => {
+                        const isRead = notif.isCtx ? notif.isRead : readIds.includes(notif.id);
                         return (
                           <div
                             key={notif.id}

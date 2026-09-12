@@ -292,7 +292,7 @@ exports.forgotPassword = async (req, res) => {
             return res.status(500).json({ 
                 message: isSmsIssue 
                     ? 'SMS gateway has insufficient credits or is unverified. Please use your email address or contact support.' 
-                    : 'Error sending OTP code. Please try again.' 
+                    : `Error sending OTP code: ${err.message}. Please try again.` 
             });
         }
     } catch (error) {

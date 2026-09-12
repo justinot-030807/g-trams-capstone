@@ -80,7 +80,7 @@ const VerifyOperator = () => {
         <div className="bg-[#7A1B22] rounded-t-3xl p-6 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg p-2">
-            <img src="/marinduque_logo.png" alt="LGU" className="w-full h-full object-contain" />
+            <img src="/gasan-logo.png" alt="LGU" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-white font-black tracking-tight text-xl mb-1">VERIFIED OPERATOR</h1>
           <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">Official LGU Record</p>

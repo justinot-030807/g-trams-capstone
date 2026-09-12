@@ -514,10 +514,6 @@ const OperatorDashboard = () => {
         id="tour-hero-banner"
         className="animate-spring-in bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-4 sm:p-7 mb-6 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden border border-[#D4AF37]/30 transition-all"
       >
-        <div className="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none opacity-[0.07] dark:opacity-[0.05] grayscale mix-blend-overlay">
-          <img src="/marinduque_logo.png" alt="Watermark" className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl" />
-        </div>
-        
         {/* Top Native Mobile Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
         <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-3 min-w-0">

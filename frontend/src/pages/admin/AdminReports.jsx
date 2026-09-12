@@ -154,20 +154,18 @@ const AdminReports = () => {
         }
       `}</style>
 
-      {/* Header */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between md:items-end gap-6 border border-[#D4AF37]/30 transition-all print:hidden print-hide">
-        <div className="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none opacity-[0.07] dark:opacity-[0.05] grayscale mix-blend-overlay">
-          <img src="/marinduque_logo.png" alt="Watermark" className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl" />
-        </div>
-        <div className="relative z-10 flex flex-col gap-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-1.5 border border-white/15 shadow-sm w-fit">
-            <Filter size={13} className="text-[#D4AF37]" />
-            <span>Data Analytics</span>
+      {/* Header Ribbon */}
+      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#D4AF37]/30 transition-all print:hidden print-hide">
+        <div className="relative z-10 flex items-center gap-4 min-w-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
+             <Filter size={20} className="text-[#D4AF37]" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">System Reports</h1>
-          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
-            Filter, view, and print franchise records.
-          </p>
+          <div>
+            <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">System Reports</h1>
+            <p className="text-white/75 dark:text-slate-400 font-medium text-[11px] sm:text-xs max-w-xl">
+              Filter, view, and print franchise records.
+            </p>
+          </div>
         </div>
         <button 
           onClick={handlePrint}
