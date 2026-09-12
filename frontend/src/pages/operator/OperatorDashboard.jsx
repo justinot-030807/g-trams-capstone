@@ -506,7 +506,9 @@ const OperatorDashboard = () => {
         id="tour-hero-banner"
         className="animate-spring-in bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-4 sm:p-7 mb-6 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden border border-[#D4AF37]/30 transition-all"
       >
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
+        <div className="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none opacity-[0.07] dark:opacity-[0.05] grayscale mix-blend-overlay">
+          <img src="/marinduque_logo.png" alt="Watermark" className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl" />
+        </div>
         
         {/* Top Native Mobile Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
         <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
@@ -891,6 +893,30 @@ const OperatorDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* TODA PRESIDENT SUMMARY SECTION */}
+      {isTodaPresident && (
+        <div className="bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/40 rounded-3xl p-4 sm:p-5 shadow-sm mb-6 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-100 dark:border-indigo-800/50">
+              <Users size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">TODA Management Console</h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md leading-relaxed">
+                Welcome President. You can view your registered members, submit the official TODA Masterlist, and coordinate with the BPLO office here.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/submit-members')}
+            className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+          >
+            Open TODA Tools
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      )}
 
       {/* 2. FLEET CAPACITY SLOTS (Dynamic with Admin Settings, Clean & Minimal) */}
       <div 

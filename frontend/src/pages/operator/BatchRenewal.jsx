@@ -122,7 +122,7 @@ const BatchRenewal = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto pb-10">
+      <div className="max-w-4xl mx-auto pb-28">
         <button 
           onClick={() => navigate('/operator-dashboard')}
           className="flex items-center gap-1 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 mb-6 transition-colors text-sm font-medium"

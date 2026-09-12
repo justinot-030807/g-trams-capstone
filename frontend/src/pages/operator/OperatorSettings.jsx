@@ -6,14 +6,13 @@ import {
   User, Lock, Camera, Save, Loader2, Phone, Mail,
   CheckCircle2, AlertCircle, Moon, Sun, Globe, 
   ShieldCheck, MapPin, Hash, Shield, Car, Check, LogOut,
-  Eye, EyeOff
+  Eye, EyeOff, FileText, Bell
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { SettingsSkeleton } from '../../components/skeleton';
 import FeedbackModal from '../../components/common/FeedbackModal';
-
-
+import OperatorIdCard from '../../components/operator/OperatorIdCard';
 
 const OperatorSettings = () => {
   const navigate = useNavigate();
@@ -37,6 +36,7 @@ const OperatorSettings = () => {
   const [profileData, setProfileData] = useState({
     name: '',
     contact: '',
+    emergencyContact: '',
     address: 'Municipality of Gasan',
     todaAssociation: 'NON-TODA'
   });
@@ -99,6 +99,7 @@ const OperatorSettings = () => {
             setProfileData({
               name: dbUser.name || dbUser.fullName || localStorage.getItem('name') || '',
               contact: dbUser.contact || '',
+              emergencyContact: dbUser.emergencyContact || '',
               address: dbUser.address || 'Municipality of Gasan',
               todaAssociation: dbUser.todaAssociation || 'NON-TODA'
             });
@@ -127,12 +128,38 @@ const OperatorSettings = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(t('settings.fileTooLarge', 'File size must be less than 5MB.'), 'error');
+        return;
+      }
+      if (profilePicPreview && profilePicPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePicPreview);
+      }
       setProfilePicFile(file);
       setProfilePicPreview(URL.createObjectURL(file));
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (profilePicPreview && profilePicPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePicPreview);
+      }
+    };
+  }, [profilePicPreview]);
+
   const handleOpenConfirm = (type) => {
+    if (type === 'profile') {
+      const isEmail = profileData.contact.includes('@');
+      if (!isEmail && profileData.contact) {
+        const phoneRegex = /^(09|\+639)\d{9}$/;
+        if (!phoneRegex.test(profileData.contact.replace(/[\s-]/g, ''))) {
+          showToast(t('profile.invalidPhone', 'Please enter a valid Philippine mobile number.'), 'error');
+          return;
+        }
+      }
+    }
+    
     if (type === 'security') {
       if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
         showToast(t('profile.fillPassFields', 'Please fill out all password fields.'), 'error');
@@ -163,6 +190,7 @@ const OperatorSettings = () => {
         const formData = new FormData();
         formData.append('name', profileData.name);
         formData.append('contact', profileData.contact);
+        formData.append('emergencyContact', profileData.emergencyContact);
         formData.append('address', profileData.address);
         formData.append('todaAssociation', profileData.todaAssociation);
         formData.append('language', preferences.language);
@@ -348,6 +376,42 @@ const OperatorSettings = () => {
               <Globe size={16} />
               <span>Preferences</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('idcard')}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+                activeTab === 'idcard'
+                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <ShieldCheck size={16} />
+              <span>Digital ID</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('vault')}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+                activeTab === 'vault'
+                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <FileText size={16} />
+              <span>Document Vault</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('notifications')}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+                activeTab === 'notifications'
+                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Bell size={16} />
+              <span>Notifications</span>
+            </button>
           </div>
 
           {/* TAB 1: PROFILE & CONTACT DETAILS */}
@@ -423,6 +487,23 @@ const OperatorSettings = () => {
                   </div>
                   <p className="text-[11px] font-medium text-slate-400 mt-1">
                     BPLO will use this {contactLabel} for notices and official updates.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                    <Phone size={14} className="text-red-500" />
+                    Emergency Contact Number
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.emergencyContact}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContact: e.target.value }))}
+                    placeholder="e.g. 09123456789"
+                    className={inputClasses}
+                  />
+                  <p className="text-[11px] font-medium text-slate-400 mt-1">
+                    Used only in case of accidents or emergencies.
                   </p>
                 </div>
 
@@ -511,7 +592,7 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setShowCurrentPass(!showCurrentPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer rounded-lg"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={showCurrentPass ? 'Hide password' : 'Show password'}
                     >
                       {showCurrentPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -534,7 +615,7 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setShowNewPass(!showNewPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer rounded-lg"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={showNewPass ? 'Hide password' : 'Show password'}
                     >
                       {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -558,7 +639,7 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPass(!showConfirmPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer rounded-lg"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={showConfirmPass ? 'Hide password' : 'Show password'}
                     >
                       {showConfirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -718,6 +799,105 @@ const OperatorSettings = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 4: DIGITAL ID CARD */}
+      {!isLoading && activeTab === 'idcard' && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-3xl">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                Digital Operator ID
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Your official LGU Gasan Digital Identification Card
+              </p>
+            </div>
+          </div>
+          
+          <div className="py-4">
+            <OperatorIdCard user={JSON.parse(localStorage.getItem('user') || '{}')} />
+          </div>
+          
+          <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800/50">
+            <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 mb-1">
+              <AlertCircle size={14} /> Official Use Only
+            </h4>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400/90 leading-relaxed">
+              This digital ID card is an official document from the Municipality of Gasan. The QR code contains verifiable data used by LGU officers and traffic enforcers.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: DOCUMENT VAULT */}
+      {!isLoading && activeTab === 'vault' && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-3xl">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
+              <FileText size={20} />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                Document Vault
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Securely store and access your uploaded operator documents
+              </p>
+            </div>
+          </div>
+          
+          <div className="py-10 text-center">
+            <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Your Vault is Empty</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+              Any documents you submit during franchise application will be safely stored here for future reference.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: NOTIFICATIONS */}
+      {!isLoading && activeTab === 'notifications' && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-3xl">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
+              <Bell size={20} />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                Notification Preferences
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Manage how you receive alerts and updates
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">SMS Alerts</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Receive text messages for application status updates</p>
+              </div>
+              <div className="w-10 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full relative cursor-pointer">
+                <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Email Notifications</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Receive detailed emails for franchise renewals</p>
+              </div>
+              <div className="w-10 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full relative cursor-pointer">
+                <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1" />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

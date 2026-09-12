@@ -12,6 +12,8 @@ const RenewFranchise = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
+
   const [franchise, setFranchise] = useState(null);
   const [loadingFranchise, setLoadingFranchise] = useState(true);
 
@@ -452,7 +454,7 @@ const RenewFranchise = () => {
                     Renewal Fee & Processing Notice
                   </h4>
                   <p className="text-xs text-slate-700 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                    Online submission is free of charge. Once verified by BPLO, bring your Claim Voucher and renewal fee of <strong>₱500.00</strong> to the Municipal Treasury / BPLO Office to receive your updated permit sticker.
+                    Online submission is free of charge. Once verified by BPLO, bring your Claim Voucher and renewal fee of <strong>₱{systemFranchiseFee}.00</strong> to the Municipal Treasury / BPLO Office to receive your updated permit sticker.
                   </p>
                 </div>
               </div>

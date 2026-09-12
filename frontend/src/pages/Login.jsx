@@ -155,55 +155,7 @@ const Login = () => {
   return (
     <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:px-8 sm:py-6 lg:px-12 overflow-x-hidden select-none">
       
-      {/* ADVANCED LIQUID AURORA KEYFRAMES */}
-      <style>{`
-        @keyframes liquidOrbit1 {
-          0% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
-          33% { transform: translate(90px, -60px) rotate(60deg) scale(1.22); }
-          66% { transform: translate(-40px, 80px) rotate(120deg) scale(0.92); }
-          100% { transform: translate(0px, 0px) rotate(180deg) scale(1); }
-        }
-        @keyframes liquidOrbit2 {
-          0% { transform: translate(0px, 0px) rotate(0deg) scale(1.05); }
-          33% { transform: translate(-80px, 70px) rotate(-60deg) scale(1.28); }
-          66% { transform: translate(70px, -50px) rotate(-120deg) scale(0.88); }
-          100% { transform: translate(0px, 0px) rotate(-180deg) scale(1.05); }
-        }
-        @keyframes liquidOrbit3 {
-          0% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
-          50% { transform: translate(-60px, -50px) scale(1.3); opacity: 0.65; }
-          100% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
-        }
-        @keyframes goldenPulseGlow {
-          0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 0.65; transform: translate(-45%, -55%) scale(1.35); }
-        }
-        @keyframes entranceCard {
-          0% { opacity: 0; transform: scale(0.95) translateY(18px); }
-          100% { opacity: 1; transform: scale(1) translateY(0px); }
-        }
-        @keyframes logoPop {
-          0% { opacity: 0; transform: scale(0.6) rotate(-8deg); }
-          70% { transform: scale(1.08) rotate(2deg); }
-          100% { opacity: 1; transform: scale(1) rotate(0deg); }
-        }
-        @keyframes itemFadeUp {
-          0% { opacity: 0; transform: translateY(12px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
 
-        .animate-liquid-1 { animation: liquidOrbit1 16s ease-in-out infinite alternate; }
-        .animate-liquid-2 { animation: liquidOrbit2 20s ease-in-out infinite alternate; }
-        .animate-liquid-3 { animation: liquidOrbit3 14s ease-in-out infinite alternate; }
-        .animate-golden-glow { animation: goldenPulseGlow 11s ease-in-out infinite alternate; }
-
-        .animate-card-entrance { animation: entranceCard 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-logo-entrance { animation: logoPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .animate-item-1 { animation: itemFadeUp 0.5s ease-out 0.15s both; }
-        .animate-item-2 { animation: itemFadeUp 0.5s ease-out 0.25s both; }
-        .animate-item-3 { animation: itemFadeUp 0.5s ease-out 0.35s both; }
-        .animate-item-4 { animation: itemFadeUp 0.5s ease-out 0.45s both; }
-      `}</style>
 
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

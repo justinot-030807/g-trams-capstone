@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   HelpCircle, Phone, Mail, Building, ChevronDown, 
-  Search, Flame, Info, ShieldCheck, MapPin, GraduationCap, Users, Code, Server, Heart 
+  Search, Flame, Info, ShieldCheck, MapPin, FileText, Clock
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -247,33 +247,61 @@ const HelpSupport = () => {
           </div>
         </div>
 
-        {/* MarSU Capstone Developers Info */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <GraduationCap size={24} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">About the Developers</h2>
+        {/* BPLO Office Hours & Fee Schedule */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8">
+          <div className="flex items-center gap-2 mb-5">
+            <Building size={24} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Office Hours & Fees</h2>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-6">
-            GTRAMS was proudly developed by the Capstone Team from <strong>Marinduque State University (MarSU)</strong> to digitize and streamline the franchise renewal and application process for the local government of Gasan.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {[
-              { name: "John Doe", role: "Project Manager", icon: <Users size={16} className="text-blue-500" /> },
-              { name: "Jane Smith", role: "Frontend Dev", icon: <Code size={16} className="text-emerald-500" /> },
-              { name: "Juan Dela Cruz", role: "Backend Dev", icon: <Server size={16} className="text-amber-500" /> },
-              { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={16} className="text-rose-500" /> },
-              { name: "Pedro Penduko", role: "QA/Security", icon: <ShieldCheck size={16} className="text-indigo-500" /> },
-            ].map((dev, idx) => (
-              <div key={idx} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col items-center gap-2 hover:shadow-sm transition-shadow">
-                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center">
-                  {dev.icon}
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-xs">{dev.name}</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{dev.role}</p>
-                </div>
-              </div>
-            ))}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+              <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-sm flex items-center gap-2">
+                <Clock size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                Operating Hours
+              </h3>
+              <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                  <span className="font-semibold">Monday - Friday</span>
+                  <span>8:00 AM - 5:00 PM</span>
+                </li>
+                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2 pt-1">
+                  <span className="font-semibold">Saturday - Sunday</span>
+                  <span className="text-slate-500">Closed</span>
+                </li>
+                <li className="flex justify-between pt-1">
+                  <span className="font-semibold">Holidays</span>
+                  <span className="text-slate-500">Closed</span>
+                </li>
+              </ul>
+              <p className="text-[10px] text-slate-500 mt-3 font-medium italic">
+                * Processing of new franchises and renewals are only done during office hours.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+              <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-sm flex items-center gap-2">
+                <FileText size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                Standard Fees
+              </h3>
+              <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                  <span className="font-semibold">Annual Franchise Fee</span>
+                  <span>₱500.00</span>
+                </li>
+                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2 pt-1">
+                  <span className="font-semibold">New Application Fee</span>
+                  <span>₱500.00</span>
+                </li>
+                <li className="flex justify-between pt-1">
+                  <span className="font-semibold">Late Penalty (per month)</span>
+                  <span className="text-red-500 font-bold">₱50.00</span>
+                </li>
+              </ul>
+              <p className="text-[10px] text-slate-500 mt-3 font-medium italic">
+                * All payments must be made directly to the Municipal Cashier. Do not pay online.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -355,6 +383,46 @@ const HelpSupport = () => {
               ))
             )}
           </div>
+        </div>
+
+        {/* Support Ticket Submission Form */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
+          <div className="mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <Mail className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
+              <span>Submit a Support Ticket</span>
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Need further assistance? Send us a message and we'll get back to you during office hours.
+            </p>
+          </div>
+          
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Ticket submitted successfully!"); }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Subject</label>
+                <select className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]">
+                  <option>Franchise Application Issue</option>
+                  <option>Account Access</option>
+                  <option>Payment/Claim Stub Inquiry</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Contact Number</label>
+                <input type="text" placeholder="09123456789" className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Message</label>
+              <textarea rows="4" placeholder="Describe your issue in detail..." className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] resize-none"></textarea>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button type="submit" className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer shadow-sm">
+                Submit Ticket
+              </button>
+            </div>
+          </form>
         </div>
 
       </div>

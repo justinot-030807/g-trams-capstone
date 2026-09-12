@@ -820,11 +820,9 @@ const ApplyFranchise = () => {
             const isCurrent = currentStep === step.num;
 
             return (
-              <button
-                type="button"
+              <div
                 key={step.num}
-                onClick={() => setCurrentStep(step.num)}
-                className="relative flex-1 flex flex-col items-center group cursor-pointer focus:outline-hidden"
+                className="relative flex-1 flex flex-col items-center select-none"
               >
                 {/* Seamless Connector Line to Next Step */}
                 {idx < steps.length - 1 && (
@@ -862,7 +860,7 @@ const ApplyFranchise = () => {
                 }`}>
                   {step.title}
                 </span>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -1068,7 +1066,18 @@ const ApplyFranchise = () => {
 
               {/* Step Navigation & Action Buttons */}
               <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
-                <div className="flex items-center justify-end">
+                <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setFormMode(null);
+                      setCurrentStep(1);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px]"
+                  >
+                    <ChevronLeft size={16} /> Cancel
+                  </button>
                   <button 
                     type="button" 
                     onClick={validateAndNext}

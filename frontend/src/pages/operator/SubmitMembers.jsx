@@ -84,6 +84,35 @@ const SubmitMembers = () => {
     }
   };
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -618,7 +647,17 @@ const SubmitMembers = () => {
                 </div>
                 
                 <form onSubmit={handleUpload}>
-                  <div className="border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 sm:p-8 text-center hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors relative group">
+                  <div 
+                    className={`border-2 border-dashed rounded-2xl p-5 sm:p-8 text-center transition-colors relative group ${
+                      isDragging 
+                        ? 'border-[#7A1B22] dark:border-[#D4AF37] bg-[#7A1B22]/5 dark:bg-[#D4AF37]/5' 
+                        : 'border-slate-200 dark:border-slate-700/80 hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
                     <div className="w-12 h-12 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-2.5 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
                       <UploadCloud size={24} />
                     </div>
