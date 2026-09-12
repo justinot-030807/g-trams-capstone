@@ -222,11 +222,12 @@ const AdminDashboard = () => {
 
       {/* 1. HERO BANNER */}
       <div 
-        className="animate-smooth-card bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#551016] dark:bg-gradient-to-r dark:from-[#0d121f] dark:via-[#220c13] dark:to-[#0b0f19] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-l-8 border-[#D4AF37] dark:border-slate-800/80 dark:border-l-8 dark:border-l-[#D4AF37] transition-colors duration-300"
+        className="animate-smooth-card bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#D4AF37]/30 transition-colors duration-300"
         style={{ animationDelay: '0.05s' }}
       >
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none animate-banner-orb" />
-
+        <div className="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none opacity-[0.07] dark:opacity-[0.05] grayscale mix-blend-overlay">
+          <img src="/marinduque_logo.png" alt="Watermark" className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl" />
+        </div>
         <div className="relative z-10 text-center md:text-left min-w-0">
           <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
             <GreetingIcon size={13} className={greeting.badgeColor} />
@@ -279,7 +280,7 @@ const AdminDashboard = () => {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {[
-            { label: 'Total Franchises', count: stats.total, sub: 'Registered fleet', icon: <Users size={22} />, color: 'from-blue-600 to-indigo-600', iconBg: 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' },
+            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, color: 'from-blue-600 to-indigo-600', iconBg: 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' },
             { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' },
             { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, color: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' },
             { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, color: 'from-red-500 to-rose-600', iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400' }
@@ -446,7 +447,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">
-                  TODA Fleet Distribution &amp; Share
+                  TODA Unit Distribution &amp; Share
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                   Breakdown of active tricycle units per transport association across Gasan
@@ -492,7 +493,7 @@ const AdminDashboard = () => {
                 {/* Center Badge in Donut Hole */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    Fleet Share
+                    Unit Share
                   </span>
                   <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
                     {stats.total}

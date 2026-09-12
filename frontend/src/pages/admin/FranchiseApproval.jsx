@@ -604,18 +604,24 @@ const FranchiseApproval = () => {
       )}
 
       {/* Header */}
-      <header className="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-6 bg-[#7A1B22] rounded-full" />
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Franchise Approval Queue</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Review, batch-approve, and generate official MTOPs and transmittal summaries.
-            </p>
-          </div>
+      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between md:items-end gap-6 border border-[#D4AF37]/30 transition-all">
+        <div className="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none opacity-[0.07] dark:opacity-[0.05] grayscale mix-blend-overlay">
+          <img src="/marinduque_logo.png" alt="Watermark" className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl" />
         </div>
+        <div className="relative z-10 flex flex-col gap-1 min-w-0">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-1.5 border border-white/15 shadow-sm w-fit">
+            <CheckCircle2 size={13} className="text-[#D4AF37]" />
+            <span>Franchise Operations</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">Franchise Approval Queue</h1>
+          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
+            Review, batch-approve, and generate official MTOPs and transmittal summaries.
+          </p>
+        </div>
+      </header>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+      {/* Toolbar */}
+      <div className="mb-6 flex flex-col md:flex-row justify-end items-center gap-2.5 flex-wrap">
           {/* TODA Association Filter */}
           <div className="relative min-w-[160px]">
             <select
@@ -646,14 +652,12 @@ const FranchiseApproval = () => {
           <button
             onClick={fetchApplications}
             disabled={isLoading}
-            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer"
+            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer shadow-sm"
             title="Refresh Applications Queue"
           >
-            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+            <RefreshCw size={16} className={isLoading ? 'animate-spin text-[#7A1B22] dark:text-[#D4AF37]' : ''} />
           </button>
         </div>
-      </header>
-
       {/* Status Tabs Bar & Select All Control */}
       <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
         {/* Filter Tabs */}
