@@ -337,8 +337,13 @@ const ChatWidget = () => {
                   <p className="text-center text-xs text-slate-500 mt-4">No active conversations.</p>
                 ) : (
                   threads.map(t => {
-                    const otherParticipants = t.participants?.filter(p => String(p._id || p) !== String(currentUserId)) || [];
-                    const names = otherParticipants.map(p => p.name).join(', ') || 'Unknown User';
+                    let names = 'Unknown User';
+                    if (t.isAnnouncement) {
+                      names = '📢 Official Announcements';
+                    } else {
+                      const otherParticipants = t.participants?.filter(p => String(p._id || p) !== String(currentUserId)) || [];
+                      names = otherParticipants.map(p => p.name).join(', ') || 'Unknown User';
+                    }
                     return (
                       <button
                         key={t._id}
@@ -449,7 +454,11 @@ const ChatWidget = () => {
           </div>
 
           {/* Input Area */}
-          {(activeThread || isBroadcast || !String(currentUser.role).toLowerCase().includes('admin')) && (
+          {(
+            isBroadcast ||
+            (activeThread && !activeThread.isAnnouncement) || 
+            (!activeThread && !String(currentUser.role).toLowerCase().includes('admin'))
+          ) && (
             <div className="border-t border-slate-200 dark:border-slate-800 p-2.5 bg-white dark:bg-slate-900 shrink-0">
               <div className="flex items-end gap-2">
                 <textarea

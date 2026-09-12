@@ -70,10 +70,12 @@ const AccountDeactivated = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-4">
       {feedback && (
         <FeedbackModal
+          isOpen={true}
           type={feedback.type}
-          title={feedback.title}
+          title={feedback.title || (feedback.type === 'error' ? 'Error' : 'Notice')}
           message={feedback.message}
           onClose={() => setFeedback(null)}
+          onConfirm={() => setFeedback(null)}
         />
       )}
 

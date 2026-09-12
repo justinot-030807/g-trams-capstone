@@ -9,7 +9,12 @@ router.use(protect);
 
 router.get('/threads', async (req, res) => {
   try {
-    const threads = await ChatThread.find({ participants: req.user._id })
+    const threads = await ChatThread.find({
+      $or: [
+        { participants: req.user._id },
+        { isAnnouncement: true }
+      ]
+    })
       .populate('participants', 'name profilePic role')
       .sort({ lastMessageAt: -1 });
 
@@ -30,7 +35,10 @@ router.get('/threads', async (req, res) => {
 
 router.get('/messages/:threadId', async (req, res) => {
   try {
-    const thread = await ChatThread.findOne({ _id: req.params.threadId, participants: req.user._id });
+    const thread = await ChatThread.findOne({ 
+      _id: req.params.threadId,
+      $or: [ { participants: req.user._id }, { isAnnouncement: true } ]
+    });
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
 
     const messages = await ChatMessage.find({ thread: thread._id })
@@ -107,7 +115,10 @@ router.post('/messages', async (req, res) => {
 
 router.put('/messages/:threadId/read', async (req, res) => {
   try {
-    const thread = await ChatThread.findOne({ _id: req.params.threadId, participants: req.user._id });
+    const thread = await ChatThread.findOne({ 
+      _id: req.params.threadId,
+      $or: [ { participants: req.user._id }, { isAnnouncement: true } ]
+    });
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
 
     await ChatMessage.updateMany(
@@ -136,33 +147,31 @@ router.post('/broadcast', async (req, res) => {
     // Find all operators and TODA presidents
     const users = await User.find({ role: { $in: ['operator', 'toda_president', 'toda president'] } });
 
+    let thread = await ChatThread.findOne({ isAnnouncement: true });
+    if (!thread) {
+      thread = await ChatThread.create({ 
+        participants: [req.user._id],
+        isAnnouncement: true 
+      });
+    }
+
+    const newMessage = await ChatMessage.create({
+      thread: thread._id,
+      sender: req.user._id,
+      message: `[ANNOUNCEMENT]\n\n${message}`
+    });
+
+    thread.lastMessage = `[ANNOUNCEMENT]\n\n${message}`;
+    thread.lastMessageAt = new Date();
+    await thread.save();
+
+    const populatedMessage = await ChatMessage.findById(newMessage._id).populate('sender', 'name profilePic role');
+    const { emitToUser } = require('../config/socket');
+    const Notification = require('../models/notificationModel');
+
     for (const user of users) {
-      // Find or create thread
-      let thread = await ChatThread.findOne({
-        participants: { $all: [req.user._id, user._id] }
-      });
-      if (!thread) {
-        thread = await ChatThread.create({ participants: [req.user._id, user._id] });
-      }
-
-      // Create message
-      const newMessage = await ChatMessage.create({
-        thread: thread._id,
-        sender: req.user._id,
-        message: `[ANNOUNCEMENT]\n\n${message}`
-      });
-
-      thread.lastMessage = `[ANNOUNCEMENT]\n\n${message}`;
-      thread.lastMessageAt = new Date();
-      await thread.save();
-
-      // Emit to each user
-      const populatedMessage = await ChatMessage.findById(newMessage._id).populate('sender', 'name profilePic role');
-      const { emitToUser } = require('../config/socket');
       emitToUser(user._id.toString(), 'chat_message', populatedMessage);
 
-      // Create notification
-      const Notification = require('../models/notificationModel');
       const notification = await Notification.create({
         recipient: user._id,
         type: 'chat',
@@ -172,7 +181,7 @@ router.post('/broadcast', async (req, res) => {
       emitToUser(user._id.toString(), 'notification', notification);
     }
 
-    res.status(200).json({ message: 'Broadcast sent successfully to ' + users.length + ' users.' });
+    res.status(200).json({ message: 'Broadcast channel updated and notifications sent successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error broadcasting message', error: error.message });
   }

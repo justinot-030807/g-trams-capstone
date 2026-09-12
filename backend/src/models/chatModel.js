@@ -11,6 +11,7 @@ const chatThreadSchema = new mongoose.Schema({
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   lastMessage: { type: String, default: '' },
   lastMessageAt: { type: Date, default: Date.now },
+  isAnnouncement: { type: Boolean, default: false },
 }, { timestamps: true });
 
 chatThreadSchema.index({ participants: 1 });
