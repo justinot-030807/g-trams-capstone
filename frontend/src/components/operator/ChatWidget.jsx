@@ -449,7 +449,7 @@ const ChatWidget = () => {
           </div>
 
           {/* Input Area */}
-          {(!(!activeThread && String(currentUser.role).toLowerCase().includes('admin'))) && (
+          {(activeThread || isBroadcast || !String(currentUser.role).toLowerCase().includes('admin')) && (
             <div className="border-t border-slate-200 dark:border-slate-800 p-2.5 bg-white dark:bg-slate-900 shrink-0">
               <div className="flex items-end gap-2">
                 <textarea

@@ -1,22 +1,25 @@
-﻿export const GASAN_BARANGAYS = [
-  "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacongbacong", "Bahi",
-  "Bangbangalon", "Banot", "Banuyo", "Bognuyan", "Cabugao",
-  "Dawis", "Dili", "Libtangin", "Mahunig", "Mangiliol",
-  "Masiga", "Matandang Gasan", "Pangi", "Pinggan", "Tabionan",
-  "Tapuyan", "Tiguion", "Tremol", "Tulingon",
-  "Barangay I", "Barangay II", "Barangay III"
+export const GASAN_BARANGAYS = [
+  "Antipolo", "Bachao Ibaba", "Bachao Ilaya", "Bacong-Bacong", "Bahi", 
+  "Bangbang", "Banot", "Banuyo", "Bognuyan", "Cabugao", "Dawis", "Dili", 
+  "Libtangin", "Mahunig", "Mangiliol", "Masiga", "Matandang Gasan", "Pangi", 
+  "Pinggan", "Tabionan", "Tapuyan", "Tiguion", "Tremol", "Tulingon", 
+  "Barangay I (Poblacion)", "Barangay II (Poblacion)", "Barangay III (Poblacion)"
 ];
 
 export const TODA_LIST = [
-  "GSTODA", "BGTODA", "DMTODA", "APTODA", 
-  "MPTODA", "PBTODA", "BATODA", "MGTODA"
+  "BATODA", "POB TODA", "NBI TODA", "GT TODA", "TIGUION TODA", 
+  "BANGBANG IPIL TODA", "TAB TODA", "LUG TODA", "MASIGA TODA", "4B TODA", 
+  "CT TODA", "TG TODA", "GC TODA", "MA TODA", "PG TODA", "MAT TODA", 
+  "DPAB TODA", "MGN TODA", "GSTODA", "GS TODA", "TTODA", "TC TODA", 
+  "NORTH TODA", "GASAN CENTRAL TODA", "BAHI TODA", "ILAYA TODA", "GTF TODA", 
+  "NON-TODA"
 ];
 
 export const CANCEL_REASONS = [
-  "Incomplete documents",
-  "Mismatched information",
-  "Expired driver's license",
-  "Unpaid previous penalties",
+  "Need to correct vehicle or tricycle details",
+  "Incomplete requirements / Postponing application",
+  "Personal reasons / Attending to other matters",
+  "Duplicate or accidental submission",
   "Other reason (Please specify below)"
 ];
 
