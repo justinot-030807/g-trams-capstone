@@ -336,7 +336,7 @@ const ChatWidget = () => {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed z-[95] bottom-20 md:bottom-20 right-3 md:right-6 w-[calc(100vw-24px)] max-w-[380px] h-[70vh] max-h-[520px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 print:hidden relative">
+        <div className="fixed z-[95] bottom-20 md:bottom-20 right-3 md:right-6 w-[calc(100vw-24px)] max-w-[380px] h-[70vh] max-h-[520px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 print:hidden">
           
           {/* Toast Notification */}
           {toastMsg && (

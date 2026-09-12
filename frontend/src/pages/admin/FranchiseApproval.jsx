@@ -28,6 +28,12 @@ const FranchiseApproval = () => {
   // Queue Filtering state
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'ready' | 'all'
   const [selectedToda, setSelectedToda] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedToda, searchQuery]);
 
   // Batch selection state
   const [selectedIds, setSelectedIds] = useState([]);
@@ -282,17 +288,25 @@ const FranchiseApproval = () => {
     (app.todaName?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
+  // Pagination calculation
+  const totalApps = filteredApps.length;
+  const totalPages = Math.max(1, Math.ceil(totalApps / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalApps);
+  const paginatedApps = filteredApps.slice(startIndex, endIndex);
+
   // Checkbox selection helpers
-  const isAllSelected = filteredApps.length > 0 && filteredApps.every(a => selectedIds.includes(a._id));
+  const isAllSelected = paginatedApps.length > 0 && paginatedApps.every(a => selectedIds.includes(a._id));
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
-      // Deselect visible
-      const visibleIds = filteredApps.map(a => a._id);
+      // Deselect visible on current page
+      const visibleIds = paginatedApps.map(a => a._id);
       setSelectedIds(prev => prev.filter(id => !visibleIds.includes(id)));
     } else {
-      // Select visible
-      const newIds = Array.from(new Set([...selectedIds, ...filteredApps.map(a => a._id)]));
+      // Select visible on current page
+      const newIds = Array.from(new Set([...selectedIds, ...paginatedApps.map(a => a._id)]));
       setSelectedIds(newIds);
     }
   };
@@ -727,8 +741,9 @@ const FranchiseApproval = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-3.5 pb-24">
-          {filteredApps.map((app, index) => {
+        <>
+          <div className="space-y-3.5 pb-6">
+          {paginatedApps.map((app, index) => {
             const isSelected = selectedIds.includes(app._id);
             const comp = getDocCompleteness(app);
 
@@ -768,7 +783,7 @@ const FranchiseApproval = () => {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">
-                        Queue #{index + 1}
+                        Queue #{startIndex + index + 1}
                       </span>
                       <h3 className="font-black text-slate-900 dark:text-white text-base sm:text-lg truncate">
                         {app.fullName}
@@ -881,7 +896,103 @@ const FranchiseApproval = () => {
             );
           })}
         </div>
-      )}
+
+        {/* Pagination Bar for Queue */}
+        {!isLoading && filteredApps.length > 0 && (
+          <div className="mt-2 mb-20 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
+              <span>Showing</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{startIndex + 1}</span>
+              <span>to</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{endIndex}</span>
+              <span>of</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{totalApps}</span>
+              <span>applications</span>
+
+              <span className="mx-1 text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <span className="text-[11px]">Rows:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={validCurrentPage <= 1}
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <div className="flex items-center gap-1 px-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    if (page === 1 || page === totalPages) return true;
+                    if (Math.abs(page - validCurrentPage) <= 1) return true;
+                    return false;
+                  })
+                  .reduce((acc, page, idx, arr) => {
+                    if (idx > 0 && page - arr[idx - 1] > 1) {
+                      acc.push('ellipsis-' + page);
+                    }
+                    acc.push(page);
+                    return acc;
+                  }, [])
+                  .map((item) => {
+                    if (typeof item === 'string') {
+                      return (
+                        <span key={item} className="px-1.5 text-slate-400 select-none">
+                          ...
+                        </span>
+                      );
+                    }
+                    const isCurrent = item === validCurrentPage;
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrentPage(item)}
+                        className={`min-w-[30px] h-[30px] rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                          isCurrent
+                            ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={validCurrentPage >= totalPages}
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+      </>
+    )}
 
       {/* ========================================================================= */}
       {/* 🚀 FLOATING BATCH ACTION BAR (Appears when 1+ applicants are selected) */}

@@ -3,7 +3,8 @@ import MainLayout from '../../components/MainLayout';
 import { 
   Users, Search, Info, MapPin, Phone, Calendar, ShieldCheck, X, 
   AlertTriangle, User, UserMinus, UserCheck, ShieldAlert,
-  Clock, Activity, RefreshCw, Radio, Building2, CheckCircle2
+  Clock, Activity, RefreshCw, Radio, Building2, CheckCircle2,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
@@ -13,6 +14,8 @@ const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   // Modal states
   const [selectedUser, setSelectedUser] = useState(null);
@@ -366,6 +369,58 @@ const UserManagement = () => {
     return nameMatch || contactMatch || todaMatch || plateMatch;
   });
 
+  // Reset pagination when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter]);
+
+  // Helper to get precise timestamp for sorting
+  const getUserActivityTimestamp = (user) => {
+    if (!user) return 0;
+    if (typeof user.lastActiveSecondsAgo === 'number') {
+      return Date.now() - (user.lastActiveSecondsAgo * 1000);
+    }
+    const ts = user.lastActive || user.updatedAt || user.createdAt;
+    if (ts) {
+      const ms = new Date(ts).getTime();
+      return isNaN(ms) ? 0 : ms;
+    }
+    return 0;
+  };
+
+  // Sort: Active/Online first -> Recently active (minutes ago) -> Inactive -> Deactivated last
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    // 1. Deactivated accounts at the very end
+    if (a.isActive !== false && b.isActive === false) return -1;
+    if (a.isActive === false && b.isActive !== false) return 1;
+
+    const statusA = getActivityStatus(a);
+    const statusB = getActivityStatus(b);
+
+    // 2. Online users strictly first
+    if (statusA.isOnline && !statusB.isOnline) return -1;
+    if (!statusA.isOnline && statusB.isOnline) return 1;
+
+    // 3. Sort by most recent activity timestamp (descending)
+    const timeA = getUserActivityTimestamp(a);
+    const timeB = getUserActivityTimestamp(b);
+
+    if (timeA !== timeB) {
+      return timeB - timeA; // Most recently active (e.g. 1 min ago > 5 mins ago > 1 hr ago)
+    }
+
+    // 4. Alphabetical tie-breaker
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  // Pagination calculation
+  const totalUsers = sortedUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalUsers);
+  const paginatedUsers = sortedUsers.slice(startIndex, endIndex);
+
   const modalActivity = selectedUser ? getActivityStatus(selectedUser) : null;
 
   return (
@@ -505,14 +560,14 @@ const UserManagement = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
               {isLoading ? (
                 <TableRowsSkeleton rows={6} columns={7} baseDelay={30} stepDelay={45} />
-              ) : filteredUsers.length === 0 ? (
+              ) : sortedUsers.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="p-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
                     No users found matching current filters
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user, uIdx) => {
+                paginatedUsers.map((user, uIdx) => {
                   const activity = getActivityStatus(user);
                   const unitsCount = user.unitsCount || 0;
                   const isMaxUnits = unitsCount >= 2;
@@ -683,6 +738,102 @@ const UserManagement = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {!isLoading && sortedUsers.length > 0 && (
+          <div className="px-4 py-3 sm:px-6 bg-slate-50/80 dark:bg-slate-800/60 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
+              <span>Showing</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{startIndex + 1}</span>
+              <span>to</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{endIndex}</span>
+              <span>of</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{totalUsers}</span>
+              <span>users</span>
+
+              <span className="mx-1 text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <span className="text-[11px]">Rows:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={validCurrentPage <= 1}
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <div className="flex items-center gap-1 px-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    if (page === 1 || page === totalPages) return true;
+                    if (Math.abs(page - validCurrentPage) <= 1) return true;
+                    return false;
+                  })
+                  .reduce((acc, page, idx, arr) => {
+                    if (idx > 0 && page - arr[idx - 1] > 1) {
+                      acc.push('ellipsis-' + page);
+                    }
+                    acc.push(page);
+                    return acc;
+                  }, [])
+                  .map((item) => {
+                    if (typeof item === 'string') {
+                      return (
+                        <span key={item} className="px-1.5 text-slate-400 select-none">
+                          ...
+                        </span>
+                      );
+                    }
+                    const isCurrent = item === validCurrentPage;
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrentPage(item)}
+                        className={`min-w-[30px] h-[30px] rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                          isCurrent
+                            ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={validCurrentPage >= totalPages}
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Account status confirmation modal */}

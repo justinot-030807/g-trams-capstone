@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { VIOLATIONS_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
-import { ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, CheckCircle, FileText, Eye } from 'lucide-react';
+import { ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, CheckCircle, FileText, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
 
@@ -11,6 +11,8 @@ const ManageRevocations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('active');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modal states
   const [selectedFranchise, setSelectedFranchise] = useState(null);
@@ -77,6 +79,17 @@ const ManageRevocations = () => {
     const isStatusMatch = activeTab === 'active' ? f.status === 'Active' : f.status === 'Revoked';
     return isMatch && isStatusMatch;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  const totalRecords = filteredFranchises.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRecords);
+  const paginatedFranchises = filteredFranchises.slice(startIndex, endIndex);
 
   return (
     <MainLayout>
@@ -162,7 +175,7 @@ const ManageRevocations = () => {
                   </td>
                 </tr>
               ) : (
-                filteredFranchises.map((f, fIdx) => (
+                paginatedFranchises.map((f, fIdx) => (
                   <tr 
                     key={f._id} 
                     className="stagger-reveal hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
@@ -214,6 +227,101 @@ const ManageRevocations = () => {
               </tbody>
             </table>
         </div>
+
+        {/* Pagination Bar */}
+        {!isLoading && filteredFranchises.length > 0 && (
+          <div className="px-4 py-3 sm:px-6 bg-slate-50/80 dark:bg-slate-800/60 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
+              <span>Showing</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{startIndex + 1}</span>
+              <span>to</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{endIndex}</span>
+              <span>of</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{totalRecords}</span>
+              <span>records</span>
+
+              <span className="mx-1 text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <span className="text-[11px]">Rows:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={validCurrentPage <= 1}
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <div className="flex items-center gap-1 px-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    if (page === 1 || page === totalPages) return true;
+                    if (Math.abs(page - validCurrentPage) <= 1) return true;
+                    return false;
+                  })
+                  .reduce((acc, page, idx, arr) => {
+                    if (idx > 0 && page - arr[idx - 1] > 1) {
+                      acc.push('ellipsis-' + page);
+                    }
+                    acc.push(page);
+                    return acc;
+                  }, [])
+                  .map((item) => {
+                    if (typeof item === 'string') {
+                      return (
+                        <span key={item} className="px-1.5 text-slate-400 select-none">
+                          ...
+                        </span>
+                      );
+                    }
+                    const isCurrent = item === validCurrentPage;
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrentPage(item)}
+                        className={`min-w-[30px] h-[30px] rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                          isCurrent
+                            ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={validCurrentPage >= totalPages}
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* REVOCATION MODAL */}
