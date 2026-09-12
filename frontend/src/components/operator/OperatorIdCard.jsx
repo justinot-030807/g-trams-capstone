@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
 import { ShieldCheck, MapPin, Phone, Award, User, RefreshCw, Smartphone } from 'lucide-react';
@@ -16,11 +16,7 @@ const OperatorIdCard = ({ user }) => {
     emergencyContact: 'Not Provided'
   };
 
-  const qrData = JSON.stringify({
-    id: safeUser._id || 'demo-id',
-    name: safeUser.name,
-    toda: safeUser.todaAssociation
-  });
+  const qrData = `${window.location.origin}/verify/${safeUser._id || 'demo-id'}`;
 
   return (
     <div className="w-full max-w-sm mx-auto group" style={{ perspective: '1000px' }}>

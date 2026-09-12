@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
@@ -42,9 +43,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
   // Map context notifications to the shape TopNavbar expects
   const safeCtxNotifs = Array.isArray(ctxNotifs) ? ctxNotifs : [];
-  const activeCtxNotifs = safeCtxNotifs.filter(n => !n?.isRead).map(n => ({
+  const activeCtxNotifs = safeCtxNotifs.map(n => ({
     id: n?._id || Math.random().toString(),
     isCtx: true,
+    isRead: Boolean(n?.isRead),
     title: n?.title || 'Notification',
     desc: n?.message || '',
     time: n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
@@ -52,9 +54,11 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     link: String(role || '').includes('admin') ? '/franchise-masterlist' : '/operator-dashboard'
   }));
 
-  const activeLocalNotifs = Array.isArray(localNotifications) ? localNotifications.filter(n => n && !readIds.includes(n.id)) : [];
-  const allActiveNotifs = [...activeCtxNotifs, ...activeLocalNotifs];
-  const unreadCount = allActiveNotifs.length;
+  const activeLocalNotifs = Array.isArray(localNotifications) ? localNotifications : [];
+  const allNotifs = [...activeCtxNotifs, ...activeLocalNotifs];
+  
+  // Count unread:
+  const unreadCount = allNotifs.filter(n => n.isCtx ? !n.isRead : !readIds.includes(n.id)).length;
 
   const [isMaintenanceActive, setIsMaintenanceActive] = useState(() => localStorage.getItem('maintenance_mode') === 'true');
 
@@ -520,65 +524,117 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             )}
           </button>
 
-          {isNotifOpen && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-88 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'unread update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
-                  </p>
-                </div>
-                {unreadCount > 0 && (
-                  <button 
-                    onClick={markAllAsRead} 
-                    className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
-                  >
-                    {t('nav.markAllRead', 'Mark all read')}
-                  </button>
-                )}
-              </div>
+          {isNotifOpen && ReactDOM.createPortal(
+            <div className="fixed inset-0 z-[120] flex flex-col justify-end sm:justify-start sm:items-end p-0 sm:p-4 sm:pt-16 sm:pr-8">
+              {/* Backdrop */}
+              <div 
+                className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200" 
+                onClick={() => setIsNotifOpen(false)} 
+              />
 
-              <div className="max-h-72 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
-                {allActiveNotifs.length === 0 ? (
-                  <div className="p-8 text-center flex flex-col items-center justify-center">
-                    <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
+              {/* Notification Card */}
+              <div 
+                role="dialog"
+                aria-modal="true"
+                className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col"
+              >
+                {/* Mobile drag bar */}
+                <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
+
+                {/* Header */}
+                <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white">
+                        {t('nav.notifications', 'Notifications')}
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                      {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
+                    </p>
                   </div>
-                ) : (
-                  allActiveNotifs.map((notif) => {
-                    const isRead = readIds.includes(notif.id);
-                    return (
-                      <div
-                        key={notif.id}
-                        onClick={() => handleNotificationClick(notif)}
-                        className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer ${
-                          !isRead ? 'bg-red-50/40 dark:bg-red-950/20' : ''
-                        }`}
+
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <button 
+                        type="button"
+                        onClick={markAllAsRead} 
+                        className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
                       >
-                        <div className="mt-0.5 shrink-0">
-                          {notif.type === 'pending' && <Clock size={15} className="text-amber-500" />}
-                          {notif.type === 'success' && <CheckCircle2 size={15} className="text-emerald-500" />}
-                          {notif.type === 'info' && <FileText size={15} className="text-blue-500" />}
-                          {notif.type === 'reminder' && <AlertTriangle size={15} className="text-orange-500" />}
-                        </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1">
-                                <p className={`text-xs truncate ${!isRead ? 'font-black text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
+                        {t('nav.markAllRead', 'Mark all read')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* List */}
+                <div className="flex-1 overflow-y-auto px-2 py-2 pb-8 sm:pb-2">
+                  {allNotifs.length === 0 ? (
+                    <div className="p-10 text-center flex flex-col items-center justify-center h-48">
+                      <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/80 rounded-full flex items-center justify-center mb-4">
+                        <Bell size={28} className="text-slate-300 dark:text-slate-600" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        {t('nav.noNotifications', 'No new notifications')}
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-1 max-w-[200px] leading-relaxed">
+                        {t('nav.noNotificationsDesc', 'System updates and notices will appear here.')}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {allNotifs.map((notif) => {
+                        const isRead = notif.isCtx ? notif.isRead : readIds.includes(notif.id);
+                        return (
+                          <div
+                            key={notif.id}
+                            onClick={() => {
+                              setIsNotifOpen(false);
+                              handleNotificationClick(notif);
+                            }}
+                            className={`p-3.5 sm:p-4 rounded-2xl flex items-start gap-3.5 transition-colors cursor-pointer group ${
+                              !isRead 
+                                ? 'bg-red-50/60 dark:bg-[#7A1B22]/10 hover:bg-red-100/60 dark:hover:bg-[#7A1B22]/20' 
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                            }`}
+                          >
+                            <div className="mt-0.5 shrink-0">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-xs ${
+                                notif.type === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
+                                notif.type === 'success' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
+                                notif.type === 'reminder' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
+                                'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                              }`}>
+                                {notif.type === 'pending' && <Clock size={18} />}
+                                {notif.type === 'success' && <CheckCircle2 size={18} />}
+                                {notif.type === 'reminder' && <AlertTriangle size={18} />}
+                                {notif.type === 'info' && <FileText size={18} />}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0 pr-2">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <p className={`text-[13px] truncate ${!isRead ? 'font-bold text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
                                   {notif?.title || 'Notification'}
                                 </p>
-                                {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
+                                {!isRead && <span className="w-2 h-2 bg-red-600 dark:bg-red-500 rounded-full shrink-0 shadow-sm" />}
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
-                              <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif?.time}</span>
+                              <p className={`text-[11px] sm:text-xs line-clamp-2 leading-snug ${!isRead ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
+                                {notif?.desc}
+                              </p>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
+                                {notif?.time}
+                              </span>
                             </div>
-                      </div>
-                    );
-                  })
-                )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
 

@@ -48,13 +48,8 @@ const ChatWidget = () => {
         const data = await res.json();
         const threadList = data.threads || data;
         setThreads(threadList);
-        
-        // Auto-select thread for operator if they have one
-        const role = String(currentUser.role || '').toLowerCase().replace(/_/g, ' ');
-        const isAdmin = role === 'admin' || role === 'administrator';
-        if (!isAdmin && threadList.length > 0 && !activeThread) {
-          setActiveThread(threadList[0]);
-        }
+        // We want all users (admin and operators) to see the thread list first.
+        // So we do not auto-select activeThread.
 
         // Calculate total unread
         const total = threadList.reduce((sum, t) => sum + (t.unreadCount || 0), 0);
@@ -358,7 +353,7 @@ const ChatWidget = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {(activeThread || isBroadcast) && String(currentUser.role).toLowerCase().includes('admin') && (
+              {(activeThread || isBroadcast) && (
                 <button
                   onClick={() => { setActiveThread(null); setIsBroadcast(false); }}
                   className="text-[10px] font-medium px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors cursor-pointer"
@@ -385,17 +380,29 @@ const ChatWidget = () => {
               <div className="flex items-center justify-center h-full">
                 <Loader2 size={24} className="animate-spin text-slate-400" />
               </div>
-            ) : !activeThread && !isBroadcast && String(currentUser.role).toLowerCase().includes('admin') ? (
-              // Thread list for admin
+            ) : !activeThread && !isBroadcast ? (
+              // Thread list for all users
               <div className="space-y-2">
-                <button
-                  onClick={() => setIsBroadcast(true)}
-                  className="w-full mb-3 flex items-center justify-center gap-2 p-3 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl font-bold text-xs hover:bg-[#7A1B22]/20 transition-colors"
-                >
-                  <MessageCircle size={16} /> Broadcast Announcement
-                </button>
+                {String(currentUser.role).toLowerCase().includes('admin') && (
+                  <button
+                    onClick={() => setIsBroadcast(true)}
+                    className="w-full mb-3 flex items-center justify-center gap-2 p-3 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl font-bold text-xs hover:bg-[#7A1B22]/20 transition-colors"
+                  >
+                    <MessageCircle size={16} /> Broadcast Announcement
+                  </button>
+                )}
+                {!String(currentUser.role).toLowerCase().includes('admin') && !threads.some(t => !t.isAnnouncement) && (
+                  <button
+                    onClick={() => setActiveThread({ _id: 'new', participants: [], isAnnouncement: false })}
+                    className="w-full mb-3 flex items-center justify-center gap-2 p-3 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl font-bold text-xs hover:bg-[#7A1B22]/20 transition-colors"
+                  >
+                    <MessageCircle size={16} /> Start Chat with Admin
+                  </button>
+                )}
                 {threads.length === 0 ? (
-                  <p className="text-center text-xs text-slate-500 mt-4">No active conversations.</p>
+                  <div className="text-center py-6">
+                    <p className="text-xs text-slate-500 mb-4">No active conversations.</p>
+                  </div>
                 ) : (
                   threads.map(t => {
                     let names = 'Unknown User';

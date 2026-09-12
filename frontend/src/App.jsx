@@ -27,6 +27,7 @@ import BatchRenewal from './pages/operator/BatchRenewal';
 import HelpSupport from './pages/operator/HelpSupport';
 import About from './pages/shared/About';
 import NotFound from './pages/shared/NotFound';
+import VerifyOperator from './pages/shared/VerifyOperator';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -78,6 +79,7 @@ function App() {
               <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
               <Route path="/account-deactivated" element={<PublicRoute><AccountDeactivated /></PublicRoute>} />
               <Route path="/maintenance" element={<MaintenanceMode />} />
+              <Route path="/verify/:id" element={<VerifyOperator />} />
 
               {/* ADMIN SECURE ROUTES */}
               <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />

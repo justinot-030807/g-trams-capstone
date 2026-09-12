@@ -240,6 +240,14 @@ const OperatorDashboard = () => {
         icon: Sparkles
       },
       {
+        targetId: 'tour-profile-menu',
+        title: 'Quick Profile Actions',
+        titleFil: 'Aksyon sa Profile',
+        description: 'Tap your profile picture here to quickly access account settings, print documents, or securely log out.',
+        descriptionFil: 'Pindutin ang iyong profile picture para makita ang settings, mag-print ng dokumento, o mag-logout.',
+        icon: User
+      },
+      {
         targetId: 'tour-hero-action',
         title: 'Franchise Action Banner',
         titleFil: 'Aksyon at Katayuan ng Prangkisa',
@@ -514,7 +522,7 @@ const OperatorDashboard = () => {
         <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-3 min-w-0">
             {/* Interactive Circular Avatar with Profile Popover */}
-            <div className="relative">
+            <div className="relative" id="tour-profile-menu">
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen(prev => !prev)}
@@ -800,12 +808,8 @@ const OperatorDashboard = () => {
 
         {/* Hero Title & Subtitle */}
         <div className="relative z-10 pt-4 pb-2">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-0.5 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2 border border-white/15 dark:border-white/10 shadow-2xs">
-            <OpGreetingIcon size={12} className={opGreeting.badgeColor} />
-            <span>{opGreeting.tag}</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-1 text-white">
-            Gasan Municipal Transport
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-1 text-white uppercase">
+            Operator Portal
           </h1>
           <p className="text-white/80 dark:text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
             {getOperatorSubtext()}
@@ -926,7 +930,7 @@ const OperatorDashboard = () => {
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Fleet Capacity
+              Unit Capacity
             </span>
             <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
               {franchises.length} / {maxUnits}
@@ -977,14 +981,7 @@ const OperatorDashboard = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
-          {franchises.filter(f => f.status === 'Expired' || f.status === 'Active').length >= 2 && (
-            <button
-              onClick={() => navigate('/batch-renewal')}
-              className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors shadow-2xs flex items-center gap-1 cursor-pointer"
-            >
-              <RefreshCw size={14} /> Batch Renew
-            </button>
-          )}
+
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
             {franchises.length} Registered
           </span>

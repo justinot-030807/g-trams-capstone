@@ -903,20 +903,20 @@ const OperatorSettings = () => {
 
       {/* ACCOUNT SESSION & LOGOUT SECTION */}
       {!isLoading && (
-        <div className="mt-8 p-4 sm:p-5 rounded-2xl bg-red-50/70 dark:bg-red-950/20 border border-red-200/80 dark:border-red-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h4 className="text-sm font-bold text-red-800 dark:text-red-300 flex items-center gap-2">
-              <LogOut size={16} />
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <LogOut size={16} className="text-slate-500" />
               <span>Account Session</span>
             </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium max-w-xl">
+            <p className="text-xs text-slate-500 mt-1 max-w-xl">
               Safely log out to end your current active portal session on this device.
             </p>
           </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all shadow-xs shrink-0 flex items-center justify-center gap-2 min-h-[42px] cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 border border-red-100 dark:border-red-900/50 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut size={16} />
             <span>Log Out of Portal</span>
