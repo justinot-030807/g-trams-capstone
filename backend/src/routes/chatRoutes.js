@@ -10,13 +10,28 @@ router.use(protect);
 router.get('/threads', async (req, res) => {
   try {
     const threads = await ChatThread.find({
-      $or: [
-        { participants: req.user._id },
-        { isAnnouncement: true }
+      $and: [
+        {
+          $or: [
+            { participants: req.user._id },
+            { isAnnouncement: true }
+          ]
+        },
+        // Filter out legacy announcement threads that were sent individually
+        { lastMessage: { $not: /^\[ANNOUNCEMENT\]/ } }
       ]
     })
       .populate('participants', 'name profilePic role')
       .sort({ lastMessageAt: -1 });
+
+    // Re-fetch the true announcement thread separately if it exists and got filtered out by the regex
+    const announcementThread = await ChatThread.findOne({ isAnnouncement: true })
+      .populate('participants', 'name profilePic role');
+
+    if (announcementThread) {
+      // Add it back
+      threads.unshift(announcementThread);
+    }
 
     const threadsWithUnread = await Promise.all(threads.map(async (thread) => {
       const unreadCount = await ChatMessage.countDocuments({
@@ -108,6 +123,51 @@ router.post('/messages', async (req, res) => {
     const populatedThread = await ChatThread.findById(thread._id).populate('participants', 'name profilePic role');
 
     res.status(201).json({ message: populatedMessage, thread: populatedThread });
+
+    // --- AUTO-REPLY LOGIC ---
+    // If sender is not an admin, check for FAQ keywords
+    const senderRole = String(req.user.role || '').toLowerCase();
+    if (!senderRole.includes('admin')) {
+      let autoReply = null;
+      const lowerMsg = message.toLowerCase();
+      
+      if (lowerMsg.includes('paano') && lowerMsg.includes('renew')) {
+        autoReply = "Automated Reply: Para mag-renew, kailangan ng latest OR/CR, lumang prangkisa, at barangay clearance. Pumunta sa 'Apply Franchise' at piliin ang Renewal.";
+      } else if (lowerMsg.includes('requirements') && (lowerMsg.includes('bago') || lowerMsg.includes('prangkisa'))) {
+        autoReply = "Automated Reply: Ang requirements para sa bagong prangkisa: 1. OR/CR, 2. Driver's License, 3. Barangay Clearance, 4. TODA Certificate, 5. Sedula.";
+      } else if (lowerMsg.includes('saan') && lowerMsg.includes('claim')) {
+        autoReply = "Automated Reply: Ang Claim Stub ay makukuha sa Mayor's Office pagkatapos ma-approve ang application.";
+      }
+
+      if (autoReply && recipients.length > 0) {
+        // Find an admin sender (just use the first recipient admin)
+        const adminSenderId = recipients[0];
+        
+        // Wait 1.5 seconds for realism
+        setTimeout(async () => {
+          const autoMsg = await ChatMessage.create({
+            thread: thread._id,
+            sender: adminSenderId,
+            message: autoReply
+          });
+          
+          thread.lastMessage = autoReply;
+          thread.lastMessageAt = new Date();
+          await thread.save();
+
+          const popAutoMsg = await ChatMessage.findById(autoMsg._id).populate('sender', 'name profilePic role');
+          
+          // Emit to operator
+          emitToUser(req.user._id.toString(), 'chat_message', popAutoMsg);
+          emitToUser(req.user._id.toString(), 'notification', await Notification.create({
+            recipient: req.user._id,
+            type: 'chat',
+            title: 'Auto-Reply',
+            message: `You received an automated reply`
+          }));
+        }, 1500);
+      }
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error sending message', error: error.message });
   }
@@ -184,6 +244,38 @@ router.post('/broadcast', async (req, res) => {
     res.status(200).json({ message: 'Broadcast channel updated and notifications sent successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error broadcasting message', error: error.message });
+  }
+});
+
+router.delete('/messages/:messageId', async (req, res) => {
+  try {
+    const message = await ChatMessage.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+    
+    // Only sender or admin can delete
+    const isAdmin = String(req.user.role).toLowerCase().includes('admin');
+    if (String(message.sender) !== String(req.user._id) && !isAdmin) {
+      return res.status(403).json({ message: 'Unauthorized to delete this message' });
+    }
+
+    await ChatMessage.findByIdAndDelete(req.params.messageId);
+    res.json({ message: 'Message deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting message', error: error.message });
+  }
+});
+
+router.delete('/threads/:threadId', async (req, res) => {
+  try {
+    const isAdmin = String(req.user.role).toLowerCase().includes('admin');
+    if (!isAdmin) return res.status(403).json({ message: 'Only admins can delete entire threads' });
+
+    await ChatMessage.deleteMany({ thread: req.params.threadId });
+    await ChatThread.findByIdAndDelete(req.params.threadId);
+    
+    res.json({ message: 'Thread and all messages deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting thread', error: error.message });
   }
 });
 

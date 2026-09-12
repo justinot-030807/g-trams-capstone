@@ -60,7 +60,7 @@ exports.register = async (req, res) => {
                     apikey: process.env.SEMAPHORE_API_KEY, 
                     number: normalizedContact, 
                     message: `G-TRAMS: Ang iyong verification code ay ${otp}. Huwag itong i-share kaninuman.` 
-                });
+                }, { timeout: 5000 });
             }
         } catch (sendErr) {
             console.error("OTP Delivery Warning (email/SMS):", sendErr.message);
@@ -279,14 +279,21 @@ exports.forgotPassword = async (req, res) => {
                     apikey: process.env.SEMAPHORE_API_KEY, 
                     number: normalizedContact, 
                     message: `G-TRAMS: Ang iyong password reset verification code ay ${otp}. Huwag itong i-share kaninuman.` 
-                });
+                }, { timeout: 5000 });
                 return res.status(200).json({ message: 'OTP sent successfully via SMS.' });
             }
         } catch (err) {
+            console.error("FORGOT PASSWORD OTP SEND ERROR:", err?.response?.data || err.message);
             user.otp = undefined;
             user.otpExpire = undefined;
             await user.save();
-            return res.status(500).json({ message: 'Error sending OTP code.' });
+            const errDetail = typeof err?.response?.data === 'string' ? err.response.data : JSON.stringify(err?.response?.data || '');
+            const isSmsIssue = errDetail.includes('approved') || errDetail.includes('credit') || errDetail.includes('balance');
+            return res.status(500).json({ 
+                message: isSmsIssue 
+                    ? 'SMS gateway has insufficient credits or is unverified. Please use your email address or contact support.' 
+                    : 'Error sending OTP code. Please try again.' 
+            });
         }
     } catch (error) {
         console.error("FORGOT PASSWORD ERROR:", error);

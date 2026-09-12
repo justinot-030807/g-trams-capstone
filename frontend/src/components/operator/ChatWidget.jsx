@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Loader2, ChevronDown, Check, CheckCheck } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ChevronDown, Check, CheckCheck, Trash2 } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 
 const ChatWidget = () => {
@@ -15,9 +15,21 @@ const ChatWidget = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  const toast = {
+    success: (msg) => {
+      setToastMsg({ msg, type: 'success' });
+      setTimeout(() => setToastMsg(null), 3000);
+    },
+    error: (msg) => {
+      setToastMsg({ msg, type: 'error' });
+      setTimeout(() => setToastMsg(null), 3500);
+    }
+  };
 
   const API_URL = import.meta.env.VITE_API_URL || '';
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -79,6 +91,46 @@ const ChatWidget = () => {
     } catch (err) { /* silent */ }
   }, [API_URL, fetchThreads]);
 
+  const handleDeleteMessage = async (msgId) => {
+    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/chat/messages/${msgId}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      });
+      if (res.ok) {
+        setMessages(prev => prev.filter(m => m._id !== msgId));
+        toast.success('Message deleted');
+      } else {
+        toast.error('Failed to delete message');
+      }
+    } catch (err) {
+      toast.error('Network error while deleting');
+    }
+  };
+
+  const handleDeleteThread = async (e, threadId) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this entire conversation? This action cannot be undone.')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/chat/threads/${threadId}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      });
+      if (res.ok) {
+        setThreads(prev => prev.filter(t => t._id !== threadId));
+        if (activeThread && activeThread._id === threadId) {
+          setActiveThread(null);
+        }
+        toast.success('Conversation deleted');
+      } else {
+        toast.error('Failed to delete conversation');
+      }
+    } catch (err) {
+      toast.error('Network error while deleting');
+    }
+  };
+
   // Send message
   const handleSend = async () => {
     if (!input.trim() || isSending) return;
@@ -96,12 +148,12 @@ const ChatWidget = () => {
         });
         
         if (res.ok) {
-          alert('Broadcast sent successfully!');
+          toast.success('Announcement broadcasted to all channels!');
           setIsBroadcast(false);
           fetchThreads();
         } else {
           const rawText = await res.text().catch(() => '');
-          alert(`Failed to broadcast: ${rawText.substring(0, 50)}`);
+          toast.error(`Failed to broadcast: ${rawText.substring(0, 50)}`);
         }
         setIsSending(false);
         return;
@@ -143,11 +195,11 @@ const ChatWidget = () => {
         
         // Show detailed error
         const errMsg = errData.message || rawText.substring(0, 100) || res.statusText || 'Unknown error';
-        alert(`Failed to send message (${res.status}): ${errMsg}`);
+        toast.error(`Failed to send message: ${errMsg}`);
       }
     } catch (err) { 
       console.error('Network error:', err);
-      alert('Network error sending message.');
+      toast.error('Network error sending message.');
     }
     
     setIsSending(false);
@@ -284,7 +336,16 @@ const ChatWidget = () => {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed z-[95] bottom-20 md:bottom-20 right-3 md:right-6 w-[calc(100vw-24px)] max-w-[380px] h-[70vh] max-h-[520px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 print:hidden">
+        <div className="fixed z-[95] bottom-20 md:bottom-20 right-3 md:right-6 w-[calc(100vw-24px)] max-w-[380px] h-[70vh] max-h-[520px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 print:hidden relative">
+          
+          {/* Toast Notification */}
+          {toastMsg && (
+            <div className={`absolute top-14 left-3 right-3 z-50 p-2.5 rounded-xl text-xs font-bold text-center shadow-lg transition-all animate-in fade-in slide-in-from-top-2 ${
+              toastMsg.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-600 text-white'
+            }`}>
+              {toastMsg.msg}
+            </div>
+          )}
           
           {/* Header */}
           <div className="bg-[#7A1B22] dark:bg-slate-800 text-white px-4 py-3 flex items-center justify-between shrink-0">
@@ -345,21 +406,31 @@ const ChatWidget = () => {
                       names = otherParticipants.map(p => p.name).join(', ') || 'Unknown User';
                     }
                     return (
-                      <button
+                      <div
                         key={t._id}
                         onClick={() => setActiveThread(t)}
-                        className="w-full text-left p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between"
+                        className="w-full text-left p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between group cursor-pointer"
                       >
                         <div className="overflow-hidden pr-2">
                           <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{names}</p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{t.lastMessage || 'No messages yet'}</p>
                         </div>
-                        {t.unreadCount > 0 && (
-                          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                            {t.unreadCount}
-                          </span>
-                        )}
-                      </button>
+                        <div className="flex items-center gap-2">
+                          {String(currentUser.role).toLowerCase().includes('admin') && !t.isAnnouncement && (
+                            <button
+                              onClick={(e) => handleDeleteThread(e, t._id)}
+                              className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                          {t.unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                              {t.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     )
                   })
                 )}
@@ -396,7 +467,7 @@ const ChatWidget = () => {
                 {messages.map((msg, idx) => {
                   const isMine = isCurrentUser(msg.sender);
                   return (
-                    <div key={msg._id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                    <div key={msg._id || idx} className={`flex group ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-xs leading-relaxed ${
                         isMine
                           ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-md'
@@ -419,7 +490,17 @@ const ChatWidget = () => {
                           {isMine && (
                             msg.isRead 
                               ? <CheckCheck size={11} className="text-white/60 dark:text-slate-950/50" />
-                              : <Check size={11} className="text-white/40 dark:text-slate-950/30" />
+                              : <Check size={11} className="text-white/40 dark:text-slate-950/40" />
+                          )}
+                          {(isMine || String(currentUser.role).toLowerCase().includes('admin')) && (
+                            <button
+                              onClick={() => handleDeleteMessage(msg._id)}
+                              className={`ml-2 text-[9px] cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity ${
+                                isMine ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-red-500'
+                              }`}
+                            >
+                              Delete
+                            </button>
                           )}
                         </div>
                       </div>
