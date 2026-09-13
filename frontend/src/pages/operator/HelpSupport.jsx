@@ -6,6 +6,7 @@ import {
   Users, GraduationCap, Code, Server, Heart
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import TermsPolicyModal from '../../components/common/TermsPolicyModal';
 
 const FAQS_DATA = {
   en: [
@@ -99,6 +100,7 @@ const HelpSupport = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('gtrams_faqs_analytics', JSON.stringify(viewCounts));
@@ -305,6 +307,41 @@ const HelpSupport = () => {
           </div>
         </div>
 
+        {/* Legal & Privacy Policy Banner */}
+        <div className="bg-gradient-to-r from-[#7A1B22] via-[#5A1419] to-[#3D0A0E] rounded-3xl p-5 sm:p-6 text-white mb-8 border border-amber-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 text-center sm:text-left">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[#D4AF37] shrink-0 mx-auto sm:mx-0 shadow-inner">
+              <ShieldCheck size={26} />
+            </div>
+            <div>
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <span className="bg-[#D4AF37] text-slate-950 text-[9px] font-black px-2 py-0.5 rounded tracking-widest uppercase">
+                  LEGAL & PRIVACY
+                </span>
+                <span className="text-[10px] text-amber-200/90 font-medium">
+                  RA 10173 • RA 7160 • Art. 172 RPC
+                </span>
+              </div>
+              <h3 className="text-sm sm:text-base font-black uppercase tracking-wide mt-1">
+                {currentLang === 'fil' ? 'Mga Tuntunin sa Paggamit at Patakaran sa Privacy' : 'Terms of Use & Municipal Privacy Policy'}
+              </h3>
+              <p className="text-xs text-amber-100/80 font-medium mt-0.5">
+                {currentLang === 'fil'
+                  ? 'Basahin ang opisyal na alituntunin sa prangkisa, taripa, 20% discount, at proteksyon sa datos.'
+                  : 'Review complete municipal guidelines on MTOP franchising, fare discounts, road safety, and data rights.'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowTermsModal(true)}
+            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#B89628] hover:brightness-105 active:scale-[0.98] text-[#3D0A0E] text-xs font-black rounded-xl shadow-md uppercase tracking-wider transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <FileText size={15} />
+            <span>{currentLang === 'fil' ? 'BUKSAN ANG PATAKARAN' : 'VIEW FULL POLICY'}</span>
+          </button>
+        </div>
+
         {/* Dynamic FAQ Module */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 border-b border-slate-100 dark:border-slate-800">
@@ -464,6 +501,13 @@ const HelpSupport = () => {
         </div>
 
       </div>
+
+      <TermsPolicyModal 
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        defaultLang={currentLang === 'fil' ? 'tl' : 'en'}
+        showAcceptButton={false}
+      />
     </MainLayout>
   );
 };

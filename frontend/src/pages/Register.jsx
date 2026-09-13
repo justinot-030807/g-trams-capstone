@@ -3,6 +3,7 @@ import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, Globe, X, Loader2, CheckCircle2, Sparkles, FileText, ShieldCheck, Clock, Phone, AlertCircle } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
+import TermsPolicyModal from '../components/common/TermsPolicyModal';
 
 
 
@@ -590,50 +591,13 @@ const Register = () => {
 
       </div>
 
-      {/* Terms Modal */}
-      {showTermsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border border-white/20">
-            <div className="p-3.5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-black text-xs text-slate-900 tracking-wider uppercase">
-                {termsLang === 'en' ? 'TERMS & PRIVACY POLICY' : 'MGA TUNTUNIN AT PATAKARAN'}
-              </h3>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setTermsLang(termsLang === 'en' ? 'tl' : 'en')}
-                  className="flex items-center gap-1 text-[9px] font-bold text-[#7A1B22] bg-[#7A1B22]/10 px-2 py-0.5 rounded-md uppercase"
-                >
-                  <Globe size={11} /> {termsLang === 'en' ? 'Tagalog' : 'English'}
-                </button>
-                <button onClick={() => setShowTermsModal(false)} className="text-slate-400 hover:text-red-500 p-0.5"><X size={16} /></button>
-              </div>
-            </div>
-            <div className="p-4 overflow-y-auto text-xs text-slate-600 space-y-2.5 leading-relaxed font-medium">
-              {termsLang === 'en' ? (
-                <>
-                  <p><strong>1. Data Collection:</strong> By using G-TRAMS, you consent to the storage and validation of your operator credentials by the Local Government Unit of Gasan.</p>
-                  <p><strong>2. Data Privacy Act of 2012:</strong> Protected under RA 10173. Data will strictly be used for transport regulation.</p>
-                  <p><strong>3. Accuracy:</strong> Submitting falsified information may result in franchise revocation.</p>
-                </>
-              ) : (
-                <>
-                  <p><strong>1. Pagkolekta ng Datos:</strong> Sumasang-ayon ka sa pagproseso ng iyong impormasyon ng Lokal na Pamahalaan ng Gasan.</p>
-                  <p><strong>2. Data Privacy Act of 2012:</strong> Protektado sa ilalim ng RA 10173 para sa opisyal na talaan ng munisipyo.</p>
-                  <p><strong>3. Katumpakan:</strong> Ang pekeng dokumento ay dahilan ng agarang pagbawi ng prangkisa.</p>
-                </>
-              )}
-            </div>
-            <div className="p-3 border-t border-slate-100 bg-slate-50 flex justify-end">
-              <button 
-                onClick={() => { setTermsAccepted(true); setShowTermsModal(false); }} 
-                className="bg-[#7A1B22] text-white px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider"
-              >
-                {termsLang === 'en' ? 'ACCEPT' : 'TANGGAPIN'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Terms & Privacy Policy Modal */}
+      <TermsPolicyModal 
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAccept={() => setTermsAccepted(true)}
+        defaultLang={termsLang}
+      />
 
       {/* Footer */}
       <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2, Sparkles, FileText, ShieldCheck, Clock, Phone, ChevronRight } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
+import TermsPolicyModal from '../components/common/TermsPolicyModal';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Login = () => {
     contact: '',
     password: ''
   });
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
@@ -385,12 +387,22 @@ const Login = () => {
               />
             </div>
 
-            <div className="mt-5 pt-4 border-t border-slate-100 text-center animate-item-4">
+            <div className="mt-5 pt-4 border-t border-slate-100 text-center space-y-2 animate-item-4">
               <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
                 <Link to="/register" className="font-black text-[#7A1B22] hover:underline">
                   CREATE AN ACCOUNT
                 </Link>
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium">
+                By logging in, you agree to the{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  className="font-bold text-[#7A1B22] hover:underline"
+                >
+                  Terms of Use & Privacy Policy
+                </button>
               </p>
             </div>
 
@@ -398,6 +410,13 @@ const Login = () => {
         </div>
 
       </div>
+
+      {/* Terms & Privacy Policy Modal */}
+      <TermsPolicyModal 
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        showAcceptButton={false}
+      />
 
       {/* Footer */}
       <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">

@@ -29,14 +29,14 @@ const CustomTodaTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 text-xs">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: data.color }} />
+      <div className="bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 text-xs z-50 relative pointer-events-none select-none">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: data.color }} />
           <span className="font-black text-slate-900 dark:text-white">{data.name}</span>
         </div>
-        <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-400">
-          <span>Units: <strong className="text-slate-800 dark:text-slate-200">{data.value}</strong></span>
-          <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37]">{data.percentage}% share</span>
+        <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-400 font-medium">
+          <span>Units: <strong className="text-slate-900 dark:text-white font-bold">{data.value}</strong></span>
+          <span className="font-black text-[#7A1B22] dark:text-[#D4AF37]">{data.percentage}% share</span>
         </div>
       </div>
     );
@@ -50,6 +50,7 @@ const AdminDashboard = () => {
     total: 0, active: 0, pending: 0, expired: 0, cancelled: 0, newApps: 0 
   });
   const [todaStats, setTodaStats] = useState([]);
+  const [hoveredTodaIndex, setHoveredTodaIndex] = useState(null);
   const [recentApps, setRecentApps] = useState([]);
   const [historyLogs, setHistoryLogs] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -150,12 +151,33 @@ const AdminDashboard = () => {
 
   const getActionDetails = (log) => {
     const name = log.fullName || log.operator?.name || 'an Operator';
-    if (log.isArchived) return { text: `Archived record of ${name}`, color: 'text-slate-600 bg-slate-100 border-slate-200' };
-    if (log.status === 'Active' && log.applicationType === 'Renewal') return { text: `Approved renewal for ${name}`, color: 'text-blue-700 bg-blue-50 border-blue-200' };
-    if (log.status === 'Active') return { text: `Approved franchise of ${name}`, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
-    if (log.status === 'Cancelled') return { text: log.cancelReason ? `Cancelled (${log.cancelReason}) - ${name}` : `Cancelled application of ${name}`, color: 'text-red-700 bg-red-50 border-red-200' };
-    if (log.status === 'Expired') return { text: `Flagged as expired for ${name}`, color: 'text-orange-700 bg-orange-50 border-orange-200' };
-    return { text: `Updated pending record of ${name}`, color: 'text-amber-700 bg-amber-50 border-amber-200' };
+    if (log.isArchived) return { name, verb: 'Archived record of', icon: FileStack, color: 'text-slate-600 bg-slate-100 border-slate-200', dotColor: 'bg-slate-400', badgeColor: 'text-slate-600 bg-slate-100 border-slate-200' };
+    if (log.status === 'Active' && log.applicationType === 'Renewal') return { name, verb: 'Approved renewal for', icon: CheckCircle, color: 'text-blue-700 bg-blue-50 border-blue-200', dotColor: 'bg-blue-500', badgeColor: 'text-blue-700 bg-blue-50 border-blue-200' };
+    if (log.status === 'Active') return { name, verb: 'Approved franchise of', icon: CheckCircle, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dotColor: 'bg-emerald-500', badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+    if (log.status === 'Cancelled') return { name, verb: log.cancelReason ? `Cancelled (${log.cancelReason}) —` : 'Cancelled application of', icon: AlertTriangle, color: 'text-red-700 bg-red-50 border-red-200', dotColor: 'bg-red-500', badgeColor: 'text-red-700 bg-red-50 border-red-200' };
+    if (log.status === 'Expired') return { name, verb: 'Flagged as expired for', icon: Clock, color: 'text-orange-700 bg-orange-50 border-orange-200', dotColor: 'bg-orange-500', badgeColor: 'text-orange-700 bg-orange-50 border-orange-200' };
+    if (log.status === 'Ready for Pickup') return { name, verb: 'Updated pending record of', icon: Sparkles, color: 'text-amber-700 bg-amber-50 border-amber-200', dotColor: 'bg-amber-500', badgeColor: 'text-amber-700 bg-amber-50 border-amber-200' };
+    return { name, verb: 'Updated pending record of', icon: Clock, color: 'text-amber-700 bg-amber-50 border-amber-200', dotColor: 'bg-amber-500', badgeColor: 'text-amber-700 bg-amber-50 border-amber-200' };
+  };
+
+  const getRelativeTime = (dateStr) => {
+    if (!dateStr) return '';
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getDaysPending = (dateStr) => {
+    if (!dateStr) return 0;
+    return Math.floor((new Date() - new Date(dateStr)) / 86400000);
   };
 
   const getGreeting = () => {
@@ -277,10 +299,10 @@ const AdminDashboard = () => {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {[
-            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, color: 'from-blue-600 to-indigo-600', iconBg: 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' },
+            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, color: 'from-[#7A1B22] to-[#5A1419]', iconBg: 'bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37]' },
             { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' },
-            { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, color: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' },
-            { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, color: 'from-red-500 to-rose-600', iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400' }
+            { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, color: 'from-[#D4AF37] to-[#B89628]', iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-[#D4AF37] dark:text-[#D4AF37]' },
+            { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, color: 'from-rose-400 to-red-500', iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-500 dark:text-red-400' }
           ].map((stat, index) => (
             <div 
               key={index} 
@@ -344,88 +366,137 @@ const AdminDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* BAR CHART */}
+          {/* FRANCHISE HEALTH OVERVIEW — Horizontal stacked bar + status breakdown */}
           <div 
-            className="animate-smooth-card lg:col-span-2 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between"
+            className="animate-smooth-card lg:col-span-2 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
             style={{ animationDelay: '0.2s' }}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl">
                   <BarChart3 size={18} />
                 </div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">Franchise Distribution</h2>
+                <div>
+                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Franchise Health Overview</h2>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Status distribution across all registered units</p>
+                </div>
               </div>
-              <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-full uppercase tracking-wider border border-slate-200/60 dark:border-slate-700">
-                {stats.total} Total Units
+              <span className="text-[10px] font-bold bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-wider border border-[#7A1B22]/20">
+                {stats.total} Units
               </span>
             </div>
 
-            <div className="h-56 w-full flex items-end justify-around gap-2 sm:gap-6 border-b border-slate-100 dark:border-slate-800 pt-6 pb-2">
-              {[
-                { label: 'Active', count: stats.active, gradient: 'from-emerald-500 to-teal-400', badge: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' },
-                { label: 'Pending', count: stats.pending, gradient: 'from-amber-400 to-orange-400', badge: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60' },
-                { label: 'Expired', count: stats.expired, gradient: 'from-red-500 to-rose-500', badge: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' },
-                { label: 'Cancelled', count: stats.cancelled, gradient: 'from-slate-400 to-slate-500', badge: 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700' }
-              ].map((bar, i) => (
-                <div key={i} className="flex flex-col items-center h-full justify-end w-16 sm:w-24 group relative">
-                  <span className={`text-[11px] font-black px-2 py-0.5 rounded-md border shadow-xs mb-2 transition-transform duration-300 group-hover:scale-110 ${bar.badge}`}>
-                    {bar.count}
-                  </span>
-                  
-                  <div className="w-full bg-slate-100/80 dark:bg-slate-800 rounded-2xl h-36 flex items-end p-1 shadow-inner overflow-hidden">
-                    <div 
-                      className={`w-full rounded-xl bg-gradient-to-t ${bar.gradient} shadow-md smooth-bar-transition group-hover:brightness-110 group-hover:scale-[1.02]`} 
-                      style={{ 
-                        height: isGraphAnimated ? getGraphHeight(bar.count) : '0%',
-                        transitionDelay: `${i * 100}ms`
-                      }} 
-                    />
-                  </div>
+            {/* Horizontal Stacked Bar */}
+            <div className="mb-6">
+              <div className="w-full h-5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex shadow-inner">
+                {[
+                  { count: stats.active, color: 'bg-emerald-500' },
+                  { count: stats.pending, color: 'bg-[#D4AF37]' },
+                  { count: stats.expired, color: 'bg-rose-400' },
+                  { count: stats.cancelled, color: 'bg-slate-400' }
+                ].map((seg, i) => (
+                  <div 
+                    key={i}
+                    className={`${seg.color} h-full transition-all duration-1000 ease-out first:rounded-l-full last:rounded-r-full`}
+                    style={{ 
+                      width: isGraphAnimated ? `${getPercentage(seg.count)}%` : '0%',
+                      transitionDelay: `${i * 120}ms`
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
 
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-2.5">
-                    {bar.label}
-                  </span>
+            {/* Status Breakdown Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: 'Active', count: stats.active, dotColor: 'bg-emerald-500', pct: getPercentage(stats.active), desc: 'Operational' },
+                { label: 'Pending', count: stats.pending, dotColor: 'bg-[#D4AF37]', pct: getPercentage(stats.pending), desc: 'Awaiting review' },
+                { label: 'Expired', count: stats.expired, dotColor: 'bg-rose-400', pct: getPercentage(stats.expired), desc: 'Renewal overdue' },
+                { label: 'Cancelled', count: stats.cancelled, dotColor: 'bg-slate-400', pct: getPercentage(stats.cancelled), desc: 'Revoked/Cancelled' }
+              ].map((item, i) => (
+                <div 
+                  key={i} 
+                  className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors group"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={`w-2.5 h-2.5 rounded-full ${item.dotColor} shrink-0 shadow-xs group-hover:scale-125 transition-transform`} />
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{item.label}</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-black text-slate-900 dark:text-white">{item.count}</span>
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{item.pct}%</span>
+                  </div>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.desc}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* PROGRESS METRICS */}
+          {/* QUICK INSIGHTS — Transport-contextual snapshot */}
           <div 
-            className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
+            className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col"
             style={{ animationDelay: '0.28s' }}
           >
-            <div className="flex items-center gap-2.5 mb-6">
-              <div className="p-2 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                <TrendingUp size={18} />
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="p-2 bg-[#D4AF37]/15 dark:bg-[#D4AF37]/20 text-[#D4AF37] rounded-xl">
+                <Sparkles size={18} />
               </div>
-              <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">Ratio Breakdown</h2>
+              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Quick Insights</h2>
             </div>
 
-            <div className="space-y-4">
-              {[
-                { label: 'Active Ratio', count: stats.active, color: 'bg-emerald-500' },
-                { label: 'Pending Ratio', count: stats.pending, color: 'bg-amber-500' },
-                { label: 'Expired Ratio', count: stats.expired, color: 'bg-red-500' },
-                { label: 'Cancelled Ratio', count: stats.cancelled, color: 'bg-slate-400' }
-              ].map((item, i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="text-slate-600 dark:text-slate-400">{item.label}</span>
-                    <span className="text-slate-900 dark:text-white">{getPercentage(item.count)}%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                    <div 
-                      className={`${item.color} h-full rounded-full transition-all duration-1000 ease-out`} 
-                      style={{ 
-                        width: isGraphAnimated ? `${getPercentage(item.count)}%` : '0%',
-                        transitionDelay: `${150 + i * 80}ms`
-                      }} 
-                    />
-                  </div>
+            <div className="space-y-3 flex-1">
+              {/* Compliance Health */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Compliance Rate</span>
+                  <span className="text-lg font-black text-emerald-700 dark:text-emerald-400">{getPercentage(stats.active)}%</span>
                 </div>
-              ))}
+                <div className="w-full bg-emerald-200/50 dark:bg-emerald-900/50 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out" 
+                    style={{ width: isGraphAnimated ? `${getPercentage(stats.active)}%` : '0%', transitionDelay: '200ms' }}
+                  />
+                </div>
+                <p className="text-[9px] text-emerald-600/80 dark:text-emerald-400/70 font-medium mt-1.5">{stats.active} of {stats.total} franchises are active and compliant</p>
+              </div>
+
+              {/* New Applications */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">New Applications</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">First-time franchise filings</p>
+                </div>
+                <span className="text-xl font-black text-slate-900 dark:text-white">{stats.newApps}</span>
+              </div>
+
+              {/* Pending Queue Urgency */}
+              <div className={`p-3.5 rounded-2xl border flex items-center justify-between ${
+                stats.pending > 0 
+                  ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/40'
+                  : 'bg-slate-50/80 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800'
+              }`}>
+                <div>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                    Approval Queue
+                  </p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                    {stats.pending > 0 ? 'Action needed from BPLO' : 'All queues cleared'}
+                  </p>
+                </div>
+                <span className={`text-xl font-black ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>{stats.pending}</span>
+              </div>
+
+              {/* Last Activity */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last System Activity</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">Most recent franchise update</p>
+                </div>
+                <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
+                  {historyLogs.length > 0 ? getRelativeTime(historyLogs[0]?.updatedAt) : '—'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -466,29 +537,12 @@ const AdminDashboard = () => {
             {/* Donut Chart with Center Metric */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
               <div className="w-full h-64 relative flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={todaStats}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={68}
-                      outerRadius={96}
-                      paddingAngle={3}
-                      dataKey="value"
-                      strokeWidth={2}
-                      stroke="transparent"
-                    >
-                      {todaStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTodaTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-
-                {/* Center Badge in Donut Hole */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                {/* Center Badge in Donut Hole - Placed behind chart layer with smooth hover fade */}
+                <div 
+                  className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 transition-all duration-200 ${
+                    hoveredTodaIndex !== null ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                  }`}
+                >
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     Unit Share
                   </span>
@@ -498,6 +552,34 @@ const AdminDashboard = () => {
                   <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                     100% Tracked
                   </span>
+                </div>
+
+                <div className="w-full h-full relative z-10">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={todaStats}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={68}
+                        outerRadius={96}
+                        paddingAngle={3}
+                        dataKey="value"
+                        strokeWidth={2}
+                        stroke="transparent"
+                        onMouseEnter={(_, index) => setHoveredTodaIndex(index)}
+                        onMouseLeave={() => setHoveredTodaIndex(null)}
+                      >
+                        {todaStats.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        content={<CustomTodaTooltip />} 
+                        wrapperStyle={{ zIndex: 50, pointerEvents: 'none' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
@@ -594,7 +676,7 @@ const AdminDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* LOGS */}
+          {/* ACTIVITY HISTORY — Upgraded with icons, relative time, bold names */}
           <div 
             className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
             style={{ animationDelay: '0.34s' }}
@@ -602,28 +684,41 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <History size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">System Activity History</h2>
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">System Activity History</h2>
               </div>
               <button onClick={() => navigate('/franchise-masterlist')} className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline flex items-center gap-1">
                 Masterlist <ArrowRight size={12} />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {historyLogs.length === 0 ? (
                 <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-8">No recent system actions logged.</p>
               ) : (
                 historyLogs.map((log) => {
                   const actionData = getActionDetails(log);
+                  const ActionIcon = actionData.icon;
                   return (
-                    <div key={log._id} className="p-3 bg-slate-50/70 dark:bg-slate-800/70 hover:bg-slate-100/80 dark:hover:bg-slate-800 rounded-2xl flex items-center justify-between gap-3 transition-all duration-200 border border-slate-100 dark:border-slate-800">
+                    <div key={log._id} className="group p-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 rounded-2xl flex items-start gap-3 transition-all duration-200 border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
+                      {/* Action Icon + Colored Dot */}
+                      <div className="relative shrink-0 mt-0.5">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${actionData.color} border`}>
+                          <ActionIcon size={14} />
+                        </div>
+                      </div>
+
+                      {/* Content */}
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{actionData.text}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                          {actionData.verb} <span className="font-black text-slate-900 dark:text-white">{actionData.name}</span>
+                        </p>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
-                          {new Date(log.updatedAt).toLocaleDateString()} at {new Date(log.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          {getRelativeTime(log.updatedAt)}
                         </p>
                       </div>
-                      <span className={`px-2 py-0.5 text-[9px] uppercase font-bold rounded-md border shrink-0 ${actionData.color}`}>
+
+                      {/* Status Badge */}
+                      <span className={`px-2 py-0.5 text-[9px] uppercase font-bold rounded-md border shrink-0 mt-0.5 ${actionData.badgeColor}`}>
                         {log.status}
                       </span>
                     </div>
@@ -633,44 +728,61 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* PENDING APPROVAL LIST */}
+          {/* PENDING APPROVAL QUEUE — Upgraded with urgency indicators */}
           <div 
             className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
             style={{ animationDelay: '0.4s' }}
           >
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <FileStack size={18} className="text-amber-500" />
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Pending Approvals Queue</h2>
+                <FileStack size={18} className="text-[#D4AF37]" />
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">Pending Approvals Queue</h2>
               </div>
               {stats.pending > 0 && (
-                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
+                <span className="bg-[#7A1B22] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full">
                   {stats.pending} New
                 </span>
               )}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {recentApps.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center">
                   <CheckCircle size={28} className="text-emerald-500 mb-1" />
                   All caught up! No pending applications.
                 </div>
               ) : (
-                recentApps.map((app) => (
-                  <div key={app._id} className="p-3 bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 rounded-2xl border border-amber-100 dark:border-amber-900/40 flex items-center justify-between gap-3 transition-all duration-200">
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-slate-900 dark:text-white truncate">{app.fullName || 'Applicant'}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{app.todaName} • {app.make || 'Tricycle'}</p>
+                recentApps.map((app) => {
+                  const daysPending = getDaysPending(app.dateApplied || app.createdAt);
+                  const urgencyColor = daysPending >= 7 ? 'text-red-500' : daysPending >= 3 ? 'text-amber-500' : 'text-emerald-500';
+                  const urgencyDot = daysPending >= 7 ? 'bg-red-500' : daysPending >= 3 ? 'bg-amber-400' : 'bg-emerald-500';
+                  return (
+                    <div key={app._id} className="p-3.5 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-3 transition-all duration-200">
+                      {/* Urgency Indicator */}
+                      <div className="flex flex-col items-center shrink-0 gap-0.5">
+                        <span className={`w-2 h-2 rounded-full ${urgencyDot} shadow-xs`} />
+                        <span className={`text-[8px] font-bold ${urgencyColor}`}>
+                          {daysPending > 0 ? `${daysPending}d` : 'New'}
+                        </span>
+                      </div>
+
+                      {/* Applicant Info */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-black text-slate-900 dark:text-white truncate">{app.fullName || 'Applicant'}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{app.todaName} • {app.make || 'Tricycle'}</p>
+                      </div>
+
+                      {/* Review CTA */}
+                      <button 
+                        onClick={() => navigate('/franchise-approval')}
+                        className="px-4 py-2 bg-[#7A1B22] hover:bg-[#5A1419] text-white text-xs font-bold rounded-xl transition-all shrink-0 active:scale-95 shadow-sm flex items-center gap-1.5"
+                      >
+                        <ArrowRight size={13} />
+                        Review
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => navigate('/franchise-approval')}
-                      className="px-3.5 py-1.5 bg-[#7A1B22] text-white text-xs font-bold rounded-xl hover:bg-[#5A1419] transition-all shrink-0 active:scale-95 shadow-sm"
-                    >
-                      Review
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
