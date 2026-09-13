@@ -259,8 +259,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Brand Header */}
         <div className={`p-4 sm:p-5 flex items-center border-b border-white/10 dark:border-white/5 shrink-0 bg-[#6c171e]/70 dark:bg-slate-950/60 ${isOpen ? 'justify-between' : 'justify-center'}`}>
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md p-1 shrink-0 overflow-hidden border-2 border-[#D4AF37]/50">
-              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
+            <div className="w-10 h-10 shrink-0 flex items-center justify-center">
+              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-10 h-10 object-contain drop-shadow-md shrink-0" />
             </div>
             {isOpen && (
               <div className="flex flex-col min-w-0 transition-opacity duration-200">
@@ -280,7 +280,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <nav className="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-sidebar-scroll overflow-x-hidden">
+        <nav className="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-sidebar-scroll">
           {activeMenu.map((item, index) => {
             if (item.type === 'link') {
               const isActive = location.pathname === item.path;
@@ -288,14 +288,15 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <div key={index} className="relative group/navitem">
                   <button
                     onClick={() => handleNavigate(item.path)}
-                    className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 ${
+                    title={item.name}
+                    className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
                       isActive 
-                        ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-md' 
+                        ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-sm' 
                         : 'text-white/80 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
-                    <div className="flex items-center gap-3 truncate">
-                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-125 group-active/navitem:scale-95">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-110 group-active/navitem:scale-95 origin-center">
                         {item.icon}
                       </div>
                       {isOpen && <span className="truncate">{item.name}</span>}
@@ -304,7 +305,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                   {/* Icon Hover Tooltip (Only when sidebar is minimized) */}
                   {!isOpen && (
-                    <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/navitem:opacity-100 group-hover/navitem:translate-x-0 -translate-x-1.5 transition-all duration-200 pointer-events-none z-[70] items-center gap-2">
+                    <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/navitem:opacity-100 group-hover/navitem:translate-x-0 -translate-x-1 transition-all duration-200 pointer-events-none z-[100] items-center gap-2">
                       <span>{item.name}</span>
                       {Boolean(item.badge) && (
                         <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black">
@@ -324,22 +325,16 @@ const Sidebar = ({ isOpen, onClose }) => {
               return (
                 <div key={index} className="space-y-1 relative group/navitem">
                   <button
-                    onClick={() => {
-                      if (!isOpen) {
-                        // If minimized, navigate to first subitem
-                        handleNavigate(item.subItems[0]?.path || location.pathname);
-                      } else {
-                        toggleSubMenu(item.id);
-                      }
-                    }}
-                    className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 ${
-                      isAnySubActive && !isExpanded 
-                        ? 'bg-white/15 dark:bg-slate-800 text-white' 
+                    onClick={() => toggleSubMenu(item.id)}
+                    title={item.name}
+                    className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
+                      isAnySubActive 
+                        ? (isExpanded ? 'bg-white/15 dark:bg-slate-800/80 text-white' : 'bg-white/20 dark:bg-slate-800 text-white shadow-sm ring-1 ring-white/20') 
                         : 'text-white/80 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
-                    <div className="flex items-center gap-3 truncate">
-                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-125 group-active/navitem:scale-95">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-110 group-active/navitem:scale-95 origin-center">
                         {item.icon}
                       </div>
                       {isOpen && <span className="truncate">{item.name}</span>}
@@ -360,9 +355,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                     )}
                   </button>
 
-                  {/* Icon Hover Tooltip (When minimized) */}
+                  {/* Icon Hover Tooltip (When minimized and not hovering a subitem) */}
                   {!isOpen && (
-                    <div className="hidden md:flex absolute left-full ml-3 top-2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/navitem:opacity-100 group-hover/navitem:translate-x-0 -translate-x-1.5 transition-all duration-200 pointer-events-none z-[70] items-center gap-2">
+                    <div className="hidden md:flex absolute left-full ml-3 top-2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/navitem:opacity-100 group-hover/navitem:translate-x-0 -translate-x-1 transition-all duration-200 pointer-events-none z-[100] items-center gap-2">
                       <span>{item.name}</span>
                       {Boolean(item.badge) && (
                         <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black">
@@ -372,27 +367,52 @@ const Sidebar = ({ isOpen, onClose }) => {
                     </div>
                   )}
 
-                  {isOpen && isExpanded && (
-                    <div className="ml-3 pl-3 py-1 border-l-2 border-white/20 dark:border-slate-800 space-y-0.5 animate-in fade-in duration-150">
+                  {/* Sub folder items accordion (Visible in BOTH expanded and minimized modes!) */}
+                  {isExpanded && (
+                    <div className={
+                      isOpen 
+                        ? "ml-3 pl-3 py-1 border-l-2 border-white/20 dark:border-slate-800 space-y-1 animate-in fade-in duration-150" 
+                        : "py-1 space-y-1.5 flex flex-col items-center bg-black/20 dark:bg-slate-950/40 rounded-xl mx-1 my-1 p-1 animate-in fade-in duration-150 border border-white/5"
+                    }>
                       {item.subItems.map((sub, idx) => {
                         const isSubActive = location.pathname === sub.path;
                         return (
-                          <button
-                            key={idx}
-                            onClick={() => handleNavigate(sub.path)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 ${
-                              isSubActive 
-                                ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-sm' 
-                                : 'text-white/70 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
-                            }`}
-                          >
-                            <span className="truncate">{sub.name}</span>
-                            {Boolean(sub.badge) && (
-                              <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm">
-                                {sub.badge}
-                              </span>
+                          <div key={idx} className="relative group/subitem w-full flex justify-center">
+                            <button
+                              onClick={() => handleNavigate(sub.path)}
+                              title={sub.name}
+                              className={`flex items-center rounded-lg text-xs font-bold transition-colors duration-150 ${
+                                isSubActive 
+                                  ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-sm font-black' 
+                                  : 'text-white/75 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
+                              } ${isOpen ? 'w-full px-2.5 py-2 justify-between' : 'w-9 h-9 justify-center'}`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="shrink-0 transition-transform duration-200 group-hover/subitem:scale-110 origin-center">
+                                  {sub.icon}
+                                </div>
+                                {isOpen && <span className="truncate">{sub.name}</span>}
+                              </div>
+
+                              {isOpen && Boolean(sub.badge) && (
+                                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm">
+                                  {sub.badge}
+                                </span>
+                              )}
+                            </button>
+
+                            {/* Tooltip for sub folder icon in minimized mode */}
+                            {!isOpen && (
+                              <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-bold rounded-lg shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/subitem:opacity-100 transition-all pointer-events-none z-[100] items-center gap-1.5">
+                                <span>{sub.name}</span>
+                                {Boolean(sub.badge) && (
+                                  <span className="bg-red-500 text-white text-[9px] px-1 rounded-full font-black">
+                                    {sub.badge}
+                                  </span>
+                                )}
+                              </div>
                             )}
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
