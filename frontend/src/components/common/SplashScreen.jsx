@@ -2,9 +2,23 @@ import React, { useState, useEffect } from 'react';
 
 const SplashScreen = () => {
   const [shouldShow, setShouldShow] = useState(() => {
-    // Show if not yet shown this session, or if requested via URL query param
-    const shown = sessionStorage.getItem('gtrams_splash_shown');
+    if (typeof window === 'undefined') return false;
+
+    // Check if app is running as an installed PWA on mobile (Standalone mode)
     const urlParams = new URLSearchParams(window.location.search);
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone === true ||
+      document.referrer.includes('android-app://') ||
+      urlParams.get('source') === 'pwa';
+
+    // DO NOT show splash screen on normal web browser unless running as installed PWA
+    if (!isStandalone && !urlParams.has('splash')) {
+      return false;
+    }
+
+    const shown = sessionStorage.getItem('gtrams_splash_shown');
     return !shown || urlParams.has('splash');
   });
 
