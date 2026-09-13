@@ -14,7 +14,7 @@ const VerifyOperator = () => {
     // we just show a safe fallback.
     const fetchVerification = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/users/verify/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/verify/${id}`);
         if (res.ok) {
           const data = await res.json();
           setOperator(data);

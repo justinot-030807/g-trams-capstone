@@ -759,3 +759,27 @@ exports.submitAppeal = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+// Verify Operator for QR Code
+exports.verifyOperator = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('fullName profilePic role todaAssociation contact isActive');
+        if (!user) return res.status(404).json({ message: 'Operator not found' });
+        
+        let formattedProfilePic = user.profilePic;
+        if (formattedProfilePic && !formattedProfilePic.startsWith('http')) {
+            formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
+        }
+        
+        res.status(200).json({
+            name: user.fullName,
+            profilePic: formattedProfilePic,
+            role: user.role,
+            todaAssociation: user.todaAssociation || 'NON-TODA',
+            isActive: user.isActive,
+            contact: user.contact
+        });
+    } catch (error) {
+        console.error('VERIFY OPERATOR ERROR:', error);
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};

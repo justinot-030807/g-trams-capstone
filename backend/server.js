@@ -3,8 +3,10 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const connectDB = require('./src/config/db');
 const mongoSanitize = require('./src/middleware/sanitize');
+const timeoutMiddleware = require('./src/middleware/timeoutMiddleware'); // ADDED TIMEOUT
 const { initSocket } = require('./src/config/socket');
 
 // Routes
@@ -13,6 +15,13 @@ const auditLogRoutes = require('./src/routes/auditLogRoutes');
 
 const app = express();
 const server = http.createServer(app);
+
+// Enable Payload Compression (Gzip/Brotli)
+app.use(compression());
+
+// Global Timeout: 15 seconds max per request to prevent hanging
+app.use(timeoutMiddleware(15000));
+
 app.set('trust proxy', 1);
 connectDB();
 

@@ -301,15 +301,30 @@ const ApplyFranchise = () => {
 
     setHasDraftRestored(false);
     setLastSavedTime(null);
-    setCurrentStep(1);
+    // Smart Defaults (Tesler's Law): Auto-fill recent CTC/Cedula if available
+    let smartCedulaDate = '';
+    let smartCedulaAddress = 'Gasan, Marinduque';
+    let smartCedulaSerialNo = '';
+
+    if (myFranchises && myFranchises.length > 0) {
+      // Find the most recent franchise
+      const recent = [...myFranchises].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+      if (recent) {
+        smartCedulaDate = recent.cedulaDate ? recent.cedulaDate.substring(0, 10) : '';
+        smartCedulaAddress = recent.cedulaAddress || 'Gasan, Marinduque';
+        smartCedulaSerialNo = recent.cedulaSerialNo || '';
+      }
+    }
+
     setFormData({ 
       fullName: loggedInUserName, 
       address: loggedInAddress, 
       zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
       todaName: loggedInToda, 
-      dateApplied: '', cedulaDate: '', 
-      cedulaAddress: 'Gasan, Marinduque', 
-      cedulaSerialNo: '' 
+      dateApplied: '', 
+      cedulaDate: smartCedulaDate, 
+      cedulaAddress: smartCedulaAddress, 
+      cedulaSerialNo: smartCedulaSerialNo 
     });
   };
 
@@ -319,15 +334,30 @@ const ApplyFranchise = () => {
     setHasDraftRestored(false);
     setLastSavedTime(null);
     setCurrentStep(1);
+    
     if (formMode === 'New') {
+      let smartCedulaDate = '';
+      let smartCedulaAddress = 'Gasan, Marinduque';
+      let smartCedulaSerialNo = '';
+
+      if (myFranchises && myFranchises.length > 0) {
+        const recent = [...myFranchises].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+        if (recent) {
+          smartCedulaDate = recent.cedulaDate ? recent.cedulaDate.substring(0, 10) : '';
+          smartCedulaAddress = recent.cedulaAddress || 'Gasan, Marinduque';
+          smartCedulaSerialNo = recent.cedulaSerialNo || '';
+        }
+      }
+
       setFormData({ 
         fullName: loggedInUserName, 
         address: loggedInAddress, 
         zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
         todaName: loggedInToda, 
-        dateApplied: '', cedulaDate: '', 
-        cedulaAddress: 'Gasan, Marinduque', 
-        cedulaSerialNo: '' 
+        dateApplied: '', 
+        cedulaDate: smartCedulaDate, 
+        cedulaAddress: smartCedulaAddress, 
+        cedulaSerialNo: smartCedulaSerialNo 
       });
       setUploadedDocs({});
       setFilePreviews({});

@@ -21,7 +21,8 @@ const {
     getProfile,
     googleAuth,
     heartbeat,
-    submitAppeal
+    submitAppeal,
+    verifyOperator
 } = require('../controllers/authController');
 
 // Rate limiters
@@ -42,14 +43,18 @@ router.get('/google-client-id', (req, res) => {
     res.status(200).json({ clientId });
 });
 
+// Import Validation Middleware
+const validate = require('../middleware/validateMiddleware');
+const { registerSchema, loginSchema, forgotPasswordSchema } = require('../schemas/authSchema');
+
 // Auth and registration routes
-router.post('/register', registerLimiter, register);
+router.post('/register', registerLimiter, validate(registerSchema), register);
 router.post('/verify-otp', registerLimiter, verifyOTP);
-router.post('/login', loginLimiter, login);
+router.post('/login', loginLimiter, validate(loginSchema), login);
 router.get('/', protect, authorize('admin'), getUsers);
 
 // Password management routes
-router.post('/forgot-password', forgotLimiter, forgotPassword);
+router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', resetLimiter, resetPassword);
 router.put('/change-password', protect, changePassword);
 
@@ -59,6 +64,9 @@ router.post('/verify-password', protect, authorize('admin'), verifyAdminPassword
 // Account status routes
 router.put('/:id/toggle-status', protect, authorize('admin'), toggleUserStatus);
 router.post('/appeal', submitAppeal);
+
+// Public verification route
+router.get('/verify/:id', verifyOperator);
 
 router.route('/:id')
     .put(protect, authorize('admin'), updateUser)

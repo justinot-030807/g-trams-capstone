@@ -165,71 +165,28 @@ const UserManagement = () => {
       const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
       const token = localStorage.getItem('token');
 
-      // Fetch users and masterlist franchises in parallel
-      const [usersRes, franchisesRes] = await Promise.all([
-        fetch(`${baseUrl}/api/v1/auth?_t=${Date.now()}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          cache: 'no-store'
-        }),
-        fetch(`${baseUrl}/api/v1/franchises?limit=2000&archived=false`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          cache: 'no-store'
-        }).catch(() => null)
-      ]);
+      // Fetch users (the backend getUsers controller already aggregates franchise counts!)
+      const usersRes = await fetch(`${baseUrl}/api/v1/auth?_t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
 
       const data = await usersRes.json();
-      let franchisesList = [];
-      if (franchisesRes && franchisesRes.ok) {
-        try {
-          const fData = await franchisesRes.json();
-          franchisesList = Array.isArray(fData) ? fData : (fData.data || []);
-        } catch {}
-      }
-
       if (usersRes.ok && Array.isArray(data)) {
-        // Cross-reference masterlist franchises with users to guarantee 100% accurate units count
+        // Backend already calculates units, unitsCount, activeUnitsCount, etc. 
+        // We just need to map it directly and format timestamps.
         const enhancedUsers = data.map(user => {
-          const uId = String(user._id || '');
-          const uName = String(user.name || '').trim().toLowerCase();
-          const uContact = String(user.contact || '').trim().toLowerCase();
-
-          const matchedFranchises = franchisesList.filter(f => {
-            const opId = f.operator?._id ? String(f.operator._id) : (f.operator ? String(f.operator) : '');
-            if (opId && opId === uId) return true;
-            if (f.fullName && uName && f.fullName.trim().toLowerCase() === uName) return true;
-            const opContact = f.operator?.contact ? String(f.operator.contact).trim().toLowerCase() : '';
-            if (opContact && uContact && opContact === uContact) return true;
-            return false;
-          });
-
-          // Format unit objects consistently
-          const formattedMatched = matchedFranchises.map(f => ({
-            _id: f._id,
-            plateNo: f.plateNo,
-            make: f.make,
-            made: f.made,
-            motorNo: f.motorNo,
-            chassisNo: f.chassisNo,
-            status: f.status,
-            zone: f.zone,
-            todaName: f.todaName
-          }));
-
-          const userUnits = (user.units && user.units.length > 0) ? user.units : formattedMatched;
-          const unitsCount = userUnits.length;
-          const activeUnitsCount = userUnits.filter(u => u.status === 'Active').length;
-          const pendingUnitsCount = userUnits.filter(u => u.status === 'Pending' || u.status === 'Ready for Pickup').length;
-          const expiredUnitsCount = userUnits.filter(u => u.status === 'Expired').length;
-          const cancelledUnitsCount = userUnits.filter(u => u.status === 'Cancelled' || u.status === 'Revoked').length;
-
           return {
             ...user,
-            units: userUnits,
-            unitsCount,
-            activeUnitsCount,
-            pendingUnitsCount,
-            expiredUnitsCount,
-            cancelledUnitsCount
+            units: user.units || [],
+            unitsCount: user.unitsCount || 0,
+            activeUnitsCount: user.activeUnitsCount || 0,
+            pendingUnitsCount: user.pendingUnitsCount || 0,
+            expiredUnitsCount: user.expiredUnitsCount || 0,
+            cancelledUnitsCount: user.cancelledUnitsCount || 0,
+            createdAtStr: new Date(user.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            })
           };
         });
 
