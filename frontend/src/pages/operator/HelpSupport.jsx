@@ -141,9 +141,8 @@ const HelpSupport = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto space-y-8 pb-28 sm:pb-24">
-        
-        {/* Header Banner */}
+      <div className="w-full space-y-8 pb-28 sm:pb-24">
+        {/* Header Ribbon */}
         <div className="bg-gradient-to-br from-[#7A1B22] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
           <div className="relative z-10">

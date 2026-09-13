@@ -184,7 +184,7 @@ const RenewFranchise = () => {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto pb-28 sm:pb-16 animate-in fade-in duration-300">
+      <div className="w-full pb-28 sm:pb-16 animate-in fade-in duration-300">
         {/* Back Link */}
         <button
           onClick={() => navigate('/operator-dashboard')}

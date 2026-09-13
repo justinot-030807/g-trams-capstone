@@ -532,7 +532,7 @@ const AdminSettings = () => {
       {isLoading ? (
         <SettingsSkeleton />
       ) : (
-        <div className="space-y-6 max-w-5xl">
+        <div className="space-y-6 w-full">
           {/* TAB NAVIGATION PILLS */}
           <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full sm:w-fit overflow-x-auto">
             <button
@@ -994,7 +994,7 @@ const AdminSettings = () => {
 
           {/* TAB 3: PREFERENCES & APPEARANCE */}
           {activeTab === 'preferences' && (
-            <div className="max-w-2xl bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5 animate-in fade-in duration-200 transition-colors">
+            <div className="w-full bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5 animate-in fade-in duration-200 transition-colors">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <Globe size={20} className="text-[#D4AF37]" />
                 <h2 className="text-base font-black text-slate-900 dark:text-white">System Appearance & Preferences</h2>

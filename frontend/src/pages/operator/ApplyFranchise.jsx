@@ -635,7 +635,7 @@ const ApplyFranchise = () => {
 
         {/* Draft Resume Alert Banner */}
         {localStorage.getItem(DRAFT_STORAGE_KEY) && myFranchises.length < maxAllowedUnits && (
-          <div className="mb-6 max-w-5xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="mb-6 w-full bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <FileText size={20} />
@@ -668,11 +668,11 @@ const ApplyFranchise = () => {
         )}
 
         {isLoading ? (
-          <div className="max-w-5xl">
+          <div className="w-full">
             <GarageGridSkeleton count={2} baseDelay={50} />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {myFranchises.map((unit, index) => {
               const hasRenewalDraft = localStorage.getItem(`gtrams_renewal_draft_${unit._id}`);
 
@@ -843,7 +843,7 @@ const ApplyFranchise = () => {
       </header>
 
       {/* Clean Stepper Navigation */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs max-w-3xl mb-5 transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs w-full mb-5 transition-colors">
         <div className="flex items-start w-full px-2 sm:px-6">
           {steps.map((step, idx) => {
             const isCompleted = currentStep > step.num;
@@ -896,7 +896,7 @@ const ApplyFranchise = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-3xl">
+      <form onSubmit={handleSubmit} className="space-y-4 w-full">
         
         {currentStep === 1 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">

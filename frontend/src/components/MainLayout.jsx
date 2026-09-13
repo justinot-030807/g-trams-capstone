@@ -203,7 +203,7 @@ const MainLayout = ({ children }) => {
           } : undefined}
           className={`p-3.5 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${stretchOffset !== 0 ? 'will-change-transform' : ''} ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}
         >
-          <div className="w-full max-w-[1720px] mx-auto print:max-w-full print:m-0 print:p-0 print:w-full transition-all duration-200">
+          <div className="w-full print:max-w-full print:m-0 print:p-0 print:w-full transition-all duration-200">
             {children}
           </div>
         </main>

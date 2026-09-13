@@ -335,7 +335,7 @@ const OperatorSettings = () => {
       {isLoading ? (
         <SettingsSkeleton />
       ) : (
-        <div className="space-y-6 max-w-5xl pb-28 sm:pb-24">
+        <div className="space-y-6 w-full pb-28 sm:pb-24">
           {/* TAB NAVIGATION PILLS */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl w-full">
             <button
@@ -416,7 +416,7 @@ const OperatorSettings = () => {
 
           {/* TAB 1: PROFILE & CONTACT DETAILS */}
           {activeTab === 'profile' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-3xl">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 w-full">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
                   <User size={20} />
@@ -561,7 +561,7 @@ const OperatorSettings = () => {
 
           {/* TAB 2: ACCOUNT SECURITY */}
           {activeTab === 'security' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-2xl">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 w-full">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="p-2 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800/60 text-amber-600 dark:text-amber-400">
                   <Lock size={20} />
@@ -663,7 +663,7 @@ const OperatorSettings = () => {
 
           {/* TAB 3: PREFERENCES & APPEARANCE */}
           {activeTab === 'preferences' && (
-            <div className="max-w-2xl bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5 animate-in fade-in duration-200 transition-colors">
+            <div className="w-full bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5 animate-in fade-in duration-200 transition-colors">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="p-2 bg-[#D4AF37]/15 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
                   <Globe size={20} />

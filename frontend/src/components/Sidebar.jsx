@@ -225,18 +225,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       <style>{`
         .custom-sidebar-scroll {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         .custom-sidebar-scroll::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-sidebar-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-sidebar-scroll::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.18);
-          border-radius: 9999px;
+          display: none;
+          width: 0px;
+          height: 0px;
         }
       `}</style>
 
