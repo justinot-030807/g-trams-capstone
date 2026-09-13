@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   HelpCircle, Phone, Mail, Building, ChevronDown, 
-  Search, Flame, Info, ShieldCheck, MapPin, FileText, Clock
+  Search, Flame, Info, ShieldCheck, MapPin, FileText, Clock,
+  Users, GraduationCap, Code, Server, Heart
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -423,6 +424,44 @@ const HelpSupport = () => {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* System Developers Section */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
+          <div className="mb-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <Users className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
+                <span>About the Development Team</span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                G-TRAMS is a Capstone Project developed by students from <strong className="text-slate-700 dark:text-slate-300">Marinduque State University (MarSU)</strong>.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-[#7A1B22] dark:text-[#D4AF37] border border-red-200 dark:border-red-900/60 text-xs font-black uppercase tracking-wider">
+              <GraduationCap size={14} /> MarSU Capstone
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {[
+              { name: "John Doe", role: "Project Manager / Lead Dev", icon: <Users size={18} className="text-blue-500" /> },
+              { name: "Jane Smith", role: "Frontend Developer", icon: <Code size={18} className="text-emerald-500" /> },
+              { name: "Juan Dela Cruz", role: "Backend / Database", icon: <Server size={18} className="text-amber-500" /> },
+              { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={18} className="text-rose-500" /> },
+              { name: "Pedro Penduko", role: "QA / Compliance Specialist", icon: <ShieldCheck size={18} className="text-indigo-500" /> },
+            ].map((dev, idx) => (
+              <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 flex items-center gap-3 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700/80 shadow-xs flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-slate-600/50">
+                  {dev.icon}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{dev.name}</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">{dev.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>

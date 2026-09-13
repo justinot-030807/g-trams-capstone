@@ -466,33 +466,34 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         <div className="flex items-center gap-3 flex-1 min-w-0 mr-4">
           <button
             onClick={onToggleSidebar}
-            title={isSidebarOpen ? "Hide Menu" : "Show Menu"}
+            title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
             className={`p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl transition-colors focus:outline-none shrink-0 ${
               isOperatorOrToda ? 'hidden md:flex' : 'flex'
             }`}
             aria-label="Toggle Sidebar"
           >
-            {isSidebarOpen ? <Menu size={20} className="md:hidden" /> : <PanelLeftOpen size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />}
+            {isSidebarOpen ? (
+              <PanelLeftOpen size={20} className="text-slate-700 dark:text-slate-300 rotate-180" />
+            ) : (
+              <PanelLeftOpen size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            )}
           </button>
 
-          {/* Global Search Bar (Replaces Page Title) */}
-          <div className="hidden sm:flex items-center w-full max-w-md relative group">
+          {/* Global Search Bar */}
+          <div className="hidden sm:flex items-center w-full max-w-sm relative group">
             <div className="absolute left-3 text-slate-400 group-focus-within:text-[#7A1B22] dark:group-focus-within:text-[#D4AF37] transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
             <input 
               type="text" 
-              placeholder="Search plate no, operator, or TODA... (Press '/')" 
-              className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-12 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
+              placeholder="Search..." 
+              className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.target.value.trim() !== '') {
                   navigate(`/franchise-masterlist?search=${encodeURIComponent(e.target.value)}`);
                 }
               }}
             />
-            <div className="absolute right-3 text-[10px] font-bold text-slate-400 border border-slate-300 dark:border-slate-600 rounded bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 hidden md:block">
-              /
-            </div>
           </div>
           
           {isMaintenanceActive && (
@@ -690,26 +691,6 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
                 >
                   <Settings size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" /> {t('nav.settings', 'Settings')}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsProfileOpen(false);
-                    navigate('/help-support');
-                  }}
-                  className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
-                >
-                  <HelpCircle size={15} className="text-slate-400" /> {t('nav.helpSupport', 'Help & Support')}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsProfileOpen(false);
-                    navigate('/about');
-                  }}
-                  className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
-                >
-                  <Users size={15} className="text-blue-500" /> About Developers
                 </button>
               </div>
 
