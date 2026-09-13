@@ -1,19 +1,25 @@
 {
-  "short_name": "G-TRAMS",
-  "name": "G-TRAMS | Gasan Tricycle Management",
+  "short_name": "GTRAMS",
+  "name": "GTRAMS",
   "description": "Gasan Tricycle Records and Application Management System - Municipality of Gasan, Marinduque",
   "icons": [
     {
-      "src": "/gasan-logo.png",
+      "src": "/icons/icon-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/gasan-logo.png",
+      "src": "/icons/icon-512x512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/",

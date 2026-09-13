@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/gasan-logo.png" />
+    <link rel="icon" type="image/png" href="/icons/favicon-32x32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
     <link rel="manifest" href="/manifest.json" />
@@ -10,10 +10,10 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="G-TRAMS" />
-    <link rel="apple-touch-icon" href="/gasan-logo.png" />
+    <meta name="apple-mobile-web-app-title" content="GTRAMS" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     
-    <title>G-TRAMS</title>
+    <title>GTRAMS</title>
     <script>
       (function() {
         try {
@@ -34,7 +34,38 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant pre-render Splash Screen (prevents white flash while JS bundles load) -->
+      <div id="initial-splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#ffffff;z-index:99999;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+          <img src="/gasan-logo.png" alt="GTRAMS Logo" style="width:112px;height:112px;object-fit:contain;margin-bottom:16px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.1));" />
+          <h1 style="margin:0;font-size:26px;font-weight:900;letter-spacing:0.25em;color:#7A1B22;">GTRAMS</h1>
+          <div style="width:180px;height:6px;background:#f1f5f9;border-radius:9999px;overflow:hidden;margin-top:16px;border:1px solid #e2e8f0;">
+            <div style="height:100%;background:#7A1B22;border-radius:9999px;animation:gtramsLoad 1.2s ease-out infinite;width:60%;"></div>
+          </div>
+        </div>
+      </div>
+      <style>
+        @keyframes gtramsLoad {
+          0% { width: 10%; transform: translateX(0); }
+          50% { width: 75%; }
+          100% { width: 100%; }
+        }
+        @media (prefers-color-scheme: dark) {
+          #initial-splash { background: #020617 !important; }
+          #initial-splash h1 { color: #e84c58 !important; }
+          #initial-splash div[style*="border-radius:9999px"] { background: #1e293b !important; border-color: #334155 !important; }
+        }
+      </style>
+      <script>
+        try {
+          if (sessionStorage.getItem('gtrams_splash_shown')) {
+            var el = document.getElementById('initial-splash');
+            if (el) el.style.display = 'none';
+          }
+        } catch(e) {}
+      </script>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

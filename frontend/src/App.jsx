@@ -34,6 +34,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { SocketProvider } from './context/SocketContext';
 import { NotificationProvider } from './context/NotificationContext';
 import PwaInstallBanner from './components/common/PwaInstallBanner';
+import SplashScreen from './components/common/SplashScreen';
 
 const ProfileRedirect = () => {
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
@@ -112,6 +113,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <PwaInstallBanner />
+            <SplashScreen />
           </NotificationProvider>
         </SocketProvider>
       </LanguageProvider>

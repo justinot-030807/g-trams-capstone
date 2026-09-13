@@ -1,11 +1,15 @@
 // G-TRAMS Official Service Worker (PWA)
-const CACHE_NAME = 'gtrams-cache-v1';
+const CACHE_NAME = 'gtrams-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/gasan-logo.png',
-  '/favicon.svg'
+  '/favicon.svg',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/icons/icon-maskable-512x512.png',
+  '/icons/apple-touch-icon.png'
 ];
 
 // Install Event: Cache Core App Shell
