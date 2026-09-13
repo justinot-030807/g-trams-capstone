@@ -33,6 +33,7 @@ import { ThemeProvider } from './context/ThemeContext';
 
 import { SocketProvider } from './context/SocketContext';
 import { NotificationProvider } from './context/NotificationContext';
+import PwaInstallBanner from './components/common/PwaInstallBanner';
 
 const ProfileRedirect = () => {
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
@@ -110,6 +111,7 @@ function App() {
               {/* CATCH-ALL 404 ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <PwaInstallBanner />
           </NotificationProvider>
         </SocketProvider>
       </LanguageProvider>

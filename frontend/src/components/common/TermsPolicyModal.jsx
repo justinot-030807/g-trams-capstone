@@ -25,11 +25,9 @@ const TermsPolicyModal = ({
   defaultLang = 'en',
   showAcceptButton = true
 }) => {
-  const [lang, setLang] = useState(defaultLang);
+  const [lang, setLang] = useState(defaultLang === 'fil' || defaultLang === 'tl' ? 'tl' : 'en');
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-
-  if (!isOpen) return null;
 
   const content = {
     en: {
@@ -292,10 +290,12 @@ const TermsPolicyModal = ({
     }
   };
 
-  const currentData = content[lang];
+  const activeLang = (lang === 'fil' || lang === 'tl' || lang === 'tagalog') ? 'tl' : 'en';
+  const currentData = content[activeLang] || content.en;
 
   // Filter sections and items
   const filteredSections = useMemo(() => {
+    if (!currentData || !currentData.sections) return [];
     return currentData.sections
       .filter(section => activeTab === 'all' || section.id === activeTab)
       .map(section => {
@@ -315,6 +315,8 @@ const TermsPolicyModal = ({
   const handlePrint = () => {
     window.print();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">

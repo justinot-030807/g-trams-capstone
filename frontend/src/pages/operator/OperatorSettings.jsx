@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
   User, Lock, Camera, Save, Loader2, Phone, Mail,
-  CheckCircle2, AlertCircle, Moon, Sun, Globe, 
+  CheckCircle2, AlertCircle, Moon, Sun, Laptop, Globe, 
   ShieldCheck, MapPin, Hash, Shield, Car, Check, LogOut,
   Eye, EyeOff, FileText, Bell
 } from 'lucide-react';
@@ -277,7 +277,14 @@ const OperatorSettings = () => {
   const handleThemeToggle = (newTheme) => {
     setTheme(newTheme);
     setPreferences(prev => ({ ...prev, theme: newTheme }));
-    showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', 'success');
+    showToast(
+      newTheme === 'dark' 
+        ? 'Dark mode enabled' 
+        : newTheme === 'system' 
+          ? 'System mode enabled (matches phone/OS settings)' 
+          : 'Light mode enabled', 
+      'success'
+    );
   };
 
   const handleLanguageChange = (newLang) => {
@@ -681,35 +688,35 @@ const OperatorSettings = () => {
               {/* Theme Mode Selector Cards */}
               <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
                 <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1">
-                  {isDark ? <Moon size={16} className="text-indigo-400" /> : <Sun size={16} className="text-amber-500" />}
+                  {theme === 'system' ? <Laptop size={16} className="text-blue-500" /> : isDark ? <Moon size={16} className="text-indigo-400" /> : <Sun size={16} className="text-amber-500" />}
                   <span>Theme Mode</span>
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-3.5">
-                  Choose light or dark mode for comfortable reading.
+                  Choose light mode, dark mode, or follow your phone/device appearance automatically.
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Light Theme Button */}
                   <button
                     type="button"
                     onClick={() => handleThemeToggle('light')}
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer min-h-[52px] text-left ${
-                      !isDark 
-                        ? 'bg-white border-[#7A1B22] dark:border-[#D4AF37] shadow-xs' 
+                      theme === 'light' 
+                        ? 'bg-white dark:bg-slate-800 border-[#7A1B22] dark:border-[#D4AF37] shadow-xs' 
                         : 'bg-slate-100 dark:bg-slate-800/80 border-transparent hover:border-slate-300 dark:hover:border-slate-700 opacity-70'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                         <Sun size={18} />
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Light Mode</p>
-                        <p className="text-[11px] text-slate-500">Clean light background</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Always light</p>
                       </div>
                     </div>
-                    {!isDark && (
-                      <div className="w-5 h-5 rounded-full bg-[#7A1B22] text-white flex items-center justify-center shrink-0">
+                    {theme === 'light' && (
+                      <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
                         <Check size={12} className="stroke-[3]" />
                       </div>
                     )}
@@ -720,7 +727,7 @@ const OperatorSettings = () => {
                     type="button"
                     onClick={() => handleThemeToggle('dark')}
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer min-h-[52px] text-left ${
-                      isDark 
+                      theme === 'dark' 
                         ? 'bg-slate-800 border-[#D4AF37] shadow-xs' 
                         : 'bg-slate-100 dark:bg-slate-800/80 border-transparent hover:border-slate-300 dark:hover:border-slate-700 opacity-70'
                     }`}
@@ -731,11 +738,37 @@ const OperatorSettings = () => {
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Dark Mode</p>
-                        <p className="text-[11px] text-slate-400">Easy on the eyes in low light</p>
+                        <p className="text-[11px] text-slate-400">Always dark</p>
                       </div>
                     </div>
-                    {isDark && (
+                    {theme === 'dark' && (
                       <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-slate-950 flex items-center justify-center shrink-0">
+                        <Check size={12} className="stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
+
+                  {/* System Default Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleThemeToggle('system')}
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer min-h-[52px] text-left ${
+                      theme === 'system' 
+                        ? 'bg-white dark:bg-slate-800 border-[#7A1B22] dark:border-[#D4AF37] shadow-xs' 
+                        : 'bg-slate-100 dark:bg-slate-800/80 border-transparent hover:border-slate-300 dark:hover:border-slate-700 opacity-70'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                        <Laptop size={18} />
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">System (Auto)</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Match phone settings</p>
+                      </div>
+                    </div>
+                    {theme === 'system' && (
+                      <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
                         <Check size={12} className="stroke-[3]" />
                       </div>
                     )}

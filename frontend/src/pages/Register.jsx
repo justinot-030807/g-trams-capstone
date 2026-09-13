@@ -596,7 +596,7 @@ const Register = () => {
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         onAccept={() => setTermsAccepted(true)}
-        defaultLang={termsLang}
+        defaultLang="tl"
       />
 
       {/* Footer */}

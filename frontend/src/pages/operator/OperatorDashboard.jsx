@@ -5,7 +5,7 @@ import {
   RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle, Car,
-  Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
+  Sun, Moon, SunMedium, Laptop, ArrowRight, Users, Sparkles, HelpCircle,
   Bell, Settings, ChevronRight, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -693,10 +693,16 @@ const OperatorDashboard = () => {
             <button
               type="button"
               onClick={toggleTheme}
-              title={isDark ? "Light Mode" : "Dark Mode"}
+              title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
               className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer"
             >
-              {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-200" />}
+              {theme === 'system' ? (
+                <Laptop size={17} className="text-blue-300" />
+              ) : isDark ? (
+                <Moon size={17} className="text-indigo-200" />
+              ) : (
+                <Sun size={17} className="text-amber-300" />
+              )}
             </button>
 
             {/* Notification Bell Circle */}

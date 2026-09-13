@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
   User, Users, LogOut, FileText, Menu, PanelLeftOpen, Settings,
-  Moon, Sun, HelpCircle, ArrowLeft
+  Moon, Sun, Laptop, HelpCircle, ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -364,10 +364,16 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             <button
               type="button"
               onClick={toggleTheme}
-              title={isDark ? "Light Mode" : "Dark Mode"}
+              title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
               className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-2xs"
             >
-              {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-600 dark:text-indigo-400" />}
+              {theme === 'system' ? (
+                <Laptop size={17} className="text-blue-500 dark:text-blue-400" />
+              ) : isDark ? (
+                <Moon size={17} className="text-indigo-600 dark:text-indigo-400" />
+              ) : (
+                <Sun size={17} className="text-amber-500" />
+              )}
             </button>
 
             {/* Notification Bell with Popup */}
@@ -510,13 +516,15 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         {/* 1-Click Quick Theme Toggle */}
         <button
           onClick={toggleTheme}
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all focus:outline-none shrink-0"
+          title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
+          className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all focus:outline-none shrink-0 cursor-pointer"
         >
-          {isDark ? (
-            <Sun size={18} className="text-amber-400" />
-          ) : (
+          {theme === 'system' ? (
+            <Laptop size={18} className="text-blue-500 dark:text-blue-400" />
+          ) : isDark ? (
             <Moon size={18} className="text-indigo-600 dark:text-indigo-400" />
+          ) : (
+            <Sun size={18} className="text-amber-500" />
           )}
         </button>
 
