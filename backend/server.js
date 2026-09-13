@@ -93,6 +93,7 @@ app.use(`${BASE_URI}/audit-logs`, auditLogRoutes);
 
 // Notification and Chat routes
 app.use(`${BASE_URI}/notifications`, require('./src/routes/notificationRoutes'));
+app.use(`${BASE_URI}/push`, require('./src/routes/pushRoutes'));
 app.use(`${BASE_URI}/chat`, require('./src/routes/chatRoutes'));
 
 // Global error handling middleware (handles Multer errors, validation errors, etc.)

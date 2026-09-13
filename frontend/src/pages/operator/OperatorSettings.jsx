@@ -6,13 +6,23 @@ import {
   User, Lock, Camera, Save, Loader2, Phone, Mail,
   CheckCircle2, AlertCircle, Moon, Sun, Laptop, Globe, 
   ShieldCheck, MapPin, Hash, Shield, Car, Check, LogOut,
-  Eye, EyeOff, FileText, Bell
+  Eye, EyeOff, FileText, Bell, Smartphone, Send, RefreshCw,
+  Volume2, Info, ShieldAlert, Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { SettingsSkeleton } from '../../components/skeleton';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import OperatorIdCard from '../../components/operator/OperatorIdCard';
+import {
+  isPushSupported,
+  getNotificationPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getPushStatus,
+  updatePushPreferences,
+  sendTestPush
+} from '../../utils/pushNotification';
 
 const OperatorSettings = () => {
   const navigate = useNavigate();
@@ -78,6 +88,84 @@ const OperatorSettings = () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, []);
+
+  // Push Notification State & Controls
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState('default');
+  const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+  const [isPushLoading, setIsPushLoading] = useState(false);
+  const [isTestingPush, setIsTestingPush] = useState(false);
+  const [pushPreferences, setPushPreferences] = useState({
+    statusUpdates: true,
+    renewalReminders: true,
+    announcements: true
+  });
+
+  useEffect(() => {
+    const checkPush = async () => {
+      const supported = isPushSupported();
+      setPushSupported(supported);
+      if (supported) {
+        setPushPermission(getNotificationPermission());
+        const status = await getPushStatus();
+        setIsPushSubscribed(status.isSubscribed);
+        if (status.preferences) {
+          setPushPreferences(prev => ({ ...prev, ...status.preferences }));
+        }
+      }
+    };
+    checkPush();
+  }, [activeTab]);
+
+  const handleTogglePushSubscription = async () => {
+    if (isPushLoading) return;
+    setIsPushLoading(true);
+    try {
+      if (isPushSubscribed) {
+        await unsubscribeFromPush();
+        setIsPushSubscribed(false);
+        showToast('Push notifications disabled on this device.', 'success');
+      } else {
+        await subscribeToPush(pushPreferences);
+        setIsPushSubscribed(true);
+        setPushPermission('granted');
+        showToast('Push notifications enabled! Your device will now receive alerts.', 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Failed to update push notification setting.', 'error', 4500);
+      setPushPermission(getNotificationPermission());
+    } finally {
+      setIsPushLoading(false);
+    }
+  };
+
+  const handleTogglePushPreference = async (key) => {
+    const updated = { ...pushPreferences, [key]: !pushPreferences[key] };
+    setPushPreferences(updated);
+    try {
+      if (isPushSubscribed) {
+        await updatePushPreferences(updated);
+      }
+      showToast('Notification preference updated.', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save preference to server.', 'error');
+    }
+  };
+
+  const handleSendTestPush = async () => {
+    if (isTestingPush || !isPushSubscribed) return;
+    setIsTestingPush(true);
+    try {
+      await sendTestPush();
+      showToast('Test push alert sent! Check your phone notification bar.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to send test push alert.', 'error');
+    } finally {
+      setIsTestingPush(false);
+    }
+  };
 
   // Load profile on mount
   useEffect(() => {
@@ -896,39 +984,234 @@ const OperatorSettings = () => {
 
       {/* TAB 6: NOTIFICATIONS */}
       {!isLoading && activeTab === 'notifications' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-3xl">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
-              <Bell size={20} />
+        <div className="space-y-6 max-w-3xl animate-in fade-in duration-200">
+          {/* Main Card: Device Push Notification Status & Toggle */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+            <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
+                  <Bell size={22} />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    Phone Push Notifications
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Real-time alerts sent to your phone lock screen &amp; status bar
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              {isPushSubscribed ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Active &amp; Subscribed</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                  <span className="w-2 h-2 rounded-full bg-slate-400" />
+                  <span>Not Subscribed</span>
+                </span>
+              )}
             </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                Notification Preferences
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Manage how you receive alerts and updates
-              </p>
+
+            {/* Browser Support or Permission Warning Alerts */}
+            {!pushSupported && (
+              <div className="mb-5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex items-start gap-3 text-amber-800 dark:text-amber-300">
+                <Info size={18} className="shrink-0 mt-0.5" />
+                <div className="text-xs leading-relaxed">
+                  <p className="font-bold">Push Notifications Not Supported</p>
+                  <p className="mt-0.5 opacity-90">
+                    This browser does not support web push notifications. To receive push alerts, please install G-TRAMS on your phone or use Google Chrome, Microsoft Edge, or Safari.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {pushPermission === 'denied' && (
+              <div className="mb-5 p-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 flex items-start gap-3 text-red-800 dark:text-red-300">
+                <ShieldAlert size={18} className="shrink-0 mt-0.5" />
+                <div className="text-xs leading-relaxed">
+                  <p className="font-bold">Notifications Blocked in Browser</p>
+                  <p className="mt-0.5 opacity-90">
+                    You have blocked notifications for G-TRAMS. To enable, tap the padlock / site settings icon beside the address bar and set <strong>Notifications</strong> to <strong>Allow</strong>.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Main Toggle Row */}
+            <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                  <Smartphone size={22} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Push Notifications on this Phone / Device
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Receive alert banners and sounds even when the G-TRAMS app is closed.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 self-end sm:self-center">
+                {isPushLoading && <Loader2 size={18} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" />}
+                <button
+                  type="button"
+                  disabled={!pushSupported || isPushLoading}
+                  onClick={handleTogglePushSubscription}
+                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/20 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isPushSubscribed ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                  aria-label="Toggle push notifications on this device"
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      isPushSubscribed ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Test Notification Row */}
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Subukan ang Notification (Test Alert)
+                </h5>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Magpadala ng agarang test alert upang masubukan kung tutunog at lalabas ang banner sa iyong telepono.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={!isPushSubscribed || isTestingPush}
+                onClick={handleSendTestPush}
+                className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs active:scale-95 ${
+                  isPushSubscribed
+                    ? 'bg-[#7A1B22] hover:bg-[#601015] text-white dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                }`}
+              >
+                {isTestingPush ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Nagpapadala...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={14} />
+                    <span>Send Test Push Alert</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">SMS Alerts</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Receive text messages for application status updates</p>
+
+          {/* Preferences Card: Categories */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+            <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2 bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400">
+                <Volume2 size={20} />
               </div>
-              <div className="w-10 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full relative cursor-pointer">
-                <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1" />
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  Notification Categories
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Piliin kung anong mga uri ng abiso ang nais mong matanggap sa iyong telepono
+                </p>
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Email Notifications</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Receive detailed emails for franchise renewals</p>
+
+            <div className="space-y-3.5">
+              {/* Category 1: Status & Approvals */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div className="pr-4">
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Franchise Status &amp; Approvals</span>
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Abiso kapag na-approve, for inspection, o may kinakailangang compliance sa iyong aplikasyon ng prangkisa.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTogglePushPreference('statusUpdates')}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    pushPreferences.statusUpdates ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      pushPreferences.statusUpdates ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
-              <div className="w-10 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full relative cursor-pointer">
-                <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1" />
+
+              {/* Category 2: Renewal Reminders */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div className="pr-4">
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Renewal Reminders &amp; Deadlines</span>
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Maagang paalala bago mag-expire ang iyong prangkisa upang makaiwas sa penalty at suspension.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTogglePushPreference('renewalReminders')}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    pushPreferences.renewalReminders ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      pushPreferences.renewalReminders ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
+
+              {/* Category 3: TODA & Municipal Advisories */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div className="pr-4">
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>TODA &amp; Municipal Transport Advisories</span>
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Mga anunsyo mula sa Sangguniang Bayan, LGU Gasan, at TODA President tungkol sa ruta, taripa, at pagpupulong.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTogglePushPreference('announcements')}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    pushPreferences.announcements ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      pushPreferences.announcements ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Explanatory footer note */}
+            <div className="mt-5 p-3.5 bg-[#7A1B22]/5 dark:bg-[#7A1B22]/10 rounded-2xl border border-[#7A1B22]/15 flex items-start gap-2.5 text-[11px] text-slate-600 dark:text-slate-300">
+              <Sparkles size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0 mt-0.5" />
+              <p>
+                <strong>Paalala:</strong> Kapag naka-install ang G-TRAMS bilang PWA sa iyong telepono (Add to Home Screen), matatanggap mo ang lahat ng mga abisong ito tulad ng isang regular na mobile app kahit nakapatay ang screen ng iyong telepono.
+              </p>
             </div>
           </div>
         </div>

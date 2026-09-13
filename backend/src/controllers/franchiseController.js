@@ -3,6 +3,7 @@ const cron = require('node-cron');
 const { logAudit } = require('../utils/auditLogger');
 const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
+const { sendPushToUser } = require('../services/pushService');
 
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -329,6 +330,14 @@ const updateFranchiseStatus = async (req, res) => {
                 relatedFranchise: updatedFranchise._id
             });
             emitToUser(String(updatedFranchise.operator._id), 'notification', notification);
+            
+            // Send background push notification to operator's mobile device
+            sendPushToUser(updatedFranchise.operator._id, {
+                title: `Franchise Status: ${status}`,
+                message: `Your franchise application for ${updatedFranchise.plateNo} has been updated to ${status}.`,
+                url: '/operator-dashboard',
+                type: String(status).toLowerCase().includes('approv') ? 'approval' : 'status_change'
+            }).catch(err => console.error('Push alert delivery failed:', err.message));
         }
 
         logAudit(req, {
