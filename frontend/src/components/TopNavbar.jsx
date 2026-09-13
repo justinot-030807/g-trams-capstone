@@ -462,8 +462,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
       {/* 2. DESKTOP / ADMIN STANDARD HEADER */}
       <div className={`items-center justify-between w-full ${isOperatorOrToda && !isDashboard ? 'hidden md:flex' : 'flex'}`}>
-        {/* Left: Sidebar Toggle & Dynamic Breadcrumb Title */}
-        <div className="flex items-center gap-3 min-w-0">
+        {/* Left: Sidebar Toggle & Global Search Bar */}
+        <div className="flex items-center gap-3 flex-1 min-w-0 mr-4">
           <button
             onClick={onToggleSidebar}
             title={isSidebarOpen ? "Hide Menu" : "Show Menu"}
@@ -475,23 +475,36 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             {isSidebarOpen ? <Menu size={20} className="md:hidden" /> : <PanelLeftOpen size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />}
           </button>
 
-          <div className="hidden sm:block h-4 w-[1px] bg-slate-200 dark:bg-slate-700 shrink-0" />
-
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate tracking-tight">
-              {getBreadcrumbTitle()}
-            </span>
-            {isMaintenanceActive && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse">
-                <span className="inline sm:hidden">🛠️ Maint</span>
-                <span className="hidden sm:inline">🛠️ Maintenance Active</span>
-              </span>
-            )}
+          {/* Global Search Bar (Replaces Page Title) */}
+          <div className="hidden sm:flex items-center w-full max-w-md relative group">
+            <div className="absolute left-3 text-slate-400 group-focus-within:text-[#7A1B22] dark:group-focus-within:text-[#D4AF37] transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search plate no, operator, or TODA... (Press '/')" 
+              className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-12 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim() !== '') {
+                  navigate(`/franchise-masterlist?search=${encodeURIComponent(e.target.value)}`);
+                }
+              }}
+            />
+            <div className="absolute right-3 text-[10px] font-bold text-slate-400 border border-slate-300 dark:border-slate-600 rounded bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 hidden md:block">
+              /
+            </div>
           </div>
+          
+          {isMaintenanceActive && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse ml-2">
+              <span className="inline sm:hidden">🛠️ Maint</span>
+              <span className="hidden sm:inline">🛠️ Maintenance Active</span>
+            </span>
+          )}
         </div>
 
-      {/* Right: 1-Click Dark Mode Toggle, Notifications & User Profile */}
-      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+      {/* Right: 1-Click Dark Mode Toggle, Notifications & Simplified User Avatar */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         
         {/* 1-Click Quick Theme Toggle */}
         <button
@@ -525,10 +538,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           </button>
 
           {isNotifOpen && ReactDOM.createPortal(
-            <div className="fixed inset-0 z-[120] flex flex-col justify-end sm:justify-start sm:items-end p-0 sm:p-4 sm:pt-16 sm:pr-8">
+            <div className="fixed inset-0 z-[120] flex flex-col justify-end sm:justify-start sm:items-end p-0 sm:p-4 sm:pt-16 sm:pr-8 pointer-events-none">
               {/* Backdrop */}
               <div 
-                className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200" 
+                className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200 pointer-events-auto" 
                 onClick={() => setIsNotifOpen(false)} 
               />
 
@@ -536,7 +549,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               <div 
                 role="dialog"
                 aria-modal="true"
-                className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col"
+                className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col pointer-events-auto"
               >
                 {/* Mobile drag bar */}
                 <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
@@ -638,13 +651,14 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           )}
         </div>
 
-        {/* User Profile Pill & Dropdown */}
+        {/* Simplified User Avatar & Dropdown */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2 p-1 sm:pr-2.5 rounded-full sm:rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/30"
+            title="Profile Options"
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#7A1B22] text-[#D4AF37] font-bold text-xs flex items-center justify-center shadow-inner overflow-hidden shrink-0 border border-[#D4AF37]/30">
+            <div className="w-full h-full rounded-full bg-[#7A1B22] text-[#D4AF37] font-bold text-xs flex items-center justify-center shadow-inner overflow-hidden border border-[#D4AF37]/30">
               {profilePic ? (
                 <img src={profilePic} alt="User" className="w-full h-full object-cover" />
               ) : role === 'admin' ? (
@@ -653,15 +667,6 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 userName.charAt(0).toUpperCase()
               )}
             </div>
-
-            <div className="hidden sm:flex flex-col text-left leading-tight">
-              <span className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 max-w-[120px]">{userName}</span>
-              <span className="text-[9px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider">
-                {getRoleBadge()}
-              </span>
-            </div>
-
-            <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
           </button>
 
           {isProfileOpen && (

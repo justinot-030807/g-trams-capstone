@@ -187,7 +187,7 @@ const MainLayout = ({ children }) => {
 
       <div 
         className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out print:ml-0 print:p-0 print:m-0 print:w-full print:block ${
-          isSidebarOpen ? 'md:ml-64' : 'md:ml-0'
+          isSidebarOpen ? 'md:ml-64' : 'md:ml-20'
         }`}
       >
         <TopNavbar 

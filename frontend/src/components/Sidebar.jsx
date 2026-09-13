@@ -248,34 +248,36 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside 
-        className={`w-64 bg-[#7A1B22] fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 print:hidden print-hide ${
+        className={`bg-slate-900 fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/5 print:hidden print-hide group ${
           isOperatorOrToda ? 'hidden md:flex' : 'flex'
         } ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen 
+            ? 'w-64 translate-x-0' 
+            : 'w-20 -translate-x-full md:translate-x-0 md:hover:w-64'
         }`}
       >
         {/* Brand Header */}
-        <div className="p-4 sm:p-5 flex items-center justify-between border-b border-white/10 shrink-0 bg-[#6c171e]/70">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-md border-2 border-[#D4AF37] p-1 shrink-0 overflow-hidden">
+        <div className={`p-4 sm:p-5 flex items-center border-b border-white/5 shrink-0 bg-slate-950/50 ${isOpen ? 'justify-between' : 'justify-center md:group-hover:justify-between'}`}>
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md p-1 shrink-0 overflow-hidden">
               <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-white font-black text-sm tracking-wider">G-TRAMS</span>
-              <span className="text-white/60 text-[10px] font-semibold tracking-tight truncate">Municipality of Gasan</span>
+            <div className={`flex flex-col min-w-0 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100 w-0 md:group-hover:w-auto hidden md:flex'}`}>
+              <span className="text-white font-black text-sm tracking-wider whitespace-nowrap">G-TRAMS</span>
+              <span className="text-slate-400 text-[10px] font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
             </div>
           </div>
 
           <button 
             onClick={onClose}
-            title="Hide Sidebar"
-            className="text-white/70 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors focus:outline-none shrink-0"
+            title="Toggle Sidebar"
+            className={`text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors focus:outline-none shrink-0 ${isOpen ? 'block' : 'hidden md:group-hover:block'}`}
           >
             <PanelLeftClose size={18} />
           </button>
         </div>
 
-        <nav className="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-sidebar-scroll">
+        <nav className="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-sidebar-scroll overflow-x-hidden">
           {activeMenu.map((item, index) => {
             if (item.type === 'link') {
               const isActive = location.pathname === item.path;
@@ -283,15 +285,16 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <button
                   key={index}
                   onClick={() => handleNavigate(item.path)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
+                  title={!isOpen ? item.name : undefined}
+                  className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
                     isActive 
-                      ? 'bg-white text-[#7A1B22] shadow-sm scale-[1.01]' 
-                      : 'text-white/80 hover:bg-white/10 hover:text-white'
-                  }`}
+                      ? 'bg-[#7A1B22] text-white shadow-md' 
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  } ${isOpen ? 'justify-between' : 'justify-center md:group-hover:justify-between'}`}
                 >
-                  <div className="flex items-center gap-2.5 truncate">
-                    {item.icon}
-                    <span className="truncate">{item.name}</span>
+                  <div className="flex items-center gap-3 truncate">
+                    <div className="shrink-0">{item.icon}</div>
+                    <span className={`truncate transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 w-0 md:group-hover:w-auto md:group-hover:opacity-100 hidden md:block'}`}>{item.name}</span>
                   </div>
                 </button>
               );
@@ -305,51 +308,49 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <div key={index} className="space-y-1">
                   <button
                     onClick={() => toggleSubMenu(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
+                    title={!isOpen ? item.name : undefined}
+                    className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
                       isAnySubActive && !isExpanded 
-                        ? 'bg-white/15 text-white' 
-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
-                    }`}
+                        ? 'bg-slate-800 text-white' 
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    } ${isOpen ? 'justify-between' : 'justify-center md:group-hover:justify-between'}`}
                   >
-                    <div className="flex items-center gap-2.5 truncate">
-                      {item.icon}
-                      <span className="truncate">{item.name}</span>
+                    <div className="flex items-center gap-3 truncate">
+                      <div className="shrink-0">{item.icon}</div>
+                      <span className={`truncate transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 w-0 md:group-hover:w-auto md:group-hover:opacity-100 hidden md:block'}`}>{item.name}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className={`flex items-center gap-1.5 shrink-0 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 w-0 md:group-hover:w-auto md:group-hover:opacity-100 hidden md:flex'}`}>
                       {Boolean(item.badge) && (
                         <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22]">
                           {item.badge}
                         </span>
                       )}
                       <ChevronDown 
-                        size={15} 
-                        className={`transition-transform duration-200 text-white/60 ${isExpanded ? 'rotate-180 text-white' : ''}`} 
+                        size={14} 
+                        className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-white' : 'text-slate-500'}`} 
                       />
                     </div>
                   </button>
 
-                  {isExpanded && (
-                    <div className="pl-5 pr-1 py-1 space-y-1 border-l-2 border-white/15 ml-3.5 animate-in fade-in duration-150">
-                      {item.subItems.map((sub, subIdx) => {
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className={`py-1 space-y-0.5 ${isOpen ? 'ml-3 pl-3 border-l-2 border-slate-800' : 'md:group-hover:ml-3 md:group-hover:pl-3 md:group-hover:border-l-2 md:group-hover:border-slate-800 hidden md:group-hover:block'}`}>
+                      {item.subItems.map((sub, idx) => {
                         const isSubActive = location.pathname === sub.path;
                         return (
                           <button
-                            key={subIdx}
+                            key={idx}
                             onClick={() => handleNavigate(sub.path)}
-                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                            title={!isOpen ? sub.name : undefined}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 ${
                               isSubActive 
-                                ? 'bg-white text-[#7A1B22] font-black shadow-sm' 
-                                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                                ? 'bg-slate-800 text-white' 
+                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
                             }`}
                           >
-                            <div className="flex items-center gap-2 truncate">
-                              {sub.icon}
-                              <span className="truncate">{sub.name}</span>
-                            </div>
-
+                            <span className="truncate">{sub.name}</span>
                             {Boolean(sub.badge) && (
-                              <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22] shrink-0">
+                              <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm">
                                 {sub.badge}
                               </span>
                             )}
@@ -357,7 +358,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         );
                       })}
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             }
@@ -366,48 +367,36 @@ const Sidebar = ({ isOpen, onClose }) => {
           })}
         </nav>
 
-        {/* Sidebar Footer & User Profile */}
-        <div className="p-3 border-t border-white/10 shrink-0 bg-black/20 space-y-2.5">
-          {/* User Profile Tile */}
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10">
-            <div className="relative shrink-0">
+        {/* User Profile & Logout - Bottom */}
+        <div className={`p-4 border-t border-white/5 shrink-0 bg-slate-950/50 ${isOpen ? 'block' : 'flex flex-col items-center md:group-hover:block'}`}>
+          <div className={`flex items-center gap-3 mb-3 ${!isOpen ? 'md:group-hover:flex justify-center' : ''}`}>
+            <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
               {userData.profilePic ? (
-                <img 
-                  src={userData.profilePic} 
-                  alt={userData.name} 
-                  className="w-8 h-8 rounded-full object-cover ring-1 ring-white/25" 
-                />
+                <img src={userData.profilePic} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-white/15 border border-[#D4AF37]/60 flex items-center justify-center text-white text-xs font-black shadow-inner">
-                  {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
-                </div>
+                <User size={18} className="text-slate-400" />
               )}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#7A1B22]" />
             </div>
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-white text-xs font-bold truncate leading-tight">
+            <div className={`flex flex-col min-w-0 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 w-0 md:group-hover:w-auto md:group-hover:opacity-100 hidden md:flex'}`}>
+              <span className="text-white font-bold text-sm tracking-tight truncate">
                 {userData.name}
               </span>
-              <span className="text-[#D4AF37] text-[10px] font-semibold tracking-wide uppercase truncate">
-                {role === 'admin' ? 'Administrator' : role === 'toda president' ? 'TODA President' : 'Operator'}
+              <span className="text-[#D4AF37] text-[9px] font-black tracking-widest uppercase">
+                {getRoleLabel()}
               </span>
             </div>
           </div>
 
-          {/* Single Sleek Log Out Button */}
           <button 
-            onClick={() => { 
-              localStorage.removeItem('token');
-              localStorage.removeItem('role');
-              localStorage.removeItem('name');
-              localStorage.removeItem('user');
-              localStorage.removeItem('userId');
-              navigate('/login'); 
+            onClick={() => {
+              localStorage.clear();
+              window.location.href = '/login';
             }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-white/85 hover:text-white bg-white/5 hover:bg-red-600/85 active:scale-[0.99] transition-all duration-150 border border-white/10 hover:border-red-500/50 shadow-sm"
+            title={!isOpen ? t('nav.logOut', 'Log Out') : undefined}
+            className={`w-full flex items-center px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 border border-transparent hover:border-rose-500/20 ${isOpen ? 'justify-center gap-2' : 'justify-center md:group-hover:justify-center md:group-hover:gap-2'}`}
           >
-            <LogOut size={15} />
-            <span>{t('nav.logOut', 'Log Out')}</span>
+            <div className="shrink-0"><LogOut size={16} /></div>
+            <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 w-0 md:group-hover:w-auto md:group-hover:opacity-100 hidden md:block'}`}>{t('nav.logOut', 'Log Out')}</span>
           </button>
         </div>
       </aside>
