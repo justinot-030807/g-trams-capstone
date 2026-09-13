@@ -17,7 +17,10 @@ const VerifyOperator = () => {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/verify/${id}`);
         if (res.ok) {
           const data = await res.json();
-          setOperator(data);
+          setOperator({
+            ...data,
+            name: data.name || data.fullName || 'Registered Operator'
+          });
         } else {
           // If endpoint doesn't exist or unauthorized, just mock it based on id for demo purposes 
           // or show a generic error. Let's just mock it to look good if API fails (since backend might not have this route yet).
@@ -97,12 +100,10 @@ const VerifyOperator = () => {
             </div>
           </div>
 
-          <div className="text-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-6">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1">{operator.name}</h2>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
-              <ShieldCheck size={14} />
-              <span className="text-xs font-bold uppercase tracking-wider">{operator.isActive === false ? 'Inactive Status' : 'Active Status'}</span>
-            </div>
+          <div className="text-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-5">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+              {operator.name || operator.fullName || 'Registered Operator'}
+            </h2>
           </div>
 
           <div className="space-y-4">

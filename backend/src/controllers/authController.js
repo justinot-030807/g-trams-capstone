@@ -762,7 +762,7 @@ exports.submitAppeal = async (req, res) => {
 // Verify Operator for QR Code
 exports.verifyOperator = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).select('fullName profilePic role todaAssociation contact isActive');
+        const user = await User.findById(req.params.id).select('name fullName profilePic role todaAssociation contact isActive');
         if (!user) return res.status(404).json({ message: 'Operator not found' });
         
         let formattedProfilePic = user.profilePic;
@@ -770,10 +770,19 @@ exports.verifyOperator = async (req, res) => {
             formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
         }
 
-        const franchises = await Franchise.find({ operator: user._id }).select('make plateNo motorNo status todaName');
+        const operatorName = user.name || user.fullName || 'Registered Operator';
+
+        const franchises = await Franchise.find({ 
+            $or: [
+                { operator: user._id },
+                { fullName: operatorName }
+            ],
+            isArchived: { $ne: true }
+        }).select('make plateNo motorNo status todaName');
         
         res.status(200).json({
-            name: user.fullName,
+            name: operatorName,
+            fullName: operatorName,
             profilePic: formattedProfilePic,
             role: user.role,
             todaAssociation: user.todaAssociation || 'NON-TODA',
