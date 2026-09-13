@@ -50,12 +50,15 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 15000,
+        windowWidth: 500,
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById('printable-document');
           if (el) {
             el.style.boxShadow = 'none';
             el.style.transform = 'none';
             el.style.borderRadius = '16px';
+            el.style.width = '500px'; // Force fixed width to prevent text squishing on mobile
+            el.style.maxWidth = '500px';
           }
         }
       });
@@ -296,7 +299,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
                 <div>
                   <span className="text-[9px] font-bold text-slate-400 uppercase block">TODA</span>
-                  <span className="font-black text-[#7A1B22] bg-[#7A1B22]/10 px-1.5 py-0.5 rounded text-[10px] inline-block mt-0.5">
+                  <span className="font-black text-[#7A1B22] bg-[#7A1B22]/10 px-1.5 py-0.5 rounded text-[10px] inline-block mt-0.5 max-w-full break-words whitespace-normal leading-tight">
                     {unit?.todaName || 'NON-TODA'}
                   </span>
                 </div>

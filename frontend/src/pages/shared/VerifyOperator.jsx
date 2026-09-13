@@ -77,7 +77,7 @@ const VerifyOperator = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
-        <div className="bg-[#7A1B22] rounded-t-3xl p-6 text-center relative overflow-hidden">
+        <div className="bg-[#7A1B22] rounded-t-3xl pt-6 pb-16 px-6 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg p-2">
             <img src="/gasan-logo.png" alt="LGU" className="w-full h-full object-contain" />
@@ -101,12 +101,12 @@ const VerifyOperator = () => {
             <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1">{operator.name}</h2>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
               <ShieldCheck size={14} />
-              <span className="text-xs font-bold uppercase tracking-wider">Active Status</span>
+              <span className="text-xs font-bold uppercase tracking-wider">{operator.isActive === false ? 'Inactive Status' : 'Active Status'}</span>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
               <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                 <MapPin size={20} />
               </div>
@@ -116,7 +116,7 @@ const VerifyOperator = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
               <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                 <Award size={20} />
               </div>
@@ -125,12 +125,48 @@ const VerifyOperator = () => {
                 <p className="font-bold text-slate-900 dark:text-white capitalize">{operator.role}</p>
               </div>
             </div>
+
+            {/* Franchise Info */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
+                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Franchise Status</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                  {operator.franchises?.length || 0} Unit(s)
+                </span>
+              </div>
+              
+              {!operator.franchises || operator.franchises.length === 0 ? (
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 text-center py-2">
+                  No active franchise records found.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {operator.franchises.map((f, i) => (
+                    <div key={i} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{f.plateNo || 'PENDING'}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[150px]">
+                          {f.make} &bull; {f.motorNo}
+                        </p>
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border ${
+                        f.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800' :
+                        f.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800' :
+                        'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                      }`}>
+                        {f.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mt-8">
             <button 
               onClick={() => navigate('/')}
-              className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold transition-colors"
+              className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold transition-colors shadow-sm"
             >
               Close Verification
             </button>

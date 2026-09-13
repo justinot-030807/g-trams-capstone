@@ -769,6 +769,8 @@ exports.verifyOperator = async (req, res) => {
         if (formattedProfilePic && !formattedProfilePic.startsWith('http')) {
             formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
         }
+
+        const franchises = await Franchise.find({ operator: user._id }).select('make plateNo motorNo status todaName');
         
         res.status(200).json({
             name: user.fullName,
@@ -776,7 +778,8 @@ exports.verifyOperator = async (req, res) => {
             role: user.role,
             todaAssociation: user.todaAssociation || 'NON-TODA',
             isActive: user.isActive,
-            contact: user.contact
+            contact: user.contact,
+            franchises: franchises || []
         });
     } catch (error) {
         console.error('VERIFY OPERATOR ERROR:', error);
