@@ -279,7 +279,7 @@ const Register = () => {
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between overflow-x-hidden select-none">
+    <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
       
       {/* Centered Floating Auto-Dismiss Toast for Google Account */}
       {showGoogleToast && googleProfileData && (
@@ -315,24 +315,25 @@ const Register = () => {
         />
       </div>
 
-      {/* TOP FLUSH NAVBAR */}
-      <AuthNavbar />
+      <div className="relative min-h-[100vh] flex flex-col">
+        {/* TOP FLUSH NAVBAR */}
+        <AuthNavbar />
 
-      {/* CENTERED AUTH CARD */}
-      <main className="relative z-10 w-full max-w-[450px] mx-auto my-auto px-4 py-2 sm:py-3 flex flex-col items-center justify-center animate-card-entrance">
-        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
-          
-          <div className="flex flex-col items-center mb-2.5 text-center">
-            <div className="w-10 h-10 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-1.5 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance">
-              <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+        {/* CENTERED AUTH CARD */}
+        <main className="relative z-10 w-full max-w-[450px] mx-auto flex-grow flex flex-col items-center justify-center animate-card-entrance py-8">
+          <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
+            
+            <div className="flex flex-col items-center mb-2.5 text-center">
+              <div className="w-10 h-10 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-1.5 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance">
+                <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
+                {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
+              </h2>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
+                {step === 1 ? 'CREATE AN OPERATOR OR TODA ACCOUNT' : `CODE SENT TO ${formData.contact}`}
+              </p>
             </div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
-              {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
-            </h2>
-            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
-              {step === 1 ? 'CREATE AN OPERATOR OR TODA ACCOUNT' : `CODE SENT TO ${formData.contact}`}
-            </p>
-          </div>
 
             {error && (
               <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
@@ -552,7 +553,8 @@ const Register = () => {
             )}
 
           </div>
-      </main>
+        </main>
+      </div>
 
       {/* Terms & Privacy Policy Modal */}
       <TermsPolicyModal 

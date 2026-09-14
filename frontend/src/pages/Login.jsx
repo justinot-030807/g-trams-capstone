@@ -169,7 +169,7 @@ const Login = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between overflow-x-hidden select-none">
+    <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
       
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -186,26 +186,27 @@ const Login = () => {
         />
       </div>
 
-      {/* TOP FLUSH NAVBAR */}
-      <AuthNavbar />
+      <div className="relative min-h-[100vh] flex flex-col">
+        {/* TOP FLUSH NAVBAR */}
+        <AuthNavbar />
 
-      {/* CENTERED AUTH CARD */}
-      <main className="relative z-10 w-full max-w-[370px] mx-auto my-auto px-4 py-2 sm:py-3 flex flex-col items-center justify-center animate-card-entrance">
-        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
-          
-          <div className="flex flex-col items-center mb-2.5 text-center">
-            <div className="relative mb-1.5 animate-logo-entrance">
-              <div className="w-11 h-11 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
-                <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+        {/* CENTERED AUTH CARD */}
+        <main className="relative z-10 w-full max-w-[370px] mx-auto flex-grow flex flex-col items-center justify-center animate-card-entrance py-8">
+          <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
+            
+            <div className="flex flex-col items-center mb-2.5 text-center">
+              <div className="relative mb-1.5 animate-logo-entrance">
+                <div className="w-11 h-11 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
+                  <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+                </div>
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
+              <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
+                <span>MUNICIPALITY OF GASAN</span>
+                <span>•</span>
+                <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
               </div>
             </div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
-            <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
-              <span>MUNICIPALITY OF GASAN</span>
-              <span>•</span>
-              <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
-            </div>
-          </div>
 
             {error && (
               <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake uppercase tracking-wide">
@@ -346,9 +347,9 @@ const Login = () => {
                 </Link>
               </p>
             </div>
-
           </div>
-      </main>
+        </main>
+      </div>
 
       {/* SHARED FULL-WIDTH FOOTER */}
       <AuthFooter />
