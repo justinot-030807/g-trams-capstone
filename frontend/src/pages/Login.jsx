@@ -3,12 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import AuthNavbar from '../components/common/AuthNavbar';
-
-const FacebookIcon = ({ size = 13, className = "" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-  </svg>
-);
+import AuthFooter from '../components/common/AuthFooter';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -199,7 +194,7 @@ const Login = () => {
         <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
           
           <div className="flex flex-col items-center mb-3.5 text-center">
-            <div className="relative mb-2 animate-logo-entrance animate-seal-float">
+            <div className="relative mb-2 animate-logo-entrance">
               <div className="w-12 h-12 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
                 <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
               </div>
@@ -355,63 +350,8 @@ const Login = () => {
           </div>
       </main>
 
-      {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
-      <footer className="relative z-10 w-full max-w-6xl mt-2 sm:mt-3 pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 animate-item-4 select-none pb-1 sm:pb-2">
-        {/* Left: Copyright */}
-        <div className="text-center sm:text-left font-medium">
-          <span>© 2026 Municipality of Gasan, Marinduque</span>
-          <span className="hidden sm:inline mx-1.5 opacity-40">•</span>
-          <span className="hidden sm:inline text-white/40">G-TRAMS</span>
-        </div>
-
-        {/* Center: Social Media Quick Icons Only */}
-        <div className="flex items-center gap-2.5">
-          <a
-            href="https://facebook.com"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="LGU Gasan Official Facebook Page"
-            title="LGU Gasan Facebook Page"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/15 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <FacebookIcon size={13} className="text-[#1877F2]" />
-          </a>
-
-          <a
-            href="https://gasan.gov.ph"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Official Municipality Portal"
-            title="gasan.gov.ph (Official Portal)"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Globe size={13} className="text-emerald-400" />
-          </a>
-
-          <a
-            href="mailto:bplo@gasan.gov.ph"
-            aria-label="BPLO Helpdesk Email"
-            title="bplo@gasan.gov.ph"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Mail size={13} className="text-[#D4AF37]" />
-          </a>
-
-          <a
-            href="tel:0423421234"
-            aria-label="BPLO Hotline"
-            title="BPLO Hotline: (042) 342-1234"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Phone size={12} className="text-amber-300" />
-          </a>
-        </div>
-
-        {/* Right: Plain Text Version Only (No design, No LGU, Far Right) */}
-        <div className="text-center sm:text-right font-mono text-[10px] text-white/40 tracking-wider">
-          v2.4.0
-        </div>
-      </footer>
+      {/* SHARED FULL-WIDTH FOOTER */}
+      <AuthFooter />
 
     </div>
   );

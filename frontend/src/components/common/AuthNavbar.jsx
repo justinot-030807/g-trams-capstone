@@ -38,7 +38,7 @@ const AuthNavbar = () => {
           className="flex items-center gap-2.5 sm:gap-3 group cursor-pointer"
           title="Go to G-TRAMS Home"
         >
-          <div className="relative shrink-0 animate-seal-float">
+          <div className="relative shrink-0">
             <img 
               src="/gasan-logo.png" 
               alt="Gasan Official Seal" 

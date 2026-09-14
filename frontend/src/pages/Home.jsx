@@ -6,18 +6,10 @@ import {
   FileText, 
   ShieldCheck, 
   Clock, 
-  Award,
-  Globe, 
-  Mail, 
-  Phone
+  Award
 } from 'lucide-react';
 import AuthNavbar from '../components/common/AuthNavbar';
-
-const FacebookIcon = ({ size = 13, className = "" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-  </svg>
-);
+import AuthFooter from '../components/common/AuthFooter';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -73,16 +65,10 @@ const Home = () => {
       {/* MAIN HERO SECTION */}
       <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 my-auto text-center flex flex-col items-center">
         
-        {/* LGU Civic Sub-Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-[#D4AF37]/40 text-[#D4AF37] text-[11px] sm:text-xs font-bold uppercase tracking-widest mb-4 shadow-sm animate-item-1">
-          <span>Municipality of Gasan</span>
-          <span className="opacity-40">•</span>
-          <span>Province of Marinduque</span>
-        </div>
-
         {/* Primary Headline */}
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight max-w-3xl drop-shadow-md animate-item-2">
-          Gasan Tricycle Records & Application Management System
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight max-w-4xl drop-shadow-md animate-item-1">
+          <span>Gasan Tricycle Records &amp; </span>
+          <span className="inline-block whitespace-nowrap">Application Management System</span>
         </h1>
 
         {/* Subtitle / Portal Overview */}
@@ -161,65 +147,8 @@ const Home = () => {
 
       </main>
 
-      {/* FOOTER */}
-      <footer className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 select-none">
-        
-        {/* Left: Copyright */}
-        <div className="text-center sm:text-left font-medium">
-          <span>© 2026 Municipality of Gasan, Marinduque</span>
-          <span className="hidden sm:inline mx-1.5 opacity-40">•</span>
-          <span className="hidden sm:inline text-white/40">G-TRAMS</span>
-        </div>
-
-        {/* Center: Social & Portal Links */}
-        <div className="flex items-center gap-2.5">
-          <a
-            href="https://facebook.com"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="LGU Gasan Official Facebook Page"
-            title="LGU Gasan Facebook Page"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/15 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <FacebookIcon size={13} className="text-[#1877F2]" />
-          </a>
-
-          <a
-            href="https://gasan.gov.ph"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Official Municipality Portal"
-            title="gasan.gov.ph (Official Portal)"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Globe size={13} className="text-emerald-400" />
-          </a>
-
-          <a
-            href="mailto:bplo@gasan.gov.ph"
-            aria-label="BPLO Helpdesk Email"
-            title="bplo@gasan.gov.ph"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Mail size={13} className="text-[#D4AF37]" />
-          </a>
-
-          <a
-            href="tel:0423421234"
-            aria-label="BPLO Hotline"
-            title="BPLO Hotline: (042) 342-1234"
-            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Phone size={12} className="text-amber-300" />
-          </a>
-        </div>
-
-        {/* Right: Plain Text Version Only */}
-        <div className="text-center sm:text-right font-mono text-[10px] text-white/40 tracking-wider">
-          v2.4.0
-        </div>
-
-      </footer>
+      {/* SHARED FULL-WIDTH FOOTER */}
+      <AuthFooter />
 
     </div>
   );
