@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, Globe, Mail, Phone } from 'lucide-react';
+import AuthNavbar from '../components/common/AuthNavbar';
 
 const FacebookIcon = ({ size = 13, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -123,7 +124,7 @@ const ForgotPassword = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-[100dvh] lg:min-h-[111.2vh] lg:h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-2 sm:px-8 sm:py-3 lg:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
+    <div className="relative min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between overflow-x-hidden select-none">
       
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -140,9 +141,12 @@ const ForgotPassword = () => {
         />
       </div>
 
-      {/* Card Container */}
-      <div className="w-full max-w-[350px] sm:max-w-[390px] my-auto relative z-10 animate-card-entrance">
-        <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-7">
+      {/* TOP FLUSH NAVBAR */}
+      <AuthNavbar />
+
+      {/* CENTERED AUTH CARD */}
+      <main className="relative z-10 w-full max-w-[390px] mx-auto my-auto px-4 py-4 flex flex-col items-center justify-center animate-card-entrance">
+        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-7">
           
           <div className="flex flex-col items-center mb-4 text-center">
             <div className="w-12 h-12 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center mb-2 ring-4 ring-[#D4AF37]/30 shrink-0 animate-logo-entrance animate-seal-float">
@@ -249,7 +253,7 @@ const ForgotPassword = () => {
           )}
 
         </div>
-      </div>
+      </main>
 
       {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
       <footer className="relative z-10 w-full max-w-6xl mt-2 sm:mt-3 pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 animate-item-4 select-none pb-1 sm:pb-2">

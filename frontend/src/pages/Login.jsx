@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, Eye, EyeOff, Loader2, Sparkles, FileText, ShieldCheck, Clock, Phone, ChevronRight, Globe, Mail } from 'lucide-react';
+import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
-import TermsPolicyModal from '../components/common/TermsPolicyModal';
+import AuthNavbar from '../components/common/AuthNavbar';
 
 const FacebookIcon = ({ size = 13, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -19,7 +19,6 @@ const Login = () => {
     contact: '',
     password: ''
   });
-  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
@@ -175,10 +174,8 @@ const Login = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-[100dvh] lg:min-h-[111.2vh] lg:h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-2 sm:px-8 sm:py-3 lg:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
+    <div className="relative min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between overflow-x-hidden select-none">
       
-
-
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
@@ -194,88 +191,26 @@ const Login = () => {
         />
       </div>
 
-      {/* MAIN SPLIT-SCREEN CONTAINER */}
-      <div className="w-full max-w-6xl my-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 py-1">
-        
-        {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
-        <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
-          <div className="flex items-center gap-3.5 mb-2.5">
-            <div className="relative shrink-0 animate-seal-float">
-              <img 
-                src="/gasan-logo.png" 
-                alt="Gasan Official Seal" 
-                className="w-14 h-14 sm:w-16 sm:h-16 object-contain filter drop-shadow-[0_4px_16px_rgba(212,175,55,0.45)]" 
-              />
+      {/* TOP FLUSH NAVBAR */}
+      <AuthNavbar />
+
+      {/* CENTERED AUTH CARD */}
+      <main className="relative z-10 w-full max-w-[380px] mx-auto my-auto px-4 py-4 flex flex-col items-center justify-center animate-card-entrance">
+        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
+          
+          <div className="flex flex-col items-center mb-3.5 text-center">
+            <div className="relative mb-2 animate-logo-entrance animate-seal-float">
+              <div className="w-12 h-12 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
+                <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
-              <p className="text-[#D4AF37] text-[11px] font-bold uppercase tracking-wider mt-1">Municipality of Gasan • Province of Marinduque</p>
+            <h2 className="text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
+            <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
+              <span>MUNICIPALITY OF GASAN</span>
+              <span>•</span>
+              <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
             </div>
           </div>
-
-          <h2 className="text-base sm:text-lg font-bold text-white/95 tracking-tight leading-snug">
-            Gasan Tricycle Records & Application Management System
-          </h2>
-          <p className="text-white/70 text-xs mt-1.5 leading-relaxed max-w-lg">
-            The official digital portal of the Local Government Unit of Gasan for secure, streamlined, and transparent motorized tricycle franchise registration, renewal, and fleet management.
-          </p>
-
-          {/* 3 FEATURE CARDS */}
-          <div className="grid grid-cols-1 gap-2.5 mt-3.5">
-            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 transition-all duration-300">
-              <div className="p-2 rounded-lg bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-sm">
-                <FileText size={16} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs text-white">Online Application & Renewal</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Submit official franchise requirements and documents digitally without waiting in long queues.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 transition-all duration-300">
-              <div className="p-2 rounded-lg bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-sm">
-                <ShieldCheck size={16} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs text-white">Verified TODA & Operator Registry</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Centralized masterlist ensuring legitimate operator credentials and authorized TODA associations.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 transition-all duration-300">
-              <div className="p-2 rounded-lg bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-sm">
-                <Clock size={16} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs text-white">Real-Time Status & Claim Stub</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Monitor application approvals live and generate official printable payment claim stubs instantly.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT AUTH CARD */}
-        <div className="w-full max-w-[340px] sm:max-w-[375px] shrink-0 animate-card-entrance">
-          <div className="mb-1.5 flex items-center justify-between px-1">
-            <Link to="/" className="inline-flex items-center gap-1 text-white/60 hover:text-[#D4AF37] text-[11px] font-semibold transition-colors">
-              <span>← Portal Home</span>
-            </Link>
-          </div>
-          <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
-            
-            <div className="flex flex-col items-center mb-3.5 text-center">
-              <div className="relative mb-2 animate-logo-entrance animate-seal-float">
-                <div className="w-12 h-12 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
-                  <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
-                </div>
-              </div>
-              <h2 className="text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
-              <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
-                <span>MUNICIPALITY OF GASAN</span>
-                <span>•</span>
-                <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
-              </div>
-            </div>
 
             {error && (
               <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake uppercase tracking-wide">
@@ -418,9 +353,7 @@ const Login = () => {
             </div>
 
           </div>
-        </div>
-
-      </div>
+      </main>
 
       {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
       <footer className="relative z-10 w-full max-w-6xl mt-2 sm:mt-3 pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 animate-item-4 select-none pb-1 sm:pb-2">

@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, Globe, Mail, X, Loader2, CheckCircle2, Sparkles, FileText, ShieldCheck, Clock, Phone, AlertCircle } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
+import AuthNavbar from '../components/common/AuthNavbar';
 
 const FacebookIcon = ({ size = 13, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -283,7 +284,7 @@ const Register = () => {
   };
 
   return (
-    <div className="relative min-h-[100dvh] lg:min-h-[111.2vh] lg:h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-2 sm:px-8 sm:py-3 lg:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
+    <div className="relative min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between overflow-x-hidden select-none">
       
       {/* Centered Floating Auto-Dismiss Toast for Google Account */}
       {showGoogleToast && googleProfileData && (
@@ -304,8 +305,6 @@ const Register = () => {
         </div>
       )}
 
-
-
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
@@ -321,76 +320,24 @@ const Register = () => {
         />
       </div>
 
-      {/* MAIN SPLIT-SCREEN CONTAINER */}
-      <div className="w-full max-w-6xl my-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 py-1">
-        
-        {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
-        <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
-          <div className="flex items-center gap-3.5 mb-2.5">
-            <div className="relative shrink-0 animate-seal-float">
-              <img 
-                src="/gasan-logo.png" 
-                alt="Gasan Official Seal" 
-                className="w-14 h-14 sm:w-16 sm:h-16 object-contain filter drop-shadow-[0_4px_16px_rgba(212,175,55,0.45)]" 
-              />
+      {/* TOP FLUSH NAVBAR */}
+      <AuthNavbar />
+
+      {/* CENTERED AUTH CARD */}
+      <main className="relative z-10 w-full max-w-[460px] mx-auto my-auto px-4 py-3 flex flex-col items-center justify-center animate-card-entrance">
+        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
+          
+          <div className="flex flex-col items-center mb-4 text-center">
+            <div className="w-13 h-13 bg-white border-2 border-[#D4AF37] shadow-[0_0_18px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-2 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance animate-seal-float">
+              <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
             </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
-              <p className="text-[#D4AF37] text-[11px] font-bold uppercase tracking-wider mt-1">Municipality of Gasan • Province of Marinduque</p>
-            </div>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">
+              {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
+            </h2>
+            <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
+              {step === 1 ? 'CREATE AN OPERATOR OR TODA ACCOUNT' : `CODE SENT TO ${formData.contact}`}
+            </p>
           </div>
-
-          <h2 className="text-xl font-bold text-white/95 tracking-tight leading-snug">
-            Operator & TODA Account Registration
-          </h2>
-          <p className="text-white/70 text-xs sm:text-sm mt-2.5 leading-relaxed">
-            Create your official G-TRAMS account to access digital franchise applications, renewal requests, real-time tracking, and downloadable claim stubs.
-          </p>
-
-          {/* 2 FEATURE CARDS */}
-          <div className="grid grid-cols-1 gap-3 mt-6">
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
-                <FileText size={18} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs text-white">Digital Document Processing</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Upload OR/CR, valid IDs, and required municipal certificates directly online.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
-                <ShieldCheck size={18} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs text-white">Verified TODA Affiliation</h3>
-                <p className="text-[11px] text-white/70 leading-tight mt-0.5">Securely linked to your recognized TODA association and registered Barangay for official compliance.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT CARD CONTAINER */}
-        <div className="w-full max-w-[370px] sm:max-w-[420px] shrink-0 animate-card-entrance">
-          <div className="mb-1.5 flex items-center justify-between px-1">
-            <Link to="/" className="inline-flex items-center gap-1 text-white/60 hover:text-[#D4AF37] text-[11px] font-semibold transition-colors">
-              <span>← Portal Home</span>
-            </Link>
-          </div>
-          <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
-            
-            <div className="flex flex-col items-center mb-4 text-center">
-              <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-2 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance animate-seal-float">
-                <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
-              </div>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">
-                {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
-              </h2>
-              <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
-                {step === 1 ? 'CREATE AN OPERATOR OR TODA ACCOUNT' : `CODE SENT TO ${formData.contact}`}
-              </p>
-            </div>
 
             {error && (
               <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
@@ -610,16 +557,14 @@ const Register = () => {
             )}
 
           </div>
-        </div>
-
-      </div>
+      </main>
 
       {/* Terms & Privacy Policy Modal */}
       <TermsPolicyModal 
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         onAccept={() => setTermsAccepted(true)}
-        defaultLang="tl"
+        defaultLang="en"
       />
 
       {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
