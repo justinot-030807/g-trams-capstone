@@ -166,7 +166,7 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
     <div className="relative min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between overflow-x-hidden select-none">
@@ -190,16 +190,16 @@ const Login = () => {
       <AuthNavbar />
 
       {/* CENTERED AUTH CARD */}
-      <main className="relative z-10 w-full max-w-[380px] mx-auto my-auto px-4 py-4 flex flex-col items-center justify-center animate-card-entrance">
-        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
+      <main className="relative z-10 w-full max-w-[370px] mx-auto my-auto px-4 py-2 sm:py-3 flex flex-col items-center justify-center animate-card-entrance">
+        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
           
-          <div className="flex flex-col items-center mb-3.5 text-center">
-            <div className="relative mb-2 animate-logo-entrance">
-              <div className="w-12 h-12 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
+          <div className="flex flex-col items-center mb-2.5 text-center">
+            <div className="relative mb-1.5 animate-logo-entrance">
+              <div className="w-11 h-11 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
                 <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
               </div>
             </div>
-            <h2 className="text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
             <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
               <span>MUNICIPALITY OF GASAN</span>
               <span>•</span>
@@ -218,9 +218,9 @@ const Login = () => {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-3">
+            <form onSubmit={handleLogin} className="space-y-2.5">
               <div className="animate-item-2">
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
                   EMAIL OR PHONE NUMBER
                 </label>
                 <input
@@ -235,7 +235,7 @@ const Login = () => {
               </div>
 
               <div className="animate-item-3">
-                <div className="flex justify-between items-center mb-1">
+                <div className="flex justify-between items-center mb-0.5">
                   <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                     PASSWORD
                   </label>
@@ -258,7 +258,7 @@ const Login = () => {
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
-                <div className="text-right mt-1">
+                <div className="text-right mt-0.5">
                   <Link 
                     to="/forgot-password" 
                     className="text-[9px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
@@ -272,7 +272,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={isLoading || lockoutSeconds > 0}
-                  className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-black shadow-md transition-all duration-300 uppercase tracking-wider cursor-pointer ${
+                  className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2 rounded-xl text-xs font-black shadow-md transition-all duration-300 uppercase tracking-wider cursor-pointer ${
                     isLoading || lockoutSeconds > 0
                       ? 'bg-slate-400 cursor-not-allowed' 
                       : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:shadow-[#7A1B22]/60 hover:brightness-110 active:scale-[0.98]'
@@ -299,9 +299,9 @@ const Login = () => {
             </form>
 
             {/* DIVIDER */}
-            <div className="flex items-center gap-3 my-3 animate-item-4">
+            <div className="flex items-center gap-3 my-2 animate-item-4">
               <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-[11px] font-semibold text-slate-400">or</span>
+              <span className="text-[10px] font-semibold text-slate-400">or</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
 
@@ -338,7 +338,7 @@ const Login = () => {
               />
             </div>
 
-            <div className="mt-3.5 pt-2.5 border-t border-slate-100 text-center animate-item-4">
+            <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
                 <Link to="/register" className="font-black text-[#7A1B22] hover:underline">

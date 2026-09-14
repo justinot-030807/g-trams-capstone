@@ -63,26 +63,26 @@ const Home = () => {
       <AuthNavbar />
 
       {/* MAIN HERO SECTION */}
-      <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 my-auto text-center flex flex-col items-center">
+      <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-5 lg:py-6 my-auto text-center flex flex-col items-center">
         
-        {/* Primary Headline */}
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight max-w-4xl drop-shadow-md animate-item-1">
+        {/* Primary Headline - Responsive font scaling & safe mobile wrapping */}
+        <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight max-w-4xl drop-shadow-md animate-item-1 px-1 sm:px-0">
           <span>Gasan Tricycle Records &amp; </span>
-          <span className="inline-block whitespace-nowrap">Application Management System</span>
+          <span className="inline sm:inline-block sm:whitespace-nowrap">Application Management System</span>
         </h1>
 
         {/* Subtitle / Portal Overview */}
-        <p className="text-white/75 text-xs sm:text-base max-w-2xl mt-3.5 sm:mt-4 leading-relaxed font-normal animate-item-2">
+        <p className="text-white/75 text-xs sm:text-sm lg:text-base max-w-2xl mt-2.5 sm:mt-3 leading-relaxed font-normal animate-item-2 px-2">
           The official motorized tricycle regulatory and franchise licensing portal of the Local Government Unit of Gasan, providing streamlined, transparent, and digital municipal services.
         </p>
 
         {/* TWO PRIMARY ACTION BUTTONS */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 mt-6 sm:mt-8 w-full max-w-md animate-item-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mt-4 sm:mt-6 w-full max-w-md animate-item-3">
           
           {/* Sign In Button */}
           <Link
             to="/login"
-            className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white font-bold text-xs sm:text-sm uppercase tracking-wider shadow-[0_8px_20px_rgba(122,27,34,0.45)] hover:shadow-[0_12px_28px_rgba(122,27,34,0.65)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 border border-white/15 cursor-pointer"
+            className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-2.5 sm:py-3 px-5 sm:px-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white font-bold text-xs sm:text-sm uppercase tracking-wider shadow-[0_8px_20px_rgba(122,27,34,0.45)] hover:shadow-[0_12px_28px_rgba(122,27,34,0.65)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 border border-white/15 cursor-pointer"
           >
             <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000 ease-out pointer-events-none" />
             <LogIn size={16} className="text-[#D4AF37]" />
@@ -92,7 +92,7 @@ const Home = () => {
           {/* Create Account Button */}
           <Link
             to="/register"
-            className="w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm uppercase tracking-wider shadow-md border border-[#D4AF37]/50 hover:border-[#D4AF37] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+            className="w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-2.5 sm:py-3 px-5 sm:px-6 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm uppercase tracking-wider shadow-md border border-[#D4AF37]/50 hover:border-[#D4AF37] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
           >
             <UserPlus size={16} className="text-[#D4AF37]" />
             <span>Create Account</span>
@@ -101,44 +101,44 @@ const Home = () => {
         </div>
 
         {/* 4 CORE SERVICE CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 mt-10 sm:mt-14 w-full text-left animate-item-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 mt-5 sm:mt-7 w-full text-left animate-item-4">
           
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-            <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
-              <FileText size={18} />
+          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+            <div className="p-2 w-fit rounded-lg sm:rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-2 shadow-sm">
+              <FileText size={16} />
             </div>
             <h3 className="font-bold text-xs sm:text-sm text-white">Online Application</h3>
-            <p className="text-[11px] text-white/70 mt-1.5 leading-relaxed">
+            <p className="text-[11px] text-white/70 mt-1 leading-snug">
               Submit new MTOP applications, renewal requests, and required digital documents without queuing.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-            <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
-              <ShieldCheck size={18} />
+          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+            <div className="p-2 w-fit rounded-lg sm:rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-2 shadow-sm">
+              <ShieldCheck size={16} />
             </div>
             <h3 className="font-bold text-xs sm:text-sm text-white">TODA Masterlist</h3>
-            <p className="text-[11px] text-white/70 mt-1.5 leading-relaxed">
+            <p className="text-[11px] text-white/70 mt-1 leading-snug">
               Verified registry of accredited TODA associations, designated routes, and authorized operators.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-            <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
-              <Clock size={18} />
+          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+            <div className="p-2 w-fit rounded-lg sm:rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-2 shadow-sm">
+              <Clock size={16} />
             </div>
             <h3 className="font-bold text-xs sm:text-sm text-white">Claim Stub & Tracking</h3>
-            <p className="text-[11px] text-white/70 mt-1.5 leading-relaxed">
+            <p className="text-[11px] text-white/70 mt-1 leading-snug">
               Track approval milestones live and generate official printable payment claim stubs instantly.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-            <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
-              <Award size={18} />
+          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+            <div className="p-2 w-fit rounded-lg sm:rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-2 shadow-sm">
+              <Award size={16} />
             </div>
             <h3 className="font-bold text-xs sm:text-sm text-white">Official Compliance</h3>
-            <p className="text-[11px] text-white/70 mt-1.5 leading-relaxed">
+            <p className="text-[11px] text-white/70 mt-1 leading-snug">
               Full compliance with Municipal Ordinances, fare rates, and MTFRB safety inspection standards.
             </p>
           </div>

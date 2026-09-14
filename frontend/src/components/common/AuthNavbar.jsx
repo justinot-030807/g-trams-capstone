@@ -30,39 +30,39 @@ const AuthNavbar = () => {
   return (
     <>
       {/* FULL-WIDTH TOP NAVBAR (Edge-to-Edge) */}
-      <header className="relative z-30 w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5 flex items-center justify-between border-b border-white/5 select-none shrink-0">
+      <header className="relative z-30 w-full px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between border-b border-white/5 select-none shrink-0">
         
         {/* FAR LEFT: Gasan Seal + G-TRAMS (Clickable Link to Home) */}
         <Link 
           to="/" 
-          className="flex items-center gap-2.5 sm:gap-3 group cursor-pointer"
+          className="flex items-center gap-2 sm:gap-2.5 group cursor-pointer"
           title="Go to G-TRAMS Home"
         >
           <div className="relative shrink-0">
             <img 
               src="/gasan-logo.png" 
               alt="Gasan Official Seal" 
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain filter drop-shadow-[0_4px_16px_rgba(212,175,55,0.45)] group-hover:scale-105 transition-transform" 
+              className="w-9 h-9 sm:w-11 sm:h-11 object-contain filter drop-shadow-[0_4px_16px_rgba(212,175,55,0.45)] group-hover:scale-105 transition-transform" 
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg sm:text-xl font-black tracking-tight text-white leading-none">
+            <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none">
               G-TRAMS
             </span>
-            <span className="text-[#D4AF37] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mt-0.5">
+            <span className="text-[#D4AF37] text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mt-0.5">
               Municipality of Gasan • Marinduque
             </span>
           </div>
         </Link>
 
         {/* FAR RIGHT: Quick Links & Hamburger Menu */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           
           {/* Contextual Nav Buttons (Hidden on small mobile if tight) */}
           {currentPath !== '/login' && (
             <Link
               to="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 transition-all cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 transition-all cursor-pointer"
             >
               <LogIn size={13} className="text-[#D4AF37]" />
               <span>Sign In</span>
@@ -72,7 +72,7 @@ const AuthNavbar = () => {
           {currentPath !== '/register' && (
             <Link
               to="/register"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#D4AF37] hover:text-white bg-[#7A1B22]/60 hover:bg-[#7A1B22] border border-[#D4AF37]/30 transition-all cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#D4AF37] hover:text-white bg-[#7A1B22]/60 hover:bg-[#7A1B22] border border-[#D4AF37]/30 transition-all cursor-pointer"
             >
               <UserPlus size={13} />
               <span>Register</span>
@@ -84,7 +84,7 @@ const AuthNavbar = () => {
             type="button"
             onClick={() => setIsMenuOpen(true)}
             aria-label="Open Navigation Menu"
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
             title="Menu & Guidelines"
           >
             <Menu size={18} />

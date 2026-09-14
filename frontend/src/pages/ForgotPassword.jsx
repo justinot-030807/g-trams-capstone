@@ -116,7 +116,7 @@ const ForgotPassword = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
     <div className="relative min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between overflow-x-hidden select-none">
@@ -140,14 +140,14 @@ const ForgotPassword = () => {
       <AuthNavbar />
 
       {/* CENTERED AUTH CARD */}
-      <main className="relative z-10 w-full max-w-[390px] mx-auto my-auto px-4 py-4 flex flex-col items-center justify-center animate-card-entrance">
-        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
+      <main className="relative z-10 w-full max-w-[370px] mx-auto my-auto px-4 py-2 sm:py-3 flex flex-col items-center justify-center animate-card-entrance">
+        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
           
-          <div className="flex flex-col items-center mb-4 text-center">
-            <div className="w-12 h-12 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center mb-2 ring-4 ring-[#D4AF37]/30 shrink-0 animate-logo-entrance">
-              {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={22} /> : <KeyRound className="text-[#7A1B22]" size={22} />}
+          <div className="flex flex-col items-center mb-2.5 text-center">
+            <div className="w-10 h-10 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center mb-1.5 ring-4 ring-[#D4AF37]/30 shrink-0 animate-logo-entrance">
+              {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={20} /> : <KeyRound className="text-[#7A1B22]" size={20} />}
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
               {step === 1 ? 'FORGOT PASSWORD?' : 'RESET PASSWORD'}
             </h2>
             <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
@@ -155,13 +155,13 @@ const ForgotPassword = () => {
             </p>
           </div>
 
-          {error && <div className="mb-3.5 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">{error}</div>}
-          {success && <div className="mb-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">{success}</div>}
+          {error && <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2 text-center shadow-sm uppercase tracking-wide">{error}</div>}
+          {success && <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-xl p-2 text-center shadow-sm uppercase tracking-wide">{success}</div>}
 
           {step === 1 && (
-            <form onSubmit={handleRequestOTP} className="space-y-3">
+            <form onSubmit={handleRequestOTP} className="space-y-2.5">
               <div className="animate-item-2">
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">EMAIL OR PHONE NUMBER</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">EMAIL OR PHONE NUMBER</label>
                 <input 
                   type="text" 
                   value={contact}
@@ -172,22 +172,22 @@ const ForgotPassword = () => {
                 />
               </div>
               
-              <div className="animate-item-3 pt-1">
+              <div className="animate-item-3 pt-0.5">
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-2.5 sm:py-3 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
+                  className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-2 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
                 >
                   {isLoading ? <><Loader2 className="animate-spin" size={15} /> SENDING CODE...</> : 'SEND RESET CODE'}
                 </button>
 
                 {isLoading && (
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center mt-2 animate-pulse font-medium">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center mt-1.5 animate-pulse font-medium">
                     Connecting to secure gateway, please wait...
                   </p>
                 )}
 
-                <Link to="/login" className="w-full flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-3 transition-colors uppercase tracking-wider">
+                <Link to="/login" className="w-full flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-2.5 transition-colors uppercase tracking-wider">
                   <ArrowLeft size={13} /> BACK TO LOGIN
                 </Link>
               </div>
@@ -197,14 +197,14 @@ const ForgotPassword = () => {
           {step === 2 && (
             <form onSubmit={handleResetPassword} className="space-y-2.5 animate-item-2">
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">ENTER 6-DIGIT CODE</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5 text-center">ENTER 6-DIGIT CODE</label>
                 <input 
                   type="text" 
                   maxLength="6" 
                   value={otpCode} 
                   onChange={(e) => setOtpCode(e.target.value)} 
                   required 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center text-lg font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#7A1B22]" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-center text-lg font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#7A1B22]" 
                   placeholder="000000" 
                 />
               </div>
@@ -236,7 +236,7 @@ const ForgotPassword = () => {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2.5 rounded-xl text-xs font-black shadow-md transition-all mt-1 uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-105 active:scale-[0.98]'}`}
+                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2 rounded-xl text-xs font-black shadow-md transition-all mt-1 uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-105 active:scale-[0.98]'}`}
               >
                 {isLoading ? <><Loader2 className="animate-spin" size={15} /> PROCESSING...</> : <><RefreshCw size={15} /> RESET PASSWORD</>}
               </button>

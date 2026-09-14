@@ -9,24 +9,25 @@ const FacebookIcon = ({ size = 13, className = "" }) => (
 
 const AuthFooter = () => {
   return (
-    <footer className="relative z-20 w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-white/50 text-[10px] sm:text-[11px] select-none shrink-0">
+    <footer className="relative z-20 w-full px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 border-t border-white/10 flex items-center justify-between gap-2 text-white/50 text-[10px] sm:text-[11px] select-none shrink-0">
       
       {/* FAR-LEFT: Copyright */}
-      <div className="w-full sm:w-auto text-center sm:text-left font-medium order-1">
-        <span>© 2026 G-TRAMS • All Rights Reserved</span>
+      <div className="text-left font-medium shrink-0">
+        <span className="hidden sm:inline">© 2026 G-TRAMS • All Rights Reserved</span>
+        <span className="sm:hidden">© 2026 G-TRAMS</span>
       </div>
 
       {/* CENTER: Social & Portal Quick Links */}
-      <div className="flex items-center justify-center gap-2.5 sm:absolute sm:left-1/2 sm:-translate-x-1/2 order-2">
+      <div className="flex items-center justify-center gap-2 sm:gap-2.5 absolute left-1/2 -translate-x-1/2">
         <a
           href="https://facebook.com"
           target="_blank"
           rel="noreferrer"
           aria-label="LGU Gasan Official Facebook Page"
           title="LGU Gasan Facebook Page"
-          className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/15 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/15 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
         >
-          <FacebookIcon size={13} className="text-[#1877F2]" />
+          <FacebookIcon size={12} className="text-[#1877F2]" />
         </a>
 
         <a
@@ -35,32 +36,32 @@ const AuthFooter = () => {
           rel="noreferrer"
           aria-label="Official Municipality Portal"
           title="gasan.gov.ph (Official Portal)"
-          className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
         >
-          <Globe size={13} className="text-emerald-400" />
+          <Globe size={12} className="text-emerald-400" />
         </a>
 
         <a
           href="mailto:bplo@gasan.gov.ph"
           aria-label="BPLO Helpdesk Email"
           title="bplo@gasan.gov.ph"
-          className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
         >
-          <Mail size={13} className="text-[#D4AF37]" />
+          <Mail size={12} className="text-[#D4AF37]" />
         </a>
 
         <a
           href="tel:0423421234"
           aria-label="BPLO Hotline"
           title="BPLO Hotline: (042) 342-1234"
-          className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
         >
-          <Phone size={12} className="text-amber-300" />
+          <Phone size={11} className="text-amber-300" />
         </a>
       </div>
 
       {/* FAR-RIGHT: Version */}
-      <div className="w-full sm:w-auto text-center sm:text-right font-mono text-[10px] text-white/40 tracking-wider order-3">
+      <div className="text-right font-mono text-[10px] text-white/40 tracking-wider shrink-0">
         v2.4.0
       </div>
 

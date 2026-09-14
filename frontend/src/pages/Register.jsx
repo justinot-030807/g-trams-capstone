@@ -268,7 +268,7 @@ const Register = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   const getStrengthLabel = () => {
     if (passwordStrength === 0) return { label: 'Empty', color: 'text-slate-400', bar: 'w-0 bg-slate-200' };
@@ -283,7 +283,7 @@ const Register = () => {
       
       {/* Centered Floating Auto-Dismiss Toast for Google Account */}
       {showGoogleToast && googleProfileData && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-sm w-[92%] sm:w-auto px-4 py-2.5 rounded-2xl bg-slate-900/95 text-white border border-emerald-500/40 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 animate-spring-in">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-sm w-[92%] sm:w-auto px-4 py-2 rounded-2xl bg-slate-900/95 text-white border border-emerald-500/40 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 animate-spring-in">
           <div className="flex items-center gap-2 min-w-0">
             <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
             <span className="text-xs font-semibold truncate">
@@ -319,14 +319,14 @@ const Register = () => {
       <AuthNavbar />
 
       {/* CENTERED AUTH CARD */}
-      <main className="relative z-10 w-full max-w-[460px] mx-auto my-auto px-4 py-3 flex flex-col items-center justify-center animate-card-entrance">
-        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
+      <main className="relative z-10 w-full max-w-[450px] mx-auto my-auto px-4 py-2 sm:py-3 flex flex-col items-center justify-center animate-card-entrance">
+        <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
           
-          <div className="flex flex-col items-center mb-4 text-center">
-            <div className="w-12 h-12 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-2 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance">
+          <div className="flex flex-col items-center mb-2.5 text-center">
+            <div className="w-10 h-10 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-1.5 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance">
               <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
               {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
             </h2>
             <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
@@ -351,7 +351,7 @@ const Register = () => {
             )}
 
             {step === 1 && (
-              <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5">
+              <form onSubmit={handleSubmitRegisterForm} className="space-y-2">
                 <div className="animate-item-2">
                   <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
                   <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
@@ -401,7 +401,7 @@ const Register = () => {
 
                 {/* VISUAL PASSWORD STRENGTH METER */}
                 {formData.password && (
-                  <div className="space-y-1 pt-0.5 animate-item-3">
+                  <div className="space-y-0.5 pt-0 animate-item-3">
                     <div className="flex justify-between items-center text-[9px] font-bold">
                       <span className="text-slate-500 uppercase">Strength:</span>
                       <span className={getStrengthLabel().color}>{getStrengthLabel().label}</span>
@@ -412,7 +412,7 @@ const Register = () => {
                   </div>
                 )}
 
-                <div className="flex items-start gap-1.5 pt-1 animate-item-4">
+                <div className="flex items-start gap-1.5 pt-0.5 animate-item-4">
                   <input 
                     type="checkbox" 
                     id="terms" 
@@ -425,11 +425,11 @@ const Register = () => {
                   </label>
                 </div>
                 
-                <div className="animate-item-4 pt-1.5">
+                <div className="animate-item-4 pt-1">
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider cursor-pointer ${
+                    className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider cursor-pointer ${
                       isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/25 hover:shadow-[#7A1B22]/50 hover:brightness-110 active:scale-[0.98]'
                     }`}
                   >
@@ -451,7 +451,7 @@ const Register = () => {
                   </button>
 
                   {googleProfileData && (
-                    <div className="text-center pt-2">
+                    <div className="text-center pt-1.5">
                       <button
                         type="button"
                         onClick={() => {
@@ -480,9 +480,9 @@ const Register = () => {
             {step === 1 && (
               <>
                 {/* DIVIDER */}
-                <div className="flex items-center gap-3 my-3 animate-item-4">
+                <div className="flex items-center gap-3 my-2 animate-item-4">
                   <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-xs font-semibold text-slate-400">or</span>
+                  <span className="text-[10px] font-semibold text-slate-400">or</span>
                   <div className="flex-1 h-px bg-slate-200" />
                 </div>
 
@@ -512,7 +512,7 @@ const Register = () => {
             )}
 
             {step === 2 && (
-              <form onSubmit={handleVerifyOTP} className="space-y-3 animate-item-2">
+              <form onSubmit={handleVerifyOTP} className="space-y-2.5 animate-item-2">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">
                     ENTER 6-DIGIT CODE
@@ -523,13 +523,13 @@ const Register = () => {
                     value={otpCode} 
                     onChange={(e) => setOtpCode(e.target.value)} 
                     required 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 shadow-inner" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center text-xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 shadow-inner" 
                     placeholder="000000" 
                   />
                 </div>
                 <button 
                   type="submit" 
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2.5 rounded-xl text-xs font-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all uppercase tracking-wider"
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2 rounded-xl text-xs font-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all uppercase tracking-wider"
                 >
                   <CheckCircle2 size={15} /> VERIFY AND REGISTER
                 </button>
@@ -544,7 +544,7 @@ const Register = () => {
             )}
 
             {step === 1 && (
-              <div className="mt-3.5 pt-3 border-t border-slate-100 text-center animate-item-4">
+              <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                   ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#7A1B22] hover:underline">LOG IN HERE</Link>
                 </p>
