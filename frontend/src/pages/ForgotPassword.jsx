@@ -124,7 +124,6 @@ const ForgotPassword = () => {
         <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
         <div className="absolute bottom-[-15%] right-[-15%] w-[620px] h-[620px] bg-gradient-to-tl from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[95px] opacity-85 animate-liquid-2" />
         <div className="absolute top-[25%] right-[10%] w-[420px] h-[420px] bg-gradient-to-bl from-[#E03144]/60 via-[#8A141E] to-transparent rounded-full blur-[75px] animate-liquid-3" />
-        <div className="absolute top-1/2 left-1/2 w-[480px] h-[480px] bg-gradient-to-r from-[#D4AF37]/35 via-[#F39C12]/20 to-transparent rounded-full blur-[105px] animate-golden-glow" />
 
         <div 
           className="absolute inset-0 opacity-[0.08]"
@@ -247,10 +246,17 @@ const ForgotPassword = () => {
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">
-        <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
-        <p className="text-white/60 text-[8px] sm:text-[9px] normal-case font-medium">
-          © 2026 Municipality of Gasan, Marinduque. All rights reserved.
+      <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-1.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
+          <span className="hidden sm:inline text-white/30">•</span>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 text-[#D4AF37] border border-[#D4AF37]/35 text-[9px] font-mono font-bold tracking-normal normal-case shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            v2.4.0-LGU (PROD)
+          </span>
+        </div>
+        <p className="text-white/50 text-[8px] sm:text-[9px] normal-case font-medium">
+          © 2026 Municipality of Gasan, Province of Marinduque. All rights reserved.
         </p>
       </footer>
 

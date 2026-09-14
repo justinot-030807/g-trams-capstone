@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, Globe, X, Loader2, CheckCircle2, Sparkles, FileText, ShieldCheck, Clock, Phone, AlertCircle } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Globe, Mail, X, Loader2, CheckCircle2, Sparkles, FileText, ShieldCheck, Clock, Phone, AlertCircle } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
+
+const FacebookIcon = ({ size = 13, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+);
 
 
 
@@ -305,7 +311,6 @@ const Register = () => {
         <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
         <div className="absolute bottom-[-15%] right-[-15%] w-[620px] h-[620px] bg-gradient-to-tl from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[95px] opacity-85 animate-liquid-2" />
         <div className="absolute top-[25%] right-[10%] w-[420px] h-[420px] bg-gradient-to-bl from-[#E03144]/60 via-[#8A141E] to-transparent rounded-full blur-[75px] animate-liquid-3" />
-        <div className="absolute top-1/2 left-1/2 w-[480px] h-[480px] bg-gradient-to-r from-[#D4AF37]/35 via-[#F39C12]/20 to-transparent rounded-full blur-[105px] animate-golden-glow" />
 
         <div 
           className="absolute inset-0 opacity-[0.08]"
@@ -322,8 +327,12 @@ const Register = () => {
         {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
         <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1.5 shadow-[0_0_25px_rgba(212,175,55,0.4)] border-2 border-[#D4AF37] shrink-0 animate-seal-float">
-              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
+            <div className="relative shrink-0 animate-seal-float">
+              <img 
+                src="/gasan-logo.png" 
+                alt="Gasan Official Seal" 
+                className="w-16 h-16 sm:w-20 sm:h-20 object-contain filter drop-shadow-[0_4px_20px_rgba(212,175,55,0.5)]" 
+              />
             </div>
             <div>
               <h1 className="text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
@@ -614,11 +623,55 @@ const Register = () => {
         defaultLang="tl"
       />
 
-      {/* Footer */}
-      <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-0.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">
-        <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
-        <p className="text-white/60 text-[8px] sm:text-[9px] normal-case font-medium">
-          © 2026 Municipality of Gasan, Marinduque. All rights reserved.
+      {/* Footer with Versioning & Social Media Links */}
+      <footer className="relative z-10 mt-4 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-2.5 pb-2 animate-item-4 shrink-0">
+        
+        {/* Social Media & Official LGU Links (Design Preview) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-white/75 font-medium">
+          <a
+            href="https://www.facebook.com"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+            title="LGU Gasan Official Facebook Page"
+          >
+            <FacebookIcon size={12} className="text-[#1877F2]" />
+            <span>LGU Gasan Facebook</span>
+          </a>
+
+          <a
+            href="https://gasan.gov.ph"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+            title="Official Municipality Portal"
+          >
+            <Globe size={12} className="text-emerald-400" />
+            <span>gasan.gov.ph</span>
+          </a>
+
+          <a
+            href="mailto:bplo@gasan.gov.ph"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+            title="BPLO Support Helpdesk"
+          >
+            <Mail size={12} className="text-[#D4AF37]" />
+            <span>bplo@gasan.gov.ph</span>
+          </a>
+        </div>
+
+        {/* System Title & Versioning Badge */}
+        <div className="flex flex-wrap items-center justify-center gap-2 uppercase tracking-wider font-semibold">
+          <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
+          <span className="hidden sm:inline text-white/30">•</span>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 text-[#D4AF37] border border-[#D4AF37]/35 text-[9px] font-mono font-bold tracking-normal normal-case shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            v2.4.0-LGU (PROD)
+          </span>
+        </div>
+
+        <p className="text-white/50 text-[8px] sm:text-[9px] font-medium tracking-normal">
+          © 2026 Municipality of Gasan, Province of Marinduque. All rights reserved.
         </p>
       </footer>
 
