@@ -164,22 +164,7 @@ const AuthNavbar = () => {
                   <ChevronRight size={14} className="text-white/40" />
                 </Link>
 
-                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-1 pt-3">Policy & Guidelines</p>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setShowTermsModal(true);
-                  }}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left text-xs font-semibold text-white/90 hover:text-white transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck size={15} className="text-[#D4AF37]" />
-                    <span>Terms of Use & Privacy Policy</span>
-                  </div>
-                  <ChevronRight size={14} className="text-white/40" />
-                </button>
 
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-1 pt-3">Official Links</p>
 

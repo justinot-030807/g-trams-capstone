@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ExternalLink, ShieldCheck, FileText, Lock } from 'lucide-react';
+import TermsPolicyModal from './TermsPolicyModal';
 
 const FacebookIcon = ({ size = 16, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -21,6 +22,8 @@ const InstagramIcon = ({ size = 16, className = "" }) => (
 );
 
 const AuthFooter = () => {
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
   return (
     <footer className="relative z-20 w-full bg-[#0a0102] border-t border-white/10 pt-12 pb-6 px-4 sm:px-6 lg:px-8 text-white/80">
       <div className="max-w-7xl mx-auto">
@@ -73,9 +76,9 @@ const AuthFooter = () => {
           <div className="flex flex-col space-y-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Legal</h3>
             <ul className="space-y-3 text-sm text-white/60">
-              <li><button className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><Lock size={14} className="text-emerald-500" /> Privacy Policy</button></li>
-              <li><button className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><FileText size={14} className="text-blue-400" /> Terms of Service</button></li>
-              <li><button className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><ShieldCheck size={14} className="text-amber-500" /> Data Privacy Act</button></li>
+              <li><button onClick={() => setShowTermsModal(true)} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><Lock size={14} className="text-emerald-500" /> Privacy Policy</button></li>
+              <li><button onClick={() => setShowTermsModal(true)} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><FileText size={14} className="text-blue-400" /> Terms of Service</button></li>
+              <li><button onClick={() => setShowTermsModal(true)} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><ShieldCheck size={14} className="text-amber-500" /> Data Privacy Act</button></li>
             </ul>
           </div>
 
@@ -108,6 +111,13 @@ const AuthFooter = () => {
           </div>
         </div>
       </div>
+
+      <TermsPolicyModal 
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        defaultLang="en"
+        showAcceptButton={false}
+      />
     </footer>
   );
 };
