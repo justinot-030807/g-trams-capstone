@@ -809,9 +809,9 @@ exports.getPublicStats = async (req, res) => {
         const totalFranchises = await Franchise.countDocuments({ status: 'Active', isArchived: { $ne: true } });
 
         res.status(200).json({
-            operators: totalOperators > 1200 ? totalOperators : (totalOperators + 1200), // add some placeholder if low
-            todas: totalTodas > 20 ? totalTodas : 24, // placeholder
-            franchises: totalFranchises > 1500 ? totalFranchises : (totalFranchises + 1500)
+            operators: totalOperators,
+            todas: totalTodas,
+            franchises: totalFranchises
         });
     } catch (error) {
         console.error('GET PUBLIC STATS ERROR:', error);

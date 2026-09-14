@@ -75,12 +75,12 @@ const Home = () => {
       </div>
 
       {/* Hero Section Container (Full Height) */}
-      <div className="relative min-h-[105vh] flex flex-col">
+      <div className="relative min-h-[115vh] flex flex-col">
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
         {/* MAIN HERO SECTION */}
-        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 sm:pt-40 sm:pb-32 flex-grow flex flex-col items-center justify-center text-center">
+        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32 sm:pt-28 sm:pb-40 lg:pb-48 flex-grow flex flex-col items-center justify-center text-center">
           
           <motion.div 
             initial="hidden" 

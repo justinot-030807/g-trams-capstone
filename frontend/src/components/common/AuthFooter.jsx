@@ -31,7 +31,7 @@ const AuthFooter = () => {
           {/* Col 1: Brand / Description */}
           <div className="flex flex-col space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full p-1 border-2 border-[#D4AF37]">
+              <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37]">
                 <img src="/gasan-logo.png" alt="Gasan Logo" className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">

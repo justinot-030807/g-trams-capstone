@@ -48,7 +48,7 @@ const CountUp = ({ end, duration = 2000 }) => {
 };
 
 const PublicStats = () => {
-  const [stats, setStats] = useState({ operators: 1250, todas: 24, franchises: 1540 });
+  const [stats, setStats] = useState({ operators: 0, todas: 0, franchises: 0 });
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -57,9 +57,9 @@ const PublicStats = () => {
         if (response.ok) {
           const data = await response.json();
           setStats({
-            operators: data.operators || 1250,
-            todas: data.todas || 24,
-            franchises: data.franchises || 1540
+            operators: data.operators || 0,
+            todas: data.todas || 0,
+            franchises: data.franchises || 0
           });
         }
       } catch (err) {
