@@ -81,7 +81,7 @@ const PublicStats = () => {
             Gasan Tricycle <span className="text-[#D4AF37]">Ecosystem</span>
           </h2>
           <p className="text-slate-400 text-sm sm:text-base font-medium max-w-2xl mx-auto">
-            Pinagsama-samang pwersa para sa mas maayos, ligtas, at mabilis na transportasyon sa bayan ng Gasan.
+            A unified ecosystem for a more organized, safe, and efficient transportation system in Gasan.
           </p>
         </div>
 
