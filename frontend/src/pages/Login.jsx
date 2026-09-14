@@ -172,10 +172,10 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:px-8 sm:py-6 lg:px-12 overflow-x-hidden select-none">
+    <div className="relative min-h-[100dvh] lg:min-h-[111.2vh] lg:h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-2 sm:px-8 sm:py-3 lg:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
       
 
 
@@ -195,36 +195,36 @@ const Login = () => {
       </div>
 
       {/* MAIN SPLIT-SCREEN CONTAINER */}
-      <div className="w-full max-w-6xl my-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-14">
+      <div className="w-full max-w-6xl my-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 py-1">
         
         {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
         <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-3.5 mb-2.5">
             <div className="relative shrink-0 animate-seal-float">
               <img 
                 src="/gasan-logo.png" 
                 alt="Gasan Official Seal" 
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain filter drop-shadow-[0_4px_20px_rgba(212,175,55,0.5)]" 
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain filter drop-shadow-[0_4px_16px_rgba(212,175,55,0.45)]" 
               />
             </div>
             <div>
-              <h1 className="text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
-              <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1.5">Municipality of Gasan • Province of Marinduque</p>
+              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
+              <p className="text-[#D4AF37] text-[11px] font-bold uppercase tracking-wider mt-1">Municipality of Gasan • Province of Marinduque</p>
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-white/95 tracking-tight leading-snug">
+          <h2 className="text-base sm:text-lg font-bold text-white/95 tracking-tight leading-snug">
             Gasan Tricycle Records & Application Management System
           </h2>
-          <p className="text-white/70 text-xs sm:text-sm mt-2.5 leading-relaxed">
+          <p className="text-white/70 text-xs mt-1.5 leading-relaxed max-w-lg">
             The official digital portal of the Local Government Unit of Gasan for secure, streamlined, and transparent motorized tricycle franchise registration, renewal, and fleet management.
           </p>
 
           {/* 3 FEATURE CARDS */}
-          <div className="grid grid-cols-1 gap-3 mt-6">
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
-                <FileText size={18} />
+          <div className="grid grid-cols-1 gap-2.5 mt-3.5">
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 transition-all duration-300">
+              <div className="p-2 rounded-lg bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-sm">
+                <FileText size={16} />
               </div>
               <div>
                 <h3 className="font-bold text-xs text-white">Online Application & Renewal</h3>
@@ -232,9 +232,9 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
-                <ShieldCheck size={18} />
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 transition-all duration-300">
+              <div className="p-2 rounded-lg bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-sm">
+                <ShieldCheck size={16} />
               </div>
               <div>
                 <h3 className="font-bold text-xs text-white">Verified TODA & Operator Registry</h3>
@@ -242,9 +242,9 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
-                <Clock size={18} />
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 transition-all duration-300">
+              <div className="p-2 rounded-lg bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-sm">
+                <Clock size={16} />
               </div>
               <div>
                 <h3 className="font-bold text-xs text-white">Real-Time Status & Claim Stub</h3>
@@ -254,44 +254,42 @@ const Login = () => {
           </div>
 
           {/* LGU HELPDESK FOOTER BADGE */}
-          <div className="flex items-center gap-2.5 mt-6 pt-4 border-t border-white/10 text-white/60 text-xs">
-            <Phone size={14} className="text-[#D4AF37]" />
+          <div className="flex items-center gap-2 mt-3.5 pt-2.5 border-t border-white/10 text-white/60 text-xs">
+            <Phone size={13} className="text-[#D4AF37]" />
             <span>BPLO Helpdesk Hotline: <strong className="text-white">(042) 342-1234</strong> • <strong className="text-white">bplo@gasan.gov.ph</strong></span>
           </div>
         </div>
 
         {/* RIGHT AUTH CARD */}
-        <div className="w-full max-w-[360px] sm:max-w-[400px] shrink-0 animate-card-entrance">
-          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-6 sm:p-8">
+        <div className="w-full max-w-[340px] sm:max-w-[375px] shrink-0 animate-card-entrance">
+          <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
             
-            <div className="flex flex-col items-center mb-6 text-center">
-              <div className="relative mb-3 animate-logo-entrance animate-seal-float">
-                <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
+            <div className="flex flex-col items-center mb-3.5 text-center">
+              <div className="relative mb-2 animate-logo-entrance animate-seal-float">
+                <div className="w-12 h-12 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
                   <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
                 </div>
               </div>
-              <h2 className="text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
-              <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
+              <h2 className="text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
+              <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
                 <span>MUNICIPALITY OF GASAN</span>
                 <span>•</span>
                 <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
               </div>
             </div>
 
-
-
             {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-3 text-center shadow-sm animate-shake uppercase tracking-wide">
+              <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake uppercase tracking-wide">
                 <p>{error}</p>
                 {error.toLowerCase().includes('maintenance') && (
-                  <Link to="/maintenance" className="inline-block mt-1.5 font-black text-[#7A1B22] underline tracking-wider">
+                  <Link to="/maintenance" className="inline-block mt-1 font-black text-[#7A1B22] underline tracking-wider">
                     VIEW SYSTEM STATUS PAGE →
                   </Link>
                 )}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-3">
               <div className="animate-item-2">
                 <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                   EMAIL OR PHONE NUMBER
@@ -328,24 +326,24 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22] transition-colors p-1"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
-                <div className="text-right mt-1.5">
+                <div className="text-right mt-1">
                   <Link 
                     to="/forgot-password" 
-                    className="text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
+                    className="text-[9px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
                   >
                     FORGOT PASSWORD?
                   </Link>
                 </div>
               </div>
 
-              <div className="animate-item-4 pt-1">
+              <div className="animate-item-4 pt-0.5">
                 <button
                   type="submit"
                   disabled={isLoading || lockoutSeconds > 0}
-                  className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-xs sm:text-sm font-black shadow-lg transition-all duration-300 uppercase tracking-wider cursor-pointer ${
+                  className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-black shadow-md transition-all duration-300 uppercase tracking-wider cursor-pointer ${
                     isLoading || lockoutSeconds > 0
                       ? 'bg-slate-400 cursor-not-allowed' 
                       : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:shadow-[#7A1B22]/60 hover:brightness-110 active:scale-[0.98]'
@@ -354,7 +352,7 @@ const Login = () => {
                   <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000 ease-out pointer-events-none" />
                   {isLoading ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={15} className="animate-spin" />
                       SIGNING IN...
                     </>
                   ) : lockoutSeconds > 0 ? (
@@ -363,7 +361,7 @@ const Login = () => {
                     </>
                   ) : (
                     <>
-                      <LogIn size={16} />
+                      <LogIn size={15} />
                       SIGN IN
                     </>
                   )}
@@ -372,9 +370,9 @@ const Login = () => {
             </form>
 
             {/* DIVIDER */}
-            <div className="flex items-center gap-3 my-4 animate-item-4">
+            <div className="flex items-center gap-3 my-3 animate-item-4">
               <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs font-semibold text-slate-400">or</span>
+              <span className="text-[11px] font-semibold text-slate-400">or</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
 
@@ -411,14 +409,14 @@ const Login = () => {
               />
             </div>
 
-            <div className="mt-5 pt-4 border-t border-slate-100 text-center space-y-2 animate-item-4">
-              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">
+            <div className="mt-3.5 pt-2.5 border-t border-slate-100 text-center space-y-1 animate-item-4">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
                 <Link to="/register" className="font-black text-[#7A1B22] hover:underline">
                   CREATE AN ACCOUNT
                 </Link>
               </p>
-              <p className="text-[10px] text-slate-400 font-medium">
+              <p className="text-[9px] text-slate-400 font-medium">
                 By logging in, you agree to the{' '}
                 <button
                   type="button"
@@ -442,56 +440,62 @@ const Login = () => {
         showAcceptButton={false}
       />
 
-      {/* Footer with Versioning & Social Media Links */}
-      <footer className="relative z-10 mt-4 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-2.5 pb-2 animate-item-4 shrink-0">
-        
-        {/* Social Media & Official LGU Links (Design Preview) */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-white/75 font-medium">
+      {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
+      <footer className="relative z-10 w-full max-w-6xl mt-2 sm:mt-3 pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 animate-item-4 select-none pb-1 sm:pb-2">
+        {/* Left: Copyright */}
+        <div className="text-center sm:text-left font-medium">
+          <span>© 2026 Municipality of Gasan, Marinduque</span>
+          <span className="hidden sm:inline mx-1.5 opacity-40">•</span>
+          <span className="hidden sm:inline text-white/40">G-TRAMS</span>
+        </div>
+
+        {/* Center: Social Media Quick Icons Only */}
+        <div className="flex items-center gap-2.5">
           <a
-            href="https://www.facebook.com"
+            href="https://facebook.com"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
-            title="LGU Gasan Official Facebook Page"
+            aria-label="LGU Gasan Official Facebook Page"
+            title="LGU Gasan Facebook Page"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/15 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
           >
-            <FacebookIcon size={12} className="text-[#1877F2]" />
-            <span>LGU Gasan Facebook</span>
+            <FacebookIcon size={13} className="text-[#1877F2]" />
           </a>
 
           <a
             href="https://gasan.gov.ph"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
-            title="Official Municipality Portal"
+            aria-label="Official Municipality Portal"
+            title="gasan.gov.ph (Official Portal)"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
           >
-            <Globe size={12} className="text-emerald-400" />
-            <span>gasan.gov.ph</span>
+            <Globe size={13} className="text-emerald-400" />
           </a>
 
           <a
             href="mailto:bplo@gasan.gov.ph"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
-            title="BPLO Support Helpdesk"
+            aria-label="BPLO Helpdesk Email"
+            title="bplo@gasan.gov.ph"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
           >
-            <Mail size={12} className="text-[#D4AF37]" />
-            <span>bplo@gasan.gov.ph</span>
+            <Mail size={13} className="text-[#D4AF37]" />
+          </a>
+
+          <a
+            href="tel:0423421234"
+            aria-label="BPLO Hotline"
+            title="BPLO Hotline: (042) 342-1234"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          >
+            <Phone size={12} className="text-amber-300" />
           </a>
         </div>
 
-        {/* System Title & Versioning Badge */}
-        <div className="flex flex-wrap items-center justify-center gap-2 uppercase tracking-wider font-semibold">
-          <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
-          <span className="hidden sm:inline text-white/30">•</span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 text-[#D4AF37] border border-[#D4AF37]/35 text-[9px] font-mono font-bold tracking-normal normal-case shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-            v2.4.0-LGU (PROD)
-          </span>
+        {/* Right: Plain Text Version Only (No design, No LGU, Far Right) */}
+        <div className="text-center sm:text-right font-mono text-[10px] text-white/40 tracking-wider">
+          v2.4.0
         </div>
-
-        <p className="text-white/50 text-[8px] sm:text-[9px] font-medium tracking-normal">
-          © 2026 Municipality of Gasan, Province of Marinduque. All rights reserved.
-        </p>
       </footer>
 
     </div>

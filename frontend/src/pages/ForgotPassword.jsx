@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
+import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, Globe, Mail, Phone } from 'lucide-react';
+
+const FacebookIcon = ({ size = 13, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+);
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -117,7 +123,7 @@ const ForgotPassword = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:p-6 overflow-hidden select-none">
+    <div className="relative min-h-[100dvh] lg:min-h-[111.2vh] lg:h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-2 sm:px-8 sm:py-3 lg:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
       
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -245,19 +251,62 @@ const ForgotPassword = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="relative z-10 mt-3 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-1.5 pb-2 animate-item-4 uppercase tracking-wider font-semibold shrink-0">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
-          <span className="hidden sm:inline text-white/30">•</span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 text-[#D4AF37] border border-[#D4AF37]/35 text-[9px] font-mono font-bold tracking-normal normal-case shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-            v2.4.0-LGU (PROD)
-          </span>
+      {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
+      <footer className="relative z-10 w-full max-w-6xl mt-2 sm:mt-3 pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 animate-item-4 select-none pb-1 sm:pb-2">
+        {/* Left: Copyright */}
+        <div className="text-center sm:text-left font-medium">
+          <span>© 2026 Municipality of Gasan, Marinduque</span>
+          <span className="hidden sm:inline mx-1.5 opacity-40">•</span>
+          <span className="hidden sm:inline text-white/40">G-TRAMS</span>
         </div>
-        <p className="text-white/50 text-[8px] sm:text-[9px] normal-case font-medium">
-          © 2026 Municipality of Gasan, Province of Marinduque. All rights reserved.
-        </p>
+
+        {/* Center: Social Media Quick Icons Only */}
+        <div className="flex items-center gap-2.5">
+          <a
+            href="https://facebook.com"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="LGU Gasan Official Facebook Page"
+            title="LGU Gasan Facebook Page"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/15 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          >
+            <FacebookIcon size={13} className="text-[#1877F2]" />
+          </a>
+
+          <a
+            href="https://gasan.gov.ph"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Official Municipality Portal"
+            title="gasan.gov.ph (Official Portal)"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          >
+            <Globe size={13} className="text-emerald-400" />
+          </a>
+
+          <a
+            href="mailto:bplo@gasan.gov.ph"
+            aria-label="BPLO Helpdesk Email"
+            title="bplo@gasan.gov.ph"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          >
+            <Mail size={13} className="text-[#D4AF37]" />
+          </a>
+
+          <a
+            href="tel:0423421234"
+            aria-label="BPLO Hotline"
+            title="BPLO Hotline: (042) 342-1234"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          >
+            <Phone size={12} className="text-amber-300" />
+          </a>
+        </div>
+
+        {/* Right: Plain Text Version Only (No design, No LGU, Far Right) */}
+        <div className="text-center sm:text-right font-mono text-[10px] text-white/40 tracking-wider">
+          v2.4.0
+        </div>
       </footer>
 
     </div>

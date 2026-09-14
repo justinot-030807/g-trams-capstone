@@ -26,6 +26,17 @@ const MainLayout = ({ children }) => {
   const isTodaPresident = role === 'toda president' || role === 'toda_president';
   const showBottomNav = isOperator || isTodaPresident;
 
+  // Enforce consistent 0.9 desktop zoom inside admin and operator dashboards
+  useEffect(() => {
+    document.documentElement.classList.remove('auth-view');
+    document.body.classList.remove('auth-view');
+    if (window.innerWidth >= 769) {
+      document.documentElement.style.zoom = '0.9';
+    } else {
+      document.documentElement.style.zoom = '1';
+    }
+  }, []);
+
   // Ensure sidebar is closed on mobile when bottom navigation is active
   useEffect(() => {
     const handleResize = () => {

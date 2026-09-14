@@ -322,21 +322,21 @@ const Register = () => {
       </div>
 
       {/* MAIN SPLIT-SCREEN CONTAINER */}
-      <div className="w-full max-w-6xl my-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-14">
+      <div className="w-full max-w-6xl my-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 py-1">
         
         {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
         <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-3.5 mb-2.5">
             <div className="relative shrink-0 animate-seal-float">
               <img 
                 src="/gasan-logo.png" 
                 alt="Gasan Official Seal" 
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain filter drop-shadow-[0_4px_20px_rgba(212,175,55,0.5)]" 
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain filter drop-shadow-[0_4px_16px_rgba(212,175,55,0.45)]" 
               />
             </div>
             <div>
-              <h1 className="text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
-              <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1.5">Municipality of Gasan • Province of Marinduque</p>
+              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
+              <p className="text-[#D4AF37] text-[11px] font-bold uppercase tracking-wider mt-1">Municipality of Gasan • Province of Marinduque</p>
             </div>
           </div>
 
@@ -623,56 +623,62 @@ const Register = () => {
         defaultLang="tl"
       />
 
-      {/* Footer with Versioning & Social Media Links */}
-      <footer className="relative z-10 mt-4 sm:mt-6 text-center text-white/80 text-[9px] sm:text-[10px] space-y-2.5 pb-2 animate-item-4 shrink-0">
-        
-        {/* Social Media & Official LGU Links (Design Preview) */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-white/75 font-medium">
+      {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
+      <footer className="relative z-10 w-full max-w-6xl mt-2 sm:mt-3 pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 animate-item-4 select-none pb-1 sm:pb-2">
+        {/* Left: Copyright */}
+        <div className="text-center sm:text-left font-medium">
+          <span>© 2026 Municipality of Gasan, Marinduque</span>
+          <span className="hidden sm:inline mx-1.5 opacity-40">•</span>
+          <span className="hidden sm:inline text-white/40">G-TRAMS</span>
+        </div>
+
+        {/* Center: Social Media Quick Icons Only */}
+        <div className="flex items-center gap-2.5">
           <a
-            href="https://www.facebook.com"
+            href="https://facebook.com"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
-            title="LGU Gasan Official Facebook Page"
+            aria-label="LGU Gasan Official Facebook Page"
+            title="LGU Gasan Facebook Page"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/15 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
           >
-            <FacebookIcon size={12} className="text-[#1877F2]" />
-            <span>LGU Gasan Facebook</span>
+            <FacebookIcon size={13} className="text-[#1877F2]" />
           </a>
 
           <a
             href="https://gasan.gov.ph"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
-            title="Official Municipality Portal"
+            aria-label="Official Municipality Portal"
+            title="gasan.gov.ph (Official Portal)"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
           >
-            <Globe size={12} className="text-emerald-400" />
-            <span>gasan.gov.ph</span>
+            <Globe size={13} className="text-emerald-400" />
           </a>
 
           <a
             href="mailto:bplo@gasan.gov.ph"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 hover:text-white border border-white/10 text-[10px] transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
-            title="BPLO Support Helpdesk"
+            aria-label="BPLO Helpdesk Email"
+            title="bplo@gasan.gov.ph"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
           >
-            <Mail size={12} className="text-[#D4AF37]" />
-            <span>bplo@gasan.gov.ph</span>
+            <Mail size={13} className="text-[#D4AF37]" />
+          </a>
+
+          <a
+            href="tel:0423421234"
+            aria-label="BPLO Hotline"
+            title="BPLO Hotline: (042) 342-1234"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/25 hover:text-white border border-white/10 flex items-center justify-center text-white/80 transition-all hover:scale-110 active:scale-95 shadow-sm cursor-pointer"
+          >
+            <Phone size={12} className="text-amber-300" />
           </a>
         </div>
 
-        {/* System Title & Versioning Badge */}
-        <div className="flex flex-wrap items-center justify-center gap-2 uppercase tracking-wider font-semibold">
-          <p className="tracking-wide">G-TRAMS — GASAN TRICYCLE RECORDS & APPLICATION MANAGEMENT SYSTEM</p>
-          <span className="hidden sm:inline text-white/30">•</span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 text-[#D4AF37] border border-[#D4AF37]/35 text-[9px] font-mono font-bold tracking-normal normal-case shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-            v2.4.0-LGU (PROD)
-          </span>
+        {/* Right: Plain Text Version Only (No design, No LGU, Far Right) */}
+        <div className="text-center sm:text-right font-mono text-[10px] text-white/40 tracking-wider">
+          v2.4.0
         </div>
-
-        <p className="text-white/50 text-[8px] sm:text-[9px] font-medium tracking-normal">
-          © 2026 Municipality of Gasan, Province of Marinduque. All rights reserved.
-        </p>
       </footer>
 
     </div>

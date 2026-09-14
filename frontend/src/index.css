@@ -59,17 +59,16 @@
 @tailwind utilities;
 
 @layer base {
-  /* 90% comfortable zoom default for desktop/laptop displays (dashboard and inner pages) */
+  /* 90% comfortable zoom default for desktop/laptop displays */
   @media (min-width: 769px) {
-    html:not(.auth-view) {
+    html {
       zoom: 0.9;
     }
   }
 
-  /* 100% natural scaling for auth pages to completely eliminate white space on any laptop display */
+  /* Dark canvas consistency for auth pages */
   html.auth-view,
   body.auth-view {
-    zoom: 1 !important;
     background-color: #120204 !important;
     min-height: 100% !important;
     overflow-x: hidden !important;

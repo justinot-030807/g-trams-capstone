@@ -23,9 +23,11 @@
 
           if (isAuthPage) {
             document.documentElement.classList.add('auth-view');
-            document.documentElement.style.zoom = '1';
             document.documentElement.style.backgroundColor = '#120204';
-          } else if (window.innerWidth >= 769) {
+            document.body.style.backgroundColor = '#120204';
+          }
+
+          if (window.innerWidth >= 769) {
             document.documentElement.style.zoom = '0.9';
           } else {
             document.documentElement.style.zoom = '1';
