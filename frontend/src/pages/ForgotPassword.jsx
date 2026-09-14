@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
 
@@ -13,6 +13,20 @@ const ForgotPassword = () => {
   const [otpCode, setOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Ensure full-screen coverage without zoom gaps on laptops
+  useEffect(() => {
+    document.documentElement.classList.add('auth-view');
+    document.body.classList.add('auth-view');
+    document.documentElement.style.backgroundColor = '#120204';
+    document.body.style.backgroundColor = '#120204';
+    return () => {
+      document.documentElement.classList.remove('auth-view');
+      document.body.classList.remove('auth-view');
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
 
   const isValidContact = (value) => {
     const trimmed = value.trim();
@@ -105,56 +119,6 @@ const ForgotPassword = () => {
   return (
     <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:p-6 overflow-hidden select-none">
       
-      {/* ADVANCED LIQUID AURORA KEYFRAMES */}
-      <style>{`
-        @keyframes liquidOrbit1 {
-          0% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
-          33% { transform: translate(90px, -60px) rotate(60deg) scale(1.22); }
-          66% { transform: translate(-40px, 80px) rotate(120deg) scale(0.92); }
-          100% { transform: translate(0px, 0px) rotate(180deg) scale(1); }
-        }
-        @keyframes liquidOrbit2 {
-          0% { transform: translate(0px, 0px) rotate(0deg) scale(1.05); }
-          33% { transform: translate(-80px, 70px) rotate(-60deg) scale(1.28); }
-          66% { transform: translate(70px, -50px) rotate(-120deg) scale(0.88); }
-          100% { transform: translate(0px, 0px) rotate(-180deg) scale(1.05); }
-        }
-        @keyframes liquidOrbit3 {
-          0% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
-          50% { transform: translate(-60px, -50px) scale(1.3); opacity: 0.65; }
-          100% { transform: translate(0px, 0px) scale(0.95); opacity: 0.35; }
-        }
-        @keyframes goldenPulseGlow {
-          0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 0.65; transform: translate(-45%, -55%) scale(1.35); }
-        }
-        @keyframes entranceCard {
-          0% { opacity: 0; transform: scale(0.94) translateY(20px); }
-          100% { opacity: 1; transform: scale(1) translateY(0px); }
-        }
-        @keyframes logoPop {
-          0% { opacity: 0; transform: scale(0.6) rotate(-8deg); }
-          70% { transform: scale(1.08) rotate(2deg); }
-          100% { opacity: 1; transform: scale(1) rotate(0deg); }
-        }
-        @keyframes itemFadeUp {
-          0% { opacity: 0; transform: translateY(12px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-liquid-1 { animation: liquidOrbit1 16s ease-in-out infinite alternate; }
-        .animate-liquid-2 { animation: liquidOrbit2 20s ease-in-out infinite alternate; }
-        .animate-liquid-3 { animation: liquidOrbit3 14s ease-in-out infinite alternate; }
-        .animate-golden-glow { animation: goldenPulseGlow 11s ease-in-out infinite alternate; }
-
-        .animate-card-entrance { animation: entranceCard 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-logo-entrance { animation: logoPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .animate-item-1 { animation: itemFadeUp 0.5s ease-out 0.15s both; }
-        .animate-item-2 { animation: itemFadeUp 0.5s ease-out 0.25s both; }
-        .animate-item-3 { animation: itemFadeUp 0.5s ease-out 0.35s both; }
-        .animate-item-4 { animation: itemFadeUp 0.5s ease-out 0.45s both; }
-      `}</style>
-
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
@@ -176,7 +140,7 @@ const ForgotPassword = () => {
         <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-7">
           
           <div className="flex flex-col items-center mb-4 text-center">
-            <div className="w-12 h-12 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-md flex items-center justify-center mb-2 ring-4 ring-[#D4AF37]/25 shrink-0 animate-logo-entrance">
+            <div className="w-12 h-12 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center mb-2 ring-4 ring-[#D4AF37]/30 shrink-0 animate-logo-entrance animate-seal-float">
               {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={22} /> : <KeyRound className="text-[#7A1B22]" size={22} />}
             </div>
             <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-wider uppercase animate-item-1">

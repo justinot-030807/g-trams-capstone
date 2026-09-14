@@ -17,11 +17,20 @@
     <script>
       (function() {
         try {
-          if (window.innerWidth >= 769) {
+          const isAuthPage = ['/', '/login', '/register', '/forgot-password'].some(function(p) {
+            return window.location.pathname === p || window.location.pathname.startsWith(p + '/');
+          });
+
+          if (isAuthPage) {
+            document.documentElement.classList.add('auth-view');
+            document.documentElement.style.zoom = '1';
+            document.documentElement.style.backgroundColor = '#120204';
+          } else if (window.innerWidth >= 769) {
             document.documentElement.style.zoom = '0.9';
           } else {
             document.documentElement.style.zoom = '1';
           }
+
           const savedTheme = localStorage.getItem('theme');
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           if (savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark)) {

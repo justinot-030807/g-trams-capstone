@@ -30,6 +30,20 @@ const Login = () => {
     };
   }, [lockoutSeconds]);
 
+  // Ensure full-screen coverage without zoom gaps on laptops
+  useEffect(() => {
+    document.documentElement.classList.add('auth-view');
+    document.body.classList.add('auth-view');
+    document.documentElement.style.backgroundColor = '#120204';
+    document.body.style.backgroundColor = '#120204';
+    return () => {
+      document.documentElement.classList.remove('auth-view');
+      document.body.classList.remove('auth-view');
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
+
   const isValidContact = (value) => {
     const trimmed = value.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -181,11 +195,11 @@ const Login = () => {
         {/* LEFT HERO SECTION (Desktop Highlight Showcase) */}
         <div className="hidden lg:flex flex-col flex-1 text-left max-w-xl animate-item-1">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1.5 shadow-xl border-2 border-[#D4AF37] shrink-0">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-1.5 shadow-[0_0_25px_rgba(212,175,55,0.4)] border-2 border-[#D4AF37] shrink-0 animate-seal-float">
               <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-4xl font-black text-white tracking-tight leading-none">G-TRAMS</h1>
+              <h1 className="text-4xl font-black text-white tracking-tight leading-none drop-shadow-md">G-TRAMS</h1>
               <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mt-1.5">Municipality of Gasan • Province of Marinduque</p>
             </div>
           </div>
@@ -199,8 +213,8 @@ const Login = () => {
 
           {/* 3 FEATURE CARDS */}
           <div className="grid grid-cols-1 gap-3 mt-6">
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
                 <FileText size={18} />
               </div>
               <div>
@@ -209,8 +223,8 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
                 <ShieldCheck size={18} />
               </div>
               <div>
@@ -219,8 +233,8 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-sm hover:bg-white/15 transition-colors">
-              <div className="p-2.5 rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-white/10 shrink-0">
+            <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-sm hover:bg-white/20 hover:border-[#D4AF37]/50 hover:-translate-y-0.5 transition-all duration-300">
+              <div className="p-2.5 rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0 shadow-md">
                 <Clock size={18} />
               </div>
               <div>
@@ -242,8 +256,8 @@ const Login = () => {
           <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-6 sm:p-8">
             
             <div className="flex flex-col items-center mb-6 text-center">
-              <div className="relative mb-3 animate-logo-entrance">
-                <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-md rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/25 shrink-0">
+              <div className="relative mb-3 animate-logo-entrance animate-seal-float">
+                <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 overflow-hidden ring-4 ring-[#D4AF37]/30 shrink-0">
                   <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
                 </div>
               </div>
@@ -322,12 +336,13 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={isLoading || lockoutSeconds > 0}
-                  className={`w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-xs sm:text-sm font-black shadow-lg transition-all duration-300 uppercase tracking-wider ${
+                  className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-xs sm:text-sm font-black shadow-lg transition-all duration-300 uppercase tracking-wider cursor-pointer ${
                     isLoading || lockoutSeconds > 0
                       ? 'bg-slate-400 cursor-not-allowed' 
-                      : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:shadow-[#7A1B22]/50 hover:brightness-110 active:scale-[0.98]'
+                      : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:shadow-[#7A1B22]/60 hover:brightness-110 active:scale-[0.98]'
                   }`}
                 >
+                  <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000 ease-out pointer-events-none" />
                   {isLoading ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
