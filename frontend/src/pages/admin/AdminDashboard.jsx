@@ -207,6 +207,9 @@ const AdminDashboard = () => {
   };
 
   const getGreetingSubtext = () => {
+    if (isLoading) {
+      return 'Loading system overview and franchise status...';
+    }
     if (stats.pending > 0) {
       return `Welcome back! You have ${stats.pending} application${stats.pending > 1 ? 's' : ''} awaiting review in the approval queue.`;
     }
@@ -262,7 +265,9 @@ const AdminDashboard = () => {
 
         {/* Right Side: Interactive Action Badge & Compact Date (Replacing bulky clock) */}
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
-          {stats.pending > 0 ? (
+          {isLoading ? (
+            <div className="h-10 w-36 rounded-2xl bg-white/10 dark:bg-white/5 animate-pulse border border-white/10" />
+          ) : stats.pending > 0 ? (
             <button
               onClick={() => navigate('/franchise-approval')}
               className="group flex items-center gap-3 bg-white/15 hover:bg-white/25 dark:bg-amber-500/15 dark:hover:bg-amber-500/25 border border-white/20 dark:border-amber-400/30 px-4 py-2.5 rounded-2xl transition-all shadow-sm cursor-pointer active:scale-95 text-left"
@@ -328,39 +333,95 @@ const AdminDashboard = () => {
       {/* 3. SMOOTH ANALYTICS GRAPH */}
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="stagger-reveal lg:col-span-2 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between min-h-[340px]" style={{ animationDelay: '300ms' }}>
-            <div className="flex items-center justify-between mb-4">
+          {/* SKELETON: FRANCHISE HEALTH OVERVIEW (Matches horizontal stacked bar + 4 status cards) */}
+          <div 
+            className="stagger-reveal lg:col-span-2 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" 
+            style={{ animationDelay: '200ms' }}
+          >
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
-                <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={310} />
-                <SkeletonElement height="18px" className="w-40" rounded="rounded-md" delay={320} />
+                <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={210} />
+                <div>
+                  <SkeletonElement height="16px" className="w-48 mb-1.5" rounded="rounded-md" delay={220} />
+                  <SkeletonElement height="11px" className="w-64" rounded="rounded-sm" delay={230} />
+                </div>
               </div>
-              <SkeletonElement height="22px" className="w-24" rounded="rounded-full" delay={330} />
+              <SkeletonElement height="24px" className="w-20" rounded="rounded-full" delay={240} />
             </div>
-            <div className="h-56 w-full flex items-end justify-around gap-2 sm:gap-6 border-b border-slate-100 dark:border-slate-800 pt-6 pb-2">
-              {[60, 95, 45, 30].map((h, i) => (
-                <div key={i} className="flex flex-col items-center h-full justify-end w-16 sm:w-24">
-                  <SkeletonElement height="18px" className="w-10 mb-2" rounded="rounded-md" delay={340 + i * 30} />
-                  <SkeletonElement height={`${h}%`} className="w-full" rounded="rounded-2xl" delay={360 + i * 30} />
-                  <SkeletonElement height="10px" className="w-12 mt-2.5" rounded="rounded-sm" delay={380 + i * 30} />
+
+            {/* Horizontal Stacked Bar Placeholder */}
+            <div className="mb-6">
+              <SkeletonElement height="20px" className="w-full" rounded="rounded-full" delay={250} />
+            </div>
+
+            {/* Status Breakdown Grid (4 cards matching Active, Pending, Expired, Cancelled) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div 
+                  key={i} 
+                  className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <SkeletonElement rounded="rounded-full" className="w-2.5 h-2.5 shrink-0" delay={260 + i * 20} />
+                    <SkeletonElement height="10px" className="w-14" rounded="rounded-sm" delay={270 + i * 20} />
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <SkeletonElement height="22px" className="w-10" rounded="rounded-md" delay={280 + i * 20} />
+                    <SkeletonElement height="11px" className="w-7" rounded="rounded-sm" delay={290 + i * 20} />
+                  </div>
+                  <SkeletonElement height="9px" className="w-16" rounded="rounded-sm" delay={300 + i * 20} />
                 </div>
               ))}
             </div>
           </div>
-          <div className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '360ms' }}>
-            <div className="flex items-center gap-2.5 mb-6">
-              <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={370} />
-              <SkeletonElement height="18px" className="w-36" rounded="rounded-md" delay={380} />
+
+          {/* SKELETON: QUICK INSIGHTS (Matches 4 insights cards) */}
+          <div 
+            className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col" 
+            style={{ animationDelay: '280ms' }}
+          >
+            <div className="flex items-center gap-2.5 mb-5">
+              <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={290} />
+              <SkeletonElement height="16px" className="w-32" rounded="rounded-md" delay={300} />
             </div>
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex justify-between">
-                    <SkeletonElement height="12px" className="w-20" rounded="rounded-sm" delay={390 + i * 25} />
-                    <SkeletonElement height="12px" className="w-10" rounded="rounded-sm" delay={400 + i * 25} />
-                  </div>
-                  <SkeletonElement height="8px" className="w-full" rounded="rounded-full" delay={410 + i * 25} />
+
+            <div className="space-y-3 flex-1">
+              {/* Compliance Rate Card */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <SkeletonElement height="11px" className="w-24" rounded="rounded-sm" delay={310} />
+                  <SkeletonElement height="18px" className="w-10" rounded="rounded-md" delay={320} />
                 </div>
-              ))}
+                <SkeletonElement height="6px" className="w-full" rounded="rounded-full" delay={330} />
+                <SkeletonElement height="9px" className="w-40" rounded="rounded-sm" delay={340} />
+              </div>
+
+              {/* New Applications Card */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <SkeletonElement height="11px" className="w-24 mb-1.5" rounded="rounded-sm" delay={350} />
+                  <SkeletonElement height="9px" className="w-32" rounded="rounded-sm" delay={360} />
+                </div>
+                <SkeletonElement height="22px" className="w-8" rounded="rounded-md" delay={370} />
+              </div>
+
+              {/* Approval Queue Card */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <SkeletonElement height="11px" className="w-24 mb-1.5" rounded="rounded-sm" delay={380} />
+                  <SkeletonElement height="9px" className="w-28" rounded="rounded-sm" delay={390} />
+                </div>
+                <SkeletonElement height="22px" className="w-8" rounded="rounded-md" delay={400} />
+              </div>
+
+              {/* Last Activity Card */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <SkeletonElement height="11px" className="w-28 mb-1.5" rounded="rounded-sm" delay={410} />
+                  <SkeletonElement height="9px" className="w-36" rounded="rounded-sm" delay={420} />
+                </div>
+                <SkeletonElement height="14px" className="w-14" rounded="rounded-md" delay={430} />
+              </div>
             </div>
           </div>
         </div>
@@ -502,8 +563,62 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* TODA DISTRIBUTION DONUT CHART */}
-      {!isLoading && todaStats.length > 0 && (
+      {/* 4. TODA DISTRIBUTION DONUT CHART */}
+      {isLoading ? (
+        <div 
+          className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
+          style={{ animationDelay: '320ms' }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={330} />
+              <div>
+                <SkeletonElement height="16px" className="w-48 sm:w-60 mb-1.5" rounded="rounded-md" delay={340} />
+                <SkeletonElement height="11px" className="w-64 sm:w-80" rounded="rounded-sm" delay={350} />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <SkeletonElement height="30px" className="w-36" rounded="rounded-xl" delay={360} />
+              <SkeletonElement height="30px" className="w-24" rounded="rounded-xl" delay={370} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+            {/* Donut Chart Skeleton */}
+            <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+              <div className="w-64 h-64 relative flex items-center justify-center">
+                <div className="w-48 h-48 rounded-full border-[18px] border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center">
+                  <SkeletonElement height="10px" className="w-16 mb-1" rounded="rounded-sm" delay={380} />
+                  <SkeletonElement height="28px" className="w-12 mb-1" rounded="rounded-md" delay={390} />
+                  <SkeletonElement height="10px" className="w-20" rounded="rounded-sm" delay={400} />
+                </div>
+              </div>
+            </div>
+
+            {/* Top TODAs Legend Grid Skeleton */}
+            <div className="lg:col-span-7 space-y-2.5 max-h-72 overflow-hidden pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div 
+                    key={i} 
+                    className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <SkeletonElement rounded="rounded-full" className="w-2.5 h-2.5 shrink-0" delay={400 + i * 20} />
+                        <SkeletonElement height="12px" className="w-24" rounded="rounded-sm" delay={410 + i * 20} />
+                      </div>
+                      <SkeletonElement height="12px" className="w-12" rounded="rounded-sm" delay={420 + i * 20} />
+                    </div>
+                    <SkeletonElement height="6px" className="w-full" rounded="rounded-full" delay={430 + i * 20} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : todaStats.length > 0 ? (
         <div 
           className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
           style={{ animationDelay: '0.32s' }}
@@ -628,11 +743,12 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* 5. ACTIVITY LOGS & PENDING QUEUE */}
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ACTIVITY HISTORY SKELETON */}
           <div className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '460ms' }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
@@ -644,31 +760,40 @@ const AdminDashboard = () => {
             <div className="space-y-3">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="p-3 bg-slate-50/70 dark:bg-slate-800/70 rounded-2xl flex items-center justify-between gap-3">
-                  <div className="space-y-1.5 flex-1">
-                    <SkeletonElement height="12px" className="w-3/4" rounded="rounded-md" delay={500 + i * 25} />
-                    <SkeletonElement height="10px" className="w-1/3" rounded="rounded-sm" delay={510 + i * 25} />
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <SkeletonElement rounded="rounded-xl" className="w-8 h-8 shrink-0" delay={495 + i * 25} />
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <SkeletonElement height="12px" className="w-3/4" rounded="rounded-md" delay={500 + i * 25} />
+                      <SkeletonElement height="10px" className="w-1/3" rounded="rounded-sm" delay={510 + i * 25} />
+                    </div>
                   </div>
-                  <SkeletonElement height="18px" className="w-14" rounded="rounded-md" delay={520 + i * 25} />
+                  <SkeletonElement height="18px" className="w-14 shrink-0" rounded="rounded-md" delay={520 + i * 25} />
                 </div>
               ))}
             </div>
           </div>
 
+          {/* PENDING APPROVAL QUEUE SKELETON */}
           <div className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '520ms' }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <SkeletonElement rounded="rounded-lg" className="w-6 h-6" delay={530} />
                 <SkeletonElement height="16px" className="w-48" rounded="rounded-md" delay={540} />
               </div>
+              <SkeletonElement height="18px" className="w-14" rounded="rounded-full" delay={545} />
             </div>
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="p-3 bg-slate-50/70 dark:bg-slate-800/70 rounded-2xl flex items-center justify-between gap-3">
-                  <div className="space-y-1.5 flex-1">
-                    <SkeletonElement height="14px" className="w-1/2" rounded="rounded-md" delay={550 + i * 25} />
+                <div key={i} className="p-3.5 bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                  <div className="flex flex-col items-center shrink-0 gap-1">
+                    <SkeletonElement rounded="rounded-full" className="w-2 h-2" delay={540 + i * 25} />
+                    <SkeletonElement height="8px" className="w-4" rounded="rounded-xs" delay={545 + i * 25} />
+                  </div>
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <SkeletonElement height="13px" className="w-1/2" rounded="rounded-md" delay={550 + i * 25} />
                     <SkeletonElement height="10px" className="w-1/3" rounded="rounded-sm" delay={560 + i * 25} />
                   </div>
-                  <SkeletonElement height="28px" className="w-16" rounded="rounded-xl" delay={570 + i * 25} />
+                  <SkeletonElement height="32px" className="w-20 shrink-0" rounded="rounded-xl" delay={570 + i * 25} />
                 </div>
               ))}
             </div>

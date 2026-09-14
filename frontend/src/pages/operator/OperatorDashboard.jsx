@@ -820,7 +820,15 @@ const OperatorDashboard = () => {
 
         {/* Action Status Banner */}
         <div id="tour-hero-action" className="relative z-10 mt-3 pt-3 border-t border-white/10">
-          {franchises.some(f => f.status === 'Ready for Pickup') ? (
+          {isLoading ? (
+            <div className="bg-white/10 dark:bg-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md border border-white/15 animate-pulse">
+              <div className="space-y-1.5 flex-1 pr-4">
+                <div className="h-3.5 w-44 bg-white/20 rounded-md" />
+                <div className="h-2.5 w-64 bg-white/15 rounded-sm" />
+              </div>
+              <div className="h-8 w-24 bg-white/20 rounded-xl shrink-0" />
+            </div>
+          ) : franchises.some(f => f.status === 'Ready for Pickup') ? (
             <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-white/20">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -901,7 +909,7 @@ const OperatorDashboard = () => {
       </div>
 
       {/* TODA PRESIDENT SUMMARY SECTION */}
-      {isTodaPresident && (
+      {isTodaPresident && !isLoading && (
         <div className="bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/40 rounded-3xl p-4 sm:p-5 shadow-sm mb-6 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-4">
             <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-100 dark:border-indigo-800/50">
@@ -929,43 +937,62 @@ const OperatorDashboard = () => {
         id="tour-capacity-card"
         className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-2xs mb-5 transition-all"
       >
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Unit Capacity
-            </span>
-            <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
-              {franchises.length} / {maxUnits}
-            </span>
+        {isLoading ? (
+          <div className="space-y-2 animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="h-3.5 w-28 bg-slate-200 dark:bg-slate-700 rounded-md" />
+              <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded-sm" />
+            </div>
+            <div 
+              className="grid gap-2"
+              style={{ gridTemplateColumns: `repeat(${maxUnits}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: maxUnits }).map((_, idx) => (
+                <div key={idx} className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70" />
+              ))}
+            </div>
           </div>
-
-          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            {franchises.length >= maxUnits 
-              ? 'Slots Full' 
-              : `${maxUnits - franchises.length} Slot(s) Available`}
-          </span>
-        </div>
-
-        {/* Dynamic Slot Bars */}
-        <div 
-          className="grid gap-2"
-          style={{ gridTemplateColumns: `repeat(${maxUnits}, minmax(0, 1fr))` }}
-        >
-          {Array.from({ length: maxUnits }).map((_, idx) => {
-            const isFilled = idx < franchises.length;
-            return (
-              <div key={idx} className="relative">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    isFilled 
-                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' 
-                      : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
-                  }`} 
-                />
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Unit Capacity
+                </span>
+                <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
+                  {franchises.length} / {maxUnits}
+                </span>
               </div>
-            );
-          })}
-        </div>
+
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                {franchises.length >= maxUnits 
+                  ? 'Slots Full' 
+                  : `${maxUnits - franchises.length} Slot(s) Available`}
+              </span>
+            </div>
+
+            {/* Dynamic Slot Bars */}
+            <div 
+              className="grid gap-2"
+              style={{ gridTemplateColumns: `repeat(${maxUnits}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: maxUnits }).map((_, idx) => {
+                const isFilled = idx < franchises.length;
+                return (
+                  <div key={idx} className="relative">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        isFilled 
+                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' 
+                          : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+                      }`} 
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* 3. GARAGE SECTION HEADER */}
@@ -983,10 +1010,13 @@ const OperatorDashboard = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
-
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
-            {franchises.length} Registered
-          </span>
+          {isLoading ? (
+            <div className="w-24 h-6 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          ) : (
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
+              {franchises.length} Registered
+            </span>
+          )}
         </div>
       </header>
 

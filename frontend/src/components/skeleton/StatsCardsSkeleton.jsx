@@ -3,7 +3,10 @@ import SkeletonElement from './SkeletonElement';
 
 /**
  * Renders staggered metric / KPI stat cards.
- * Useful for dashboards and reports overviews.
+ * Matches the exact layout of AdminDashboard stat cards:
+ * - Top accent strip
+ * - Left: Label, large metric number, and subtitle
+ * - Right: Rounded-2xl icon container
  */
 const StatsCardsSkeleton = ({
   count = 4,
@@ -18,37 +21,40 @@ const StatsCardsSkeleton = ({
         return (
           <div
             key={index}
-            className="stagger-reveal bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs relative overflow-hidden"
+            className="stagger-reveal bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-sm relative overflow-hidden flex justify-between items-start"
             style={{ animationDelay: `${cardDelay}ms` }}
           >
-            <div className="flex items-center justify-between mb-4">
+            {/* Top Accent Strip Placeholder */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-slate-200/80 dark:bg-slate-700/80" />
+
+            {/* Left Metrics */}
+            <div className="space-y-1.5 flex-1 pr-2">
               <SkeletonElement
-                rounded="rounded-2xl"
-                className="w-10 h-10 sm:w-12 sm:h-12"
+                height="12px"
+                className="w-24 sm:w-28"
+                rounded="rounded-md"
                 delay={cardDelay}
               />
               <SkeletonElement
-                height="16px"
-                className="w-14"
-                rounded="rounded-full"
+                height="30px"
+                className="w-16 sm:w-20 my-1"
+                rounded="rounded-lg"
                 delay={cardDelay + 15}
+              />
+              <SkeletonElement
+                height="10px"
+                className="w-28 sm:w-32 max-w-full"
+                rounded="rounded-sm"
+                delay={cardDelay + 25}
               />
             </div>
 
-            <div className="space-y-2">
-              <SkeletonElement
-                height="28px"
-                className="w-20 sm:w-24"
-                rounded="rounded-lg"
-                delay={cardDelay + 25}
-              />
-              <SkeletonElement
-                height="12px"
-                className="w-32 max-w-full"
-                rounded="rounded-sm"
-                delay={cardDelay + 35}
-              />
-            </div>
+            {/* Right Icon Box */}
+            <SkeletonElement
+              rounded="rounded-2xl"
+              className="w-10 h-10 sm:w-12 sm:h-12 shrink-0"
+              delay={cardDelay + 20}
+            />
           </div>
         );
       })}
