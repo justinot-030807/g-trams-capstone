@@ -6,6 +6,7 @@ import PublicRoute from './components/PublicRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import LandingPage from './pages/LandingPage';
 import MaintenanceMode from './pages/MaintenanceMode';
 
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -75,7 +76,7 @@ function App() {
           <NotificationProvider>
             <Routes>
               {/* PUBLIC ROUTES */}
-              <Route path="/" element={<Navigate to="/login" />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
               <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
               <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />

@@ -252,16 +252,15 @@ const Login = () => {
               </div>
             </div>
           </div>
-
-          {/* LGU HELPDESK FOOTER BADGE */}
-          <div className="flex items-center gap-2 mt-3.5 pt-2.5 border-t border-white/10 text-white/60 text-xs">
-            <Phone size={13} className="text-[#D4AF37]" />
-            <span>BPLO Helpdesk Hotline: <strong className="text-white">(042) 342-1234</strong> • <strong className="text-white">bplo@gasan.gov.ph</strong></span>
-          </div>
         </div>
 
         {/* RIGHT AUTH CARD */}
         <div className="w-full max-w-[340px] sm:max-w-[375px] shrink-0 animate-card-entrance">
+          <div className="mb-1.5 flex items-center justify-between px-1">
+            <Link to="/" className="inline-flex items-center gap-1 text-white/60 hover:text-[#D4AF37] text-[11px] font-semibold transition-colors">
+              <span>← Portal Home</span>
+            </Link>
+          </div>
           <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
             
             <div className="flex flex-col items-center mb-3.5 text-center">
@@ -409,22 +408,12 @@ const Login = () => {
               />
             </div>
 
-            <div className="mt-3.5 pt-2.5 border-t border-slate-100 text-center space-y-1 animate-item-4">
+            <div className="mt-3.5 pt-2.5 border-t border-slate-100 text-center animate-item-4">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
                 <Link to="/register" className="font-black text-[#7A1B22] hover:underline">
                   CREATE AN ACCOUNT
                 </Link>
-              </p>
-              <p className="text-[9px] text-slate-400 font-medium">
-                By logging in, you agree to the{' '}
-                <button
-                  type="button"
-                  onClick={() => setShowTermsModal(true)}
-                  className="font-bold text-[#7A1B22] hover:underline"
-                >
-                  Terms of Use & Privacy Policy
-                </button>
               </p>
             </div>
 
@@ -432,13 +421,6 @@ const Login = () => {
         </div>
 
       </div>
-
-      {/* Terms & Privacy Policy Modal */}
-      <TermsPolicyModal 
-        isOpen={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-        showAcceptButton={false}
-      />
 
       {/* Clean Uncluttered Footer with Icons & Right-Aligned Version */}
       <footer className="relative z-10 w-full max-w-6xl mt-2 sm:mt-3 pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-white/50 text-[10px] shrink-0 animate-item-4 select-none pb-1 sm:pb-2">

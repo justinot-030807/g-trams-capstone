@@ -283,7 +283,7 @@ const Register = () => {
   };
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-3 sm:px-8 sm:py-6 lg:px-12 overflow-x-hidden select-none">
+    <div className="relative min-h-[100dvh] lg:min-h-[111.2vh] lg:h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-2 sm:px-8 sm:py-3 lg:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none">
       
       {/* Centered Floating Auto-Dismiss Toast for Google Account */}
       {showGoogleToast && googleProfileData && (
@@ -369,17 +369,16 @@ const Register = () => {
               </div>
             </div>
           </div>
-
-          {/* LGU HELPDESK FOOTER BADGE */}
-          <div className="flex items-center gap-2.5 mt-6 pt-4 border-t border-white/10 text-white/60 text-xs">
-            <Phone size={14} className="text-[#D4AF37]" />
-            <span>Need Assistance? Contact BPLO: <strong className="text-white">(042) 342-1234</strong> • <strong className="text-white">bplo@gasan.gov.ph</strong></span>
-          </div>
         </div>
 
         {/* RIGHT CARD CONTAINER */}
         <div className="w-full max-w-[370px] sm:max-w-[420px] shrink-0 animate-card-entrance">
-          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-7">
+          <div className="mb-1.5 flex items-center justify-between px-1">
+            <Link to="/" className="inline-flex items-center gap-1 text-white/60 hover:text-[#D4AF37] text-[11px] font-semibold transition-colors">
+              <span>← Portal Home</span>
+            </Link>
+          </div>
+          <div className="bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-5 sm:p-6">
             
             <div className="flex flex-col items-center mb-4 text-center">
               <div className="w-14 h-14 bg-white border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-2 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance animate-seal-float">
