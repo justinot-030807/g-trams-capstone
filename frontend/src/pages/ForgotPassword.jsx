@@ -136,12 +136,12 @@ const ForgotPassword = () => {
         />
       </div>
 
-      <div className="relative min-h-[110vh] flex flex-col">
+      <div className="relative min-h-[100dvh] md:min-h-[112vh] flex flex-col justify-between">
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
         {/* CENTERED AUTH CARD */}
-        <main className="relative z-10 w-full max-w-[450px] mx-auto px-4 flex-grow flex flex-col items-center justify-center animate-card-entrance py-12">
+        <main className="relative z-10 w-full max-w-[360px] sm:max-w-[380px] mx-auto px-4 my-auto py-3 sm:py-6 flex flex-col items-center justify-center animate-card-entrance">
           <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
             
             <div className="flex flex-col items-center mb-2.5 text-center">
