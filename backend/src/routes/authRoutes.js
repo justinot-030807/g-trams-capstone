@@ -22,7 +22,8 @@ const {
     googleAuth,
     heartbeat,
     submitAppeal,
-    verifyOperator
+    verifyOperator,
+    getPublicStats
 } = require('../controllers/authController');
 
 // Rate limiters
@@ -65,8 +66,9 @@ router.post('/verify-password', protect, authorize('admin'), verifyAdminPassword
 router.put('/:id/toggle-status', protect, authorize('admin'), toggleUserStatus);
 router.post('/appeal', submitAppeal);
 
-// Public verification route
+// Public routes
 router.get('/verify/:id', verifyOperator);
+router.get('/public-stats', getPublicStats);
 
 router.route('/:id')
     .put(protect, authorize('admin'), updateUser)
