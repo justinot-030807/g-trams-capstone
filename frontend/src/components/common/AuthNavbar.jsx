@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Menu, 
   X, 
@@ -11,7 +12,8 @@ import {
   ChevronRight,
   Building2,
   LogIn,
-  UserPlus
+  UserPlus,
+  Home
 } from 'lucide-react';
 import TermsPolicyModal from './TermsPolicyModal';
 
@@ -30,7 +32,7 @@ const AuthNavbar = () => {
   return (
     <>
       {/* FULL-WIDTH TOP NAVBAR (Edge-to-Edge) */}
-      <header className="relative z-30 w-full px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between border-b border-white/5 select-none shrink-0">
+      <header className="relative z-30 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between border-b border-white/5 select-none shrink-0">
         
         {/* FAR LEFT: Gasan Seal + G-TRAMS (Clickable Link to Home) */}
         <a 
@@ -55,14 +57,24 @@ const AuthNavbar = () => {
           </div>
         </a>
 
-        {/* FAR RIGHT: Quick Links & Hamburger Menu */}
+        {/* FAR RIGHT: Quick Links, Home Icon & Hamburger Menu */}
         <div className="flex items-center gap-2 sm:gap-2.5">
           
-          {/* Contextual Nav Buttons (Hidden on small mobile if tight) */}
+          {/* Back to Home Icon Button */}
+          <Link
+            to="/"
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-[#D4AF37] transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5"
+            title="Back to Home"
+          >
+            <Home size={17} />
+            <span className="hidden md:inline text-xs font-bold text-white/90">Home</span>
+          </Link>
+
+          {/* Contextual Nav Buttons */}
           {currentPath !== '/login' && (
             <Link
               to="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white/90 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 transition-all cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7A1B22] via-[#9B222B] to-[#5A1419] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer border border-white/10"
             >
               <LogIn size={13} className="text-[#D4AF37]" />
               <span>Sign In</span>
@@ -72,9 +84,9 @@ const AuthNavbar = () => {
           {currentPath !== '/register' && (
             <Link
               to="/register"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#D4AF37] hover:text-white bg-[#7A1B22]/60 hover:bg-[#7A1B22] border border-[#D4AF37]/30 transition-all cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-[#120204] bg-[#D4AF37] hover:bg-[#E5C158] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer"
             >
-              <UserPlus size={13} />
+              <UserPlus size={13} className="text-[#120204]" />
               <span>Register</span>
             </Link>
           )}
@@ -84,148 +96,170 @@ const AuthNavbar = () => {
             type="button"
             onClick={() => setIsMenuOpen(true)}
             aria-label="Open Navigation Menu"
-            className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
             title="Menu & Guidelines"
           >
-            <Menu size={18} />
+            <Menu size={19} />
           </button>
         </div>
 
       </header>
 
-      {/* SLIDE-OUT DRAWER (Hamburger Menu) */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-sm animate-fade-in select-none">
-          <div className="relative w-full max-w-sm sm:max-w-md bg-[#180407] border-l border-white/15 p-5 sm:p-6 flex flex-col justify-between shadow-2xl h-full animate-slide-left">
-            
-            {/* Drawer Header */}
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                <Link 
-                  to="/" 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-2.5 cursor-pointer"
-                >
-                  <img src="/gasan-logo.png" alt="Gasan Seal" className="w-9 h-9 object-contain" />
-                  <div>
-                    <h3 className="font-black text-sm text-white">G-TRAMS PORTAL</h3>
-                    <p className="text-xs text-[#D4AF37] font-semibold">Municipality of Gasan</p>
-                  </div>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Navigation Links */}
-              <div className="mt-5 space-y-2">
-                <p className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Navigation</p>
-                
-                <Link
-                  to="/"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-colors ${
-                    currentPath === '/' 
-                      ? 'bg-[#7A1B22]/50 border-[#D4AF37]/50 text-white' 
-                      : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80'
-                  }`}
-                >
-                  <span className="text-xs font-semibold">Home</span>
-                  <ChevronRight size={14} className="text-white/40" />
-                </Link>
-
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-colors ${
-                    currentPath === '/login' 
-                      ? 'bg-[#7A1B22]/50 border-[#D4AF37]/50 text-white' 
-                      : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80'
-                  }`}
-                >
-                  <span className="text-xs font-semibold">Sign In</span>
-                  <ChevronRight size={14} className="text-white/40" />
-                </Link>
-
-                <Link
-                  to="/register"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-colors ${
-                    currentPath === '/register' 
-                      ? 'bg-[#7A1B22]/50 border-[#D4AF37]/50 text-white' 
-                      : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80'
-                  }`}
-                >
-                  <span className="text-xs font-semibold">Create Account</span>
-                  <ChevronRight size={14} className="text-white/40" />
-                </Link>
-
-
-
-                <p className="text-xs font-bold text-white/40 uppercase tracking-widest px-1 pt-3">Official Links</p>
-
-                <a
-                  href="https://gasan.ph"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left text-xs font-semibold text-white/90 hover:text-white transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <Globe size={15} className="text-emerald-400" />
-                    <span>Official Municipality Website (gasan.ph)</span>
-                  </div>
-                  <ExternalLink size={13} className="text-white/40" />
-                </a>
-
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left text-xs font-semibold text-white/90 hover:text-white transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <FacebookIcon size={15} className="text-[#1877F2]" />
-                    <span>LGU Gasan Facebook Page</span>
-                  </div>
-                  <ExternalLink size={13} className="text-white/40" />
-                </a>
-              </div>
-
-              {/* BPLO Support Information */}
-              <div className="mt-5 p-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/80 space-y-2">
-                <div className="flex items-center gap-2 text-[#D4AF37] font-bold">
-                  <Building2 size={15} />
-                  <span>BPLO Helpdesk & Support</span>
+      {/* SLIDE-OUT DRAWER (Animated Smooth Hamburger Menu) */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMenuOpen(false)}
+            className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-md select-none"
+          >
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#180407] to-[#0D0103] p-5 sm:p-6 flex flex-col justify-between shadow-2xl h-full overflow-y-auto"
+            >
+              
+              {/* Drawer Header */}
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                  <Link 
+                    to="/" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2.5 cursor-pointer"
+                  >
+                    <img src="/gasan-logo.png" alt="Gasan Seal" className="w-9 h-9 object-contain" />
+                    <div>
+                      <h3 className="font-black text-sm text-white tracking-wide">G-TRAMS PORTAL</h3>
+                      <p className="text-xs text-[#D4AF37] font-semibold">Municipality of Gasan</p>
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
-                <p className="text-xs text-white/60 leading-relaxed">
-                  Ground Floor, Gasan Municipal Hall, Gasan, Marinduque
-                </p>
-                <div className="pt-2 border-t border-white/10 space-y-1 text-xs">
-                  <p className="flex items-center gap-2">
-                    <Phone size={12} className="text-amber-300" />
-                    <span>Hotline: <strong>(042) 342-1234</strong></span>
+
+                {/* Navigation Links (No Harsh Borders) */}
+                <div className="mt-5 space-y-2">
+                  <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest px-1">Navigation</p>
+                  
+                  <Link
+                    to="/"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
+                      currentPath === '/' 
+                        ? 'bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white font-bold shadow-md' 
+                        : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Home size={16} className={currentPath === '/' ? 'text-[#D4AF37]' : 'text-white/50'} />
+                      <span className="text-xs font-semibold">Home</span>
+                    </div>
+                    <ChevronRight size={14} className="text-white/40" />
+                  </Link>
+
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
+                      currentPath === '/login' 
+                        ? 'bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white font-bold shadow-md' 
+                        : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LogIn size={16} className={currentPath === '/login' ? 'text-[#D4AF37]' : 'text-white/50'} />
+                      <span className="text-xs font-semibold">Sign In</span>
+                    </div>
+                    <ChevronRight size={14} className="text-white/40" />
+                  </Link>
+
+                  <Link
+                    to="/register"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
+                      currentPath === '/register' 
+                        ? 'bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white font-bold shadow-md' 
+                        : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <UserPlus size={16} className={currentPath === '/register' ? 'text-[#D4AF37]' : 'text-white/50'} />
+                      <span className="text-xs font-semibold">Create Account</span>
+                    </div>
+                    <ChevronRight size={14} className="text-white/40" />
+                  </Link>
+
+                  <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest px-1 pt-3">Official Links</p>
+
+                  <a
+                    href="https://gasan.ph"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-left text-xs font-semibold text-white/90 hover:text-white transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Globe size={15} className="text-[#D4AF37]" />
+                      <span>Official Municipality Website (gasan.ph)</span>
+                    </div>
+                    <ExternalLink size={13} className="text-white/40" />
+                  </a>
+
+                  <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-left text-xs font-semibold text-white/90 hover:text-white transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FacebookIcon size={15} className="text-[#1877F2]" />
+                      <span>LGU Gasan Facebook Page</span>
+                    </div>
+                    <ExternalLink size={13} className="text-white/40" />
+                  </a>
+                </div>
+
+                {/* Municipal Support Information (De-BPLO'd) */}
+                <div className="mt-5 p-4 rounded-3xl bg-white/[0.04] text-xs text-white/80 space-y-2">
+                  <div className="flex items-center gap-2 text-[#D4AF37] font-bold">
+                    <Building2 size={16} />
+                    <span>Municipal Helpdesk &amp; Support</span>
+                  </div>
+                  <p className="text-xs text-white/60 leading-relaxed">
+                    Ground Floor, Gasan Municipal Hall, Gasan, Marinduque
                   </p>
-                  <p className="flex items-center gap-2">
-                    <Mail size={12} className="text-[#D4AF37]" />
-                    <span>Email: <strong>bplo@gasan.ph</strong></span>
-                  </p>
+                  <div className="pt-2 border-t border-white/5 space-y-1.5 text-xs">
+                    <p className="flex items-center gap-2">
+                      <Phone size={13} className="text-[#D4AF37]" />
+                      <span>Hotline: <strong>(042) 342-1234</strong></span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Mail size={13} className="text-[#D4AF37]" />
+                      <span>Email: <strong>bplo@gasan.ph</strong></span>
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Drawer Footer */}
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
-              <span>G-TRAMS Portal</span>
-              <span className="font-mono">v2.4.0</span>
-            </div>
+              {/* Drawer Footer */}
+              <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-white/40 mt-4">
+                <span>G-TRAMS Portal</span>
+                <span className="font-mono">v2.4.0</span>
+              </div>
 
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Simplified Terms & Privacy Modal */}
       <TermsPolicyModal 

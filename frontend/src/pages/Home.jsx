@@ -97,8 +97,9 @@ const Home = () => {
             className="flex flex-col items-center w-full"
           >
             {/* Primary Headline - Responsive font scaling & safe mobile wrapping */}
-            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-4xl drop-shadow-md px-1 sm:px-0">
-              Gasan Tricycle Records &amp; Application Management System
+            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-5xl drop-shadow-md px-1 sm:px-0">
+              <span className="block sm:inline">Gasan Tricycle Records &amp; </span>
+              <span className="inline sm:inline-block sm:whitespace-nowrap">Application Management System</span>
             </motion.h1>
 
             {/* Subtitle / Portal Overview */}
