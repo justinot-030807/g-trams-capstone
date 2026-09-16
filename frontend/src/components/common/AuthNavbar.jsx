@@ -33,10 +33,10 @@ const AuthNavbar = () => {
       <header className="relative z-30 w-full px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between border-b border-white/5 select-none shrink-0">
         
         {/* FAR LEFT: Gasan Seal + G-TRAMS (Clickable Link to Home) */}
-        <Link 
-          to="/" 
+        <a 
+          href="/" 
           className="flex items-center gap-2 sm:gap-2.5 group cursor-pointer"
-          title="Go to G-TRAMS Home"
+          title="Go to G-TRAMS Home (Refresh)"
         >
           <div className="relative shrink-0">
             <img 
@@ -49,11 +49,11 @@ const AuthNavbar = () => {
             <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none">
               G-TRAMS
             </span>
-            <span className="text-[#D4AF37] text-[9px] sm:text-xs font-bold uppercase tracking-wider mt-0.5">
-              Municipality of Gasan • Marinduque
+            <span className="text-[9px] sm:text-[10px] text-[#D4AF37] font-semibold tracking-wider uppercase mt-0.5">
+              Portal
             </span>
           </div>
-        </Link>
+        </a>
 
         {/* FAR RIGHT: Quick Links & Hamburger Menu */}
         <div className="flex items-center gap-2 sm:gap-2.5">
