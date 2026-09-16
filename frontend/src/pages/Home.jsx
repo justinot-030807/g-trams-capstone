@@ -68,16 +68,17 @@ const Home = () => {
   return (
     <div className="relative w-full bg-[#120204] text-white flex flex-col overflow-x-hidden select-none">
       
-      {/* Grounded Municipal LGU Ambient Background (Clean, Civic & Non-AI) */}
+      {/* Dynamic Animated Ambient Background with Official Gasan Seal */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Subtle municipal seal watermark centered */}
-        <div className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.035] pointer-events-none select-none">
+        {/* Animated ambient gradient blobs */}
+        <div className="absolute top-[-10%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[90px] opacity-70 animate-liquid-1" />
+        <div className="absolute top-[45%] right-[-15%] w-[620px] h-[620px] bg-gradient-to-tl from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[100px] opacity-75 animate-liquid-2" />
+        <div className="absolute top-[30%] right-[10%] w-[420px] h-[420px] bg-gradient-to-bl from-[#E03144]/40 via-[#8A141E] to-transparent rounded-full blur-[80px] animate-liquid-3" />
+
+        {/* Subtle official Gasan seal watermark centered */}
+        <div className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.045] pointer-events-none select-none">
           <img src="/gasan-logo.png" alt="" className="w-full h-full object-contain filter grayscale" />
         </div>
-
-        {/* Deep architectural gradients */}
-        <div className="absolute top-0 left-0 right-0 h-[480px] bg-gradient-to-b from-[#7A1B22]/35 via-[#3D0A0E]/20 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-[400px] bg-gradient-to-t from-[#0A0102] via-[#1A0306]/40 to-transparent" />
       </div>
 
       {/* Hero Section Container */}
@@ -95,21 +96,9 @@ const Home = () => {
             variants={staggerContainer}
             className="flex flex-col items-center w-full"
           >
-            {/* Official Government Badge */}
-            <motion.div 
-              variants={springFade}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-[#D4AF37]/30 shadow-xs mb-5 backdrop-blur-md"
-            >
-              <Building2 size={13} className="text-[#D4AF37]" />
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/90">
-                Republic of the Philippines • LGU Gasan
-              </span>
-            </motion.div>
-
             {/* Primary Headline - Responsive font scaling & safe mobile wrapping */}
             <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-4xl drop-shadow-md px-1 sm:px-0">
-              <span>Gasan Tricycle Records &amp; </span>
-              <span className="text-[#D4AF37] block sm:inline">Application Management System</span>
+              Gasan Tricycle Records &amp; Application Management System
             </motion.h1>
 
             {/* Subtitle / Portal Overview */}
@@ -118,24 +107,29 @@ const Home = () => {
             </motion.p>
 
             {/* TWO PRIMARY ACTION BUTTONS */}
-            <motion.div variants={springFade} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8 sm:mt-10 w-full max-w-md">
+            <motion.div variants={springFade} className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 mt-8 sm:mt-10 w-full max-w-md">
               
               {/* Sign In Button */}
               <Link
                 to="/login"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3 px-5 sm:px-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white font-bold text-sm uppercase tracking-wider shadow-[0_8px_20px_rgba(122,27,34,0.45)] hover:shadow-[0_12px_28px_rgba(122,27,34,0.65)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 border border-white/15 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#7A1B22] via-[#9B222B] to-[#5A1419] text-white font-bold text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(155,34,43,0.65),0_0_15px_rgba(212,175,55,0.25)] hover:shadow-[0_15px_30px_-5px_rgba(155,34,43,0.85),0_0_25px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-[#D4AF37]/50 hover:border-[#D4AF37] cursor-pointer"
               >
-                <LogIn size={16} className="text-[#D4AF37]" />
-                <span>Sign In</span>
+                <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[260%] transition-transform duration-1000 ease-out pointer-events-none" />
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                  <LogIn size={14} className="text-[#D4AF37]" />
+                </div>
+                <span className="drop-shadow-xs">Sign In</span>
               </Link>
 
               {/* Create Account Button */}
               <Link
                 to="/register"
-                className="w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3 px-5 sm:px-6 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm uppercase tracking-wider shadow-md border border-[#D4AF37]/50 hover:border-[#D4AF37] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-white/[0.08] hover:bg-white/[0.16] text-white font-bold text-sm uppercase tracking-wider shadow-[0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_10px_25px_rgba(212,175,55,0.3)] border border-[#D4AF37]/60 hover:border-[#D4AF37] hover:scale-[1.03] active:scale-[0.98] backdrop-blur-xl transition-all duration-300 cursor-pointer"
               >
-                <UserPlus size={16} className="text-[#D4AF37]" />
-                <span>Create Account</span>
+                <div className="w-6 h-6 rounded-full bg-[#D4AF37]/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <UserPlus size={14} className="text-[#D4AF37]" />
+                </div>
+                <span className="drop-shadow-xs">Create Account</span>
               </Link>
 
             </motion.div>
