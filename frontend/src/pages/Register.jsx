@@ -41,6 +41,7 @@ const Register = () => {
   // Google Sign-In state
   const [googleProfileData, setGoogleProfileData] = useState(incomingGoogle || null);
   const [showGoogleToast, setShowGoogleToast] = useState(false);
+  const [showGoogleWelcome, setShowGoogleWelcome] = useState(!!location.state?.fromGoogleLogin);
 
   // Ensure full-screen coverage without zoom gaps on laptops
   useEffect(() => {
@@ -240,36 +241,7 @@ const Register = () => {
     }
   };
 
-  const handleOnboardingSubmit = async (onboardingData) => {
-    setIsOnboardingLoading(true);
-    setOnboardingError('');
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          googleProfile: googleProfileData,
-          onboardingData
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.token) {
-        setGoogleOnboardingOpen(false);
-        setSuccess('Google registration successful! Redirecting...');
-        setTimeout(() => {
-          handleGoogleSuccess(data);
-        }, 1000);
-      } else {
-        setOnboardingError(data.message || 'Failed to complete registration.');
-      }
-    } catch (err) {
-      setOnboardingError('Cannot connect to the server. Please try again.');
-    } finally {
-      setIsOnboardingLoading(false);
-    }
-  };
+  // Removed unused handleOnboardingSubmit
 
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
 
