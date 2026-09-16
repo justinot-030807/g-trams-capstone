@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Megaphone, Calendar, AlertTriangle } from 'lucide-react';
 
 const announcements = [
@@ -15,7 +16,7 @@ const announcements = [
     type: 'info',
     date: 'Nov 20, 2024',
     title: 'New Online Claim Stub System',
-    desc: 'Operators can now directly print their claim stubs from the dashboard without visiting the BPLO office initially.',
+    desc: 'Operators can now directly print their claim stubs from the dashboard without visiting the office initially.',
     icon: <Megaphone size={16} />
   },
   {
@@ -28,44 +29,79 @@ const announcements = [
   }
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: { type: "spring", stiffness: 80, damping: 15 }
+  }
+};
+
 const LandingAnnouncements = () => {
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 relative z-10">
+    <motion.div 
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+      variants={containerVariants}
+      className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 relative z-10"
+    >
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <motion.div variants={cardVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase mb-1">
-            BPLO <span className="text-[#D4AF37]">Bulletin Board</span>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight uppercase mb-2 drop-shadow-md">
+            Municipal <span className="text-[#D4AF37]">Bulletin Board</span>
           </h2>
-          <p className="text-white/60 text-xs sm:text-sm">Latest advisories and updates from the LGU.</p>
+          <p className="text-white/60 text-xs sm:text-sm font-medium">Latest advisories and updates from the LGU.</p>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
         {announcements.map((item) => (
-          <div 
+          <motion.div 
             key={item.id} 
-            className="flex flex-col p-5 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-colors"
+            variants={cardVariants}
+            whileHover={{ y: -5, scale: 1.02 }}
+            className="flex flex-col p-6 rounded-3xl bg-linear-to-bl from-white/10 to-white/5 backdrop-blur-lg border border-white/10 hover:border-white/30 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-colors relative overflow-hidden group"
           >
-            <div className="flex justify-between items-center mb-3">
-              <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
-                item.type === 'alert' ? 'bg-red-500/20 text-red-300' :
-                item.type === 'info' ? 'bg-blue-500/20 text-blue-300' :
-                'bg-[#D4AF37]/20 text-[#D4AF37]'
+            {/* Ambient glow effect inside card */}
+            <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl rounded-full opacity-20 group-hover:opacity-40 transition-opacity ${
+              item.type === 'alert' ? 'bg-red-500' :
+              item.type === 'info' ? 'bg-blue-500' :
+              'bg-[#D4AF37]'
+            }`} />
+
+            <div className="flex justify-between items-center mb-4 relative z-10">
+              <span className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg shadow-sm ${
+                item.type === 'alert' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                item.type === 'info' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
               }`}>
                 {item.icon}
                 {item.type}
               </span>
-              <span className="text-[10px] text-white/40 font-semibold">{item.date}</span>
+              <span className="text-[10px] text-white/50 font-bold tracking-wider">{item.date}</span>
             </div>
             
-            <h3 className="font-bold text-white text-sm mb-2">{item.title}</h3>
-            <p className="text-white/60 text-xs leading-relaxed">{item.desc}</p>
-          </div>
+            <h3 className="font-bold text-white text-base mb-2.5 relative z-10">{item.title}</h3>
+            <p className="text-white/60 text-xs sm:text-sm leading-relaxed font-medium relative z-10">{item.desc}</p>
+          </motion.div>
         ))}
       </div>
 
-    </div>
+    </motion.div>
   );
 };
 

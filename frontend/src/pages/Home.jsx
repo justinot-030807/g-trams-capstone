@@ -45,16 +45,21 @@ const Home = () => {
     };
   }, []);
 
-  const fadeIn = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  const springFade = {
+    hidden: { opacity: 0, y: 50, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { type: "spring", stiffness: 100, damping: 15, mass: 1 } 
+    }
   };
 
   const staggerContainer = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.15 }
+      transition: { staggerChildren: 0.15, delayChildren: 0.1 }
     }
   };
 
@@ -92,18 +97,18 @@ const Home = () => {
             className="flex flex-col items-center w-full"
           >
             {/* Primary Headline - Responsive font scaling & safe mobile wrapping */}
-            <motion.h1 variants={fadeIn} className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight max-w-4xl drop-shadow-md px-1 sm:px-0">
+            <motion.h1 variants={springFade} className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight max-w-4xl drop-shadow-md px-1 sm:px-0">
               <span>Gasan Tricycle Records &amp; </span>
               <span className="inline sm:inline-block sm:whitespace-nowrap">Application Management System</span>
             </motion.h1>
 
             {/* Subtitle / Portal Overview */}
-            <motion.p variants={fadeIn} className="text-white/75 text-xs sm:text-sm lg:text-base max-w-2xl mt-4 sm:mt-5 leading-relaxed font-normal px-2">
+            <motion.p variants={springFade} className="text-white/75 text-xs sm:text-sm lg:text-base max-w-2xl mt-4 sm:mt-5 leading-relaxed font-normal px-2">
               The official motorized tricycle regulatory and franchise licensing portal of the Local Government Unit of Gasan, providing streamlined, transparent, and digital municipal services.
             </motion.p>
 
             {/* TWO PRIMARY ACTION BUTTONS */}
-            <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8 sm:mt-10 w-full max-w-md">
+            <motion.div variants={springFade} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8 sm:mt-10 w-full max-w-md">
               
               {/* Sign In Button */}
               <Link
@@ -129,7 +134,7 @@ const Home = () => {
             {/* 4 CORE SERVICE CARDS */}
             <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-12 sm:mt-16 w-full text-left">
               
-              <motion.div variants={fadeIn} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
                 <div className="p-2 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
                   <FileText size={18} />
                 </div>
@@ -139,7 +144,7 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              <motion.div variants={fadeIn} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
                 <div className="p-2 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
                   <ShieldCheck size={18} />
                 </div>
@@ -149,7 +154,7 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              <motion.div variants={fadeIn} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
                 <div className="p-2 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
                   <Clock size={18} />
                 </div>
@@ -159,7 +164,7 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              <motion.div variants={fadeIn} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm hover:bg-white/15 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
                 <div className="p-2 w-fit rounded-xl bg-[#7A1B22]/90 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-sm">
                   <Award size={18} />
                 </div>
