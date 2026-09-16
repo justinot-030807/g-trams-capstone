@@ -61,10 +61,10 @@ const LandingAnnouncements = () => {
       
       <motion.div variants={cardVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight uppercase mb-2 drop-shadow-md">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#730000] tracking-tight uppercase mb-2 drop-shadow-md">
             Municipal <span className="text-[#ffbd00]">Bulletin Board</span>
           </h2>
-          <p className="text-[#f3efd0]/80 text-xs sm:text-sm font-medium">Latest advisories and updates from the LGU.</p>
+          <p className="text-slate-600 text-xs sm:text-sm font-medium">Latest advisories and updates from the LGU.</p>
         </div>
       </motion.div>
 

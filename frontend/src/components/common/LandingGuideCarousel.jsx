@@ -102,10 +102,10 @@ const LandingGuideCarousel = () => {
       className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-white/10 relative z-10"
     >
       <div className="text-center mb-16">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight uppercase mb-3 drop-shadow-md">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#730000] tracking-tight uppercase mb-3 drop-shadow-md">
           Citizen's <span className="text-[#ffbd00]">Charter</span>
         </h2>
-        <p className="text-[#f3efd0]/80 text-sm sm:text-base max-w-2xl mx-auto font-medium">
+        <p className="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto font-medium">
           Simplifying the tricycle franchise application process in Gasan. Follow this 5-step digital flow.
         </p>
       </div>
@@ -156,13 +156,13 @@ const LandingGuideCarousel = () => {
         {/* Navigation Arrows */}
         <button 
           onClick={handlePrev}
-          className="absolute left-2 sm:left-10 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#ffbd00] text-white hover:text-[#730000] backdrop-blur-md transition-all border border-white/20 hover:border-[#ffbd00] shadow-lg"
+          className="absolute left-2 sm:left-10 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-[#730000] hover:bg-[#9b000a] text-white hover:text-[#ffbd00] transition-all border border-[#730000] hover:border-[#9b000a] shadow-lg"
         >
           <ChevronLeft size={24} />
         </button>
         <button 
           onClick={handleNext}
-          className="absolute right-2 sm:right-10 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#ffbd00] text-white hover:text-[#730000] backdrop-blur-md transition-all border border-white/20 hover:border-[#ffbd00] shadow-lg"
+          className="absolute right-2 sm:right-10 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-[#730000] hover:bg-[#9b000a] text-white hover:text-[#ffbd00] transition-all border border-[#730000] hover:border-[#9b000a] shadow-lg"
         >
           <ChevronRight size={24} />
         </button>
@@ -177,7 +177,7 @@ const LandingGuideCarousel = () => {
             className={`transition-all duration-300 rounded-full ${
               currentIndex === idx 
                 ? 'w-8 h-2.5 bg-[#ffbd00] shadow-[0_0_10px_rgba(255,189,0,0.6)]' 
-                : 'w-2.5 h-2.5 bg-white/20 hover:bg-white/40'
+                : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
             }`}
           />
         ))}
