@@ -134,13 +134,13 @@ const PublicStats = () => {
           </motion.div>
 
           {/* Stat 3 */}
-          <motion.div variants={fadeIn} className="relative group bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 text-center transition-all duration-300 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(16,185,129,0.2)] hover:border-emerald-500/30">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <motion.div variants={fadeIn} className="relative group bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 text-center transition-all duration-300 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/30">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#7A1B22] to-[#4A1015] rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
               <FileCheck2 className="text-white w-8 h-8" />
             </div>
             <div className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-2">
               <CountUp end={stats.franchises} />
-              <span className="text-emerald-400">+</span>
+              <span className="text-[#D4AF37]">+</span>
             </div>
             <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
               Active Franchises

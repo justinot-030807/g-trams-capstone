@@ -197,8 +197,8 @@ const Login = () => {
         <AuthNavbar />
 
         {/* CENTERED AUTH CARD */}
-        <main className="relative z-10 w-full max-w-[360px] sm:max-w-[380px] mx-auto px-4 my-auto py-3 sm:py-6 flex flex-col items-center justify-center animate-card-entrance">
-          <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
+        <main className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] mx-auto px-4 my-auto py-4 sm:py-6 flex flex-col items-center justify-center min-h-fit animate-card-entrance">
+          <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-6 min-h-fit">
             
             <div className="flex flex-col items-center mb-2.5 text-center">
               <div className="relative mb-1.5 animate-logo-entrance">

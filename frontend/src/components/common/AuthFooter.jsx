@@ -23,6 +23,7 @@ const InstagramIcon = ({ size = 16, className = "" }) => (
 
 const AuthFooter = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [legalTab, setLegalTab] = useState('privacy');
 
   return (
     <footer className="relative z-20 w-full bg-[#0a0102] border-t border-white/10 pt-12 pb-6 px-4 sm:px-6 lg:px-8 text-white/80">
@@ -55,7 +56,7 @@ const AuthFooter = () => {
               <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#E1306C] border border-white/10 hover:border-[#E1306C] flex items-center justify-center transition-all">
                 <InstagramIcon size={16} className="text-white" />
               </a>
-              <a href="https://gasan.gov.ph" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-emerald-600 border border-white/10 hover:border-emerald-600 flex items-center justify-center transition-all">
+              <a href="https://gasan.ph" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-emerald-600 border border-white/10 hover:border-emerald-600 flex items-center justify-center transition-all">
                 <ExternalLink size={16} className="text-white" />
               </a>
             </div>
@@ -76,9 +77,33 @@ const AuthFooter = () => {
           <div className="flex flex-col space-y-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Legal</h3>
             <ul className="space-y-3 text-sm text-white/60">
-              <li><button onClick={() => setShowTermsModal(true)} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><Lock size={14} className="text-emerald-500" /> Privacy Policy</button></li>
-              <li><button onClick={() => setShowTermsModal(true)} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><FileText size={14} className="text-blue-400" /> Terms of Service</button></li>
-              <li><button onClick={() => setShowTermsModal(true)} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"><ShieldCheck size={14} className="text-amber-500" /> Data Privacy Act</button></li>
+              <li>
+                <button 
+                  type="button"
+                  onClick={() => { setLegalTab('privacy'); setShowTermsModal(true); }} 
+                  className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <Lock size={14} className="text-[#D4AF37]" /> Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button 
+                  type="button"
+                  onClick={() => { setLegalTab('terms'); setShowTermsModal(true); }} 
+                  className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <FileText size={14} className="text-[#D4AF37]" /> Terms of Service
+                </button>
+              </li>
+              <li>
+                <button 
+                  type="button"
+                  onClick={() => { setLegalTab('dpa'); setShowTermsModal(true); }} 
+                  className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <ShieldCheck size={14} className="text-[#D4AF37]" /> Data Privacy Act
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -95,8 +120,8 @@ const AuthFooter = () => {
                 <span>(042) 342-1234</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail size={16} className="text-emerald-500 shrink-0" />
-                <span>bplo@gasan.gov.ph</span>
+                <Mail size={16} className="text-[#D4AF37] shrink-0" />
+                <span>bplo@gasan.ph</span>
               </li>
             </ul>
           </div>
@@ -115,6 +140,7 @@ const AuthFooter = () => {
       <TermsPolicyModal 
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
+        initialTab={legalTab}
         defaultLang="en"
         showAcceptButton={false}
       />

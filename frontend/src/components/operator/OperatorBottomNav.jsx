@@ -79,23 +79,23 @@ const OperatorBottomNav = ({ role }) => {
                   navigate(item.path);
                 }
               }}
-              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl transition-all duration-200 active:scale-90 cursor-pointer ${
+              className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 sm:py-1.5 px-1 rounded-2xl transition-all duration-200 active:scale-90 cursor-pointer ${
                 item.active
                   ? 'text-[#7A1B22] dark:text-[#D4AF37]'
                   : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${
+              <div className={`relative p-1 rounded-xl transition-all duration-300 shrink-0 ${
                 item.active 
                   ? 'bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 scale-105' 
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
               }`}>
-                <Icon size={19} className={item.active ? 'stroke-[2.5]' : 'stroke-[2]'} />
+                <Icon size={18} className={item.active ? 'stroke-[2.5]' : 'stroke-[2]'} />
                 {item.active && (
                   <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] shadow-xs" />
                 )}
               </div>
-              <span className={`text-xs mt-0.5 tracking-tight transition-all duration-200 ${
+              <span className={`text-[11px] sm:text-xs mt-0.5 tracking-tight transition-all duration-200 truncate w-full text-center leading-tight ${
                 item.active ? 'font-black scale-105' : 'font-semibold'
               }`}>
                 {item.label}

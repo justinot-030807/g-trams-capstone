@@ -231,7 +231,7 @@ const HelpSupport = () => {
               </a>
 
               <a 
-                href="mailto:bplo@gasan.gov.ph" 
+                href="mailto:bplo@gasan.ph" 
                 className="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:scale-95 p-3 rounded-xl border border-white/15 transition-all shadow-xs cursor-pointer min-h-[46px]"
                 title="Send Email to BPLO"
               >
@@ -242,7 +242,7 @@ const HelpSupport = () => {
                   <p className="text-xs text-[#D4AF37] uppercase font-bold tracking-wider">
                     Official Email
                   </p>
-                  <p className="font-bold text-xs tracking-wide">bplo@gasan.gov.ph</p>
+                  <p className="font-bold text-xs tracking-wide">bplo@gasan.ph</p>
                 </div>
               </a>
             </div>

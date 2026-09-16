@@ -59,6 +59,13 @@
 @tailwind utilities;
 
 @layer base {
+  /* Dynamic OS font scaling support */
+  html {
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   /* 90% comfortable zoom default for desktop/laptop displays */
   @media (min-width: 769px) {
     html {
@@ -74,10 +81,11 @@
     overflow-x: hidden !important;
   }
 
-  /* 100% natural scaling for mobile screens */
+  /* Fluid scaling on mobile screens honoring system font size */
   @media (max-width: 768px) {
     html {
-      zoom: 1 !important;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
   }
 

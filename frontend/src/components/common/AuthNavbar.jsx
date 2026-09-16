@@ -169,14 +169,14 @@ const AuthNavbar = () => {
                 <p className="text-xs font-bold text-white/40 uppercase tracking-widest px-1 pt-3">Official Links</p>
 
                 <a
-                  href="https://gasan.gov.ph"
+                  href="https://gasan.ph"
                   target="_blank"
                   rel="noreferrer"
                   className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left text-xs font-semibold text-white/90 hover:text-white transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <Globe size={15} className="text-emerald-400" />
-                    <span>Official Municipality Website (gasan.gov.ph)</span>
+                    <span>Official Municipality Website (gasan.ph)</span>
                   </div>
                   <ExternalLink size={13} className="text-white/40" />
                 </a>
@@ -211,7 +211,7 @@ const AuthNavbar = () => {
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail size={12} className="text-[#D4AF37]" />
-                    <span>Email: <strong>bplo@gasan.gov.ph</strong></span>
+                    <span>Email: <strong>bplo@gasan.ph</strong></span>
                   </p>
                 </div>
               </div>
