@@ -75,7 +75,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
                 <h3 className="font-black text-base tracking-wide uppercase">
                   Complete Profile Information
                 </h3>
-                <p className="text-[11px] text-white/80 font-medium">
+                <p className="text-xs text-white/80 font-medium">
                   G-TRAMS Operator Registration via Google
                 </p>
               </div>
@@ -91,7 +91,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
             )}
           </div>
 
-          <div className="mt-3 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-2.5 flex items-center gap-2 text-[11px]">
+          <div className="mt-3 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-2.5 flex items-center gap-2 text-xs">
             <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
             <span>
               <strong>Google Email Verified:</strong> No OTP verification code required for Google Sign-In.
@@ -110,12 +110,12 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
 
           {/* Email (Read-only) */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               Google Account Email
             </label>
             <div className="flex items-center justify-between bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-600 font-semibold select-none">
               <span>{googleProfile.email}</span>
-              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
                 Verified ✓
               </span>
             </div>
@@ -124,10 +124,10 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
           {/* Full Legal Name (EDITABLE with explicit prompt) */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[10px] font-black text-slate-800 uppercase tracking-wider">
+              <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
                 Full Legal Name <span className="text-red-500">*</span>
               </label>
-              <span className="text-[10px] font-bold text-[#7A1B22] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#7A1B22] uppercase tracking-wider">
                 Editable
               </span>
             </div>
@@ -145,7 +145,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
             />
 
             {/* Crucial user prompt as requested */}
-            <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200/70 rounded-lg text-[11px] text-amber-900 font-medium flex items-start gap-1.5 leading-snug">
+            <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200/70 rounded-lg text-xs text-amber-900 font-medium flex items-start gap-1.5 leading-snug">
               <span className="text-amber-600 font-bold shrink-0">ℹ️ Notice:</span>
               <span>
                 Please ensure you enter your <strong>full legal name</strong> (First Name, Middle Name, Last Name) matching your Driver's License or Valid ID for official MTOP franchise records.
@@ -155,7 +155,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
 
           {/* Address / Barangay */}
           <div>
-            <label className="block text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-1">
               Barangay in Gasan <span className="text-red-500">*</span>
             </label>
             <select
@@ -171,7 +171,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
 
           {/* Mobile Contact Number */}
           <div>
-            <label className="block text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-1">
               Mobile Contact Number <span className="text-red-500">*</span>
             </label>
             <input
@@ -185,14 +185,14 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
               className={inputClasses}
               placeholder="09123456789"
             />
-            <p className="text-[10px] text-slate-400 mt-1 font-medium">
+            <p className="text-xs text-slate-400 mt-1 font-medium">
               Used for official LGU franchise notifications and SMS updates.
             </p>
           </div>
 
           {/* TODA Association */}
           <div>
-            <label className="block text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-1">
               TODA Association
             </label>
             <select

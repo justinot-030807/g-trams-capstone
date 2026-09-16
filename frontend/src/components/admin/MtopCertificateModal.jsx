@@ -99,7 +99,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             <div>
               <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
                 Official MTOP Certificate
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
                   unit.status === 'Active' 
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
                     : unit.status === 'Ready for Pickup'
@@ -109,7 +109,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                   {unit.status || 'Active Franchise'}
                 </span>
               </h3>
-              <p className="text-[10px] text-white/60">Municipality of Gasan &bull; Appendix C Format</p>
+              <p className="text-xs text-white/60">Municipality of Gasan &bull; Appendix C Format</p>
             </div>
           </div>
 
@@ -162,7 +162,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
         </div>
 
         {/* Mobile Swipe Hint */}
-        <div className="sm:hidden w-full flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-sans font-medium mb-2 bg-amber-950/60 border border-amber-500/30 px-3 py-1 rounded-full shadow-sm">
+        <div className="sm:hidden w-full flex items-center justify-center gap-1.5 text-xs text-amber-300 font-sans font-medium mb-2 bg-amber-950/60 border border-amber-500/30 px-3 py-1 rounded-full shadow-sm">
           <span>&larr;</span>
           <span>I-swipe pakaliwa o pakanan para makita nang buo</span>
           <span>&rarr;</span>
@@ -273,8 +273,8 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                   <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-cover" />
                 </div>
                 <div className="text-center">
-                  <p className="text-[10px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
                   <h2 className="text-lg sm:text-xl font-black text-[#7A1B22] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
                   <p className="text-[9.5px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Municipal Vice Mayor / Sangguniang Bayan</p>
                 </div>
@@ -287,7 +287,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-wide uppercase font-serif">
                   MOTORIZED TRICYCLE OPERATOR'S PERMIT
                 </h1>
-                <p className="text-[11px] font-bold tracking-widest text-[#7A1B22] uppercase font-sans mt-0.5">
+                <p className="text-xs font-bold tracking-widest text-[#7A1B22] uppercase font-sans mt-0.5">
                   MUNICIPAL (TRICYCLE) FRANCHISE
                 </p>
                 <div className="inline-block mt-1.5 px-4 py-1 bg-amber-50 border border-amber-300 rounded text-xs sm:text-sm font-mono font-bold text-[#7A1B22] shadow-2xs">
@@ -309,19 +309,19 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             <div className="relative z-10 bg-amber-50/50 border border-[#D4AF37]/60 rounded-xl p-3.5 mb-3 text-xs sm:text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Name of Operator:</span>
+                  <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Name of Operator:</span>
                   <span className="font-bold text-slate-900 text-xs sm:text-sm">{unit.fullName?.toUpperCase()}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Residential Address:</span>
+                  <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Residential Address:</span>
                   <span className="font-bold text-slate-800 text-xs sm:text-sm">{unit.address || 'Gasan, Marinduque'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Classification:</span>
+                  <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Classification:</span>
                   <span className="font-bold text-[#7A1B22] text-xs sm:text-sm">{unit.applicationType === 'Renewal' ? 'RENEWAL' : 'NEW APPLICATION'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-sans font-bold text-slate-500 uppercase block">Authorized Route &amp; Zone:</span>
+                  <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Authorized Route &amp; Zone:</span>
                   <span className="font-bold text-slate-800 text-xs sm:text-sm">Zone {unit.zone} &bull; {unit.todaName || 'NON-TODA'}</span>
                 </div>
               </div>
@@ -332,12 +332,12 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           <div>
             {/* Tricycle Technical Specifications */}
             <div className="relative z-10 mb-3">
-              <p className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              <p className="text-xs font-sans font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                 AUTHORIZED MOTORIZED TRICYCLE UNIT SPECIFICATIONS:
               </p>
               <table className="w-full border-collapse border border-slate-300 text-xs text-left">
                 <thead>
-                  <tr className="bg-slate-100/90 font-sans text-[10px] uppercase font-bold text-slate-700">
+                  <tr className="bg-slate-100/90 font-sans text-xs uppercase font-bold text-slate-700">
                     <th className="border border-slate-300 py-2 px-3 text-center">Make / Brand</th>
                     <th className="border border-slate-300 py-2 px-3 text-center">Year / Model</th>
                     <th className="border border-slate-300 py-2 px-3 text-center">Motor Number</th>
@@ -359,10 +359,10 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
 
             {/* Standard 7 Legal Terms and Conditions (Appendix C) */}
             <div className="relative z-10 mb-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200">
-              <p className="text-[10px] font-sans font-black uppercase tracking-wider text-[#7A1B22] mb-1.5">
+              <p className="text-xs font-sans font-black uppercase tracking-wider text-[#7A1B22] mb-1.5">
                 TERMS AND CONDITIONS (APPENDIX C - MUNICIPAL FRANCHISE):
               </p>
-              <ol className="list-decimal list-outside pl-4 space-y-1 text-[9.5px] sm:text-[10px] text-slate-700 leading-snug">
+              <ol className="list-decimal list-outside pl-4 space-y-1 text-[9.5px] sm:text-xs text-slate-700 leading-snug">
                 <li>The operator and driver shall strictly comply with all national traffic laws, municipal ordinances, and road safety regulations promulgated by the Municipality of Gasan.</li>
                 <li>This permit is strictly <strong>non-transferable</strong> and valid exclusively for the motorized tricycle unit specifically described herein.</li>
                 <li>The unit shall operate strictly within its assigned <strong>authorized route and zone</strong> approved by the Sangguniang Bayan.</li>
@@ -401,14 +401,14 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
               </div>
 
               <div className="text-right">
-                <p className="text-[10px] font-sans uppercase font-bold text-slate-600 mb-6 sm:mb-8 print:mb-8">
+                <p className="text-xs font-sans uppercase font-bold text-slate-600 mb-6 sm:mb-8 print:mb-8">
                   For and by Authority of the Sangguniang Bayan:
                 </p>
                 <div className="inline-block text-center border-t-2 border-slate-800 pt-1.5 min-w-[220px]">
                   <p className="font-serif font-black text-sm sm:text-base text-slate-900 tracking-wide">
                     {MUNICIPAL_SIGNATORY}
                   </p>
-                  <p className="text-[10px] font-sans uppercase font-bold text-slate-600">
+                  <p className="text-xs font-sans uppercase font-bold text-slate-600">
                     Municipal Vice Mayor &amp; Presiding Officer
                   </p>
                   <p className="text-[9px] font-sans text-slate-500 italic">

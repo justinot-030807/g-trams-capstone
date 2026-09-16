@@ -166,7 +166,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
             </div>
             <div>
               <h3 className="font-black text-xs sm:text-sm tracking-wide">Franchise Claim Stub</h3>
-              <p className="text-[10px] text-white/60">Official Payment Slip &bull; 1-Page Cutout</p>
+              <p className="text-xs text-white/60">Official Payment Slip &bull; 1-Page Cutout</p>
             </div>
           </div>
 
@@ -224,7 +224,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
         )}
 
         {/* Scissors Cutout Indicator for Paper Printing */}
-        <div className="w-full max-w-[500px] mb-1.5 hidden print:flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-widest border-b border-dashed border-slate-400 pb-1">
+        <div className="w-full max-w-[500px] mb-1.5 hidden print:flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-widest border-b border-dashed border-slate-400 pb-1">
           <span className="flex items-center gap-1"><Scissors size={12} /> Cut along line</span>
           <span>Official Voucher Slip</span>
         </div>
@@ -279,7 +279,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
           {/* Voucher Lower Body: Two-Column Metadata */}
           <div className="p-3.5 sm:p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-2.5 text-[11px]">
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
               
               {/* Operator Information */}
               <div className="bg-slate-50/80 rounded-xl p-2.5 border border-slate-200/80 space-y-1.5">
@@ -294,12 +294,12 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
                 <div>
                   <span className="text-[9px] font-bold text-slate-400 uppercase block">Address</span>
-                  <span className="font-medium text-slate-800 text-[10px] truncate block">{unit?.address || 'Gasan, Marinduque'}</span>
+                  <span className="font-medium text-slate-800 text-xs truncate block">{unit?.address || 'Gasan, Marinduque'}</span>
                 </div>
 
                 <div>
                   <span className="text-[9px] font-bold text-slate-400 uppercase block">TODA</span>
-                  <span className="font-black text-[#7A1B22] bg-[#7A1B22]/10 px-1.5 py-0.5 rounded text-[10px] inline-block mt-0.5 max-w-full break-words whitespace-normal leading-tight">
+                  <span className="font-black text-[#7A1B22] bg-[#7A1B22]/10 px-1.5 py-0.5 rounded text-xs inline-block mt-0.5 max-w-full break-words whitespace-normal leading-tight">
                     {unit?.todaName || 'NON-TODA'}
                   </span>
                 </div>
@@ -318,7 +318,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
                 <div>
                   <span className="text-[9px] font-bold text-slate-400 uppercase block">Make &amp; Route</span>
-                  <span className="font-medium text-slate-800 text-[10px] block">{unit?.make} &bull; {unit?.zone || 'Zone 1'}</span>
+                  <span className="font-medium text-slate-800 text-xs block">{unit?.make} &bull; {unit?.zone || 'Zone 1'}</span>
                 </div>
 
                 <div>
@@ -331,12 +331,12 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
             {/* Checklist: What to Bring to the Municipal Hall */}
             <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-2.5">
-              <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+              <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
                 <AlertCircle size={12} className="text-amber-600" />
                 What to Bring to the Municipal Hall (Checklist)
               </h4>
 
-              <ul className="space-y-1 text-[10px] text-amber-950 font-medium">
+              <ul className="space-y-1 text-xs text-amber-950 font-medium">
                 <li className="flex items-start gap-1.5">
                   <CheckCircle2 size={11} className="text-emerald-600 shrink-0 mt-0.5" />
                   <span><strong>1. Claim Stub Voucher:</strong> Digital on mobile or printed slip.</span>

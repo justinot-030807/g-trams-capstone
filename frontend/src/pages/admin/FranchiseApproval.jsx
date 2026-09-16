@@ -418,7 +418,7 @@ const FranchiseApproval = () => {
               <p><span className="font-bold text-slate-500">TODA / Zone:</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
               <p><span className="font-bold text-slate-500">Plate Number:</span> <span className="font-mono font-bold text-[#7A1B22] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
               {quickApproveTarget.status === 'Pending' && (
-                <p className="text-[11px] text-blue-600 dark:text-blue-400 pt-1 font-medium">
+                <p className="text-xs text-blue-600 dark:text-blue-400 pt-1 font-medium">
                   &bull; A digital Claim Stub Voucher will be immediately generated for the operator.
                 </p>
               )}
@@ -460,7 +460,7 @@ const FranchiseApproval = () => {
             </div>
 
             <div className="space-y-2.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Rejection Reason</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Rejection Reason</label>
               <select
                 value={quickRejectReason}
                 onChange={(e) => setQuickRejectReason(e.target.value)}
@@ -523,7 +523,7 @@ const FranchiseApproval = () => {
               {applications.filter(a => selectedIds.includes(a._id)).map((app, i) => (
                 <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-white dark:hover:bg-slate-800">
                   <span className="font-bold text-slate-800 dark:text-slate-200">{i + 1}. {app.fullName}</span>
-                  <span className="text-[11px] font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
+                  <span className="text-xs font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
                 </div>
               ))}
             </div>
@@ -573,7 +573,7 @@ const FranchiseApproval = () => {
               {applications.filter(a => selectedIds.includes(a._id)).map((app, i) => (
                 <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-white dark:hover:bg-slate-800">
                   <span className="font-bold text-slate-800 dark:text-slate-200">{i + 1}. {app.fullName}</span>
-                  <span className="text-[11px] font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
+                  <span className="text-xs font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
                 </div>
               ))}
             </div>
@@ -611,7 +611,7 @@ const FranchiseApproval = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">Franchise Approval Queue</h1>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-[11px] sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Review, batch-approve, and generate official MTOPs and transmittal summaries.
             </p>
           </div>
@@ -670,7 +670,7 @@ const FranchiseApproval = () => {
           >
             <FileText size={14} />
             <span>Needs Review (Pending)</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
               activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
             }`}>
               {pendingCount}
@@ -687,7 +687,7 @@ const FranchiseApproval = () => {
           >
             <Printer size={14} />
             <span>Ready for Pickup / Cashier</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
               activeTab === 'ready' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
             }`}>
               {readyCount}
@@ -703,7 +703,7 @@ const FranchiseApproval = () => {
             }`}
           >
             <span>All in Queue</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
               activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
             }`}>
               {allCount}
@@ -784,7 +784,7 @@ const FranchiseApproval = () => {
 
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">
+                      <span className="text-xs font-black px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">
                         Queue #{startIndex + index + 1}
                       </span>
                       <h3 className="font-black text-slate-900 dark:text-white text-base sm:text-lg truncate">
@@ -792,17 +792,17 @@ const FranchiseApproval = () => {
                       </h3>
                       
                       {app.status === 'Ready for Pickup' ? (
-                        <span className="text-[10px] bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 uppercase font-black tracking-wider">
+                        <span className="text-xs bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 uppercase font-black tracking-wider">
                           Ready for Pickup
                         </span>
                       ) : (
-                        <span className="text-[10px] bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 uppercase font-black tracking-wider">
+                        <span className="text-xs bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 uppercase font-black tracking-wider">
                           Pending Review
                         </span>
                       )}
 
                       {/* Document Completeness Badge */}
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
                         comp.isComplete 
                           ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
                           : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
@@ -914,7 +914,7 @@ const FranchiseApproval = () => {
               <span className="mx-1 text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
 
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <span className="text-[11px]">Rows:</span>
+                <span className="text-xs">Rows:</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -1018,7 +1018,7 @@ const FranchiseApproval = () => {
                   </p>
                   <button 
                     onClick={() => setSelectedIds([])}
-                    className="text-[10px] text-white/60 hover:text-white underline cursor-pointer"
+                    className="text-xs text-white/60 hover:text-white underline cursor-pointer"
                   >
                     Clear selection
                   </button>
@@ -1098,10 +1098,10 @@ const FranchiseApproval = () => {
                     <h2 className="font-black text-base text-slate-900 dark:text-white tracking-tight truncate">
                       {selectedApp.fullName}
                     </h2>
-                    <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white/90 border border-slate-200 dark:border-white/15">
+                    <span className="text-xs uppercase font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white/90 border border-slate-200 dark:border-white/15">
                       {selectedApp.applicationType || 'New'} Application
                     </span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#D4AF37]/15 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#D4AF37]/15 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/40">
                       Plate: {selectedApp.plateNo || 'PENDING'}
                     </span>
                   </div>
@@ -1121,7 +1121,7 @@ const FranchiseApproval = () => {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-[11px] font-mono px-2 text-slate-600 dark:text-slate-300">
+                <span className="text-xs font-mono px-2 text-slate-600 dark:text-slate-300">
                   {currentWorkstationIndex >= 0 ? currentWorkstationIndex + 1 : 1} / {filteredApps.length}
                 </span>
                 <button
@@ -1185,43 +1185,43 @@ const FranchiseApproval = () => {
                       <h3 className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-2">
                         <User size={15} /> Operator & Vehicle Specs
                       </h3>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
                         ID: {selectedApp._id.slice(-6)}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Full Name</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">Full Name</p>
                         <p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedApp.fullName}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase text-slate-400">TODA & Zone</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">TODA & Zone</p>
                         <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedApp.todaName} (Zone {selectedApp.zone})</p>
                       </div>
                       <div className="col-span-2">
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Barangay Address</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">Barangay Address</p>
                         <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{selectedApp.address}</p>
                       </div>
                     </div>
 
                     <div className="pt-3 border-t border-slate-200 dark:border-slate-700/80 grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Make / Brand</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">Make / Brand</p>
                         <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedApp.make} ({selectedApp.made || 'N/A'})</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Plate Number</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">Plate Number</p>
                         <p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedApp.plateNo || 'PENDING ASSIGNMENT'}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Motor Number</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">Motor Number</p>
                         <p className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded mt-0.5 border border-slate-200 dark:border-slate-700 select-all">
                           {selectedApp.motorNo}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Chassis Number</p>
+                        <p className="text-xs font-bold uppercase text-slate-400">Chassis Number</p>
                         <p className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded mt-0.5 border border-slate-200 dark:border-slate-700 select-all">
                           {selectedApp.chassisNo}
                         </p>
@@ -1235,7 +1235,7 @@ const FranchiseApproval = () => {
                       <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                         <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Submitted Documents
                       </h4>
-                      <span className="text-[10px] text-slate-400 font-medium">Click to inspect</span>
+                      <span className="text-xs text-slate-400 font-medium">Click to inspect</span>
                     </div>
 
                     <div className="space-y-2 pt-1">
@@ -1269,11 +1269,11 @@ const FranchiseApproval = () => {
 
                             <div className="flex items-center gap-2 shrink-0">
                               {hasFile ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">
                                   <CheckCircle2 size={11} /> Attached
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">
                                   Missing
                                 </span>
                               )}
@@ -1423,7 +1423,7 @@ const FranchiseApproval = () => {
                     >
                       <ZoomOut size={16} />
                     </button>
-                    <span className="text-[11px] font-mono font-bold px-1 text-slate-500 dark:text-slate-400 min-w-[40px] text-center">
+                    <span className="text-xs font-mono font-bold px-1 text-slate-500 dark:text-slate-400 min-w-[40px] text-center">
                       {Math.round(zoomScale * 100)}%
                     </span>
                     <button 
@@ -1506,7 +1506,7 @@ const FranchiseApproval = () => {
                 </div>
 
                 {/* CANVAS BOTTOM INFO BAR */}
-                <div className="px-4 py-2 bg-white dark:bg-slate-900/90 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="px-4 py-2 bg-white dark:bg-slate-900/90 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span className="flex items-center gap-1.5 font-medium">
                     <Eye size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Inspecting: <strong className="text-slate-800 dark:text-slate-200">{currentDoc?.label}</strong>
                   </span>

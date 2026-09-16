@@ -114,7 +114,7 @@ const ManageRevocations = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">Manage Revocations</h1>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-[11px] sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Process violations and revoke operator franchises securely.
             </p>
           </div>
@@ -194,12 +194,12 @@ const ManageRevocations = () => {
                       {activeTab === 'revoked' && (
                         <td className="p-4">
                           <p className="text-sm font-bold text-red-600 dark:text-red-400">{f.cancelReason}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Revoked on: {new Date(f.updatedAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Revoked on: {new Date(f.updatedAt).toLocaleDateString()}</p>
                         </td>
                       )}
 
                       <td className="p-4 text-center">
-                        <span className={`inline-flex px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider border ${
+                        <span className={`inline-flex px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wider border ${
                           f.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' : 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60'
                         }`}>
                           {f.status}
@@ -248,7 +248,7 @@ const ManageRevocations = () => {
               <span className="mx-1 text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
 
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <span className="text-[11px]">Rows:</span>
+                <span className="text-xs">Rows:</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -370,7 +370,7 @@ const ManageRevocations = () => {
                   />
                   <UploadCloud className="mx-auto text-slate-400 dark:text-slate-500 mb-2" size={32} />
                   <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{evidenceFile ? evidenceFile.name : 'Tap to upload order or ticket'}</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Accepts PDF, JPG, or PNG</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Accepts PDF, JPG, or PNG</p>
                 </div>
               </div>
 

@@ -173,11 +173,13 @@ const Register = () => {
     }
 
     setIsLoading(true);
+    const slowTimer = setTimeout(() => setError('YOUR NETWORK SEEMS SLOW. PLEASE WAIT...'), 8000);
 
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
       });
+      clearTimeout(slowTimer);
       const data = await response.json();
       if (response.ok) { 
         setSuccess('OTP CODE SENT SUCCESSFULLY!'); 
@@ -188,6 +190,7 @@ const Register = () => {
     } catch (err) { 
       setError('CANNOT CONNECT TO THE SERVER.'); 
     } finally { 
+      clearTimeout(slowTimer);
       setIsLoading(false); 
     }
   };
@@ -322,21 +325,35 @@ const Register = () => {
         {/* CENTERED AUTH CARD */}
         <main className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] mx-auto px-4 my-auto py-3 sm:py-6 flex flex-col items-center justify-center animate-card-entrance">
           <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-5">
-            
-            <div className="flex flex-col items-center mb-2.5 text-center">
+            {showGoogleWelcome ? (
+              <div className="flex flex-col items-center justify-center text-center py-4 space-y-4 animate-in zoom-in-95">
+                {googleProfileData?.picture && (
+                  <img src={googleProfileData.picture} alt="Profile" className="w-16 h-16 rounded-full shadow-md mx-auto" />
+                )}
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Welcome, {googleProfileData?.name}!</h3>
+                <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                  You're almost there! To complete your registration via Google, we just need a few more details about your TODA and Barangay.
+                </p>
+                <button type="button" onClick={() => setShowGoogleWelcome(false)} className="w-full bg-[#7A1B22] text-white py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-md mt-2 hover:bg-[#5a1419] transition-colors">
+                  Proceed to Fill Form
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col items-center mb-2.5 text-center">
               <div className="w-10 h-10 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-1.5 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance">
                 <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
               </div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
                 {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
               </h2>
-              <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
+              <p className="text-[9px] sm:text-xs text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
                 {step === 1 ? 'CREATE AN OPERATOR OR TODA ACCOUNT' : `CODE SENT TO ${formData.contact}`}
               </p>
             </div>
 
             {error && (
-              <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
+              <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
                 <p>{error}</p>
                 {error.includes('ALREADY EXISTS') && (
                   <Link to="/login" className="inline-block mt-1 font-black text-[#7A1B22] underline tracking-wider">
@@ -346,7 +363,7 @@ const Register = () => {
               </div>
             )}
             {success && (
-              <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
+              <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
                 {success}
               </div>
             )}
@@ -354,20 +371,20 @@ const Register = () => {
             {step === 1 && (
               <form onSubmit={handleSubmitRegisterForm} className="space-y-2">
                 <div className="animate-item-2">
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
-                  <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
+                  <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 animate-item-2">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">BARANGAY</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">BARANGAY</label>
                     <select name="address" value={formData.address} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
                       <option value="" disabled>Select Brgy</option>
                       {GASAN_BARANGAYS.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA ASSOCIATION</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA ASSOCIATION</label>
                     <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
                       {TODA_LIST.map((toda) => <option key={toda} value={toda}>{toda}</option>)}
                     </select>
@@ -375,13 +392,13 @@ const Register = () => {
                 </div>
 
                 <div className="animate-item-3">
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">EMAIL OR PHONE NUMBER</label>
-                  <input type="text" name="contact" value={formData.contact} onChange={handleChange} required className={inputClasses} placeholder="juan@gmail.com or 09123456789" />
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">EMAIL OR PHONE NUMBER</label>
+                  <input type="text" name="contact" maxLength="50" value={formData.contact} onChange={handleChange} required className={inputClasses} placeholder="juan@gmail.com or 09123456789" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 animate-item-3">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
                     <div className="relative">
                       <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
@@ -390,7 +407,7 @@ const Register = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
                     <div className="relative">
                       <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
@@ -421,7 +438,7 @@ const Register = () => {
                     onChange={() => setTermsAccepted(!termsAccepted)} 
                     className="mt-0.5 accent-[#7A1B22] w-3.5 h-3.5 rounded cursor-pointer"
                   />
-                  <label htmlFor="terms" className="text-[10px] text-slate-600 leading-tight cursor-pointer font-medium uppercase tracking-tight">
+                  <label htmlFor="terms" className="text-xs text-slate-600 leading-tight cursor-pointer font-medium uppercase tracking-tight">
                     I ACCEPT THE <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#7A1B22] hover:underline">TERMS & PRIVACY POLICY</button>.
                   </label>
                 </div>
@@ -468,7 +485,7 @@ const Register = () => {
                           setError('');
                           setShowGoogleToast(false);
                         }}
-                        className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
+                        className="text-xs font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
                       >
                         Cancel Google Sign-in & Register Manually
                       </button>
@@ -483,7 +500,7 @@ const Register = () => {
                 {/* DIVIDER */}
                 <div className="flex items-center gap-3 my-2 animate-item-4">
                   <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-[10px] font-semibold text-slate-400">or</span>
+                  <span className="text-xs font-semibold text-slate-400">or</span>
                   <div className="flex-1 h-px bg-slate-200" />
                 </div>
 
@@ -515,7 +532,7 @@ const Register = () => {
             {step === 2 && (
               <form onSubmit={handleVerifyOTP} className="space-y-2.5 animate-item-2">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">
                     ENTER 6-DIGIT CODE
                   </label>
                   <input 
@@ -537,7 +554,7 @@ const Register = () => {
                 <button 
                   type="button" 
                   onClick={() => setStep(1)} 
-                  className="w-full text-center text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
+                  className="w-full text-center text-xs font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
                 >
                   ← CHANGE CONTACT INFO
                 </button>
@@ -546,12 +563,14 @@ const Register = () => {
 
             {step === 1 && (
               <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
                   ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#7A1B22] hover:underline">LOG IN HERE</Link>
                 </p>
               </div>
             )}
 
+              </>
+            )}
           </div>
         </main>
       </div>

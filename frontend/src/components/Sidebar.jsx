@@ -260,7 +260,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             {isOpen && (
               <div className="flex flex-col min-w-0 transition-opacity duration-200">
                 <span className="text-white font-black text-sm tracking-wider whitespace-nowrap">G-TRAMS</span>
-                <span className="text-white/60 dark:text-slate-400 text-[10px] font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
+                <span className="text-white/60 dark:text-slate-400 text-xs font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
               </div>
             )}
           </div>
@@ -398,7 +398,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                             {/* Tooltip for sub folder icon in minimized mode */}
                             {!isOpen && (
-                              <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-bold rounded-lg shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/subitem:opacity-100 transition-all pointer-events-none z-[100] items-center gap-1.5">
+                              <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/subitem:opacity-100 transition-all pointer-events-none z-[100] items-center gap-1.5">
                                 <span>{sub.name}</span>
                                 {Boolean(sub.badge) && (
                                   <span className="bg-red-500 text-white text-[9px] px-1 rounded-full font-black">

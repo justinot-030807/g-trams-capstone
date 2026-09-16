@@ -390,7 +390,7 @@ const UserManagement = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">User Management</h1>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-[11px] sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Manage operators, roles, fleet capacities, and live account activity.
             </p>
           </div>
@@ -564,7 +564,7 @@ const UserManagement = () => {
                           </div>
                           <div>
                             <span className={`font-bold block text-sm ${user.isActive === false ? 'text-red-900 dark:text-red-300 line-through decoration-red-300' : 'text-slate-900 dark:text-white'}`}>{user.name}</span>
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 capitalize">{user.role ? user.role.replace('_', ' ') : 'Operator'}</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 capitalize">{user.role ? user.role.replace('_', ' ') : 'Operator'}</span>
                           </div>
                         </div>
                       </td>
@@ -572,7 +572,7 @@ const UserManagement = () => {
                       {/* Contact & TODA */}
                       <td className="py-3 px-3">
                         <p className="text-xs font-bold text-slate-900 dark:text-white">{user.contact}</p>
-                        <p className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 inline-block px-1.5 py-0.5 rounded border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 mt-0.5">
+                        <p className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 inline-block px-1.5 py-0.5 rounded border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 mt-0.5">
                           {user.todaAssociation || 'NON-TODA'}
                         </p>
                       </td>
@@ -602,7 +602,7 @@ const UserManagement = () => {
                       {/* Activity Status */}
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border shadow-2xs ${activity.badgeClass}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border shadow-2xs ${activity.badgeClass}`}>
                             <span className="relative flex h-2 w-2">
                               {activity.isPulsing && (
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -617,12 +617,12 @@ const UserManagement = () => {
                       {/* Account Status */}
                       <td className="py-3 px-3">
                         {user.isActive === false ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 text-[10px] font-bold uppercase tracking-wider border border-red-200 dark:border-red-800">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider border border-red-200 dark:border-red-800">
                             <ShieldAlert size={12} /> Deactivated
                           </span>
                         ) : user.isVerified ? (
                           (user.authProvider === 'google' || user.googleId) ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[10px] font-bold tracking-tight border border-blue-200 dark:border-blue-800/70 shadow-2xs" title={`Google Verified: ${user.email || user.contact}`}>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-xs font-bold tracking-tight border border-blue-200 dark:border-blue-800/70 shadow-2xs" title={`Google Verified: ${user.email || user.contact}`}>
                               <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -632,12 +632,12 @@ const UserManagement = () => {
                               Verified (Google)
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60">
                               <ShieldCheck size={12} /> Verified (SMS)
                             </span>
                           )
                         ) : (
-                          <span className="inline-flex px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
+                          <span className="inline-flex px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
                             Unverified
                           </span>
                         )}
@@ -676,7 +676,7 @@ const UserManagement = () => {
                         </button>
 
                         {isAdminUser ? (
-                          <span className="inline-flex items-center px-2 py-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold text-slate-400 dark:text-slate-500">
                             Protected
                           </span>
                         ) : (
@@ -717,7 +717,7 @@ const UserManagement = () => {
               <span className="mx-1 text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
 
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <span className="text-[11px]">Rows:</span>
+                <span className="text-xs">Rows:</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -865,9 +865,9 @@ const UserManagement = () => {
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Change User Role?</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
               Are you sure you want to change <strong className="text-slate-800 dark:text-slate-200">{pendingRoleChange.userName}</strong>'s role from <br/>
-              <span className="inline-block mt-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[10px] rounded uppercase tracking-wider border border-slate-200 dark:border-slate-700">{pendingRoleChange.oldRole}</span> 
+              <span className="inline-block mt-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs rounded uppercase tracking-wider border border-slate-200 dark:border-slate-700">{pendingRoleChange.oldRole}</span> 
               <span className="mx-2 text-slate-300 dark:text-slate-600">➔</span> 
-              <span className="inline-block px-2 py-1 bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#7A1B22] dark:text-[#D4AF37] font-bold text-[10px] rounded uppercase tracking-wider border border-[#D4AF37]/40">{pendingRoleChange.newRole}</span> ?
+              <span className="inline-block px-2 py-1 bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#7A1B22] dark:text-[#D4AF37] font-bold text-xs rounded uppercase tracking-wider border border-[#D4AF37]/40">{pendingRoleChange.newRole}</span> ?
             </p>
             <div className="flex gap-3">
               <button onClick={() => setIsConfirmOpen(false)} className="flex-1 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm">Cancel</button>
@@ -1049,7 +1049,7 @@ const UserManagement = () => {
                             <span className="w-2 h-2 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]"></span>
                             Plate No: {unit.plateNo || 'Pending Plate'}
                           </span>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
                             unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' :
                             unit.status === 'Pending' || unit.status === 'Ready for Pickup' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' :
                             unit.status === 'Expired' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' :
@@ -1058,7 +1058,7 @@ const UserManagement = () => {
                             {unit.status || 'Active'}
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-700/50">
+                        <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-700/50">
                           <div>
                             <span className="font-medium text-slate-400 dark:text-slate-500">Make/Model:</span>{' '}
                             <strong className="text-slate-800 dark:text-slate-200">{unit.make || unit.made || 'N/A'}</strong>

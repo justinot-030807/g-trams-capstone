@@ -148,7 +148,7 @@ const HelpSupport = () => {
         <div className="bg-gradient-to-br from-[#7A1B22] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
           <div className="relative z-10">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-950 bg-[#D4AF37] px-2.5 py-0.5 rounded-md">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-950 bg-[#D4AF37] px-2.5 py-0.5 rounded-md">
               Helpdesk &amp; Support
             </span>
             <h1 className="text-lg sm:text-xl font-bold tracking-tight mt-2 mb-1">
@@ -201,7 +201,7 @@ const HelpSupport = () => {
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck size={18} className="text-[#D4AF37]" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">
                   Municipal Support
                 </span>
               </div>
@@ -223,7 +223,7 @@ const HelpSupport = () => {
                   <Phone size={15} />
                 </div>
                 <div>
-                  <p className="text-[10px] text-[#D4AF37] uppercase font-bold tracking-wider">
+                  <p className="text-xs text-[#D4AF37] uppercase font-bold tracking-wider">
                     Hotline (Office Hours)
                   </p>
                   <p className="font-bold text-xs tracking-wide">+63 (042) 342-1234 / 0912 345 6789</p>
@@ -239,7 +239,7 @@ const HelpSupport = () => {
                   <Mail size={15} />
                 </div>
                 <div>
-                  <p className="text-[10px] text-[#D4AF37] uppercase font-bold tracking-wider">
+                  <p className="text-xs text-[#D4AF37] uppercase font-bold tracking-wider">
                     Official Email
                   </p>
                   <p className="font-bold text-xs tracking-wide">bplo@gasan.gov.ph</p>
@@ -276,7 +276,7 @@ const HelpSupport = () => {
                   <span className="text-slate-500">Closed</span>
                 </li>
               </ul>
-              <p className="text-[10px] text-slate-500 mt-3 font-medium italic">
+              <p className="text-xs text-slate-500 mt-3 font-medium italic">
                 * Processing of new franchises and renewals are only done during office hours.
               </p>
             </div>
@@ -300,7 +300,7 @@ const HelpSupport = () => {
                   <span className="text-red-500 font-bold">₱50.00</span>
                 </li>
               </ul>
-              <p className="text-[10px] text-slate-500 mt-3 font-medium italic">
+              <p className="text-xs text-slate-500 mt-3 font-medium italic">
                 * All payments must be made directly to the Municipal Cashier. Do not pay online.
               </p>
             </div>
@@ -318,7 +318,7 @@ const HelpSupport = () => {
                 <span className="bg-[#D4AF37] text-slate-950 text-[9px] font-black px-2 py-0.5 rounded tracking-widest uppercase">
                   LEGAL & PRIVACY
                 </span>
-                <span className="text-[10px] text-amber-200/90 font-medium">
+                <span className="text-xs text-amber-200/90 font-medium">
                   RA 10173 • RA 7160 • Art. 172 RPC
                 </span>
               </div>
@@ -384,7 +384,7 @@ const HelpSupport = () => {
                   >
                     <div className="flex items-center gap-2.5 pr-3 flex-wrap sm:flex-nowrap">
                       {idx === 0 && !searchQuery && (
-                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-300 dark:border-amber-800/80">
+                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-300 dark:border-amber-800/80">
                           <Flame size={12} className="text-amber-600 dark:text-amber-400" /> 
                           <span>Top FAQ</span>
                         </span>
@@ -405,12 +405,12 @@ const HelpSupport = () => {
                       <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-slate-800 flex-wrap gap-2">
                         <div className="flex gap-1.5 flex-wrap">
                           {faq.tags.map(tag => (
-                            <span key={tag} className="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-md">
+                            <span key={tag} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-md">
                               #{tag}
                             </span>
                           ))}
                         </div>
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                           {faq.views} views
                         </span>
                       </div>
@@ -493,7 +493,7 @@ const HelpSupport = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{dev.name}</h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">{dev.role}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{dev.role}</p>
                 </div>
               </div>
             ))}
@@ -512,4 +512,4 @@ const HelpSupport = () => {
   );
 };
 
-export default HelpSupport;
+export default HelpSupport;

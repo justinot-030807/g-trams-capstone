@@ -107,7 +107,7 @@ const PwaInstallBanner = () => {
               </span>
             </div>
             <h4 className="text-sm font-black text-white leading-tight">Install G-TRAMS App</h4>
-            <p className="text-[11px] text-white/80 font-medium leading-tight mt-1">
+            <p className="text-xs text-white/80 font-medium leading-tight mt-1">
               Add to your phone for quick offline access and franchise notifications.
             </p>
 
@@ -169,7 +169,7 @@ const PwaInstallBanner = () => {
                 </div>
                 <div className="text-xs">
                   <p className="font-bold text-slate-800 dark:text-slate-200">1. Tap the Share Button</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-[11px]">Located at the bottom bar of your Safari browser.</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Located at the bottom bar of your Safari browser.</p>
                 </div>
               </div>
 
@@ -179,7 +179,7 @@ const PwaInstallBanner = () => {
                 </div>
                 <div className="text-xs">
                   <p className="font-bold text-slate-800 dark:text-slate-200">2. Tap "Add to Home Screen"</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-[11px]">Scroll down the share options and tap "Add to Home Screen".</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Scroll down the share options and tap "Add to Home Screen".</p>
                 </div>
               </div>
             </div>

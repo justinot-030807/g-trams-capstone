@@ -25,6 +25,7 @@ const franchiseSchema = new mongoose.Schema({
     },
     
     dateApplied: { type: Date, default: Date.now },
+    approvalDate: { type: Date },
     cedulaDate: { type: Date, required: true },
     cedulaAddress: { type: String, required: true },
     cedulaSerialNo: { type: String, required: true },

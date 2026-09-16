@@ -96,9 +96,11 @@ const OperatorDashboard = () => {
     if (changeLanguage) changeLanguage(nextLang);
   };
 
-  const calculateDaysRemaining = (dateApplied) => {
-    if (!dateApplied) return null;
-    const expDate = new Date(dateApplied);
+  const calculateDaysRemaining = (unit) => {
+    if (!unit) return null;
+    const dateToUse = typeof unit === 'object' ? (unit.approvalDate || unit.dateApplied) : unit;
+    if (!dateToUse) return null;
+    const expDate = new Date(dateToUse);
     expDate.setFullYear(expDate.getFullYear() + 1);
     const today = new Date();
     const diffTime = expDate.getTime() - today.getTime();
@@ -284,9 +286,11 @@ const OperatorDashboard = () => {
     return steps;
   };
 
-  const getExpirationDate = (dateApplied) => {
-    if (!dateApplied) return 'N/A';
-    const date = new Date(dateApplied);
+  const getExpirationDate = (unit) => {
+    if (!unit) return 'N/A';
+    const dateToUse = typeof unit === 'object' ? (unit.approvalDate || unit.dateApplied) : unit;
+    if (!dateToUse) return 'N/A';
+    const date = new Date(dateToUse);
     date.setFullYear(date.getFullYear() + 1); 
     const locale = language === 'fil' ? 'tl-PH' : 'en-US';
     return date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
@@ -355,7 +359,7 @@ const OperatorDashboard = () => {
           <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={18} />
           <div>
             <p className="text-xs font-bold text-red-900 dark:text-red-300">{t('dashboard.attentionTitle', 'Application Needs Attention')}</p>
-            <p className="text-[11px] text-red-700 dark:text-red-400 leading-snug">{t('dashboard.attentionDesc', 'Please review the reason below and click "Fix Issues" to re-submit corrected details.')}</p>
+            <p className="text-xs text-red-700 dark:text-red-400 leading-snug">{t('dashboard.attentionDesc', 'Please review the reason below and click "Fix Issues" to re-submit corrected details.')}</p>
           </div>
         </div>
       );
@@ -367,7 +371,7 @@ const OperatorDashboard = () => {
           <AlertCircle className="text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" size={18} />
           <div>
             <p className="text-xs font-bold text-orange-900 dark:text-orange-300">{t('dashboard.expiredTitle', 'Franchise Expired')}</p>
-            <p className="text-[11px] text-orange-700 dark:text-orange-400 leading-snug">{t('dashboard.expiredDesc', 'Your franchise validity has ended. Click "Renew Franchise" to submit your updated CTC/Cedula.')}</p>
+            <p className="text-xs text-orange-700 dark:text-orange-400 leading-snug">{t('dashboard.expiredDesc', 'Your franchise validity has ended. Click "Renew Franchise" to submit your updated CTC/Cedula.')}</p>
           </div>
         </div>
       );
@@ -387,7 +391,7 @@ const OperatorDashboard = () => {
 
     return (
       <div className="mb-5 bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
+        <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
           {t('dashboard.appProgress', 'Application Progress')}
         </p>
         
@@ -563,10 +567,10 @@ const OperatorDashboard = () => {
                             {loggedInUserName}
                           </h3>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]">
+                            <span className="inline-block text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]">
                               {isTodaPresident ? 'TODA President' : 'Operator'}
                             </span>
-                            <span className="text-[11px] text-slate-400">G-TRAMS Gasan</span>
+                            <span className="text-xs text-slate-400">G-TRAMS Gasan</span>
                           </div>
                         </div>
                       </div>
@@ -599,7 +603,7 @@ const OperatorDashboard = () => {
                             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                               Account Settings
                             </p>
-                            <p className="text-[10px] sm:text-[11px] text-slate-400">
+                            <p className="text-xs sm:text-xs text-slate-400">
                               Personal info, password, and preferences
                             </p>
                           </div>
@@ -623,7 +627,7 @@ const OperatorDashboard = () => {
                             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                               Explore Portal Tour
                             </p>
-                            <p className="text-[10px] sm:text-[11px] text-slate-400">
+                            <p className="text-xs sm:text-xs text-slate-400">
                               Quick visual guide of portal features
                             </p>
                           </div>
@@ -647,7 +651,7 @@ const OperatorDashboard = () => {
                             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                               Help &amp; Support
                             </p>
-                            <p className="text-[10px] sm:text-[11px] text-slate-400">
+                            <p className="text-xs sm:text-xs text-slate-400">
                               FAQs, hotline &amp; info
                             </p>
                           </div>
@@ -678,7 +682,7 @@ const OperatorDashboard = () => {
 
             {/* Greeting & Bold User Name */}
             <div className="flex flex-col min-w-0">
-              <span className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">
                 {opGreeting.text},
               </span>
               <span className="text-base sm:text-xl font-black text-white tracking-tight truncate">
@@ -747,7 +751,7 @@ const OperatorDashboard = () => {
                             {t('nav.notifications', 'Notifications')}
                           </h4>
                         </div>
-                        <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
                           {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
                         </p>
                       </div>
@@ -757,7 +761,7 @@ const OperatorDashboard = () => {
                           <button 
                             type="button"
                             onClick={markAllNotifsRead} 
-                            className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                            className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
                           >
                             {t('nav.markAllRead', 'Mark all read')}
                           </button>
@@ -781,7 +785,7 @@ const OperatorDashboard = () => {
                             <Bell size={22} />
                           </div>
                           <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                          <p className="text-[11px] text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
+                          <p className="text-xs text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
                         </div>
                       ) : (
                         notifications.map(notif => (
@@ -795,7 +799,7 @@ const OperatorDashboard = () => {
                             className={`p-4 cursor-pointer transition-colors ${notif.isRead ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60' : 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
                           >
                             <p className={`text-xs text-slate-900 dark:text-white line-clamp-1 ${notif.isRead ? 'font-semibold' : 'font-black'}`}>{notif.title}</p>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
                           </div>
                         ))
                       )}
@@ -838,7 +842,7 @@ const OperatorDashboard = () => {
                   <h4 className="text-xs sm:text-sm font-bold truncate">
                     Franchise Approved!
                   </h4>
-                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
                     Claim Stub is ready for Municipal Cashier
                   </p>
                 </div>
@@ -867,7 +871,7 @@ const OperatorDashboard = () => {
                   <h4 className="text-xs sm:text-sm font-bold truncate">
                     Application Needs Attention
                   </h4>
-                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
                     Review remarks and submit corrected documents
                   </p>
                 </div>
@@ -888,7 +892,7 @@ const OperatorDashboard = () => {
                     ? `Maximum Fleet Capacity (${maxUnits}/${maxUnits})`
                     : 'Available Franchise Slot'}
                 </h4>
-                <p className="text-[11px] sm:text-xs text-white/80 mt-0.5">
+                <p className="text-xs sm:text-xs text-white/80 mt-0.5">
                   {franchises.length >= maxUnits
                     ? `All allowed ${maxUnits} units are currently registered`
                     : `Registered operators may register up to ${maxUnits} units in Gasan`}
@@ -917,7 +921,7 @@ const OperatorDashboard = () => {
             </div>
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">TODA Management Console</h3>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md leading-relaxed">
+              <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md leading-relaxed">
                 Welcome President. You can view your registered members, submit the official TODA Masterlist, and coordinate with the BPLO office here.
               </p>
             </div>
@@ -964,7 +968,7 @@ const OperatorDashboard = () => {
                 </span>
               </div>
 
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {franchises.length >= maxUnits 
                   ? 'Slots Full' 
                   : `${maxUnits - franchises.length} Slot(s) Available`}
@@ -1003,7 +1007,7 @@ const OperatorDashboard = () => {
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               {t('dashboard.garageTitle', 'My Franchise Garage')}
             </h2>
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
+            <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
               {t('dashboard.garageSub', 'Assigned tricycle units under your account')}
             </p>
           </div>
@@ -1052,7 +1056,7 @@ const OperatorDashboard = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
           {franchises.map((unit, unitIndex) => (
             <div 
               key={unit?._id} 
@@ -1070,12 +1074,12 @@ const OperatorDashboard = () => {
               <div>
                 {/* Header Row: TODA tag & Status Badge */}
                 <div className="flex justify-between items-center mb-3 mt-0.5 gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-[11px] font-black uppercase tracking-wider border border-slate-200/60 dark:border-slate-700/60 truncate">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-black uppercase tracking-wider border border-slate-200/60 dark:border-slate-700/60 truncate">
                     <Users size={12} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                     <span className="truncate">{unit?.todaName || 'TODA'}</span>
                   </span>
 
-                  <span className={`px-2.5 py-1 text-[10px] font-black rounded-xl uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs shrink-0 ${
+                  <span className={`px-2.5 py-1 text-xs font-black rounded-xl uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs shrink-0 ${
                     unit?.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                     unit?.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
                     unit?.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
@@ -1114,10 +1118,10 @@ const OperatorDashboard = () => {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="inline-block px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight shadow-2xs">
+                    <span className="inline-block px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight shadow-2xs">
                       {unit?.make || 'Tricycle'}
                     </span>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 uppercase">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5 uppercase">
                       {unit?.made || 'Model'}
                     </p>
                   </div>
@@ -1153,7 +1157,7 @@ const OperatorDashboard = () => {
                   {renderApplicationTracker(unit?.status)}
 
                   {unit?.status === 'Active' && (() => {
-                    const daysRemaining = calculateDaysRemaining(unit?.dateApplied);
+                    const daysRemaining = calculateDaysRemaining(unit);
                     const isExpiringSoon = daysRemaining !== null && daysRemaining <= 60 && daysRemaining > 0;
                     const isOverdue = daysRemaining !== null && daysRemaining <= 0;
 
@@ -1168,19 +1172,19 @@ const OperatorDashboard = () => {
                         <div className="flex justify-between items-center mb-1.5">
                           <div className="flex items-center gap-1.5">
                             <CalendarDays size={13} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
-                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
+                            <span className={`text-xs font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
                               {t('dashboard.validUntil', 'Valid Until')}
                             </span>
                           </div>
                           <p className={`text-xs font-bold ${isOverdue ? 'text-red-950 dark:text-red-200' : isExpiringSoon ? 'text-amber-950 dark:text-amber-200' : 'text-emerald-950 dark:text-emerald-200'}`}>
-                            {getExpirationDate(unit?.dateApplied)}
+                            {getExpirationDate(unit)}
                           </p>
                         </div>
 
                         {/* Traffic-Light Urgency Meter */}
                         {daysRemaining !== null && (
                           <div className="space-y-1 pt-0.5">
-                            <div className="flex justify-between items-center text-[10px] font-semibold">
+                            <div className="flex justify-between items-center text-xs font-semibold">
                               <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                 Status
                               </span>
@@ -1205,12 +1209,12 @@ const OperatorDashboard = () => {
 
                             {isExpiringSoon && (
                               <div className="pt-1.5 flex items-center justify-between">
-                                <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-tight">
+                                <p className="text-xs text-amber-800 dark:text-amber-300 font-medium leading-tight">
                                   Within 60-day renewal window. Renew early to avoid penalties.
                                 </p>
                                 <button
                                   onClick={() => navigate(`/renew-franchise/${unit._id}`)}
-                                  className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shadow-2xs transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer"
+                                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase px-2 py-0.5 rounded-md shadow-2xs transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer"
                                 >
                                   Renew Now
                                 </button>
@@ -1227,7 +1231,7 @@ const OperatorDashboard = () => {
                       <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
                       <div>
                         <h4 className="text-blue-900 dark:text-blue-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
-                        <p className="text-[11px] font-normal text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                        <p className="text-xs font-normal text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
                       </div>
                     </div>
                   )}
@@ -1306,15 +1310,15 @@ const OperatorDashboard = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
               <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
-                <p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.operator', 'Operator')}</p>
+                <p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
                 <p className="font-bold text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.fullName}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-[10px]">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
             </div>
             <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
           </div>
@@ -1344,7 +1348,7 @@ const OperatorDashboard = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-base text-slate-900 dark:text-white">Cancel Application</h3>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
                 </div>
               </div>
               <button 

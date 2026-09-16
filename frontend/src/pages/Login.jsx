@@ -70,12 +70,17 @@ const Login = () => {
 
     setIsLoading(true);
 
+    const slowNetworkTimer = setTimeout(() => {
+      setError('YOUR NETWORK SEEMS SLOW. PLEASE WAIT WHILE WE CONNECT...');
+    }, 8000);
+
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
+      clearTimeout(slowNetworkTimer);
 
       const data = await response.json();
 
@@ -104,6 +109,7 @@ const Login = () => {
     } catch (err) {
       setError('CANNOT CONNECT TO THE SERVER.');
     } finally {
+      clearTimeout(slowNetworkTimer);
       setIsLoading(false);
     }
   };
@@ -209,7 +215,7 @@ const Login = () => {
             </div>
 
             {error && (
-              <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake uppercase tracking-wide">
+              <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake uppercase tracking-wide">
                 <p>{error}</p>
                 {error.toLowerCase().includes('maintenance') && (
                   <Link to="/maintenance" className="inline-block mt-1 font-black text-[#7A1B22] underline tracking-wider">
@@ -221,7 +227,7 @@ const Login = () => {
 
             <form onSubmit={handleLogin} className="space-y-2.5">
               <div className="animate-item-2">
-                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">
                   EMAIL OR PHONE NUMBER
                 </label>
                 <input
@@ -237,7 +243,7 @@ const Login = () => {
 
               <div className="animate-item-3">
                 <div className="flex justify-between items-center mb-0.5">
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     PASSWORD
                   </label>
                 </div>
@@ -302,7 +308,7 @@ const Login = () => {
             {/* DIVIDER */}
             <div className="flex items-center gap-3 my-2 animate-item-4">
               <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-[10px] font-semibold text-slate-400">or</span>
+              <span className="text-xs font-semibold text-slate-400">or</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
 
@@ -340,7 +346,7 @@ const Login = () => {
             </div>
 
             <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
                 <Link to="/register" className="font-black text-[#7A1B22] hover:underline">
                   CREATE AN ACCOUNT

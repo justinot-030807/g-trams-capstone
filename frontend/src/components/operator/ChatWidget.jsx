@@ -323,7 +323,7 @@ const ChatWidget = () => {
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {!isOpen && unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 shadow-md animate-bounce">
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center px-1 shadow-md animate-bounce">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -348,7 +348,7 @@ const ChatWidget = () => {
               <h3 className="font-bold text-sm">
                 {isBroadcast ? 'Broadcast Announcement' : activeThread ? (String(currentUser.role).toLowerCase().includes('admin') ? 'Chat with Operator' : 'GTRAMS Admin Support') : 'Messages'}
               </h3>
-              <p className="text-[10px] text-white/70 font-medium">
+              <p className="text-xs text-white/70 font-medium">
                 {isBroadcast ? 'Send to all operators & TODA' : activeThread ? 'Online' : 'GTRAMS Communications'}
               </p>
             </div>
@@ -356,7 +356,7 @@ const ChatWidget = () => {
               {(activeThread || isBroadcast) && (
                 <button
                   onClick={() => { setActiveThread(null); setIsBroadcast(false); }}
-                  className="text-[10px] font-medium px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors cursor-pointer"
+                  className="text-xs font-medium px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors cursor-pointer"
                 >
                   Back to List
                 </button>
@@ -420,7 +420,7 @@ const ChatWidget = () => {
                       >
                         <div className="overflow-hidden pr-2">
                           <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{names}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{t.lastMessage || 'No messages yet'}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{t.lastMessage || 'No messages yet'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {String(currentUser.role).toLowerCase().includes('admin') && !t.isAnnouncement && (
@@ -432,7 +432,7 @@ const ChatWidget = () => {
                             </button>
                           )}
                           {t.unreadCount > 0 && (
-                            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                            <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0">
                               {t.unreadCount}
                             </span>
                           )}
@@ -461,7 +461,7 @@ const ChatWidget = () => {
                       <button
                         key={i}
                         onClick={() => { setInput(q); }}
-                        className="block w-full p-2 text-[11px] text-left text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-colors"
+                        className="block w-full p-2 text-xs text-left text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-colors"
                       >
                         {q}
                       </button>
@@ -481,7 +481,7 @@ const ChatWidget = () => {
                           : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-bl-md shadow-xs'
                       }`}>
                         {!isMine && msg.sender?.name && (
-                          <p className={`text-[10px] font-bold mb-0.5 ${
+                          <p className={`text-xs font-bold mb-0.5 ${
                             isMine ? 'text-white/70 dark:text-slate-950/60' : 'text-[#7A1B22] dark:text-[#D4AF37]'
                           }`}>
                             {msg.sender.name}

@@ -39,7 +39,7 @@ const AuthFooter = () => {
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-lg text-white leading-tight">G-TRAMS</span>
-                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest">Gasan Municipality</span>
+                <span className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest">Gasan Municipality</span>
               </div>
             </div>
             <p className="text-sm text-white/60 leading-relaxed max-w-xs mt-2">
@@ -107,7 +107,7 @@ const AuthFooter = () => {
         <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40 font-medium">
           <p>© 2026 Municipality of Gasan. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <span className="font-mono text-[10px] bg-white/5 px-2 py-1 rounded text-white/60">v2.4.0</span>
+            <span className="font-mono text-xs bg-white/5 px-2 py-1 rounded text-white/60">v2.4.0</span>
           </div>
         </div>
       </div>

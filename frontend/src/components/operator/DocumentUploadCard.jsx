@@ -114,7 +114,7 @@ const DocumentUploadCard = ({
               <span>Files / Gallery</span>
             </button>
           </div>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
             Clear photo or scanned copy
           </p>
         </div>
@@ -167,7 +167,7 @@ const DocumentUploadCard = ({
       </div>
       
       {sizeError && (
-        <p className="mt-1.5 text-[11px] font-bold text-red-600 dark:text-red-400">
+        <p className="mt-1.5 text-xs font-bold text-red-600 dark:text-red-400">
           File exceeds 10MB limit. Please choose a smaller file.
         </p>
       )}

@@ -95,7 +95,7 @@ const OperatorBottomNav = ({ role }) => {
                   <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] shadow-xs" />
                 )}
               </div>
-              <span className={`text-[10px] mt-0.5 tracking-tight transition-all duration-200 ${
+              <span className={`text-xs mt-0.5 tracking-tight transition-all duration-200 ${
                 item.active ? 'font-black scale-105' : 'font-semibold'
               }`}>
                 {item.label}

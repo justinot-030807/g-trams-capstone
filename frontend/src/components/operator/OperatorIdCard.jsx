@@ -36,7 +36,7 @@ const OperatorIdCard = ({ user }) => {
               <ShieldCheck className="text-[#D4AF37]" size={24} />
               <div>
                 <h3 className="text-white font-bold text-xs leading-tight tracking-wider uppercase">LGU Gasan</h3>
-                <p className="text-[#D4AF37] text-[10px] font-semibold uppercase tracking-widest">Digital Operator ID</p>
+                <p className="text-[#D4AF37] text-xs font-semibold uppercase tracking-widest">Digital Operator ID</p>
               </div>
             </div>
             <img src="/gasan-logo.png" alt="LGU Gasan" className="w-10 h-10 object-contain opacity-90" onError={(e) => e.target.style.display = 'none'} />
@@ -68,7 +68,7 @@ const OperatorIdCard = ({ user }) => {
                 <p className="flex items-center gap-1.5 text-xs text-slate-300">
                   <MapPin size={12} className="text-[#D4AF37]" /> {safeUser.todaAssociation}
                 </p>
-                <p className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <p className="flex items-center gap-1.5 text-xs text-slate-400">
                   <Smartphone size={12} className="text-[#D4AF37]" /> {safeUser.contact || 'No Contact'}
                 </p>
               </div>
@@ -95,7 +95,7 @@ const OperatorIdCard = ({ user }) => {
           </div>
 
           <div className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center border border-slate-100 dark:border-slate-700">
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">In case of emergency</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">In case of emergency</p>
             <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-center gap-1">
               <Phone size={12} className="text-red-500" /> {safeUser.emergencyContact || 'Not Provided'}
             </p>

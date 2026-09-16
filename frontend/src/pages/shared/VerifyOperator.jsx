@@ -112,7 +112,7 @@ const VerifyOperator = () => {
                 <MapPin size={20} />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">TODA Association</p>
+                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">TODA Association</p>
                 <p className="font-bold text-slate-900 dark:text-white">{operator.todaAssociation || 'NON-TODA'}</p>
               </div>
             </div>
@@ -122,7 +122,7 @@ const VerifyOperator = () => {
                 <Award size={20} />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Account Role</p>
+                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Account Role</p>
                 <p className="font-bold text-slate-900 dark:text-white capitalize">{operator.role}</p>
               </div>
             </div>
@@ -130,8 +130,8 @@ const VerifyOperator = () => {
             {/* Franchise Info */}
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Franchise Status</p>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Franchise Status</p>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                   {operator.franchises?.length || 0} Unit(s)
                 </span>
               </div>
@@ -146,7 +146,7 @@ const VerifyOperator = () => {
                     <div key={i} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                       <div>
                         <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">{f.plateNo || 'PENDING'}</p>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[150px]">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate max-w-[150px]">
                           {f.make} &bull; {f.motorNo}
                         </p>
                       </div>

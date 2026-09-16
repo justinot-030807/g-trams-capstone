@@ -162,7 +162,7 @@ const ValidateTODA = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">TODA Management</h1>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-[11px] sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Manage recognized TODA directories, member rosters, and masterlist submissions.
             </p>
           </div>
@@ -180,11 +180,11 @@ const ValidateTODA = () => {
             <Building2 size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Recognized TODAs</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Recognized TODAs</p>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {totalRecognizedTodas} <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-sans">100% Gasan</span>
             </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Official Associations</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Official Associations</p>
           </div>
         </div>
 
@@ -194,11 +194,11 @@ const ValidateTODA = () => {
             <Users size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Operators</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Operators</p>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {totalOperatorsCount}
             </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Registered in Directory</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Registered in Directory</p>
           </div>
         </div>
 
@@ -208,11 +208,11 @@ const ValidateTODA = () => {
             <ShieldCheck size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active MTOPs</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Active MTOPs</p>
             <h3 className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
               {activeMtopCount}
             </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Street-Legal Franchises</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Street-Legal Franchises</p>
           </div>
         </div>
 
@@ -222,11 +222,11 @@ const ValidateTODA = () => {
             <Clock size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pending Actions</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Pending Actions</p>
             <h3 className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
               {pendingValidationCount}
             </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Submissions & Reviews</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Submissions & Reviews</p>
           </div>
         </div>
       </div>
@@ -339,7 +339,7 @@ const ValidateTODA = () => {
                             <h3 className="font-black text-slate-900 dark:text-white text-sm sm:text-base truncate">
                               {toda.name}
                             </h3>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                               {toda.members.length} {toda.members.length === 1 ? 'Driver' : 'Drivers'} 
                               {toda.totalCount !== toda.members.length && ` (filtered from ${toda.totalCount})`}
                             </p>
@@ -363,7 +363,7 @@ const ValidateTODA = () => {
                         <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 overflow-x-auto">
                           <table className="w-full text-left border-collapse min-w-[650px]">
                             <thead>
-                              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider font-bold bg-slate-50/50 dark:bg-slate-800/40">
+                              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider font-bold bg-slate-50/50 dark:bg-slate-800/40">
                                 <th className="py-2.5 px-4">Operator / Driver</th>
                                 <th className="py-2.5 px-4">Barangay Address</th>
                                 <th className="py-2.5 px-4">Role</th>
@@ -394,7 +394,7 @@ const ValidateTODA = () => {
                                           </span>
                                         )}
                                       </div>
-                                      <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                      <div className="text-xs text-slate-400 font-mono mt-0.5">
                                         {member.contact || 'No contact'}
                                       </div>
                                     </td>
@@ -420,41 +420,41 @@ const ValidateTODA = () => {
                                       {franchise ? (
                                         franchise.status === 'Active' ? (
                                           <div className="flex flex-col gap-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 w-fit">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-black px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 w-fit">
                                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                               Active MTOP
                                             </span>
-                                            <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-slate-200">
+                                            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
                                               Plate: {franchise.plateNo || 'N/A'} &bull; <span className="font-sans font-medium text-slate-500 dark:text-slate-400">{franchise.make || 'Tricycle'}</span>
                                             </span>
                                           </div>
                                         ) : franchise.status === 'Pending' || franchise.status === 'Ready for Pickup' ? (
                                           <div className="flex flex-col gap-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 w-fit">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 w-fit">
                                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                               {franchise.status === 'Ready for Pickup' ? 'Awaiting Release' : 'Pending MTOP'}
                                             </span>
-                                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                                               Plate: {franchise.plateNo || 'PENDING'}
                                             </span>
                                           </div>
                                         ) : franchise.status === 'Expired' ? (
                                           <div className="flex flex-col gap-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 w-fit">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 w-fit">
                                               <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                                               Expired MTOP
                                             </span>
-                                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                                               Plate: {franchise.plateNo || 'N/A'}
                                             </span>
                                           </div>
                                         ) : (
-                                          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
+                                          <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
                                             {franchise.status}
                                           </span>
                                         )
                                       ) : (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
+                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
                                           No Franchise Record
                                         </span>
                                       )}
@@ -511,7 +511,7 @@ const ValidateTODA = () => {
                         <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37]"><FileText size={16} /> {sub.fileName}</div></td>
                         <td className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">{new Date(sub.createdAt).toLocaleDateString()}</td>
                         <td className="p-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${sub.status === 'Approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'}`}>
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${sub.status === 'Approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'}`}>
                             {sub.status}
                           </span>
                         </td>

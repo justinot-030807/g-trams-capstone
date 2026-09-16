@@ -49,11 +49,11 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
               <div>
                 <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
                   Official Transmittal Summary Sheet
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     {units.length} Units Listed
                   </span>
                 </h3>
-                <p className="text-[10px] text-white/60">LGU Gasan BPLO &bull; Sangguniang Bayan Endorsement Record</p>
+                <p className="text-xs text-white/60">LGU Gasan BPLO &bull; Sangguniang Bayan Endorsement Record</p>
               </div>
             </div>
 
@@ -213,7 +213,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                   </thead>
                   <tbody>
                     {units.map((unit, i) => (
-                      <tr key={unit._id || i} className="text-[10px] text-slate-800 hover:bg-slate-50">
+                      <tr key={unit._id || i} className="text-xs text-slate-800 hover:bg-slate-50">
                         <td className="border border-slate-300 py-1 px-2 text-center font-bold">{i + 1}</td>
                         <td className="border border-slate-300 py-1 px-2 font-bold uppercase">{unit.fullName}</td>
                         <td className="border border-slate-300 py-1 px-2 text-center font-semibold">{unit.todaName || 'NON-TODA'} (Z{unit.zone || 1})</td>

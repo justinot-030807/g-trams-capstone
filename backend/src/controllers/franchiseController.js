@@ -315,9 +315,20 @@ const updateFranchiseStatus = async (req, res) => {
         
         const previousStatus = existingFranchise.status;
 
+        const updateData = { 
+            status: status, 
+            cancelReason: cancelReason || '', 
+            eSigned: eSigned || false, 
+            releaseDate: releaseDate || '' 
+        };
+
+        if ((status === 'Ready for Pickup' || status === 'Active') && previousStatus !== status) {
+            updateData.approvalDate = new Date();
+        }
+
         const updatedFranchise = await Franchise.findByIdAndUpdate(
             req.params.id,
-            { status: status, cancelReason: cancelReason || '', eSigned: eSigned || false, releaseDate: releaseDate || '' },
+            updateData,
             { returnDocument: 'after' }
         ).populate('operator', 'name address contact');
 

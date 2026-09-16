@@ -124,6 +124,10 @@ const SubmitMembers = () => {
     if (!file) return;
 
     setIsUploading(true);
+    const slowNetTimer = setTimeout(() => {
+      showToast("Network seems slow. Please wait while processing the masterlist...", "warning");
+    }, 7000);
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -164,6 +168,7 @@ const SubmitMembers = () => {
         message: 'Unable to connect to the server. Please check your network connection and try again.'
       });
     } finally {
+      clearTimeout(slowNetTimer);
       setIsUploading(false);
     }
   };
@@ -247,7 +252,7 @@ const SubmitMembers = () => {
             </button>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full border border-[#7A1B22]/15 dark:border-[#D4AF37]/25">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full border border-[#7A1B22]/15 dark:border-[#D4AF37]/25">
                   {todaData.todaName || 'TODA Association'}
                 </span>
               </div>
@@ -336,7 +341,7 @@ const SubmitMembers = () => {
                   <Users size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     Total Members
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
@@ -350,7 +355,7 @@ const SubmitMembers = () => {
                   <CheckCircle2 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     Active Units
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
@@ -364,7 +369,7 @@ const SubmitMembers = () => {
                   <Clock3 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     Pending
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
@@ -378,7 +383,7 @@ const SubmitMembers = () => {
                   <ShieldCheck size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
                     Total Fleet
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
@@ -519,7 +524,7 @@ const SubmitMembers = () => {
                                 {member.name}
                               </h3>
                               {member.isCurrentUser && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                   You
                                 </span>
                               )}
@@ -527,12 +532,12 @@ const SubmitMembers = () => {
 
                             <div className="flex items-center gap-2 mt-0.5">
                               {member.isPresident ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-amber-900 dark:text-[#D4AF37] border border-[#D4AF37]/40">
                                   <Sparkles size={10} />
                                   TODA President
                                 </span>
                               ) : (
-                                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                   Operator / Member
                                 </span>
                               )}
@@ -557,7 +562,7 @@ const SubmitMembers = () => {
                               title="Call member"
                             >
                               <span>{member.contact}</span>
-                              <span className="text-[10px] uppercase font-bold bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Call</span>
+                              <span className="text-xs uppercase font-bold bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Call</span>
                             </a>
                           ) : (
                             <span className="text-slate-400 italic text-xs">No contact number listed</span>
@@ -574,7 +579,7 @@ const SubmitMembers = () => {
 
                       {/* Member's Registered Units Roster */}
                       <div>
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
                           <Car size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                           <span>Registered Tricycle Units</span>
                         </p>
@@ -599,12 +604,12 @@ const SubmitMembers = () => {
                                       {unit.make || 'Tricycle'}
                                     </span>
                                   </div>
-                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate">
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
                                     Zone {unit.zone || 'N/A'} {unit.motorNo ? `• Motor: ${unit.motorNo}` : ''}
                                   </p>
                                 </div>
 
-                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg uppercase tracking-wider shrink-0 flex items-center gap-1 ${
+                                <span className={`px-2 py-0.5 text-xs font-bold rounded-lg uppercase tracking-wider shrink-0 flex items-center gap-1 ${
                                   unit.status === 'Active'
                                     ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
                                     : unit.status === 'Ready for Pickup'
@@ -641,7 +646,7 @@ const SubmitMembers = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     Upload Member Roster Document
                   </h2>
-                  <span className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-lg">
+                  <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-lg">
                     PDF • Excel • CSV
                   </span>
                 </div>
@@ -746,7 +751,7 @@ const SubmitMembers = () => {
                           </div>
                           
                           {/* Dynamic Badge Status */}
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${
                             sub.status === 'Approved' 
                             ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60' 
                             : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60'
@@ -755,7 +760,7 @@ const SubmitMembers = () => {
                             {sub.status}
                           </span>
                         </div>
-                        <p className="text-[11px] font-normal text-slate-500 dark:text-slate-400 pl-5">
+                        <p className="text-xs font-normal text-slate-500 dark:text-slate-400 pl-5">
                           Submitted on {new Date(sub.createdAt).toLocaleDateString()}
                         </p>
                       </div>

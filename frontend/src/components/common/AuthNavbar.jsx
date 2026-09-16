@@ -49,7 +49,7 @@ const AuthNavbar = () => {
             <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none">
               G-TRAMS
             </span>
-            <span className="text-[#D4AF37] text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mt-0.5">
+            <span className="text-[#D4AF37] text-[9px] sm:text-xs font-bold uppercase tracking-wider mt-0.5">
               Municipality of Gasan • Marinduque
             </span>
           </div>
@@ -109,7 +109,7 @@ const AuthNavbar = () => {
                   <img src="/gasan-logo.png" alt="Gasan Seal" className="w-9 h-9 object-contain" />
                   <div>
                     <h3 className="font-black text-sm text-white">G-TRAMS PORTAL</h3>
-                    <p className="text-[10px] text-[#D4AF37] font-semibold">Municipality of Gasan</p>
+                    <p className="text-xs text-[#D4AF37] font-semibold">Municipality of Gasan</p>
                   </div>
                 </Link>
                 <button
@@ -123,7 +123,7 @@ const AuthNavbar = () => {
 
               {/* Navigation Links */}
               <div className="mt-5 space-y-2">
-                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-1">Navigation</p>
+                <p className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Navigation</p>
                 
                 <Link
                   to="/"
@@ -166,7 +166,7 @@ const AuthNavbar = () => {
 
 
 
-                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-1 pt-3">Official Links</p>
+                <p className="text-xs font-bold text-white/40 uppercase tracking-widest px-1 pt-3">Official Links</p>
 
                 <a
                   href="https://gasan.gov.ph"
@@ -201,10 +201,10 @@ const AuthNavbar = () => {
                   <Building2 size={15} />
                   <span>BPLO Helpdesk & Support</span>
                 </div>
-                <p className="text-[11px] text-white/60 leading-relaxed">
+                <p className="text-xs text-white/60 leading-relaxed">
                   Ground Floor, Gasan Municipal Hall, Gasan, Marinduque
                 </p>
-                <div className="pt-2 border-t border-white/10 space-y-1 text-[11px]">
+                <div className="pt-2 border-t border-white/10 space-y-1 text-xs">
                   <p className="flex items-center gap-2">
                     <Phone size={12} className="text-amber-300" />
                     <span>Hotline: <strong>(042) 342-1234</strong></span>
@@ -218,7 +218,7 @@ const AuthNavbar = () => {
             </div>
 
             {/* Drawer Footer */}
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-white/40">
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
               <span>G-TRAMS Portal</span>
               <span className="font-mono">v2.4.0</span>
             </div>

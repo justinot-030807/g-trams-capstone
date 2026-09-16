@@ -169,14 +169,14 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
 
         {/* Quick Filter Barangay Tags */}
         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-2 pr-1 shrink-0">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2 pr-1 shrink-0">
             Quick Filter:
           </span>
           {QUICK_BARANGAYS.map((b) => (
             <button
               key={b}
               onClick={() => setSelectedBrgyTag(b)}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all ${
+              className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all ${
                 selectedBrgyTag === b
                   ? 'bg-[#7A1B22] text-white shadow-xs'
                   : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600'
@@ -209,12 +209,12 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
                       <span className="font-black text-sm text-slate-900 dark:text-white tracking-wide">
                         {toda.name}
                       </span>
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                      <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                         {toda.id}
                       </span>
                     </div>
 
-                    <span className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1">
+                    <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1">
                       <Navigation size={11} /> {toda.zone}
                     </span>
                   </div>
@@ -227,20 +227,20 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
                     <div className="flex items-start gap-2">
                       <MapPin size={14} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Terminal Base</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Terminal Base</span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">{toda.terminal}</span>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
                         Covered Barangays &amp; Route Stops:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {toda.barangays.map((brgy) => (
                           <span 
                             key={brgy}
-                            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md text-[10px] font-semibold"
+                            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md text-xs font-semibold"
                           >
                             {brgy}
                           </span>
@@ -257,7 +257,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs shrink-0">
-          <p className="text-[11px] text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 font-medium">
             Official Gasan TODA Route Network
           </p>
           <button

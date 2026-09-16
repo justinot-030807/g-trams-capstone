@@ -352,7 +352,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 shadow-xs flex items-center justify-center group-hover:-translate-x-0.5 transition-transform">
                 <ArrowLeft size={14} className="text-slate-700 dark:text-slate-200" />
               </div>
-              <span className="text-[10px] font-bold tracking-wide uppercase hidden sm:block">Back</span>
+              <span className="text-xs font-bold tracking-wide uppercase hidden sm:block">Back</span>
             </button>
             <h1 className="text-base font-black text-slate-900 dark:text-white tracking-tight truncate">
               {getBreadcrumbTitle()}
@@ -405,14 +405,14 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-xs text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h3>
-                      <p className="text-[10px] text-slate-400 font-medium">
+                      <p className="text-xs text-slate-400 font-medium">
                         {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'unread update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
                       </p>
                     </div>
                     {unreadCount > 0 && (
                       <button 
                         onClick={markAllAsRead} 
-                        className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                        className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
                       >
                         {t('nav.markAllRead', 'Mark all read')}
                       </button>
@@ -424,7 +424,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                       <div className="p-8 text-center flex flex-col items-center justify-center">
                         <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
                       </div>
                     ) : (
                       allNotifs.map((notif) => {
@@ -450,7 +450,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                                 </p>
                                 {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
                               <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif?.time}</span>
                             </div>
                           </div>
@@ -503,7 +503,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           </div>
           
           {isMaintenanceActive && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse ml-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 text-[9px] sm:text-xs font-black uppercase tracking-wider border border-orange-200 dark:border-orange-800/80 animate-pulse ml-2">
               <span className="inline sm:hidden">🛠️ Maint</span>
               <span className="hidden sm:inline">🛠️ Maintenance Active</span>
             </span>
@@ -572,7 +572,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                         {t('nav.notifications', 'Notifications')}
                       </h4>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">
                       {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
                     </p>
                   </div>
@@ -582,7 +582,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                       <button 
                         type="button"
                         onClick={markAllAsRead} 
-                        className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                        className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
                       >
                         {t('nav.markAllRead', 'Mark all read')}
                       </button>
@@ -600,7 +600,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                       <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                         {t('nav.noNotifications', 'No new notifications')}
                       </p>
-                      <p className="text-[11px] text-slate-400 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-xs text-slate-400 mt-1 max-w-[200px] leading-relaxed">
                         {t('nav.noNotificationsDesc', 'System updates and notices will appear here.')}
                       </p>
                     </div>
@@ -641,10 +641,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                                 </p>
                                 {!isRead && <span className="w-2 h-2 bg-red-600 dark:bg-red-500 rounded-full shrink-0 shadow-sm" />}
                               </div>
-                              <p className={`text-[11px] sm:text-xs line-clamp-2 leading-snug ${!isRead ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
+                              <p className={`text-xs sm:text-xs line-clamp-2 leading-snug ${!isRead ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
                                 {notif?.desc}
                               </p>
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
+                              <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
                                 {notif?.time}
                               </span>
                             </div>
@@ -682,7 +682,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                 <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{userName}</p>
-                <p className="text-[10px] text-[#7A1B22] dark:text-[#D4AF37] font-bold uppercase tracking-wide mt-0.5">{getRoleBadge()}</p>
+                <p className="text-xs text-[#7A1B22] dark:text-[#D4AF37] font-bold uppercase tracking-wide mt-0.5">{getRoleBadge()}</p>
               </div>
 
               <div className="py-1">

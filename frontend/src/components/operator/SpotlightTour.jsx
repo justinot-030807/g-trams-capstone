@@ -192,7 +192,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
 
           {/* Header Row: Step counter pill & Close button */}
           <div className="flex items-center justify-between mb-2.5 pt-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] text-[10px] font-black uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] text-xs font-black uppercase tracking-wider">
               <StepIcon size={12} />
               <span>
                 {`Step ${currentStepIndex + 1} of ${steps.length}`}

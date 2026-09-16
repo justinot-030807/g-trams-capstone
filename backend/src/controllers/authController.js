@@ -59,7 +59,7 @@ exports.register = async (req, res) => {
                 await axios.post('https://api.semaphore.co/api/v4/messages', { 
                     apikey: process.env.SEMAPHORE_API_KEY, 
                     number: normalizedContact, 
-                    message: `G-TRAMS: Ang iyong verification code ay ${otp}. Huwag itong i-share kaninuman.` 
+                    message: `G-TRAMS: Your verification code is ${otp}. Do not share this with anyone.` 
                 }, { timeout: 5000 });
             }
         } catch (sendErr) {
@@ -278,7 +278,7 @@ exports.forgotPassword = async (req, res) => {
                 await axios.post('https://api.semaphore.co/api/v4/messages', { 
                     apikey: process.env.SEMAPHORE_API_KEY, 
                     number: normalizedContact, 
-                    message: `G-TRAMS: Ang iyong password reset verification code ay ${otp}. Huwag itong i-share kaninuman.` 
+                    message: `G-TRAMS: Your password reset verification code is ${otp}. Do not share this with anyone.` 
                 }, { timeout: 5000 });
                 return res.status(200).json({ message: 'OTP sent successfully via SMS.' });
             }
@@ -640,6 +640,14 @@ exports.googleAuth = async (req, res) => {
             return res.status(503).json({ 
                 message: 'Registration is temporarily disabled during system maintenance.',
                 maintenanceMode: true
+            });
+        }
+
+        if (!onboardingData || !onboardingData.todaAssociation) {
+            return res.status(200).json({
+                isNewUser: true,
+                message: 'Google account verified. Please complete your registration.',
+                googleProfile: { email, googleId, name: googleName, picture: googlePicture }
             });
         }
 

@@ -174,7 +174,7 @@ const BatchRenewal = () => {
                       <div>
                         <p className="font-bold text-sm text-slate-900 dark:text-white">{unit.plateNo || 'PENDING PLATE'}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{unit.make} ({unit.made})</p>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">Status: {unit.status}</p>
+                        <p className="text-xs uppercase font-bold text-slate-400 mt-1">Status: {unit.status}</p>
                       </div>
                     </div>
                   );

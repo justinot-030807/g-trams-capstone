@@ -58,7 +58,7 @@ const MaintenanceMode = () => {
         </div>
         <div>
           <h1 className="text-lg font-black tracking-wider text-white">G-TRAMS</h1>
-          <p className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest">Municipality of Gasan</p>
+          <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest">Municipality of Gasan</p>
         </div>
       </header>
 
@@ -70,7 +70,7 @@ const MaintenanceMode = () => {
           <Wrench size={36} className="animate-bounce" />
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-widest border border-orange-200 mb-3 shadow-xs">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-widest border border-orange-200 mb-3 shadow-xs">
           <ShieldAlert size={12} /> Scheduled System Maintenance
         </span>
 
@@ -86,7 +86,7 @@ const MaintenanceMode = () => {
           <p className="font-bold text-slate-800 flex items-center gap-2">
             <Lock size={14} className="text-[#7A1B22]" /> Public & Operator Access Paused
           </p>
-          <p className="text-[11px] text-slate-500 leading-snug">
+          <p className="text-xs text-slate-500 leading-snug">
             Franchise submissions, renewals, and member validation are temporarily locked to ensure data integrity during maintenance.
           </p>
         </div>
@@ -119,7 +119,7 @@ const MaintenanceMode = () => {
         </div>
 
         {/* Hotline */}
-        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-[11px] text-slate-400 font-medium">
+        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-slate-400 font-medium">
           <span className="flex items-center gap-1">
             <Phone size={12} className="text-[#7A1B22]" /> (042) 342-1234
           </span>
@@ -132,7 +132,7 @@ const MaintenanceMode = () => {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center text-white/50 text-[10px]">
+      <footer className="relative z-10 text-center text-white/50 text-xs">
         © 2026 Municipality of Gasan, Marinduque. All rights reserved.
       </footer>
 

@@ -282,7 +282,7 @@ const FranchiseMasterlist = () => {
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                     {selectedFranchise.plateNo || 'PENDING PLATE'}
-                    <span className={`px-2.5 py-0.5 text-[10px] font-black rounded-lg uppercase tracking-wider border ${
+                    <span className={`px-2.5 py-0.5 text-xs font-black rounded-lg uppercase tracking-wider border ${
                       selectedFranchise.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                       selectedFranchise.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
                       selectedFranchise.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
@@ -292,7 +292,7 @@ const FranchiseMasterlist = () => {
                       {selectedFranchise.status}
                     </span>
                   </h2>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">System ID: {selectedFranchise._id}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">System ID: {selectedFranchise._id}</p>
                 </div>
               </div>
               <button 
@@ -308,24 +308,24 @@ const FranchiseMasterlist = () => {
 
               {/* TIMELINE & DATES CARD */}
               <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5">
-                <h3 className="text-[10px] font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <h3 className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <CalendarDays size={14} /> Registration Timeline & Validity
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Date Applied</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Date Applied</span>
                     <span className="font-bold text-slate-900 dark:text-white">{formatDate(selectedFranchise.dateApplied || selectedFranchise.createdAt)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Expiration Date</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Expiration Date</span>
                     <span className="font-black text-emerald-800 dark:text-emerald-400">{getExpirationDate(selectedFranchise.dateApplied)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Application Type</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Application Type</span>
                     <span className="font-bold text-slate-900 dark:text-white">{selectedFranchise.applicationType || 'New'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Fiscal Year</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Fiscal Year</span>
                     <span className="font-bold text-slate-900 dark:text-white">FY {new Date(selectedFranchise.dateApplied || selectedFranchise.createdAt).getFullYear()}</span>
                   </div>
                 </div>
@@ -333,24 +333,24 @@ const FranchiseMasterlist = () => {
 
               {/* OPERATOR DETAILS */}
               <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-                <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <User size={14} /> Operator Information
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Full Name</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Full Name</span>
                     <span className="font-bold text-slate-900 dark:text-white text-sm">{selectedFranchise.fullName || (selectedFranchise.operator?.name) || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Registered Barangay / Address</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Registered Barangay / Address</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.address || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">TODA Association</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">TODA Association</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.todaName || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Authorized Route Zone</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Authorized Route Zone</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">Zone {selectedFranchise.zone || 'N/A'}</span>
                   </div>
                 </div>
@@ -358,24 +358,24 @@ const FranchiseMasterlist = () => {
 
               {/* VEHICLE SPECIFICATIONS */}
               <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-                <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <Car size={14} /> Tricycle Specifications
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Make / Brand</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Make / Brand</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.make || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Year Made</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Year Made</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.made || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Motor Number</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Motor Number</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">{selectedFranchise.motorNo || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Chassis Number</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Chassis Number</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">{selectedFranchise.chassisNo || 'N/A'}</span>
                   </div>
                 </div>
@@ -383,20 +383,20 @@ const FranchiseMasterlist = () => {
 
               {/* CEDULA & TAX INFO */}
               <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-                <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <FileText size={14} /> Community Tax Certificate (Cedula)
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Serial Number</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Serial Number</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.cedulaSerialNo || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Date Issued</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Date Issued</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(selectedFranchise.cedulaDate)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-[10px] uppercase">Place Issued</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Place Issued</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.cedulaAddress || 'Gasan, Marinduque'}</span>
                   </div>
                 </div>
@@ -404,7 +404,7 @@ const FranchiseMasterlist = () => {
 
               {/* UPLOADED ATTACHMENTS */}
               <div>
-                <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
                   Document Attachments
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -421,11 +421,11 @@ const FranchiseMasterlist = () => {
                           onClick={() => setDocPreviewUrl(doc.url)}
                           className="w-full flex items-center justify-between p-2.5 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-950/60 transition-colors text-left group"
                         >
-                          <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 truncate">{doc.label}</span>
+                          <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 truncate">{doc.label}</span>
                           <Eye size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
                         </button>
                       ) : (
-                        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500 text-[11px] font-medium text-center">
+                        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500 text-xs font-medium text-center">
                           {doc.label} (None)
                         </div>
                       )}
@@ -437,7 +437,7 @@ const FranchiseMasterlist = () => {
               {/* Cancellation or revocation reason */}
               {selectedFranchise.cancelReason && (
                 <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-4">
-                  <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400 block mb-1">
+                  <span className="text-xs font-bold uppercase text-red-600 dark:text-red-400 block mb-1">
                     {selectedFranchise.status === 'Cancelled' ? 'Reason for Cancellation / Rejection:' : 'Reason for Revocation:'}
                   </span>
                   <p className="text-xs text-red-900 dark:text-red-200 font-medium">{selectedFranchise.cancelReason}</p>
@@ -482,7 +482,7 @@ const FranchiseMasterlist = () => {
                 FY {currentFiscalYear}
               </span>
             </div>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-[11px] sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Manage, query, multi-filter, inspect, and paginate official tricycle records.
             </p>
           </div>
@@ -503,7 +503,7 @@ const FranchiseMasterlist = () => {
         <div className="hidden print:block text-center border-b-2 border-black pb-4 mb-4 pt-4">
           <p className="text-xs font-bold uppercase tracking-wider">Municipality of Gasan</p>
           <p className="text-lg font-black uppercase mt-0.5 text-[#7A1B22]">Franchise Masterlist Report</p>
-          <p className="text-[10px] text-slate-500 font-medium mt-1">Fiscal Year {currentFiscalYear} | Tab: {activeTab.toUpperCase()}</p>
+          <p className="text-xs text-slate-500 font-medium mt-1">Fiscal Year {currentFiscalYear} | Tab: {activeTab.toUpperCase()}</p>
         </div>
 
         {/* TABS */}
@@ -557,7 +557,7 @@ const FranchiseMasterlist = () => {
                   <Filter size={15} className={selectedStatuses.length > 0 ? 'text-white' : 'text-slate-400'} />
                   <span>Status Filter</span>
                   {selectedStatuses.length > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-white text-[#7A1B22] text-[10px] font-black flex items-center justify-center">
+                    <span className="w-5 h-5 rounded-full bg-white text-[#7A1B22] text-xs font-black flex items-center justify-center">
                       {selectedStatuses.length}
                     </span>
                   )}
@@ -568,12 +568,12 @@ const FranchiseMasterlist = () => {
               {isFilterDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 px-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Select Statuses</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Select Statuses</span>
                     {selectedStatuses.length > 0 && (
                       <button
                         type="button"
                         onClick={() => { setSelectedStatuses([]); setCurrentPage(1); }}
-                        className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                        className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
                       >
                         Reset
                       </button>
@@ -619,7 +619,7 @@ const FranchiseMasterlist = () => {
                 onClick={() => setIsPageSizeDropdownOpen(prev => !prev)}
                 className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors shadow-xs"
               >
-                <span className="text-slate-400 dark:text-slate-500 text-[11px] font-medium hidden sm:inline">Rows:</span>
+                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium hidden sm:inline">Rows:</span>
                 <span>{pageSize}</span>
                 <ChevronDown size={14} className="text-slate-400" />
               </button>
@@ -655,7 +655,7 @@ const FranchiseMasterlist = () => {
         {/* ACTIVE FILTER PILLS */}
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 print-hide animate-in fade-in duration-150">
-            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1 mr-1">
+            <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1 mr-1">
               <Tag size={12} /> Active Filters:
             </span>
 
@@ -694,7 +694,7 @@ const FranchiseMasterlist = () => {
             <button
               type="button"
               onClick={clearAllFilters}
-              className="text-[11px] font-bold text-slate-400 dark:text-slate-500 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] flex items-center gap-1 ml-1 cursor-pointer transition-colors"
+              className="text-xs font-bold text-slate-400 dark:text-slate-500 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] flex items-center gap-1 ml-1 cursor-pointer transition-colors"
             >
               <RotateCcw size={12} /> Clear all
             </button>
@@ -705,7 +705,7 @@ const FranchiseMasterlist = () => {
         <div className="overflow-x-auto min-h-[320px]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-bold">
+              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                 <th className="p-4 pl-6">Operator Details</th>
                 <th className="p-4">Tricycle Info</th>
                 <th className="p-4">TODA / Zone</th>
@@ -746,20 +746,20 @@ const FranchiseMasterlist = () => {
                                </span>
                             )}
                           </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{f.address}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{f.address}</p>
                         </td>
                         <td className="p-4">
-                          <p className="font-black text-slate-800 dark:text-slate-900 tracking-wider bg-yellow-100 inline-block px-2 py-0.5 border border-yellow-300 rounded mb-1 text-[11px] shadow-xs">
+                          <p className="font-black text-slate-800 dark:text-slate-900 tracking-wider bg-yellow-100 inline-block px-2 py-0.5 border border-yellow-300 rounded mb-1 text-xs shadow-xs">
                             {f.plateNo || 'N/A'}
                           </p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Motor: {f.motorNo}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Motor: {f.motorNo}</p>
                         </td>
                         <td className="p-4">
                           <p className="font-bold text-slate-800 dark:text-slate-200">{f.todaName}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">Zone {f.zone}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Zone {f.zone}</p>
                         </td>
                         <td className="p-4 text-center">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider border shadow-xs ${
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-black rounded-lg uppercase tracking-wider border shadow-xs ${
                             f.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                             f.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
                             f.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
@@ -800,7 +800,7 @@ const FranchiseMasterlist = () => {
                             {/* ARCHIVE / RESTORE BUTTON */}
                             {!f.isArchived ? (
                               f.status === 'Active' ? (
-                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
                                   Protected
                                 </span>
                               ) : (

@@ -540,7 +540,7 @@ const OperatorSettings = () => {
                   <span>Change Profile Photo</span>
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 </label>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
                   Select a clear photo of your face (JPG or PNG)
                 </p>
               </div>
@@ -551,7 +551,7 @@ const OperatorSettings = () => {
                     Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="text"
+                    type="text" maxLength="50"
                     value={profileData.name}
                     onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
                     className={inputClasses}
@@ -580,7 +580,7 @@ const OperatorSettings = () => {
                       placeholder={isEmailContact ? "e.g. operator@gmail.com" : "e.g. 0912 345 6789"}
                     />
                   </div>
-                  <p className="text-[11px] font-medium text-slate-400 mt-1">
+                  <p className="text-xs font-medium text-slate-400 mt-1">
                     BPLO will use this {contactLabel} for notices and official updates.
                   </p>
                 </div>
@@ -591,13 +591,13 @@ const OperatorSettings = () => {
                     Emergency Contact Number
                   </label>
                   <input
-                    type="text"
+                    type="text" maxLength="50"
                     value={profileData.emergencyContact}
                     onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContact: e.target.value }))}
                     placeholder="e.g. 09123456789"
                     className={inputClasses}
                   />
-                  <p className="text-[11px] font-medium text-slate-400 mt-1">
+                  <p className="text-xs font-medium text-slate-400 mt-1">
                     Used only in case of accidents or emergencies.
                   </p>
                 </div>
@@ -607,18 +607,18 @@ const OperatorSettings = () => {
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       TODA Association
                     </label>
-                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800/80">
+                    <span className="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800/80">
                       Locked (Official)
                     </span>
                   </div>
                   <input
-                    type="text"
+                    type="text" maxLength="50"
                     value={profileData.todaAssociation}
                     readOnly
                     title="Registered TODA is permanent. Visit LGU office for TODA transfer."
                     className={lockedClasses}
                   />
-                  <p className="text-[11px] text-slate-400 mt-1 font-medium">Contact the BPLO office for any TODA reassignment.</p>
+                  <p className="text-xs text-slate-400 mt-1 font-medium">Contact the BPLO office for any TODA reassignment.</p>
                 </div>
 
                 <div>
@@ -626,18 +626,18 @@ const OperatorSettings = () => {
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Registered Barangay
                     </label>
-                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800/80">
+                    <span className="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800/80">
                       Locked (Official)
                     </span>
                   </div>
                   <input
-                    type="text"
+                    type="text" maxLength="50"
                     value={profileData.address}
                     readOnly
                     title="Official registered address cannot be self-edited. Contact BPLO for changes."
                     className={lockedClasses}
                   />
-                  <p className="text-[11px] text-slate-400 mt-1 font-medium">Recorded in the official municipal registry of Gasan.</p>
+                  <p className="text-xs text-slate-400 mt-1 font-medium">Recorded in the official municipal registry of Gasan.</p>
                 </div>
               </div>
 
@@ -716,7 +716,7 @@ const OperatorSettings = () => {
                       {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  <p className="text-[11px] font-medium text-slate-400 mt-1">Must be at least 6 characters.</p>
+                  <p className="text-xs font-medium text-slate-400 mt-1">Must be at least 6 characters.</p>
                 </div>
 
                 <div>
@@ -800,7 +800,7 @@ const OperatorSettings = () => {
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Light Mode</p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Always light</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Always light</p>
                       </div>
                     </div>
                     {theme === 'light' && (
@@ -826,7 +826,7 @@ const OperatorSettings = () => {
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Dark Mode</p>
-                        <p className="text-[11px] text-slate-400">Always dark</p>
+                        <p className="text-xs text-slate-400">Always dark</p>
                       </div>
                     </div>
                     {theme === 'dark' && (
@@ -852,7 +852,7 @@ const OperatorSettings = () => {
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">System (Auto)</p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Match phone settings</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Match phone settings</p>
                       </div>
                     </div>
                     {theme === 'system' && (
@@ -887,7 +887,7 @@ const OperatorSettings = () => {
                   >
                     <div>
                       <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">English (US)</p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Default system language</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Default system language</p>
                     </div>
                     {preferences.language === 'en' && (
                       <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
@@ -908,7 +908,7 @@ const OperatorSettings = () => {
                   >
                     <div>
                       <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Filipino / Tagalog</p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Tagalog language</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Tagalog language</p>
                     </div>
                     {preferences.language === 'fil' && (
                       <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
@@ -948,7 +948,7 @@ const OperatorSettings = () => {
             <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 mb-1">
               <AlertCircle size={14} /> Official Use Only
             </h4>
-            <p className="text-[11px] text-amber-700 dark:text-amber-400/90 leading-relaxed">
+            <p className="text-xs text-amber-700 dark:text-amber-400/90 leading-relaxed">
               This digital ID card is an official document from the Municipality of Gasan. The QR code contains verifiable data used by LGU officers and traffic enforcers.
             </p>
           </div>
@@ -1083,7 +1083,7 @@ const OperatorSettings = () => {
                 <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   Subukan ang Notification (Test Alert)
                 </h5>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Magpadala ng agarang test alert upang masubukan kung tutunog at lalabas ang banner sa iyong telepono.
                 </p>
               </div>
@@ -1136,7 +1136,7 @@ const OperatorSettings = () => {
                   <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>Franchise Status &amp; Approvals</span>
                   </h4>
-                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Abiso kapag na-approve, for inspection, o may kinakailangang compliance sa iyong aplikasyon ng prangkisa.
                   </p>
                 </div>
@@ -1161,7 +1161,7 @@ const OperatorSettings = () => {
                   <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>Renewal Reminders &amp; Deadlines</span>
                   </h4>
-                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Maagang paalala bago mag-expire ang iyong prangkisa upang makaiwas sa penalty at suspension.
                   </p>
                 </div>
@@ -1186,7 +1186,7 @@ const OperatorSettings = () => {
                   <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>TODA &amp; Municipal Transport Advisories</span>
                   </h4>
-                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Mga anunsyo mula sa Sangguniang Bayan, LGU Gasan, at TODA President tungkol sa ruta, taripa, at pagpupulong.
                   </p>
                 </div>
@@ -1207,7 +1207,7 @@ const OperatorSettings = () => {
             </div>
 
             {/* Explanatory footer note */}
-            <div className="mt-5 p-3.5 bg-[#7A1B22]/5 dark:bg-[#7A1B22]/10 rounded-2xl border border-[#7A1B22]/15 flex items-start gap-2.5 text-[11px] text-slate-600 dark:text-slate-300">
+            <div className="mt-5 p-3.5 bg-[#7A1B22]/5 dark:bg-[#7A1B22]/10 rounded-2xl border border-[#7A1B22]/15 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300">
               <Sparkles size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0 mt-0.5" />
               <p>
                 <strong>Paalala:</strong> Kapag naka-install ang G-TRAMS bilang PWA sa iyong telepono (Add to Home Screen), matatanggap mo ang lahat ng mga abisong ito tulad ng isang regular na mobile app kahit nakapatay ang screen ng iyong telepono.

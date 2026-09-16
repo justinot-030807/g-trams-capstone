@@ -251,7 +251,7 @@ const AdminDashboard = () => {
         style={{ animationDelay: '0.05s' }}
       >
         <div className="relative z-10 text-center md:text-left min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
             <GreetingIcon size={13} className={greeting.badgeColor} />
             <span>{greeting.tag}</span>
           </div>
@@ -277,7 +277,7 @@ const AdminDashboard = () => {
                 <Clock size={16} />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
                 <p className="text-xs font-black text-white">{stats.pending} Pending Review</p>
               </div>
               <ArrowRight size={15} className="text-[#D4AF37] group-hover:translate-x-1 transition-transform ml-0.5" />
@@ -317,9 +317,9 @@ const AdminDashboard = () => {
               <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.color}`} />
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-xs sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stat.label}</p>
                   <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{stat.count}</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{stat.sub}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{stat.sub}</p>
                 </div>
                 <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
                   {stat.icon}
@@ -439,10 +439,10 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Franchise Health Overview</h2>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Status distribution across all registered units</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Status distribution across all registered units</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-wider border border-[#7A1B22]/20">
+              <span className="text-xs font-bold bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-wider border border-[#7A1B22]/20">
                 {stats.total} Units
               </span>
             </div>
@@ -482,11 +482,11 @@ const AdminDashboard = () => {
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`w-2.5 h-2.5 rounded-full ${item.dotColor} shrink-0 shadow-xs group-hover:scale-125 transition-transform`} />
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{item.label}</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{item.label}</span>
                   </div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xl font-black text-slate-900 dark:text-white">{item.count}</span>
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{item.pct}%</span>
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{item.pct}%</span>
                   </div>
                   <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.desc}</p>
                 </div>
@@ -510,7 +510,7 @@ const AdminDashboard = () => {
               {/* Compliance Health */}
               <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Compliance Rate</span>
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Compliance Rate</span>
                   <span className="text-lg font-black text-emerald-700 dark:text-emerald-400">{getPercentage(stats.active)}%</span>
                 </div>
                 <div className="w-full bg-emerald-200/50 dark:bg-emerald-900/50 rounded-full h-1.5 overflow-hidden">
@@ -525,7 +525,7 @@ const AdminDashboard = () => {
               {/* New Applications */}
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">New Applications</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">New Applications</p>
                   <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">First-time franchise filings</p>
                 </div>
                 <span className="text-xl font-black text-slate-900 dark:text-white">{stats.newApps}</span>
@@ -538,7 +538,7 @@ const AdminDashboard = () => {
                   : 'bg-slate-50/80 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800'
               }`}>
                 <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-wider ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'}`}>
                     Approval Queue
                   </p>
                   <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
@@ -551,7 +551,7 @@ const AdminDashboard = () => {
               {/* Last Activity */}
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last System Activity</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last System Activity</p>
                   <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">Most recent franchise update</p>
                 </div>
                 <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
@@ -632,17 +632,17 @@ const AdminDashboard = () => {
                 <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">
                   TODA Unit Distribution &amp; Share
                 </h2>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Breakdown of active tricycle units per transport association across Gasan
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] sm:text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700">
+              <span className="text-xs sm:text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700">
                 {todaStats.length} Transport Associations
               </span>
-              <span className="text-[10px] sm:text-xs font-black bg-[#7A1B22]/10 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1.5 rounded-xl border border-[#7A1B22]/20">
+              <span className="text-xs sm:text-xs font-black bg-[#7A1B22]/10 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1.5 rounded-xl border border-[#7A1B22]/20">
                 {stats.total} Total Units
               </span>
             </div>
@@ -658,13 +658,13 @@ const AdminDashboard = () => {
                     hoveredTodaIndex !== null ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
                   }`}
                 >
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     Unit Share
                   </span>
                   <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
                     {stats.total}
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     100% Tracked
                   </span>
                 </div>
@@ -721,7 +721,7 @@ const AdminDashboard = () => {
                         <span className="text-xs font-black text-slate-900 dark:text-white">
                           {toda.value}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
                           ({toda.percentage}%)
                         </span>
                       </div>
@@ -837,7 +837,7 @@ const AdminDashboard = () => {
                         <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                           {actionData.verb} <span className="font-black text-slate-900 dark:text-white">{actionData.name}</span>
                         </p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
                           {getRelativeTime(log.updatedAt)}
                         </p>
                       </div>
@@ -864,7 +864,7 @@ const AdminDashboard = () => {
                 <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">Pending Approvals Queue</h2>
               </div>
               {stats.pending > 0 && (
-                <span className="bg-[#7A1B22] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                <span className="bg-[#7A1B22] text-white text-xs font-black px-2.5 py-0.5 rounded-full">
                   {stats.pending} New
                 </span>
               )}
@@ -894,7 +894,7 @@ const AdminDashboard = () => {
                       {/* Applicant Info */}
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-black text-slate-900 dark:text-white truncate">{app.fullName || 'Applicant'}</p>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{app.todaName} • {app.make || 'Tricycle'}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{app.todaName} • {app.make || 'Tricycle'}</p>
                       </div>
 
                       {/* Review CTA */}

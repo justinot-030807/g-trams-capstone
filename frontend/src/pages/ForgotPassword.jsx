@@ -151,18 +151,18 @@ const ForgotPassword = () => {
               <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
                 {step === 1 ? 'FORGOT PASSWORD?' : 'RESET PASSWORD'}
               </h2>
-              <p className="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
+              <p className="text-[9px] sm:text-xs text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
                 {step === 1 ? 'ENTER REGISTERED CONTACT' : 'CREATE A NEW PASSWORD'}
               </p>
             </div>
 
-            {error && <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-xl p-2 text-center shadow-sm uppercase tracking-wide">{error}</div>}
-            {success && <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-xl p-2 text-center shadow-sm uppercase tracking-wide">{success}</div>}
+            {error && <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2 text-center shadow-sm uppercase tracking-wide">{error}</div>}
+            {success && <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-2 text-center shadow-sm uppercase tracking-wide">{success}</div>}
 
             {step === 1 && (
               <form onSubmit={handleRequestOTP} className="space-y-2.5">
                 <div className="animate-item-2">
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">EMAIL OR PHONE NUMBER</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">EMAIL OR PHONE NUMBER</label>
                   <input 
                     type="text" 
                     value={contact}
@@ -183,12 +183,12 @@ const ForgotPassword = () => {
                   </button>
 
                   {isLoading && (
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center mt-1.5 animate-pulse font-medium">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-1.5 animate-pulse font-medium">
                       Connecting to secure gateway, please wait...
                     </p>
                   )}
 
-                  <Link to="/login" className="w-full flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-2.5 transition-colors uppercase tracking-wider">
+                  <Link to="/login" className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#7A1B22] mt-2.5 transition-colors uppercase tracking-wider">
                     <ArrowLeft size={13} /> BACK TO LOGIN
                   </Link>
                 </div>
@@ -198,7 +198,7 @@ const ForgotPassword = () => {
             {step === 2 && (
               <form onSubmit={handleResetPassword} className="space-y-2.5 animate-item-2">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5 text-center">ENTER 6-DIGIT CODE</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5 text-center">ENTER 6-DIGIT CODE</label>
                   <input 
                     type="text" 
                     maxLength="6" 
@@ -211,7 +211,7 @@ const ForgotPassword = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">NEW PASSWORD</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">NEW PASSWORD</label>
                   <input 
                     type="password" 
                     value={newPassword}
@@ -223,7 +223,7 @@ const ForgotPassword = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM PASSWORD</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM PASSWORD</label>
                   <input 
                     type="password" 
                     value={confirmPassword}
@@ -242,7 +242,7 @@ const ForgotPassword = () => {
                   {isLoading ? <><Loader2 className="animate-spin" size={15} /> PROCESSING...</> : <><RefreshCw size={15} /> RESET PASSWORD</>}
                 </button>
                 
-                <button type="button" onClick={() => setStep(1)} className="w-full text-center text-[10px] font-bold text-slate-500 hover:text-[#7A1B22] mt-1 transition-colors uppercase tracking-wider">
+                <button type="button" onClick={() => setStep(1)} className="w-full text-center text-xs font-bold text-slate-500 hover:text-[#7A1B22] mt-1 transition-colors uppercase tracking-wider">
                   ← CHANGE CONTACT INFO
                 </button>
               </form>

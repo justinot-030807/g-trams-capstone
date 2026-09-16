@@ -522,7 +522,7 @@ const AdminSettings = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">Settings</h1>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-[11px] sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Manage your account, preferences, and system configurations.
             </p>
           </div>
@@ -601,7 +601,7 @@ const AdminSettings = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       New Application Validity
                     </label>
                     <div className="relative">
@@ -619,7 +619,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Renewal Validity
                     </label>
                     <div className="relative">
@@ -637,7 +637,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Expiry Warning Alert
                     </label>
                     <div className="relative">
@@ -670,7 +670,7 @@ const AdminSettings = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Fiscal Year Cycle
                     </label>
                     <div className="relative">
@@ -687,7 +687,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Max Units / Operator
                     </label>
                     <div className="relative">
@@ -701,11 +701,11 @@ const AdminSettings = () => {
                         className={inputClasses}
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1">Default is 2 units</p>
+                    <p className="text-xs text-slate-400 mt-1">Default is 2 units</p>
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Franchise Application Fee
                     </label>
                     <div className="relative">
@@ -722,7 +722,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Late Renewal Penalty
                     </label>
                     <div className="relative">
@@ -739,7 +739,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Base TODA Fare Rate
                     </label>
                     <div className="relative">
@@ -769,7 +769,7 @@ const AdminSettings = () => {
                       <button
                         type="button"
                         onClick={handleResetDefaultDocs}
-                        className="text-[10px] font-bold text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors"
+                        className="text-xs font-bold text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors"
                       >
                         Reset Defaults
                       </button>
@@ -835,7 +835,7 @@ const AdminSettings = () => {
                   <div className="p-4 rounded-2xl bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 flex items-center justify-between">
                     <div>
                       <p className="text-xs font-bold text-orange-900 dark:text-orange-300">System Access Status</p>
-                      <p className="text-[11px] font-semibold text-orange-700 dark:text-orange-400">
+                      <p className="text-xs font-semibold text-orange-700 dark:text-orange-400">
                         {systemConfig.maintenanceMode ? 'Locked for non-admin users' : 'Live & Accessible to all operators'}
                       </p>
                     </div>
@@ -893,12 +893,12 @@ const AdminSettings = () => {
                       <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                     </label>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-2 font-medium">Click to upload custom administrator avatar</p>
+                  <p className="text-xs text-slate-400 mt-2 font-medium">Click to upload custom administrator avatar</p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                       Administrator Name
                     </label>
                     <input
@@ -911,7 +911,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                       Official Contact Phone
                     </label>
                     <input
@@ -942,7 +942,7 @@ const AdminSettings = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                       Current Password
                     </label>
                     <input
@@ -955,7 +955,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                       New Password
                     </label>
                     <input
@@ -968,7 +968,7 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                       Confirm New Password
                     </label>
                     <input
@@ -1007,7 +1007,7 @@ const AdminSettings = () => {
                     {isDark ? <Moon size={16} className="text-indigo-400" /> : <Sun size={16} className="text-amber-500" />}
                     Theme Mode
                   </p>
-                  <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                     {isDark ? 'Dark Theme active (High Contrast)' : 'Light Theme active'}
                   </p>
                 </div>
@@ -1038,7 +1038,7 @@ const AdminSettings = () => {
                     <Globe size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     Display Language
                   </p>
-                  <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                     Select language for UI labels and notifications
                   </p>
                 </div>
@@ -1060,7 +1060,7 @@ const AdminSettings = () => {
                     <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     In-App Action Toasts
                   </p>
-                  <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                     Show centered pop-up toasts on save and updates
                   </p>
                 </div>
@@ -1094,7 +1094,7 @@ const AdminSettings = () => {
                     <div>
                       <h2 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
                         System Audit Trail & Security Logs
-                        <span className="text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                        <span className="text-xs bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                           Immutable Ledger
                         </span>
                       </h2>
@@ -1157,7 +1157,7 @@ const AdminSettings = () => {
                 <div className="mt-6 overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider font-bold">
+                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                         <th className="py-3 px-4">Timestamp & IP</th>
                         <th className="py-3 px-4">Administrator / Actor</th>
                         <th className="py-3 px-4">Action Event</th>
@@ -1177,7 +1177,7 @@ const AdminSettings = () => {
                           <td colSpan="4" className="py-12 text-center text-slate-400">
                             <ShieldCheck size={32} className="mx-auto mb-2 opacity-30" />
                             <p className="font-bold text-slate-700 dark:text-slate-300">No audit log entries recorded yet.</p>
-                            <p className="text-[11px] text-slate-500 mt-0.5">Admin operations will automatically appear here in real time.</p>
+                            <p className="text-xs text-slate-500 mt-0.5">Admin operations will automatically appear here in real time.</p>
                           </td>
                         </tr>
                       ) : (
@@ -1187,11 +1187,11 @@ const AdminSettings = () => {
                           
                           return (
                             <tr key={log._id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                              <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                              <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-400">
                                 <div className="font-bold text-slate-800 dark:text-slate-200">
                                   {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </div>
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-xs text-slate-400">
                                   {new Date(log.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} &bull; IP: {log.ipAddress || '127.0.0.1'}
                                 </div>
                               </td>
@@ -1207,7 +1207,7 @@ const AdminSettings = () => {
                               </td>
 
                               <td className="py-3.5 px-4">
-                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${
                                   isDeleteOrRevoke 
                                     ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border-rose-200 dark:border-rose-900/60'
                                     : isSuccess
@@ -1223,12 +1223,12 @@ const AdminSettings = () => {
                                   {log.targetType}: {log.details?.plateNo || log.details?.name || log.targetId || 'N/A'}
                                 </div>
                                 {log.details?.reason && (
-                                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium truncate max-w-xs">
+                                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium truncate max-w-xs">
                                     Reason: {log.details.reason}
                                   </p>
                                 )}
                                 {log.details?.previousStatus && log.details?.newStatus && (
-                                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                                     {log.details.previousStatus} ➜ {log.details.newStatus}
                                   </p>
                                 )}
@@ -1290,7 +1290,7 @@ const AdminSettings = () => {
                   <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
                     {confirmModal.type === 'system' ? 'Save System Configuration' : 'Confirm Action'}
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Apply updates to platform database</p>
+                  <p className="text-xs text-slate-400 font-medium">Apply updates to platform database</p>
                 </div>
               </div>
               <button
@@ -1330,7 +1330,7 @@ const AdminSettings = () => {
                     <span className="font-bold text-slate-900 dark:text-white">{Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs.length : 0} items</span>
                   </div>
                 </div>
-                <p className="text-[10px] text-slate-400 text-center">
+                <p className="text-xs text-slate-400 text-center">
                   Changes will take effect immediately across all operator portals.
                 </p>
               </div>

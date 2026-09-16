@@ -132,7 +132,7 @@ export const UnitCardSkeleton = ({ delay = 60 }) => {
 
 export const GarageGridSkeleton = ({ count = 2, baseDelay = 60 }) => {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
       {Array.from({ length: count }).map((_, i) => (
         <UnitCardSkeleton key={i} delay={baseDelay + i * 90} />
       ))}

@@ -108,7 +108,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'Continue with
       const tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'email profile openid',
-        prompt: 'select_account',
+        prompt: 'consent select_account',
         callback: async (tokenResponse) => {
           if (tokenResponse.error) {
             setIsLoading(false);
@@ -163,7 +163,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'Continue with
       });
 
       // Opens Google "Choose an account" dialog
-      tokenClient.requestAccessToken({ prompt: 'select_account' });
+      tokenClient.requestAccessToken({ prompt: 'consent select_account' });
     } catch (err) {
       setIsLoading(false);
       console.error('Error requesting Google access token:', err);
@@ -227,14 +227,14 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'Continue with
                 To display the official Google account chooser (like in Figma) on your live site, Google requires a registered <strong>Client ID</strong>.
               </p>
               
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5 font-mono text-[11px]">
-                <div className="text-slate-500 font-sans font-bold text-[10px] uppercase">Add Environment Variable in Render or Vercel:</div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5 font-mono text-xs">
+                <div className="text-slate-500 font-sans font-bold text-xs uppercase">Add Environment Variable in Render or Vercel:</div>
                 <div className="text-[#7A1B22] font-bold select-all bg-white px-2 py-1 rounded border border-slate-200">
                   GOOGLE_CLIENT_ID
                 </div>
               </div>
 
-              <div className="space-y-1 text-[11px]">
+              <div className="space-y-1 text-xs">
                 <p className="font-bold text-slate-700">Where to add it:</p>
                 <ul className="list-disc list-inside space-y-1 pl-1 text-slate-500">
                   <li><strong>Render (Backend):</strong> Add <code className="text-slate-700 font-bold">GOOGLE_CLIENT_ID</code> in your Render Service Environment Variables.</li>

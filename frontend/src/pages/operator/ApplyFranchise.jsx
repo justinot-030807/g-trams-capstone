@@ -514,6 +514,9 @@ const ApplyFranchise = () => {
     }
 
     setIsSubmitting(true);
+    const slowNetTimer = setTimeout(() => {
+      showToast("Network seems slow. Please wait while uploading...", "warning");
+    }, 7000);
 
     try {
       let response;
@@ -591,6 +594,7 @@ const ApplyFranchise = () => {
       console.error('Submission error:', error);
       showToast(error.message ? `Submission error: ${error.message}` : 'Network error. Cannot connect to server.', 'error');
     } finally {
+      clearTimeout(slowNetTimer);
       setIsSubmitting(false);
     }
   };
@@ -691,7 +695,7 @@ const ApplyFranchise = () => {
                 
                 <div>
                   <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2 gap-2 flex-wrap">
-                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
+                    <span className={`px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
                       unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                       unit.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
                       unit.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
@@ -757,7 +761,7 @@ const ApplyFranchise = () => {
 
                   {unit.status === 'Cancelled' && (
                     <div className="mt-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 p-3.5 rounded-2xl">
-                      <h4 className="text-red-900 dark:text-red-300 font-bold text-[10px] uppercase mb-1 flex items-center gap-1.5">
+                      <h4 className="text-red-900 dark:text-red-300 font-bold text-xs uppercase mb-1 flex items-center gap-1.5">
                         <AlertCircle size={13} className="text-red-600 dark:text-red-400" /> Reason for Rejection
                       </h4>
                       <p className="text-xs font-medium text-red-700 dark:text-red-300 leading-snug">
@@ -779,7 +783,7 @@ const ApplyFranchise = () => {
                   <PlusCircle size={26} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                 </div>
                 <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
-                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
+                <span className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
               </button>
             ) : (
               <div className="bg-red-50/60 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-3xl p-6 flex flex-col items-center justify-center text-red-700 dark:text-red-300 min-h-[190px] text-center">
@@ -881,11 +885,11 @@ const ApplyFranchise = () => {
                   ) : isCurrent ? (
                     <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
                   ) : (
-                    <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
+                    <span className="text-xs font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
                   )}
                 </div>
                 
-                <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                <span className={`text-xs sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
                   isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-bold' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
                 }`}>
                   {step.title}
@@ -910,7 +914,7 @@ const ApplyFranchise = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     1. Operator Information (Owner)
                   </h2>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-normal">
                     Personal details of the registered franchise owner
                   </p>
                 </div>
@@ -954,7 +958,7 @@ const ApplyFranchise = () => {
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                       TODA Association
                     </label>
-                    <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
                       Registered
                     </span>
                   </div>
@@ -980,7 +984,7 @@ const ApplyFranchise = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     2. Vehicle Details (Tricycle / Motorcycle)
                   </h2>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-normal">
                     Official vehicle details according to LTO OR/CR
                   </p>
                 </div>
@@ -1052,6 +1056,7 @@ const ApplyFranchise = () => {
                   <input 
                     type="text" 
                     name="plateNo" 
+                    maxLength="8"
                     value={formData.plateNo} 
                     onChange={handleInputChange} 
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
@@ -1068,6 +1073,7 @@ const ApplyFranchise = () => {
                   <input 
                     type="text" 
                     name="motorNo" 
+                    maxLength="25"
                     value={formData.motorNo} 
                     onChange={handleInputChange} 
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
@@ -1084,6 +1090,7 @@ const ApplyFranchise = () => {
                   <input 
                     type="text" 
                     name="chassisNo" 
+                    maxLength="25"
                     value={formData.chassisNo} 
                     onChange={handleInputChange} 
                     className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
@@ -1154,7 +1161,7 @@ const ApplyFranchise = () => {
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Community Tax Certificate (CTC / Cedula)
                 </h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                   Enter the latest CTC details issued by the Municipal Treasurer
                 </p>
               </div>
@@ -1176,7 +1183,7 @@ const ApplyFranchise = () => {
                   placeholder="e.g. 08123456" 
                   required 
                 />
-                <p className="text-[11px] font-medium text-slate-400 mt-1">Digits printed on top of the certificate</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">Digits printed on top of the certificate</p>
               </div>
 
               <div>
@@ -1279,7 +1286,7 @@ const ApplyFranchise = () => {
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Step 3: Upload Required Documents
                 </h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                   Take a clear photo with your mobile camera or upload from device gallery
                 </p>
               </div>
@@ -1314,19 +1321,19 @@ const ApplyFranchise = () => {
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">Operator</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">Operator</span>
                   <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.fullName}</span>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">Plate No.</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">Plate No.</span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.plateNo}</span>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">TODA</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">TODA</span>
                   <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.todaName || loggedInToda}</span>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-[10px] uppercase">Zone</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">Zone</span>
                   <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">Zone {formData.zone}</span>
                 </div>
               </div>
@@ -1440,7 +1447,7 @@ const ApplyFranchise = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-base text-slate-900 dark:text-white">Cancel Application</h3>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
                 </div>
               </div>
               <button 

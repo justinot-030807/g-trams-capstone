@@ -26,7 +26,7 @@ const About = () => {
           <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center">
             <ArrowLeft size={14} className="text-slate-700 dark:text-slate-200" />
           </div>
-          <span className="text-[10px] font-bold tracking-wide uppercase">Back</span>
+          <span className="text-xs font-bold tracking-wide uppercase">Back</span>
         </button>
 
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
