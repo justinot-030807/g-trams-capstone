@@ -12,6 +12,8 @@ import {
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import PublicStats from '../components/common/PublicStats';
+import LandingGuideCarousel from '../components/common/LandingGuideCarousel';
+import LandingAnnouncements from '../components/common/LandingAnnouncements';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -171,6 +173,12 @@ const Home = () => {
           </motion.div>
         </main>
       </div>
+
+      {/* NEW: Step-by-step Guide Carousel */}
+      <LandingGuideCarousel />
+
+      {/* NEW: BPLO Announcements */}
+      <LandingAnnouncements />
 
       {/* PUBLIC STATS SECTION (Scroll down to see) */}
       <PublicStats />
