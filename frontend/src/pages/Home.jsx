@@ -112,24 +112,24 @@ const Home = () => {
               {/* Sign In Button */}
               <Link
                 to="/login"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#7A1B22] via-[#9B222B] to-[#5A1419] text-white font-bold text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(155,34,43,0.65),0_0_15px_rgba(212,175,55,0.25)] hover:shadow-[0_15px_30px_-5px_rgba(155,34,43,0.85),0_0_25px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-[#D4AF37]/50 hover:border-[#D4AF37] cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#7A1B22] via-[#9B222B] to-[#5A1419] text-white font-bold text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(155,34,43,0.65)] hover:shadow-[0_15px_30px_-5px_rgba(155,34,43,0.85)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-white/10 hover:border-white/20 cursor-pointer"
               >
-                <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[260%] transition-transform duration-1000 ease-out pointer-events-none" />
+                <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[260%] transition-transform duration-1000 ease-out pointer-events-none" />
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
                   <LogIn size={14} className="text-[#D4AF37]" />
                 </div>
                 <span className="drop-shadow-xs">Sign In</span>
               </Link>
 
-              {/* Create Account Button */}
+              {/* Create Account Button (Solid Yellow) */}
               <Link
                 to="/register"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-white/[0.08] hover:bg-white/[0.16] text-white font-bold text-sm uppercase tracking-wider shadow-[0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_10px_25px_rgba(212,175,55,0.3)] border border-[#D4AF37]/60 hover:border-[#D4AF37] hover:scale-[1.03] active:scale-[0.98] backdrop-blur-xl transition-all duration-300 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#120204] font-black text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(212,175,55,0.45)] hover:shadow-[0_15px_30px_-5px_rgba(212,175,55,0.65)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
               >
-                <div className="w-6 h-6 rounded-full bg-[#D4AF37]/15 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <UserPlus size={14} className="text-[#D4AF37]" />
+                <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <UserPlus size={14} className="text-[#120204]" />
                 </div>
-                <span className="drop-shadow-xs">Create Account</span>
+                <span>Create Account</span>
               </Link>
 
             </motion.div>
