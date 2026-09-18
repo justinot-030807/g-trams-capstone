@@ -383,7 +383,7 @@ const RenewFranchise = () => {
                       value={formData.ctcNo}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400 min-h-[42px]" 
+                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400 min-h-[44px]" 
                       placeholder="e.g. 08123456"
                     />
                     <p className="text-xs font-medium text-slate-400 mt-1">Digits only</p>
@@ -399,8 +399,14 @@ const RenewFranchise = () => {
                       value={formData.dateIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[42px]" 
+                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[44px]" 
                     />
+                    {formData.dateIssued && new Date(formData.dateIssued).getFullYear() < new Date().getFullYear() && (
+                      <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                        <AlertCircle size={12} className="shrink-0" />
+                        Please verify that CTC was issued for {new Date().getFullYear()}.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -413,7 +419,7 @@ const RenewFranchise = () => {
                       value={formData.placeIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[42px]" 
+                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[44px]" 
                       placeholder="Gasan, Marinduque"
                     />
                   </div>
@@ -450,15 +456,15 @@ const RenewFranchise = () => {
                 </div>
               </div>
 
-              {/* Renewal Fee & Reminder */}
+              {/* Claim Stub Notice */}
               <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-900/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex items-start gap-3">
                 <ShieldCheck size={20} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-200">
-                    Renewal Fee & Processing Notice
+                    Claim Stub & Settlement Notice
                   </h4>
                   <p className="text-xs text-slate-700 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                    Online submission is free of charge. Once verified by BPLO, bring your Claim Voucher and renewal fee of <strong>₱{systemFranchiseFee}.00</strong> to the Municipal Treasury / BPLO Office to receive your updated permit sticker.
+                    Online renewal submission is free. After BPLO verification, download your official Claim Stub Voucher indicating your franchise details and fee breakdown for final settlement and sticker collection at the Municipal Treasury / BPLO Office.
                   </p>
                 </div>
               </div>
@@ -468,7 +474,7 @@ const RenewFranchise = () => {
                 <button 
                   type="button" 
                   onClick={() => navigate('/operator-dashboard')} 
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[42px] flex items-center justify-center active:scale-95"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95"
                 >
                   Cancel
                 </button>
@@ -476,7 +482,7 @@ const RenewFranchise = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px] ${
+                  className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] ${
                     isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-[#7A1B22] hover:bg-[#5A1419] shadow-[#7A1B22]/20'
                   }`}
                 >

@@ -4,7 +4,7 @@ import {
   CheckCircle, CheckCircle2, XCircle, Eye, FileText, AlertCircle, 
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
   CalendarDays, User, Clock, ExternalLink, RefreshCw, ChevronRight, ChevronLeft, Shield,
-  CheckSquare, Square, Filter, Users, Layers, FileSpreadsheet
+  CheckSquare, Square, Filter, Users, Layers, FileSpreadsheet, Copy, Check
 } from 'lucide-react';
 import { QueueListSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
@@ -64,6 +64,14 @@ const FranchiseApproval = () => {
   // Document viewer state
   const [zoomScale, setZoomScale] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [copiedKey, setCopiedKey] = useState(null);
+
+  const handleCopyText = (text, key) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1800);
+  };
 
   // Print modals state
   const [printTargetUnit, setPrintTargetUnit] = useState(null);
@@ -125,7 +133,7 @@ const FranchiseApproval = () => {
   };
 
   // Status Update for Single Unit (from Workstation or Quick Action)
-  const handleUpdateStatus = async (status, targetApp = selectedApp, customReasonText = '') => {
+  const handleUpdateStatus = async (status, targetApp = selectedApp, customReasonText = '', autoAdvance = false) => {
     if (!targetApp) return;
     setIsProcessing(true);
     const finalReason = status === 'Cancelled' ? customReasonText : '';
@@ -149,8 +157,28 @@ const FranchiseApproval = () => {
       if (response.ok) {
         showToast(`Application for ${targetApp.fullName} updated to ${status}!`, "success");
         if (selectedApp?._id === targetApp._id) {
-          setSelectedApp(null); 
           setIsRejecting(false);
+          if (autoAdvance) {
+            // Find next eligible applicant in filteredApps
+            const currIdx = filteredApps.findIndex(a => a._id === targetApp._id);
+            const remaining = filteredApps.filter(a => a._id !== targetApp._id);
+
+            let nextTarget = null;
+            if (currIdx >= 0 && currIdx < filteredApps.length - 1) {
+              nextTarget = filteredApps[currIdx + 1];
+            } else if (remaining.length > 0) {
+              nextTarget = remaining[Math.min(currIdx, remaining.length - 1)];
+            }
+
+            if (nextTarget) {
+              handleOpenWorkstation(nextTarget);
+            } else {
+              showToast("Queue completed! All applications in view reviewed.", "success");
+              setSelectedApp(null);
+            }
+          } else {
+            setSelectedApp(null);
+          }
         }
         setQuickApproveTarget(null);
         setQuickRejectTarget(null);
@@ -327,6 +355,48 @@ const FranchiseApproval = () => {
   const handleNextApp = () => {
     if (hasNextApp) handleOpenWorkstation(filteredApps[currentWorkstationIndex + 1]);
   };
+
+  // Keyboard Shortcuts for Rapid Admin Workstation Verification
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore keystrokes when typing inside inputs, textareas, or selects
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (['input', 'textarea', 'select'].includes(activeTag)) return;
+
+      if (!selectedApp) return;
+
+      if (e.key === 'Escape') {
+        setSelectedApp(null);
+      } else if (e.key === '1') {
+        setActiveDocKey('orCr');
+      } else if (e.key === '2') {
+        setActiveDocKey('license');
+      } else if (e.key === '3') {
+        setActiveDocKey('toda');
+      } else if (e.key === '4') {
+        setActiveDocKey('brgy');
+      } else if (e.key === 'ArrowLeft') {
+        if (hasPrevApp) handlePrevApp();
+      } else if (e.key === 'ArrowRight') {
+        if (hasNextApp) handleNextApp();
+      } else if ((e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        if (selectedApp.status === 'Pending' && !isProcessing) {
+          handleUpdateStatus('Ready for Pickup', selectedApp, '', true);
+        } else if (selectedApp.status === 'Ready for Pickup' && !isProcessing) {
+          handleUpdateStatus('Active', selectedApp, '', true);
+        }
+      } else if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey) {
+        if (selectedApp.status === 'Pending') {
+          e.preventDefault();
+          setIsRejecting(prev => !prev);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedApp, hasPrevApp, hasNextApp, filteredApps, isProcessing]);
 
   // Documents list for workstation
   const docTabs = selectedApp ? [
@@ -1085,10 +1155,10 @@ const FranchiseApproval = () => {
             onClick={() => setSelectedApp(null)} 
           />
           
-          <div className="relative w-full h-[96vh] max-w-[1500px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10">
+          <div className="relative w-full h-[96vh] max-w-[1540px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10">
             
             {/* WORKSTATION TOP BAR */}
-            <div className="px-5 py-3.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white flex flex-wrap items-center justify-between gap-3 shrink-0 border-b border-slate-200 dark:border-slate-800">
+            <div className="px-4 sm:px-5 py-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white flex flex-wrap items-center justify-between gap-3 shrink-0 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-[#7A1B22] flex items-center justify-center text-[#D4AF37] font-black text-xs shrink-0 shadow-sm border border-[#D4AF37]/30">
                   <ShieldCheck size={18} />
@@ -1104,6 +1174,13 @@ const FranchiseApproval = () => {
                     <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#D4AF37]/15 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/40">
                       Plate: {selectedApp.plateNo || 'PENDING'}
                     </span>
+                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                      selectedApp.status === 'Pending' 
+                        ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                        : 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800'
+                    }`}>
+                      {selectedApp.status}
+                    </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     {selectedApp.todaName} &bull; Zone {selectedApp.zone} &bull; Submitted: {formatDate(selectedApp.dateApplied || selectedApp.createdAt)}
@@ -1112,174 +1189,210 @@ const FranchiseApproval = () => {
               </div>
 
               {/* Queue Navigator: Previous & Next Applicant */}
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold">
-                <button
-                  onClick={handlePrevApp}
-                  disabled={!hasPrevApp}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-                  title="Previous Application"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="text-xs font-mono px-2 text-slate-600 dark:text-slate-300">
-                  {currentWorkstationIndex >= 0 ? currentWorkstationIndex + 1 : 1} / {filteredApps.length}
-                </span>
-                <button
-                  onClick={handleNextApp}
-                  disabled={!hasNextApp}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-                  title="Next Application"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-
-              {/* Mobile Pane Switcher (Tabs on < lg screens) */}
-              <div className="flex lg:hidden items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold">
-                <button
-                  onClick={() => setMobilePane('details')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'details' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                >
-                  Applicant Data
-                </button>
-                <button
-                  onClick={() => setMobilePane('document')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'document' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                >
-                  Live Document
-                </button>
-              </div>
-
-              {/* Top Bar Actions */}
               <div className="flex items-center gap-2">
-                {(selectedApp.status === 'Ready for Pickup' || selectedApp.status === 'Active') && (
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold">
                   <button
-                    onClick={() => setPrintTargetUnit(selectedApp)}
-                    className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-white/15 cursor-pointer"
+                    onClick={handlePrevApp}
+                    disabled={!hasPrevApp}
+                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    title="Previous Application (ArrowLeft)"
                   >
-                    <Printer size={14} className="text-[#D4AF37]" /> Print MTOP
+                    <ChevronLeft size={16} />
                   </button>
-                )}
-                <button 
-                  onClick={() => setSelectedApp(null)} 
-                  className="p-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 dark:bg-white/10 dark:hover:bg-red-500 text-slate-600 dark:text-white rounded-xl transition-colors cursor-pointer"
-                  title="Close Workstation (Esc)"
-                >
-                  <X size={20} />
-                </button>
+                  <span className="text-xs font-mono px-2 text-slate-600 dark:text-slate-300 select-none">
+                    Applicant {currentWorkstationIndex >= 0 ? currentWorkstationIndex + 1 : 1} of {filteredApps.length}
+                  </span>
+                  <button
+                    onClick={handleNextApp}
+                    disabled={!hasNextApp}
+                    className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    title="Next Application (ArrowRight)"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                {/* Mobile Pane Switcher (Tabs on < lg screens) */}
+                <div className="flex lg:hidden items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold">
+                  <button
+                    onClick={() => setMobilePane('details')}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'details' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                  >
+                    Details
+                  </button>
+                  <button
+                    onClick={() => setMobilePane('document')}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${mobilePane === 'document' ? 'bg-[#7A1B22] text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                  >
+                    Document
+                  </button>
+                </div>
+
+                {/* Top Bar Actions */}
+                <div className="flex items-center gap-1.5">
+                  {(selectedApp.status === 'Ready for Pickup' || selectedApp.status === 'Active') && (
+                    <button
+                      onClick={() => setPrintTargetUnit(selectedApp)}
+                      className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-white/15 cursor-pointer"
+                    >
+                      <Printer size={14} className="text-[#D4AF37]" /> <span className="hidden sm:inline">Print MTOP</span>
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => setSelectedApp(null)} 
+                    className="p-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 dark:bg-white/10 dark:hover:bg-red-500 text-slate-600 dark:text-white rounded-xl transition-colors cursor-pointer"
+                    title="Close Workstation (Esc)"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* WORKSTATION BODY: SPLIT VIEW */}
             <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
               
-              {/* LEFT PANE: APPLICANT DATA & INSPECTION CHECKLIST (42% on desktop) */}
-              <div className={`w-full lg:w-[42%] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 ${
+              {/* LEFT PANE: APPLICANT DATA & VERIFICATION CHECKLIST (36% on desktop) */}
+              <div className={`w-full lg:w-[38%] xl:w-[35%] flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-full overflow-hidden ${
                 mobilePane === 'details' ? 'flex' : 'hidden lg:flex'
               }`}>
-                <div className="p-5 sm:p-6 space-y-5 flex-1">
+                
+                {/* SCROLLABLE DETAILS BODY */}
+                <div className="p-4 sm:p-5 space-y-3.5 flex-1 min-h-0 overflow-y-auto">
                   
-                  {/* Operator & Vehicle Spec Strip */}
-                  <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4.5 space-y-4">
+                  {/* Operator & Vehicle Spec Card */}
+                  <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3.5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-2">
-                        <User size={15} /> Operator & Vehicle Specs
+                      <h3 className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
+                        <User size={14} /> Operator Information
                       </h3>
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
                         ID: {selectedApp._id.slice(-6)}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="grid grid-cols-2 gap-2.5 text-xs">
                       <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Full Name</p>
-                        <p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedApp.fullName}</p>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Full Name</p>
+                        <p className="font-black text-slate-900 dark:text-white mt-0.5 truncate">{selectedApp.fullName}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">TODA & Zone</p>
-                        <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedApp.todaName} (Zone {selectedApp.zone})</p>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">TODA & Zone</p>
+                        <p className="font-bold text-slate-900 dark:text-white mt-0.5 truncate">{selectedApp.todaName} (Zone {selectedApp.zone})</p>
                       </div>
                       <div className="col-span-2">
-                        <p className="text-xs font-bold uppercase text-slate-400">Barangay Address</p>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Barangay Address</p>
                         <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{selectedApp.address}</p>
                       </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-700/80 grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Make / Brand</p>
-                        <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedApp.make} ({selectedApp.made || 'N/A'})</p>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Make / Brand</p>
+                        <p className="font-bold text-slate-900 dark:text-white mt-0.5 truncate">{selectedApp.make} ({selectedApp.made || 'N/A'})</p>
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Plate Number</p>
-                        <p className="font-black text-slate-900 dark:text-white mt-0.5">{selectedApp.plateNo || 'PENDING ASSIGNMENT'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Motor Number</p>
-                        <p className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded mt-0.5 border border-slate-200 dark:border-slate-700 select-all">
-                          {selectedApp.motorNo}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold uppercase text-slate-400">Chassis Number</p>
-                        <p className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded mt-0.5 border border-slate-200 dark:border-slate-700 select-all">
-                          {selectedApp.chassisNo}
-                        </p>
+                        <p className="text-[10px] font-bold uppercase text-slate-400">Application Type</p>
+                        <p className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedApp.applicationType || 'New'}</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* SUBMITTED DOCUMENTS OVERVIEW (Clean & Elegant, Click to view on right pane) */}
-                  <div className="bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 space-y-3">
+                  {/* QUICK CROSS-CHECK STRIP (Compare against OR/CR) */}
+                  <div className="bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/90 dark:border-amber-900/50 rounded-2xl p-3.5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Submitted Documents
-                      </h4>
-                      <span className="text-xs text-slate-400 font-medium">Click to inspect</span>
+                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                        <ShieldCheck size={14} /> Compare with OR/CR Image
+                      </span>
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Click box to copy</span>
                     </div>
 
-                    <div className="space-y-2 pt-1">
-                      {docTabs.map((tab) => {
-                        const isSelected = activeDocKey === tab.key;
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div 
+                        onClick={() => handleCopyText(selectedApp.plateNo, 'plate')}
+                        className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-amber-200/80 dark:border-amber-800/40 cursor-pointer hover:border-amber-400 transition-all flex items-center justify-between group"
+                        title="Click to copy Plate Number"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Plate No.</p>
+                          <p className="font-mono font-black text-[#7A1B22] dark:text-[#D4AF37] text-xs truncate">
+                            {selectedApp.plateNo || 'PENDING'}
+                          </p>
+                        </div>
+                        {copiedKey === 'plate' ? <Check size={13} className="text-emerald-500 shrink-0" /> : <Copy size={13} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 shrink-0" />}
+                      </div>
+
+                      <div 
+                        onClick={() => handleCopyText(selectedApp.motorNo, 'motor')}
+                        className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-amber-200/80 dark:border-amber-800/40 cursor-pointer hover:border-amber-400 transition-all flex items-center justify-between group"
+                        title="Click to copy Motor Number"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Motor No.</p>
+                          <p className="font-mono font-black text-slate-900 dark:text-white text-xs truncate max-w-[105px]">
+                            {selectedApp.motorNo}
+                          </p>
+                        </div>
+                        {copiedKey === 'motor' ? <Check size={13} className="text-emerald-500 shrink-0" /> : <Copy size={13} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 shrink-0" />}
+                      </div>
+
+                      <div 
+                        onClick={() => handleCopyText(selectedApp.chassisNo, 'chassis')}
+                        className="col-span-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-amber-200/80 dark:border-amber-800/40 cursor-pointer hover:border-amber-400 transition-all flex items-center justify-between group"
+                        title="Click to copy Chassis Number"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Chassis No.</p>
+                          <p className="font-mono font-black text-slate-900 dark:text-white text-xs truncate">
+                            {selectedApp.chassisNo}
+                          </p>
+                        </div>
+                        {copiedKey === 'chassis' ? <Check size={13} className="text-emerald-500 shrink-0" /> : <Copy size={13} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 shrink-0" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SLEEK COMPACT DOCUMENT STATUS CHECKLIST */}
+                  <div className="bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <FileText size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Required Attachments
+                      </h4>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                        {docTabs.filter(d => Boolean(d.url)).length} of {docTabs.length} uploaded
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                      {docTabs.map((tab, idx) => {
+                        const isActive = activeDocKey === tab.key;
                         const hasFile = Boolean(tab.url);
 
                         return (
-                          <div
+                          <button
                             key={tab.key}
+                            type="button"
                             onClick={() => {
                               setActiveDocKey(tab.key);
+                              setZoomScale(1);
+                              setRotation(0);
                               setMobilePane('document');
                             }}
-                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
-                              isSelected
-                                ? 'bg-white dark:bg-slate-800 border-[#7A1B22] dark:border-[#D4AF37] shadow-sm ring-1 ring-[#7A1B22]/20 dark:ring-[#D4AF37]/20'
-                                : 'bg-white/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'
+                            className={`flex items-center justify-between p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                              isActive 
+                                ? 'bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 border-[#7A1B22] dark:border-[#D4AF37] ring-1 ring-[#7A1B22]/25 dark:ring-[#D4AF37]/30 shadow-2xs' 
+                                : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
                           >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-[#7A1B22] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>
-                                <FileText size={14} />
-                              </div>
-                              <div className="min-w-0">
-                                <p className={`text-xs font-bold truncate ${isSelected ? 'text-[#7A1B22] dark:text-[#D4AF37]' : 'text-slate-800 dark:text-slate-200'}`}>
-                                  {tab.label}
-                                </p>
-                              </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-[10px] font-mono font-bold text-slate-400">[{idx + 1}]</span>
+                              <span className={`text-xs font-bold truncate ${isActive ? 'text-[#7A1B22] dark:text-[#D4AF37]' : 'text-slate-700 dark:text-slate-300'}`}>
+                                {tab.short}
+                              </span>
                             </div>
 
-                            <div className="flex items-center gap-2 shrink-0">
-                              {hasFile ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">
-                                  <CheckCircle2 size={11} /> Attached
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">
-                                  Missing
-                                </span>
-                              )}
-                              <ChevronRight size={14} className={`transition-colors ${isSelected ? 'text-[#7A1B22] dark:text-[#D4AF37]' : 'text-slate-300 dark:text-slate-600'}`} />
-                            </div>
-                          </div>
+                            <span 
+                              className={`w-2 h-2 rounded-full shrink-0 ${hasFile ? 'bg-emerald-500' : 'bg-amber-400'}`} 
+                              title={hasFile ? 'Document Uploaded' : 'Missing Document'} 
+                            />
+                          </button>
                         );
                       })}
                     </div>
@@ -1287,7 +1400,7 @@ const FranchiseApproval = () => {
 
                   {/* REJECTION REASON EXPANDABLE ACCORDION */}
                   {isRejecting && (
-                    <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-4.5 animate-in fade-in slide-in-from-top-2 space-y-3">
+                    <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-red-800 dark:text-red-300 font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
                           <XCircle size={15} /> Specify Rejection Reason
@@ -1303,17 +1416,17 @@ const FranchiseApproval = () => {
                       <select 
                         value={rejectReason} 
                         onChange={(e) => setRejectReason(e.target.value)} 
-                        className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-200"
+                        className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-200"
                       >
                         {REJECT_REASONS.map((r, i) => <option key={i} value={r}>{r}</option>)}
                       </select>
 
                       {rejectReason === 'Others (Please specify)' && (
                         <textarea 
-                          placeholder="Type specific inspection defect or reason for the operator..." 
+                          placeholder="Type specific inspection defect or instruction for the operator..." 
                           value={customReason} 
                           onChange={(e) => setCustomReason(e.target.value)} 
-                          className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-white min-h-[70px] outline-none focus:ring-2 focus:ring-red-200" 
+                          className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 dark:text-white min-h-[60px] outline-none focus:ring-2 focus:ring-red-200" 
                         />
                       )}
 
@@ -1321,73 +1434,120 @@ const FranchiseApproval = () => {
                         <button 
                           onClick={() => {
                             const reasonText = rejectReason === 'Others (Please specify)' ? customReason : rejectReason;
-                            handleUpdateStatus('Cancelled', selectedApp, reasonText);
+                            handleUpdateStatus('Cancelled', selectedApp, reasonText, true);
                           }} 
                           disabled={isProcessing} 
-                          className="flex-1 bg-red-600 text-white hover:bg-red-700 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
+                          className="flex-1 bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
                         >
-                          {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />} 
-                          Confirm Rejection
+                          {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />} 
+                          Confirm Rejection &amp; Next
                         </button>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* BOTTOM ACTION DOCK (LEFT PANE) */}
-                <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
-                  {!isRejecting && (
+                {/* FIXED ZERO-SCROLL STICKY BOTTOM ACTION DOCK */}
+                <div className="p-3.5 sm:p-4 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2 shrink-0 z-20 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+                  {!isRejecting ? (
                     <>
                       {selectedApp.status === 'Pending' ? (
-                        <button 
-                          onClick={() => setIsRejecting(true)} 
-                          className="px-4 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors border border-red-200 dark:border-red-800/40 cursor-pointer"
-                        >
-                          <XCircle size={15} /> Reject
-                        </button>
-                      ) : (
-                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                          <Clock size={15} /> Awaiting Release
-                        </span>
-                      )}
+                        <div className="flex items-center gap-2">
+                          {/* Reject Button */}
+                          <button 
+                            onClick={() => setIsRejecting(true)} 
+                            disabled={isProcessing}
+                            className="px-3 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/70 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all border border-red-200 dark:border-red-800/40 active:scale-95 cursor-pointer shrink-0"
+                            title="Reject Application (Shortcut: R)"
+                          >
+                            <XCircle size={15} />
+                            <span>Reject</span>
+                            <kbd className="hidden sm:inline-block px-1 text-[9px] bg-red-200/60 dark:bg-red-900/60 rounded font-mono">R</kbd>
+                          </button>
 
-                      <div className="flex items-center gap-2 ml-auto">
-                        {selectedApp.status === 'Pending' ? (
+                          {/* Regular Approve Button (Closes modal) */}
                           <button 
-                            onClick={() => handleUpdateStatus('Ready for Pickup', selectedApp)} 
+                            onClick={() => handleUpdateStatus('Ready for Pickup', selectedApp, '', false)} 
                             disabled={isProcessing} 
-                            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md cursor-pointer"
+                            className="px-3.5 py-2.5 bg-slate-200/80 hover:bg-slate-300/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0 border border-slate-300/60 dark:border-slate-700"
+                            title="Approve and close workstation"
                           >
-                            {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
-                            Approve (Set to Ready for Pickup)
+                            {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                            <span className="hidden sm:inline">Approve Only</span>
+                            <span className="sm:hidden">Approve</span>
                           </button>
-                        ) : (
+
+                          {/* Primary High-Speed Action: Approve & Next */}
                           <button 
-                            onClick={() => handleUpdateStatus('Active', selectedApp)} 
+                            onClick={() => handleUpdateStatus('Ready for Pickup', selectedApp, '', true)} 
                             disabled={isProcessing} 
-                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-md cursor-pointer"
+                            className="flex-1 py-2.5 px-3.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md hover:shadow-lg cursor-pointer"
+                            title="Approve and automatically load next applicant (Shortcut: A)"
                           >
-                            {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
-                            Acknowledge Payment & Release
+                            {isProcessing ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle2 size={16} className="text-white shrink-0" />
+                                <span className="truncate">Approve &amp; Next</span>
+                                <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[10px] bg-white/20 rounded font-mono font-bold">A</kbd>
+                                <ChevronRight size={15} className="shrink-0" />
+                              </>
+                            )}
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        /* Ready for Pickup unit */
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleUpdateStatus('Active', selectedApp, '', false)} 
+                            disabled={isProcessing} 
+                            className="px-3 py-2.5 bg-slate-200/80 hover:bg-slate-300/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0 border border-slate-300/60 dark:border-slate-700"
+                            title="Release without advancing"
+                          >
+                            {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                            <span>Release Only</span>
+                          </button>
+
+                          <button 
+                            onClick={() => handleUpdateStatus('Active', selectedApp, '', true)} 
+                            disabled={isProcessing} 
+                            className="flex-1 py-2.5 px-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md cursor-pointer"
+                            title="Acknowledge payment, release franchise, and load next"
+                          >
+                            {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                            <span>Acknowledge &amp; Next</span>
+                            <ChevronRight size={15} />
+                          </button>
+                        </div>
+                      )}
                     </>
+                  ) : (
+                    /* When rejecting: Rejection input box is shown inside the scrollable body, but we provide a Cancel button here too */
+                    <div className="flex items-center justify-between text-xs text-red-600 dark:text-red-400 font-bold px-1">
+                      <span>Rejection mode active</span>
+                      <button 
+                        onClick={() => setIsRejecting(false)} 
+                        className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* RIGHT PANE: DEDICATED LIVE DOCUMENT VIEWER CANVAS (58% on desktop) */}
-              <div className={`w-full lg:w-[58%] flex flex-col bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white overflow-hidden ${
+              {/* RIGHT PANE: DEDICATED MAXIMIZED DOCUMENT VIEWER CANVAS (64% on desktop) */}
+              <div className={`w-full lg:w-[62%] xl:w-[65%] flex flex-col bg-slate-100 dark:bg-[#070b14] text-slate-900 dark:text-white overflow-hidden h-full ${
                 mobilePane === 'document' ? 'flex' : 'hidden lg:flex'
               }`}>
                 
                 {/* DOCUMENT SELECTOR TABS & TOOLBAR */}
-                <div className="px-4 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
                   
                   {/* Doc Pills */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto py-1">
-                    {docTabs.map((tab) => {
+                  <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+                    {docTabs.map((tab, idx) => {
                       const isActive = tab.key === activeDocKey;
                       const hasDoc = Boolean(tab.url);
                       return (
@@ -1400,22 +1560,23 @@ const FranchiseApproval = () => {
                           }}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
                             isActive
-                              ? 'bg-[#7A1B22] text-white shadow-sm border border-[#D4AF37]/40'
+                              ? 'bg-[#7A1B22] text-white shadow-xs border border-[#D4AF37]/50'
                               : 'bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/5'
                           }`}
                         >
-                          <FileText size={13} className={isActive ? 'text-[#D4AF37]' : 'text-slate-400 dark:text-slate-500'} />
-                          <span>{tab.label}</span>
-                          {!hasDoc && selectedApp.applicationType !== 'Renewal' && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Missing attachment" />
-                          )}
+                          <span className="text-[10px] font-mono opacity-80">[{idx + 1}]</span>
+                          <span>{tab.short}</span>
+                          <span 
+                            className={`w-2 h-2 rounded-full shrink-0 ${hasDoc ? 'bg-emerald-400' : 'bg-amber-400'}`} 
+                            title={hasDoc ? 'Attached' : 'Missing'}
+                          />
                         </button>
                       );
                     })}
                   </div>
 
                   {/* Interactive Controls (Zoom / Rotate / Reset / External) */}
-                  <div className="flex items-center gap-1.5 ml-auto">
+                  <div className="flex items-center gap-1 ml-auto">
                     <button 
                       onClick={() => setZoomScale(prev => Math.max(prev - 0.25, 0.5))} 
                       className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
@@ -1465,10 +1626,10 @@ const FranchiseApproval = () => {
                   </div>
                 </div>
 
-                {/* WORKSPACE CANVAS / VIEWER */}
-                <div className="flex-1 relative flex items-center justify-center p-4 overflow-auto bg-slate-100 dark:bg-slate-950/90 select-none">
+                {/* WORKSPACE CANVAS / VIEWER (MAXIMIZED VIEWPORT) */}
+                <div className="flex-1 relative flex items-center justify-center p-2 sm:p-4 overflow-auto bg-slate-200/50 dark:bg-slate-950/90 select-none">
                   {selectedApp.applicationType === 'Renewal' && !currentDoc?.url ? (
-                    <div className="text-center p-8 max-w-md bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
+                    <div className="text-center p-8 max-w-md bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
                       <ShieldCheck size={36} className="mx-auto text-[#7A1B22] dark:text-[#D4AF37] mb-3 opacity-70" />
                       <h4 className="font-bold text-sm text-slate-900 dark:text-white">Renewal Application</h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
@@ -1476,7 +1637,7 @@ const FranchiseApproval = () => {
                       </p>
                     </div>
                   ) : !currentDoc?.url ? (
-                    <div className="text-center p-8 max-w-md bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
+                    <div className="text-center p-8 max-w-md bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
                       <AlertCircle size={36} className="mx-auto text-amber-500 mb-3 opacity-70" />
                       <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Document Uploaded</h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
@@ -1490,7 +1651,7 @@ const FranchiseApproval = () => {
                       title="Inspection Document PDF" 
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center overflow-auto p-2">
+                    <div className="w-full h-full flex items-center justify-center overflow-auto p-1 sm:p-2">
                       <img 
                         src={currentDoc.url} 
                         alt={currentDoc.label}
@@ -1499,19 +1660,19 @@ const FranchiseApproval = () => {
                           transformOrigin: 'center', 
                           transition: 'transform 0.15s ease-out' 
                         }}
-                        className="max-h-[82vh] max-w-[90%] object-contain rounded-xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10" 
+                        className="max-h-[86vh] max-w-full object-contain rounded-2xl shadow-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10" 
                       />
                     </div>
                   )}
                 </div>
 
                 {/* CANVAS BOTTOM INFO BAR */}
-                <div className="px-4 py-2 bg-white dark:bg-slate-900/90 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div className="px-4 py-2 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2 shrink-0">
                   <span className="flex items-center gap-1.5 font-medium">
                     <Eye size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Inspecting: <strong className="text-slate-800 dark:text-slate-200">{currentDoc?.label}</strong>
                   </span>
-                  <span className="font-mono text-slate-400 dark:text-slate-500">
-                    Use controls in toolbar to inspect fine details
+                  <span className="hidden sm:inline font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                    Shortcuts: <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">1-4</kbd> Docs &bull; <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">A</kbd> Approve &amp; Next &bull; <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">&larr; &rarr;</kbd> Applicants
                   </span>
                 </div>
               </div>
