@@ -102,6 +102,11 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/config/swagger');
 app.use(`${BASE_URI}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Health check route for Render/Uptime monitors
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'G-TRAMS API is running smoothly.' });
+});
+
 const { errorHandler, notFound } = require('./src/middleware/errorMiddleware');
 
 // Handle 404

@@ -1,10 +1,13 @@
 const errorHandler = (err, req, res, next) => {
-    console.error(`[ERROR] ${err.name}: ${err.message}`);
-    if (err.stack) {
-        console.error(err.stack);
-    }
-
     const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+
+    // Log only actual server errors (500s) to console, ignore 404 noise from bots
+    if (statusCode !== 404) {
+        console.error(`[ERROR] ${err.name}: ${err.message}`);
+        if (err.stack) {
+            console.error(err.stack);
+        }
+    }
     
     let errorResponse = {
         message: err.message || 'Internal Server Error'
