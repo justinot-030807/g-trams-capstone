@@ -198,7 +198,7 @@ exports.getUsers = async (req, res) => {
 
             uObj.unitsCount = userUnits.length;
             uObj.activeUnitsCount = userUnits.filter(unit => unit.status === 'Active').length;
-            uObj.pendingUnitsCount = userUnits.filter(unit => unit.status === 'Pending' || unit.status === 'Ready for Pickup').length;
+            uObj.pendingUnitsCount = userUnits.filter(unit => unit.status === 'Pending' || unit.status === 'For Signing' || unit.status === 'Ready for Pickup').length;
             uObj.expiredUnitsCount = userUnits.filter(unit => unit.status === 'Expired').length;
             uObj.cancelledUnitsCount = userUnits.filter(unit => unit.status === 'Cancelled' || unit.status === 'Revoked').length;
             uObj.units = userUnits;

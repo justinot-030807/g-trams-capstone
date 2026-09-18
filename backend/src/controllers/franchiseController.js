@@ -322,7 +322,7 @@ const updateFranchiseStatus = async (req, res) => {
             releaseDate: releaseDate || '' 
         };
 
-        if ((status === 'Ready for Pickup' || status === 'Active') && previousStatus !== status) {
+        if (['For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.approvalDate) {
             updateData.approvalDate = new Date();
         }
 
@@ -333,21 +333,35 @@ const updateFranchiseStatus = async (req, res) => {
         ).populate('operator', 'name address contact');
 
         if (updatedFranchise.operator) {
+            let notifTitle = `Franchise ${status}`;
+            let notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has been updated to: ${status}`;
+
+            if (status === 'For Signing') {
+                notifTitle = 'Franchise Approved - For Signing';
+                notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has passed technical verification and is now routed for municipal official signatures.`;
+            } else if (status === 'Ready for Pickup') {
+                notifTitle = 'Franchise Signed - Ready for Pickup!';
+                notifMessage = `Your official MTOP Certificate for ${updatedFranchise.plateNo} has been signed! Please present your Claim Stub to the Municipal Cashier to pay and claim.`;
+            } else if (status === 'Active') {
+                notifTitle = 'Franchise Activated!';
+                notifMessage = `Your franchise permit for ${updatedFranchise.plateNo} is now officially active and released.`;
+            }
+
             const notification = await Notification.create({
                 recipient: updatedFranchise.operator._id,
                 type: 'status_change',
-                title: `Franchise ${status}`,
-                message: `Your franchise application for ${updatedFranchise.plateNo} has been updated to: ${status}`,
+                title: notifTitle,
+                message: notifMessage,
                 relatedFranchise: updatedFranchise._id
             });
             emitToUser(String(updatedFranchise.operator._id), 'notification', notification);
             
             // Send background push notification to operator's mobile device
             sendPushToUser(updatedFranchise.operator._id, {
-                title: `Franchise Status: ${status}`,
-                message: `Your franchise application for ${updatedFranchise.plateNo} has been updated to ${status}.`,
+                title: notifTitle,
+                message: notifMessage,
                 url: '/operator-dashboard',
-                type: String(status).toLowerCase().includes('approv') ? 'approval' : 'status_change'
+                type: String(status).toLowerCase().includes('approv') || status === 'For Signing' ? 'approval' : 'status_change'
             }).catch(err => console.error('Push alert delivery failed:', err.message));
         }
 
@@ -376,8 +390,8 @@ const cancelMyFranchise = async (req, res) => {
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
         if (franchise.operator.toString() !== req.user._id.toString()) return res.status(401).json({ message: 'Not authorized to cancel this application' });
         
-        if (franchise.status !== 'Pending' && franchise.status !== 'Ready for Pickup') {
-            return res.status(400).json({ message: 'Only pending applications can be cancelled.' });
+        if (!['Pending', 'For Signing', 'Ready for Pickup'].includes(franchise.status)) {
+            return res.status(400).json({ message: 'Only pending or unreleased applications can be cancelled.' });
         }
 
         const reason = (req.body.cancelReason || 'Cancelled by operator').trim();

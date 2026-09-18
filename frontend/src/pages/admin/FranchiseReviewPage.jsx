@@ -263,8 +263,10 @@ const FranchiseReviewPage = () => {
 
       if (res.ok) {
         showToast(
-          newStatus === 'Ready for Pickup'
-            ? 'Application approved! Status set to Ready for Pickup.'
+          newStatus === 'For Signing'
+            ? 'Application approved and queued for municipal signatures!'
+            : newStatus === 'Ready for Pickup'
+            ? 'Marked as Signed! Status set to Ready for Pickup.'
             : newStatus === 'Active'
             ? 'Franchise officially activated and released!'
             : 'Application marked as Cancelled/Rejected.',
@@ -306,6 +308,8 @@ const FranchiseReviewPage = () => {
       if (e.key === 'a' || e.key === 'A') {
         e.preventDefault();
         if (currentApp?.status === 'Pending') {
+          handleUpdateStatus('For Signing', null, true);
+        } else if (currentApp?.status === 'For Signing') {
           handleUpdateStatus('Ready for Pickup', null, true);
         } else if (currentApp?.status === 'Ready for Pickup') {
           handleUpdateStatus('Active', null, true);
@@ -412,6 +416,8 @@ const FranchiseReviewPage = () => {
             <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${
               currentApp.status === 'Ready for Pickup' 
                 ? 'bg-blue-500/20 text-blue-100 border-blue-300/40' 
+                : currentApp.status === 'For Signing'
+                ? 'bg-purple-500/20 text-purple-100 border-purple-300/40'
                 : currentApp.status === 'Active'
                 ? 'bg-emerald-500/20 text-emerald-100 border-emerald-300/40'
                 : 'bg-amber-500/20 text-amber-100 border-amber-300/40'
@@ -446,8 +452,8 @@ const FranchiseReviewPage = () => {
 
         {/* Right: Primary Actions */}
         <div className="flex items-center gap-2">
-          {/* MTOP Print if Ready or Active */}
-          {(currentApp.status === 'Ready for Pickup' || currentApp.status === 'Active') && (
+          {/* MTOP Print if For Signing, Ready or Active */}
+          {(currentApp.status === 'For Signing' || currentApp.status === 'Ready for Pickup' || currentApp.status === 'Active') && (
             <button
               onClick={() => setIsPrintOpen(true)}
               className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/20 cursor-pointer"
@@ -474,16 +480,28 @@ const FranchiseReviewPage = () => {
             <span className="hidden lg:inline text-xs px-1 bg-black/25 rounded text-white/80">R</span>
           </button>
 
-          {/* Primary: Approve & Next */}
+          {/* Primary: Approve / Sign / Release */}
           {currentApp.status === 'Pending' ? (
+            <button
+              onClick={() => handleUpdateStatus('For Signing', null, true)}
+              disabled={isProcessing}
+              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Approve requirements and route for municipal signature (Shortcut: A)"
+            >
+              {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+              <span>Approve for Signing</span>
+              <span className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-bold">A</span>
+              <ChevronRight size={14} />
+            </button>
+          ) : currentApp.status === 'For Signing' ? (
             <button
               onClick={() => handleUpdateStatus('Ready for Pickup', null, true)}
               disabled={isProcessing}
-              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
-              title="Approve and advance to next applicant (Shortcut: A)"
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Mark MTOP certificate as signed and ready for pickup (Shortcut: A)"
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              <span>Approve &amp; Next</span>
+              <span>Mark Signed &amp; Ready</span>
               <span className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-bold">A</span>
               <ChevronRight size={14} />
             </button>

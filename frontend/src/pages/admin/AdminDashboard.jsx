@@ -3,7 +3,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
   BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles,
-  PieChart as PieChartIcon, Sun, Moon, SunMedium
+  PieChart as PieChartIcon, Sun, Moon, SunMedium, FileCheck
 } from 'lucide-react';
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip 
@@ -86,7 +86,7 @@ const AdminDashboard = () => {
       if (response.ok) {
         const data = Array.isArray(raw) ? raw : (raw?.data || []);
         const activeCount = data.filter(f => f.status === 'Active').length;
-        const pendingCount = data.filter(f => f.status === 'Pending' || f.status === 'Ready for Pickup').length;
+        const pendingCount = data.filter(f => f.status === 'Pending' || f.status === 'For Signing' || f.status === 'Ready for Pickup').length;
         const expiredCount = data.filter(f => f.status === 'Expired').length;
         const cancelledCount = data.filter(f => f.status === 'Cancelled' || f.status === 'Revoked').length;
         const newAppsCount = data.filter(f => f.applicationType === 'New').length;
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
 
         setTodaStats(formattedTodaStats);
         
-        const pendingList = data.filter(f => f.status === 'Pending' || f.status === 'Ready for Pickup').slice(0, 5);
+        const pendingList = data.filter(f => f.status === 'Pending' || f.status === 'For Signing' || f.status === 'Ready for Pickup').slice(0, 5);
         setRecentApps(pendingList);
 
         const sortedHistory = [...data].sort((a, b) => {
@@ -156,7 +156,8 @@ const AdminDashboard = () => {
     if (log.status === 'Active') return { name, verb: 'Approved franchise of', icon: CheckCircle, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dotColor: 'bg-emerald-500', badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
     if (log.status === 'Cancelled') return { name, verb: log.cancelReason ? `Cancelled (${log.cancelReason}) —` : 'Cancelled application of', icon: AlertTriangle, color: 'text-red-700 bg-red-50 border-red-200', dotColor: 'bg-red-500', badgeColor: 'text-red-700 bg-red-50 border-red-200' };
     if (log.status === 'Expired') return { name, verb: 'Flagged as expired for', icon: Clock, color: 'text-orange-700 bg-orange-50 border-orange-200', dotColor: 'bg-orange-500', badgeColor: 'text-orange-700 bg-orange-50 border-orange-200' };
-    if (log.status === 'Ready for Pickup') return { name, verb: 'Updated pending record of', icon: Sparkles, color: 'text-amber-700 bg-amber-50 border-amber-200', dotColor: 'bg-amber-500', badgeColor: 'text-amber-700 bg-amber-50 border-amber-200' };
+    if (log.status === 'For Signing') return { name, verb: 'Routed for signature of', icon: FileCheck, color: 'text-purple-700 bg-purple-50 border-purple-200', dotColor: 'bg-purple-500', badgeColor: 'text-purple-700 bg-purple-50 border-purple-200' };
+    if (log.status === 'Ready for Pickup') return { name, verb: 'Marked ready for pickup for', icon: Sparkles, color: 'text-blue-700 bg-blue-50 border-blue-200', dotColor: 'bg-blue-500', badgeColor: 'text-blue-700 bg-blue-50 border-blue-200' };
     return { name, verb: 'Updated pending record of', icon: Clock, color: 'text-amber-700 bg-amber-50 border-amber-200', dotColor: 'bg-amber-500', badgeColor: 'text-amber-700 bg-amber-50 border-amber-200' };
   };
 

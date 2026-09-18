@@ -94,7 +94,7 @@ const FranchiseApproval = () => {
         const data = await response.json();
         // Sort by earliest submission date (FIFO queue)
         const queue = (Array.isArray(data) ? data : (data.data || []))
-          .filter(app => app.status === 'Pending' || app.status === 'Ready for Pickup')
+          .filter(app => app.status === 'Pending' || app.status === 'For Signing' || app.status === 'Ready for Pickup')
           .sort((a, b) => new Date(a.dateApplied || a.createdAt) - new Date(b.dateApplied || b.createdAt));
         
         setApplications(queue);
@@ -200,6 +200,8 @@ const FranchiseApproval = () => {
     if (selectedIds.length === 0) return;
     setIsBatchProcessing(true);
 
+    const targetStatus = activeTab === 'signing' ? 'Ready for Pickup' : 'For Signing';
+
     try {
       const promises = selectedIds.map(async (id) => {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
@@ -208,20 +210,25 @@ const FranchiseApproval = () => {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ status: 'Ready for Pickup' })
+          body: JSON.stringify({ status: targetStatus })
         });
-        if (!res.ok) throw new Error(`Failed to approve ${id}`);
+        if (!res.ok) throw new Error(`Failed to update ${id}`);
         return res;
       });
 
       await Promise.all(promises);
-      showToast(`Successfully approved ${selectedIds.length} application(s) to Ready for Pickup!`, "success");
+      showToast(
+        targetStatus === 'Ready for Pickup'
+          ? `Successfully marked ${selectedIds.length} application(s) as Signed & Ready for Pickup!`
+          : `Successfully approved ${selectedIds.length} application(s) for Municipal Signatures!`,
+        "success"
+      );
       setSelectedIds([]);
       setBatchApproveModal(false);
       fetchApplications();
     } catch (error) {
-      console.error('Error in batch approval:', error);
-      showToast('Encountered an error while processing batch approval.', 'error');
+      console.error('Error in batch action:', error);
+      showToast('Encountered an error while processing batch action.', 'error');
     } finally {
       setIsBatchProcessing(false);
     }
@@ -282,6 +289,7 @@ const FranchiseApproval = () => {
 
   // Count indicators
   const pendingCount = applications.filter(a => a.status === 'Pending').length;
+  const signingCount = applications.filter(a => a.status === 'For Signing').length;
   const readyCount = applications.filter(a => a.status === 'Ready for Pickup').length;
   const allCount = applications.length;
 
@@ -291,6 +299,7 @@ const FranchiseApproval = () => {
   // Filter Pipeline: Tab Filter -> TODA Filter -> Search Filter
   const tabFiltered = applications.filter(app => {
     if (activeTab === 'pending') return app.status === 'Pending';
+    if (activeTab === 'signing') return app.status === 'For Signing';
     if (activeTab === 'ready') return app.status === 'Ready for Pickup';
     return true;
   });
@@ -466,10 +475,18 @@ const FranchiseApproval = () => {
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                  {quickApproveTarget.status === 'Pending' ? 'Approve Application?' : 'Acknowledge Payment & Release?'}
+                  {quickApproveTarget.status === 'Pending' 
+                    ? 'Approve for Signing?' 
+                    : quickApproveTarget.status === 'For Signing'
+                    ? 'Mark Signed & Ready for Pickup?'
+                    : 'Acknowledge Payment & Release?'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {quickApproveTarget.status === 'Pending' ? 'Set status to Ready for Pickup' : 'Set status to Active Franchise'}
+                  {quickApproveTarget.status === 'Pending' 
+                    ? 'Queue for Mayor/Licensing Official signature' 
+                    : quickApproveTarget.status === 'For Signing'
+                    ? 'Notify operator that certificate is ready for pickup at Cashier'
+                    : 'Set status to Active Franchise'}
                 </p>
               </div>
             </div>
@@ -478,9 +495,9 @@ const FranchiseApproval = () => {
               <p><span className="font-bold text-slate-500">Operator:</span> <strong className="text-slate-900 dark:text-white">{quickApproveTarget.fullName}</strong></p>
               <p><span className="font-bold text-slate-500">TODA / Zone:</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
               <p><span className="font-bold text-slate-500">Plate Number:</span> <span className="font-mono font-bold text-[#7A1B22] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
-              {quickApproveTarget.status === 'Pending' && (
+              {quickApproveTarget.status === 'For Signing' && (
                 <p className="text-xs text-blue-600 dark:text-blue-400 pt-1 font-medium">
-                  &bull; A digital Claim Stub Voucher will be immediately generated for the operator.
+                  &bull; A digital Claim Stub Voucher will be immediately released for the operator to pay at Cashier.
                 </p>
               )}
             </div>
@@ -494,12 +511,21 @@ const FranchiseApproval = () => {
                 Cancel
               </button>
               <button
-                onClick={() => handleUpdateStatus(quickApproveTarget.status === 'Pending' ? 'Ready for Pickup' : 'Active', quickApproveTarget)}
+                onClick={() => handleUpdateStatus(
+                  quickApproveTarget.status === 'Pending' 
+                    ? 'For Signing' 
+                    : quickApproveTarget.status === 'For Signing'
+                    ? 'Ready for Pickup'
+                    : 'Active', 
+                  quickApproveTarget
+                )}
                 disabled={isProcessing}
                 className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
               >
                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                <span>Confirm {quickApproveTarget.status === 'Pending' ? 'Approval' : 'Release'}</span>
+                <span>
+                  Confirm {quickApproveTarget.status === 'Pending' ? 'Approval' : quickApproveTarget.status === 'For Signing' ? 'Signing' : 'Release'}
+                </span>
               </button>
             </div>
           </div>
@@ -590,7 +616,11 @@ const FranchiseApproval = () => {
             </div>
 
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              All selected applications will transition to <strong className="text-blue-600 dark:text-blue-400">Ready for Pickup</strong>. Operators will immediately be notified and can view their Claim Stub Voucher to pay at the Municipal Cashier.
+              {activeTab === 'signing' ? (
+                <>All selected applications will transition to <strong className="text-blue-600 dark:text-blue-400">Ready for Pickup</strong>. Operators will immediately be notified to present their Claim Stub at the Municipal Cashier.</>
+              ) : (
+                <>All selected applications will transition to <strong className="text-purple-600 dark:text-purple-400">For Signing</strong>. MTOP certificates will be queued for municipal official signatures.</>
+              )}
             </p>
 
             <div className="flex items-center gap-2 pt-1">
@@ -756,6 +786,23 @@ const FranchiseApproval = () => {
           </button>
 
           <button
+            onClick={() => setActiveTab('signing')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'signing'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <ShieldCheck size={14} />
+            <span>For Signing (Routing)</span>
+            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
+              activeTab === 'signing' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            }`}>
+              {signingCount}
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('ready')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'ready'
@@ -874,6 +921,10 @@ const FranchiseApproval = () => {
                       <span className="text-[10px] bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 uppercase font-black tracking-wider shrink-0">
                         Ready for Pickup
                       </span>
+                    ) : app.status === 'For Signing' ? (
+                      <span className="text-[10px] bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800 uppercase font-black tracking-wider shrink-0">
+                        For Signing
+                      </span>
                     ) : app.status === 'Active' ? (
                       <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 uppercase font-black tracking-wider shrink-0">
                         Active
@@ -893,15 +944,15 @@ const FranchiseApproval = () => {
                     <button
                       onClick={() => setQuickApproveTarget(app)}
                       className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
-                      title="Quick Approve to Ready for Pickup"
+                      title="Approve for Municipal Official Signature"
                     >
                       <CheckCircle size={14} className="text-emerald-600" />
-                      <span className="hidden sm:inline">Quick Approve</span>
+                      <span className="hidden sm:inline">Approve for Signing</span>
                     </button>
                   )}
 
-                  {/* Quick Reject (If Pending) */}
-                  {app.status === 'Pending' && (
+                  {/* Quick Reject (If Pending or For Signing) */}
+                  {(app.status === 'Pending' || app.status === 'For Signing') && (
                     <button
                       onClick={() => setQuickRejectTarget(app)}
                       className="px-2.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 rounded-xl font-bold text-xs flex items-center gap-1 transition-all active:scale-95 shadow-2xs cursor-pointer"
@@ -912,8 +963,8 @@ const FranchiseApproval = () => {
                     </button>
                   )}
 
-                  {/* Quick Print MTOP (If Ready for Pickup) */}
-                  {app.status === 'Ready for Pickup' && (
+                  {/* Quick Print MTOP (If For Signing or Ready for Pickup) */}
+                  {(app.status === 'For Signing' || app.status === 'Ready for Pickup') && (
                     <button
                       onClick={() => setPrintTargetUnit(app)}
                       className="px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-[#7A1B22] dark:text-[#D4AF37] border border-amber-300 dark:border-amber-700/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
@@ -921,6 +972,18 @@ const FranchiseApproval = () => {
                     >
                       <Printer size={14} />
                       <span className="hidden sm:inline">Print MTOP</span>
+                    </button>
+                  )}
+
+                  {/* Quick Mark Signed (If For Signing) */}
+                  {app.status === 'For Signing' && (
+                    <button
+                      onClick={() => setQuickApproveTarget(app)}
+                      className="px-3 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Mark MTOP certificate as signed and ready for pickup"
+                    >
+                      <CheckCircle2 size={14} className="text-blue-600" />
+                      <span className="hidden sm:inline">Mark Signed</span>
                     </button>
                   )}
 
@@ -1090,12 +1153,22 @@ const FranchiseApproval = () => {
                     <CheckCircle2 size={14} />
                     <span>Batch Release ({selectedIds.length})</span>
                   </button>
+                ) : activeTab === 'signing' ? (
+                  <button
+                    onClick={() => setBatchApproveModal(true)}
+                    disabled={isBatchProcessing}
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    title="Batch Mark selected applications as Signed & Ready for Pickup"
+                  >
+                    <CheckCircle2 size={14} />
+                    <span>Batch Mark Signed ({selectedIds.length})</span>
+                  </button>
                 ) : (
                   <button
                     onClick={() => setBatchApproveModal(true)}
                     disabled={isBatchProcessing}
                     className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-                    title="Batch Approve selected applications to Ready for Pickup"
+                    title="Batch Approve selected applications for Municipal Signatures"
                   >
                     <CheckCircle2 size={14} />
                     <span>Batch Approve ({selectedIds.length})</span>

@@ -102,6 +102,8 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
                   unit.status === 'Active' 
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                    : unit.status === 'For Signing'
+                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
                     : unit.status === 'Ready for Pickup'
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
                     : 'bg-amber-500/20 text-amber-300 border-amber-500/30'

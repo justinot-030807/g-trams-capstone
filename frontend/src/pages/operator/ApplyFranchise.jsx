@@ -706,12 +706,13 @@ const ApplyFranchise = () => {
                       unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                       unit.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
                       unit.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
+                      unit.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
                       unit.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
                       'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
                     }`}>
                       {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={13}/>}
                       {unit.status === 'Active' && <CheckCircle size={13}/>}
-                      {unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
+                      {unit.status === 'For Signing' ? 'For Signing' : unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
                     </span>
                     
                     <div className="flex items-center gap-2">
@@ -733,7 +734,7 @@ const ApplyFranchise = () => {
                         </button>
                       )}
 
-                      {(unit.status === 'Pending' || unit.status === 'Ready for Pickup') && (
+                      {(unit.status === 'Pending' || unit.status === 'For Signing' || unit.status === 'Ready for Pickup') && (
                         <button 
                           onClick={() => setCancelModal({
                             isOpen: true,

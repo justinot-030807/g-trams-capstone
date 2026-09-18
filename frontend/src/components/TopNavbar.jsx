@@ -178,7 +178,16 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             const fList = await fRes.json();
             if (Array.isArray(fList)) {
               fList.forEach(item => {
-                if (item.status === 'Ready for Pickup') {
+                if (item.status === 'For Signing') {
+                  notifs.push({
+                    id: `op_signing_${item._id}`,
+                    title: 'Franchise Verified - Routing for Signatures',
+                    desc: `Documents verified for ${item.plateNo || 'unit'}. MTOP certificate is now being routed for official municipal signatures.`,
+                    time: 'For Signing',
+                    type: 'info',
+                    link: '/operator-dashboard'
+                  });
+                } else if (item.status === 'Ready for Pickup') {
                   notifs.push({
                     id: `op_ready_${item._id}`,
                     title: 'Franchise Approved - Ready for Pickup!',

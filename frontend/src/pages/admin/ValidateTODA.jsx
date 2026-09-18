@@ -109,7 +109,7 @@ const ValidateTODA = () => {
   const totalOperatorsCount = users.length;
   const activeMtopCount = franchises.filter(f => f.status === 'Active').length;
   const pendingValidationCount = submissions.filter(s => s.status !== 'Approved').length + 
-    franchises.filter(f => f.status === 'Pending' || f.status === 'Ready for Pickup').length;
+    franchises.filter(f => f.status === 'Pending' || f.status === 'For Signing' || f.status === 'Ready for Pickup').length;
 
   // Unified Smart Search & TODA Grouping
   const query = searchQuery.trim().toLowerCase();
@@ -426,6 +426,16 @@ const ValidateTODA = () => {
                                             </span>
                                             <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
                                               Plate: {franchise.plateNo || 'N/A'} &bull; <span className="font-sans font-medium text-slate-500 dark:text-slate-400">{franchise.make || 'Tricycle'}</span>
+                                            </span>
+                                          </div>
+                                        ) : franchise.status === 'For Signing' ? (
+                                          <div className="flex flex-col gap-0.5">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60 w-fit">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                              For Signing
+                                            </span>
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                                              Plate: {franchise.plateNo || 'PENDING'}
                                             </span>
                                           </div>
                                         ) : franchise.status === 'Pending' || franchise.status === 'Ready for Pickup' ? (

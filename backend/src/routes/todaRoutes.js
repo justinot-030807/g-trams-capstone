@@ -230,7 +230,7 @@ router.get('/my-members', protect, async (req, res) => {
             m.units.forEach(u => {
                 totalUnits++;
                 if (u.status === 'Active') activeUnits++;
-                else if (u.status === 'Pending' || u.status === 'Ready for Pickup') pendingUnits++;
+                else if (u.status === 'Pending' || u.status === 'For Signing' || u.status === 'Ready for Pickup') pendingUnits++;
                 else if (u.status === 'Expired') expiredUnits++;
             });
         });

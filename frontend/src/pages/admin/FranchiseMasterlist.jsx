@@ -13,6 +13,7 @@ import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'Active', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   { label: 'Pending', value: 'Pending', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { label: 'For Signing', value: 'For Signing', color: 'bg-purple-50 text-purple-700 border-purple-200' },
   { label: 'Ready for Pickup', value: 'Ready for Pickup', color: 'bg-blue-50 text-blue-700 border-blue-200' },
   { label: 'Expired', value: 'Expired', color: 'bg-orange-50 text-orange-700 border-orange-200' },
   { label: 'Cancelled', value: 'Cancelled', color: 'bg-red-50 text-red-700 border-red-200' },
@@ -284,6 +285,7 @@ const FranchiseMasterlist = () => {
                     {selectedFranchise.plateNo || 'PENDING PLATE'}
                     <span className={`px-2.5 py-0.5 text-xs font-black rounded-lg uppercase tracking-wider border ${
                       selectedFranchise.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
+                      selectedFranchise.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
                       selectedFranchise.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
                       selectedFranchise.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
                       (selectedFranchise.status === 'Cancelled' || selectedFranchise.status === 'Revoked') ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
@@ -761,12 +763,14 @@ const FranchiseMasterlist = () => {
                         <td className="p-4 text-center">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-black rounded-lg uppercase tracking-wider border shadow-xs ${
                             f.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
+                            f.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
                             f.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
                             f.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
                             (f.status === 'Cancelled' || f.status === 'Revoked') ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
                             'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
                           }`}>
                             {f.status === 'Active' && <CheckCircle size={12}/>}
+                            {f.status === 'For Signing' && <Shield size={12}/>}
                             {f.status === 'Pending' && <Clock size={12}/>}
                             {(f.status === 'Cancelled' || f.status === 'Expired' || f.status === 'Revoked') && <AlertCircle size={12}/>}
                             {f.status}

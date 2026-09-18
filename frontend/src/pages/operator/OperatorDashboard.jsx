@@ -380,14 +380,16 @@ const OperatorDashboard = () => {
     const steps = [
       { id: 1, label: t('dashboard.stepSubmitted', 'Submitted') },
       { id: 2, label: t('dashboard.stepReview', 'Review') },
-      { id: 3, label: t('dashboard.stepPayment', 'Payment') },
-      { id: 4, label: t('dashboard.stepActive', 'Active') }
+      { id: 3, label: t('dashboard.stepSigning', 'For Signing') },
+      { id: 4, label: t('dashboard.stepPayment', 'Payment') },
+      { id: 5, label: t('dashboard.stepActive', 'Active') }
     ];
 
     let currentStepNum = 1;
     if (status === 'Pending') currentStepNum = 2;
-    else if (status === 'Ready for Pickup') currentStepNum = 3;
-    else if (status === 'Active') currentStepNum = 4;
+    else if (status === 'For Signing') currentStepNum = 3;
+    else if (status === 'Ready for Pickup') currentStepNum = 4;
+    else if (status === 'Active') currentStepNum = 5;
 
     return (
       <div className="mb-5 bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
@@ -398,7 +400,7 @@ const OperatorDashboard = () => {
         {/* Seamless Step progress track & nodes */}
         <div className="flex items-start w-full">
           {steps.map((step, idx) => {
-            const isCompleted = currentStepNum > step.id || (status === 'Active' && step.id === 4);
+            const isCompleted = currentStepNum > step.id || (status === 'Active' && step.id === 5);
             const isCurrent = currentStepNum === step.id && status !== 'Active';
 
             return (
@@ -455,10 +457,8 @@ const OperatorDashboard = () => {
   };
 
   const getOperatorGreeting = () => {
-    const hour = currentTime.getHours();
-    const portalTag = isTodaPresident 
-      ? t('dashboard.badgeToda', 'TODA President Portal') 
-      : t('dashboard.badge', 'Operator Portal');
+    const hour = new Date().getHours();
+    const portalTag = isTodaPresident ? t('nav.roleTodaPresident', 'TODA PRESIDENT') : t('dashboard.badge', 'Operator Portal');
 
     if (hour >= 5 && hour < 12) {
       return { 
@@ -486,10 +486,12 @@ const OperatorDashboard = () => {
 
   const getOperatorSubtext = () => {
     const hasReady = franchises.some(f => f.status === 'Ready for Pickup');
+    const hasSigning = franchises.some(f => f.status === 'For Signing');
     const hasPending = franchises.some(f => f.status === 'Pending');
     const hasActive = franchises.some(f => f.status === 'Active');
 
     if (hasReady) return t('greeting.subReady', 'Welcome back! Your MTOP Certificate is ready for pickup at the Municipal Cashier.');
+    if (hasSigning) return t('greeting.subSigning', 'Welcome back! Your application is approved and is currently routing for municipal signatures.');
     if (hasPending) return t('greeting.subPending', 'Welcome back! Your franchise application is currently under municipal review.');
     if (hasActive) return t('greeting.subActive', 'Welcome back! Your registered tricycle franchise is active and road-authorized.');
     return t('dashboard.welcomeSub', 'Welcome back! Manage your active and pending franchises securely.');
@@ -861,6 +863,25 @@ const OperatorDashboard = () => {
                 <span>Get Voucher</span>
               </button>
             </div>
+          ) : franchises.some(f => f.status === 'For Signing') ? (
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-purple-200 dark:border-purple-900/60">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                  <FileText size={18} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs sm:text-sm font-bold truncate text-purple-950 dark:text-purple-200">
+                    {t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}
+                  </h4>
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
+                    {t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}
+                  </p>
+                </div>
+              </div>
+              <span className="px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800 text-purple-800 dark:text-purple-300 text-xs font-bold shrink-0 text-center">
+                {t('dashboard.statusSigning', 'For Signing')}
+              </span>
+            </div>
           ) : franchises.some(f => f.status === 'Cancelled') ? (
             <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-red-300 dark:border-red-900/60">
               <div className="flex items-center gap-3 min-w-0">
@@ -1067,6 +1088,7 @@ const OperatorDashboard = () => {
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
                 unit?.status === 'Active' ? 'bg-emerald-500' :
                 unit?.status === 'Ready for Pickup' ? 'bg-blue-500' :
+                unit?.status === 'For Signing' ? 'bg-purple-500' :
                 unit?.status === 'Expired' ? 'bg-orange-500' :
                 unit?.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-400'
               }`} />
@@ -1082,6 +1104,7 @@ const OperatorDashboard = () => {
                   <span className={`px-2.5 py-1 text-xs font-black rounded-xl uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs shrink-0 ${
                     unit?.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                     unit?.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
+                    unit?.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
                     unit?.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
                     unit?.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
                     'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
@@ -1089,11 +1112,13 @@ const OperatorDashboard = () => {
                     <span className={`w-2 h-2 rounded-full shrink-0 ${
                       unit?.status === 'Active' ? 'bg-emerald-500' :
                       unit?.status === 'Ready for Pickup' ? 'bg-blue-500 animate-pulse-beacon' :
+                      unit?.status === 'For Signing' ? 'bg-purple-500 animate-pulse-beacon' :
                       unit?.status === 'Expired' ? 'bg-orange-500' :
                       unit?.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-500 animate-pulse-beacon'
                     }`} />
                     {unit?.status === 'Active' ? t('dashboard.statusActive', 'Active') :
                      unit?.status === 'Ready for Pickup' ? t('dashboard.statusReadyPickup', 'Awaiting Payment') :
+                     unit?.status === 'For Signing' ? t('dashboard.statusSigning', 'For Signing') :
                      unit?.status === 'Expired' ? t('dashboard.statusExpired', 'Expired') :
                      unit?.status === 'Cancelled' ? t('dashboard.statusCancelled', 'Cancelled') :
                      t('dashboard.statusPending', 'Pending')}
@@ -1226,6 +1251,16 @@ const OperatorDashboard = () => {
                     );
                   })()}
 
+                  {unit?.status === 'For Signing' && (
+                    <div className="mb-3.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 p-3 rounded-2xl flex items-start gap-2.5">
+                      <FileText className="text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" size={16} />
+                      <div>
+                        <h4 className="text-purple-900 dark:text-purple-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}</h4>
+                        <p className="text-xs font-normal text-purple-700 dark:text-purple-300 leading-snug">{t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}</p>
+                      </div>
+                    </div>
+                  )}
+
                   {unit?.status === 'Ready for Pickup' && (
                     <div className="mb-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3 rounded-2xl flex items-start gap-2.5">
                       <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
@@ -1277,7 +1312,7 @@ const OperatorDashboard = () => {
                 ) : (
                   <div className="flex flex-col sm:flex-row items-center w-full gap-2">
                     <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
-                    {(unit?.status === 'Pending' || unit?.status === 'Ready for Pickup') && (
+                    {(unit?.status === 'Pending' || unit?.status === 'For Signing' || unit?.status === 'Ready for Pickup') && (
                       <button 
                         onClick={() => setCancelModal({
                           isOpen: true,
