@@ -102,6 +102,23 @@ const FranchiseReviewPage = () => {
     fetchQueue();
   }, [fetchQueue]);
 
+  // Enforce 100% full-screen edge-to-edge layout without 0.9 desktop zoom shrinking
+  useEffect(() => {
+    document.documentElement.classList.add('review-station-active');
+    document.body.classList.add('review-station-active');
+    document.documentElement.style.zoom = '1';
+
+    return () => {
+      document.documentElement.classList.remove('review-station-active');
+      document.body.classList.remove('review-station-active');
+      if (window.innerWidth >= 769) {
+        document.documentElement.style.zoom = '0.9';
+      } else {
+        document.documentElement.style.zoom = '1';
+      }
+    };
+  }, []);
+
   // When active applicant changes, reset viewer position and zoom
   useEffect(() => {
     setZoomScale(1);
@@ -325,7 +342,7 @@ const FranchiseReviewPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-700 flex flex-col items-center justify-center">
+      <div className="fixed inset-0 w-full h-full bg-slate-50 text-slate-700 flex flex-col items-center justify-center z-50">
         <Loader2 size={32} className="animate-spin text-[#7A1B22] mb-3" />
         <p className="text-sm font-semibold text-slate-700">Loading Franchise Inspection Station...</p>
       </div>
@@ -334,7 +351,7 @@ const FranchiseReviewPage = () => {
 
   if (!currentApp) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-center p-6 text-center">
+      <div className="fixed inset-0 w-full h-full bg-slate-50 text-slate-800 flex flex-col items-center justify-center p-6 text-center z-50">
         <AlertCircle size={44} className="text-amber-500 mb-3" />
         <h2 className="text-base font-bold text-slate-800">Franchise Application Not Found</h2>
         <p className="text-xs text-slate-500 mt-1 max-w-sm">
@@ -351,7 +368,7 @@ const FranchiseReviewPage = () => {
   }
 
   return (
-    <div className="w-screen h-screen flex flex-col bg-slate-50 text-slate-800 overflow-hidden select-none">
+    <div className="fixed inset-0 w-full h-full flex flex-col bg-slate-50 text-slate-800 overflow-hidden select-none z-40">
       
       {/* Toast Notification */}
       {toast.show && (

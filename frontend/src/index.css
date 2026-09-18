@@ -81,6 +81,17 @@
     overflow-x: hidden !important;
   }
 
+  /* Full-viewport edge-to-edge consistency for franchise review workstation */
+  html.review-station-active,
+  body.review-station-active {
+    zoom: 1 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
   /* Fluid scaling on mobile screens honoring system font size */
   @media (max-width: 768px) {
     html {
