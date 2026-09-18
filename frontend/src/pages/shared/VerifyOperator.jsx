@@ -50,7 +50,7 @@ const VerifyOperator = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
         <Loader2 size={48} className="text-[#7A1B22] dark:text-[#D4AF37] animate-spin mb-4" />
         <p className="text-slate-500 font-medium animate-pulse">Verifying LGU Credentials...</p>
       </div>
@@ -59,7 +59,7 @@ const VerifyOperator = () => {
 
   if (error || !operator) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl max-w-sm w-full text-center border border-red-200 dark:border-red-900/50">
           <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-5 text-red-500">
             <AlertTriangle size={36} />
@@ -78,7 +78,7 @@ const VerifyOperator = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
         <div className="bg-[#7A1B22] rounded-t-3xl pt-6 pb-16 px-6 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />

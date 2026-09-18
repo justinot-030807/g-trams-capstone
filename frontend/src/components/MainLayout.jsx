@@ -26,15 +26,10 @@ const MainLayout = ({ children }) => {
   const isTodaPresident = role === 'toda president' || role === 'toda_president';
   const showBottomNav = isOperator || isTodaPresident;
 
-  // Enforce consistent 0.9 desktop zoom inside admin and operator dashboards
+  // Reset body classes when entering main layout
   useEffect(() => {
     document.documentElement.classList.remove('auth-view');
     document.body.classList.remove('auth-view');
-    if (window.innerWidth >= 769) {
-      document.documentElement.style.zoom = '0.9';
-    } else {
-      document.documentElement.style.zoom = '1';
-    }
   }, []);
 
   // Ensure sidebar is closed on mobile when bottom navigation is active
@@ -190,7 +185,7 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 print:bg-white print:text-black print:block print:min-h-0">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 overscroll-y-contain print:bg-white print:text-black print:block print:min-h-0">
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={closeSidebar} 

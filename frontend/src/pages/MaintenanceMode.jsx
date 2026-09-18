@@ -43,7 +43,7 @@ const MaintenanceMode = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-8 sm:p-10 select-none relative overflow-hidden text-white">
+    <div className="min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-8 sm:p-10 select-none relative overflow-hidden text-white">
       
       {/* Dynamic Background Glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

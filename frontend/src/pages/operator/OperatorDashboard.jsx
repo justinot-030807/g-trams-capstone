@@ -540,9 +540,9 @@ const OperatorDashboard = () => {
                 )}
               </button>
 
-              {/* Profile / Account Bottom Sheet Modal via Portal */}
-              {isProfileMenuOpen && ReactDOM.createPortal(
-                <div className="fixed inset-0 z-[120] flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4">
+              {/* Profile / Account Bottom Sheet Modal */}
+              {isProfileMenuOpen && (
+                <dialog open className="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent border-none outline-none z-50 flex flex-col justify-end sm:justify-center sm:items-center sm:p-4">
                   {/* Backdrop */}
                   <div 
                     className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
@@ -551,8 +551,6 @@ const OperatorDashboard = () => {
                   
                   {/* Sheet / Modal Dialog */}
                   <div 
-                    role="dialog"
-                    aria-modal="true"
                     className="relative z-10 w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 p-5 sm:p-6 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:zoom-in-95 duration-250 pb-8 sm:pb-6"
                   >
                     {/* Mobile drag handle */}
@@ -677,8 +675,7 @@ const OperatorDashboard = () => {
                       </button>
                     </div>
                   </div>
-                </div>,
-                document.body
+                </dialog>
               )}
             </div>
 
@@ -726,9 +723,9 @@ const OperatorDashboard = () => {
                 )}
               </button>
 
-              {/* In-Header Notification Modal via Portal */}
-              {isNotifOpen && ReactDOM.createPortal(
-                <div className="fixed inset-0 z-[120] flex flex-col justify-end sm:justify-start sm:items-end p-0 sm:p-4 sm:pt-16 sm:pr-8">
+              {/* In-Header Notification Modal */}
+              {isNotifOpen && (
+                <dialog open className="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent border-none outline-none z-50 flex flex-col justify-end sm:justify-start sm:items-end sm:p-4 sm:pt-16 sm:pr-8">
                   {/* Backdrop */}
                   <div 
                     className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200" 
@@ -737,8 +734,6 @@ const OperatorDashboard = () => {
 
                   {/* Notification Card */}
                   <div 
-                    role="dialog"
-                    aria-modal="true"
                     className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col"
                   >
                     {/* Mobile drag bar */}
@@ -807,8 +802,7 @@ const OperatorDashboard = () => {
                       )}
                     </div>
                   </div>
-                </div>,
-                document.body
+                </dialog>
               )}
             </div>
           </div>

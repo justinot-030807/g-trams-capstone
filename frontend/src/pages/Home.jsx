@@ -82,7 +82,7 @@ const Home = () => {
       </div>
 
       {/* Hero Section Container */}
-      <div className="relative min-h-[92vh] sm:min-h-[96vh] flex flex-col justify-between">
+      <div className="relative min-h-[100dvh] flex flex-col justify-between">
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 

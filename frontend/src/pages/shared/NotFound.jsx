@@ -6,7 +6,7 @@ const NotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
       <div className="text-center max-w-md">
         <AlertTriangle size={64} className="mx-auto text-amber-500 mb-6" />
         <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2">404 - Page Not Found</h1>
