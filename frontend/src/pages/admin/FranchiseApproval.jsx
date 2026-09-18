@@ -837,77 +837,52 @@ const FranchiseApproval = () => {
                 }`}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                <div className="flex items-start gap-3.5 min-w-0">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   {/* Selection Checkbox */}
                   <button
                     onClick={() => toggleSelect(app._id)}
-                    className="mt-1 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
+                    className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
                     title={isSelected ? "Deselect" : "Select"}
                   >
                     {isSelected ? (
-                      <CheckSquare size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                      <CheckSquare size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     ) : (
-                      <Square size={20} className="text-slate-300 dark:text-slate-600 hover:text-slate-500" />
+                      <Square size={18} className="text-slate-300 dark:text-slate-600 hover:text-slate-500" />
                     )}
                   </button>
 
-                  {/* Status Icon */}
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
-                    app.status === 'Ready for Pickup' 
-                      ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400' 
-                      : 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
-                  }`}>
-                    {app.status === 'Ready for Pickup' ? <Printer size={20} /> : <FileText size={20} />}
-                  </div>
+                  {/* 1. Queue Number */}
+                  <span className="text-xs font-black text-slate-400 dark:text-slate-500 font-mono w-6 shrink-0">
+                    {startIndex + index + 1}.
+                  </span>
 
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-black px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">
-                        Queue #{startIndex + index + 1}
-                      </span>
-                      <h3 className="font-black text-slate-900 dark:text-white text-base sm:text-lg truncate">
-                        {app.fullName}
-                      </h3>
-                      
-                      {app.status === 'Ready for Pickup' ? (
-                        <span className="text-xs bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 uppercase font-black tracking-wider">
-                          Ready for Pickup
-                        </span>
-                      ) : (
-                        <span className="text-xs bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 uppercase font-black tracking-wider">
-                          Pending Review
-                        </span>
-                      )}
+                  {/* 2. Name, 3. Plate Number, 4. TODA, 5. Status */}
+                  <div className="min-w-0 flex flex-wrap items-center gap-2.5 sm:gap-4 flex-1">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base truncate">
+                      {app.fullName}
+                    </h3>
 
-                      {/* Document Completeness Badge */}
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
-                        comp.isComplete 
-                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                          : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${comp.isComplete ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                        {comp.isComplete ? `${comp.uploadedCount}/${comp.totalCount} Docs Complete` : `Missing: ${comp.missing.join(', ')}`}
-                      </span>
-                    </div>
+                    <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0">
+                      Plate: {app.plateNo || 'PENDING'}
+                    </span>
 
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <span className="flex items-center gap-1 font-bold text-slate-800 dark:text-slate-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> 
-                        Plate: {app.plateNo || 'PENDING'}
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
+                      TODA: {app.todaName || 'NON-TODA'}
+                    </span>
+
+                    {app.status === 'Ready for Pickup' ? (
+                      <span className="text-[10px] bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 uppercase font-black tracking-wider shrink-0">
+                        Ready for Pickup
                       </span>
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> 
-                        TODA: {app.todaName || 'NON-TODA'} (Zone {app.zone || 1})
+                    ) : app.status === 'Active' ? (
+                      <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 uppercase font-black tracking-wider shrink-0">
+                        Active
                       </span>
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> 
-                        Type: {app.applicationType || 'New'}
+                    ) : (
+                      <span className="text-[10px] bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 uppercase font-black tracking-wider shrink-0">
+                        Pending
                       </span>
-                      <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-700">
-                        <CalendarDays size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> 
-                        Submitted: {formatDate(app.dateApplied || app.createdAt)}
-                      </span>
-                    </div>
+                    )}
                   </div>
                 </div>
 
