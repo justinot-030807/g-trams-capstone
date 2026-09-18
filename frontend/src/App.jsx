@@ -15,6 +15,7 @@ import UserManagement from './pages/admin/UserManagement';
 import AdminSettings from './pages/admin/AdminSettings';
 import AccountDeactivated from './pages/AccountDeactivated';
 import FranchiseApproval from './pages/admin/FranchiseApproval';
+import FranchiseReviewPage from './pages/admin/FranchiseReviewPage';
 import ManageRevocations from './pages/admin/ManageRevocations';
 import ValidateTODA from './pages/admin/ValidateTODA';
 import AdminReports from './pages/admin/AdminReports';
@@ -91,6 +92,7 @@ function App() {
               <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
               <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
               <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseApproval /></ProtectedRoute>} />
+              <Route path="/franchise-approval/review/:id" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseReviewPage /></ProtectedRoute>} />
               <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['admin']}><ManageRevocations /></ProtectedRoute>} />
               <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
               <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
