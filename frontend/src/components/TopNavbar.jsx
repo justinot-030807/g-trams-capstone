@@ -191,7 +191,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   notifs.push({
                     id: `op_ready_${item._id}`,
                     title: 'Franchise Approved - Ready for Pickup!',
-                    desc: `Your franchise for unit ${item.plateNo || ''} is approved. Proceed to BPLO for payment & claim stub.`,
+                    desc: `Your franchise for unit ${item.plateNo || ''} is approved. Proceed to Office of the Vice Mayor Extension for payment & claim stub.`,
                     time: 'Action Required',
                     type: 'success',
                     link: '/operator-dashboard'
@@ -218,7 +218,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   notifs.push({
                     id: `op_pending_${item._id}`,
                     title: 'Application In Review',
-                    desc: `Your application for ${item.plateNo || 'unit'} is currently in queue at BPLO.`,
+                    desc: `Your application for ${item.plateNo || 'unit'} is currently in queue at Office of the Vice Mayor Extension.`,
                     time: 'Pending',
                     type: 'pending',
                     link: '/apply-franchise'
@@ -737,3 +737,4 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 };
 
 export default TopNavbar;
+

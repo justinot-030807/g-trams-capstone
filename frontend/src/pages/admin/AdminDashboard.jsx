@@ -543,7 +543,7 @@ const AdminDashboard = () => {
                     Approval Queue
                   </p>
                   <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                    {stats.pending > 0 ? 'Action needed from BPLO' : 'All queues cleared'}
+                    {stats.pending > 0 ? 'Action needed from Office of the Vice Mayor Extension' : 'All queues cleared'}
                   </p>
                 </div>
                 <span className={`text-xl font-black ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>{stats.pending}</span>
@@ -920,3 +920,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

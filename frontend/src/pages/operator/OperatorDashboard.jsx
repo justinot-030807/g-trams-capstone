@@ -943,7 +943,7 @@ const OperatorDashboard = () => {
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">TODA Management Console</h3>
               <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md leading-relaxed">
-                Welcome President. You can view your registered members, submit the official TODA Masterlist, and coordinate with the BPLO office here.
+                Welcome President. You can view your registered members, submit the official TODA Masterlist, and coordinate with the Office of the Vice Mayor Extension office here.
               </p>
             </div>
           </div>
@@ -1496,3 +1496,4 @@ const OperatorDashboard = () => {
 };
 
 export default OperatorDashboard;
+

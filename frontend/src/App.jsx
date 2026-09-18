@@ -19,13 +19,13 @@ import FranchiseReviewPage from './pages/admin/FranchiseReviewPage';
 import ManageRevocations from './pages/admin/ManageRevocations';
 import ValidateTODA from './pages/admin/ValidateTODA';
 import AdminReports from './pages/admin/AdminReports';
+import AdminTickets from './pages/admin/AdminTickets';
 
 import OperatorDashboard from './pages/operator/OperatorDashboard';
 import ApplyFranchise from './pages/operator/ApplyFranchise';
 import RenewFranchise from './pages/operator/RenewFranchise';
 import OperatorSettings from './pages/operator/OperatorSettings';
 import SubmitMembers from './pages/operator/SubmitMembers';
-import BatchRenewal from './pages/operator/BatchRenewal';
 import HelpSupport from './pages/operator/HelpSupport';
 import About from './pages/shared/About';
 import NotFound from './pages/shared/NotFound';
@@ -96,6 +96,7 @@ function App() {
               <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['admin']}><ManageRevocations /></ProtectedRoute>} />
               <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
               <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
+              <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['admin']}><AdminTickets /></ProtectedRoute>} />
 
               {/* TODA PRESIDENT SECURE ROUTES */}
               <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['toda president']}><SubmitMembers /></ProtectedRoute>} />
@@ -104,7 +105,6 @@ function App() {
               <Route path="/operator-dashboard" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorDashboard /></ProtectedRoute>} />
               <Route path="/apply-franchise" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><ApplyFranchise /></ProtectedRoute>} />
               <Route path="/renew-franchise/:id" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><RenewFranchise /></ProtectedRoute>} />
-              <Route path="/batch-renewal" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><BatchRenewal /></ProtectedRoute>} />
               <Route path="/operator/settings" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorSettings /></ProtectedRoute>} />
               
               {/* SHARED SECURE ROUTES & REDIRECTS */}

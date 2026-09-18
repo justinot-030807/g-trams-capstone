@@ -228,7 +228,7 @@ const AuthNavbar = () => {
                   </a>
                 </div>
 
-                {/* Municipal Support Information (De-BPLO'd) */}
+                {/* Municipal Support Information (De-Office of the Vice Mayor Extension'd) */}
                 <div className="mt-5 p-4 rounded-3xl bg-white/[0.04] text-xs text-white/80 space-y-2">
                   <div className="flex items-center gap-2 text-[#D4AF37] font-bold">
                     <Building2 size={16} />
@@ -244,7 +244,7 @@ const AuthNavbar = () => {
                     </p>
                     <p className="flex items-center gap-2">
                       <Mail size={13} className="text-[#D4AF37]" />
-                      <span>Email: <strong>bplo@gasan.ph</strong></span>
+                      <span>Email: <strong>Office of the Vice Mayor Extension@gasan.ph</strong></span>
                     </p>
                   </div>
                 </div>
@@ -273,3 +273,4 @@ const AuthNavbar = () => {
 };
 
 export default AuthNavbar;
+

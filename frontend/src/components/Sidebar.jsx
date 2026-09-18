@@ -30,7 +30,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const adminRoutes = [
     '/admin-dashboard', '/franchise-masterlist', '/franchise-approval', 
     '/manage-revocations', '/user-management', '/system-settings', 
-    '/admin/settings', '/validate-toda', '/system-reports'
+    '/admin/settings', '/validate-toda', '/system-reports', '/admin/tickets'
   ];
   if (adminRoutes.includes(location.pathname)) {
     role = 'admin';
@@ -144,6 +144,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         name: 'System Reports', 
         path: '/system-reports', 
         icon: <Printer size={18} /> 
+      },
+      { 
+        type: 'link', 
+        name: 'Support Tickets', 
+        path: '/admin/tickets', 
+        icon: <HelpCircle size={18} /> 
       },
       { 
         type: 'link', 

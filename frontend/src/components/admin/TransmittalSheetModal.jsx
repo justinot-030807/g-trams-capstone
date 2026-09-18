@@ -53,7 +53,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                     {units.length} Units Listed
                   </span>
                 </h3>
-                <p className="text-xs text-white/60">LGU Gasan BPLO &bull; Sangguniang Bayan Endorsement Record</p>
+                <p className="text-xs text-white/60">LGU Gasan Office of the Vice Mayor Extension &bull; Sangguniang Bayan Endorsement Record</p>
               </div>
             </div>
 
@@ -160,7 +160,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                     <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
                     <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
                     <h2 className="text-base font-black text-[#7A1B22] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
-                    <p className="text-[9px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Sangguniang Bayan / BPLO Franchising Unit</p>
+                    <p className="text-[9px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Sangguniang Bayan / Office of the Vice Mayor Extension Franchising Unit</p>
                   </div>
                   <div className="w-13 h-13 rounded-full overflow-hidden shrink-0 border border-[#D4AF37]">
                     <img src="/gasan-logo.png" alt="Gasan Seal Right" className="w-full h-full object-cover" />
@@ -249,7 +249,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                   </p>
                   <div className="border-t border-slate-800 pt-1 inline-block min-w-[200px]">
                     <p className="font-bold text-xs text-slate-900 uppercase">
-                      BPLO FRANCHISING IN-CHARGE
+                      Office of the Vice Mayor Extension FRANCHISING IN-CHARGE
                     </p>
                     <p className="text-[8.5px] text-slate-500">
                       Business Permits &amp; Licensing Office
@@ -282,3 +282,4 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 };
 
 export default TransmittalSheetModal;
+

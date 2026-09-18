@@ -576,7 +576,7 @@ const ApplyFranchise = () => {
           isOpen: true,
           type: 'success',
           title: formMode === 'Re-apply' ? 'Revision Submitted!' : formMode === 'Renewal' ? 'Renewal Submitted!' : 'Application Submitted!',
-          message: 'Your application has been received by the BPLO office for evaluation. You can track the status directly on your dashboard.',
+          message: 'Your application has been received by the Office of the Vice Mayor Extension office for evaluation. You can track the status directly on your dashboard.',
           confirmText: 'OK',
           onConfirm: () => {
             setFeedbackModal(prev => ({ ...prev, isOpen: false }));
@@ -1612,3 +1612,4 @@ const ApplyFranchise = () => {
 };
 
 export default ApplyFranchise;
+

@@ -230,7 +230,7 @@ const AdminReports = () => {
               <p className="text-xs uppercase tracking-widest font-serif text-slate-700 font-semibold">Republic of the Philippines</p>
               <p className="text-xs uppercase tracking-wider font-serif text-slate-700">Province of Marinduque</p>
               <p className="text-sm font-black uppercase tracking-wide text-slate-950">Municipality of Gasan</p>
-              <p className="text-xs font-bold text-[#7A1B22] uppercase tracking-wider mt-0.5">Office of the Municipal Mayor &bull; BPLO / Licensing Division</p>
+              <p className="text-xs font-bold text-[#7A1B22] uppercase tracking-wider mt-0.5">Office of the Municipal Mayor &bull; Office of the Vice Mayor Extension / Licensing Division</p>
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 mt-1">
                 Official Franchise System Report
               </h2>
@@ -377,7 +377,7 @@ const AdminReports = () => {
             <div>
               <p className="text-xs uppercase font-bold text-slate-500 mb-8">Verified & Certified Correct:</p>
               <div className="border-b border-slate-900 w-4/5 mx-auto mb-1"></div>
-              <p className="font-black text-slate-900 uppercase text-xs">BPLO / LICENSING OFFICER</p>
+              <p className="font-black text-slate-900 uppercase text-xs">Office of the Vice Mayor Extension / LICENSING OFFICER</p>
               <p className="text-xs text-slate-600">Municipality of Gasan</p>
             </div>
             <div>
@@ -398,3 +398,4 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
+

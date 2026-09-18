@@ -149,7 +149,7 @@ const SubmitMembers = () => {
           isOpen: true,
           type: 'success',
           title: 'Roster Document Submitted',
-          message: 'Your official TODA member roster document has been successfully submitted to the LGU BPLO office for review.'
+          message: 'Your official TODA member roster document has been successfully submitted to the LGU Office of the Vice Mayor Extension office for review.'
         });
       } else {
         setFeedbackModal({
@@ -788,3 +788,4 @@ const SubmitMembers = () => {
 };
 
 export default SubmitMembers;
+

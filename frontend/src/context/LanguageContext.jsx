@@ -125,11 +125,11 @@ const translations = {
     'help.aboutTitle': 'About G-TRAMS Portal',
     'help.aboutSub': 'A Web-Based Tricycle Franchise Management System for the Municipality of Gasan, Marinduque',
     'help.aboutText': 'G-TRAMS (Gasan Tricycle Records and Application Management System) is a Web-Based Tricycle Franchise Management System for the Municipality of Gasan, Marinduque. Developed to make tricycle franchise registration, renewals, record verification, and fleet monitoring digital, fast, and transparent for every operator and TODA.',
-    'help.deptBplo': 'Sangguniang Bayan Office / BPLO',
+    'help.deptOffice of the Vice Mayor Extension': 'Sangguniang Bayan Office / Office of the Vice Mayor Extension',
     'help.location': 'Municipal Hall, Gasan, Marinduque',
     'help.adminBadge': 'Admin Helpdesk',
     'help.haveQuestions': 'Have questions or concerns?',
-    'help.contactDesc': 'You may reach out to municipal officers and BPLO staff through the following official channels:',
+    'help.contactDesc': 'You may reach out to municipal officers and Office of the Vice Mayor Extension staff through the following official channels:',
     'help.hotline': 'Hotline (Office Hours)',
     'help.emailSupport': 'Email Support',
     'help.faqTitle': 'Frequently Asked Questions (FAQ)',
@@ -263,7 +263,7 @@ const translations = {
     'help.aboutTitle': 'Tungkol sa G-TRAMS Portal',
     'help.aboutSub': 'Isang Web-Based Tricycle Franchise Management System para sa Bayan ng Gasan, Marinduque',
     'help.aboutText': 'Ang G-TRAMS (Gasan Tricycle Records and Application Management System) ay isang Web-Based Tricycle Franchise Management System para sa Bayan ng Gasan, Marinduque. Binuo ito upang gawing digital, mabilis, at transparent ang pagpaparehistro, pag-renew, at pag-monitor ng prangkisa ng tricycle para sa bawat operator at TODA.',
-    'help.deptBplo': 'Tanggapan ng Sangguniang Bayan / BPLO',
+    'help.deptOffice of the Vice Mayor Extension': 'Tanggapan ng Sangguniang Bayan / Office of the Vice Mayor Extension',
     'help.location': 'Gusaling Pamahalaan, Gasan, Marinduque',
     'help.adminBadge': 'Helpdesk ng Admin',
     'help.haveQuestions': 'May mga katanungan o kailangan ng tulong?',
@@ -341,3 +341,4 @@ export const LanguageProvider = ({ children }) => {
 
 export const useLanguage = () => useContext(LanguageContext);
 export default LanguageContext;
+

@@ -15,13 +15,39 @@ const {
     searchHistoricalFranchise,
     toggleArchiveFranchise,
     revokeFranchise,
-    getFranchiseReports,
-    batchRenewFranchises
+    getFranchiseReports
 } = require('../controllers/franchiseController');
 
 // Search historical franchise records
 router.get('/search', protect, authorize('admin'), searchHistoricalFranchise);
 
+/**
+ * @swagger
+ * /franchises:
+ *   get:
+ *     summary: Retrieve paginated list of franchises
+ *     tags: [Franchises]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *   post:
+ *     summary: Create a new franchise application
+ *     tags: [Franchises]
+ *     responses:
+ *       201:
+ *         description: Franchise created successfully
+ */
 // Franchise application and masterlist
 router.route('/')
     // Submit new franchise application (Operators and TODA Presidents)
@@ -42,7 +68,6 @@ router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
-router.put('/batch-renew', protect, authorize('operator', 'toda president'), upload.any(), batchRenewFranchises);
 router.put('/:id/renew', protect, authorize('operator', 'toda president'), upload.fields([{ name: 'orcrFile', maxCount: 1 }]), renewFranchise);
 router.put('/:id/cancel', protect, authorize('operator', 'toda president'), cancelMyFranchise);
 

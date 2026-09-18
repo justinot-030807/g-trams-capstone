@@ -7,9 +7,9 @@ const franchiseSchema = new mongoose.Schema({
     zone: { type: String, required: true },
     made: { type: String, required: true },
     make: { type: String, required: true },
-    motorNo: { type: String, required: true, unique: true },
-    chassisNo: { type: String, required: true, unique: true },
-    plateNo: { type: String, required: true, unique: true },
+    motorNo: { type: String, required: true },
+    chassisNo: { type: String, required: true },
+    plateNo: { type: String, required: true },
     todaName: { type: String, required: true },
     
     orCrUrl: { type: String },
@@ -43,5 +43,14 @@ const franchiseSchema = new mongoose.Schema({
     archivedAt: { type: Date }
 
 }, { timestamps: true });
+
+// Create text index for search optimization
+franchiseSchema.index({ 
+    fullName: 'text', 
+    plateNo: 'text', 
+    motorNo: 'text', 
+    chassisNo: 'text',
+    todaName: 'text'
+});
 
 module.exports = mongoose.model('Franchise', franchiseSchema);

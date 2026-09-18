@@ -4,6 +4,7 @@ const { logAudit } = require('../utils/auditLogger');
 const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
 const { sendPushToUser } = require('../services/pushService');
+const FranchiseService = require('../services/franchiseService');
 
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -15,7 +16,7 @@ cron.schedule('0 0 * * *', async () => {
         const result = await Franchise.updateMany(
             { 
                 status: 'Expired', 
-                dateApplied: { $lt: oneYearAgo }, 
+                updatedAt: { $lt: oneYearAgo }, 
                 isArchived: { $ne: true } 
             },
             { 
@@ -33,19 +34,6 @@ cron.schedule('0 0 * * *', async () => {
 
 const createFranchise = async (req, res) => {
     try {
-        const { 
-            operator, fullName, address, zone, made, make, motorNo, chassisNo, plateNo, todaName, 
-            cedulaDate, cedulaAddress, cedulaSerialNo, applicationType, status, dateApplied 
-        } = req.body;
-        
-        const existingTricycle = await Franchise.findOne({ 
-            $or: [{ motorNo }, { chassisNo }, { plateNo }] 
-        });
-                
-        if (existingTricycle) {
-            return res.status(400).json({ message: 'Tricycle (Plate/Motor/Chassis) is already registered.' });
-        }
-        
         const files = req.files || {};
         const findFilePath = (keys) => {
             if (Array.isArray(files)) {
@@ -58,121 +46,38 @@ const createFranchise = async (req, res) => {
             return '';
         };
 
-        const orCrUrl = findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']);
-        const licenseUrl = findFilePath(['license', 'licenseUrl', 'doc_1']);
-        const todaEndorsementUrl = findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']);
-        const brgyClearanceUrl = findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']);
+        const data = {
+            ...req.body,
+            orCrUrl: findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']),
+            licenseUrl: findFilePath(['license', 'licenseUrl', 'doc_1']),
+            todaEndorsementUrl: findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']),
+            brgyClearanceUrl: findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3'])
+        };
         
-        const franchiseOwner = operator || req.user._id;
+        const franchiseOwner = req.body.operator || req.user._id;
+        const franchise = await FranchiseService.createFranchise(data, franchiseOwner);
         
-        // Safe date parsing to prevent Mongoose validation CastError
-        const parsedCedulaDate = cedulaDate && !isNaN(new Date(cedulaDate).getTime()) ? new Date(cedulaDate) : new Date();
-        const parsedDateApplied = dateApplied && !isNaN(new Date(dateApplied).getTime()) ? new Date(dateApplied) : new Date();
-        
-        let franchise = await Franchise.create({
-            operator: franchiseOwner,
-            fullName, address, zone, made, make, motorNo, chassisNo, plateNo, todaName,
-            cedulaDate: parsedCedulaDate,
-            cedulaAddress: cedulaAddress || 'Gasan, Marinduque',
-            cedulaSerialNo: cedulaSerialNo || '000000',
-            applicationType: applicationType || 'New',
-            status: status || 'Pending',
-            dateApplied: parsedDateApplied,
-            orCrUrl, licenseUrl, todaEndorsementUrl, brgyClearanceUrl,
-            deficiencies: {
-                hasOrcr: !!orCrUrl,
-                hasLicense: !!licenseUrl,
-                hasTodaEndorsement: !!todaEndorsementUrl,
-                hasBrgyClearance: !!brgyClearanceUrl
-            }
-        });
-        
-        franchise = await franchise.populate('operator', 'name address contact');
         res.status(201).json(franchise);
     } catch (error) {
         console.error('Error creating franchise:', error);
-        res.status(500).json({ message: error.message || 'Server error creating franchise application.' });
+        res.status(error.message.includes('registered') ? 400 : 500).json({ message: error.message || 'Server error creating franchise application.' });
     }
 };
 
 const searchHistoricalFranchise = async (req, res) => {
     try {
-        const { query } = req.query;
-        if (!query) return res.status(400).json({ message: 'Search query is required' });
-        
-        const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const escapedQuery = escapeRegex(query);
-        const record = await Franchise.findOne({
-            $or: [
-                { fullName: { $regex: escapedQuery, $options: 'i' } },
-                { plateNo: { $regex: escapedQuery, $options: 'i' } }
-            ]
-        }).sort({ createdAt: -1 }).populate('operator', 'name address contact');
-        
+        const record = await FranchiseService.searchHistorical(req.query.query);
         if (!record) return res.status(404).json({ message: 'No historical application record found.' });
         res.status(200).json(record);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(error.message.includes('required') ? 400 : 500).json({ error: error.message });
     }
 };
 
-// Get franchises with pagination, filter, and search
 const getAllFranchises = async (req, res) => {
     try {
-        const { archived, page = 1, limit = 10, search = '', status = 'All' } = req.query;
-
-        const pageNum = Math.max(1, parseInt(page, 10) || 1);
-        const limitNum = Math.max(1, parseInt(limit, 10) || 10);
-        const skip = (pageNum - 1) * limitNum;
-
-        // Archive filter
-        let queryCondition = archived === 'true' ? { isArchived: true } : { isArchived: { $ne: true } };
-
-        // Multi-status filter
-        if (status && status !== 'All') {
-            const statusList = status.split(',').filter(s => s && s.trim() !== 'All');
-            if (statusList.length === 1) {
-                queryCondition.status = statusList[0];
-            } else if (statusList.length > 1) {
-                queryCondition.status = { $in: statusList };
-            }
-        }
-
-        // Search query filter
-        if (search && search.trim() !== '') {
-            const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const searchRegex = { $regex: escapeRegex(search.trim()), $options: 'i' };
-            queryCondition.$or = [
-                { fullName: searchRegex },
-                { plateNo: searchRegex },
-                { motorNo: searchRegex },
-                { chassisNo: searchRegex },
-                { todaName: searchRegex },
-                { address: searchRegex }
-            ];
-        }
-
-        const totalRecords = await Franchise.countDocuments(queryCondition);
-
-        const franchises = await Franchise.find(queryCondition)
-            .populate('operator', 'name address contact')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limitNum);
-
-        const totalPages = Math.ceil(totalRecords / limitNum) || 1;
-
-        res.status(200).json({
-            data: franchises,
-            pagination: {
-                totalRecords,
-                totalPages,
-                currentPage: pageNum,
-                limit: limitNum,
-                hasNextPage: pageNum < totalPages,
-                hasPrevPage: pageNum > 1
-            }
-        });
+        const result = await FranchiseService.getPaginatedFranchises(req.query);
+        res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -492,107 +397,15 @@ const revokeFranchise = async (req, res) => {
 
 const getFranchiseReports = async (req, res) => {
     try {
-        const { startDate, endDate, status, todaName, barangay } = req.query;
-        let query = {}; 
-
-        if (startDate && endDate) {
-            const start = new Date(startDate);
-            start.setHours(0, 0, 0, 0);
-            
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-
-            query.dateApplied = { $gte: start, $lte: end };
-        }
-
-        if (status) query.status = status;
-        if (todaName) query.todaName = todaName;
-        if (barangay) {
-            const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            query.address = { $regex: escapeRegex(barangay), $options: 'i' };
-        }
-
-        const reports = await Franchise.find(query)
-            .populate('operator', 'name contact')
-            .sort({ dateApplied: -1 });
-
-        const summary = {
-            total: reports.length,
-            active: reports.filter(r => r.status === 'Active').length,
-            pending: reports.filter(r => r.status === 'Pending').length,
-            revoked: reports.filter(r => r.status === 'Revoked').length,
-            cancelled: reports.filter(r => r.status === 'Cancelled').length,
-            expired: reports.filter(r => r.status === 'Expired').length,
-        };
-
-        res.status(200).json({ summary, data: reports });
+        const { summary, data } = await FranchiseService.generateReports(req.query);
+        res.status(200).json({ summary, data });
     } catch (error) {
         console.error("Report Generation Error:", error);
         res.status(500).json({ error: error.message });
     }
 };
 
-const batchRenewFranchises = async (req, res) => {
-    try {
-        let franchiseIds = [];
-        try {
-            franchiseIds = JSON.parse(req.body.franchiseIds);
-        } catch (e) {
-            return res.status(400).json({ message: 'Invalid franchiseIds format' });
-        }
 
-        const { cedulaSerialNo, cedulaDate, cedulaAddress, dateApplied } = req.body;
-        const results = [];
-
-        for (const id of franchiseIds) {
-            try {
-                const franchise = await Franchise.findById(id);
-                if (!franchise) {
-                    results.push({ id, status: 'failed', reason: 'Franchise not found' });
-                    continue;
-                }
-
-                const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
-                const isAdmin = role === 'admin' || role === 'administrator';
-                const isOwner = franchise.operator && franchise.operator.toString() === req.user._id.toString();
-
-                if (!isAdmin && !isOwner) {
-                    results.push({ id, status: 'failed', reason: 'Access denied' });
-                    continue;
-                }
-
-                if (franchise.status !== 'Expired' && franchise.status !== 'Active') {
-                    results.push({ id, status: 'failed', reason: `Status is ${franchise.status}, cannot renew` });
-                    continue;
-                }
-
-                const updateData = {
-                    status: 'Pending',
-                    applicationType: 'Renewal',
-                    dateApplied: dateApplied || new Date().toISOString(),
-                    cedulaSerialNo: cedulaSerialNo || franchise.cedulaSerialNo,
-                    cedulaDate: cedulaDate || franchise.cedulaDate,
-                    cedulaAddress: cedulaAddress || franchise.cedulaAddress
-                };
-
-                const files = req.files || [];
-                const orcrFile = files.find(f => f.fieldname === `orcrFile_${id}`);
-                if (orcrFile) {
-                    updateData.orCrUrl = orcrFile.path || orcrFile.secure_url || orcrFile.url;
-                }
-
-                await Franchise.findByIdAndUpdate(id, updateData);
-                results.push({ id, status: 'success' });
-            } catch (err) {
-                results.push({ id, status: 'failed', reason: err.message });
-            }
-        }
-
-        res.status(200).json({ results });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
 
 module.exports = { 
     createFranchise, 
@@ -606,6 +419,5 @@ module.exports = {
     cancelMyFranchise,
     toggleArchiveFranchise,
     revokeFranchise,
-    getFranchiseReports,
-    batchRenewFranchises
+    getFranchiseReports
 };

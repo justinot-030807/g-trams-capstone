@@ -581,7 +581,7 @@ const OperatorSettings = () => {
                     />
                   </div>
                   <p className="text-xs font-medium text-slate-400 mt-1">
-                    BPLO will use this {contactLabel} for notices and official updates.
+                    Office of the Vice Mayor Extension will use this {contactLabel} for notices and official updates.
                   </p>
                 </div>
 
@@ -618,7 +618,7 @@ const OperatorSettings = () => {
                     title="Registered TODA is permanent. Visit LGU office for TODA transfer."
                     className={lockedClasses}
                   />
-                  <p className="text-xs text-slate-400 mt-1 font-medium">Contact the BPLO office for any TODA reassignment.</p>
+                  <p className="text-xs text-slate-400 mt-1 font-medium">Contact the Office of the Vice Mayor Extension office for any TODA reassignment.</p>
                 </div>
 
                 <div>
@@ -634,7 +634,7 @@ const OperatorSettings = () => {
                     type="text" maxLength="50"
                     value={profileData.address}
                     readOnly
-                    title="Official registered address cannot be self-edited. Contact BPLO for changes."
+                    title="Official registered address cannot be self-edited. Contact Office of the Vice Mayor Extension for changes."
                     className={lockedClasses}
                   />
                   <p className="text-xs text-slate-400 mt-1 font-medium">Recorded in the official municipal registry of Gasan.</p>
@@ -1306,3 +1306,4 @@ const OperatorSettings = () => {
 };
 
 export default OperatorSettings;
+

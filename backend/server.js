@@ -95,23 +95,29 @@ app.use(`${BASE_URI}/audit-logs`, auditLogRoutes);
 app.use(`${BASE_URI}/notifications`, require('./src/routes/notificationRoutes'));
 app.use(`${BASE_URI}/push`, require('./src/routes/pushRoutes'));
 app.use(`${BASE_URI}/chat`, require('./src/routes/chatRoutes'));
+app.use(`${BASE_URI}/tickets`, require('./src/routes/ticketRoutes'));
+
+// Swagger API Documentation
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./src/config/swagger');
+app.use(`${BASE_URI}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+const { errorHandler, notFound } = require('./src/middleware/errorMiddleware');
+
+// Handle 404
+app.use(notFound);
 
 // Global error handling middleware (handles Multer errors, validation errors, etc.)
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    if (err.name === 'MulterError') {
-        return res.status(400).json({ message: `File upload error: ${err.message}` });
-    }
-    if (err.message && err.message.includes('CORS policy')) {
-        return res.status(403).json({ message: err.message });
-    }
-    return res.status(500).json({ message: err.message || 'Internal server error' });
-});
+app.use(errorHandler);
 
 // Initialize Socket.IO
 initSocket(server);
 
-// Start server
-server.listen(PORT, () => {
-    console.log(`server running on port ${PORT}`);
-});
+// Start server only if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+    server.listen(PORT, () => {
+        console.log(`server running on port ${PORT}`);
+    });
+}
+
+module.exports = { app, server };

@@ -243,7 +243,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
               </div>
               <div className="text-left">
                 <p className="text-[9px] font-black tracking-widest text-[#D4AF37] uppercase">MUNICIPALITY OF GASAN &bull; MARINDUQUE</p>
-                <h1 className="text-xs sm:text-sm font-black tracking-wider uppercase">BPLO &amp; FRANCHISING BOARD</h1>
+                <h1 className="text-xs sm:text-sm font-black tracking-wider uppercase">Office of the Vice Mayor Extension &amp; FRANCHISING BOARD</h1>
                 <p className="text-[8.5px] text-white/80 uppercase font-semibold">Tricycle Regulation &amp; Management System (G-TRAMS)</p>
               </div>
             </div>
@@ -358,7 +358,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
             {/* Official Authorization Seal Footer */}
             <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
-              <span>LGU GASAN &bull; BPLO</span>
+              <span>LGU GASAN &bull; Office of the Vice Mayor Extension</span>
               <span>NO BARCODE NEEDED &bull; VALID DIGITAL STUB</span>
             </div>
 
@@ -373,3 +373,4 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 };
 
 export default ClaimStubVoucher;
+

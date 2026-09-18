@@ -52,7 +52,7 @@ const TermsPolicyModal = ({
             },
             {
               title: "2. Layunin ng Pagproseso ng Datos",
-              desc: "Gagamitin ang inyong mga dokumento para lamang sa pagsusuri ng BPLO, pagtatala sa opisyal na TODA Masterlist, paglikha ng MTOP Certificate, at beripikasyon ng roadworthiness ng inyong sasakyan alinsunod sa Municipal Ordinances."
+              desc: "Gagamitin ang inyong mga dokumento para lamang sa pagsusuri ng Office of the Vice Mayor Extension, pagtatala sa opisyal na TODA Masterlist, paglikha ng MTOP Certificate, at beripikasyon ng roadworthiness ng inyong sasakyan alinsunod sa Municipal Ordinances."
             },
             {
               title: "3. Seguridad at Pagtatago ng Impormasyon",
@@ -60,7 +60,7 @@ const TermsPolicyModal = ({
             },
             {
               title: "4. Karapatan ng Operator bilang Data Subject",
-              desc: "May karapatan kayong humiling ng pagwawasto sa inyong maling impormasyon, magbago ng inyong contact number sa Settings, o humingi ng opisyal na kopya ng inyong talaan sa pamamagitan ng direktang pagdulog sa BPLO Office."
+              desc: "May karapatan kayong humiling ng pagwawasto sa inyong maling impormasyon, magbago ng inyong contact number sa Settings, o humingi ng opisyal na kopya ng inyong talaan sa pamamagitan ng direktang pagdulog sa Office of the Vice Mayor Extension Office."
             }
           ]
         },
@@ -92,7 +92,7 @@ const TermsPolicyModal = ({
           points: [
             {
               title: "1. Pamantayan sa Oras ng Pagproseso (ARTA Compliance)",
-              desc: "Alinsunod sa RA 11032 (Ease of Doing Business), ang bagong aplikasyon o renewal ng prangkisa na kumpleto ang dokumento ay pinoproseso ng BPLO sa loob ng tatlo (3) hanggang limang (5) araw ng trabaho."
+              desc: "Alinsunod sa RA 11032 (Ease of Doing Business), ang bagong aplikasyon o renewal ng prangkisa na kumpleto ang dokumento ay pinoproseso ng Office of the Vice Mayor Extension sa loob ng tatlo (3) hanggang limang (5) araw ng trabaho."
             },
             {
               title: "2. Data Protection Officer (DPO) ng Munisipyo",
@@ -104,7 +104,7 @@ const TermsPolicyModal = ({
             },
             {
               title: "4. Ulat at Reklamo ng mga Operator",
-              desc: "Bukas ang Help & Support module sa inyong dashboard para magsumite ng opisyal na reklamo o ulat ukol sa serbisyo ng sistema, o tumawag sa BPLO Hotline (042) 342-1234."
+              desc: "Bukas ang Help & Support module sa inyong dashboard para magsumite ng opisyal na reklamo o ulat ukol sa serbisyo ng sistema, o tumawag sa Office of the Vice Mayor Extension Hotline (042) 342-1234."
             }
           ]
         }
@@ -129,7 +129,7 @@ const TermsPolicyModal = ({
             },
             {
               title: "2. Purpose of Data Processing",
-              desc: "All submitted data and images are processed strictly for regulatory evaluation by the BPLO, inclusion in the municipal TODA registry, generation of official MTOP certificates, and route enforcement under Gasan Municipal Ordinances."
+              desc: "All submitted data and images are processed strictly for regulatory evaluation by the Office of the Vice Mayor Extension, inclusion in the municipal TODA registry, generation of official MTOP certificates, and route enforcement under Gasan Municipal Ordinances."
             },
             {
               title: "3. Data Storage & Security Standards",
@@ -137,7 +137,7 @@ const TermsPolicyModal = ({
             },
             {
               title: "4. Rights of Operators as Data Subjects",
-              desc: "Operators maintain the right to inspect their registered records, request correction of inaccurate vehicular details, or contact the BPLO directly for formal inquiries regarding their stored records."
+              desc: "Operators maintain the right to inspect their registered records, request correction of inaccurate vehicular details, or contact the Office of the Vice Mayor Extension directly for formal inquiries regarding their stored records."
             }
           ]
         },
@@ -169,7 +169,7 @@ const TermsPolicyModal = ({
           points: [
             {
               title: "1. Processing Lead Times (ARTA Standard)",
-              desc: "Under ARTA guidelines, complete online applications and renewal requests are reviewed and acted upon by the BPLO within three (3) to five (5) working days from submission."
+              desc: "Under ARTA guidelines, complete online applications and renewal requests are reviewed and acted upon by the Office of the Vice Mayor Extension within three (3) to five (5) working days from submission."
             },
             {
               title: "2. Designated Data Protection Officer",
@@ -181,7 +181,7 @@ const TermsPolicyModal = ({
             },
             {
               title: "4. Official Support & Redress Channel",
-              desc: "Operators can submit inquiries or report discrepancies via the Help & Support page on their dashboard or by calling the BPLO direct desk at (042) 342-1234."
+              desc: "Operators can submit inquiries or report discrepancies via the Help & Support page on their dashboard or by calling the Office of the Vice Mayor Extension direct desk at (042) 342-1234."
             }
           ]
         }
@@ -287,8 +287,8 @@ const TermsPolicyModal = ({
           {/* Contact Support Banner */}
           <div className="mt-4 p-4 rounded-2xl bg-[#7A1B22]/5 border border-[#7A1B22]/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
             <div>
-              <p className="font-bold text-slate-900">BPLO &amp; MTFRB Municipal Office</p>
-              <p className="text-slate-500">Gasan Municipal Hall, Ground Floor • bplo@gasan.ph</p>
+              <p className="font-bold text-slate-900">Office of the Vice Mayor Extension &amp; MTFRB Municipal Office</p>
+              <p className="text-slate-500">Gasan Municipal Hall, Ground Floor • Office of the Vice Mayor Extension@gasan.ph</p>
             </div>
             <a 
               href="https://gasan.ph" 
@@ -331,3 +331,4 @@ const TermsPolicyModal = ({
 };
 
 export default TermsPolicyModal;
+

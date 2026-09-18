@@ -121,7 +121,7 @@ const AuthFooter = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-[#D4AF37] shrink-0" />
-                <span>bplo@gasan.ph</span>
+                <span>Office of the Vice Mayor Extension@gasan.ph</span>
               </li>
             </ul>
           </div>
@@ -149,3 +149,4 @@ const AuthFooter = () => {
 };
 
 export default AuthFooter;
+

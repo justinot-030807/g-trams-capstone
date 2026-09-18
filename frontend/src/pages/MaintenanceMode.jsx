@@ -125,7 +125,7 @@ const MaintenanceMode = () => {
           </span>
           <span className="hidden sm:inline">•</span>
           <span className="flex items-center gap-1">
-            <Mail size={12} className="text-[#7A1B22]" /> bplo@gasan.ph
+            <Mail size={12} className="text-[#7A1B22]" /> Office of the Vice Mayor Extension@gasan.ph
           </span>
         </div>
 
@@ -141,3 +141,4 @@ const MaintenanceMode = () => {
 };
 
 export default MaintenanceMode;
+

@@ -3,7 +3,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   HelpCircle, Phone, Mail, Building, ChevronDown, 
   Search, Flame, Info, ShieldCheck, MapPin, FileText, Clock,
-  Users, GraduationCap, Code, Server, Heart
+  Users, GraduationCap, Code, Server, Heart, Send, MessageSquare
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import TermsPolicyModal from '../../components/common/TermsPolicyModal';
@@ -34,8 +34,8 @@ const FAQS_DATA = {
     {
       id: 4,
       question: "Why was my franchise application returned or cancelled?",
-      answer: "Applications may be returned due to blurry or incomplete uploaded documents, or mismatched motor and chassis numbers noted by BPLO evaluators. Please review the remarks on your dashboard for specific correction instructions.",
-      tags: ["reject", "cancel", "revision", "remarks", "bplo"],
+      answer: "Applications may be returned due to blurry or incomplete uploaded documents, or mismatched motor and chassis numbers noted by Office of the Vice Mayor Extension evaluators. Please review the remarks on your dashboard for specific correction instructions.",
+      tags: ["reject", "cancel", "revision", "remarks", "Office of the Vice Mayor Extension"],
       defaultViews: 11
     },
     {
@@ -71,8 +71,8 @@ const FAQS_DATA = {
     {
       id: 4,
       question: "Bakit na-cancel o ibinalik ang aking franchise application?",
-      answer: "Maaaring malabo ang naipasa mong dokumento o may hindi tugmang impormasyon sa motor at chassis ayon sa BPLO remarks. Tingnan ang rejection/revision note sa dashboard para sa detalye.",
-      tags: ["reject", "cancel", "mali", "aberya", "bplo"],
+      answer: "Maaaring malabo ang naipasa mong dokumento o may hindi tugmang impormasyon sa motor at chassis ayon sa Office of the Vice Mayor Extension remarks. Tingnan ang rejection/revision note sa dashboard para sa detalye.",
+      tags: ["reject", "cancel", "mali", "aberya", "Office of the Vice Mayor Extension"],
       defaultViews: 11
     },
     {
@@ -101,6 +101,41 @@ const HelpSupport = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
+
+  // Ticket Form State
+  const [ticketData, setTicketData] = useState({
+    subject: 'Franchise Application Issue',
+    contactNumber: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleTicketSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/tickets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(ticketData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(currentLang === 'fil' ? 'Naisumite na ang iyong ticket! Maghihintay ng sagot ang admin.' : 'Ticket submitted successfully! Please wait for an admin response.');
+        setTicketData({ subject: 'Franchise Application Issue', contactNumber: '', message: '' });
+      } else {
+        alert(data.message || 'Error submitting ticket');
+      }
+    } catch (err) {
+      alert('Network error. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem('gtrams_faqs_analytics', JSON.stringify(viewCounts));
@@ -187,7 +222,7 @@ const HelpSupport = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
                 <Building size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                <span>Sangguniang Bayan Office / BPLO</span>
+                <span>Sangguniang Bayan Office / Office of the Vice Mayor Extension</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
                 <MapPin size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
@@ -209,7 +244,7 @@ const HelpSupport = () => {
                 Have Questions or Concerns?
               </h2>
               <p className="text-white/80 text-xs leading-relaxed mb-4 font-normal">
-                You may reach out to municipal officers and BPLO staff through the following official channels:
+                You may reach out to municipal officers and Office of the Vice Mayor Extension staff through the following official channels:
               </p>
             </div>
 
@@ -217,7 +252,7 @@ const HelpSupport = () => {
               <a 
                 href="tel:09123456789" 
                 className="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:scale-95 p-3 rounded-xl border border-white/15 transition-all shadow-xs cursor-pointer min-h-[46px]"
-                title="Call BPLO Hotline"
+                title="Call Office of the Vice Mayor Extension Hotline"
               >
                 <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
                   <Phone size={15} />
@@ -231,9 +266,9 @@ const HelpSupport = () => {
               </a>
 
               <a 
-                href="mailto:bplo@gasan.ph" 
+                href="mailto:Office of the Vice Mayor Extension@gasan.ph" 
                 className="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:scale-95 p-3 rounded-xl border border-white/15 transition-all shadow-xs cursor-pointer min-h-[46px]"
-                title="Send Email to BPLO"
+                title="Send Email to Office of the Vice Mayor Extension"
               >
                 <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
                   <Mail size={15} />
@@ -242,14 +277,14 @@ const HelpSupport = () => {
                   <p className="text-xs text-[#D4AF37] uppercase font-bold tracking-wider">
                     Official Email
                   </p>
-                  <p className="font-bold text-xs tracking-wide">bplo@gasan.ph</p>
+                  <p className="font-bold text-xs tracking-wide">Office of the Vice Mayor Extension@gasan.ph</p>
                 </div>
               </a>
             </div>
           </div>
         </div>
 
-        {/* BPLO Office Hours & Fee Schedule */}
+        {/* Office of the Vice Mayor Extension Office Hours & Fee Schedule */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8">
           <div className="flex items-center gap-2 mb-5">
             <Building size={24} className="text-[#7A1B22] dark:text-[#D4AF37]" />
@@ -434,32 +469,73 @@ const HelpSupport = () => {
             </p>
           </div>
           
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Ticket submitted successfully!"); }}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Subject</label>
-                <select className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]">
-                  <option>Franchise Application Issue</option>
-                  <option>Account Access</option>
-                  <option>Payment/Claim Stub Inquiry</option>
-                  <option>Other</option>
-                </select>
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-black/20 border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#7A1B22]/5 to-[#D4AF37]/5 dark:from-[#7A1B22]/10 dark:to-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700" />
+            
+            <div className="flex items-center gap-3 mb-6 relative z-10">
+              <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#E8C340]">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+                {currentLang === 'fil' ? 'Mag-sumite ng Ticket' : 'Submit a Ticket'}
+              </h3>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleTicketSubmit}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {currentLang === 'fil' ? 'Paksa' : 'Subject'}
+                  </label>
+                  <select 
+                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]"
+                    value={ticketData.subject}
+                    onChange={(e) => setTicketData({...ticketData, subject: e.target.value})}
+                    required
+                  >
+                    <option>{currentLang === 'fil' ? 'Isyu sa Franchise Application' : 'Franchise Application Issue'}</option>
+                    <option>{currentLang === 'fil' ? 'Account Access' : 'Account Access'}</option>
+                    <option>{currentLang === 'fil' ? 'Tanong sa Payment/Claim Stub' : 'Payment/Claim Stub Inquiry'}</option>
+                    <option>{currentLang === 'fil' ? 'Iba pa' : 'Other'}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {currentLang === 'fil' ? 'Numero sa Telepono' : 'Contact Number'}
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="09123456789" 
+                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]" 
+                    value={ticketData.contactNumber}
+                    onChange={(e) => setTicketData({...ticketData, contactNumber: e.target.value})}
+                    required
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Contact Number</label>
-                <input type="text" placeholder="09123456789" className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]" />
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {currentLang === 'fil' ? 'Mensahe' : 'Message'}
+                </label>
+                <textarea 
+                  rows="4" 
+                  placeholder={currentLang === 'fil' ? 'Ilarawan ang iyong isyu...' : 'Describe your issue in detail...'} 
+                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] resize-none"
+                  value={ticketData.message}
+                  onChange={(e) => setTicketData({...ticketData, message: e.target.value})}
+                  required
+                ></textarea>
               </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Message</label>
-              <textarea rows="4" placeholder="Describe your issue in detail..." className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] resize-none"></textarea>
-            </div>
-            <div className="flex justify-end pt-2">
-              <button type="submit" className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer shadow-sm">
-                Submit Ticket
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#7A1B22] to-[#B22222] hover:from-[#5A1419] hover:to-[#7A1B22] dark:from-[#D4AF37] dark:to-[#F1C40F] dark:hover:from-[#B8962E] dark:hover:to-[#D4AF37] text-white dark:text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-[#7A1B22]/20 dark:shadow-[#D4AF37]/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+                <span>{isSubmitting ? (currentLang === 'fil' ? 'Sinasubmit...' : 'Submitting...') : (currentLang === 'fil' ? 'Ipadala ang Ticket' : 'Send Ticket')}</span>
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
 
         {/* System Developers Section */}
@@ -513,3 +589,4 @@ const HelpSupport = () => {
 };
 
 export default HelpSupport;
+

@@ -140,7 +140,7 @@ const RenewFranchise = () => {
           isOpen: true,
           type: 'success',
           title: 'Renewal Application Submitted!',
-          message: 'Your franchise renewal has been submitted to the BPLO for verification. You can track your renewal status on the dashboard.',
+          message: 'Your franchise renewal has been submitted to the Office of the Vice Mayor Extension for verification. You can track your renewal status on the dashboard.',
           confirmText: 'OK',
           onConfirm: () => {
             setFeedbackModal(prev => ({ ...prev, isOpen: false }));
@@ -343,7 +343,7 @@ const RenewFranchise = () => {
                   </div>
                   <span className="text-xs sm:text-xs font-semibold text-[#7A1B22] dark:text-[#D4AF37] flex items-center gap-1">
                     <ShieldCheck size={13} />
-                    Official BPLO Registry
+                    Official Office of the Vice Mayor Extension Registry
                   </span>
                 </div>
               </div>
@@ -464,7 +464,7 @@ const RenewFranchise = () => {
                     Claim Stub & Settlement Notice
                   </h4>
                   <p className="text-xs text-slate-700 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                    Online renewal submission is free. After BPLO verification, download your official Claim Stub Voucher indicating your franchise details and fee breakdown for final settlement and sticker collection at the Municipal Treasury / BPLO Office.
+                    Online renewal submission is free. After Office of the Vice Mayor Extension verification, download your official Claim Stub Voucher indicating your franchise details and fee breakdown for final settlement and sticker collection at the Municipal Treasury / Office of the Vice Mayor Extension Office.
                   </p>
                 </div>
               </div>
@@ -562,3 +562,4 @@ const RenewFranchise = () => {
 };
 
 export default RenewFranchise;
+
