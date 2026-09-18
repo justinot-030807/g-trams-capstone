@@ -3,7 +3,8 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
   ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, 
-  FileText, AlertCircle, Loader2, Printer, Move, Check, AlertTriangle
+  FileText, AlertCircle, Loader2, Printer, Move, Check, AlertTriangle,
+  PanelLeftClose, PanelLeft, Maximize2, Minimize2
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 
@@ -29,6 +30,10 @@ const FranchiseReviewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Full Screen and Sidebar Layout State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Document Viewer State
   const [activeDocKey, setActiveDocKey] = useState('orCrDocument');
@@ -224,6 +229,25 @@ const FranchiseReviewPage = () => {
     }
   };
 
+  // True Browser Fullscreen Mode
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
+
   // Status Action (Approve / Reject / Release)
   const handleUpdateStatus = async (newStatus, customCancelReason = null, autoAdvance = true) => {
     if (!currentApp) return;
@@ -279,7 +303,7 @@ const FranchiseReviewPage = () => {
     }
   };
 
-  // Keyboard Shortcuts (A for Approve, R for Reject, 1-4 for Docs, Arrows for Nav)
+  // Keyboard Shortcuts (A for Approve, R for Reject, 1-4 for Docs, Arrows for Nav, S for Sidebar, F for Fullscreen)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) {
@@ -296,6 +320,12 @@ const FranchiseReviewPage = () => {
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
         setIsRejecting(prev => !prev);
+      } else if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        setIsSidebarOpen(prev => !prev);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
       } else if (e.key === '1') {
         setActiveDocKey('orCrDocument');
         resetCanvasView();
@@ -382,6 +412,19 @@ const FranchiseReviewPage = () => {
             <ArrowLeft size={15} />
             <span className="hidden sm:inline">Back to List</span>
           </Link>
+
+          <div className="h-5 w-px bg-white/20 hidden sm:block" />
+
+          {/* Toggle Sidebar Button */}
+          <button
+            onClick={() => setIsSidebarOpen(prev => !prev)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
+            title={isSidebarOpen ? "Hide Application Form (Shortcut: S)" : "Show Application Form (Shortcut: S)"}
+          >
+            {isSidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeft size={15} />}
+            <span className="hidden md:inline">{isSidebarOpen ? 'Hide Form' : 'Show Form'}</span>
+            <span className="text-[10px] px-1 bg-black/25 rounded text-white/80 font-mono">S</span>
+          </button>
 
           <div className="h-5 w-px bg-white/20 hidden sm:block" />
 
@@ -495,7 +538,8 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* LEFT INSPECTION SHEET: COMPLETE OPERATOR FORM SUBMISSION DETAILS        */}
         {/* ======================================================================= */}
-        <aside className="w-full md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs">
+        {isSidebarOpen && (
+          <aside className="w-full md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs">
           
           <div className="p-4 space-y-3.5 flex-1">
             
@@ -696,12 +740,15 @@ const FranchiseReviewPage = () => {
             <div className="p-2 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-1">
               <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">A</kbd> Approve</span>
               <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">R</kbd> Reject</span>
+              <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">S</kbd> Form</span>
+              <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">F</kbd> Full</span>
               <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">1-4</kbd> Docs</span>
               <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">&larr;/&rarr;</kbd> Queue</span>
             </div>
 
           </div>
         </aside>
+        )}
 
         {/* ======================================================================= */}
         {/* RIGHT DOCUMENT VIEWER CANVAS (STUDIO DESK VIEWPORT)                    */}
@@ -757,6 +804,17 @@ const FranchiseReviewPage = () => {
               <RefreshCw size={14} />
             </button>
 
+            <div className="h-4 w-px bg-slate-200 mx-0.5" />
+
+            {/* Toggle Fullscreen */}
+            <button
+              onClick={toggleFullscreen}
+              className="p-1.5 hover:bg-slate-100 text-[#7A1B22] rounded-lg transition-colors cursor-pointer"
+              title={isFullscreen ? "Exit Fullscreen (Shortcut: F)" : "Fullscreen Mode (Shortcut: F)"}
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </button>
+
             {/* Open Original File in New Tab */}
             {currentDoc?.url && (
               <>
@@ -774,9 +832,19 @@ const FranchiseReviewPage = () => {
             )}
           </div>
 
-          {/* ACTIVE DOCUMENT LABEL BADGE (TOP LEFT OF CANVAS) */}
-          <div className="absolute top-3 left-3 z-20 pointer-events-none">
-            <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+          {/* ACTIVE DOCUMENT LABEL BADGE & FORM TOGGLE (TOP LEFT OF CANVAS) */}
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
+            {!isSidebarOpen && (
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-1.5 text-xs font-semibold text-[#7A1B22] hover:bg-slate-50 transition-colors cursor-pointer"
+                title="Show Form Details (Shortcut: S)"
+              >
+                <PanelLeft size={14} />
+                <span>Show Form</span>
+              </button>
+            )}
+            <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2 pointer-events-none">
               <FileText size={15} className="text-[#7A1B22]" />
               <span className="text-xs font-semibold text-slate-800">
                 {currentDoc.label}
@@ -832,7 +900,7 @@ const FranchiseReviewPage = () => {
                   src={currentDoc.url}
                   alt={currentDoc.label}
                   draggable={false}
-                  className="max-h-[82vh] max-w-[85vw] object-contain rounded-2xl shadow-2xl bg-white border border-slate-200/80 p-1 select-none"
+                  className="h-[84vh] w-auto max-w-[94%] object-contain rounded-2xl shadow-2xl bg-white border border-slate-200/80 p-1.5 select-none"
                 />
               </div>
             )}
@@ -849,6 +917,8 @@ const FranchiseReviewPage = () => {
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className="text-xs text-slate-500">Double-click to reset</span>
+            <span className="text-slate-300">&bull;</span>
+            <span className="text-xs text-slate-500 font-mono">[S] Form &bull; [F] Fullscreen</span>
           </div>
         </main>
       </div>
