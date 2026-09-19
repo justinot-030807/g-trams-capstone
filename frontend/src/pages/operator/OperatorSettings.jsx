@@ -7,7 +7,7 @@ import {
   CheckCircle2, AlertCircle, Moon, Sun, Laptop, Globe, 
   ShieldCheck, MapPin, Hash, Shield, Car, Check, LogOut,
   Eye, EyeOff, FileText, Bell, Smartphone, Send, RefreshCw,
-  Volume2, Info, ShieldAlert, Sparkles
+  Volume2, Info, ShieldAlert, Sparkles, Printer, Download, ExternalLink, ZoomIn, X
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -88,6 +88,11 @@ const OperatorSettings = () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, []);
+
+  // Vault Documents State
+  const [vaultDocuments, setVaultDocuments] = useState([]);
+  const [isVaultLoading, setIsVaultLoading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   // Push Notification State & Controls
   const [pushSupported, setPushSupported] = useState(false);
@@ -211,6 +216,83 @@ const OperatorSettings = () => {
     };
 
     fetchOperatorProfile();
+  }, []);
+
+  const fetchVaultDocs = async () => {
+    setIsVaultLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/franchises/my-franchises`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const list = await res.json();
+        const docs = [];
+        list.forEach(unit => {
+          const unitPlate = unit.plateNo || 'PENDING PLATE';
+          const unitDesc = `${unit.make || 'Tricycle'} (${unit.made || 'Unit'})`;
+          
+          if (unit.orCrUrl) {
+            docs.push({
+              id: `${unit._id}_orcr`,
+              title: 'Tricycle OR / CR (LTO Registration)',
+              category: 'Vehicle Document',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.orCrUrl,
+              status: unit.status,
+              type: 'orCr'
+            });
+          }
+          if (unit.licenseUrl) {
+            docs.push({
+              id: `${unit._id}_license`,
+              title: "Professional Driver's License",
+              category: "Driver's Credential",
+              plate: unitPlate,
+              unitDesc,
+              url: unit.licenseUrl,
+              status: unit.status,
+              type: 'license'
+            });
+          }
+          if (unit.brgyClearanceUrl) {
+            docs.push({
+              id: `${unit._id}_brgy`,
+              title: 'Barangay Clearance (Gasan)',
+              category: 'LGU Clearance',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.brgyClearanceUrl,
+              status: unit.status,
+              type: 'brgy'
+            });
+          }
+          if (unit.todaEndorsementUrl) {
+            docs.push({
+              id: `${unit._id}_toda`,
+              title: 'TODA Endorsement Certificate',
+              category: 'Association Certificate',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.todaEndorsementUrl,
+              status: unit.status,
+              type: 'toda'
+            });
+          }
+        });
+        setVaultDocuments(docs);
+      }
+    } catch (err) {
+      console.error('Failed to load vault documents:', err);
+    } finally {
+      setIsVaultLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVaultDocs();
   }, []);
 
   const handleImageChange = (e) => {
@@ -432,80 +514,83 @@ const OperatorSettings = () => {
       ) : (
         <div className="space-y-6 w-full pb-28 sm:pb-24">
           {/* TAB NAVIGATION PILLS */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 sm:gap-2 p-1.5 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl w-full">
             <button
               type="button"
               onClick={() => setActiveTab('profile')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'profile'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <User size={16} />
-              <span>Profile &amp; Contact</span>
+              <User size={15} />
+              <span className="truncate">Profile</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('security')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'security'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Lock size={16} />
-              <span>Account Security</span>
+              <Lock size={15} />
+              <span className="truncate">Security</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('preferences')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'preferences'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Globe size={16} />
-              <span>Preferences</span>
+              <Globe size={15} />
+              <span className="truncate">Preferences</span>
             </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('idcard')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'idcard'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <ShieldCheck size={16} />
-              <span>Digital ID</span>
+              <ShieldCheck size={15} />
+              <span className="truncate">Digital ID</span>
             </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('vault')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'vault'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <FileText size={16} />
-              <span>Document Vault</span>
+              <FileText size={15} />
+              <span className="truncate">Vault ({vaultDocuments.length})</span>
             </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('notifications')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[42px] cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'notifications'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Bell size={16} />
-              <span>Notifications</span>
+              <Bell size={15} />
+              <span className="truncate">Alerts</span>
             </button>
           </div>
 
@@ -926,27 +1011,44 @@ const OperatorSettings = () => {
       {/* TAB 4: DIGITAL ID CARD */}
       {!isLoading && activeTab === 'idcard' && (
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-3xl">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
-              <ShieldCheck size={20} />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  Digital Operator ID
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Official LGU Gasan Tricycle Operator Credential
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                Digital Operator ID
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Your official LGU Gasan Digital Identification Card
-              </p>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs active:scale-95 cursor-pointer"
+              >
+                <Printer size={15} />
+                <span>Print ID Card</span>
+              </button>
             </div>
           </div>
           
-          <div className="py-4">
+          <div className="py-2 text-center">
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 flex items-center justify-center gap-1.5 font-medium">
+              <RefreshCw size={12} className="text-[#D4AF37] animate-spin" />
+              <span>Click or tap the ID card to flip between photo and QR code</span>
+            </p>
             <OperatorIdCard user={JSON.parse(localStorage.getItem('user') || '{}')} />
           </div>
           
           <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800/50">
             <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 mb-1">
-              <AlertCircle size={14} /> Official Use Only
+              <AlertCircle size={14} /> Official Use &amp; Verification
             </h4>
             <p className="text-xs text-amber-700 dark:text-amber-400/90 leading-relaxed">
               This digital ID card is an official document from the Municipality of Gasan. The QR code contains verifiable data used by LGU officers and traffic enforcers.
@@ -957,28 +1059,120 @@ const OperatorSettings = () => {
 
       {/* TAB 5: DOCUMENT VAULT */}
       {!isLoading && activeTab === 'vault' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-3xl">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
-              <FileText size={20} />
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors animate-in fade-in duration-200 max-w-4xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#D4AF37]">
+                <FileText size={20} />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  Document Vault
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Securely access and download your submitted franchise documents
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                Document Vault
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Securely store and access your uploaded operator documents
-              </p>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={fetchVaultDocs}
+                disabled={isVaultLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <RefreshCw size={13} className={isVaultLoading ? "animate-spin" : ""} />
+                <span>Refresh Vault</span>
+              </button>
             </div>
           </div>
           
-          <div className="py-10 text-center">
-            <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Your Vault is Empty</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              Any documents you submit during franchise application will be safely stored here for future reference.
-            </p>
-          </div>
+          {isVaultLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center">
+              <Loader2 size={32} className="text-[#7A1B22] dark:text-[#D4AF37] animate-spin mb-3" />
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading your encrypted documents...</p>
+            </div>
+          ) : vaultDocuments.length === 0 ? (
+            <div className="py-12 text-center flex flex-col items-center justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-4">
+                <FileText size={36} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5">No Uploaded Documents Found</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-5 leading-relaxed">
+                When you submit a franchise application or renewal, your LTO OR/CR, Driver's License, Barangay Clearance, and TODA Endorsement will automatically be accessible here.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/apply-franchise')}
+                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
+              >
+                <FileText size={14} />
+                <span>Apply or Upload Documents</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Stored Files ({vaultDocuments.length})
+                </p>
+                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                  <ShieldCheck size={12} />
+                  <span>Cloud Encrypted</span>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {vaultDocuments.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800/80 transition-all flex flex-col justify-between group"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                          {doc.category}
+                        </span>
+                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                          Available
+                        </span>
+                      </div>
+
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1 group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
+                        {doc.title}
+                      </h4>
+                      <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mb-3">
+                        Plate: <span className="font-bold text-slate-700 dark:text-slate-200">{doc.plate}</span> &bull; {doc.unitDesc}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDoc(doc)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all active:scale-98 cursor-pointer"
+                      >
+                        <Eye size={14} />
+                        <span>Preview</span>
+                      </button>
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#7A1B22]/10 hover:bg-[#7A1B22]/20 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 text-[#7A1B22] dark:text-[#D4AF37] text-xs font-bold transition-all active:scale-98 cursor-pointer"
+                        title="Open or Download"
+                      >
+                        <Download size={14} />
+                        <span>Download</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1301,6 +1495,68 @@ const OperatorSettings = () => {
         title={feedbackModal.title}
         message={feedbackModal.message}
       />
+
+      {/* Document Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md transition-opacity animate-in fade-in duration-200 cursor-pointer"
+            onClick={() => setPreviewDoc(null)}
+          />
+          <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="min-w-0 pr-4">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
+                  {previewDoc.title}
+                </h3>
+                <p className="text-xs text-slate-400 truncate">
+                  {previewDoc.plate} &bull; {previewDoc.unitDesc}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={previewDoc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors"
+                  title="Open Original in New Tab"
+                >
+                  <ExternalLink size={16} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4 bg-slate-100 dark:bg-slate-950 flex items-center justify-center min-h-[300px]">
+              {previewDoc.url.toLowerCase().endsWith('.pdf') ? (
+                <iframe src={previewDoc.url} title={previewDoc.title} className="w-full h-[60vh] rounded-xl border border-slate-200 dark:border-slate-800" />
+              ) : (
+                <img src={previewDoc.url} alt={previewDoc.title} className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md" />
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-slate-400 font-medium">G-TRAMS Secured Document Vault</span>
+              <a
+                href={previewDoc.url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs active:scale-95 cursor-pointer"
+              >
+                <Download size={14} />
+                <span>Download Document</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

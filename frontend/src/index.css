@@ -54,6 +54,25 @@
 .animate-item-3 { animation: itemFadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.32s both; }
 .animate-item-4 { animation: itemFadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.42s both; }
 
+/* Horizontal Step Transitions for Multi-step forms */
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-right {
+  animation: slideInFromRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-left {
+  animation: slideInFromLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

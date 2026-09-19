@@ -94,9 +94,6 @@ const OperatorBottomNav = ({ role }) => {
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
               }`}>
                 <Icon size={18} className={item.active ? 'stroke-[2.5]' : 'stroke-[2]'} />
-                {item.active && (
-                  <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] shadow-xs" />
-                )}
               </div>
               <span className={`text-[11px] sm:text-xs mt-0.5 tracking-tight transition-all duration-200 truncate w-full text-center leading-tight ${
                 item.active ? 'font-black scale-105' : 'font-semibold'

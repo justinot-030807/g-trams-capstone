@@ -45,6 +45,8 @@ const ApplyFranchise = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [currentStep, setCurrentStep] = useState(1);
+  const [slideDirection, setSlideDirection] = useState('forward');
+  const [showChecklist, setShowChecklist] = useState(false);
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState(null);
 
@@ -500,18 +502,20 @@ const ApplyFranchise = () => {
         return;
       }
     }
-      if (!document.startViewTransition) {
+    setSlideDirection('forward');
+    if (!document.startViewTransition) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      document.startViewTransition(() => {
         setCurrentStep(prev => prev + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        document.startViewTransition(() => {
-          setCurrentStep(prev => prev + 1);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-      }
-    };
+      });
+    }
+  };
 
   const prevStep = () => {
+    setSlideDirection('backward');
     if (!document.startViewTransition) {
       setCurrentStep(prev => Math.max(prev - 1, 1));
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -854,17 +858,12 @@ const ApplyFranchise = () => {
 
 
 
-      <header className="mb-5 max-w-3xl flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <div className="w-1.5 h-7 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-              {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-              {formMode === 'Renewal' ? 'Please review your records and update Community Tax Certificate (CTC) details.' : 'Complete the required vehicle information and upload supporting documents.'}
-            </p>
-          </div>
+      <header className="mb-3.5 max-w-3xl flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+            {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
+          </h1>
         </div>
       </header>
 
@@ -925,36 +924,45 @@ const ApplyFranchise = () => {
       <form onSubmit={handleSubmit} className="space-y-4 w-full">
         
         {currentStep === 1 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* Pre-Flight Checklist Banner */}
-            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5">
-              <div className="flex items-center gap-2 mb-1.5">
-                <ShieldCheck size={18} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                  Pre-Application Requirements Checklist
-                </h3>
+          <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+            {/* Compact Pre-Flight Checklist Banner */}
+            <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl p-3 sm:p-3.5 transition-all">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <ShieldCheck size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                  <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                    <span>Requirements Checklist: </span>
+                    <span className="font-medium text-slate-500 dark:text-slate-400">4 items needed</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowChecklist(prev => !prev)}
+                  className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline shrink-0 cursor-pointer"
+                >
+                  {showChecklist ? 'Hide List' : 'View Checklist'}
+                </button>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 font-medium">
-                Ensure you have clear copies or photos ready for scanning:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900/90 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">1</div>
-                  <span className="font-medium">Tricycle OR / CR Document (LTO)</span>
+              {showChecklist && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-2.5 mt-2 border-t border-amber-200/60 dark:border-amber-900/40 animate-slide-right">
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
+                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">1</span>
+                    <span className="truncate">LTO OR / CR</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
+                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">2</span>
+                    <span className="truncate">Driver's License</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
+                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">3</span>
+                    <span className="truncate">Brgy Clearance</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
+                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">4</span>
+                    <span className="truncate">TODA Endorsement</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900/90 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">2</div>
-                  <span className="font-medium">Valid Professional Driver's License</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900/90 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">3</div>
-                  <span className="font-medium">Barangay Clearance (Gasan)</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900/90 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">4</div>
-                  <span className="font-medium">TODA Endorsement Certificate</span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Section 1: Operator Information */}
@@ -963,14 +971,9 @@ const ApplyFranchise = () => {
                 <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <User size={16} />
                 </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    1. Operator Information (Owner)
-                  </h2>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 font-normal">
-                    Personal details of the registered franchise owner
-                  </p>
-                </div>
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  1. Operator Information (Owner)
+                </h2>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -1033,14 +1036,9 @@ const ApplyFranchise = () => {
                 <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <Car size={16} />
                 </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    2. Vehicle Details (Tricycle / Motorcycle)
-                  </h2>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 font-normal">
-                    Official vehicle details according to LTO OR/CR
-                  </p>
-                </div>
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  2. Vehicle Details (Tricycle / Motorcycle)
+                </h2>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -1235,7 +1233,7 @@ const ApplyFranchise = () => {
         )}
 
         {currentStep === 2 && (
-          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300 transition-colors">
+          <div className={`bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                 <FileText size={18} />
@@ -1245,7 +1243,7 @@ const ApplyFranchise = () => {
                   Community Tax Certificate (CTC / Cedula)
                 </h2>
                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-                  Enter the latest CTC details issued by the Municipal Treasurer
+                  Enter CTC details issued by the Municipal Treasurer
                 </p>
               </div>
             </div>
@@ -1266,7 +1264,6 @@ const ApplyFranchise = () => {
                   placeholder="e.g. 08123456" 
                   required 
                 />
-                <p className="text-xs font-medium text-slate-400 mt-1">Digits printed on top of the certificate</p>
               </div>
 
               <div>
@@ -1360,7 +1357,7 @@ const ApplyFranchise = () => {
         )}
 
         {currentStep === 3 && (
-          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300 transition-colors">
+          <div className={`bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                 <UploadCloud size={18} />

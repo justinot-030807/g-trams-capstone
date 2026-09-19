@@ -380,7 +380,7 @@ const OperatorDashboard = () => {
     const steps = [
       { id: 1, label: t('dashboard.stepSubmitted', 'Submitted') },
       { id: 2, label: t('dashboard.stepReview', 'Review') },
-      { id: 3, label: t('dashboard.stepSigning', 'For Signing') },
+      { id: 3, label: t('dashboard.stepSigning', 'Signing') },
       { id: 4, label: t('dashboard.stepPayment', 'Payment') },
       { id: 5, label: t('dashboard.stepActive', 'Active') }
     ];
@@ -392,22 +392,22 @@ const OperatorDashboard = () => {
     else if (status === 'Active') currentStepNum = 5;
 
     return (
-      <div className="mb-5 bg-slate-50/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-        <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
+      <div className="mb-5 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5 sm:p-5">
+        <p className="text-[11px] sm:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
           {t('dashboard.appProgress', 'Application Progress')}
         </p>
         
         {/* Seamless Step progress track & nodes */}
-        <div className="flex items-start w-full">
+        <div className="flex items-start w-full px-1 sm:px-2">
           {steps.map((step, idx) => {
             const isCompleted = currentStepNum > step.id || (status === 'Active' && step.id === 5);
             const isCurrent = currentStepNum === step.id && status !== 'Active';
 
             return (
-              <div key={step.id} className="relative flex-1 flex flex-col items-center group">
+              <div key={step.id} className="relative flex-1 flex flex-col items-center group min-w-0">
                 {/* Seamless Connector Line to Next Step */}
                 {idx < steps.length - 1 && (
-                  <div className="absolute top-4 left-1/2 w-full h-[3px] -translate-y-1/2 z-0 pointer-events-none">
+                  <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] sm:h-[3px] -translate-y-1/2 z-0 pointer-events-none">
                     {/* Background Inactive Track */}
                     <div className="w-full h-full bg-slate-200 dark:bg-slate-700/80 rounded-full" />
                     {/* Active Progress Fill */}
@@ -421,7 +421,7 @@ const OperatorDashboard = () => {
 
                 {/* Step Circle Badge */}
                 <div 
-                  className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
                     isCompleted 
                       ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs' 
                       : isCurrent 
@@ -430,16 +430,16 @@ const OperatorDashboard = () => {
                   }`}
                 >
                   {isCompleted ? (
-                    <Check size={16} className="stroke-[3]" />
+                    <Check size={14} className="stroke-[3]" />
                   ) : isCurrent ? (
-                    <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full animate-pulse" />
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full animate-pulse" />
                   ) : (
-                    <div className="w-2 h-2 bg-slate-300 dark:bg-slate-700 rounded-full" />
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-slate-300 dark:bg-slate-700 rounded-full" />
                   )}
                 </div>
 
                 {/* Step Label */}
-                <span className={`text-xs mt-2 tracking-tight text-center truncate max-w-full px-0.5 transition-colors ${
+                <span className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 tracking-tight text-center leading-tight max-w-full px-0.5 truncate transition-colors ${
                   isCurrent 
                     ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' 
                     : isCompleted 
@@ -539,144 +539,6 @@ const OperatorDashboard = () => {
                   </span>
                 )}
               </button>
-
-              {/* Profile / Account Bottom Sheet Modal */}
-              {isProfileMenuOpen && (
-                <dialog open className="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent border-none outline-none z-50 flex flex-col justify-end sm:justify-center sm:items-center sm:p-4">
-                  {/* Backdrop */}
-                  <div 
-                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                  />
-                  
-                  {/* Sheet / Modal Dialog */}
-                  <div 
-                    className="relative z-10 w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 p-5 sm:p-6 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:zoom-in-95 duration-250 pb-8 sm:pb-6"
-                  >
-                    {/* Mobile drag handle */}
-                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-4 sm:hidden" />
-
-                    {/* Header with user info and close button */}
-                    <div className="flex items-center justify-between pb-4 mb-3 border-b border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7A1B22] to-[#9E2A2B] dark:from-[#D4AF37] dark:to-[#B8860B] text-white dark:text-slate-950 font-black flex items-center justify-center text-lg shadow-md shrink-0">
-                          {loggedInUserName.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-black text-base text-slate-900 dark:text-white truncate">
-                            {loggedInUserName}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="inline-block text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37]">
-                              {isTodaPresident ? 'TODA President' : 'Operator'}
-                            </span>
-                            <span className="text-xs text-slate-400">G-TRAMS Gasan</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
-                        aria-label="Close"
-                      >
-                        <X size={18} />
-                      </button>
-                    </div>
-
-                    {/* Quick navigation actions */}
-                    <div className="space-y-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          navigate('/operator/settings');
-                        }}
-                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all cursor-pointer group text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-[#7A1B22]/10 group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
-                            <Settings size={18} />
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                              Account Settings
-                            </p>
-                            <p className="text-xs sm:text-xs text-slate-400">
-                              Personal info, password, and preferences
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight size={16} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          setIsTourOpen(true);
-                        }}
-                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all cursor-pointer group text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-amber-500/10 dark:bg-amber-400/15 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:bg-amber-500/20 transition-colors">
-                            <Sparkles size={18} />
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                              Explore Portal Tour
-                            </p>
-                            <p className="text-xs sm:text-xs text-slate-400">
-                              Quick visual guide of portal features
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight size={16} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          navigate('/help-support');
-                        }}
-                        className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all cursor-pointer group text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            <HelpCircle size={18} />
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                              Help &amp; Support
-                            </p>
-                            <p className="text-xs sm:text-xs text-slate-400">
-                              FAQs, hotline &amp; info
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight size={16} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    </div>
-
-                    {/* Prominent Log Out */}
-                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileMenuOpen(false);
-                          handleLogout();
-                        }}
-                        className="w-full flex items-center justify-center gap-2.5 p-3 rounded-2xl text-xs sm:text-sm font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 transition-all cursor-pointer active:scale-98"
-                      >
-                        <LogOut size={16} className="stroke-[2.5]" />
-                        <span>Log Out of Account</span>
-                      </button>
-                    </div>
-                  </div>
-                </dialog>
-              )}
             </div>
 
             {/* Greeting & Bold User Name */}
@@ -722,88 +584,6 @@ const OperatorDashboard = () => {
                   </span>
                 )}
               </button>
-
-              {/* In-Header Notification Modal */}
-              {isNotifOpen && (
-                <dialog open className="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent border-none outline-none z-50 flex flex-col justify-end sm:justify-start sm:items-end sm:p-4 sm:pt-16 sm:pr-8">
-                  {/* Backdrop */}
-                  <div 
-                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200" 
-                    onClick={() => setIsNotifOpen(false)} 
-                  />
-
-                  {/* Notification Card */}
-                  <div 
-                    className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col"
-                  >
-                    {/* Mobile drag bar */}
-                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
-
-                    {/* Header */}
-                    <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                          <h4 className="font-black text-sm text-slate-900 dark:text-white">
-                            {t('nav.notifications', 'Notifications')}
-                          </h4>
-                        </div>
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">
-                          {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {unreadNotifCount > 0 && (
-                          <button 
-                            type="button"
-                            onClick={markAllNotifsRead} 
-                            className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                          >
-                            {t('nav.markAllRead', 'Mark all read')}
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setIsNotifOpen(false)}
-                          className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
-                          aria-label="Close"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Notification List */}
-                    <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 flex-1 max-h-[60vh] overscroll-contain">
-                      {notifications.length === 0 ? (
-                        <div className="p-8 text-center flex flex-col items-center justify-center">
-                          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-2.5">
-                            <Bell size={22} />
-                          </div>
-                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                          <p className="text-xs text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
-                        </div>
-                      ) : (
-                        notifications.map(notif => (
-                          <div
-                            key={notif._id}
-                            onClick={() => {
-                              markAsRead(notif._id);
-                              if (notif.relatedFranchise) navigate('/operator-dashboard');
-                              setIsNotifOpen(false);
-                            }}
-                            className={`p-4 cursor-pointer transition-colors ${notif.isRead ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60' : 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
-                          >
-                            <p className={`text-xs text-slate-900 dark:text-white line-clamp-1 ${notif.isRead ? 'font-semibold' : 'font-black'}`}>{notif.title}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </dialog>
-              )}
             </div>
           </div>
         </div>
@@ -854,7 +634,7 @@ const OperatorDashboard = () => {
                 className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Receipt size={15} />
-                <span>Get Voucher</span>
+                <span>Get Claim Stub</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'For Signing') ? (
@@ -1485,6 +1265,215 @@ const OperatorDashboard = () => {
         onConfirm={feedbackModal.onConfirm || (() => setFeedbackModal(prev => ({ ...prev, isOpen: false })))}
         onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
       />
+
+      {/* Portalled Profile Bottom Sheet / Modal (Escape stacking context) */}
+      {isProfileMenuOpen && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-center sm:items-center">
+          {/* Backdrop with modern blur */}
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200 cursor-pointer"
+            onClick={() => setIsProfileMenuOpen(false)}
+          />
+
+          {/* Bottom Sheet Card */}
+          <div className="relative z-10 w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 p-6 text-slate-900 dark:text-white animate-in slide-in-from-bottom duration-250 max-h-[90vh] flex flex-col overflow-y-auto">
+            {/* Drag Handle Bar (Mobile) */}
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-4 sm:hidden" />
+
+            {/* Header Profile Info */}
+            <div className="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="w-14 h-14 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#7A1B22] flex items-center justify-center shrink-0">
+                {profilePic ? (
+                  <img src={profilePic} alt="User" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[#D4AF37] font-black text-xl">
+                    {loggedInUserName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-black text-base text-slate-900 dark:text-white truncate">
+                  {loggedInUserName}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/40">
+                    {isTodaPresident ? 'TODA President' : 'Franchise Operator'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Menu Options */}
+            <div className="py-3 space-y-1">
+              {/* Settings & Profile */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  navigate('/operator-settings');
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center">
+                    <Settings size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">Account & Document Settings</p>
+                    <p className="text-xs text-slate-400">Manage profile, documents & security</p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              {/* Language Preference */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  setIsLangModalOpen(true);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                    <span className="font-black text-xs">A/文</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">Language / Wika</p>
+                    <p className="text-xs text-slate-400">{language === 'fil' ? 'Filipino (Tagalog)' : 'English (US)'}</p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              {/* Spotlight Tour / Help */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  setIsTourOpen(true);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">Quick System Tour</p>
+                    <p className="text-xs text-slate-400">Learn how to use Operator Portal</p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
+            {/* Logout Button */}
+            <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-sm transition-all active:scale-98 cursor-pointer"
+              >
+                <LogOut size={18} />
+                <span>Sign Out / Mag-logout</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Portalled Notification Bottom Sheet / Dropdown (Escape stacking context) */}
+      {isNotifOpen && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-start sm:items-end sm:p-4 sm:pt-16 sm:pr-8">
+          {/* Backdrop with modern blur */}
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200 cursor-pointer" 
+            onClick={() => setIsNotifOpen(false)} 
+          />
+
+          {/* Notification Card */}
+          <div 
+            className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col"
+          >
+            {/* Mobile drag bar */}
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
+
+            {/* Header */}
+            <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <h4 className="font-black text-sm text-slate-900 dark:text-white">
+                    {t('nav.notifications', 'Notifications')}
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                  {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {unreadNotifCount > 0 && (
+                  <button 
+                    type="button"
+                    onClick={markAllNotifsRead} 
+                    className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                  >
+                    {t('nav.markAllRead', 'Mark all read')}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsNotifOpen(false)}
+                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Notification List */}
+            <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 flex-1 max-h-[60vh] overscroll-contain">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center flex flex-col items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-2.5">
+                    <Bell size={22} />
+                  </div>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
+                </div>
+              ) : (
+                notifications.map(notif => (
+                  <div
+                    key={notif._id}
+                    onClick={() => {
+                      markAsRead(notif._id);
+                      if (notif.relatedFranchise) navigate('/operator-dashboard');
+                      setIsNotifOpen(false);
+                    }}
+                    className={`p-4 cursor-pointer transition-colors ${notif.isRead ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60' : 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                  >
+                    <p className={`text-xs text-slate-900 dark:text-white line-clamp-1 ${notif.isRead ? 'font-semibold' : 'font-black'}`}>{notif.title}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </MainLayout>
   );
 };
