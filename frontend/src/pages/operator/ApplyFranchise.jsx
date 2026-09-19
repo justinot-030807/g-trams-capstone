@@ -381,6 +381,19 @@ const ApplyFranchise = () => {
     });
   };
 
+  const handleBackToMyFranchises = () => {
+    const exitFn = () => {
+      setFormMode(null);
+      setCurrentStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    if (document.startViewTransition) {
+      document.startViewTransition(exitFn);
+    } else {
+      exitFn();
+    }
+  };
+
   const handleRenewClick = (franchise) => {
     navigate('/renew-franchise/' + franchise._id);
   };
@@ -831,7 +844,7 @@ const ApplyFranchise = () => {
   ];
 
   return (
-    <MainLayout>
+    <MainLayout hideNav={true}>
       {/* Minimalist Floating Toast Notification */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -856,72 +869,113 @@ const ApplyFranchise = () => {
         </div>
       )}
 
+      {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
+      <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
+        {/* Top Hero Banner (Inspired by User's Reference Image) */}
+        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-9 px-4 sm:px-6 relative overflow-hidden shadow-md">
+          {/* Subtle Graphic Silhouette */}
+          <div className="absolute -right-6 -bottom-10 opacity-10 pointer-events-none">
+            <Car size={180} />
+          </div>
+          <div className="absolute left-1/2 top-0 -translate-x-1/2 w-96 h-28 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
 
-
-      <header className="mb-3.5 max-w-3xl flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
-          <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-            {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application'}
-          </h1>
-        </div>
-      </header>
-
-      {/* Clean Stepper Navigation */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs w-full mb-5 transition-colors">
-        <div className="flex items-start w-full px-2 sm:px-6">
-          {steps.map((step, idx) => {
-            const isCompleted = currentStep > step.num;
-            const isCurrent = currentStep === step.num;
-
-            return (
-              <div
-                key={step.num}
-                className="relative flex-1 flex flex-col items-center select-none"
+          <div className="max-w-2xl mx-auto relative z-10">
+            {/* Top Navigation Row */}
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <button
+                type="button"
+                onClick={handleBackToMyFranchises}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-xs font-bold transition-all border border-white/15 shadow-xs cursor-pointer"
+                title="Back to My Franchises"
               >
-                {/* Seamless Connector Line to Next Step */}
-                {idx < steps.length - 1 && (
-                  <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] -translate-y-1/2 z-0 pointer-events-none">
-                    <div className="w-full h-full bg-slate-200 dark:bg-slate-700 rounded-full" />
-                    <div 
-                      className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
-                        currentStep > step.num ? 'w-full' : 'w-0'
-                      }`} 
-                    />
-                  </div>
-                )}
+                <ArrowLeft size={16} />
+                <span>Back</span>
+              </button>
 
-                {/* Step Circle */}
-                <div 
-                  className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-                    isCompleted 
-                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs group-hover:scale-105' 
-                      : isCurrent 
-                      ? 'bg-white dark:bg-slate-800 border-[2.5px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
-                      : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
-                  }`}
-                >
-                  {isCompleted ? (
-                    <Check size={13} className="stroke-[3]" />
-                  ) : isCurrent ? (
-                    <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
-                  ) : (
-                    <span className="text-xs font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
-                  )}
-                </div>
-                
-                <span className={`text-xs sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
-                  isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-bold' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
-                }`}>
-                  {step.title}
-                </span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 shadow-2xs">
+                {formMode === 'New' ? 'New Franchise' : formMode === 'Renewal' ? 'Renewal' : 'Correction'}
+              </span>
+            </div>
+
+            {/* Institution Badge & System Branding */}
+            <div className="text-center pt-1 pb-2">
+              <div className="inline-block border border-[#D4AF37] bg-black/25 backdrop-blur-xs px-3.5 py-1 rounded-full text-[10px] sm:text-xs font-bold text-[#D4AF37] tracking-wider uppercase mb-2 shadow-2xs">
+                MUNICIPALITY OF GASAN &bull; MARINDUQUE
               </div>
-            );
-          })}
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase drop-shadow-xs">
+                G-TRAMS
+              </h1>
+              <p className="text-xs sm:text-sm text-white/80 max-w-md mx-auto mt-1 font-medium leading-relaxed">
+                Tricycle Regulatory and Franchise Management System
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 w-full">
+        {/* Form Container - Pulled up with -mt-5 */}
+        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 -mt-5 pb-16 flex-1 flex flex-col relative z-10">
+          {/* Header Card with Form Title & Stepper */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm mb-4 transition-colors">
+            <div className="text-center mb-3">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
+              </h2>
+            </div>
+
+            {/* Stepper Navigation */}
+            <div className="flex items-start w-full px-2 sm:px-6">
+              {steps.map((step, idx) => {
+                const isCompleted = currentStep > step.num;
+                const isCurrent = currentStep === step.num;
+
+                return (
+                  <div
+                    key={step.num}
+                    className="relative flex-1 flex flex-col items-center select-none"
+                  >
+                    {/* Seamless Connector Line to Next Step */}
+                    {idx < steps.length - 1 && (
+                      <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] -translate-y-1/2 z-0 pointer-events-none">
+                        <div className="w-full h-full bg-slate-200 dark:bg-slate-700 rounded-full" />
+                        <div 
+                          className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
+                            currentStep > step.num ? 'w-full' : 'w-0'
+                          }`} 
+                        />
+                      </div>
+                    )}
+
+                    {/* Step Circle */}
+                    <div 
+                      className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isCompleted 
+                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs group-hover:scale-105' 
+                          : isCurrent 
+                          ? 'bg-white dark:bg-slate-800 border-[2.5px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
+                          : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <Check size={13} className="stroke-[3]" />
+                      ) : isCurrent ? (
+                        <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+                      ) : (
+                        <span className="text-xs font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
+                      )}
+                    </div>
+                    
+                    <span className={`text-xs sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                      isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-bold' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+                    }`}>
+                      {step.title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 w-full flex-1">
         
         {currentStep === 1 && (
           <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
@@ -1180,21 +1234,10 @@ const ApplyFranchise = () => {
                 <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
                   <button 
                     type="button" 
-                    onClick={() => {
-                      const cancelFn = () => {
-                        setFormMode(null);
-                        setCurrentStep(1);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      };
-                      if (document.startViewTransition) {
-                        document.startViewTransition(cancelFn);
-                      } else {
-                        cancelFn();
-                      }
-                    }}
+                    onClick={handleBackToMyFranchises}
                     className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
                   >
-                    <ChevronLeft size={16} /> Cancel
+                    <ChevronLeft size={16} /> Back
                   </button>
                   <button 
                     type="button" 
@@ -1469,6 +1512,8 @@ const ApplyFranchise = () => {
         )}
 
       </form>
+        </div>
+      </div>
 
       {/* Document Zoom Modal */}
       {fullPreview && (

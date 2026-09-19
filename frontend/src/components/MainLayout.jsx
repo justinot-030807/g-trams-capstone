@@ -4,7 +4,7 @@ import TopNavbar from './TopNavbar';
 import OperatorBottomNav from './operator/OperatorBottomNav';
 import ChatWidget from './operator/ChatWidget';
 
-const MainLayout = ({ children }) => {
+const MainLayout = ({ children, hideNav = false }) => {
   // Elastic Rubber-band Overscroll Touch Stretch Effect for mobile
   const [stretchOffset, setStretchOffset] = useState(0);
   const [isStretching, setIsStretching] = useState(false);
@@ -183,6 +183,16 @@ const MainLayout = ({ children }) => {
       localStorage.setItem('gtrams_sidebar_open', JSON.stringify(false));
     }
   };
+
+  if (hideNav) {
+    return (
+      <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200 print:bg-white print:text-black">
+        <main className="flex-1 w-full flex flex-col">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 overscroll-y-contain print:bg-white print:text-black print:block print:min-h-0">
