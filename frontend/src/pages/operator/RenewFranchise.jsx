@@ -190,8 +190,8 @@ const RenewFranchise = () => {
 
       {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
       <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
-        {/* Top Hero Banner (Matching ApplyFranchise & User Reference) */}
-        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-9 px-4 sm:px-6 relative overflow-hidden shadow-md">
+        {/* Top Hero Banner */}
+        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-10 px-4 sm:px-6 relative overflow-hidden shadow-md">
           {/* Subtle Graphic Silhouette */}
           <div className="absolute -right-6 -bottom-10 opacity-10 pointer-events-none">
             <RefreshCw size={180} />
@@ -200,7 +200,7 @@ const RenewFranchise = () => {
 
           <div className="max-w-2xl mx-auto relative z-10">
             {/* Top Navigation Row */}
-            <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center justify-between mb-2">
               <button
                 type="button"
                 onClick={() => navigate('/apply-franchise')}
@@ -210,39 +210,29 @@ const RenewFranchise = () => {
                 <ArrowLeft size={16} />
                 <span>Back</span>
               </button>
-
-              <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 shadow-2xs">
-                Annual Renewal
-              </span>
             </div>
 
-            {/* Institution Badge & System Branding */}
-            <div className="text-center pt-1 pb-2">
-              <div className="inline-block border border-[#D4AF37] bg-black/25 backdrop-blur-xs px-3.5 py-1 rounded-full text-[10px] sm:text-xs font-bold text-[#D4AF37] tracking-wider uppercase mb-2 shadow-2xs">
-                MUNICIPALITY OF GASAN &bull; MARINDUQUE
+            {/* Official Gasan Seal + Form Title in Banner */}
+            <div className="text-center pt-1 pb-2 flex flex-col items-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 p-1.5 backdrop-blur-xs border border-white/25 shadow-lg mb-2.5 flex items-center justify-center">
+                <img 
+                  src="/gasan-logo.png" 
+                  alt="Municipality of Gasan Seal" 
+                  className="w-full h-full object-contain drop-shadow-md" 
+                />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase drop-shadow-xs">
-                G-TRAMS
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-xs">
+                Franchise Renewal Application
               </h1>
-              <p className="text-xs sm:text-sm text-white/80 max-w-md mx-auto mt-1 font-medium leading-relaxed">
-                Tricycle Regulatory and Franchise Management System
+              <p className="text-[11px] sm:text-xs font-bold text-[#D4AF37] tracking-wider uppercase mt-1">
+                Municipality of Gasan &bull; Marinduque
               </p>
             </div>
           </div>
         </div>
 
-        {/* Form Container - Pulled up with -mt-5 */}
-        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 -mt-5 pb-16 flex-1 flex flex-col relative z-10">
-          {/* Header Card with Renewal Title & Subtitle */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm mb-4 transition-colors text-center">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-              Franchise Renewal Application
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              Update your Community Tax Certificate (CTC / Cedula) and OR/CR to keep your franchise registration active.
-            </p>
-          </div>
-
+        {/* Form Container - Pulled up with -mt-6 into Single Unified Canvas */}
+        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 -mt-6 pb-16 flex-1 flex flex-col relative z-10">
           {/* Main Card with Details and Form */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden">
 
@@ -383,8 +373,8 @@ const RenewFranchise = () => {
             <form onSubmit={handleSubmit} className="p-4 sm:p-7 space-y-5 sm:space-y-6">
               
               {/* Step 1: Updated Cedula Information */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-                <div className="flex items-center gap-2.5 mb-2">
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                     1
                   </div>
@@ -455,8 +445,8 @@ const RenewFranchise = () => {
               </div>
 
               {/* Step 2: Vehicle Document (Mobile-first Camera Upload) */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-                <div className="flex items-center gap-2.5 mb-2">
+              <div className="space-y-3.5 pt-2">
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                     2
                   </div>

@@ -871,8 +871,8 @@ const ApplyFranchise = () => {
 
       {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
       <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
-        {/* Top Hero Banner (Inspired by User's Reference Image) */}
-        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-9 px-4 sm:px-6 relative overflow-hidden shadow-md">
+        {/* Top Hero Banner */}
+        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-10 px-4 sm:px-6 relative overflow-hidden shadow-md">
           {/* Subtle Graphic Silhouette */}
           <div className="absolute -right-6 -bottom-10 opacity-10 pointer-events-none">
             <Car size={180} />
@@ -881,7 +881,7 @@ const ApplyFranchise = () => {
 
           <div className="max-w-2xl mx-auto relative z-10">
             {/* Top Navigation Row */}
-            <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center justify-between mb-2">
               <button
                 type="button"
                 onClick={handleBackToMyFranchises}
@@ -891,39 +891,32 @@ const ApplyFranchise = () => {
                 <ArrowLeft size={16} />
                 <span>Back</span>
               </button>
-
-              <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 shadow-2xs">
-                {formMode === 'New' ? 'New Franchise' : formMode === 'Renewal' ? 'Renewal' : 'Correction'}
-              </span>
             </div>
 
-            {/* Institution Badge & System Branding */}
-            <div className="text-center pt-1 pb-2">
-              <div className="inline-block border border-[#D4AF37] bg-black/25 backdrop-blur-xs px-3.5 py-1 rounded-full text-[10px] sm:text-xs font-bold text-[#D4AF37] tracking-wider uppercase mb-2 shadow-2xs">
-                MUNICIPALITY OF GASAN &bull; MARINDUQUE
+            {/* Official Gasan Seal + Form Title in Banner */}
+            <div className="text-center pt-1 pb-2 flex flex-col items-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 p-1.5 backdrop-blur-xs border border-white/25 shadow-lg mb-2.5 flex items-center justify-center">
+                <img 
+                  src="/gasan-logo.png" 
+                  alt="Municipality of Gasan Seal" 
+                  className="w-full h-full object-contain drop-shadow-md" 
+                />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase drop-shadow-xs">
-                G-TRAMS
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-xs">
+                {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
               </h1>
-              <p className="text-xs sm:text-sm text-white/80 max-w-md mx-auto mt-1 font-medium leading-relaxed">
-                Tricycle Regulatory and Franchise Management System
+              <p className="text-[11px] sm:text-xs font-bold text-[#D4AF37] tracking-wider uppercase mt-1">
+                Municipality of Gasan &bull; Marinduque
               </p>
             </div>
           </div>
         </div>
 
-        {/* Form Container - Pulled up with -mt-5 */}
-        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 -mt-5 pb-16 flex-1 flex flex-col relative z-10">
-          {/* Header Card with Form Title & Stepper */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm mb-4 transition-colors">
-            <div className="text-center mb-3">
-              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
-              </h2>
-            </div>
-
-            {/* Stepper Navigation */}
-            <div className="flex items-start w-full px-2 sm:px-6">
+        {/* Form Container - Pulled up with -mt-6 into Single Unified Canvas */}
+        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 -mt-6 pb-16 flex-1 flex flex-col relative z-10">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-4 sm:p-7 transition-colors space-y-6">
+            {/* Stepper Navigation - Seamlessly embedded at top of form */}
+            <div className="flex items-start w-full px-1 sm:px-6 pb-5 border-b border-slate-100 dark:border-slate-800">
               {steps.map((step, idx) => {
                 const isCompleted = currentStep > step.num;
                 const isCurrent = currentStep === step.num;
@@ -973,9 +966,8 @@ const ApplyFranchise = () => {
                 );
               })}
             </div>
-          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 w-full flex-1">
+            <form onSubmit={handleSubmit} className="space-y-6 w-full">
         
         {currentStep === 1 && (
           <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
@@ -1020,8 +1012,8 @@ const ApplyFranchise = () => {
             </div>
 
             {/* Section 1: Operator Information */}
-            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
-              <div className="flex items-center gap-2.5 mb-3.5 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                 <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <User size={16} />
                 </div>
@@ -1085,8 +1077,8 @@ const ApplyFranchise = () => {
             </div>
 
             {/* Section 2: Vehicle Details */}
-            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors">
-              <div className="flex items-center gap-2.5 mb-3.5 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                 <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <Car size={16} />
                 </div>
@@ -1276,7 +1268,7 @@ const ApplyFranchise = () => {
         )}
 
         {currentStep === 2 && (
-          <div className={`bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+          <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                 <FileText size={18} />
@@ -1400,7 +1392,7 @@ const ApplyFranchise = () => {
         )}
 
         {currentStep === 3 && (
-          <div className={`bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl shadow-xs border border-slate-200/90 dark:border-slate-800 transition-colors ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+          <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                 <UploadCloud size={18} />
@@ -1512,6 +1504,7 @@ const ApplyFranchise = () => {
         )}
 
       </form>
+          </div>
         </div>
       </div>
 
