@@ -402,6 +402,14 @@ const ApplyFranchise = () => {
     }
   };
 
+  const handleTopBack = () => {
+    if (currentStep > 1) {
+      prevStep();
+    } else {
+      handleBackToMyFranchises();
+    }
+  };
+
   const handleRenewClick = (franchise) => {
     navigate('/renew-franchise/' + franchise._id);
   };
@@ -959,12 +967,12 @@ const ApplyFranchise = () => {
       <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
         {/* Top Hero Banner */}
         <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-7 px-4 sm:px-6 relative overflow-hidden shadow-md">
-          {/* Subtle Graphic Silhouette - Gasan Seal Watermark */}
-          <div className="absolute -right-8 -bottom-10 opacity-10 pointer-events-none select-none">
+          {/* Official Gasan Seal Watermark in Full Color */}
+          <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
             <img 
               src="/gasan-logo.png" 
-              alt="" 
-              className="w-56 h-56 object-contain filter grayscale brightness-200 invert" 
+              alt="Seal of Gasan" 
+              className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-25 dark:opacity-30 drop-shadow-md" 
             />
           </div>
           <div className="absolute left-1/2 top-0 -translate-x-1/2 w-96 h-28 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
@@ -974,7 +982,7 @@ const ApplyFranchise = () => {
             <div className="flex items-center justify-between mb-2">
               <button
                 type="button"
-                onClick={handleBackToMyFranchises}
+                onClick={handleTopBack}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-xs font-bold transition-all border border-white/15 shadow-xs cursor-pointer"
                 title="Back"
               >
@@ -999,7 +1007,23 @@ const ApplyFranchise = () => {
                 return (
                   <div
                     key={step.num}
-                    className="relative flex-1 flex flex-col items-center select-none"
+                    onClick={() => {
+                      if (step.num < currentStep) {
+                        setSlideDirection('backward');
+                        if (!document.startViewTransition) {
+                          setCurrentStep(step.num);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                          document.startViewTransition(() => {
+                            setCurrentStep(step.num);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          });
+                        }
+                      }
+                    }}
+                    className={`relative flex-1 flex flex-col items-center select-none ${
+                      step.num < currentStep ? 'cursor-pointer group' : ''
+                    }`}
                   >
                     {/* Seamless Connector Line to Next Step */}
                     {idx < steps.length - 1 && (
@@ -1349,16 +1373,16 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={handleBackToMyFranchises}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
                   >
                     <span>Back</span>
                   </button>
                   <button 
                     type="button" 
                     onClick={validateAndNext}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                   >
-                    <span>Continue to Step 2 (CTC / Cedula)</span>
+                    <span>Continue to Step 2</span>
                   </button>
                 </div>
 
@@ -1472,7 +1496,7 @@ const ApplyFranchise = () => {
                 <button 
                   type="button" 
                   onClick={prevStep}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
                 >
                   <span>Back</span>
                 </button>
@@ -1480,9 +1504,9 @@ const ApplyFranchise = () => {
                 <button 
                   type="button" 
                   onClick={validateAndNext}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                 >
-                  <span>Continue to Step 3 (Requirements)</span>
+                  <span>Continue to Step 3</span>
                 </button>
               </div>
 
@@ -1564,7 +1588,7 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={() => setIsSummaryModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
               >
                 <Eye size={15} />
                 <span>See Summary</span>
@@ -1576,7 +1600,7 @@ const ApplyFranchise = () => {
                 <button 
                   type="button" 
                   onClick={prevStep}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
                 >
                   <span>Back</span>
                 </button>
@@ -1584,9 +1608,9 @@ const ApplyFranchise = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] ${
+                  className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] border-2 border-[#541116] dark:border-[#b89428] ${
                     isSubmitting 
-                      ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' 
+                      ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed border-transparent' 
                       : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
                   }`}
                 >

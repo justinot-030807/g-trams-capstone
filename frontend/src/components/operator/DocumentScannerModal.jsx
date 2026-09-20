@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
-  Camera, Upload, RotateCw, Check, X, RefreshCw, Eye, 
-  Sparkles, Sliders, AlertCircle, FlipHorizontal, ArrowLeft,
-  FileText, ShieldCheck, SunMedium, Contrast
+  Camera, Upload, RotateCw, Check, X, RefreshCw, 
+  Sparkles, FlipHorizontal, ArrowLeft
 } from 'lucide-react';
 
 const DocumentScannerModal = ({
@@ -23,10 +22,9 @@ const DocumentScannerModal = ({
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' | 'user'
   const [isCameraReady, setIsCameraReady] = useState(false);
   
-  // Enhancement state
-  const [activeFilter, setActiveFilter] = useState('enhance'); // 'original' | 'enhance' | 'bw' | 'grayscale'
+  // Enhancement state (CamScanner Magic Color)
+  const [isEnhanced, setIsEnhanced] = useState(true);
   const [rotation, setRotation] = useState(0);
-  const [isComparing, setIsComparing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Hidden gallery file input
@@ -124,7 +122,7 @@ const DocumentScannerModal = ({
     setCapturedImage(src);
     setOriginalImage(src);
     setRotation(0);
-    setActiveFilter('enhance');
+    setIsEnhanced(true);
     setMode('preview');
   };
 
@@ -133,7 +131,7 @@ const DocumentScannerModal = ({
     setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
   };
 
-  // Apply filters using HTML5 Canvas
+  // Apply filters using HTML5 Canvas (CamScanner Magic Color)
   const applyImageFilters = useCallback(() => {
     if (!originalImage || !canvasRef.current) return;
     setIsProcessing(true);
@@ -172,60 +170,79 @@ const DocumentScannerModal = ({
       ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
       ctx.restore();
 
-      // Pixel data manipulation for filters
-      if (activeFilter !== 'original') {
+      // CamScanner Magic Color: whitens paper background + enhances ink/seal vibrancy
+      if (isEnhanced) {
         const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imgData.data;
         const len = data.length;
 
-        if (activeFilter === 'enhance') {
-          // Document Magic Color: Contrast +28%, Saturation normalize, Text Sharpness
-          const contrast = 1.28;
-          const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
-          for (let i = 0; i < len; i += 4) {
-            data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128 + 6));
-            data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128 + 6));
-            data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128 + 6));
-          }
-        } else if (activeFilter === 'bw') {
-          // CamScanner-style B&W Photocopy: high-contrast document thresholding
-          for (let i = 0; i < len; i += 4) {
-            // Perceived luminance formula
-            const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-            // Adaptive-like high contrast curve
-            let val;
-            if (lum < 118) {
-              val = Math.max(0, lum * 0.45); // Darken ink/text
-            } else {
-              val = Math.min(255, 170 + (lum - 118) * 1.4); // Whiten paper
-            }
-            data[i] = val;
-            data[i + 1] = val;
-            data[i + 2] = val;
-          }
-        } else if (activeFilter === 'grayscale') {
-          // Clean standard grayscale
-          for (let i = 0; i < len; i += 4) {
-            const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-            data[i] = gray;
-            data[i + 1] = gray;
-            data[i + 2] = gray;
-          }
+        // Step 1: Detect paper background level by sampling luminance
+        let lumSum = 0;
+        let samples = 0;
+        for (let i = 0; i < len; i += 64) {
+          lumSum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          samples++;
         }
+        const avgLum = lumSum / (samples || 1);
+        const paperThreshold = Math.max(120, Math.min(215, avgLum * 0.94));
+
+        // Step 2: Pixel transformation
+        for (let i = 0; i < len; i += 4) {
+          let r = data[i];
+          let g = data[i + 1];
+          let b = data[i + 2];
+
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          const maxC = Math.max(r, g, b);
+          const minC = Math.min(r, g, b);
+          const chroma = maxC - minC; // Colorfulness
+
+          // A. VIBRANT COLOR BOOST (Magic Color: "natingkad kulay" for stamps, seals, blue pen signatures)
+          if (chroma > 14) {
+            const satBoost = 1.6;
+            r = Math.min(255, Math.max(0, lum + (r - lum) * satBoost));
+            g = Math.min(255, Math.max(0, lum + (g - lum) * satBoost));
+            b = Math.min(255, Math.max(0, lum + (b - lum) * satBoost));
+          }
+
+          // B. PAPER BACKGROUND WHITENING ("pumuputi yung documents" - clears murky grey shadows & yellow tints)
+          if (lum >= paperThreshold - 30 && chroma < 40) {
+            const range = 255 - (paperThreshold - 30);
+            const norm = Math.min(1, Math.max(0, (lum - (paperThreshold - 30)) / (range || 1)));
+            const whitened = lum + (255 - lum) * Math.min(1, norm * 1.45 + 0.4);
+            const delta = whitened - lum;
+            r = Math.min(255, r + delta);
+            g = Math.min(255, g + delta);
+            b = Math.min(255, b + delta);
+          } else if (lum < paperThreshold - 35 && chroma < 30) {
+            // C. TEXT DEEPENING (Dark, bold, sharp text letters)
+            r = Math.max(0, r * 0.72);
+            g = Math.max(0, g * 0.72);
+            b = Math.max(0, b * 0.72);
+          }
+
+          // D. CRISP DOCUMENT CONTRAST S-CURVE
+          const contrast = 1.22;
+          const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+          data[i] = Math.min(255, Math.max(0, factor * (r - 128) + 128 + 6));
+          data[i + 1] = Math.min(255, Math.max(0, factor * (g - 128) + 128 + 6));
+          data[i + 2] = Math.min(255, Math.max(0, factor * (b - 128) + 128 + 6));
+        }
+
         ctx.putImageData(imgData, 0, 0);
       }
 
-      setCapturedImage(canvas.toDataURL('image/jpeg', 0.84));
+      setCapturedImage(canvas.toDataURL('image/jpeg', 0.86));
       setIsProcessing(false);
     };
     img.src = originalImage;
-  }, [originalImage, activeFilter, rotation]);
+  }, [originalImage, isEnhanced, rotation]);
 
   useEffect(() => {
     if (mode === 'preview' && originalImage) {
       applyImageFilters();
     }
-  }, [mode, originalImage, activeFilter, rotation, applyImageFilters]);
+  }, [mode, originalImage, isEnhanced, rotation, applyImageFilters]);
 
   // Confirm and return compressed File
   const handleApplyAndAttach = () => {
@@ -240,10 +257,10 @@ const DocumentScannerModal = ({
       onComplete({
         file: optimizedFile,
         previewUrl: URL.createObjectURL(blob),
-        filter: activeFilter
+        filter: isEnhanced ? 'enhanced' : 'original'
       });
       onClose();
-    }, 'image/jpeg', 0.82);
+    }, 'image/jpeg', 0.85);
   };
 
   if (!isOpen) return null;
@@ -256,7 +273,7 @@ const DocumentScannerModal = ({
         <input 
           ref={galleryInputRef}
           type="file" 
-          accept="image/*" 
+          accept="image/*,.webp,image/webp" 
           onChange={handleGalleryFile}
           className="hidden"
         />
@@ -442,114 +459,64 @@ const DocumentScannerModal = ({
 
               <div className="relative max-h-[66vh] max-w-full flex items-center justify-center">
                 <img 
-                  src={isComparing ? originalImage : capturedImage} 
+                  src={capturedImage || originalImage} 
                   alt="Scanned Document Preview"
                   className="max-h-[64vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/15 bg-white"
                 />
 
-                {/* Compare Badge */}
-                {isComparing && (
-                  <div className="absolute top-3 left-3 bg-amber-500 text-slate-950 font-black text-[10px] uppercase px-2 py-0.5 rounded-md shadow-md tracking-wider">
-                    Viewing Original
-                  </div>
-                )}
+                {/* Status Badge */}
+                <div className={`absolute top-3 left-3 font-black text-[10px] uppercase px-2.5 py-1 rounded-lg shadow-md tracking-wider flex items-center gap-1.5 ${
+                  isEnhanced 
+                    ? 'bg-[#7A1B22] text-[#D4AF37] border border-[#D4AF37]/50' 
+                    : 'bg-slate-800 text-slate-200 border border-slate-700'
+                }`}>
+                  <Sparkles size={12} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-400'} />
+                  <span>{isEnhanced ? 'Magic Enhanced (CamScanner)' : 'Original Photo'}</span>
+                </div>
               </div>
             </div>
 
             {/* ENHANCEMENT CONTROLS TOOLBAR */}
-            <div className="px-4 py-3 bg-slate-900 border-t border-slate-800 space-y-3 shrink-0">
+            <div className="px-4 py-3.5 bg-slate-900 border-t border-slate-800 space-y-2.5 shrink-0">
               
-              {/* Filter Tabs (CamScanner Presets) */}
-              <div className="flex items-center justify-between gap-1.5 overflow-x-auto pb-1">
+              {/* Single Enhance Button + Rotate Button */}
+              <div className="flex items-center gap-2">
+                {/* ONE Single Magic Enhance Toggle Button */}
                 <button
                   type="button"
-                  onClick={() => setActiveFilter('enhance')}
-                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                    activeFilter === 'enhance'
-                      ? 'bg-[#7A1B22] text-white shadow-md border border-[#D4AF37]/50'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  onClick={() => setIsEnhanced(prev => !prev)}
+                  className={`flex-1 py-3 px-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm border-2 active:scale-95 ${
+                    isEnhanced
+                      ? 'bg-gradient-to-r from-[#7A1B22] to-[#99222B] text-white border-[#D4AF37] shadow-[#7A1B22]/30'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                   }`}
+                  title={isEnhanced ? 'CamScanner Magic Color Active (Tap to view original)' : 'Tap to enhance document'}
                 >
-                  <Sparkles size={14} className="text-[#D4AF37]" />
-                  <span>Auto-Enhance</span>
+                  <Sparkles size={16} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-400'} />
+                  <span>{isEnhanced ? 'Magic Enhance: ON' : 'Magic Enhance: OFF'}</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter('bw')}
-                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                    activeFilter === 'bw'
-                      ? 'bg-[#7A1B22] text-white shadow-md border border-[#D4AF37]/50'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  <Contrast size={14} />
-                  <span>B&amp;W Photocopy</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter('grayscale')}
-                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                    activeFilter === 'grayscale'
-                      ? 'bg-[#7A1B22] text-white shadow-md border border-[#D4AF37]/50'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  <SunMedium size={14} />
-                  <span>Grayscale</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter('original')}
-                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                    activeFilter === 'original'
-                      ? 'bg-[#7A1B22] text-white shadow-md border border-[#D4AF37]/50'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  <span>Original</span>
-                </button>
-              </div>
-
-              {/* Action Buttons Row */}
-              <div className="flex items-center gap-2 pt-1">
                 {/* Rotate Button */}
                 <button
                   type="button"
                   onClick={() => setRotation(prev => (prev + 90) % 360)}
-                  className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border border-slate-700"
+                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 border-2 border-slate-700 active:scale-95"
                   title="Rotate 90° Clockwise"
                 >
-                  <RotateCw size={15} />
-                  <span className="hidden sm:inline">Rotate 90°</span>
-                </button>
-
-                {/* Hold to Compare */}
-                <button
-                  type="button"
-                  onMouseDown={() => setIsComparing(true)}
-                  onMouseUp={() => setIsComparing(false)}
-                  onTouchStart={() => setIsComparing(true)}
-                  onTouchEnd={() => setIsComparing(false)}
-                  className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border border-slate-700 select-none"
-                  title="Hold to see original unedited photo"
-                >
-                  <Eye size={15} />
-                  <span className="hidden sm:inline">Hold to Compare</span>
-                </button>
-
-                {/* Primary Confirm Button */}
-                <button
-                  type="button"
-                  onClick={handleApplyAndAttach}
-                  className="flex-1 py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer ml-auto"
-                >
-                  <Check size={16} />
-                  <span>Use This Document</span>
+                  <RotateCw size={16} />
+                  <span>Rotate</span>
                 </button>
               </div>
+
+              {/* Primary Attach Button */}
+              <button
+                type="button"
+                onClick={handleApplyAndAttach}
+                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer border-2 border-emerald-500"
+              >
+                <Check size={18} />
+                <span>Attach This Document</span>
+              </button>
             </div>
           </div>
         )}

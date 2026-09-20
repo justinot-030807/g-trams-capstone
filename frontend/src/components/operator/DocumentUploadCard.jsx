@@ -58,7 +58,7 @@ const DocumentUploadCard = ({
         <input 
           ref={galleryInputRef}
           type="file" 
-          accept=".pdf,image/*" 
+          accept=".pdf,image/*,.webp,image/webp" 
           onChange={handleGalleryChange}
           className="hidden"
         />
@@ -72,7 +72,7 @@ const DocumentUploadCard = ({
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               {hasFile ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Document Attached {appliedFilter && `(${appliedFilter.toUpperCase()})`}
+                  <CheckCircle2 size={12} /> Document Attached {appliedFilter === 'enhanced' && '(Magic Enhanced)'}
                 </span>
               ) : (
                 'Scan using guide frame or choose file'
