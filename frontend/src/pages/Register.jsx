@@ -243,7 +243,7 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
 
   const getStrengthLabel = () => {
     if (passwordStrength === 0) return { label: 'Empty', color: 'text-slate-400', bar: 'w-0 bg-slate-200' };
@@ -472,14 +472,14 @@ const Register = () => {
                 {/* DIVIDER */}
                 <div className="flex items-center gap-3 my-2 animate-item-4">
                   <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-xs font-semibold text-slate-400">or</span>
+                  <span className="text-xs font-black text-slate-400 tracking-wider">OR</span>
                   <div className="flex-1 h-px bg-slate-200" />
                 </div>
 
                 {/* GOOGLE SIGN UP BUTTON */}
                 <div className="animate-item-4">
                   <GoogleAuthButton 
-                    text="Continue with Google"
+                    text="CONTINUE WITH GOOGLE"
                     onSuccess={handleGoogleSuccess}
                     onNewUser={(data) => {
                       if (data?.token) {
@@ -536,7 +536,7 @@ const Register = () => {
             {step === 1 && (
               <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-                  ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#7A1B22] hover:underline">LOG IN HERE</Link>
+                  ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#7A1B22] hover:underline">LOG IN HERE &gt;</Link>
                 </p>
               </div>
             )}

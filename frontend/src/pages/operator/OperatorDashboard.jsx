@@ -185,39 +185,52 @@ const OperatorDashboard = () => {
     return 'default';
   };
 
-  // Sequence first-time onboarding: Language preference selection first, then tour (user-scoped)
+  // Sequence first-time onboarding: Language preference selection first, then tour (permanently suppressed once completed)
   useEffect(() => {
     if (!isLoading) {
       const uid = getCurrentUserId();
       const langKey = `gtrams_lang_selected_${uid}`;
       const tourKey = `gtrams_operator_tour_done_${uid}`;
 
-      const hasSelectedLang = localStorage.getItem(langKey);
+      const hasSelectedLang = 
+        localStorage.getItem(langKey) === 'true' || 
+        localStorage.getItem('gtrams_lang_selected') === 'true' || 
+        localStorage.getItem('gtrams_lang_selected_global') === 'true' ||
+        Boolean(localStorage.getItem('gtrams_lang'));
+
+      const hasSeenTour = 
+        localStorage.getItem(tourKey) === 'true' || 
+        localStorage.getItem('gtrams_operator_tour_done') === 'true' || 
+        localStorage.getItem('gtrams_operator_tour_done_global') === 'true';
+
       if (!hasSelectedLang) {
         const timer = setTimeout(() => {
           setIsLangModalOpen(true);
-        }, 500);
+        }, 600);
         return () => clearTimeout(timer);
-      } else {
-        const hasSeenTour = localStorage.getItem(tourKey);
-        if (!hasSeenTour) {
-          const timer = setTimeout(() => {
-            setIsTourOpen(true);
-          }, 800);
-          return () => clearTimeout(timer);
-        }
+      } else if (!hasSeenTour) {
+        const timer = setTimeout(() => {
+          setIsTourOpen(true);
+        }, 1000);
+        return () => clearTimeout(timer);
       }
     }
   }, [isLoading]);
 
-  const handleLanguageConfirmed = () => {
+  const handleLanguageConfirmed = (chosenLang) => {
     const uid = getCurrentUserId();
     localStorage.setItem(`gtrams_lang_selected_${uid}`, 'true');
+    localStorage.setItem('gtrams_lang_selected', 'true');
+    localStorage.setItem('gtrams_lang_selected_global', 'true');
     setIsLangModalOpen(false);
 
-    // After language is chosen, launch the spotlight tour if not yet completed for this account
+    // After language is chosen, launch the spotlight tour if not yet completed
     const tourKey = `gtrams_operator_tour_done_${uid}`;
-    const hasSeenTour = localStorage.getItem(tourKey);
+    const hasSeenTour = 
+      localStorage.getItem(tourKey) === 'true' || 
+      localStorage.getItem('gtrams_operator_tour_done') === 'true' || 
+      localStorage.getItem('gtrams_operator_tour_done_global') === 'true';
+
     if (!hasSeenTour) {
       setTimeout(() => {
         setIsTourOpen(true);
@@ -229,6 +242,8 @@ const OperatorDashboard = () => {
     const uid = getCurrentUserId();
     setIsTourOpen(false);
     localStorage.setItem(`gtrams_operator_tour_done_${uid}`, 'true');
+    localStorage.setItem('gtrams_operator_tour_done', 'true');
+    localStorage.setItem('gtrams_operator_tour_done_global', 'true');
   };
 
   const getTourSteps = () => {

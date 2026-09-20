@@ -172,7 +172,7 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
 
   return (
     <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
@@ -308,14 +308,14 @@ const Login = () => {
             {/* DIVIDER */}
             <div className="flex items-center gap-3 my-2 animate-item-4">
               <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs font-semibold text-slate-400">or</span>
+              <span className="text-xs font-black text-slate-400 tracking-wider">OR</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
 
             {/* GOOGLE SIGN IN BUTTON */}
             <div className="animate-item-4">
               <GoogleAuthButton 
-                text="Continue with Google"
+                text="CONTINUE WITH GOOGLE"
                 onSuccess={handleAuthSuccess}
                 onNewUser={(data) => {
                   if (data?.token) {
@@ -349,7 +349,7 @@ const Login = () => {
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
                 <Link to="/register" className="font-black text-[#7A1B22] hover:underline">
-                  CREATE AN ACCOUNT
+                  CREATE AN ACCOUNT &gt;
                 </Link>
               </p>
             </div>

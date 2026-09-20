@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, ExternalLink, X, ShieldCheck } from 'lucide-react';
 
-const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'Continue with Google', className = '' }) => {
+const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH GOOGLE', className = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;

@@ -15,8 +15,12 @@ const {
     searchHistoricalFranchise,
     toggleArchiveFranchise,
     revokeFranchise,
-    getFranchiseReports
+    getFranchiseReports,
+    checkUniqueFranchiseField
 } = require('../controllers/franchiseController');
+
+// Check unique plateNo / motorNo / chassisNo in real-time
+router.get('/check-unique', protect, checkUniqueFranchiseField);
 
 // Search historical franchise records
 router.get('/search', protect, authorize('admin'), searchHistoricalFranchise);

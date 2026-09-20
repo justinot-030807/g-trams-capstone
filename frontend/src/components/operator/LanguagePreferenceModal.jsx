@@ -16,6 +16,8 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
 
   const handleContinue = () => {
     changeLanguage(selectedLang);
+    localStorage.setItem('gtrams_lang_selected', 'true');
+    localStorage.setItem('gtrams_lang_selected_global', 'true');
     if (onConfirm) {
       onConfirm(selectedLang);
     }

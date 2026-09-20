@@ -405,7 +405,41 @@ const getFranchiseReports = async (req, res) => {
     }
 };
 
+const checkUniqueFranchiseField = async (req, res) => {
+    try {
+        const { field, value, currentFranchiseId } = req.query;
+        const allowedFields = ['plateNo', 'motorNo', 'chassisNo'];
+        if (!field || !allowedFields.includes(field)) {
+            return res.status(400).json({ message: 'Invalid field specified for uniqueness check.' });
+        }
+        if (!value || !value.trim()) {
+            return res.status(200).json({ isUnique: true, exists: false, field, value: '' });
+        }
 
+        const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const query = {
+            [field]: { $regex: new RegExp('^' + escapeRegex(value.trim()) + '$', 'i') },
+            isArchived: { $ne: true },
+            status: { $nin: ['Cancelled'] }
+        };
+
+        if (currentFranchiseId) {
+            query._id = { $ne: currentFranchiseId };
+        }
+
+        const existing = await Franchise.findOne(query).select('plateNo status');
+        res.status(200).json({
+            isUnique: !existing,
+            exists: !!existing,
+            field,
+            value: value.trim(),
+            existingStatus: existing ? existing.status : null
+        });
+    } catch (error) {
+        console.error('Error checking unique franchise field:', error);
+        res.status(500).json({ message: 'Server error checking field uniqueness.' });
+    }
+};
 
 module.exports = { 
     createFranchise, 
@@ -419,5 +453,6 @@ module.exports = {
     cancelMyFranchise,
     toggleArchiveFranchise,
     revokeFranchise,
-    getFranchiseReports
+    getFranchiseReports,
+    checkUniqueFranchiseField
 };

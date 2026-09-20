@@ -5,7 +5,7 @@ import {
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw,
-  Save, XCircle, CheckCircle2, Clock, Sparkles, User
+  Save, XCircle, CheckCircle2, Clock, Sparkles, User, Eye, Receipt
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -72,6 +72,14 @@ const ApplyFranchise = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [fullPreview, setFullPreview] = useState(null);
   const [showTodaGuide, setShowTodaGuide] = useState(false);
+
+  // Real-time uniqueness checker state
+  const [duplicateStatus, setDuplicateStatus] = useState({
+    plateNo: { checking: false, duplicate: false, message: '' },
+    motorNo: { checking: false, duplicate: false, message: '' },
+    chassisNo: { checking: false, duplicate: false, message: '' }
+  });
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
 
   // Dynamic settings: max units and requirements list
   const [maxAllowedUnits, setMaxAllowedUnits] = useState(() => {
@@ -503,10 +511,88 @@ const ApplyFranchise = () => {
     });
   };
 
+  // Real-time debounced checker for plateNo, motorNo, chassisNo uniqueness
+  useEffect(() => {
+    if (formMode !== 'New' && formMode !== 'Re-apply') return;
+
+    const fieldsToCheck = [
+      { name: 'plateNo', value: formData.plateNo, label: 'Plate Number' },
+      { name: 'motorNo', value: formData.motorNo, label: 'Motor Number' },
+      { name: 'chassisNo', value: formData.chassisNo, label: 'Chassis Number' }
+    ];
+
+    const timers = fieldsToCheck.map(({ name, value, label }) => {
+      const trimmed = (value || '').trim();
+      if (!trimmed || trimmed.length < 3) {
+        setDuplicateStatus(prev => ({
+          ...prev,
+          [name]: { checking: false, duplicate: false, message: '' }
+        }));
+        return null;
+      }
+
+      setDuplicateStatus(prev => ({
+        ...prev,
+        [name]: { ...prev[name], checking: true }
+      }));
+
+      return setTimeout(async () => {
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/v1/franchises/check-unique?field=${name}&value=${encodeURIComponent(trimmed)}&currentFranchiseId=${selectedId || ''}`,
+            {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data.exists) {
+              setDuplicateStatus(prev => ({
+                ...prev,
+                [name]: {
+                  checking: false,
+                  duplicate: true,
+                  message: `⚠️ This ${label} is already registered in the system.`
+                }
+              }));
+            } else {
+              setDuplicateStatus(prev => ({
+                ...prev,
+                [name]: {
+                  checking: false,
+                  duplicate: false,
+                  message: '✓ Available'
+                }
+              }));
+            }
+          } else {
+            setDuplicateStatus(prev => ({
+              ...prev,
+              [name]: { checking: false, duplicate: false, message: '' }
+            }));
+          }
+        } catch {
+          setDuplicateStatus(prev => ({
+            ...prev,
+            [name]: { checking: false, duplicate: false, message: '' }
+          }));
+        }
+      }, 400);
+    });
+
+    return () => {
+      timers.forEach(t => t && clearTimeout(t));
+    };
+  }, [formData.plateNo, formData.motorNo, formData.chassisNo, formMode, selectedId]);
+
   const validateAndNext = () => {
     if (currentStep === 1) {
       if (!formData.fullName || !formData.address || !formData.zone || !formData.make || !formData.made || !formData.motorNo || !formData.chassisNo || !formData.plateNo) {
         showToast("Please fill out all required vehicle and operator details.", "error");
+        return;
+      }
+      if (duplicateStatus.plateNo?.duplicate || duplicateStatus.motorNo?.duplicate || duplicateStatus.chassisNo?.duplicate) {
+        showToast("Please resolve duplicate vehicle numbers before continuing.", "error");
         return;
       }
     } else if (currentStep === 2) {
@@ -872,10 +958,14 @@ const ApplyFranchise = () => {
       {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
       <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
         {/* Top Hero Banner */}
-        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-10 px-4 sm:px-6 relative overflow-hidden shadow-md">
-          {/* Subtle Graphic Silhouette */}
-          <div className="absolute -right-6 -bottom-10 opacity-10 pointer-events-none">
-            <Car size={180} />
+        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-7 px-4 sm:px-6 relative overflow-hidden shadow-md">
+          {/* Subtle Graphic Silhouette - Gasan Seal Watermark */}
+          <div className="absolute -right-8 -bottom-10 opacity-10 pointer-events-none select-none">
+            <img 
+              src="/gasan-logo.png" 
+              alt="" 
+              className="w-56 h-56 object-contain filter grayscale brightness-200 invert" 
+            />
           </div>
           <div className="absolute left-1/2 top-0 -translate-x-1/2 w-96 h-28 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -886,37 +976,22 @@ const ApplyFranchise = () => {
                 type="button"
                 onClick={handleBackToMyFranchises}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-xs font-bold transition-all border border-white/15 shadow-xs cursor-pointer"
-                title="Back to My Franchises"
+                title="Back"
               >
                 <ArrowLeft size={16} />
                 <span>Back</span>
               </button>
             </div>
 
-            {/* Official Gasan Seal + Form Title in Banner */}
-            <div className="text-center pt-1 pb-2 flex flex-col items-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 p-1.5 backdrop-blur-xs border border-white/25 shadow-lg mb-2.5 flex items-center justify-center">
-                <img 
-                  src="/gasan-logo.png" 
-                  alt="Municipality of Gasan Seal" 
-                  className="w-full h-full object-contain drop-shadow-md" 
-                />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-xs">
+            {/* Form Title in Banner */}
+            <div className="text-center pt-1 pb-4 flex flex-col items-center">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-sm">
                 {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
               </h1>
-              <p className="text-[11px] sm:text-xs font-bold text-[#D4AF37] tracking-wider uppercase mt-1">
-                Municipality of Gasan &bull; Marinduque
-              </p>
             </div>
-          </div>
-        </div>
 
-        {/* Form Container - Pulled up with -mt-6 into Single Unified Canvas */}
-        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 -mt-6 pb-16 flex-1 flex flex-col relative z-10">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-4 sm:p-7 transition-colors space-y-6">
-            {/* Stepper Navigation - Seamlessly embedded at top of form */}
-            <div className="flex items-start w-full px-1 sm:px-6 pb-5 border-b border-slate-100 dark:border-slate-800">
+            {/* Stepper Navigation - Seamlessly embedded directly inside Hero Banner */}
+            <div className="flex items-start w-full px-2 sm:px-8 pt-1 select-none">
               {steps.map((step, idx) => {
                 const isCompleted = currentStep > step.num;
                 const isCurrent = currentStep === step.num;
@@ -928,10 +1003,10 @@ const ApplyFranchise = () => {
                   >
                     {/* Seamless Connector Line to Next Step */}
                     {idx < steps.length - 1 && (
-                      <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] -translate-y-1/2 z-0 pointer-events-none">
-                        <div className="w-full h-full bg-slate-200 dark:bg-slate-700 rounded-full" />
+                      <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2px] -translate-y-1/2 z-0 pointer-events-none">
+                        <div className="w-full h-full bg-white/20 rounded-full" />
                         <div 
-                          className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
+                          className={`absolute top-0 left-0 h-full bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
                             currentStep > step.num ? 'w-full' : 'w-0'
                           }`} 
                         />
@@ -942,23 +1017,21 @@ const ApplyFranchise = () => {
                     <div 
                       className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                         isCompleted 
-                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs group-hover:scale-105' 
+                          ? 'bg-[#D4AF37] text-slate-950 font-black shadow-xs' 
                           : isCurrent 
-                          ? 'bg-white dark:bg-slate-800 border-[2.5px] border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/20 scale-105' 
-                          : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 group-hover:border-slate-400'
+                          ? 'bg-white text-[#7A1B22] font-black ring-4 ring-white/30 scale-105 shadow-md' 
+                          : 'bg-white/10 text-white/60 border border-white/20'
                       }`}
                     >
                       {isCompleted ? (
-                        <Check size={13} className="stroke-[3]" />
-                      ) : isCurrent ? (
-                        <div className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+                        <Check size={14} className="stroke-[3]" />
                       ) : (
-                        <span className="text-xs font-bold text-slate-400 group-hover:text-slate-600">{step.num}</span>
+                        <span className="text-xs font-black">{step.num}</span>
                       )}
                     </div>
                     
-                    <span className={`text-xs sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
-                      isCurrent ? 'text-[#7A1B22] dark:text-[#D4AF37] font-bold' : isCompleted ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'
+                    <span className={`text-[11px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                      isCurrent ? 'text-white' : isCompleted ? 'text-[#D4AF37]' : 'text-white/50'
                     }`}>
                       {step.title}
                     </span>
@@ -966,8 +1039,12 @@ const ApplyFranchise = () => {
                 );
               })}
             </div>
+          </div>
+        </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6 w-full">
+        {/* Form Container - Unboxed Full-Width Edge-to-Edge */}
+        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-6 pb-16 flex-1 flex flex-col relative z-10">
+          <form onSubmit={handleSubmit} className="space-y-6 w-full">
         
         {currentStep === 1 && (
           <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
@@ -1179,11 +1256,26 @@ const ApplyFranchise = () => {
                     maxLength="8"
                     value={formData.plateNo} 
                     onChange={handleInputChange} 
-                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="e.g. 123-ABC" 
                   />
+                  {duplicateStatus.plateNo.checking && (
+                    <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
+                      <Loader2 size={11} className="animate-spin" /> Checking plate number...
+                    </p>
+                  )}
+                  {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && (
+                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
+                      <AlertCircle size={12} className="shrink-0" /> {duplicateStatus.plateNo.message}
+                    </p>
+                  )}
+                  {!duplicateStatus.plateNo.checking && !duplicateStatus.plateNo.duplicate && duplicateStatus.plateNo.message && (
+                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
+                      <CheckCircle size={12} className="shrink-0" /> {duplicateStatus.plateNo.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1196,11 +1288,26 @@ const ApplyFranchise = () => {
                     maxLength="25"
                     value={formData.motorNo} 
                     onChange={handleInputChange} 
-                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="Motor Serial Number" 
                   />
+                  {duplicateStatus.motorNo.checking && (
+                    <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
+                      <Loader2 size={11} className="animate-spin" /> Checking motor number...
+                    </p>
+                  )}
+                  {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && (
+                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
+                      <AlertCircle size={12} className="shrink-0" /> {duplicateStatus.motorNo.message}
+                    </p>
+                  )}
+                  {!duplicateStatus.motorNo.checking && !duplicateStatus.motorNo.duplicate && duplicateStatus.motorNo.message && (
+                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
+                      <CheckCircle size={12} className="shrink-0" /> {duplicateStatus.motorNo.message}
+                    </p>
+                  )}
                 </div>
                 
                 <div>
@@ -1213,11 +1320,26 @@ const ApplyFranchise = () => {
                     maxLength="25"
                     value={formData.chassisNo} 
                     onChange={handleInputChange} 
-                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="Chassis Serial Number" 
                   />
+                  {duplicateStatus.chassisNo.checking && (
+                    <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
+                      <Loader2 size={11} className="animate-spin" /> Checking chassis number...
+                    </p>
+                  )}
+                  {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && (
+                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
+                      <AlertCircle size={12} className="shrink-0" /> {duplicateStatus.chassisNo.message}
+                    </p>
+                  )}
+                  {!duplicateStatus.chassisNo.checking && !duplicateStatus.chassisNo.duplicate && duplicateStatus.chassisNo.message && (
+                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
+                      <CheckCircle size={12} className="shrink-0" /> {duplicateStatus.chassisNo.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1227,9 +1349,9 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={handleBackToMyFranchises}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
                   >
-                    <ChevronLeft size={16} /> Back
+                    <span>Back</span>
                   </button>
                   <button 
                     type="button" 
@@ -1237,7 +1359,6 @@ const ApplyFranchise = () => {
                     className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                   >
                     <span>Continue to Step 2 (CTC / Cedula)</span>
-                    <ChevronRight size={16} />
                   </button>
                 </div>
 
@@ -1351,9 +1472,9 @@ const ApplyFranchise = () => {
                 <button 
                   type="button" 
                   onClick={prevStep}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
                 >
-                  <ChevronLeft size={16} /> Back: Vehicle Info
+                  <span>Back</span>
                 </button>
 
                 <button 
@@ -1361,8 +1482,7 @@ const ApplyFranchise = () => {
                   onClick={validateAndNext}
                   className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                 >
-                  <span>Continue to Step 3 (Documents)</span>
-                  <ChevronRight size={16} />
+                  <span>Continue to Step 3 (Requirements)</span>
                 </button>
               </div>
 
@@ -1430,28 +1550,25 @@ const ApplyFranchise = () => {
               </div>
             )}
 
-            <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-5">
-              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                Application Summary Before Submission
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
-                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">Operator</span>
-                  <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.fullName}</span>
+            {/* Slide 1: See Application Summary Button */}
+            <div className="bg-gradient-to-r from-[#7A1B22]/5 via-amber-500/5 to-transparent dark:from-[#D4AF37]/10 dark:via-transparent border border-[#7A1B22]/15 dark:border-[#D4AF37]/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                  <FileText size={20} />
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">Plate No.</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.plateNo}</span>
-                </div>
-                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">TODA</span>
-                  <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">{formData.todaName || loggedInToda}</span>
-                </div>
-                <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 dark:text-slate-500 font-medium block text-xs uppercase">Zone</span>
-                  <span className="font-bold text-slate-900 dark:text-white truncate block text-xs sm:text-sm mt-0.5">Zone {formData.zone}</span>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Application Summary</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Review all operator, vehicle, cedula, and document details before final submission.</p>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsSummaryModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+              >
+                <Eye size={15} />
+                <span>See Summary</span>
+              </button>
             </div>
 
             <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
@@ -1459,9 +1576,9 @@ const ApplyFranchise = () => {
                 <button 
                   type="button" 
                   onClick={prevStep}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
                 >
-                  <ChevronLeft size={16} /> Back: CTC / Cedula
+                  <span>Back</span>
                 </button>
 
                 <button 
@@ -1504,7 +1621,6 @@ const ApplyFranchise = () => {
         )}
 
       </form>
-          </div>
         </div>
       </div>
 
@@ -1545,6 +1661,154 @@ const ApplyFranchise = () => {
                   className="max-h-[65vh] w-auto object-contain rounded-xl shadow-xs" 
                 />
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Application Summary Modal (Slide 1) */}
+      {isSummaryModalOpen && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsSummaryModalOpen(false)}
+        >
+          <div 
+            className="relative max-w-xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 max-h-[85vh] flex flex-col animate-spring-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Application Summary</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Complete application details before final submission</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsSummaryModalOpen(false)}
+                className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
+              {/* 1. Operator Information */}
+              <div>
+                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <User size={13} /> 1. Operator Information
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Full Name</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.fullName || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Barangay Address</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.address || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Route Zone</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.zone ? `Zone ${formData.zone}` : '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">TODA Association</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.todaName || loggedInToda || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Tricycle Details */}
+              <div>
+                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Car size={13} /> 2. Tricycle Details
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Make & Model</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.make || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Model Year</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.made || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Plate Number</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">{formData.plateNo || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Motor Number</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.motorNo || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 sm:col-span-2">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Chassis Number</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.chassisNo || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. CTC / Cedula & Tax */}
+              <div>
+                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Receipt size={13} /> 3. CTC / Cedula Details
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Cedula Serial No.</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.cedulaSerialNo || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Date Issued</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.cedulaDate || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Place Issued</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.cedulaAddress || '—'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Date Applied</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.dateApplied || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Uploaded Requirements */}
+              <div>
+                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <ShieldCheck size={13} /> 4. Attached Documents
+                </h4>
+                <div className="space-y-1.5">
+                  {requirementsList.map((req) => {
+                    const isAttached = !!(uploadedDocs[req.id] || filePreviews[req.id]);
+                    return (
+                      <div key={req.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs">
+                        <span className="font-medium text-slate-700 dark:text-slate-300 truncate">{req.label}</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                          isAttached ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60'
+                        }`}>
+                          {isAttached ? '✓ Attached' : 'Missing'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsSummaryModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              >
+                Close Summary
+              </button>
             </div>
           </div>
         </div>

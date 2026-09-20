@@ -191,10 +191,14 @@ const RenewFranchise = () => {
       {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
       <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
         {/* Top Hero Banner */}
-        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-10 px-4 sm:px-6 relative overflow-hidden shadow-md">
-          {/* Subtle Graphic Silhouette */}
-          <div className="absolute -right-6 -bottom-10 opacity-10 pointer-events-none">
-            <RefreshCw size={180} />
+        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-7 px-4 sm:px-6 relative overflow-hidden shadow-md">
+          {/* Subtle Graphic Silhouette - Gasan Seal Watermark */}
+          <div className="absolute -right-8 -bottom-10 opacity-10 pointer-events-none select-none">
+            <img 
+              src="/gasan-logo.png" 
+              alt="" 
+              className="w-56 h-56 object-contain filter grayscale brightness-200 invert" 
+            />
           </div>
           <div className="absolute left-1/2 top-0 -translate-x-1/2 w-96 h-28 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -205,36 +209,24 @@ const RenewFranchise = () => {
                 type="button"
                 onClick={() => navigate('/apply-franchise')}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-xs font-bold transition-all border border-white/15 shadow-xs cursor-pointer"
-                title="Back to My Franchises"
+                title="Back"
               >
                 <ArrowLeft size={16} />
                 <span>Back</span>
               </button>
             </div>
 
-            {/* Official Gasan Seal + Form Title in Banner */}
-            <div className="text-center pt-1 pb-2 flex flex-col items-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 p-1.5 backdrop-blur-xs border border-white/25 shadow-lg mb-2.5 flex items-center justify-center">
-                <img 
-                  src="/gasan-logo.png" 
-                  alt="Municipality of Gasan Seal" 
-                  className="w-full h-full object-contain drop-shadow-md" 
-                />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-xs">
+            {/* Form Title in Banner */}
+            <div className="text-center pt-1 pb-3 flex flex-col items-center">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-sm">
                 Franchise Renewal Application
               </h1>
-              <p className="text-[11px] sm:text-xs font-bold text-[#D4AF37] tracking-wider uppercase mt-1">
-                Municipality of Gasan &bull; Marinduque
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Form Container - Pulled up with -mt-6 into Single Unified Canvas */}
-        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 -mt-6 pb-16 flex-1 flex flex-col relative z-10">
-          {/* Main Card with Details and Form */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden">
+        {/* Form Container - Unboxed Full-Width Edge-to-Edge */}
+        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-6 pb-16 flex-1 flex flex-col relative z-10 space-y-6">
 
           {/* Loading Skeleton */}
           {loadingFranchise && (
@@ -492,9 +484,8 @@ const RenewFranchise = () => {
                 <button 
                   type="button" 
                   onClick={() => navigate('/apply-franchise')} 
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95 gap-1.5"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95"
                 >
-                  <ArrowLeft size={16} />
                   <span>Back</span>
                 </button>
 
@@ -523,7 +514,6 @@ const RenewFranchise = () => {
           )}
         </div>
       </div>
-    </div>
 
       {/* Document Zoom Modal */}
       {fullPreview && (

@@ -104,6 +104,8 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
   };
 
   const handleFinish = () => {
+    localStorage.setItem('gtrams_operator_tour_done', 'true');
+    localStorage.setItem('gtrams_operator_tour_done_global', 'true');
     onClose();
   };
 
