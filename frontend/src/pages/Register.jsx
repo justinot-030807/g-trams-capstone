@@ -178,7 +178,7 @@ const Register = () => {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
-      role: formData.role || 'operator'
+      role: 'operator'
     };
 
     try {

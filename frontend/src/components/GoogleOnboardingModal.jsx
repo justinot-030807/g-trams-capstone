@@ -65,8 +65,9 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       }
     };
 
+    const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
+      const res = await fetch(`${baseUrl}/api/v1/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -128,7 +129,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 <span className="text-[10px] font-black tracking-widest text-[#7A1B22] uppercase">
                   MUNICIPALITY OF GASAN
                 </span>
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-amber-700 bg-amber-100/90 px-1.5 py-0.2 rounded-full">
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-amber-700 bg-amber-100/90 px-1.5 py-0.5 rounded-full">
                   <Sparkles size={10} /> 5-Sec Setup
                 </span>
               </div>
@@ -240,7 +241,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
           {/* Account Type Informative Badge */}
           <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-[11px]">
             <span className="font-bold text-slate-600 uppercase tracking-wider">Account Role:</span>
-            <span className="font-black text-[#7A1B22] uppercase tracking-wider bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
+            <span className="font-black text-[#7A1B22] uppercase tracking-wider bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-sm">
               Tricycle Operator
             </span>
           </div>

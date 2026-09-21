@@ -872,7 +872,7 @@ exports.googleAuth = async (req, res) => {
             });
         }
 
-        if (!onboardingData || (!onboardingData.todaAssociation && !onboardingData.address)) {
+        if (!onboardingData || !onboardingData.address || !String(onboardingData.address).trim()) {
             return res.status(200).json({
                 isNewUser: true,
                 message: 'Google account verified. Please complete your registration.',
@@ -899,6 +899,12 @@ exports.googleAuth = async (req, res) => {
             }
             existingContact.googleId = googleId || existingContact.googleId || '';
             existingContact.email = email;
+            if (address && (!existingContact.address || existingContact.address === 'Gasan, Marinduque')) {
+                existingContact.address = address;
+            }
+            if (todaAssociation && existingContact.todaAssociation === 'NON-TODA') {
+                existingContact.todaAssociation = todaAssociation;
+            }
             existingContact.isVerified = true;
             existingContact.otp = undefined;
             existingContact.otpExpire = undefined;
@@ -921,14 +927,10 @@ exports.googleAuth = async (req, res) => {
             });
         }
 
-        const requestedRole = String(onboardingData?.role || 'operator').toLowerCase().trim().replace(/_/g, ' ');
-        const assignedRole = (requestedRole === 'toda president' || requestedRole === 'toda_president') ? 'toda president' : 'operator';
+        // Public Google sign-in strictly registers as 'operator' (privilege escalation prevention)
+        const assignedRole = 'operator';
 
-        if (assignedRole === 'toda president' && (!todaAssociation || todaAssociation === 'NON-TODA')) {
-            return res.status(400).json({ message: 'TODA President must specify a valid TODA Association.' });
-        }
-
-        // Create new operator or toda president user with isVerified: true (NO 6-DIGIT OTP CODE REQUIRED!)
+        // Create new operator user with isVerified: true (NO 6-DIGIT OTP CODE REQUIRED!)
         const randomPass = crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + 'G!9a';
         const chosenPassword = (onboardingData?.password && onboardingData.password.length >= 6) ? onboardingData.password : randomPass;
         user = new User({

@@ -644,5 +644,58 @@ describe('Registration & Auth Verification Flow', () => {
         expect(created.password).toBeDefined();
         expect(created.password.length).toBeGreaterThan(10);
     });
+
+    it('25. should strictly enforce operator role even if client passes toda president or admin in onboardingData', async () => {
+        const payload = {
+            email: 'privilege.escalation@gmail.com',
+            googleProfile: {
+                email: 'privilege.escalation@gmail.com',
+                name: 'Privilege Test User',
+                googleId: 'priv-sub-123'
+            },
+            onboardingData: {
+                fullName: 'Privilege Test User',
+                address: 'Bahi',
+                todaAssociation: 'BATODA',
+                role: 'toda president'
+            }
+        };
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send(payload);
+
+        expect(res.status).toBe(201);
+        expect(res.body.role).toBe('operator');
+
+        const created = await User.findOne({ email: 'privilege.escalation@gmail.com' });
+        expect(created.role).toBe('operator');
+    });
+
+    it('26. should return isNewUser true if address is missing or empty in onboardingData', async () => {
+        const payload = {
+            email: 'missing.address@gmail.com',
+            googleProfile: {
+                email: 'missing.address@gmail.com',
+                name: 'Missing Address User',
+                googleId: 'addr-sub-456'
+            },
+            onboardingData: {
+                fullName: 'Missing Address User',
+                address: '   ',
+                todaAssociation: 'BATODA',
+                role: 'operator'
+            }
+        };
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send(payload);
+
+        expect(res.status).toBe(200);
+        expect(res.body.isNewUser).toBe(true);
+        expect(res.body.googleProfile.email).toBe('missing.address@gmail.com');
+    });
 });
+
 
