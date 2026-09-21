@@ -232,7 +232,15 @@ exports.login = async (req, res) => {
         }
         
         const isMatch = await user.matchPassword(password);
-        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+        if (!isMatch) {
+            if (user.authProvider === 'google' || user.googleId) {
+                return res.status(400).json({ 
+                    message: 'Ang account na ito ay naka-link sa Google. Pindutin lamang ang "Continue with Google" sa ibaba para makapasok, o gamitin ang "Forgot Password" kung nais mag-set ng sariling password.',
+                    isGoogleAccount: true
+                });
+            }
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
 
         // Block non-admin users during maintenance mode
         const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');

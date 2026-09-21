@@ -212,7 +212,11 @@ const Login = () => {
             </div>
 
             {error && (
-              <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake uppercase tracking-wide">
+              <div className={`mb-3 text-xs sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake tracking-wide ${
+                error.toLowerCase().includes('google')
+                  ? 'bg-amber-50 border border-amber-300 text-amber-900 leading-relaxed'
+                  : 'bg-red-50 border border-red-200 text-red-600 uppercase'
+              }`}>
                 <p>{error}</p>
                 {error.toLowerCase().includes('maintenance') && (
                   <Link to="/maintenance" className="inline-block mt-1 font-black text-[#7A1B22] underline tracking-wider">
