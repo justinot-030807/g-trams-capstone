@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
@@ -6,14 +6,35 @@ import {
   HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSocket } from '../context/SocketContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
+  const { socket } = useSocket() || {};
   const navigate = useNavigate();
   const location = useLocation();
   
-  const [userData, setUserData] = useState({ name: 'G-TRAMS', profilePic: null });
+  const [userData] = useState(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      const storedName = localStorage.getItem('name');
+      if (userStr) {
+        const parsed = JSON.parse(userStr);
+        return {
+          name: parsed.name || parsed.fullName || storedName || 'G-TRAMS',
+          profilePic: parsed.profilePic || parsed.profilePicUrl || null
+        };
+      }
+      if (storedName) {
+        return { name: storedName, profilePic: null };
+      }
+    } catch {
+      // silent
+    }
+    return { name: 'G-TRAMS', profilePic: null };
+  });
   const [pendingCount, setPendingCount] = useState(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   
   // Persist open submenu state in localStorage
   const [openSubMenus, setOpenSubMenus] = useState(() => {
@@ -38,31 +59,81 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const isOperatorOrToda = role === 'operator' || role === 'toda president' || role === 'toda_president';
 
+  const fetchChatUnreadCount = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/chat/unread-count`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setChatUnreadCount(data.unreadCount || 0);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
+  // Listen for socket real-time chat and notifications
+  useEffect(() => {
+    if (role === 'admin' || role === 'administrator') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchChatUnreadCount();
+
+      const handleUnreadUpdate = (e) => {
+        if (e.detail?.count !== undefined) {
+          setChatUnreadCount(e.detail.count);
+        } else {
+          fetchChatUnreadCount();
+        }
+      };
+
+      window.addEventListener('chat_unread_updated', handleUnreadUpdate);
+      const interval = setInterval(fetchChatUnreadCount, 15000);
+
+      return () => {
+        window.removeEventListener('chat_unread_updated', handleUnreadUpdate);
+        clearInterval(interval);
+      };
+    }
+  }, [role, fetchChatUnreadCount]);
+
+  useEffect(() => {
+    if (!socket) return;
+    if (role !== 'admin' && role !== 'administrator') return;
+
+    const onChatMessage = () => {
+      fetchChatUnreadCount();
+    };
+    const onChatRead = () => {
+      fetchChatUnreadCount();
+    };
+    const onNotification = (notif) => {
+      if (notif?.type === 'chat') {
+        fetchChatUnreadCount();
+      }
+    };
+
+    socket.on('chat_message', onChatMessage);
+    socket.on('chat_read', onChatRead);
+    socket.on('notification', onNotification);
+
+    return () => {
+      socket.off('chat_message', onChatMessage);
+      socket.off('chat_read', onChatRead);
+      socket.off('notification', onNotification);
+    };
+  }, [socket, role, fetchChatUnreadCount]);
+
   // Automatically close sidebar on mobile route navigation
   useEffect(() => {
     if (window.innerWidth < 768 && onClose) {
       onClose();
     }
-  }, [location.pathname]);
+  }, [location.pathname, onClose]);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    const storedName = localStorage.getItem('name');
-    
-    if (userStr) {
-      try {
-        const parsed = JSON.parse(userStr);
-        setUserData({
-          name: parsed.name || parsed.fullName || storedName || 'G-TRAMS',
-          profilePic: parsed.profilePic || parsed.profilePicUrl || null
-        });
-      } catch (e) {
-        console.error(e);
-      }
-    } else if (storedName) {
-      setUserData(prev => ({ ...prev, name: storedName }));
-    }
-
     if (role === 'admin' || role === 'administrator') {
       fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/reports`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -149,7 +220,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         type: 'link', 
         name: 'Support Tickets', 
         path: '/admin/tickets', 
-        icon: <HelpCircle size={18} /> 
+        icon: <HelpCircle size={18} />,
+        badge: chatUnreadCount > 0 ? chatUnreadCount : null
       },
       { 
         type: 'link', 
@@ -204,7 +276,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
       }
     });
-  }, [location.pathname, role]);
+  }, [location.pathname, role, activeMenu]);
 
   const toggleSubMenu = (id) => {
     setOpenSubMenus(prev => {
@@ -297,11 +369,22 @@ const Sidebar = ({ isOpen, onClose }) => {
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-110 group-active/navitem:scale-95 origin-center">
+                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-110 group-active/navitem:scale-95 origin-center relative">
                         {item.icon}
+                        {!isOpen && Boolean(item.badge) && (
+                          <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22]">
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </span>
+                        )}
                       </div>
                       {isOpen && <span className="truncate">{item.name}</span>}
                     </div>
+
+                    {isOpen && Boolean(item.badge) && (
+                      <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm shrink-0">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
                   </button>
 
                   {/* Icon Hover Tooltip (Only when sidebar is minimized) */}

@@ -54,9 +54,12 @@ const ChatWidget = ({ inline = false }) => {
         // Calculate total unread
         const total = threadList.reduce((sum, t) => sum + (t.unreadCount || 0), 0);
         setUnreadCount(total);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('chat_unread_updated', { detail: { count: total } }));
+        }
       }
-    } catch (err) { /* silent */ }
-  }, [API_URL, currentUser.role, activeThread]);
+    } catch { /* silent */ }
+  }, [API_URL]);
 
   // Fetch messages for active thread
   const fetchMessages = useCallback(async (threadId) => {
@@ -68,7 +71,7 @@ const ChatWidget = ({ inline = false }) => {
         const data = await res.json();
         setMessages(data.messages || data);
       }
-    } catch (err) { /* silent */ }
+    } catch { /* silent */ }
     setIsLoading(false);
   }, [API_URL]);
 
@@ -82,8 +85,11 @@ const ChatWidget = ({ inline = false }) => {
       setThreads(prev => prev.map(t => 
         t._id === threadId ? { ...t, unreadCount: 0 } : t
       ));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('chat_unread_updated', {}));
+      }
       fetchThreads();
-    } catch (err) { /* silent */ }
+    } catch { /* silent */ }
   }, [API_URL, fetchThreads]);
 
   const handleDeleteMessage = async (msgId) => {
@@ -99,7 +105,7 @@ const ChatWidget = ({ inline = false }) => {
       } else {
         toast.error('Failed to delete message');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error while deleting');
     }
   };
@@ -121,7 +127,7 @@ const ChatWidget = ({ inline = false }) => {
       } else {
         toast.error('Failed to delete conversation');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error while deleting');
     }
   };
@@ -159,9 +165,15 @@ const ChatWidget = ({ inline = false }) => {
         if (activeThread._id && activeThread._id !== 'new') {
           payload.threadId = activeThread._id;
         }
-        const otherParticipant = activeThread.participants?.find(p => String(p._id || p) !== String(currentUserId));
-        if (otherParticipant) {
-          payload.recipientId = otherParticipant._id || otherParticipant;
+        const isCurrentAdmin = String(currentUser.role || '').toLowerCase().includes('admin');
+        if (isCurrentAdmin) {
+          const operatorParticipant = activeThread.participants?.find(p => {
+            const role = String(p.role || '').toLowerCase();
+            return !role.includes('admin');
+          });
+          if (operatorParticipant) {
+            payload.recipientId = operatorParticipant._id || operatorParticipant;
+          }
         }
       }
 
@@ -175,10 +187,13 @@ const ChatWidget = ({ inline = false }) => {
         const data = await res.json();
         const newMsg = data.message || data;
         
-        setMessages(prev => [...prev, newMsg]);
+        setMessages(prev => {
+          if (prev.some(m => m._id === newMsg._id)) return prev;
+          return [...prev, newMsg];
+        });
         
-        // If no active thread, set it
-        if (data.thread && !activeThread) {
+        // If no active thread or drafting a new thread, set to returned thread
+        if (data.thread && (!activeThread || activeThread._id === 'new')) {
           setActiveThread(data.thread);
         }
 
@@ -188,7 +203,7 @@ const ChatWidget = ({ inline = false }) => {
       } else {
         const rawText = await res.text().catch(() => '');
         let errData = {};
-        try { errData = JSON.parse(rawText); } catch(e) {}
+        try { errData = JSON.parse(rawText); } catch { errData = {}; }
         console.error('Chat error:', rawText);
         
         // Show detailed error
@@ -223,7 +238,10 @@ const ChatWidget = ({ inline = false }) => {
 
     const handleChatMessage = (data) => {
       if (activeThread && data.thread === activeThread._id) {
-        setMessages(prev => [...prev, data]);
+        setMessages(prev => {
+          if (prev.some(m => m._id === data._id)) return prev;
+          return [...prev, data];
+        });
         markThreadRead(activeThread._id);
         scrollToBottom();
       }
@@ -250,13 +268,15 @@ const ChatWidget = ({ inline = false }) => {
   // Fetch threads on open
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchThreads();
     }
   }, [isOpen, fetchThreads]);
 
   // Load messages when thread selected
   useEffect(() => {
-    if (activeThread?._id) {
+    if (activeThread?._id && activeThread._id !== 'new') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchMessages(activeThread._id);
       markThreadRead(activeThread._id);
     }
@@ -269,18 +289,37 @@ const ChatWidget = ({ inline = false }) => {
 
   // Initial unread count fetch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchThreads();
   }, [fetchThreads]);
 
-  // Emit typing
+  // Emit typing specifically to relevant participants
   const handleInputChange = (e) => {
     setInput(e.target.value);
     if (socket && activeThread && activeThread._id !== 'new') {
-      const otherParticipant = activeThread.participants?.find(p => String(p._id || p) !== String(currentUserId));
-      if (otherParticipant) {
-        socket.emit('chat_typing', { 
-          threadId: activeThread._id, 
-          recipientId: otherParticipant._id || otherParticipant 
+      if (isCurrentUserAdmin) {
+        // Admin typing: send specifically to the operator
+        const operatorParticipant = activeThread.participants?.find(p => {
+          const role = String(p?.role || '').toLowerCase();
+          return role && !role.includes('admin');
+        });
+        if (operatorParticipant) {
+          socket.emit('chat_typing', { 
+            threadId: activeThread._id, 
+            recipientId: operatorParticipant._id || operatorParticipant 
+          });
+        }
+      } else {
+        // Operator typing: notify admins
+        const admins = activeThread.participants?.filter(p => {
+          const role = String(p?.role || '').toLowerCase();
+          return role.includes('admin');
+        }) || [];
+        admins.forEach(admin => {
+          socket.emit('chat_typing', { 
+            threadId: activeThread._id, 
+            recipientId: admin._id || admin 
+          });
         });
       }
     }
@@ -309,13 +348,34 @@ const ChatWidget = ({ inline = false }) => {
     return String(sid) === String(currentUserId);
   };
 
-  const getSenderName = (sender) => {
-    if (!sender) return 'Unknown User';
-    const sRole = String(sender.role || '').toLowerCase();
-    if (sRole.includes('admin') || sRole.includes('administrator')) {
+  const isCurrentUserAdmin = String(currentUser?.role || localStorage.getItem('role') || '').toLowerCase().includes('admin');
+
+  const getThreadTitle = (t) => {
+    if (!t) return 'GTRAMS Support';
+    if (t.isAnnouncement) {
+      return '📢 Official Announcements';
+    }
+    if (isCurrentUserAdmin) {
+      // For Admin: ONLY show Operator's name. Never list other admins!
+      const operator = t.participants?.find(p => {
+        if (!p) return false;
+        const role = String(p.role || '').toLowerCase();
+        return role && !role.includes('admin');
+      });
+      return operator?.name || 'Operator';
+    } else {
+      // For Operator: always show GTRAMS Support
       return 'GTRAMS Support';
     }
-    return sender.name;
+  };
+
+  const getSenderName = (sender) => {
+    if (!sender) return 'User';
+    const sRole = String(sender.role || '').toLowerCase();
+    if (sRole.includes('admin')) {
+      return 'GTRAMS Support';
+    }
+    return sender.name || 'Operator';
   };
 
   return (
@@ -324,16 +384,16 @@ const ChatWidget = ({ inline = false }) => {
       {!inline && (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`fixed z-[90] bottom-20 md:bottom-6 right-4 md:right-6 w-13 h-13 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer print:hidden ${
+          className={`fixed z-[90] bottom-20 md:bottom-6 right-4 md:right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer print:hidden ${
             isOpen 
               ? 'bg-slate-800 dark:bg-slate-700 text-white rotate-0'
               : 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:scale-105'
           }`}
           title="Chat with GTRAMS Admin"
         >
-          {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
+          {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
           {!isOpen && unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center px-1 shadow-md animate-bounce">
+            <span className="absolute -top-1 -right-1 min-w-[22px] h-5.5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center px-1.5 shadow-md animate-bounce">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -349,16 +409,16 @@ const ChatWidget = ({ inline = false }) => {
         />
       )}
 
-      {/* Chat Panel */}
+      {/* Chat Panel - Enlarge operator floating widget and inline container */}
       {isOpen && (
         <div className={inline 
-          ? "w-full h-[600px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden" 
-          : "fixed z-[95] bottom-20 md:bottom-20 right-3 md:right-6 w-[calc(100vw-24px)] max-w-[450px] h-[80vh] max-h-[600px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-300 print:hidden"
+          ? "w-full h-full min-h-[620px] max-h-[740px] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden shadow-sm" 
+          : "fixed z-[95] bottom-4 sm:bottom-6 md:bottom-8 left-4 right-4 sm:left-auto sm:right-6 w-auto sm:w-[500px] md:w-[540px] max-w-[560px] h-[85vh] max-h-[720px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-300 print:hidden"
         }>
           
           {/* Toast Notification */}
           {toastMsg && (
-            <div className={`absolute top-14 left-3 right-3 z-50 p-2.5 rounded-xl text-xs font-bold text-center shadow-lg transition-all animate-in fade-in slide-in-from-top-2 ${
+            <div className={`absolute top-16 left-4 right-4 z-50 p-3 rounded-2xl text-xs sm:text-sm font-bold text-center shadow-lg transition-all animate-in fade-in slide-in-from-top-2 ${
               toastMsg.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-600 text-white'
             }`}>
               {toastMsg.msg}
@@ -366,20 +426,28 @@ const ChatWidget = ({ inline = false }) => {
           )}
           
           {/* Header */}
-          <div className="bg-[#7A1B22] dark:bg-slate-800 text-white px-4 py-3 flex items-center justify-between shrink-0">
-            <div>
-              <h3 className="font-bold text-sm">
-                {isBroadcast ? 'Broadcast Announcement' : activeThread ? (String(currentUser.role).toLowerCase().includes('admin') ? 'Chat with Operator' : 'GTRAMS Admin Support') : 'Messages'}
+          <div className="bg-[#7A1B22] dark:bg-slate-800 text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-sm">
+            <div className="min-w-0 pr-3">
+              <h3 className="font-bold text-sm sm:text-base tracking-tight truncate">
+                {isBroadcast 
+                  ? 'Broadcast Announcement' 
+                  : activeThread 
+                    ? getThreadTitle(activeThread)
+                    : 'Messages'}
               </h3>
-              <p className="text-xs text-white/70 font-medium">
-                {isBroadcast ? 'Send to all operators & TODA' : activeThread ? 'Online' : 'GTRAMS Communications'}
+              <p className="text-xs text-white/75 font-medium truncate mt-0.5">
+                {isBroadcast 
+                  ? 'Send to all operators & TODA' 
+                  : activeThread 
+                    ? (activeThread.isAnnouncement ? 'Official broadcast channel' : (isCurrentUserAdmin ? 'Support with Operator' : 'Online • Admin Support')) 
+                    : 'GTRAMS Communications'}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {(activeThread || isBroadcast) && (
                 <button
                   onClick={() => { setActiveThread(null); setIsBroadcast(false); }}
-                  className="text-xs font-medium px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors cursor-pointer"
+                  className="text-xs font-bold px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-xl transition-colors cursor-pointer"
                 >
                   Back to List
                 </button>
@@ -387,106 +455,110 @@ const ChatWidget = ({ inline = false }) => {
               {!inline && (
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Close chat"
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Messages Container */}
           <div 
             ref={messagesContainerRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-slate-50 dark:bg-slate-950/50 relative"
+            className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-slate-50/80 dark:bg-slate-950/50 relative"
           >
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
-                <Loader2 size={24} className="animate-spin text-slate-600 dark:text-slate-400" />
+                <Loader2 size={28} className="animate-spin text-slate-400 dark:text-slate-500" />
               </div>
             ) : !activeThread && !isBroadcast ? (
               // Thread list for all users
-              <div className="space-y-2">
-                {String(currentUser.role).toLowerCase().includes('admin') && (
+              <div className="space-y-2.5">
+                {isCurrentUserAdmin && (
                   <button
                     onClick={() => setIsBroadcast(true)}
-                    className="w-full mb-3 flex items-center justify-center gap-2 p-3 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl font-bold text-xs hover:bg-[#7A1B22]/20 transition-colors"
+                    className="w-full mb-3 flex items-center justify-center gap-2 p-3.5 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] hover:bg-[#7A1B22]/20 dark:hover:bg-[#D4AF37]/20 rounded-2xl font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs"
                   >
-                    <MessageCircle size={16} /> Broadcast Announcement
+                    <MessageCircle size={18} /> Broadcast Announcement
                   </button>
                 )}
-                {!String(currentUser.role).toLowerCase().includes('admin') && !threads.some(t => !t.isAnnouncement) && (
+                {!isCurrentUserAdmin && !threads.some(t => !t.isAnnouncement) && (
                   <button
                     onClick={() => setActiveThread({ _id: 'new', participants: [], isAnnouncement: false })}
-                    className="w-full mb-3 flex items-center justify-center gap-2 p-3 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl font-bold text-xs hover:bg-[#7A1B22]/20 transition-colors"
+                    className="w-full mb-3 flex items-center justify-center gap-2 p-3.5 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] hover:bg-[#7A1B22]/20 dark:hover:bg-[#D4AF37]/20 rounded-2xl font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs"
                   >
-                    <MessageCircle size={16} /> Start Chat with Admin
+                    <MessageCircle size={18} /> Start Chat with Admin Support
                   </button>
                 )}
                 {threads.length === 0 ? (
-                  <div className="text-center py-6">
-                    <p className="text-xs text-slate-500 mb-4">No active conversations.</p>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+                      <MessageCircle size={28} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No active conversations</p>
+                    <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                      {isCurrentUserAdmin ? 'Incoming messages from operators will appear here.' : 'Click start chat to message admin support.'}
+                    </p>
                   </div>
                 ) : (
                   threads.map(t => {
-                    let names = 'Unknown User';
-                    if (t.isAnnouncement) {
-                      names = '📢 Official Announcements';
-                    } else {
-                      const otherParticipants = t.participants?.filter(p => String(p._id || p) !== String(currentUserId)) || [];
-                      names = otherParticipants.map(p => p.name).join(', ') || 'Unknown User';
-                    }
+                    const title = getThreadTitle(t);
                     return (
                       <div
                         key={t._id}
                         onClick={() => setActiveThread(t)}
-                        className="w-full text-left p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between group cursor-pointer"
+                        className="w-full text-left p-3.5 sm:p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between group cursor-pointer shadow-2xs"
                       >
-                        <div className="overflow-hidden pr-2">
-                          <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{names}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 truncate mt-0.5">{t.lastMessage || 'No messages yet'}</p>
+                        <div className="overflow-hidden pr-3">
+                          <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{title}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-1">{t.lastMessage || 'No messages yet'}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          {String(currentUser.role).toLowerCase().includes('admin') && !t.isAnnouncement && (
+                          {isCurrentUserAdmin && !t.isAnnouncement && (
                             <button
                               onClick={(e) => handleDeleteThread(e, t._id)}
-                              className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all"
+                              className="opacity-0 group-hover:opacity-100 p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all cursor-pointer"
+                              title="Delete conversation"
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={16} />
                             </button>
                           )}
                           {t.unreadCount > 0 && (
-                            <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                            <span className="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full shrink-0">
                               {t.unreadCount}
                             </span>
                           )}
                         </div>
                       </div>
-                    )
+                    );
                   })
                 )}
               </div>
             ) : isBroadcast || messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                <div className="w-14 h-14 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-3">
-                  <MessageCircle size={24} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+              <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8">
+                <div className="w-16 h-16 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-4">
+                  <MessageCircle size={30} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                 </div>
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
-                  {isBroadcast ? 'Broadcast Announcement' : 'Start a Conversation'}
+                <p className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1.5">
+                  {isBroadcast ? 'Broadcast Announcement' : (isCurrentUserAdmin ? 'Conversation with Operator' : 'GTRAMS Admin Support')}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-5 max-w-sm">
                   {isBroadcast 
                     ? 'Type your announcement below. It will be sent as a direct message to all Operators and TODA Presidents.' 
-                    : 'Send a message to GTRAMS Admin. They\'ll respond during office hours.'}
+                    : (isCurrentUserAdmin 
+                      ? 'Reply to assist this operator with franchise concerns or inquiries.' 
+                      : 'Send a message to GTRAMS Support. Our administrators will assist you shortly.')}
                 </p>
-                {!isBroadcast && !String(currentUser.role).toLowerCase().includes('admin') && (
-                  <div className="w-full space-y-2 mt-2">
+                {!isBroadcast && !isCurrentUserAdmin && (
+                  <div className="w-full max-w-md space-y-2 mt-2">
                     {['Paano mag-renew ng prangkisa?', 'Ano ang requirements para sa bagong prangkisa?', 'Saan kukunin ang Claim Stub?'].map((q, i) => (
                       <button
                         key={i}
                         onClick={() => { setInput(q); }}
-                        className="block w-full p-2 text-xs text-left text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-colors"
+                        className="block w-full p-2.5 sm:p-3 text-xs sm:text-sm text-left font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all cursor-pointer shadow-2xs"
                       >
                         {q}
                       </button>
@@ -500,35 +572,35 @@ const ChatWidget = ({ inline = false }) => {
                   const isMine = isCurrentUser(msg.sender);
                   return (
                     <div key={msg._id || idx} className={`flex group ${isMine ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-xs leading-relaxed ${
+                      <div className={`max-w-[85%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                         isMine
-                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-md'
+                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-md shadow-xs'
                           : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-bl-md shadow-xs'
                       }`}>
                         {!isMine && msg.sender && (
-                          <p className={`text-xs font-bold mb-0.5 ${
+                          <p className={`text-xs font-bold mb-1 ${
                             isMine ? 'text-white/70 dark:text-slate-950/60' : 'text-[#7A1B22] dark:text-[#D4AF37]'
                           }`}>
                             {getSenderName(msg.sender)}
                           </p>
                         )}
                         <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-                        <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
-                          <span className={`text-[9px] font-medium ${
-                            isMine ? 'text-white/60 dark:text-slate-950/50' : 'text-slate-600 dark:text-slate-400'
+                        <div className={`flex items-center gap-1.5 mt-1.5 ${isMine ? 'justify-end' : 'justify-start'}`}>
+                          <span className={`text-[10px] font-medium ${
+                            isMine ? 'text-white/70 dark:text-slate-950/60' : 'text-slate-400 dark:text-slate-400'
                           }`}>
                             {formatTime(msg.createdAt)}
                           </span>
                           {isMine && (
                             msg.isRead 
-                              ? <CheckCheck size={11} className="text-white/60 dark:text-slate-950/50" />
-                              : <Check size={11} className="text-white/40 dark:text-slate-950/40" />
+                              ? <CheckCheck size={12} className="text-white/80 dark:text-slate-950/70" />
+                              : <Check size={12} className="text-white/50 dark:text-slate-950/50" />
                           )}
-                          {(isMine || String(currentUser.role).toLowerCase().includes('admin')) && (
+                          {(isMine || isCurrentUserAdmin) && (
                             <button
                               onClick={() => handleDeleteMessage(msg._id)}
-                              className={`ml-2 text-[9px] cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity ${
-                                isMine ? 'text-white/80 hover:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-red-500'
+                              className={`ml-2 text-[10px] cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity ${
+                                isMine ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-red-500'
                               }`}
                             >
                               Delete
@@ -542,11 +614,11 @@ const ChatWidget = ({ inline = false }) => {
                 
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-2xl rounded-bl-md shadow-xs">
-                      <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-xs">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
                     </div>
                   </div>
@@ -559,43 +631,44 @@ const ChatWidget = ({ inline = false }) => {
             {showScrollBtn && (
               <button
                 onClick={scrollToBottom}
-                className="sticky bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                className="sticky bottom-2 left-1/2 -translate-x-1/2 w-9 h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               >
-                <ChevronDown size={16} className="text-slate-600 dark:text-slate-300" />
+                <ChevronDown size={18} className="text-slate-600 dark:text-slate-300" />
               </button>
             )}
           </div>
 
-          {/* Input Area */}
+          {/* Input Area - Spacious and comfortable */}
           {(
             isBroadcast ||
             (activeThread && !activeThread.isAnnouncement) || 
-            (!activeThread && !String(currentUser.role).toLowerCase().includes('admin'))
+            (!activeThread && !isCurrentUserAdmin)
           ) && (
-            <div className="border-t border-slate-200 dark:border-slate-800 p-2.5 bg-white dark:bg-slate-900 shrink-0">
-              <div className="flex items-end gap-2">
+            <div className="border-t border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 bg-white dark:bg-slate-900 shrink-0">
+              <div className="flex items-end gap-2.5">
                 <textarea
                   value={input}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   placeholder="Type your message..."
                   rows={1}
-                  className="flex-1 resize-none border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/30 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] min-h-[38px] max-h-[80px] transition-colors"
+                  className="flex-1 resize-none border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs sm:text-sm font-medium bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/30 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] min-h-[46px] max-h-[120px] transition-colors leading-relaxed"
                   style={{ fieldSizing: 'content' }}
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || isSending}
-                  className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                  className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
                     input.trim() && !isSending
                       ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:opacity-90 active:scale-90 shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                   }`}
+                  title="Send message"
                 >
                   {isSending ? (
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={18} className="animate-spin" />
                   ) : (
-                    <Send size={16} />
+                    <Send size={18} />
                   )}
                 </button>
               </div>

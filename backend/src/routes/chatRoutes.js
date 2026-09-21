@@ -2,41 +2,85 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const { ChatMessage, ChatThread } = require('../models/chatModel');
-const { emitToUser } = require('../config/socket');
+const { emitToUser, emitToAdmins } = require('../config/socket');
 const Notification = require('../models/notificationModel');
+const User = require('../models/userModel');
 
 router.use(protect);
 
+router.get('/unread-count', async (req, res) => {
+  try {
+    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
+    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+    const adminIds = adminUsers.map(a => a._id);
+
+    let threadQuery;
+    let senderFilter;
+
+    if (isUserAdmin) {
+      // For admins: all support threads, and only count inbound messages from operators/non-admins
+      threadQuery = {
+        $or: [
+          { participants: req.user._id },
+          { isAnnouncement: false }
+        ]
+      };
+      senderFilter = { $nin: adminIds };
+    } else {
+      // For operators: their threads, excluding announcements
+      threadQuery = {
+        participants: req.user._id,
+        isAnnouncement: false
+      };
+      senderFilter = { $ne: req.user._id };
+    }
+
+    const threads = await ChatThread.find(threadQuery).select('_id');
+    const threadIds = threads.map(t => t._id);
+
+    const count = await ChatMessage.countDocuments({
+      thread: { $in: threadIds },
+      sender: senderFilter,
+      isRead: false
+    });
+
+    res.json({ unreadCount: count });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching unread count', error: error.message });
+  }
+});
+
 router.get('/threads', async (req, res) => {
   try {
-    const threads = await ChatThread.find({
-      $and: [
-        {
-          $or: [
-            { participants: req.user._id },
-            { isAnnouncement: true }
-          ]
-        },
-        // Filter out legacy announcement threads that were sent individually
-        { lastMessage: { $not: /^\[ANNOUNCEMENT\]/ } }
-      ]
-    })
+    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
+    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+    const adminIds = adminUsers.map(a => a._id);
+
+    let query;
+    if (isUserAdmin) {
+      // Admins see all non-announcement support threads and announcements
+      query = {};
+    } else {
+      // Operators see threads they participate in or official broadcasts
+      query = {
+        $or: [
+          { participants: req.user._id },
+          { isAnnouncement: true }
+        ]
+      };
+    }
+
+    const threads = await ChatThread.find(query)
       .populate('participants', 'name profilePic role')
       .sort({ lastMessageAt: -1 });
 
-    // Re-fetch the true announcement thread separately if it exists and got filtered out by the regex
-    const announcementThread = await ChatThread.findOne({ isAnnouncement: true })
-      .populate('participants', 'name profilePic role');
-
-    if (announcementThread) {
-      // Add it back
-      threads.unshift(announcementThread);
-    }
-
     const threadsWithUnread = await Promise.all(threads.map(async (thread) => {
+      // For admins: unread messages are only those sent by non-admins (operators)
+      // For operators: unread messages are those sent by admins or others
+      const senderFilter = isUserAdmin ? { $nin: adminIds } : { $ne: req.user._id };
       const unreadCount = await ChatMessage.countDocuments({
         thread: thread._id,
-        sender: { $ne: req.user._id },
+        sender: senderFilter,
         isRead: false
       });
       return { ...thread.toObject(), unreadCount };
@@ -50,10 +94,12 @@ router.get('/threads', async (req, res) => {
 
 router.get('/messages/:threadId', async (req, res) => {
   try {
-    const thread = await ChatThread.findOne({ 
-      _id: req.params.threadId,
-      $or: [ { participants: req.user._id }, { isAnnouncement: true } ]
-    });
+    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
+    const threadFilter = isUserAdmin
+      ? { _id: req.params.threadId }
+      : { _id: req.params.threadId, $or: [ { participants: req.user._id }, { isAnnouncement: true } ] };
+
+    const thread = await ChatThread.findOne(threadFilter);
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
 
     const messages = await ChatMessage.find({ thread: thread._id })
@@ -73,37 +119,63 @@ router.post('/messages', async (req, res) => {
     
     if (!message) return res.status(400).json({ message: 'Missing message' });
     
-    const User = require('../models/userModel');
     let thread = null;
     let recipients = [];
+    const senderRole = String(req.user.role || '').toLowerCase();
+    const isSenderAdmin = senderRole.includes('admin');
     
-    if (threadId) {
+    if (threadId && threadId !== 'new') {
       thread = await ChatThread.findById(threadId);
     }
 
-    if (thread) {
-      // Get recipients from existing thread (everyone except sender)
-      recipients = thread.participants.filter(pId => String(pId) !== String(req.user._id));
-    } else {
-      // New thread logic
-      if (!recipientId) {
-        const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
-        if (!admins.length) return res.status(400).json({ message: 'No admin found to receive message' });
-        recipients = admins.map(a => a._id);
-      } else {
-        recipients = [recipientId];
+    if (!thread) {
+      if (!isSenderAdmin) {
+        // Operator starting or sending to support: look for existing support thread
+        thread = await ChatThread.findOne({
+          participants: req.user._id,
+          isAnnouncement: { $ne: true }
+        });
       }
-
-      const participants = [req.user._id, ...recipients];
-
-      thread = await ChatThread.findOne({
-        participants: { $all: participants, $size: participants.length }
-      });
 
       if (!thread) {
-        thread = await ChatThread.create({ participants });
+        const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+        if (!admins.length) return res.status(400).json({ message: 'No admin found to receive message' });
+        const adminIds = admins.map(a => a._id);
+
+        if (isSenderAdmin) {
+          if (!recipientId) return res.status(400).json({ message: 'Recipient required' });
+          thread = await ChatThread.create({
+            participants: [recipientId, ...adminIds]
+          });
+        } else {
+          // Operator starting support thread
+          thread = await ChatThread.create({
+            participants: [req.user._id, ...adminIds]
+          });
+        }
       }
     }
+
+    // Ensure all current admins and sender are included in participants
+    const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+    const existingStrs = new Set((thread.participants || []).map(p => p.toString()));
+    let threadModified = false;
+    for (const a of admins) {
+      if (!existingStrs.has(a._id.toString())) {
+        thread.participants.push(a._id);
+        threadModified = true;
+      }
+    }
+    if (!existingStrs.has(req.user._id.toString())) {
+      thread.participants.push(req.user._id);
+      threadModified = true;
+    }
+    if (threadModified) {
+      await thread.save();
+    }
+
+    // Recipients are everyone in participants except the sender
+    recipients = (thread.participants || []).filter(pId => pId.toString() !== req.user._id.toString());
 
     const newMessage = await ChatMessage.create({
       thread: thread._id,
@@ -122,23 +194,39 @@ router.post('/messages', async (req, res) => {
 
     const { sendPushToUser } = require('../services/pushService');
 
-    // Notify all recipients
+    // Notify recipients
     for (const recId of recipients) {
+      // Real-time socket message to all participants
       emitToUser(recId.toString(), 'chat_message', populatedMessage);
+
+      // Check recipient's role
+      const recUser = await User.findById(recId).select('role');
+      const isRecAdmin = recUser && String(recUser.role || '').toLowerCase().includes('admin');
+
+      // Do NOT create notifications or push notifications for fellow admins when an admin sends a message!
+      if (isSenderAdmin && isRecAdmin) {
+        continue;
+      }
+
+      const notifTitle = isRecAdmin ? `New Message from ${req.user.name}` : 'GTRAMS Support';
+      const notifMsg = isRecAdmin 
+        ? `${req.user.name}: ${message.length > 80 ? message.substring(0, 77) + '...' : message}` 
+        : `New message from GTRAMS Support`;
+      const notifUrl = isRecAdmin ? '/admin/tickets' : '/operator-dashboard';
 
       const notification = await Notification.create({
         recipient: recId,
         type: 'chat',
-        title: 'New Message',
-        message: `You received a new message from ${req.user.name}`
+        title: notifTitle,
+        message: notifMsg
       });
       emitToUser(recId.toString(), 'notification', notification);
       
       sendPushToUser(recId, {
-        title: `New message from ${req.user.name}`,
+        title: notifTitle,
         message: message,
         type: 'chat',
-        url: '/operator-dashboard'
+        url: notifUrl
       });
     }
 
@@ -148,8 +236,7 @@ router.post('/messages', async (req, res) => {
 
     // --- AUTO-REPLY LOGIC ---
     // If sender is not an admin, check for FAQ keywords
-    const senderRole = String(req.user.role || '').toLowerCase();
-    if (!senderRole.includes('admin')) {
+    if (!isSenderAdmin) {
       let autoReply = null;
       const lowerMsg = message.toLowerCase();
       
@@ -162,8 +249,9 @@ router.post('/messages', async (req, res) => {
       }
 
       if (autoReply && recipients.length > 0) {
-        // Find an admin sender (just use the first recipient admin)
-        const adminSenderId = recipients[0];
+        // Find an admin user to attribute auto-reply
+        const adminUser = await User.findOne({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+        const adminSenderId = adminUser ? adminUser._id : recipients[0];
         
         // Wait 1.5 seconds for realism
         setTimeout(async () => {
@@ -189,8 +277,8 @@ router.post('/messages', async (req, res) => {
           emitToUser(req.user._id.toString(), 'notification', await Notification.create({
             recipient: req.user._id,
             type: 'chat',
-            title: 'Auto-Reply',
-            message: `You received an automated reply`
+            title: 'Auto-Reply from GTRAMS',
+            message: autoReply
           }));
           
           const { sendPushToUser } = require('../services/pushService');
@@ -210,16 +298,38 @@ router.post('/messages', async (req, res) => {
 
 router.put('/messages/:threadId/read', async (req, res) => {
   try {
-    const thread = await ChatThread.findOne({ 
-      _id: req.params.threadId,
-      $or: [ { participants: req.user._id }, { isAnnouncement: true } ]
-    });
+    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
+    const threadFilter = isUserAdmin
+      ? { _id: req.params.threadId }
+      : { _id: req.params.threadId, $or: [ { participants: req.user._id }, { isAnnouncement: true } ] };
+
+    const thread = await ChatThread.findOne(threadFilter);
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
 
-    await ChatMessage.updateMany(
-      { thread: thread._id, sender: { $ne: req.user._id }, isRead: false },
-      { isRead: true }
-    );
+    if (isUserAdmin) {
+      const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+      const adminIds = adminUsers.map(a => a._id);
+
+      // Admin reading: ONLY mark messages from OPERATORS (non-admins) as read!
+      // Do NOT touch outbound admin messages sent to the operator!
+      await ChatMessage.updateMany(
+        { thread: thread._id, sender: { $nin: adminIds }, isRead: false },
+        { isRead: true }
+      );
+
+      // Notify all admins and sender
+      emitToAdmins('chat_read', { threadId: thread._id });
+      emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
+    } else {
+      // Operator reading: mark all incoming messages as read
+      await ChatMessage.updateMany(
+        { thread: thread._id, sender: { $ne: req.user._id }, isRead: false },
+        { isRead: true }
+      );
+
+      emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
+      emitToAdmins('chat_read', { threadId: thread._id });
+    }
 
     res.json({ message: 'Messages marked as read' });
   } catch (error) {
@@ -238,7 +348,6 @@ router.post('/broadcast', async (req, res) => {
       return res.status(403).json({ message: 'Only admins can broadcast messages' });
     }
 
-    const User = require('../models/userModel');
     // Find all operators and TODA presidents
     const users = await User.find({ role: { $in: ['operator', 'toda_president', 'toda president'] } });
 
