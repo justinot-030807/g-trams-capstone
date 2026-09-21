@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
 import AuthNavbar from '../components/common/AuthNavbar';
@@ -127,21 +127,30 @@ const Register = () => {
 
       const cleanContact = resolvedContact.includes('@') ? resolvedContact.toLowerCase() : resolvedContact.replace(/[\s\-()]/g, '');
 
+      // Derive the resolved email: prefer google profile email, fall back to contact if it's an email
+      const resolvedEmail = (cleanProfile?.email || '').trim() || (cleanContact.includes('@') ? cleanContact : '');
+
+      // Build a merged google profile that always has the email populated
+      const mergedProfile = {
+        ...cleanProfile,
+        email: resolvedEmail || cleanProfile?.email || ''
+      };
+
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: cleanProfile?.email || (cleanContact.includes('@') ? cleanContact : undefined),
+            email: resolvedEmail || undefined,
             idToken: cleanProfile?.idToken || cleanProfile?.credential || undefined,
             credential: cleanProfile?.credential || cleanProfile?.idToken || undefined,
-            googleProfile: cleanProfile,
+            googleProfile: mergedProfile,
             onboardingData: {
               fullName: formData.name.trim(),
               name: formData.name.trim(),
               address: formData.address.trim(),
               contact: cleanContact,
-              email: cleanProfile?.email || (cleanContact.includes('@') ? cleanContact : ''),
+              email: resolvedEmail || cleanContact,
               todaAssociation: formData.todaAssociation || 'NON-TODA',
               role: formData.role || 'operator',
               password: formData.password || ''
@@ -168,6 +177,7 @@ const Register = () => {
       }
       return;
     }
+
 
     // Standard non-Google registration with OTP:
     handleRequestOTP(e);
@@ -376,24 +386,48 @@ const Register = () => {
   return (
     <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
       
-      {/* Centered Floating Auto-Dismiss Toast for Google Account */}
+      {/* Centered "Connected with Google" Card — auto-dismisses in 4s or on tap */}
       {showGoogleToast && googleProfileData && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-sm w-[92%] sm:w-auto px-4 py-2 rounded-2xl bg-slate-900/95 text-white border border-emerald-500/40 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 animate-spring-in">
-          <div className="flex items-center gap-2 min-w-0">
-            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-            <span className="text-xs font-semibold truncate">
-              Connected with Google: <strong className="text-emerald-300">{googleProfileData.email}</strong>
-            </span>
-          </div>
-          <button
-            type="button"
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+          aria-live="polite"
+        >
+          <div
+            className="pointer-events-auto mx-4 w-full max-w-sm bg-white rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.55)] border-2 border-[#7A1B22]/30 p-5 flex flex-col items-center gap-3 animate-spring-in cursor-pointer select-none"
+            role="status"
             onClick={() => setShowGoogleToast(false)}
-            className="text-slate-600 dark:text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+            title="Tap to dismiss"
           >
-            <X size={14} />
-          </button>
+            {/* Green checkmark ring */}
+            <div className="w-14 h-14 rounded-full bg-emerald-50 border-2 border-emerald-400 flex items-center justify-center shadow-md">
+              <CheckCircle2 size={30} className="text-emerald-500" />
+            </div>
+
+            {/* Google profile picture if available */}
+            {(googleProfileData.picture) && (
+              <img
+                src={googleProfileData.picture}
+                alt={googleProfileData.name || 'Google Account'}
+                className="w-12 h-12 rounded-full shadow border-2 border-[#D4AF37] -mt-1"
+              />
+            )}
+
+            <div className="text-center space-y-0.5">
+              <p className="text-[11px] font-black text-[#7A1B22] uppercase tracking-widest">Connected with Google</p>
+              {googleProfileData.name && (
+                <p className="text-sm font-bold text-slate-800">{googleProfileData.name}</p>
+              )}
+              <p className="text-xs font-semibold text-emerald-600 break-all">{googleProfileData.email}</p>
+            </div>
+
+            {/* Gold accent bar */}
+            <div className="w-full h-1 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F0D060] to-[#D4AF37] opacity-80" />
+
+            <p className="text-[10px] text-slate-400 font-medium">Tap to dismiss</p>
+          </div>
         </div>
       )}
+
 
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -570,30 +604,7 @@ const Register = () => {
                     )}
                   </button>
 
-                  {googleProfileData && (
-                    <div className="text-center pt-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setGoogleProfileData(null);
-                          setFormData({
-                            name: '',
-                            address: '',
-                            contact: '',
-                            password: '',
-                            confirmPassword: '',
-                            todaAssociation: 'NON-TODA',
-                            role: 'operator'
-                          });
-                          setError('');
-                          setShowGoogleToast(false);
-                        }}
-                        className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
-                      >
-                        Cancel Google Sign-in & Register Manually
-                      </button>
-                    </div>
-                  )}
+
                 </div>
               </form>
             )}
