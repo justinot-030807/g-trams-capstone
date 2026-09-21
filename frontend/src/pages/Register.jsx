@@ -6,20 +6,7 @@ import GoogleAuthButton from '../components/GoogleAuthButton';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
-
-
-
-
-
-const unwrapGoogleProfile = (raw) => {
-  if (!raw) return null;
-  const p = raw.googleProfile || raw.profile || raw.user || raw;
-  const email = (p.email || p.mail || raw.email || '').trim().toLowerCase();
-  const name = (p.name || p.fullName || raw.name || raw.fullName || '').trim();
-  const picture = p.picture || p.photo || p.avatar || raw.picture || '';
-  const googleId = p.googleId || p.sub || p.id || raw.googleId || raw.sub || '';
-  return { email, name, picture, googleId };
-};
+import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -88,13 +75,6 @@ const Register = () => {
     };
   }, [resendCooldown]);
 
-  const isValidContact = (value) => {
-    const trimmed = String(value || '').trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^(09|\+639)\d{9}$/;
-    return emailRegex.test(trimmed) || phoneRegex.test(trimmed.replace(/[\s-]/g, ''));
-  };
-
   const checkPasswordStrength = (pass) => {
     let strength = 0;
     if (pass.length >= 8) strength += 1;
@@ -145,13 +125,16 @@ const Register = () => {
 
       setIsLoading(true);
 
-      const cleanContact = resolvedContact.includes('@') ? resolvedContact.toLowerCase() : resolvedContact.replace(/[\s-]/g, '');
+      const cleanContact = resolvedContact.includes('@') ? resolvedContact.toLowerCase() : resolvedContact.replace(/[\s\-()]/g, '');
 
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            email: cleanProfile?.email || (cleanContact.includes('@') ? cleanContact : undefined),
+            idToken: cleanProfile?.idToken || cleanProfile?.credential || undefined,
+            credential: cleanProfile?.credential || cleanProfile?.idToken || undefined,
             googleProfile: cleanProfile,
             onboardingData: {
               fullName: formData.name.trim(),
@@ -227,7 +210,7 @@ const Register = () => {
     const slowTimer = setTimeout(() => setError('YOUR NETWORK SEEMS SLOW. PLEASE WAIT...'), 8000);
 
     const rawContact = formData.contact.trim();
-    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
+    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
 
     const payload = {
       name: formData.name.trim(),
@@ -274,7 +257,7 @@ const Register = () => {
     setIsLoading(true);
 
     const rawContact = formData.contact.trim();
-    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
+    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
 
     const payload = {
       name: formData.name.trim(),
@@ -315,7 +298,7 @@ const Register = () => {
     setIsLoading(true);
 
     const rawContact = formData.contact.trim();
-    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
+    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
 
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/verify-otp', {

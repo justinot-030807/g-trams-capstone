@@ -4,6 +4,7 @@ import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
+import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -43,23 +44,6 @@ const Login = () => {
       document.body.style.backgroundColor = '';
     };
   }, []);
-
-  const unwrapGoogleProfile = (raw) => {
-    if (!raw) return null;
-    const p = raw.googleProfile || raw.profile || raw.user || raw;
-    const email = (p.email || p.mail || raw.email || '').trim().toLowerCase();
-    const name = (p.name || p.fullName || raw.name || raw.fullName || '').trim();
-    const picture = p.picture || p.photo || p.avatar || raw.picture || '';
-    const googleId = p.googleId || p.sub || p.id || raw.googleId || raw.sub || '';
-    return { email, name, picture, googleId };
-  };
-
-  const isValidContact = (value) => {
-    const trimmed = value.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^(09|\+639)\d{9}$/;
-    return emailRegex.test(trimmed) || phoneRegex.test(trimmed.replace(/[\s-]/g, ''));
-  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

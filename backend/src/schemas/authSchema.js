@@ -60,13 +60,14 @@ const forgotPasswordSchema = z.object({
 
 const googleAuthSchema = z.object({
     body: z.object({
-        idToken: z.string().optional(),
-        credential: z.string().optional(),
-        token: z.string().optional(),
-        accessToken: z.string().optional(),
-        email: z.string().trim().optional(),
-        googleProfile: z.any().optional(),
-        onboardingData: z.any().optional()
+        idToken: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().optional().nullable()),
+        credential: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().optional().nullable()),
+        token: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().optional().nullable()),
+        accessToken: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().optional().nullable()),
+        access_token: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().optional().nullable()),
+        email: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim().toLowerCase() : undefined), z.string().optional().nullable()),
+        googleProfile: z.any().optional().nullable(),
+        onboardingData: z.any().optional().nullable()
     }).passthrough()
 });
 

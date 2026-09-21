@@ -1,24 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, ExternalLink, X, ShieldCheck } from 'lucide-react';
-
-const decodeJwtPayload = (token) => {
-  try {
-    if (!token || typeof token !== 'string') return null;
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-};
+import { Loader2, ShieldCheck, X } from 'lucide-react';
+import { unwrapGoogleProfile } from '../utils/googleAuthUtils';
 
 const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH GOOGLE', className = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -47,15 +29,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
 
     let decodedProfile = null;
     try {
-      const payload = decodeJwtPayload(response.credential);
-      if (payload && (payload.email || payload.sub)) {
-        decodedProfile = {
-          email: (payload.email || '').toLowerCase().trim(),
-          name: payload.name || `${payload.given_name || ''} ${payload.family_name || ''}`.trim(),
-          picture: payload.picture || '',
-          googleId: payload.sub || ''
-        };
-      }
+      decodedProfile = unwrapGoogleProfile(response.credential);
     } catch (dErr) {
       console.warn('Google One Tap JWT decode note:', dErr);
     }
@@ -67,6 +41,8 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
         body: JSON.stringify({ 
           idToken: response.credential,
           credential: response.credential,
+          token: response.credential,
+          email: decodedProfile?.email || undefined,
           googleProfile: decodedProfile
         })
       });
@@ -77,7 +53,12 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
           if (onError) onError(data); 
           return; 
         } 
-        throw new Error(data.message || 'Google authentication failed.'); 
+        let errorMsg = data.message || 'Google authentication failed.';
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          const detailed = data.errors.map(err => err.message).filter(Boolean).join('. ');
+          if (detailed) errorMsg = detailed;
+        }
+        throw new Error(errorMsg); 
       }
 
       if (data.isNewUser) {
@@ -206,6 +187,8 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
                 accessToken: tokenResponse.access_token,
+                token: tokenResponse.access_token,
+                email: directGoogleProfile?.email || undefined,
                 googleProfile: directGoogleProfile
               })
             });
@@ -216,7 +199,12 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
                 if (onError) onError(data); 
                 return; 
               } 
-              throw new Error(data.message || 'Google authentication failed.'); 
+              let errorMsg = data.message || 'Google authentication failed.';
+              if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+                const detailed = data.errors.map(err => err.message).filter(Boolean).join('. ');
+                if (detailed) errorMsg = detailed;
+              }
+              throw new Error(errorMsg); 
             }
 
             if (data.isNewUser) {

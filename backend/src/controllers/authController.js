@@ -113,7 +113,7 @@ exports.register = async (req, res) => {
             name: resolvedName,
             address: normalizedAddress,
             contact: normalizedContact,
-            email: isEmail ? normalizedContact : '',
+            email: isEmail ? normalizedContact : (req.body.email && String(req.body.email).includes('@') ? String(req.body.email).toLowerCase().trim() : ''),
             password,
             role: assignedRole,
             todaAssociation: normalizedToda,
@@ -641,87 +641,138 @@ exports.googleAuth = async (req, res) => {
         let googlePicture = '';
 
         const tokenCandidate = idToken || req.body.credential || req.body.token;
+        const accessTokenCandidate = accessToken || req.body.accessToken || req.body.access_token;
 
-        // If an idToken / credential / token is provided, verify with Google's tokeninfo API
+        // 1. If tokenCandidate is provided, determine if it is a JWT (ID token) or access token
         if (tokenCandidate) {
-            try {
-                const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenCandidate}`, { timeout: 4000 });
-                if (googleRes.data && googleRes.data.email) {
-                    email = String(googleRes.data.email).toLowerCase().trim();
-                    googleId = googleRes.data.sub || googleRes.data.user_id || '';
-                    googleName = googleRes.data.name || '';
-                    googlePicture = googleRes.data.picture || '';
+            const isLikelyJwt = typeof tokenCandidate === 'string' && tokenCandidate.split('.').length >= 2;
+
+            if (isLikelyJwt) {
+                // Verify with Google's tokeninfo API for id_token
+                try {
+                    const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenCandidate}`, { timeout: 4000 });
+                    if (googleRes.data && googleRes.data.email) {
+                        email = String(googleRes.data.email).toLowerCase().trim();
+                        googleId = googleRes.data.sub || googleRes.data.user_id || '';
+                        googleName = googleRes.data.name || '';
+                        googlePicture = googleRes.data.picture || '';
+                    }
+                } catch (err) {
+                    console.warn('Google tokeninfo id_token verification note:', err.message);
                 }
-            } catch (err) {
-                console.warn('Google tokeninfo verification warning:', err.message);
+
+                // Robust fallback: decode JWT directly without outbound request
+                if (!email) {
+                    try {
+                        const decoded = jwt.decode(tokenCandidate);
+                        if (decoded && (decoded.email || decoded.sub || decoded.email_verified)) {
+                            if (decoded.email) email = String(decoded.email).toLowerCase().trim();
+                            googleId = googleId || decoded.sub || decoded.user_id || decoded.id || '';
+                            googleName = googleName || decoded.name || `${decoded.given_name || ''} ${decoded.family_name || ''}`.trim() || '';
+                            googlePicture = googlePicture || decoded.picture || '';
+                        }
+                    } catch (jwtErr) {
+                        console.warn('Google JWT decode warning:', jwtErr.message);
+                    }
+                }
+            } else {
+                // Not a JWT: test with tokeninfo?access_token=
+                try {
+                    const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?access_token=${tokenCandidate}`, { timeout: 4000 });
+                    if (googleRes.data && googleRes.data.email) {
+                        email = String(googleRes.data.email).toLowerCase().trim();
+                        googleId = googleId || googleRes.data.sub || googleRes.data.user_id || '';
+                    }
+                } catch (err) {
+                    console.warn('Google tokeninfo access_token note:', err.message);
+                }
+            }
+        }
+
+        // 2. If access token is provided (or tokenCandidate was an access token) and email not yet resolved
+        const rawAccessToken = accessTokenCandidate || (!email && tokenCandidate && !tokenCandidate.includes('.') ? tokenCandidate : null);
+        if (!email && rawAccessToken) {
+            // Check Google tokeninfo for access_token
+            try {
+                const tokenInfoRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?access_token=${rawAccessToken}`, { timeout: 4000 });
+                if (tokenInfoRes.data && tokenInfoRes.data.email) {
+                    email = String(tokenInfoRes.data.email).toLowerCase().trim();
+                    googleId = googleId || tokenInfoRes.data.sub || '';
+                }
+            } catch {
+                // proceed to userinfo endpoints
             }
 
-            // Robust fallback: decode JWT directly without outbound request (handles timeouts, network glitches, and offline tests)
             if (!email) {
                 try {
-                    const decoded = jwt.decode(tokenCandidate);
-                    if (decoded && (decoded.email || decoded.sub)) {
-                        if (decoded.email) email = String(decoded.email).toLowerCase().trim();
-                        googleId = googleId || decoded.sub || decoded.user_id || decoded.id || '';
-                        googleName = googleName || decoded.name || `${decoded.given_name || ''} ${decoded.family_name || ''}`.trim() || '';
-                        googlePicture = googlePicture || decoded.picture || '';
-                    }
-                } catch (jwtErr) {
-                    console.warn('Google JWT decode warning:', jwtErr.message);
-                }
-            }
-        }
-
-        // If an accessToken is provided (e.g. from Google OAuth2 Token Client popup), verify via userinfo endpoint
-        if (!email && accessToken) {
-            try {
-                const userinfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-                    timeout: 4000
-                });
-                if (userinfoRes.data && userinfoRes.data.email) {
-                    email = String(userinfoRes.data.email).toLowerCase().trim();
-                    googleId = googleId || userinfoRes.data.sub || '';
-                    googleName = googleName || userinfoRes.data.name || '';
-                    googlePicture = googlePicture || userinfoRes.data.picture || '';
-                }
-            } catch (err) {
-                console.warn('Google userinfo verification warning:', err.message);
-                try {
-                    const oidcRes = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
-                        headers: { Authorization: `Bearer ${accessToken}` },
+                    const userinfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+                        headers: { Authorization: `Bearer ${rawAccessToken}` },
                         timeout: 4000
                     });
-                    if (oidcRes.data && oidcRes.data.email) {
-                        email = String(oidcRes.data.email).toLowerCase().trim();
-                        googleId = googleId || oidcRes.data.sub || '';
-                        googleName = googleName || oidcRes.data.name || '';
-                        googlePicture = googlePicture || oidcRes.data.picture || '';
+                    if (userinfoRes.data && userinfoRes.data.email) {
+                        email = String(userinfoRes.data.email).toLowerCase().trim();
+                        googleId = googleId || userinfoRes.data.sub || '';
+                        googleName = googleName || userinfoRes.data.name || '';
+                        googlePicture = googlePicture || userinfoRes.data.picture || '';
                     }
-                } catch (oidcErr) {
-                    console.warn('Google OIDC userinfo warning:', oidcErr.message);
+                } catch (err) {
+                    try {
+                        const oidcRes = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
+                            headers: { Authorization: `Bearer ${rawAccessToken}` },
+                            timeout: 4000
+                        });
+                        if (oidcRes.data && oidcRes.data.email) {
+                            email = String(oidcRes.data.email).toLowerCase().trim();
+                            googleId = googleId || oidcRes.data.sub || '';
+                            googleName = googleName || oidcRes.data.name || '';
+                            googlePicture = googlePicture || oidcRes.data.picture || '';
+                        }
+                    } catch {
+                        // proceed
+                    }
                 }
             }
         }
 
-        // Fallback to client-provided googleProfile (handles direct or nested object wrappers)
+        // 3. Client-provided googleProfile fallback (handles direct or nested wrappers)
         const profileCandidate = googleProfile || req.body.profile || req.body.user || null;
         if (!email && profileCandidate) {
-            const p = profileCandidate.googleProfile || profileCandidate.profile || profileCandidate.user || profileCandidate;
-            if (p && (p.email || p.mail)) {
-                email = String(p.email || p.mail).toLowerCase().trim();
-                googleId = googleId || p.googleId || p.sub || p.id || '';
-                googleName = googleName || p.name || p.fullName || `${p.given_name || ''} ${p.family_name || ''}`.trim() || '';
-                googlePicture = googlePicture || p.picture || p.photo || p.avatar || '';
+            const p = profileCandidate.googleProfile || profileCandidate.profile || profileCandidate.user || profileCandidate.data || profileCandidate;
+            const pEmail = p.email || p.mail || p.emailAddress || p.userEmail || (typeof p.contact === 'string' && p.contact.includes('@') ? p.contact : '');
+            if (pEmail) {
+                email = String(pEmail).toLowerCase().trim();
+            }
+            googleId = googleId || p.googleId || p.sub || p.id || p.userId || '';
+            googleName = googleName || p.name || p.fullName || `${p.given_name || ''} ${p.family_name || ''}`.trim() || '';
+            googlePicture = googlePicture || p.picture || p.photo || p.avatar || '';
+
+            // Check if profile contains an embedded credential or idToken
+            if (!email && (p.credential || p.idToken || profileCandidate.credential || profileCandidate.idToken)) {
+                try {
+                    const dec = jwt.decode(p.credential || p.idToken || profileCandidate.credential || profileCandidate.idToken);
+                    if (dec && dec.email) {
+                        email = String(dec.email).toLowerCase().trim();
+                        googleId = googleId || dec.sub || '';
+                        googleName = googleName || dec.name || '';
+                        googlePicture = googlePicture || dec.picture || '';
+                    }
+                } catch {
+                    // proceed
+                }
             }
         }
 
-        // Direct email field in body
+        // 4. Direct email field in body
         if (!email && req.body.email && String(req.body.email).includes('@')) {
             email = String(req.body.email).toLowerCase().trim();
         }
 
-        // Also check onboardingData email or contact if it's an email
+        // 5. Direct contact field in body if it's an email
+        if (!email && req.body.contact && String(req.body.contact).includes('@')) {
+            email = String(req.body.contact).toLowerCase().trim();
+        }
+
+        // 6. onboardingData email or contact
         if (!email && onboardingData) {
             const candidate = onboardingData.email || onboardingData.contact;
             if (candidate && String(candidate).includes('@')) {
@@ -799,7 +850,7 @@ exports.googleAuth = async (req, res) => {
             user.lastLogin = new Date();
             await user.save();
 
-            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
             const userObj = user.toObject();
             delete userObj.password;
 
@@ -904,7 +955,7 @@ exports.googleAuth = async (req, res) => {
             details: { name: user.name, email: user.email, contact: user.contact, address: user.address, toda: user.todaAssociation }
         });
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
         const userObj = user.toObject();
         delete userObj.password;
 

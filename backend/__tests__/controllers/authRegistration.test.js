@@ -523,5 +523,87 @@ describe('Registration & Auth Verification Flow', () => {
         expect(dbUser).toBeDefined();
         expect(dbUser.contact).toBe('09777777777');
     });
+
+    it('21. should accept null or empty string fields in googleAuthSchema without validation error', async () => {
+        const payloadWithNulls = {
+            idToken: null,
+            credential: null,
+            token: null,
+            accessToken: null,
+            access_token: null,
+            email: null,
+            googleProfile: {
+                email: 'nullsafe.google@gmail.com',
+                googleId: 'nullsafe-12345',
+                name: 'Null Safe User'
+            }
+        };
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send(payloadWithNulls);
+
+        expect(res.status).toBe(200);
+        expect(res.body.isNewUser).toBe(true);
+        expect(res.body.googleProfile.email).toBe('nullsafe.google@gmail.com');
+    });
+
+    it('22. should seamlessly register user via Google onboarding with root email field', async () => {
+        const payload = {
+            email: 'root.email.user@gmail.com',
+            googleProfile: {
+                email: 'root.email.user@gmail.com',
+                name: 'Root Email User',
+                googleId: 'root-sub-555'
+            },
+            onboardingData: {
+                fullName: 'Root Email User',
+                address: 'Antipolo',
+                contact: 'root.email.user@gmail.com',
+                todaAssociation: 'BATODA',
+                role: 'operator'
+            }
+        };
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send(payload);
+
+        expect(res.status).toBe(201);
+        expect(res.body.token).toBeDefined();
+        expect(res.body.isNewUser).toBe(false);
+
+        const created = await User.findOne({ email: 'root.email.user@gmail.com' });
+        expect(created).toBeDefined();
+        expect(created.isVerified).toBe(true);
+        expect(created.authProvider).toBe('google');
+
+        // Subsequent Continue with Google should log in directly
+        const loginRes = await request(app)
+            .post('/api/v1/auth/google')
+            .send({
+                email: 'root.email.user@gmail.com',
+                googleProfile: {
+                    email: 'root.email.user@gmail.com',
+                    googleId: 'root-sub-555'
+                }
+            });
+
+        expect(loginRes.status).toBe(200);
+        expect(loginRes.body.isNewUser).toBe(false);
+        expect(loginRes.body.token).toBeDefined();
+    });
+
+    it('23. should extract email from top-level req.body.contact if passed as email', async () => {
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send({
+                contact: 'direct.contact@gmail.com'
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.isNewUser).toBe(true);
+        expect(res.body.googleProfile.email).toBe('direct.contact@gmail.com');
+    });
 });
 
