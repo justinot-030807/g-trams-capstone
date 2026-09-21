@@ -28,7 +28,7 @@ const ManageRevocations = () => {
   const fetchFranchises = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=2000`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active&limit=1000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {

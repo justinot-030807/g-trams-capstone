@@ -119,7 +119,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
         if (storedRole === 'admin' || storedRole === 'administrator') {
           // Fetch pending applications for admin
-          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=100`, {
+          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Expired&limit=15`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (fRes.ok) {

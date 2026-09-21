@@ -441,11 +441,22 @@ const checkUniqueFranchiseField = async (req, res) => {
     }
 };
 
+const getFranchiseById = async (req, res) => {
+    try {
+        const franchise = await Franchise.findById(req.params.id).populate('operator', 'name address contact');
+        if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
+        res.status(200).json(franchise);
+    } catch (error) {
+        res.status(500).json({ error: 'An internal server error occurred' });
+    }
+};
+
 module.exports = { 
     createFranchise, 
     searchHistoricalFranchise,
     getAllFranchises, 
     getMyFranchises, 
+    getFranchiseById,
     updateFranchise, 
     deleteFranchise,
     renewFranchise,

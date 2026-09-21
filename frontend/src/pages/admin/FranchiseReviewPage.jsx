@@ -63,44 +63,54 @@ const FranchiseReviewPage = () => {
     });
   };
 
-  // Fetch full queue to support seamless next/prev navigation
-  const fetchQueue = useCallback(async () => {
-    setIsLoading(true);
+  // Phase 1: INSTANT — fetch only the single franchise being reviewed
+  const fetchCurrentApp = useCallback(async (franchiseId) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=2000`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${franchiseId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentApp(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch franchise:', err);
+      showToast('Network error loading application.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Phase 2: BACKGROUND — fetch filtered queue for prev/next navigation
+  const fetchQueue = useCallback(async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,For%20Signing,Ready%20for%20Pickup&limit=500`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.data || []);
         
-        // Prioritize pending and ready for pickup applications
+        // Prioritize pending applications first, then by date
         const sortedQueue = [...list].sort((a, b) => {
           if (a.status === 'Pending' && b.status !== 'Pending') return -1;
           if (a.status !== 'Pending' && b.status === 'Pending') return 1;
-          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+          return new Date(a.dateApplied || a.createdAt || 0) - new Date(b.dateApplied || b.createdAt || 0);
         });
 
         setQueue(sortedQueue);
-
-        const target = sortedQueue.find(item => item._id === id);
-        if (target) {
-          setCurrentApp(target);
-        } else if (sortedQueue.length > 0) {
-          setCurrentApp(sortedQueue[0]);
-        }
       }
     } catch (err) {
       console.error('Failed to fetch review queue:', err);
-      showToast('Network error loading franchise queue.', 'error');
-    } finally {
-      setIsLoading(false);
     }
-  }, [id]);
+  }, []);
 
   useEffect(() => {
+    // Phase 1: Load the current app instantly (stops the loading spinner)
+    fetchCurrentApp(id);
+    // Phase 2: Load queue in background (for prev/next arrows)
     fetchQueue();
-  }, [fetchQueue]);
+  }, [id, fetchCurrentApp, fetchQueue]);
 
   // Enforce 100% full-screen edge-to-edge layout without 0.9 desktop zoom shrinking
   useEffect(() => {
@@ -275,8 +285,15 @@ const FranchiseReviewPage = () => {
 
         setIsRejecting(false);
 
-        // Update local queue entry
-        setQueue(prev => prev.map(item => item._id === currentApp._id ? { ...item, status: newStatus } : item));
+        // Update local queue: remove completed/rejected items, update in-progress ones
+        const TERMINAL_STATUSES = ['Active', 'Cancelled', 'Revoked', 'Expired'];
+        if (TERMINAL_STATUSES.includes(newStatus)) {
+          // Remove from queue — this item is done
+          setQueue(prev => prev.filter(item => item._id !== currentApp._id));
+        } else {
+          // Keep in queue but update status (e.g. Pending → For Signing)
+          setQueue(prev => prev.map(item => item._id === currentApp._id ? { ...item, status: newStatus } : item));
+        }
 
         if (autoAdvance) {
           if (hasNext) {

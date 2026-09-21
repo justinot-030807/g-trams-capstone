@@ -7,6 +7,7 @@ const {
     createFranchise, 
     getAllFranchises, 
     getMyFranchises, 
+    getFranchiseById,
     updateFranchise, 
     deleteFranchise, 
     renewFranchise,
@@ -77,6 +78,7 @@ router.put('/:id/cancel', protect, authorize('operator', 'toda president'), canc
 
 // Update and delete franchise
 router.route('/:id')
+    .get(protect, getFranchiseById)
     .put(
         protect, 
         upload.any(), 
