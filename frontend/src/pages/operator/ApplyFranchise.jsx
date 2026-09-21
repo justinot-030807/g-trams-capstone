@@ -197,7 +197,10 @@ const ApplyFranchise = () => {
 
     const step1Fields = [
       formData.fullName,
-      formData.address,
+      formData.address
+    ].filter(Boolean).length;
+
+    const step2Fields = [
       formData.zone,
       formData.made,
       formData.make,
@@ -206,17 +209,17 @@ const ApplyFranchise = () => {
       formData.plateNo
     ].filter(Boolean).length;
 
-    const step2Fields = [
+    const step3Fields = [
       formData.dateApplied,
       formData.cedulaDate,
       formData.cedulaAddress,
       formData.cedulaSerialNo
     ].filter(Boolean).length;
 
-    const step3Files = requirementsList.filter(req => uploadedDocs[req.id] || filePreviews[req.id]).length;
+    const step4Files = requirementsList.filter(req => uploadedDocs[req.id] || filePreviews[req.id]).length;
 
-    const total = 8 + 4 + (requirementsList?.length || 4);
-    const done = step1Fields + step2Fields + step3Files;
+    const total = 2 + 6 + 4 + (requirementsList?.length || 4);
+    const done = step1Fields + step2Fields + step3Fields + step4Files;
     const pct = Math.round((done / total) * 100);
     return { percentage: Math.min(pct, 100), completed: done, total, remaining: total - done };
   };
@@ -596,15 +599,20 @@ const ApplyFranchise = () => {
 
   const validateAndNext = () => {
     if (currentStep === 1) {
-      if (!formData.fullName || !formData.address || !formData.zone || !formData.make || !formData.made || !formData.motorNo || !formData.chassisNo || !formData.plateNo) {
-        showToast("Please fill out all required vehicle and operator details.", "error");
+      if (!formData.fullName || !formData.address) {
+        showToast("Please fill out all required operator details.", "error");
+        return;
+      }
+    } else if (currentStep === 2) {
+      if (!formData.zone || !formData.make || !formData.made || !formData.motorNo || !formData.chassisNo || !formData.plateNo) {
+        showToast("Please fill out all required vehicle details.", "error");
         return;
       }
       if (duplicateStatus.plateNo?.duplicate || duplicateStatus.motorNo?.duplicate || duplicateStatus.chassisNo?.duplicate) {
         showToast("Please resolve duplicate vehicle numbers before continuing.", "error");
         return;
       }
-    } else if (currentStep === 2) {
+    } else if (currentStep === 3) {
       if (!formData.dateApplied || !formData.cedulaDate || !formData.cedulaSerialNo || !formData.cedulaAddress) {
         showToast("Please provide complete Community Tax Certificate (Cedula) details.", "error");
         return;
@@ -939,9 +947,10 @@ const ApplyFranchise = () => {
   }
 
   const steps = [
-    { num: 1, title: 'Operator & Vehicle' },
-    { num: 2, title: 'Cedula & Tax' },
-    { num: 3, title: 'Requirements' }
+    { num: 1, title: 'Operator Info' },
+    { num: 2, title: 'Vehicle Details' },
+    { num: 3, title: 'Cedula & Tax' },
+    { num: 4, title: 'Requirements' }
   ];
 
   return (
@@ -1126,7 +1135,7 @@ const ApplyFranchise = () => {
                   <User size={16} />
                 </div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  1. Operator Information (Owner)
+                  Operator Information (Owner)
                 </h2>
               </div>
 
@@ -1182,16 +1191,62 @@ const ApplyFranchise = () => {
                   />
                 </div>
               </div>
-            </div>
 
+              {/* Step Navigation & Action Buttons */}
+              <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+                <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
+                  <button 
+                    type="button" 
+                    onClick={handleBackToMyFranchises}
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
+                  >
+                    <span>Back</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={validateAndNext}
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                  >
+                    <span>Continue to Step 2</span>
+                  </button>
+                </div>
+
+                {/* Secondary buttons below continue */}
+                <div className="flex items-center justify-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveProgress(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <Save size={13} />
+                    <span>Save Draft</span>
+                  </button>
+                  {hasDraftRestored && (
+                    <button
+                      type="button"
+                      onClick={handleClearDraft}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw size={13} />
+                      <span>Reset Draft</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             {/* Section 2: Vehicle Details */}
-            <div className="space-y-3.5 pt-2">
+            <div className="space-y-3.5">
               <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                 <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <Car size={16} />
                 </div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  2. Vehicle Details (Tricycle / Motorcycle)
+                  Vehicle Details (Tricycle / Motorcycle)
                 </h2>
               </div>
 
@@ -1382,7 +1437,7 @@ const ApplyFranchise = () => {
                 <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
                   <button 
                     type="button" 
-                    onClick={handleBackToMyFranchises}
+                    onClick={prevStep}
                     className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
                   >
                     <span>Back</span>
@@ -1392,7 +1447,7 @@ const ApplyFranchise = () => {
                     onClick={validateAndNext}
                     className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                   >
-                    <span>Continue to Step 2</span>
+                    <span>Continue to Step 3</span>
                   </button>
                 </div>
 
@@ -1422,7 +1477,7 @@ const ApplyFranchise = () => {
           </div>
         )}
 
-        {currentStep === 2 && (
+        {currentStep === 3 && (
           <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
@@ -1516,7 +1571,7 @@ const ApplyFranchise = () => {
                   onClick={validateAndNext}
                   className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                 >
-                  <span>Continue to Step 3</span>
+                  <span>Continue to Step 4</span>
                 </button>
               </div>
 
@@ -1545,7 +1600,7 @@ const ApplyFranchise = () => {
           </div>
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 4 && (
           <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
@@ -1553,7 +1608,7 @@ const ApplyFranchise = () => {
               </div>
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Step 3: Upload Required Documents
+                  Step 4: Upload Required Documents
                 </h2>
                 <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
                   Take a clear photo with your mobile camera or upload from device gallery
