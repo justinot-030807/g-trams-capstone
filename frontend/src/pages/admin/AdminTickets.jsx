@@ -56,9 +56,9 @@ const AdminTickets = () => {
   };
 
   const filteredTickets = tickets.filter(t => 
-    t.subject.toLowerCase().includes(search.toLowerCase()) ||
-    t.operator?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    t.status.toLowerCase().includes(search.toLowerCase())
+    (t.subject || '').toLowerCase().includes(search.toLowerCase()) ||
+    (t.operator?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (t.status || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (

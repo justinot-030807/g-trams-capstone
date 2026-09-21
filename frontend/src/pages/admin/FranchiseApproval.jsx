@@ -87,14 +87,13 @@ const FranchiseApproval = () => {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=2000`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,For%20Signing,Ready%20for%20Pickup&limit=2000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
         const data = await response.json();
-        // Sort by earliest submission date (FIFO queue)
+        // Server already filtered statuses, we just sort it (FIFO queue)
         const queue = (Array.isArray(data) ? data : (data.data || []))
-          .filter(app => app.status === 'Pending' || app.status === 'For Signing' || app.status === 'Ready for Pickup')
           .sort((a, b) => new Date(a.dateApplied || a.createdAt) - new Date(b.dateApplied || b.createdAt));
         
         setApplications(queue);

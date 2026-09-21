@@ -68,12 +68,16 @@ const ValidateTODA = () => {
 
   const fetchFranchises = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=2000`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Awaiting%20TODA%20Verification&limit=1000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
         const data = await response.json();
-        setFranchises(data.data || (Array.isArray(data) ? data : []));
+        const records = Array.isArray(data) ? data : (data.data || []);
+        
+        // Ensure oldest applications are on top (FIFO)
+        const queue = records.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        setFranchises(queue);
       }
     } catch (error) {
       console.error('Error fetching franchises:', error);

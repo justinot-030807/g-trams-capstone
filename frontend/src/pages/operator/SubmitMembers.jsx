@@ -584,13 +584,15 @@ const SubmitMembers = () => {
                           <span>Registered Tricycle Units</span>
                         </p>
 
-                        {member.units.length === 0 ? (
-                          <div className="p-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
-                            No franchise applied yet
+                        {(!member.units || member.units.length === 0) ? (
+                          <div className="flex flex-col items-center justify-center p-6 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                            <AlertCircle className="w-8 h-8 text-slate-400 mb-2" />
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">No active tricycle units</p>
+                            <p className="text-xs text-slate-500 mt-1">This member needs an approved franchise</p>
                           </div>
                         ) : (
                           <div className="space-y-1.5">
-                            {member.units.map((unit, uIdx) => (
+                            {(member.units || []).map((unit, uIdx) => (
                               <div
                                 key={unit._id || uIdx}
                                 className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between gap-2 shadow-2xs"

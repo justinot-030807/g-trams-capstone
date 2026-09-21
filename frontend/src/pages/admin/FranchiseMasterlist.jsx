@@ -5,7 +5,7 @@ import {
   Clock, AlertCircle, Loader2, X, CalendarDays, Printer,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag,
   ChevronDown, Check, CheckSquare, Square, RotateCcw, Eye,
-  Car, User, ShieldCheck, FileCheck, Phone, MapPin, Hash, ExternalLink
+  Car, User, ShieldCheck, Shield, FileCheck, Phone, MapPin, Hash, ExternalLink
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';

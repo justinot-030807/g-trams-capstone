@@ -30,7 +30,7 @@ export const NotificationProvider = ({ children }) => {
 
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications || data);
+        setNotifications(Array.isArray(data.notifications) ? data.notifications : (Array.isArray(data) ? data : []));
       }
     } catch (err) {
       // Silent fail — notifications are non-critical

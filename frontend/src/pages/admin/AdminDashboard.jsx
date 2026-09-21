@@ -78,41 +78,32 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=5000`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/reports`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       const raw = await response.json();
       
       if (response.ok) {
-        const data = Array.isArray(raw) ? raw : (raw?.data || []);
-        const activeCount = data.filter(f => f.status === 'Active').length;
-        const pendingCount = data.filter(f => f.status === 'Pending' || f.status === 'For Signing' || f.status === 'Ready for Pickup').length;
-        const expiredCount = data.filter(f => f.status === 'Expired').length;
-        const cancelledCount = data.filter(f => f.status === 'Cancelled' || f.status === 'Revoked').length;
-        const newAppsCount = data.filter(f => f.applicationType === 'New').length;
+        const sum = raw.summary || {};
         
         setStats({ 
-          total: data.length,
-          active: activeCount, 
-          pending: pendingCount, 
-          expired: expiredCount,
-          cancelled: cancelledCount,
-          newApps: newAppsCount 
+          total: sum.total || 0,
+          active: sum.active || 0, 
+          pending: (sum.pending || 0) + (sum.forSigning || 0) + (sum.readyForPickup || 0), 
+          expired: sum.expired || 0,
+          cancelled: (sum.cancelled || 0) + (sum.revoked || 0),
+          newApps: sum.newApps || 0 
         });
 
-        // Compute TODA distribution
-        const todaMap = {};
-        data.forEach(item => {
-          let name = item.todaName ? item.todaName.trim() : 'NON-TODA';
-          if (!name) name = 'NON-TODA';
-          todaMap[name] = (todaMap[name] || 0) + 1;
-        });
+        // Compute TODA distribution directly from server's map
+        const todaMap = sum.todaMap || {};
+        const totalRecords = sum.total || 1;
 
         const todaList = Object.entries(todaMap)
           .map(([name, count]) => ({
             name,
             value: count,
-            percentage: data.length > 0 ? Math.round((count / data.length) * 100) : 0
+            percentage: Math.round((count / totalRecords) * 100)
           }))
           .sort((a, b) => b.value - a.value);
 
@@ -122,16 +113,8 @@ const AdminDashboard = () => {
         }));
 
         setTodaStats(formattedTodaStats);
-        
-        const pendingList = data.filter(f => f.status === 'Pending' || f.status === 'For Signing' || f.status === 'Ready for Pickup').slice(0, 5);
-        setRecentApps(pendingList);
-
-        const sortedHistory = [...data].sort((a, b) => {
-          const timeA = new Date(a.updatedAt || a.dateApplied || 0).getTime();
-          const timeB = new Date(b.updatedAt || b.dateApplied || 0).getTime();
-          return timeB - timeA;
-        }).slice(0, 6);
-        setHistoryLogs(sortedHistory);
+        setRecentApps(sum.recentApps || []);
+        setHistoryLogs(sum.historyLogs || []);
       }
     } catch (error) {
       console.error('Failed to fetch dashboard stats:', error);

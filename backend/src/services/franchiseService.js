@@ -38,8 +38,26 @@ class FranchiseService {
             revoked: reports.filter(r => r.status === 'Revoked').length,
             cancelled: reports.filter(r => r.status === 'Cancelled').length,
             expired: reports.filter(r => r.status === 'Expired').length,
+            newApps: reports.filter(r => r.applicationType === 'New').length,
+            
+            // Computations directly handled by the server to prevent OOM errors on frontend
+            todaMap: reports.reduce((acc, curr) => {
+                const name = curr.todaName ? curr.todaName.trim() : 'NON-TODA';
+                acc[name || 'NON-TODA'] = (acc[name || 'NON-TODA'] || 0) + 1;
+                return acc;
+            }, {}),
+            
+            recentApps: reports
+                .filter(r => ['Pending', 'For Signing', 'Ready for Pickup'].includes(r.status))
+                .slice(0, 5),
+                
+            historyLogs: [...reports]
+                .sort((a, b) => new Date(b.updatedAt || b.dateApplied || 0) - new Date(a.updatedAt || a.dateApplied || 0))
+                .slice(0, 6)
         };
 
+        // We can safely return only summary and NOT the huge 'reports' data array to save bandwidth if data isn't needed.
+        // But to not break compatibility with AdminReports.jsx, we return both.
         return { summary, data: reports };
     }
 

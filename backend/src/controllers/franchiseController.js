@@ -60,7 +60,7 @@ const createFranchise = async (req, res) => {
         res.status(201).json(franchise);
     } catch (error) {
         console.error('Error creating franchise:', error);
-        res.status(error.message.includes('registered') ? 400 : 500).json({ message: error.message || 'Server error creating franchise application.' });
+        res.status(error?.message?.includes('registered') ? 400 : 500).json({ message: error.message || 'Server error creating franchise application.' });
     }
 };
 
@@ -70,7 +70,7 @@ const searchHistoricalFranchise = async (req, res) => {
         if (!record) return res.status(404).json({ message: 'No historical application record found.' });
         res.status(200).json(record);
     } catch (error) {
-        res.status(error.message.includes('required') ? 400 : 500).json({ error: 'An internal server error occurred' });
+        res.status(error?.message?.includes('required') ? 400 : 500).json({ error: 'An internal server error occurred' });
     }
 };
 
