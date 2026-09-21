@@ -99,7 +99,18 @@ export const unwrapGoogleProfile = (raw) => {
     getStringProp(jwtData, 'id')
   ).trim();
 
-  return { email, name, picture, googleId };
+  const credential = (rawObj && (rawObj.credential || rawObj.idToken)) || (typeof raw === 'string' && raw.includes('.') ? raw : '') || (p && (p.credential || p.idToken)) || '';
+  const accessToken = (rawObj && (rawObj.accessToken || rawObj.access_token)) || (p && (p.accessToken || p.access_token)) || '';
+
+  return { 
+    email, 
+    name, 
+    picture, 
+    googleId, 
+    credential: credential || undefined, 
+    idToken: credential || undefined, 
+    accessToken: accessToken || undefined 
+  };
 };
 
 export const isValidContact = (value) => {

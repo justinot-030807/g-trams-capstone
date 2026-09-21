@@ -4,6 +4,7 @@ const SystemSettings = require('../models/systemSettingsModel');
 const jwt = require('jsonwebtoken'); 
 const sendEmail = require('../utils/sendEmail'); 
 const axios = require('axios');
+const crypto = require('crypto');
 const { logAudit } = require('../utils/auditLogger');
 
 // Helper to canonicalize contact input (email in lowercase, Philippine mobile number to 09XXXXXXXXX)
@@ -871,7 +872,7 @@ exports.googleAuth = async (req, res) => {
             });
         }
 
-        if (!onboardingData || !onboardingData.todaAssociation) {
+        if (!onboardingData || (!onboardingData.todaAssociation && !onboardingData.address)) {
             return res.status(200).json({
                 isNewUser: true,
                 message: 'Google account verified. Please complete your registration.',
@@ -883,7 +884,7 @@ exports.googleAuth = async (req, res) => {
         const address = (onboardingData?.address || 'Gasan, Marinduque').trim();
         const rawContact = (onboardingData?.contact || onboardingData?.email || email).trim();
         const contact = normalizeContact(rawContact) || email;
-        const todaAssociation = onboardingData?.todaAssociation || 'NON-TODA';
+        const todaAssociation = (onboardingData?.todaAssociation || 'NON-TODA').trim();
 
         // Check if account with this contact already exists
         const contactFilter = getContactQueryFilter(rawContact);
@@ -928,7 +929,7 @@ exports.googleAuth = async (req, res) => {
         }
 
         // Create new operator or toda president user with isVerified: true (NO 6-DIGIT OTP CODE REQUIRED!)
-        const randomPass = Math.random().toString(36).slice(-8) + 'G!' + Math.floor(Math.random() * 90 + 10);
+        const randomPass = crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + 'G!9a';
         const chosenPassword = (onboardingData?.password && onboardingData.password.length >= 6) ? onboardingData.password : randomPass;
         user = new User({
             name: fullName,

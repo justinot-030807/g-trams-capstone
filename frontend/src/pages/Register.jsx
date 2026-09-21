@@ -3,6 +3,7 @@ import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
+import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
@@ -36,10 +37,9 @@ const Register = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Google Sign-In state
-  const [googleProfileData, setGoogleProfileData] = useState(incomingGoogle || null);
-  const [showGoogleToast, setShowGoogleToast] = useState(Boolean(incomingGoogle));
-  const [showGoogleWelcome, setShowGoogleWelcome] = useState(!!location.state?.fromGoogleLogin);
+  // Google Sign-In Streamlined Onboarding
+  const [googleOnboardingProfile, setGoogleOnboardingProfile] = useState(incomingGoogle || null);
+  const [showGoogleOnboarding, setShowGoogleOnboarding] = useState(Boolean(incomingGoogle));
 
   // Ensure full-screen coverage without zoom gaps on laptops
   useEffect(() => {
@@ -54,14 +54,6 @@ const Register = () => {
       document.body.style.backgroundColor = '';
     };
   }, []);
-
-  useEffect(() => {
-    if (!showGoogleToast) return;
-    const timer = setTimeout(() => {
-      setShowGoogleToast(false);
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [showGoogleToast]);
 
   useEffect(() => {
     let timer;
@@ -86,100 +78,13 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'role') {
-      const newToda = value === 'toda president' ? (formData.todaAssociation === 'NON-TODA' ? '' : formData.todaAssociation) : (formData.todaAssociation || 'NON-TODA');
-      setFormData(prev => ({ ...prev, role: value, todaAssociation: newToda }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (name === 'password') checkPasswordStrength(value);
     if (error) setError('');
   };
 
   const handleSubmitRegisterForm = async (e) => {
     e.preventDefault();
-    setError(''); setSuccess('');
-
-    // If registering via Google: No OTP required, instant registration and login!
-    if (googleProfileData) {
-      const cleanProfile = unwrapGoogleProfile(googleProfileData) || googleProfileData;
-      if (!formData.name || !formData.name.trim()) {
-        return setError('PLEASE ENTER YOUR FULL LEGAL NAME.');
-      }
-      if (!formData.address) {
-        return setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
-      }
-
-      const inputContact = (formData.contact || '').trim();
-      const resolvedContact = (inputContact && isValidContact(inputContact)) ? inputContact : (cleanProfile?.email || '');
-
-      if (!resolvedContact || !isValidContact(resolvedContact)) {
-        return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
-      }
-      if (formData.role === 'toda president' && (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA')) {
-        return setError('PLEASE SELECT A VALID TODA ASSOCIATION FOR TODA PRESIDENT.');
-      }
-      if (!termsAccepted) {
-        return setError('PLEASE ACCEPT THE TERMS AND PRIVACY POLICY.');
-      }
-
-      setIsLoading(true);
-
-      const cleanContact = resolvedContact.includes('@') ? resolvedContact.toLowerCase() : resolvedContact.replace(/[\s\-()]/g, '');
-
-      // Derive the resolved email: prefer google profile email, fall back to contact if it's an email
-      const resolvedEmail = (cleanProfile?.email || '').trim() || (cleanContact.includes('@') ? cleanContact : '');
-
-      // Build a merged google profile that always has the email populated
-      const mergedProfile = {
-        ...cleanProfile,
-        email: resolvedEmail || cleanProfile?.email || ''
-      };
-
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: resolvedEmail || undefined,
-            idToken: cleanProfile?.idToken || cleanProfile?.credential || undefined,
-            credential: cleanProfile?.credential || cleanProfile?.idToken || undefined,
-            googleProfile: mergedProfile,
-            onboardingData: {
-              fullName: formData.name.trim(),
-              name: formData.name.trim(),
-              address: formData.address.trim(),
-              contact: cleanContact,
-              email: resolvedEmail || cleanContact,
-              todaAssociation: formData.todaAssociation || 'NON-TODA',
-              role: formData.role || 'operator',
-              password: formData.password || ''
-            }
-          })
-        });
-
-        const data = await response.json();
-        if (response.ok && data.token) {
-          setSuccess('REGISTRATION SUCCESSFUL! LOGGING IN...');
-          handleAuthSuccess(data);
-        } else {
-          let errorMsg = data.message || data.error || 'REGISTRATION FAILED.';
-          if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-            const detailed = data.errors.map(err => err.message).filter(Boolean).join('. ');
-            if (detailed) errorMsg = detailed;
-          }
-          setError(errorMsg.toUpperCase());
-        }
-      } catch {
-        setError('CANNOT CONNECT TO THE SERVER.');
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
-
-    // Standard non-Google registration with OTP:
     handleRequestOTP(e);
   };
 
@@ -198,10 +103,6 @@ const Register = () => {
     // Validate contact format
     if (!isValidContact(formData.contact)) {
       return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
-    }
-
-    if (formData.role === 'toda president' && (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA')) {
-      return setError('PLEASE SELECT A VALID TODA ASSOCIATION FOR TODA PRESIDENT.');
     }
 
     if (!formData.password || formData.password.length < 6) {
@@ -230,7 +131,7 @@ const Register = () => {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
-      role: formData.role || 'operator'
+      role: 'operator'
     };
 
     try {
@@ -386,49 +287,6 @@ const Register = () => {
   return (
     <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
       
-      {/* Centered "Connected with Google" Card — auto-dismisses in 4s or on tap */}
-      {showGoogleToast && googleProfileData && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
-          aria-live="polite"
-        >
-          <div
-            className="pointer-events-auto mx-4 w-full max-w-sm bg-white rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.55)] border-2 border-[#7A1B22]/30 p-5 flex flex-col items-center gap-3 animate-spring-in cursor-pointer select-none"
-            role="status"
-            onClick={() => setShowGoogleToast(false)}
-            title="Tap to dismiss"
-          >
-            {/* Green checkmark ring */}
-            <div className="w-14 h-14 rounded-full bg-emerald-50 border-2 border-emerald-400 flex items-center justify-center shadow-md">
-              <CheckCircle2 size={30} className="text-emerald-500" />
-            </div>
-
-            {/* Google profile picture if available */}
-            {(googleProfileData.picture) && (
-              <img
-                src={googleProfileData.picture}
-                alt={googleProfileData.name || 'Google Account'}
-                className="w-12 h-12 rounded-full shadow border-2 border-[#D4AF37] -mt-1"
-              />
-            )}
-
-            <div className="text-center space-y-0.5">
-              <p className="text-[11px] font-black text-[#7A1B22] uppercase tracking-widest">Connected with Google</p>
-              {googleProfileData.name && (
-                <p className="text-sm font-bold text-slate-800">{googleProfileData.name}</p>
-              )}
-              <p className="text-xs font-semibold text-emerald-600 break-all">{googleProfileData.email}</p>
-            </div>
-
-            {/* Gold accent bar */}
-            <div className="w-full h-1 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F0D060] to-[#D4AF37] opacity-80" />
-
-            <p className="text-[10px] text-slate-400 font-medium">Tap to dismiss</p>
-          </div>
-        </div>
-      )}
-
-
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
@@ -451,22 +309,7 @@ const Register = () => {
         {/* CENTERED AUTH CARD */}
         <main className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] mx-auto px-4 my-auto py-4 sm:py-6 flex flex-col items-center justify-center min-h-fit animate-card-entrance">
           <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-6 min-h-fit">
-            {showGoogleWelcome ? (
-              <div className="flex flex-col items-center justify-center text-center py-4 space-y-4 animate-in zoom-in-95">
-                {googleProfileData?.picture && (
-                  <img src={googleProfileData.picture} alt="Profile" className="w-16 h-16 rounded-full shadow-md mx-auto" />
-                )}
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Welcome, {googleProfileData?.name}!</h3>
-                <p className="text-xs text-slate-500 font-semibold leading-relaxed">
-                  You're almost there! To complete your registration via Google, we just need a few more details about your TODA and Barangay.
-                </p>
-                <button type="button" onClick={() => setShowGoogleWelcome(false)} className="w-full bg-[#7A1B22] text-white py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-md mt-2 hover:bg-[#5a1419] transition-colors">
-                  Proceed to Fill Form
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex flex-col items-center mb-2.5 text-center">
+            <div className="flex flex-col items-center mb-2.5 text-center">
               <div className="w-10 h-10 bg-white border-2 border-[#D4AF37] shadow-[0_0_16px_rgba(212,175,55,0.45)] rounded-full flex items-center justify-center p-0.5 mx-auto mb-1.5 ring-4 ring-[#D4AF37]/30 overflow-hidden shrink-0 animate-logo-entrance">
                 <img src="/gasan-logo.png" alt="Official Gasan Logo" className="w-full h-full object-cover scale-105" />
               </div>
@@ -474,7 +317,7 @@ const Register = () => {
                 {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
               </h2>
               <p className="text-[9px] sm:text-xs text-slate-500 mt-0.5 font-bold uppercase tracking-widest animate-item-1">
-                {step === 1 ? 'CREATE AN OPERATOR OR TODA ACCOUNT' : `CODE SENT TO ${formData.contact}`}
+                {step === 1 ? 'CREATE AN OPERATOR ACCOUNT' : `CODE SENT TO ${formData.contact}`}
               </p>
             </div>
 
@@ -496,18 +339,9 @@ const Register = () => {
 
             {step === 1 && (
               <form onSubmit={handleSubmitRegisterForm} className="space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 animate-item-2">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
-                    <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">ACCOUNT TYPE</label>
-                    <select name="role" value={formData.role} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                      <option value="operator">Operator</option>
-                      <option value="toda president">TODA President</option>
-                    </select>
-                  </div>
+                <div className="animate-item-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
+                  <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 animate-item-2">
@@ -521,8 +355,7 @@ const Register = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA ASSOCIATION</label>
                     <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                      {formData.role === 'toda president' && <option value="" disabled>Select TODA</option>}
-                      {TODA_LIST.filter(t => formData.role !== 'toda president' || t !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
+                      {TODA_LIST.map((toda) => <option key={toda} value={toda}>{toda}</option>)}
                     </select>
                   </div>
                 </div>
@@ -536,7 +369,7 @@ const Register = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
                     <div className="relative">
-                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
+                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22]">
                         {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -545,7 +378,7 @@ const Register = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
                     <div className="relative">
-                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
+                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22]">
                         {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -591,11 +424,7 @@ const Register = () => {
                     {isLoading ? (
                       <>
                         <Loader2 size={15} className="animate-spin" />
-                        {googleProfileData ? 'COMPLETING REGISTRATION...' : 'SENDING CODE...'}
-                      </>
-                    ) : googleProfileData ? (
-                      <>
-                        <CheckCircle2 size={15} /> COMPLETE REGISTRATION
+                        SENDING CODE...
                       </>
                     ) : (
                       <>
@@ -603,8 +432,6 @@ const Register = () => {
                       </>
                     )}
                   </button>
-
-
                 </div>
               </form>
             )}
@@ -627,17 +454,12 @@ const Register = () => {
                       if (data?.token) {
                         handleAuthSuccess(data);
                       } else {
-                        const cleanProfile = unwrapGoogleProfile(data);
-                        setGoogleProfileData(cleanProfile);
-                        setFormData(prev => ({
-                          ...prev,
-                          name: cleanProfile?.name || prev.name,
-                          contact: cleanProfile?.email || prev.contact
-                        }));
-                        setShowGoogleToast(true);
+                        const cleanProfile = unwrapGoogleProfile(data) || data;
+                        setGoogleOnboardingProfile(cleanProfile);
+                        setShowGoogleOnboarding(true);
                       }
                     }}
-                    onError={(msg) => setError(msg)}
+                    onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
                   />
                 </div>
               </>
@@ -694,12 +516,20 @@ const Register = () => {
                 </p>
               </div>
             )}
-
-              </>
-            )}
           </div>
         </main>
       </div>
+
+      {/* Streamlined Google Onboarding Modal (Quick 5-Second Setup) */}
+      <GoogleOnboardingModal
+        isOpen={showGoogleOnboarding}
+        onClose={() => {
+          setShowGoogleOnboarding(false);
+          setGoogleOnboardingProfile(null);
+        }}
+        googleProfile={googleOnboardingProfile}
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* Terms & Privacy Policy Modal */}
       <TermsPolicyModal 

@@ -605,5 +605,44 @@ describe('Registration & Auth Verification Flow', () => {
         expect(res.body.isNewUser).toBe(true);
         expect(res.body.googleProfile.email).toBe('direct.contact@gmail.com');
     });
+
+    it('24. should complete 5-second quick setup for new Google user with barangay and todaAssociation and generated random password', async () => {
+        const payload = {
+            email: 'quicksetup.google@gmail.com',
+            googleProfile: {
+                email: 'quicksetup.google@gmail.com',
+                name: 'Quick Setup User',
+                googleId: 'quick-sub-999',
+                picture: 'https://lh3.googleusercontent.com/photo.jpg'
+            },
+            onboardingData: {
+                fullName: 'Quick Setup User',
+                address: 'Bahi',
+                todaAssociation: 'NON-TODA',
+                email: 'quicksetup.google@gmail.com',
+                contact: 'quicksetup.google@gmail.com',
+                role: 'operator'
+            }
+        };
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send(payload);
+
+        expect(res.status).toBe(201);
+        expect(res.body.token).toBeDefined();
+        expect(res.body.role).toBe('operator');
+        expect(res.body.isNewUser).toBe(false);
+
+        const created = await User.findOne({ email: 'quicksetup.google@gmail.com' });
+        expect(created).toBeDefined();
+        expect(created.isVerified).toBe(true);
+        expect(created.authProvider).toBe('google');
+        expect(created.role).toBe('operator');
+        expect(created.address).toBe('Bahi');
+        expect(created.todaAssociation).toBe('NON-TODA');
+        expect(created.password).toBeDefined();
+        expect(created.password.length).toBeGreaterThan(10);
+    });
 });
 

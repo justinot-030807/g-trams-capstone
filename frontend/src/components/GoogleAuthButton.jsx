@@ -62,7 +62,11 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
       }
 
       if (data.isNewUser) {
-        onNewUser(data.googleProfile || decodedProfile);
+        onNewUser({
+          ...(data.googleProfile || decodedProfile || {}),
+          credential: response.credential,
+          idToken: response.credential
+        });
       } else {
         onSuccess(data);
       }
@@ -208,7 +212,10 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
             }
 
             if (data.isNewUser) {
-              onNewUser(data.googleProfile || directGoogleProfile);
+              onNewUser({
+                ...(data.googleProfile || directGoogleProfile || {}),
+                accessToken: tokenResponse.access_token
+              });
             } else {
               onSuccess(data);
             }

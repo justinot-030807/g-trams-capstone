@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
+import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
@@ -15,6 +16,8 @@ const Login = () => {
     contact: '',
     password: ''
   });
+  const [googleOnboardingProfile, setGoogleOnboardingProfile] = useState(null);
+  const [showGoogleOnboarding, setShowGoogleOnboarding] = useState(false);
 
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
@@ -315,13 +318,9 @@ const Login = () => {
                   if (data?.token) {
                     handleAuthSuccess(data);
                   } else {
-                    const cleanProfile = unwrapGoogleProfile(data);
-                    navigate('/register', { 
-                      state: { 
-                        googleProfile: cleanProfile,
-                        fromGoogleLogin: true 
-                      } 
-                    });
+                    const cleanProfile = unwrapGoogleProfile(data) || data;
+                    setGoogleOnboardingProfile(cleanProfile);
+                    setShowGoogleOnboarding(true);
                   }
                 }}
                 onError={(err) => {
@@ -351,6 +350,17 @@ const Login = () => {
           </div>
         </main>
       </div>
+
+      {/* Streamlined Google Onboarding Modal (Quick 5-Second Setup) */}
+      <GoogleOnboardingModal
+        isOpen={showGoogleOnboarding}
+        onClose={() => {
+          setShowGoogleOnboarding(false);
+          setGoogleOnboardingProfile(null);
+        }}
+        googleProfile={googleOnboardingProfile}
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* SHARED FULL-WIDTH FOOTER */}
       <AuthFooter />
