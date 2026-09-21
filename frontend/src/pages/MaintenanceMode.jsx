@@ -119,7 +119,7 @@ const MaintenanceMode = () => {
         </div>
 
         {/* Hotline */}
-        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-slate-400 font-medium">
+        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-slate-600 dark:text-slate-400 font-medium">
           <span className="flex items-center gap-1">
             <Phone size={12} className="text-[#7A1B22]" /> (042) 342-1234
           </span>

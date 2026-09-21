@@ -387,7 +387,7 @@ const ChatWidget = () => {
           >
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
-                <Loader2 size={24} className="animate-spin text-slate-400" />
+                <Loader2 size={24} className="animate-spin text-slate-600 dark:text-slate-400" />
               </div>
             ) : !activeThread && !isBroadcast ? (
               // Thread list for all users
@@ -429,7 +429,7 @@ const ChatWidget = () => {
                       >
                         <div className="overflow-hidden pr-2">
                           <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{names}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{t.lastMessage || 'No messages yet'}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 truncate mt-0.5">{t.lastMessage || 'No messages yet'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {String(currentUser.role).toLowerCase().includes('admin') && !t.isAnnouncement && (
@@ -459,7 +459,7 @@ const ChatWidget = () => {
                 <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
                   {isBroadcast ? 'Broadcast Announcement' : 'Start a Conversation'}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
                   {isBroadcast 
                     ? 'Type your announcement below. It will be sent as a direct message to all Operators and TODA Presidents.' 
                     : 'Send a message to GTRAMS Admin. They\'ll respond during office hours.'}
@@ -499,7 +499,7 @@ const ChatWidget = () => {
                         <p className="whitespace-pre-wrap break-words">{msg.message}</p>
                         <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
                           <span className={`text-[9px] font-medium ${
-                            isMine ? 'text-white/60 dark:text-slate-950/50' : 'text-slate-400'
+                            isMine ? 'text-white/60 dark:text-slate-950/50' : 'text-slate-600 dark:text-slate-400'
                           }`}>
                             {formatTime(msg.createdAt)}
                           </span>
@@ -512,7 +512,7 @@ const ChatWidget = () => {
                             <button
                               onClick={() => handleDeleteMessage(msg._id)}
                               className={`ml-2 text-[9px] cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity ${
-                                isMine ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-red-500'
+                                isMine ? 'text-white/80 hover:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-red-500'
                               }`}
                             >
                               Delete
@@ -573,7 +573,7 @@ const ChatWidget = () => {
                   className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                     input.trim() && !isSending
                       ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:opacity-90 active:scale-90 shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed'
                   }`}
                 >
                   {isSending ? (

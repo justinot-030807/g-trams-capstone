@@ -180,19 +180,19 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
               {/* Transmittal Metadata Strip */}
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-3 text-xs flex items-center justify-between font-sans">
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Transmittal Ref:</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Transmittal Ref:</span>
                   <span className="font-mono font-bold text-[#7A1B22] text-xs">{batchRef}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Date Processed:</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Date Processed:</span>
                   <span className="font-bold text-slate-800 text-xs">{formattedDate}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Total Units:</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Total Units:</span>
                   <span className="font-bold text-slate-900 text-xs">{units.length} Unit(s)</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Action Type:</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Action Type:</span>
                   <span className="font-bold text-emerald-700 text-xs">Ready for Pickup / Release</span>
                 </div>
               </div>

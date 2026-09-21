@@ -266,7 +266,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             {isOpen && (
               <div className="flex flex-col min-w-0 transition-opacity duration-200">
                 <span className="text-white font-black text-sm tracking-wider whitespace-nowrap">G-TRAMS</span>
-                <span className="text-white/60 dark:text-slate-400 text-xs font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
+                <span className="text-white/60 dark:text-slate-600 dark:text-slate-400 text-xs font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
               </div>
             )}
           </div>
@@ -293,7 +293,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
                       isActive 
                         ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-sm' 
-                        : 'text-white/80 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
+                        : 'text-white/80 dark:text-slate-600 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -331,7 +331,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
                       isAnySubActive 
                         ? (isExpanded ? 'bg-white/15 dark:bg-slate-800/80 text-white' : 'bg-white/20 dark:bg-slate-800 text-white shadow-sm ring-1 ring-white/20') 
-                        : 'text-white/80 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
+                        : 'text-white/80 dark:text-slate-600 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -385,7 +385,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                               className={`flex items-center rounded-lg text-xs font-bold transition-colors duration-150 ${
                                 isSubActive 
                                   ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-sm font-black' 
-                                  : 'text-white/75 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
+                                  : 'text-white/75 dark:text-slate-600 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
                               } ${isOpen ? 'w-full px-2.5 py-2 justify-between' : 'w-9 h-9 justify-center'}`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
@@ -433,7 +433,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               {userData.profilePic ? (
                 <img src={userData.profilePic} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <User size={16} className="text-white/80 dark:text-slate-400" />
+                <User size={16} className="text-white/80 dark:text-slate-600 dark:text-slate-400" />
               )}
             </div>
             {isOpen ? (

@@ -257,13 +257,13 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
           <div className="p-3 sm:p-4 bg-slate-50 border-b border-slate-200">
             <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Voucher Reference No.</p>
+                <p className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Voucher Reference No.</p>
                 <p className="text-xs sm:text-sm font-black font-mono text-[#7A1B22] tracking-wider">{refNumber}</p>
                 <p className="text-[9.5px] text-slate-500 mt-0.5">Approved: <strong>{formattedDateApproved}</strong></p>
               </div>
 
               <div className="text-right border-l border-slate-100 pl-3">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Amount Payable</p>
+                <p className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Amount Payable</p>
                 <p className="text-xl sm:text-2xl font-black text-slate-900">₱{parseFloat(systemFranchiseFee).toFixed(2)}</p>
                 <span className="inline-block text-[8.5px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full mt-0.5">
                   Pay at Cashier
@@ -288,17 +288,17 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
                 </p>
 
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Name</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Name</span>
                   <span className="font-bold text-slate-900 uppercase text-xs truncate block">{unit?.fullName}</span>
                 </div>
 
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Address</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Address</span>
                   <span className="font-medium text-slate-800 text-xs truncate block">{unit?.address || 'Gasan, Marinduque'}</span>
                 </div>
 
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">TODA</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">TODA</span>
                   <span className="font-black text-[#7A1B22] bg-[#7A1B22]/10 px-1.5 py-0.5 rounded text-xs inline-block mt-0.5 max-w-full break-words whitespace-normal leading-tight">
                     {unit?.todaName || 'NON-TODA'}
                   </span>
@@ -312,17 +312,17 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
                 </p>
 
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Plate / Temp No.</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Plate / Temp No.</span>
                   <span className="font-black text-slate-900 text-xs tracking-wider">{unit?.plateNo || 'PENDING'}</span>
                 </div>
 
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Make &amp; Route</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Make &amp; Route</span>
                   <span className="font-medium text-slate-800 text-xs block">{unit?.make} &bull; {unit?.zone || 'Zone 1'}</span>
                 </div>
 
                 <div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block">Motor No.</span>
+                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Motor No.</span>
                   <span className="font-mono text-[9.5px] font-bold text-slate-700 block truncate">{unit?.motorNo}</span>
                 </div>
               </div>
@@ -357,7 +357,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
             </div>
 
             {/* Official Authorization Seal Footer */}
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
               <span>LGU GASAN &bull; Office of the Vice Mayor Extension</span>
               <span>NO BARCODE NEEDED &bull; VALID DIGITAL STUB</span>
             </div>

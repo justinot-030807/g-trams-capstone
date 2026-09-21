@@ -44,6 +44,29 @@ const franchiseSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
+// Unique indexes to prevent duplicates (Race condition fix)
+franchiseSchema.index(
+    { plateNo: 1 }, 
+    { unique: true, partialFilterExpression: { 
+        isArchived: { $ne: true }, 
+        status: { $nin: ['Cancelled'] } 
+    }}
+);
+franchiseSchema.index(
+    { motorNo: 1 }, 
+    { unique: true, partialFilterExpression: { 
+        isArchived: { $ne: true }, 
+        status: { $nin: ['Cancelled'] } 
+    }}
+);
+franchiseSchema.index(
+    { chassisNo: 1 }, 
+    { unique: true, partialFilterExpression: { 
+        isArchived: { $ne: true }, 
+        status: { $nin: ['Cancelled'] } 
+    }}
+);
+
 // Create text index for search optimization
 franchiseSchema.index({ 
     fullName: 'text', 

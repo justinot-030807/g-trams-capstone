@@ -95,7 +95,9 @@ exports.verifyOTP = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { contact, password } = req.body; 
-        const user = await User.findOne({ contact });
+        // Use case-insensitive regex for email addresses to prevent login failures
+        const contactRegex = new RegExp('^' + contact.trim() + '$', 'i');
+        const user = await User.findOne({ contact: contactRegex });
         
         if (!user) return res.status(400).json({ message: 'Invalid credentials' });
         if (!user.isVerified) return res.status(400).json({ message: 'Please verify your account first.' });
@@ -496,7 +498,7 @@ exports.toggleUserStatus = async (req, res) => {
             user: updatedUser 
         });
     } catch (error) {
-        res.status(500).json({ message: error.message, error: error.message });
+        res.status(500).json({ message: error.message, error: 'An internal server error occurred' });
     }
 };
 
@@ -826,3 +828,4 @@ exports.getPublicStats = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+

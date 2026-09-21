@@ -68,13 +68,13 @@ const OperatorIdCard = ({ user }) => {
                 <p className="flex items-center gap-1.5 text-xs text-slate-300">
                   <MapPin size={12} className="text-[#D4AF37]" /> {safeUser.todaAssociation}
                 </p>
-                <p className="flex items-center gap-1.5 text-xs text-slate-400">
+                <p className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                   <Smartphone size={12} className="text-[#D4AF37]" /> {safeUser.contact || 'No Contact'}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">Tap to flip</p>
-                <RefreshCw size={14} className="text-slate-400 inline-block animate-pulse" />
+                <RefreshCw size={14} className="text-slate-600 dark:text-slate-400 inline-block animate-pulse" />
               </div>
             </div>
           </div>
@@ -87,7 +87,7 @@ const OperatorIdCard = ({ user }) => {
         >
           <div className="text-center mb-6">
             <h3 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Official LGU QR Code</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Scan to verify operator credentials</p>
+            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Scan to verify operator credentials</p>
           </div>
           
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6">
@@ -95,7 +95,7 @@ const OperatorIdCard = ({ user }) => {
           </div>
 
           <div className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center border border-slate-100 dark:border-slate-700">
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">In case of emergency</p>
+            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">In case of emergency</p>
             <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-center gap-1">
               <Phone size={12} className="text-red-500" /> {safeUser.emergencyContact || 'Not Provided'}
             </p>

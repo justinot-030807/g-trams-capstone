@@ -169,7 +169,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
 
         {/* Quick Filter Barangay Tags */}
         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2 pr-1 shrink-0">
+          <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider pl-2 pr-1 shrink-0">
             Quick Filter:
           </span>
           {QUICK_BARANGAYS.map((b) => (
@@ -190,10 +190,10 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
         {/* TODA Directory Cards List */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-3.5 flex-1">
           {filteredList.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-slate-600 dark:text-slate-400">
               <Info size={32} className="mx-auto mb-2 opacity-50" />
               <p className="text-sm font-bold text-slate-600 dark:text-slate-300">No matching TODA or route found</p>
-              <p className="text-xs text-slate-400 mt-0.5">Try searching with a different barangay name or clearing filters.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Try searching with a different barangay name or clearing filters.</p>
             </div>
           ) : (
             filteredList.map((toda) => (
@@ -227,13 +227,13 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
                     <div className="flex items-start gap-2">
                       <MapPin size={14} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Terminal Base</span>
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">Terminal Base</span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">{toda.terminal}</span>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-1">
                         Covered Barangays &amp; Route Stops:
                       </span>
                       <div className="flex flex-wrap gap-1.5">

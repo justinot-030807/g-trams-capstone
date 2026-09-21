@@ -111,6 +111,7 @@ const MainLayout = ({ children, hideNav = false }) => {
   }, []);
 
   // Native-feel touch stretch event listener
+  const stretchRef = useRef({ offset: 0, isStretching: false });
   useEffect(() => {
     const handleTouchStart = (e) => {
       if (e.touches.length !== 1) return;
@@ -132,23 +133,27 @@ const MainLayout = ({ children, hideNav = false }) => {
         // Pulling down past top edge
         const stretch = Math.min(Math.pow(deltaY, 0.72) * 0.55, 45);
         setStretchOffset(stretch);
+        stretchRef.current = { offset: stretch, isStretching: true };
         setIsStretching(true);
       } else if (isBottom && deltaY < 0) {
         // Pulling up past bottom edge
         const stretch = -Math.min(Math.pow(Math.abs(deltaY), 0.72) * 0.55, 45);
         setStretchOffset(stretch);
+        stretchRef.current = { offset: stretch, isStretching: true };
         setIsStretching(true);
       } else {
-        if (stretchOffset !== 0) {
+        if (stretchRef.current.offset !== 0) {
           setStretchOffset(0);
+          stretchRef.current = { offset: 0, isStretching: false };
           setIsStretching(false);
         }
       }
     };
 
     const handleTouchEnd = () => {
-      if (isStretching || stretchOffset !== 0) {
+      if (stretchRef.current.isStretching || stretchRef.current.offset !== 0) {
         setStretchOffset(0);
+        stretchRef.current = { offset: 0, isStretching: false };
         setIsStretching(false);
       }
       isAtEdge.current = false;
@@ -165,7 +170,7 @@ const MainLayout = ({ children, hideNav = false }) => {
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [isStretching, stretchOffset]);
+  }, []); // Run only once on mount to prevent listener detach/reattach thrashing
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => {
@@ -184,9 +189,27 @@ const MainLayout = ({ children, hideNav = false }) => {
     }
   };
 
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   if (hideNav) {
     return (
       <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200 print:bg-white print:text-black">
+        {isOffline && (
+          <div className="bg-red-600 text-white text-center py-2 px-4 text-[11px] font-bold z-50 shadow-md">
+            ⚠️ Offline ka ngayon. Limitado ang ibang features.
+          </div>
+        )}
         <main className="flex-1 w-full flex flex-col">
           {children}
         </main>
@@ -210,6 +233,12 @@ const MainLayout = ({ children, hideNav = false }) => {
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={toggleSidebar} 
         />
+
+        {isOffline && (
+          <div className="bg-red-600 text-white text-center py-2 px-4 text-[11px] font-bold z-50 shadow-md animate-in slide-in-from-top-2">
+            ⚠️ Nawalan ng internet connection. Subukang i-refresh pag bumalik ang signal.
+          </div>
+        )}
 
         <main 
           style={stretchOffset !== 0 ? {

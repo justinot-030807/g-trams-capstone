@@ -114,7 +114,7 @@ const ManageRevocations = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">Manage Revocations</h1>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Process violations and revoke operator franchises securely.
             </p>
           </div>
@@ -127,7 +127,7 @@ const ManageRevocations = () => {
           <button 
             onClick={() => { setActiveTab('active'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'active' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'active' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <ShieldAlert size={18} /> Active Operators
@@ -135,7 +135,7 @@ const ManageRevocations = () => {
           <button 
             onClick={() => { setActiveTab('revoked'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'revoked' ? 'text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400 bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'revoked' ? 'text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400 bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <AlertTriangle size={18} /> Revoked Records
@@ -145,13 +145,13 @@ const ManageRevocations = () => {
         {/* SEARCH BAR */}
         <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="relative w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={18} />
             <input
               type="text"
               placeholder="Search by operator name or plate no..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 transition-all"
             />
           </div>
         </div>
@@ -160,7 +160,7 @@ const ManageRevocations = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
+              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                 <th className="p-4 pl-6">Operator & Vehicle</th>
                 {activeTab === 'revoked' && <th className="p-4">Violation Details</th>}
                 <th className="p-4 text-center">Status</th>
@@ -172,7 +172,7 @@ const ManageRevocations = () => {
                 <TableRowsSkeleton rows={5} columns={activeTab === 'revoked' ? 4 : 3} baseDelay={30} stepDelay={45} />
               ) : filteredFranchises.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="p-12 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan="4" className="p-12 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     <div className="flex flex-col items-center justify-center">
                       <CheckCircle size={40} className="text-emerald-300 dark:text-emerald-500/50 mb-3"/>
                       <p className="font-bold text-lg text-slate-700 dark:text-slate-200">No records found</p>
@@ -188,13 +188,13 @@ const ManageRevocations = () => {
                   >
                       <td className="p-4 pl-6">
                         <p className="font-bold text-slate-900 dark:text-white text-sm">{f.fullName}</p>
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Plate: <span className="text-slate-800 dark:text-slate-900 bg-yellow-100 px-1 rounded border border-yellow-300">{f.plateNo || 'N/A'}</span> &bull; {f.todaName}</p>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">Plate: <span className="text-slate-800 dark:text-slate-900 bg-yellow-100 px-1 rounded border border-yellow-300">{f.plateNo || 'N/A'}</span> &bull; {f.todaName}</p>
                       </td>
                       
                       {activeTab === 'revoked' && (
                         <td className="p-4">
                           <p className="text-sm font-bold text-red-600 dark:text-red-400">{f.cancelReason}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Revoked on: {new Date(f.updatedAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium mt-0.5">Revoked on: {new Date(f.updatedAt).toLocaleDateString()}</p>
                         </td>
                       )}
 
@@ -219,7 +219,7 @@ const ManageRevocations = () => {
                             onClick={() => setPreviewDoc(f.evidenceUrl)}
                             disabled={!f.evidenceUrl}
                             className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors border ${
-                              f.evidenceUrl ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 shadow-sm' : 'bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-800 cursor-not-allowed'
+                              f.evidenceUrl ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 shadow-sm' : 'bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-800 cursor-not-allowed'
                             }`}
                           >
                             <FileText size={14} /> View Evidence
@@ -236,7 +236,7 @@ const ManageRevocations = () => {
         {/* Pagination Bar */}
         {!isLoading && filteredFranchises.length > 0 && (
           <div className="px-4 py-3 sm:px-6 bg-slate-50/80 dark:bg-slate-800/60 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
               <span>Showing</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{startIndex + 1}</span>
               <span>to</span>
@@ -292,7 +292,7 @@ const ManageRevocations = () => {
                   .map((item) => {
                     if (typeof item === 'string') {
                       return (
-                        <span key={item} className="px-1.5 text-slate-400 select-none">
+                        <span key={item} className="px-1.5 text-slate-600 dark:text-slate-400 select-none">
                           ...
                         </span>
                       );
@@ -342,7 +342,7 @@ const ManageRevocations = () => {
             
             <form onSubmit={handleRevokeSubmit} className="p-6 space-y-6">
               <div className="bg-slate-50 dark:bg-slate-800/70 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Target Operator</p>
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Target Operator</p>
                 <p className="font-black text-slate-900 dark:text-white text-lg">{selectedFranchise.fullName}</p>
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">Plate Number: <span className="font-bold text-slate-900 dark:text-slate-900 bg-yellow-100 px-1.5 border border-yellow-300 rounded">{selectedFranchise.plateNo}</span></p>
               </div>
@@ -368,9 +368,9 @@ const ManageRevocations = () => {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     required
                   />
-                  <UploadCloud className="mx-auto text-slate-400 dark:text-slate-500 mb-2" size={32} />
+                  <UploadCloud className="mx-auto text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-2" size={32} />
                   <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{evidenceFile ? evidenceFile.name : 'Tap to upload order or ticket'}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Accepts PDF, JPG, or PNG</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1">Accepts PDF, JPG, or PNG</p>
                 </div>
               </div>
 

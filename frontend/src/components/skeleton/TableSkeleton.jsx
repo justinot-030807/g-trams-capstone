@@ -129,7 +129,7 @@ export const TableSkeleton = ({
       <div className="overflow-x-auto min-h-[320px]">
         <table className="w-full text-left border-collapse min-w-[800px]">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider font-bold">
+            <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider font-bold">
               <th className="p-4 pl-6">
                 <SkeletonElement height="12px" className="w-28" rounded="rounded-sm" delay={baseDelay} />
               </th>

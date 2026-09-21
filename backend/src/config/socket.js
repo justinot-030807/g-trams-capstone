@@ -27,6 +27,9 @@ const initSocket = (server) => {
       socket.userRole = decoded.role;
       next();
     } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return next(new Error('Token expired. Please login again.'));
+      }
       next(new Error('Invalid token'));
     }
   });

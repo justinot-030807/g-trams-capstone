@@ -246,7 +246,7 @@ const Register = () => {
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
 
   const getStrengthLabel = () => {
-    if (passwordStrength === 0) return { label: 'Empty', color: 'text-slate-400', bar: 'w-0 bg-slate-200' };
+    if (passwordStrength === 0) return { label: 'Empty', color: 'text-slate-600 dark:text-slate-400', bar: 'w-0 bg-slate-200' };
     if (passwordStrength === 1) return { label: 'Weak', color: 'text-red-500', bar: 'w-1/4 bg-red-500' };
     if (passwordStrength === 2) return { label: 'Fair', color: 'text-amber-500', bar: 'w-2/4 bg-amber-500' };
     if (passwordStrength === 3) return { label: 'Good', color: 'text-blue-500', bar: 'w-3/4 bg-blue-500' };
@@ -268,7 +268,7 @@ const Register = () => {
           <button
             type="button"
             onClick={() => setShowGoogleToast(false)}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+            className="text-slate-600 dark:text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer shrink-0"
           >
             <X size={14} />
           </button>
@@ -373,7 +373,7 @@ const Register = () => {
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
                     <div className="relative">
                       <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22]">
                         {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
                     </div>
@@ -382,7 +382,7 @@ const Register = () => {
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
                     <div className="relative">
                       <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required={!googleProfileData} className={`${inputClasses} pr-8`} placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22]">
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22]">
                         {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
                     </div>
@@ -457,7 +457,7 @@ const Register = () => {
                           setError('');
                           setShowGoogleToast(false);
                         }}
-                        className="text-xs font-bold text-slate-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
+                        className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-red-500 uppercase tracking-wider transition-colors cursor-pointer"
                       >
                         Cancel Google Sign-in & Register Manually
                       </button>
@@ -472,7 +472,7 @@ const Register = () => {
                 {/* DIVIDER */}
                 <div className="flex items-center gap-3 my-2 animate-item-4">
                   <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-xs font-black text-slate-400 tracking-wider">OR</span>
+                  <span className="text-xs font-black text-slate-600 dark:text-slate-400 tracking-wider">OR</span>
                   <div className="flex-1 h-px bg-slate-200" />
                 </div>
 

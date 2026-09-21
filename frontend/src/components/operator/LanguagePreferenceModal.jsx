@@ -47,7 +47,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
             <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight leading-snug">
               {isFilipino ? 'Pumili ng Wika' : 'Select Language'}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium truncate">
               {isFilipino ? 'Tagalog o English para sa buong portal' : 'Choose your preferred portal language'}
             </p>
           </div>
@@ -77,7 +77,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
             </div>
             <div>
               <p className="text-xs font-black text-slate-900 dark:text-white">Filipino</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tagalog</p>
+              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">Tagalog</p>
             </div>
           </button>
 
@@ -103,7 +103,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
             </div>
             <div>
               <p className="text-xs font-black text-slate-900 dark:text-white">English</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Default</p>
+              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">Default</p>
             </div>
           </button>
         </div>

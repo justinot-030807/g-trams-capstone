@@ -97,7 +97,7 @@ const AccountDeactivated = () => {
                 <AlertCircle size={24} className="text-amber-600 dark:text-amber-400" />
               </div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Appeal Pending Review</h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              <p className="text-sm text-slate-600 dark:text-slate-600 dark:text-slate-400 mb-6">
                 Your appeal has been submitted and is currently under review by an administrator. You will be notified of the decision.
               </p>
               <Link 
@@ -109,7 +109,7 @@ const AccountDeactivated = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 text-center">
+              <p className="text-sm text-slate-600 dark:text-slate-600 dark:text-slate-400 mb-4 text-center">
                 If you believe this is a mistake, you can submit an appeal using the form below.
               </p>
 
@@ -118,7 +118,7 @@ const AccountDeactivated = () => {
                   Appeal Message
                 </label>
                 <div className="relative">
-                  <div className="absolute top-3 left-3 text-slate-400">
+                  <div className="absolute top-3 left-3 text-slate-600 dark:text-slate-400">
                     <MessageSquare size={18} />
                   </div>
                   <textarea
@@ -136,7 +136,7 @@ const AccountDeactivated = () => {
                   Verify Password
                 </label>
                 <div className="relative">
-                  <div className="absolute top-1/2 -translate-y-1/2 left-3 text-slate-400">
+                  <div className="absolute top-1/2 -translate-y-1/2 left-3 text-slate-600 dark:text-slate-400">
                     <Lock size={18} />
                   </div>
                   <input

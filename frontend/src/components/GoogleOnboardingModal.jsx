@@ -185,7 +185,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSubmit, isLoa
               className={inputClasses}
               placeholder="09123456789"
             />
-            <p className="text-xs text-slate-400 mt-1 font-medium">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">
               Used for official LGU franchise notifications and SMS updates.
             </p>
           </div>

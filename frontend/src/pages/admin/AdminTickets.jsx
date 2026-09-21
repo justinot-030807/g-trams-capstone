@@ -67,10 +67,10 @@ const AdminTickets = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Help & Support Tickets</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage inquiries and support requests from operators.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1">Manage inquiries and support requests from operators.</p>
           </div>
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
             <input 
               type="text" 
               placeholder="Search tickets..." 
@@ -148,7 +148,7 @@ const AdminTickets = () => {
                 <MessageSquare className="w-5 h-5 text-[#7A1B22] dark:text-[#D4AF37]" />
                 Ticket Details
               </h3>
-              <button onClick={() => setSelectedTicket(null)} className="text-slate-400 hover:text-red-500 transition-colors">
+              <button onClick={() => setSelectedTicket(null)} className="text-slate-600 dark:text-slate-400 hover:text-red-500 transition-colors">
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
@@ -160,7 +160,7 @@ const AdminTickets = () => {
                     <h4 className="font-bold text-sm text-slate-900 dark:text-white">{selectedTicket.operator?.name || 'Unknown'}</h4>
                     <p className="text-xs text-slate-500">{selectedTicket.contactNumber}</p>
                   </div>
-                  <span className="text-xs text-slate-400">{new Date(selectedTicket.createdAt).toLocaleString()}</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">{new Date(selectedTicket.createdAt).toLocaleString()}</span>
                 </div>
                 <h5 className="font-bold text-sm text-slate-800 dark:text-slate-200 mt-2 mb-1">{selectedTicket.subject}</h5>
                 <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">

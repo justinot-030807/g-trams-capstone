@@ -259,7 +259,7 @@ const SubmitMembers = () => {
               <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                 TODA Association &amp; Member Roster
               </h1>
-              <p className="print:hidden text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              <p className="print:hidden text-xs sm:text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
                 View all association members, registered units, or submit official rosters to the LGU.
               </p>
             </div>
@@ -341,7 +341,7 @@ const SubmitMembers = () => {
                   <Users size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider truncate">
                     Total Members
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
@@ -355,7 +355,7 @@ const SubmitMembers = () => {
                   <CheckCircle2 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider truncate">
                     Active Units
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
@@ -369,7 +369,7 @@ const SubmitMembers = () => {
                   <Clock3 size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider truncate">
                     Pending
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
@@ -383,7 +383,7 @@ const SubmitMembers = () => {
                   <ShieldCheck size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider truncate">
                     Total Fleet
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
@@ -396,18 +396,18 @@ const SubmitMembers = () => {
             {/* Search & Filter Controls */}
             <div className="print:hidden bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by member name, plate #, contact..."
-                  className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 shadow-2xs min-h-[42px]"
+                  className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 shadow-2xs min-h-[42px]"
                 />
                 {searchTerm && (
                   <button 
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
                   >
                     <X size={15} />
                   </button>
@@ -470,13 +470,13 @@ const SubmitMembers = () => {
               </div>
             ) : filteredMembers.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-dashed border-slate-300 dark:border-slate-700">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-600 dark:text-slate-400">
                   <Users size={28} />
                 </div>
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">
                   {searchTerm ? 'No matching members found' : 'No registered members found'}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 max-w-sm mx-auto mb-4">
                   {searchTerm
                     ? 'Try changing your search keywords or filter pills.'
                     : 'When operators register under your TODA, they will automatically appear here.'}
@@ -524,7 +524,7 @@ const SubmitMembers = () => {
                                 {member.name}
                               </h3>
                               {member.isCurrentUser && (
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-600 dark:text-slate-400">
                                   You
                                 </span>
                               )}
@@ -537,7 +537,7 @@ const SubmitMembers = () => {
                                   TODA President
                                 </span>
                               ) : (
-                                <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-600 dark:text-slate-400">
                                   Operator / Member
                                 </span>
                               )}
@@ -565,13 +565,13 @@ const SubmitMembers = () => {
                               <span className="text-xs uppercase font-bold bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Call</span>
                             </a>
                           ) : (
-                            <span className="text-slate-400 italic text-xs">No contact number listed</span>
+                            <span className="text-slate-600 dark:text-slate-400 italic text-xs">No contact number listed</span>
                           )}
                         </div>
 
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <MapPin size={13} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-                          <span className="truncate text-xs font-normal text-slate-600 dark:text-slate-400">
+                          <span className="truncate text-xs font-normal text-slate-600 dark:text-slate-600 dark:text-slate-400">
                             {member.address || 'Address not listed'}
                           </span>
                         </div>
@@ -579,13 +579,13 @@ const SubmitMembers = () => {
 
                       {/* Member's Registered Units Roster */}
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
                           <Car size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                           <span>Registered Tricycle Units</span>
                         </p>
 
                         {member.units.length === 0 ? (
-                          <div className="p-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 font-medium">
+                          <div className="p-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-600 dark:text-slate-400 font-medium">
                             No franchise applied yet
                           </div>
                         ) : (
@@ -604,7 +604,7 @@ const SubmitMembers = () => {
                                       {unit.make || 'Tricycle'}
                                     </span>
                                   </div>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate">
+                                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-normal truncate">
                                     Zone {unit.zone || 'N/A'} {unit.motorNo ? `• Motor: ${unit.motorNo}` : ''}
                                   </p>
                                 </div>
@@ -671,7 +671,7 @@ const SubmitMembers = () => {
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-0.5">
                       Select a file from your device
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 font-normal">
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-4 font-normal">
                       Supported formats: PDF, Excel (.xlsx, .csv)
                     </p>
                     
@@ -696,7 +696,7 @@ const SubmitMembers = () => {
                         <button 
                           type="button" 
                           onClick={() => setFile(null)} 
-                          className="text-slate-400 hover:text-red-500 ml-1 p-0.5 cursor-pointer rounded"
+                          className="text-slate-600 dark:text-slate-400 hover:text-red-500 ml-1 p-0.5 cursor-pointer rounded"
                         >
                           <X size={14} />
                         </button>
@@ -737,7 +737,7 @@ const SubmitMembers = () => {
                   {isLoadingHistory ? (
                     <SubmissionCardsSkeleton count={3} baseDelay={30} stepDelay={45} />
                   ) : submissions.length === 0 ? (
-                    <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-medium bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <div className="text-center py-6 text-slate-600 dark:text-slate-400 dark:text-slate-500 text-xs font-medium bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
                       No submissions yet.
                     </div>
                   ) : (
@@ -762,7 +762,7 @@ const SubmitMembers = () => {
                             {sub.status}
                           </span>
                         </div>
-                        <p className="text-xs font-normal text-slate-500 dark:text-slate-400 pl-5">
+                        <p className="text-xs font-normal text-slate-500 dark:text-slate-600 dark:text-slate-400 pl-5">
                           Submitted on {new Date(sub.createdAt).toLocaleDateString()}
                         </p>
                       </div>

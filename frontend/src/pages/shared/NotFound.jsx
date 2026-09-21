@@ -10,7 +10,7 @@ const NotFound = () => {
       <div className="text-center max-w-md">
         <AlertTriangle size={64} className="mx-auto text-amber-500 mb-6" />
         <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2">404 - Page Not Found</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 font-medium">
+        <p className="text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-8 font-medium">
           The page you are looking for doesn't exist or has been moved.
         </p>
         <button

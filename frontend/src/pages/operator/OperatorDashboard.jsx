@@ -408,7 +408,7 @@ const OperatorDashboard = () => {
 
     return (
       <div className="mb-5 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5 sm:p-5">
-        <p className="text-[11px] sm:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
+        <p className="text-[11px] sm:text-xs font-black text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
           {t('dashboard.appProgress', 'Application Progress')}
         </p>
         
@@ -459,7 +459,7 @@ const OperatorDashboard = () => {
                     ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' 
                     : isCompleted 
                     ? 'text-slate-800 dark:text-slate-200 font-bold' 
-                    : 'text-slate-400 dark:text-slate-500 font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold'
                 }`}>
                   {step.label}
                 </span>
@@ -633,7 +633,7 @@ const OperatorDashboard = () => {
                   <h4 className="text-xs sm:text-sm font-bold truncate">
                     Franchise Approved!
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     Claim Stub is ready for Municipal Cashier
                   </p>
                 </div>
@@ -662,7 +662,7 @@ const OperatorDashboard = () => {
                   <h4 className="text-xs sm:text-sm font-bold truncate text-purple-950 dark:text-purple-200">
                     {t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     {t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}
                   </p>
                 </div>
@@ -681,7 +681,7 @@ const OperatorDashboard = () => {
                   <h4 className="text-xs sm:text-sm font-bold truncate">
                     Application Needs Attention
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     Review remarks and submit corrected documents
                   </p>
                 </div>
@@ -731,7 +731,7 @@ const OperatorDashboard = () => {
             </div>
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">TODA Management Console</h3>
-              <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md leading-relaxed">
+              <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 max-w-md leading-relaxed">
                 Welcome President. You can view your registered members, submit the official TODA Masterlist, and coordinate with the Office of the Vice Mayor Extension office here.
               </p>
             </div>
@@ -778,7 +778,7 @@ const OperatorDashboard = () => {
                 </span>
               </div>
 
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400">
                 {franchises.length >= maxUnits 
                   ? 'Slots Full' 
                   : `${maxUnits - franchises.length} Slot(s) Available`}
@@ -817,7 +817,7 @@ const OperatorDashboard = () => {
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               {t('dashboard.garageTitle', 'My Franchise Garage')}
             </h2>
-            <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
+            <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-normal mt-0.5">
               {t('dashboard.garageSub', 'Assigned tricycle units under your account')}
             </p>
           </div>
@@ -840,7 +840,7 @@ const OperatorDashboard = () => {
       ) : franchises.length === 0 ? (
         <div 
           id="tour-empty-garage"
-          className="animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-6 sm:p-10 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center min-h-[260px] transition-colors shadow-2xs"
+          className="animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-6 sm:p-10 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400 flex flex-col items-center justify-center min-h-[260px] transition-colors shadow-2xs"
         >
           {/* Glowing Halo Icon Container */}
           <div className="relative mb-3">
@@ -853,7 +853,7 @@ const OperatorDashboard = () => {
           <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1">
             {t('dashboard.noUnitsTitle', 'No Franchise Units Found')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-sm leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-5 max-w-sm leading-relaxed">
             {t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}
           </p>
 
@@ -922,7 +922,7 @@ const OperatorDashboard = () => {
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 truncate">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 dark:text-slate-600 dark:text-slate-400 truncate">
                         MUNICIPALITY OF GASAN &bull; MTOP
                       </p>
                     </div>
@@ -935,7 +935,7 @@ const OperatorDashboard = () => {
                     <span className="inline-block px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight shadow-2xs">
                       {unit?.make || 'Tricycle'}
                     </span>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5 uppercase">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-0.5 uppercase">
                       {unit?.made || 'Model'}
                     </p>
                   </div>
@@ -951,7 +951,7 @@ const OperatorDashboard = () => {
                       <MapPin size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
+                      <p className="text-[9px] font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
                       <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{unit?.zone || 'N/A'}</p>
                     </div>
                   </div>
@@ -961,7 +961,7 @@ const OperatorDashboard = () => {
                       <Hash size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.motorNumber', 'Motor Number')}</p>
+                      <p className="text-[9px] font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.motorNumber', 'Motor Number')}</p>
                       <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{unit?.motorNo || 'N/A'}</p>
                     </div>
                   </div>
@@ -999,7 +999,7 @@ const OperatorDashboard = () => {
                         {daysRemaining !== null && (
                           <div className="space-y-1 pt-0.5">
                             <div className="flex justify-between items-center text-xs font-semibold">
-                              <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                              <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                 Status
                               </span>
                               <span className={`flex items-center gap-1 font-bold ${
@@ -1130,19 +1130,19 @@ const OperatorDashboard = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-5 sm:p-7 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
               <h2 className="text-base font-bold text-slate-900 dark:text-white">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
-              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-400 hover:text-red-500 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"><X size={18} /></button>
+              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-red-500 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"><X size={18} /></button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
               <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
-                <p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
+                <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
                 <p className="font-bold text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.fullName}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
             </div>
             <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
           </div>
@@ -1172,13 +1172,13 @@ const OperatorDashboard = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-base text-slate-900 dark:text-white">Cancel Application</h3>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
                 </div>
               </div>
               <button 
                 disabled={cancelModal.isSubmitting}
                 onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))} 
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
               >
                 <X size={18} />
               </button>
@@ -1319,7 +1319,7 @@ const OperatorDashboard = () => {
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-600 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
               >
                 <X size={18} />
               </button>
@@ -1342,10 +1342,10 @@ const OperatorDashboard = () => {
                   </div>
                   <div>
                     <p className="font-bold text-sm text-slate-900 dark:text-white">Account & Document Settings</p>
-                    <p className="text-xs text-slate-400">Manage profile, documents & security</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Manage profile, documents & security</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               {/* Language Preference */}
@@ -1363,10 +1363,10 @@ const OperatorDashboard = () => {
                   </div>
                   <div>
                     <p className="font-bold text-sm text-slate-900 dark:text-white">Language / Wika</p>
-                    <p className="text-xs text-slate-400">{language === 'fil' ? 'Filipino (Tagalog)' : 'English (US)'}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{language === 'fil' ? 'Filipino (Tagalog)' : 'English (US)'}</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               {/* Spotlight Tour / Help */}
@@ -1384,10 +1384,10 @@ const OperatorDashboard = () => {
                   </div>
                   <div>
                     <p className="font-bold text-sm text-slate-900 dark:text-white">Quick System Tour</p>
-                    <p className="text-xs text-slate-400">Learn how to use Operator Portal</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Learn how to use Operator Portal</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
 
@@ -1432,7 +1432,7 @@ const OperatorDashboard = () => {
                     {t('nav.notifications', 'Notifications')}
                   </h4>
                 </div>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">
                   {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
                 </p>
               </div>
@@ -1450,7 +1450,7 @@ const OperatorDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setIsNotifOpen(false)}
-                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-600 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
                   aria-label="Close"
                 >
                   <X size={16} />
@@ -1466,7 +1466,7 @@ const OperatorDashboard = () => {
                     <Bell size={22} />
                   </div>
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                  <p className="text-xs text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
                 </div>
               ) : (
                 notifications.map(notif => (
@@ -1480,7 +1480,7 @@ const OperatorDashboard = () => {
                     className={`p-4 cursor-pointer transition-colors ${notif.isRead ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60' : 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
                   >
                     <p className={`text-xs text-slate-900 dark:text-white line-clamp-1 ${notif.isRead ? 'font-semibold' : 'font-black'}`}>{notif.title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
                   </div>
                 ))
               )}

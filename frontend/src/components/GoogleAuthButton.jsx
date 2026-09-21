@@ -216,7 +216,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               </div>
               <button 
                 onClick={() => setShowConfigModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
                 <X size={18} />
               </button>

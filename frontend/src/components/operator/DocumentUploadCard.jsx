@@ -29,11 +29,22 @@ const DocumentUploadCard = ({
         return;
       }
       setSizeError(false);
+      
+      // Cleanup previous preview if any
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
       onFileSelect(id, selected);
     }
   };
 
   const handleScannerComplete = ({ file: scannedFile, filter }) => {
+    // Cleanup previous preview if any
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    
     setAppliedFilter(filter);
     onFileSelect(id, scannedFile);
   };
@@ -50,8 +61,8 @@ const DocumentUploadCard = ({
 
       <div className={`relative border-2 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
         hasFile 
-          ? 'bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 shadow-xs' 
-          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+          ? 'bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700 shadow-xs' 
+          : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
       }`}>
         
         {/* Hidden file input for direct file/PDF upload */}
@@ -67,9 +78,9 @@ const DocumentUploadCard = ({
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
             <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate leading-snug">
-              {label} {required && <span className="text-red-500">*</span>}
+              {label}
             </p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <p className="text-[11px] text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium mt-0.5">
               {hasFile ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
                   <CheckCircle2 size={12} /> Document Attached {appliedFilter === 'enhanced' && '(Magic Enhanced)'}
@@ -86,12 +97,15 @@ const DocumentUploadCard = ({
               onClick={(e) => {
                 e.preventDefault();
                 setAppliedFilter(null);
+                if (previewUrl && previewUrl.startsWith('blob:')) {
+                  URL.revokeObjectURL(previewUrl);
+                }
                 onFileRemove(id);
               }}
-              className="text-slate-400 hover:text-red-500 p-1.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer"
+              className="text-slate-600 dark:text-slate-400 hover:text-red-500 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2 -mt-2"
               title="Remove document"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           )}
         </div>
@@ -118,7 +132,7 @@ const DocumentUploadCard = ({
                 <span>Upload PDF / File</span>
               </button>
             </div>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
               Camera guide grid available &bull; Auto-enhancement &amp; B&amp;W filter supported
             </p>
           </div>
@@ -157,7 +171,7 @@ const DocumentUploadCard = ({
                 <button
                   type="button"
                   onClick={() => setIsScannerOpen(true)}
-                  className="text-[#7A1B22] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer text-xs"
+                  className="text-[#7A1B22] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-2 -mx-2 text-xs"
                 >
                   <RotateCcw size={12} /> Re-scan
                 </button>
@@ -167,7 +181,7 @@ const DocumentUploadCard = ({
         )}
 
         {/* Footer Helper */}
-        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
           <span>JPG, PNG, or PDF</span>
           <span>Max 15MB</span>
         </div>
@@ -183,4 +197,4 @@ const DocumentUploadCard = ({
   );
 };
 
-export default DocumentUploadCard;
+export default React.memo(DocumentUploadCard);

@@ -152,7 +152,7 @@ const PwaInstallBanner = () => {
               </div>
               <button 
                 onClick={() => setShowIOSModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
+                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
               >
                 <X size={18} />
               </button>
@@ -169,7 +169,7 @@ const PwaInstallBanner = () => {
                 </div>
                 <div className="text-xs">
                   <p className="font-bold text-slate-800 dark:text-slate-200">1. Tap the Share Button</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">Located at the bottom bar of your Safari browser.</p>
+                  <p className="text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs">Located at the bottom bar of your Safari browser.</p>
                 </div>
               </div>
 
@@ -179,7 +179,7 @@ const PwaInstallBanner = () => {
                 </div>
                 <div className="text-xs">
                   <p className="font-bold text-slate-800 dark:text-slate-200">2. Tap "Add to Home Screen"</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">Scroll down the share options and tap "Add to Home Screen".</p>
+                  <p className="text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs">Scroll down the share options and tap "Add to Home Screen".</p>
                 </div>
               </div>
             </div>

@@ -70,7 +70,7 @@ const searchHistoricalFranchise = async (req, res) => {
         if (!record) return res.status(404).json({ message: 'No historical application record found.' });
         res.status(200).json(record);
     } catch (error) {
-        res.status(error.message.includes('required') ? 400 : 500).json({ error: error.message });
+        res.status(error.message.includes('required') ? 400 : 500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -79,7 +79,7 @@ const getAllFranchises = async (req, res) => {
         const result = await FranchiseService.getPaginatedFranchises(req.query);
         res.status(200).json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -88,7 +88,7 @@ const getMyFranchises = async (req, res) => {
         const franchises = await Franchise.find({ operator: req.user._id, isArchived: { $ne: true } }).populate('operator', 'name address contact');
         res.status(200).json(franchises);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -150,7 +150,7 @@ const updateFranchise = async (req, res) => {
 
         res.status(200).json(updatedFranchise);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -168,7 +168,7 @@ const deleteFranchise = async (req, res) => {
 
         res.status(200).json({ message: 'Franchise deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -208,7 +208,7 @@ const renewFranchise = async (req, res) => {
 
         res.status(200).json(updatedFranchise);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -285,7 +285,7 @@ const updateFranchiseStatus = async (req, res) => {
 
         res.status(200).json(updatedFranchise);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -293,7 +293,7 @@ const cancelMyFranchise = async (req, res) => {
     try {
         const franchise = await Franchise.findById(req.params.id);
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
-        if (franchise.operator.toString() !== req.user._id.toString()) return res.status(401).json({ message: 'Not authorized to cancel this application' });
+        if (!franchise.operator || franchise.operator.toString() !== req.user._id.toString()) return res.status(401).json({ message: 'Not authorized to cancel this application' });
         
         if (!['Pending', 'For Signing', 'Ready for Pickup'].includes(franchise.status)) {
             return res.status(400).json({ message: 'Only pending or unreleased applications can be cancelled.' });
@@ -317,7 +317,7 @@ const cancelMyFranchise = async (req, res) => {
 
         res.status(200).json(franchise);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -354,7 +354,7 @@ const toggleArchiveFranchise = async (req, res) => {
             franchise: updatedFranchise 
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -391,7 +391,7 @@ const revokeFranchise = async (req, res) => {
             franchise
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 
@@ -401,7 +401,7 @@ const getFranchiseReports = async (req, res) => {
         res.status(200).json({ summary, data });
     } catch (error) {
         console.error("Report Generation Error:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An internal server error occurred' });
     }
 };
 

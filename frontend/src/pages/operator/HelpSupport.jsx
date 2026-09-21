@@ -385,26 +385,26 @@ const HelpSupport = () => {
                 <HelpCircle className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
                 <span>Frequently Asked Questions (FAQ)</span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
                 Ranked by trending and frequently accessed topics
               </p>
             </div>
 
             <div className="relative w-full md:w-80">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search help topics (e.g. renewal, permit)..."
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400 min-h-[40px]"
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-600 dark:text-slate-400 min-h-[40px]"
               />
             </div>
           </div>
 
           <div className="space-y-3">
             {filteredAndSortedFaqs.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="p-8 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
                 No matching questions found. Try different search keywords.
               </div>
             ) : (
@@ -445,7 +445,7 @@ const HelpSupport = () => {
                             </span>
                           ))}
                         </div>
-                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                        <span className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
                           {faq.views} views
                         </span>
                       </div>
@@ -464,7 +464,7 @@ const HelpSupport = () => {
               <Mail className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
               <span>Submit a Support Ticket</span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 font-medium">
               Need further assistance? Send us a message and we'll get back to you during office hours.
             </p>
           </div>
@@ -546,7 +546,7 @@ const HelpSupport = () => {
                 <Users className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
                 <span>About the Development Team</span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 font-medium">
                 G-TRAMS is a Capstone Project developed by students from <strong className="text-slate-700 dark:text-slate-300">Marinduque State University (MarSU)</strong>.
               </p>
             </div>
@@ -569,7 +569,7 @@ const HelpSupport = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{dev.name}</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{dev.role}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium truncate">{dev.role}</p>
                 </div>
               </div>
             ))}

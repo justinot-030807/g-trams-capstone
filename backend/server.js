@@ -28,7 +28,18 @@ connectDB();
 // HTTP Security Headers (Helmet)
 app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
-    contentSecurityPolicy: false
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "https://accounts.google.com"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "https://res.cloudinary.com", "data:", "blob:"],
+            connectSrc: ["'self'", "https://api.semaphore.co", "https://oauth2.googleapis.com"],
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            frameSrc: ["https://accounts.google.com"]
+        }
+    }
 }));
 
 // CORS configuration with strict origin enforcement
@@ -46,12 +57,7 @@ app.use(cors({
         // Allow mobile apps, curl, or server-to-server requests without Origin header
         if (!origin) return callback(null, true);
         
-        if (
-            ALLOWED_ORIGINS.includes(origin) ||
-            origin.includes('localhost') ||
-            origin.includes('127.0.0.1') ||
-            origin.endsWith('.vercel.app')
-        ) {
+        if (ALLOWED_ORIGINS.includes(origin)) {
             return callback(null, true);
         }
         return callback(new Error(`Blocked by CORS policy: Origin ${origin} not allowed.`));

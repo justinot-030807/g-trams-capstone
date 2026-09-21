@@ -100,7 +100,7 @@ const PublicStats = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white text-center tracking-tight uppercase mb-4">
             Public <span className="text-[#D4AF37]">Stats</span>
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base font-medium max-w-2xl mx-auto text-center">
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base font-medium max-w-2xl mx-auto text-center">
             A unified ecosystem for a more organized, safe, and efficient transportation system in Gasan.
           </p>
         </motion.div>

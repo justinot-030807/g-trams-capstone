@@ -92,13 +92,19 @@ const DocumentScannerModal = ({
   const handleShutterCapture = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
+    
+    // Scale down to max 1024px width to save memory
+    const MAX_WIDTH = 1024;
+    const scale = Math.min(1, MAX_WIDTH / (video.videoWidth || 1280));
+    
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
+    canvas.width = (video.videoWidth || 1280) * scale;
+    canvas.height = (video.videoHeight || 720) * scale;
+    
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // 0.85 for better compression
     stopCamera();
     loadCapturedImage(dataUrl);
   };
@@ -291,7 +297,7 @@ const DocumentScannerModal = ({
               <h3 className="text-sm sm:text-base font-bold text-white truncate">
                 {mode === 'camera' ? `Scan ${documentTitle}` : `Enhance & Verify ${documentTitle}`}
               </h3>
-              <p className="text-[11px] text-slate-400 truncate">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
                 {mode === 'camera' ? 'Align paper within guidelines' : 'Review clarity before attaching'}
               </p>
             </div>
@@ -343,7 +349,7 @@ const DocumentScannerModal = ({
                   <AlertCircle size={24} />
                 </div>
                 <h4 className="text-base font-bold text-white">Camera Unavailable</h4>
-                <p className="text-xs text-slate-400 max-w-sm">
+                <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm">
                   {cameraError} You can choose a photo directly from your device gallery.
                 </p>
                 <button
@@ -470,7 +476,7 @@ const DocumentScannerModal = ({
                     ? 'bg-[#7A1B22] text-[#D4AF37] border border-[#D4AF37]/50' 
                     : 'bg-slate-800 text-slate-200 border border-slate-700'
                 }`}>
-                  <Sparkles size={12} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-400'} />
+                  <Sparkles size={12} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-600 dark:text-slate-400'} />
                   <span>{isEnhanced ? 'Magic Enhanced (CamScanner)' : 'Original Photo'}</span>
                 </div>
               </div>
@@ -492,7 +498,7 @@ const DocumentScannerModal = ({
                   }`}
                   title={isEnhanced ? 'CamScanner Magic Color Active (Tap to view original)' : 'Tap to enhance document'}
                 >
-                  <Sparkles size={16} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-400'} />
+                  <Sparkles size={16} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-600 dark:text-slate-400'} />
                   <span>{isEnhanced ? 'Magic Enhance: ON' : 'Magic Enhance: OFF'}</span>
                 </button>
 

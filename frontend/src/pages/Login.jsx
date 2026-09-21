@@ -260,7 +260,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7A1B22] transition-colors p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] transition-colors p-1"
                   >
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
@@ -308,7 +308,7 @@ const Login = () => {
             {/* DIVIDER */}
             <div className="flex items-center gap-3 my-2 animate-item-4">
               <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs font-black text-slate-400 tracking-wider">OR</span>
+              <span className="text-xs font-black text-slate-600 dark:text-slate-400 tracking-wider">OR</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
 

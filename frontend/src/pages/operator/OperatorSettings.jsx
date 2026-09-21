@@ -465,7 +465,7 @@ const OperatorSettings = () => {
   };
 
   const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs";
-  const lockedClasses = "w-full bg-slate-100/90 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none";
+  const lockedClasses = "w-full bg-slate-100/90 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 outline-none cursor-not-allowed select-none";
 
   const isEmailContact = (profileData.contact || '').includes('@');
   const contactLabel = profileData.contact
@@ -503,7 +503,7 @@ const OperatorSettings = () => {
         <div className="w-1.5 h-8 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
         <div>
           <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">Account Settings</h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium mt-0.5">
             Manage your personal profile, security credentials, and portal display preferences.
           </p>
         </div>
@@ -521,7 +521,7 @@ const OperatorSettings = () => {
               className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'profile'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <User size={15} />
@@ -534,7 +534,7 @@ const OperatorSettings = () => {
               className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'security'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Lock size={15} />
@@ -547,7 +547,7 @@ const OperatorSettings = () => {
               className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'preferences'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Globe size={15} />
@@ -560,7 +560,7 @@ const OperatorSettings = () => {
               className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'idcard'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <ShieldCheck size={15} />
@@ -573,7 +573,7 @@ const OperatorSettings = () => {
               className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'vault'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <FileText size={15} />
@@ -586,7 +586,7 @@ const OperatorSettings = () => {
               className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all min-h-[38px] sm:min-h-[42px] cursor-pointer ${
                 activeTab === 'notifications'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Bell size={15} />
@@ -605,7 +605,7 @@ const OperatorSettings = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     Operator Information
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     Update personal details and registered {contactLabel}
                   </p>
                 </div>
@@ -625,7 +625,7 @@ const OperatorSettings = () => {
                   <span>Change Profile Photo</span>
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 </label>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1.5 font-medium">
                   Select a clear photo of your face (JPG or PNG)
                 </p>
               </div>
@@ -651,9 +651,9 @@ const OperatorSettings = () => {
                   </label>
                   <div className="relative">
                     {isEmailContact ? (
-                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 pointer-events-none" />
                     ) : (
-                      <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 pointer-events-none" />
                     )}
                     <input
                       type={isEmailContact ? "email" : "tel"}
@@ -665,7 +665,7 @@ const OperatorSettings = () => {
                       placeholder={isEmailContact ? "e.g. operator@gmail.com" : "e.g. 0912 345 6789"}
                     />
                   </div>
-                  <p className="text-xs font-medium text-slate-400 mt-1">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">
                     Office of the Vice Mayor Extension will use this {contactLabel} for notices and official updates.
                   </p>
                 </div>
@@ -682,7 +682,7 @@ const OperatorSettings = () => {
                     placeholder="e.g. 09123456789"
                     className={inputClasses}
                   />
-                  <p className="text-xs font-medium text-slate-400 mt-1">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">
                     Used only in case of accidents or emergencies.
                   </p>
                 </div>
@@ -703,7 +703,7 @@ const OperatorSettings = () => {
                     title="Registered TODA is permanent. Visit LGU office for TODA transfer."
                     className={lockedClasses}
                   />
-                  <p className="text-xs text-slate-400 mt-1 font-medium">Contact the Office of the Vice Mayor Extension office for any TODA reassignment.</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">Contact the Office of the Vice Mayor Extension office for any TODA reassignment.</p>
                 </div>
 
                 <div>
@@ -722,7 +722,7 @@ const OperatorSettings = () => {
                     title="Official registered address cannot be self-edited. Contact Office of the Vice Mayor Extension for changes."
                     className={lockedClasses}
                   />
-                  <p className="text-xs text-slate-400 mt-1 font-medium">Recorded in the official municipal registry of Gasan.</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">Recorded in the official municipal registry of Gasan.</p>
                 </div>
               </div>
 
@@ -750,7 +750,7 @@ const OperatorSettings = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     Account Password
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     Keep your account secure with a strong password
                   </p>
                 </div>
@@ -772,7 +772,7 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setShowCurrentPass(!showCurrentPass)}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={showCurrentPass ? 'Hide password' : 'Show password'}
                     >
                       {showCurrentPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -795,13 +795,13 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setShowNewPass(!showNewPass)}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={showNewPass ? 'Hide password' : 'Show password'}
                     >
                       {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  <p className="text-xs font-medium text-slate-400 mt-1">Must be at least 6 characters.</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Must be at least 6 characters.</p>
                 </div>
 
                 <div>
@@ -819,7 +819,7 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPass(!showConfirmPass)}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 cursor-pointer rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={showConfirmPass ? 'Hide password' : 'Show password'}
                     >
                       {showConfirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -852,7 +852,7 @@ const OperatorSettings = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     App Preferences
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     Adjust display appearance and system language
                   </p>
                 </div>
@@ -864,7 +864,7 @@ const OperatorSettings = () => {
                   {theme === 'system' ? <Laptop size={16} className="text-blue-500" /> : isDark ? <Moon size={16} className="text-indigo-400" /> : <Sun size={16} className="text-amber-500" />}
                   <span>Theme Mode</span>
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3.5">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-3.5">
                   Choose light mode, dark mode, or follow your phone/device appearance automatically.
                 </p>
 
@@ -885,7 +885,7 @@ const OperatorSettings = () => {
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Light Mode</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Always light</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Always light</p>
                       </div>
                     </div>
                     {theme === 'light' && (
@@ -911,7 +911,7 @@ const OperatorSettings = () => {
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Dark Mode</p>
-                        <p className="text-xs text-slate-400">Always dark</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">Always dark</p>
                       </div>
                     </div>
                     {theme === 'dark' && (
@@ -937,7 +937,7 @@ const OperatorSettings = () => {
                       </div>
                       <div>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">System (Auto)</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Match phone settings</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Match phone settings</p>
                       </div>
                     </div>
                     {theme === 'system' && (
@@ -955,7 +955,7 @@ const OperatorSettings = () => {
                   <Globe size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                   <span>Display Language</span>
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3.5">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-3.5">
                   Select your preferred display language across the portal.
                 </p>
 
@@ -972,7 +972,7 @@ const OperatorSettings = () => {
                   >
                     <div>
                       <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">English (US)</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Default system language</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Default system language</p>
                     </div>
                     {preferences.language === 'en' && (
                       <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
@@ -993,7 +993,7 @@ const OperatorSettings = () => {
                   >
                     <div>
                       <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Filipino / Tagalog</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Tagalog language</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Tagalog language</p>
                     </div>
                     {preferences.language === 'fil' && (
                       <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
@@ -1020,7 +1020,7 @@ const OperatorSettings = () => {
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Digital Operator ID
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                   Official LGU Gasan Tricycle Operator Credential
                 </p>
               </div>
@@ -1039,7 +1039,7 @@ const OperatorSettings = () => {
           </div>
           
           <div className="py-2 text-center">
-            <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 flex items-center justify-center gap-1.5 font-medium">
+            <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-3 flex items-center justify-center gap-1.5 font-medium">
               <RefreshCw size={12} className="text-[#D4AF37] animate-spin" />
               <span>Click or tap the ID card to flip between photo and QR code</span>
             </p>
@@ -1069,7 +1069,7 @@ const OperatorSettings = () => {
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Document Vault
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                   Securely access and download your submitted franchise documents
                 </p>
               </div>
@@ -1091,7 +1091,7 @@ const OperatorSettings = () => {
           {isVaultLoading ? (
             <div className="py-12 flex flex-col items-center justify-center">
               <Loader2 size={32} className="text-[#7A1B22] dark:text-[#D4AF37] animate-spin mb-3" />
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading your encrypted documents...</p>
+              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">Loading your encrypted documents...</p>
             </div>
           ) : vaultDocuments.length === 0 ? (
             <div className="py-12 text-center flex flex-col items-center justify-center">
@@ -1099,7 +1099,7 @@ const OperatorSettings = () => {
                 <FileText size={36} />
               </div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5">No Uploaded Documents Found</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-5 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 max-w-sm mx-auto mb-5 leading-relaxed">
                 When you submit a franchise application or renewal, your LTO OR/CR, Driver's License, Barangay Clearance, and TODA Endorsement will automatically be accessible here.
               </p>
               <button
@@ -1114,7 +1114,7 @@ const OperatorSettings = () => {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Stored Files ({vaultDocuments.length})
                 </p>
                 <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
@@ -1142,7 +1142,7 @@ const OperatorSettings = () => {
                       <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1 group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
                         {doc.title}
                       </h4>
-                      <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mb-3">
+                      <p className="text-xs font-mono text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-3">
                         Plate: <span className="font-bold text-slate-700 dark:text-slate-200">{doc.plate}</span> &bull; {doc.unitDesc}
                       </p>
                     </div>
@@ -1190,7 +1190,7 @@ const OperatorSettings = () => {
                   <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                     Phone Push Notifications
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                     Real-time alerts sent to your phone lock screen &amp; status bar
                   </p>
                 </div>
@@ -1203,7 +1203,7 @@ const OperatorSettings = () => {
                   <span>Active &amp; Subscribed</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                   <span className="w-2 h-2 rounded-full bg-slate-400" />
                   <span>Not Subscribed</span>
                 </span>
@@ -1245,7 +1245,7 @@ const OperatorSettings = () => {
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                     Push Notifications on this Phone / Device
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                     Receive alert banners and sounds even when the G-TRAMS app is closed.
                   </p>
                 </div>
@@ -1257,7 +1257,7 @@ const OperatorSettings = () => {
                   type="button"
                   disabled={!pushSupported || isPushLoading}
                   onClick={handleTogglePushSubscription}
-                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/20 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                     isPushSubscribed ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
                   }`}
                   aria-label="Toggle push notifications on this device"
@@ -1277,7 +1277,7 @@ const OperatorSettings = () => {
                 <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   Subukan ang Notification (Test Alert)
                 </h5>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                   Magpadala ng agarang test alert upang masubukan kung tutunog at lalabas ang banner sa iyong telepono.
                 </p>
               </div>
@@ -1289,7 +1289,7 @@ const OperatorSettings = () => {
                 className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs active:scale-95 ${
                   isPushSubscribed
                     ? 'bg-[#7A1B22] hover:bg-[#601015] text-white dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-600 cursor-not-allowed'
                 }`}
               >
                 {isTestingPush ? (
@@ -1317,7 +1317,7 @@ const OperatorSettings = () => {
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Notification Categories
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                   Piliin kung anong mga uri ng abiso ang nais mong matanggap sa iyong telepono
                 </p>
               </div>
@@ -1330,7 +1330,7 @@ const OperatorSettings = () => {
                   <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>Franchise Status &amp; Approvals</span>
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                     Abiso kapag na-approve, for inspection, o may kinakailangang compliance sa iyong aplikasyon ng prangkisa.
                   </p>
                 </div>
@@ -1355,7 +1355,7 @@ const OperatorSettings = () => {
                   <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>Renewal Reminders &amp; Deadlines</span>
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                     Maagang paalala bago mag-expire ang iyong prangkisa upang makaiwas sa penalty at suspension.
                   </p>
                 </div>
@@ -1380,7 +1380,7 @@ const OperatorSettings = () => {
                   <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>TODA &amp; Municipal Transport Advisories</span>
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                     Mga anunsyo mula sa Sangguniang Bayan, LGU Gasan, at TODA President tungkol sa ruta, taripa, at pagpupulong.
                   </p>
                 </div>
@@ -1449,7 +1449,7 @@ const OperatorSettings = () => {
             <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5 tracking-tight">
               {confirmModal.type === 'profile' ? 'Save Profile Changes?' : 'Confirm Password Change?'}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mb-5 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-600 dark:text-slate-400 mb-5 leading-relaxed">
               {confirmModal.type === 'profile'
                 ? 'Are you sure you want to save these updated details to your profile?'
                 : 'Are you sure you want to update your account password?'}
@@ -1509,7 +1509,7 @@ const OperatorSettings = () => {
                 <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
                   {previewDoc.title}
                 </h3>
-                <p className="text-xs text-slate-400 truncate">
+                <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
                   {previewDoc.plate} &bull; {previewDoc.unitDesc}
                 </p>
               </div>
@@ -1542,7 +1542,7 @@ const OperatorSettings = () => {
             </div>
 
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-medium">G-TRAMS Secured Document Vault</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">G-TRAMS Secured Document Vault</span>
               <a
                 href={previewDoc.url}
                 target="_blank"

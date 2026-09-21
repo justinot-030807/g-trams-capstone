@@ -522,7 +522,7 @@ const AdminSettings = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">Settings</h1>
-            <p className="text-white/75 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
+            <p className="text-white/75 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
               Manage your account, preferences, and system configurations.
             </p>
           </div>
@@ -540,7 +540,7 @@ const AdminSettings = () => {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
                 activeTab === 'system'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Sliders size={16} />
@@ -552,7 +552,7 @@ const AdminSettings = () => {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
                 activeTab === 'account'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <User size={16} />
@@ -564,7 +564,7 @@ const AdminSettings = () => {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
                 activeTab === 'preferences'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Globe size={16} />
@@ -576,7 +576,7 @@ const AdminSettings = () => {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
                 activeTab === 'audit'
                   ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Shield size={16} />
@@ -595,7 +595,7 @@ const AdminSettings = () => {
                   </div>
                   <div>
                     <h2 className="text-base font-black text-slate-900 dark:text-white">Franchise Validity Period</h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Configure validity duration for first-time and renewed permits</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Configure validity duration for first-time and renewed permits</p>
                   </div>
                 </div>
 
@@ -614,7 +614,7 @@ const AdminSettings = () => {
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">Years</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-600 dark:text-slate-400 font-bold">Years</span>
                     </div>
                   </div>
 
@@ -632,7 +632,7 @@ const AdminSettings = () => {
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">Years</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-600 dark:text-slate-400 font-bold">Years</span>
                     </div>
                   </div>
 
@@ -650,7 +650,7 @@ const AdminSettings = () => {
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">Days before</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-600 dark:text-slate-400 font-bold">Days before</span>
                     </div>
                   </div>
                 </div>
@@ -664,7 +664,7 @@ const AdminSettings = () => {
                   </div>
                   <div>
                     <h2 className="text-base font-black text-slate-900 dark:text-white">Fiscal & Fare Rates</h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Establish municipal fees, penalties, and official TODA fare tariffs</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Establish municipal fees, penalties, and official TODA fare tariffs</p>
                   </div>
                 </div>
 
@@ -674,7 +674,7 @@ const AdminSettings = () => {
                       Fiscal Year Cycle
                     </label>
                     <div className="relative">
-                      <CalendarDays size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <CalendarDays size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" />
                       <input
                         type="text"
                         name="fiscalYear"
@@ -701,7 +701,7 @@ const AdminSettings = () => {
                         className={inputClasses}
                       />
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">Default is 2 units</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Default is 2 units</p>
                   </div>
 
                   <div>
@@ -769,12 +769,12 @@ const AdminSettings = () => {
                       <button
                         type="button"
                         onClick={handleResetDefaultDocs}
-                        className="text-xs font-bold text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors"
+                        className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors"
                       >
                         Reset Defaults
                       </button>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Manage the list of documents required from operators when submitting franchise applications:</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-4">Manage the list of documents required from operators when submitting franchise applications:</p>
 
                     {/* DYNAMIC DOCUMENT LIST */}
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -787,7 +787,7 @@ const AdminSettings = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveRequirement(doc)}
-                            className="text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            className="text-slate-600 dark:text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                             title="Remove document requirement"
                           >
                             <X size={14} />
@@ -795,7 +795,7 @@ const AdminSettings = () => {
                         </div>
                       ))}
                       {(Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).length === 0 && (
-                        <p className="text-xs text-slate-400 italic py-2 text-center">No document requirements defined. Add one below.</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 italic py-2 text-center">No document requirements defined. Add one below.</p>
                       )}
                     </div>
                   </div>
@@ -827,7 +827,7 @@ const AdminSettings = () => {
                       <AlertTriangle size={20} className="text-orange-500" />
                       <h2 className="text-base font-black text-slate-900 dark:text-white">Maintenance Mode</h2>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
                       Enabling Maintenance Mode prevents operators from submitting new applications while system maintenance or database migration is in progress.
                     </p>
                   </div>
@@ -893,7 +893,7 @@ const AdminSettings = () => {
                       <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                     </label>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2 font-medium">Click to upload custom administrator avatar</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium">Click to upload custom administrator avatar</p>
                 </div>
 
                 <div className="space-y-4">
@@ -1007,7 +1007,7 @@ const AdminSettings = () => {
                     {isDark ? <Moon size={16} className="text-indigo-400" /> : <Sun size={16} className="text-amber-500" />}
                     Theme Mode
                   </p>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                     {isDark ? 'Dark Theme active (High Contrast)' : 'Light Theme active'}
                   </p>
                 </div>
@@ -1038,7 +1038,7 @@ const AdminSettings = () => {
                     <Globe size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     Display Language
                   </p>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                     Select language for UI labels and notifications
                   </p>
                 </div>
@@ -1046,7 +1046,7 @@ const AdminSettings = () => {
                 <select
                   value={preferences.language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-2 focus:ring-[#7A1B22]/20"
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2"
                 >
                   <option value="en">English (US)</option>
                   <option value="fil">Tagalog / Filipino</option>
@@ -1060,7 +1060,7 @@ const AdminSettings = () => {
                     <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     In-App Action Toasts
                   </p>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                     Show centered pop-up toasts on save and updates
                   </p>
                 </div>
@@ -1098,7 +1098,7 @@ const AdminSettings = () => {
                           Immutable Ledger
                         </span>
                       </h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
                         Chronological record of administrative operations, approvals, revocations, and security events.
                       </p>
                     </div>
@@ -1117,7 +1117,7 @@ const AdminSettings = () => {
                 {/* Filter and Search Bar */}
                 <div className="pt-6 grid grid-cols-1 sm:grid-cols-12 gap-3">
                   <div className="sm:col-span-8 relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
                     <input
                       type="text"
                       placeholder="Search by Actor Name, Action, or Record ID..."
@@ -1157,7 +1157,7 @@ const AdminSettings = () => {
                 <div className="mt-6 overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
+                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                         <th className="py-3 px-4">Timestamp & IP</th>
                         <th className="py-3 px-4">Administrator / Actor</th>
                         <th className="py-3 px-4">Action Event</th>
@@ -1167,14 +1167,14 @@ const AdminSettings = () => {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {auditLoading ? (
                         <tr>
-                          <td colSpan="4" className="py-12 text-center text-slate-400">
+                          <td colSpan="4" className="py-12 text-center text-slate-600 dark:text-slate-400">
                             <Loader2 className="animate-spin mx-auto mb-2 text-[#7A1B22] dark:text-[#D4AF37]" size={24} />
                             <p className="font-bold text-xs">Loading audit ledger...</p>
                           </td>
                         </tr>
                       ) : auditLogs.length === 0 ? (
                         <tr>
-                          <td colSpan="4" className="py-12 text-center text-slate-400">
+                          <td colSpan="4" className="py-12 text-center text-slate-600 dark:text-slate-400">
                             <ShieldCheck size={32} className="mx-auto mb-2 opacity-30" />
                             <p className="font-bold text-slate-700 dark:text-slate-300">No audit log entries recorded yet.</p>
                             <p className="text-xs text-slate-500 mt-0.5">Admin operations will automatically appear here in real time.</p>
@@ -1187,11 +1187,11 @@ const AdminSettings = () => {
                           
                           return (
                             <tr key={log._id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                              <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-400">
+                              <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
                                 <div className="font-bold text-slate-800 dark:text-slate-200">
                                   {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </div>
-                                <div className="text-xs text-slate-400">
+                                <div className="text-xs text-slate-600 dark:text-slate-400">
                                   {new Date(log.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} &bull; IP: {log.ipAddress || '127.0.0.1'}
                                 </div>
                               </td>
@@ -1201,7 +1201,7 @@ const AdminSettings = () => {
                                   <User size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                                   {log.actorName || 'System'}
                                 </div>
-                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-600 dark:text-slate-400">
                                   {log.actorRole || 'admin'}
                                 </span>
                               </td>
@@ -1228,7 +1228,7 @@ const AdminSettings = () => {
                                   </p>
                                 )}
                                 {log.details?.previousStatus && log.details?.newStatus && (
-                                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-mono">
                                     {log.details.previousStatus} ➜ {log.details.newStatus}
                                   </p>
                                 )}
@@ -1243,7 +1243,7 @@ const AdminSettings = () => {
 
                 {/* Pagination Controls */}
                 {auditPagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs font-bold text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs font-bold text-slate-600 dark:text-slate-600 dark:text-slate-400">
                     <div>
                       Page {auditPagination.currentPage} of {auditPagination.totalPages} ({auditPagination.totalRecords} total records)
                     </div>
@@ -1290,14 +1290,14 @@ const AdminSettings = () => {
                   <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
                     {confirmModal.type === 'system' ? 'Save System Configuration' : 'Confirm Action'}
                   </h3>
-                  <p className="text-xs text-slate-400 font-medium">Apply updates to platform database</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Apply updates to platform database</p>
                 </div>
               </div>
               <button
                 type="button"
                 disabled={isProcessing}
                 onClick={() => setConfirmModal({ isOpen: false, type: null, data: null })}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
+                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1307,30 +1307,30 @@ const AdminSettings = () => {
             {confirmModal.type === 'system' ? (
               <div className="space-y-3 mb-5">
                 <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 space-y-2 text-xs">
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
                     <span>Max Units / Operator:</span>
                     <span className="font-bold text-slate-900 dark:text-white">{systemConfig.maxUnitsPerOperator} unit(s)</span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
                     <span>Fiscal Year Cycle:</span>
                     <span className="font-bold text-slate-900 dark:text-white">{systemConfig.fiscalYear}</span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
                     <span>Franchise Application Fee:</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">₱{Number(systemConfig.franchiseFee).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
                     <span>Maintenance Mode:</span>
-                    <span className={`font-bold ${systemConfig.maintenanceMode ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                    <span className={`font-bold ${systemConfig.maintenanceMode ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400'}`}>
                       {systemConfig.maintenanceMode ? 'Active (Restricted)' : 'Inactive (Public Access)'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
                     <span>Required Documents:</span>
                     <span className="font-bold text-slate-900 dark:text-white">{Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs.length : 0} items</span>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 text-center">
+                <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
                   Changes will take effect immediately across all operator portals.
                 </p>
               </div>

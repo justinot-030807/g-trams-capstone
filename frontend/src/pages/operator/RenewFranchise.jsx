@@ -245,7 +245,7 @@ const RenewFranchise = () => {
               <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                 Franchise Record Not Found
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 max-w-sm mx-auto font-medium">
                 This franchise record could not be located. Please return to your franchises list.
               </p>
               <button
@@ -263,7 +263,7 @@ const RenewFranchise = () => {
           {!loadingFranchise && franchise && (
             <div className="p-4 sm:p-6 bg-slate-50/70 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800">
               <div className="flex items-center justify-between gap-2 mb-2.5">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Car size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                   Official Tricycle Details (Transport Pass)
                 </span>
@@ -295,7 +295,7 @@ const RenewFranchise = () => {
                 <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-center">
                   {/* Plate Number & Model */}
                   <div className="sm:col-span-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-1">
                       Plate Number
                     </span>
                     <div className="inline-flex items-center gap-2.5 bg-slate-100 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-xl border border-slate-300/80 dark:border-slate-700 shadow-inner">
@@ -309,20 +309,20 @@ const RenewFranchise = () => {
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mt-1.5 flex items-center gap-1.5">
                       <span className="font-semibold">{franchise.make || 'Tricycle'}</span>
                       <span className="text-slate-300 dark:text-slate-600">&bull;</span>
-                      <span className="text-slate-500 dark:text-slate-400">Model Year {franchise.made || 'N/A'}</span>
+                      <span className="text-slate-500 dark:text-slate-600 dark:text-slate-400">Model Year {franchise.made || 'N/A'}</span>
                     </p>
                   </div>
 
                   {/* Route & Toda Info Card */}
                   <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
                     <div>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">TODA Association</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">TODA Association</span>
                       <span className="text-xs sm:text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37] truncate block mt-0.5">
                         {franchise.todaName || 'NON-TODA'}
                       </span>
                     </div>
                     <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">Route / Zone</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">Route / Zone</span>
                       <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
                         Zone {franchise.zone || 'N/A'} (Gasan)
                       </span>
@@ -341,12 +341,12 @@ const RenewFranchise = () => {
                 <div className="px-4 sm:px-5 py-2.5 bg-slate-50/70 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-2.5 text-xs">
                   <div className="flex items-center gap-3.5 flex-wrap">
                     {franchise.motorNo && (
-                      <span className="text-slate-500 dark:text-slate-400 font-medium text-xs sm:text-xs">
+                      <span className="text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs">
                         <strong className="text-slate-700 dark:text-slate-300 font-semibold">Motor:</strong> {franchise.motorNo}
                       </span>
                     )}
                     {franchise.chassisNo && (
-                      <span className="text-slate-500 dark:text-slate-400 font-medium text-xs sm:text-xs">
+                      <span className="text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs">
                         <strong className="text-slate-700 dark:text-slate-300 font-semibold">Chassis:</strong> {franchise.chassisNo}
                       </span>
                     )}
@@ -374,7 +374,7 @@ const RenewFranchise = () => {
                     <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                       Step 1: Latest Community Tax Certificate (CTC)
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">
                       Enter details of your current Community Tax Certificate issued for this year.
                     </p>
                   </div>
@@ -382,8 +382,8 @@ const RenewFranchise = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      CTC / Cedula Serial No. <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                      CTC / Cedula Serial No.
                     </label>
                     <input 
                       type="text" 
@@ -393,15 +393,15 @@ const RenewFranchise = () => {
                       value={formData.ctcNo}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-400 min-h-[44px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 transition-all shadow-xs placeholder:text-slate-600 dark:text-slate-400 min-h-[46px]" 
                       placeholder="e.g. 08123456"
                     />
-                    <p className="text-xs font-medium text-slate-400 mt-1">Digits only</p>
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Digits only</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Date Issued <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                      Date Issued
                     </label>
                     <input 
                       type="date" 
@@ -409,7 +409,7 @@ const RenewFranchise = () => {
                       value={formData.dateIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[44px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
                     />
                     {formData.dateIssued && new Date(formData.dateIssued).getFullYear() < new Date().getFullYear() && (
                       <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
@@ -420,8 +420,8 @@ const RenewFranchise = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Place Issued <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                      Place Issued
                     </label>
                     <input 
                       type="text" 
@@ -429,7 +429,7 @@ const RenewFranchise = () => {
                       value={formData.placeIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs min-h-[44px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
                       placeholder="Gasan, Marinduque"
                     />
                   </div>
@@ -446,7 +446,7 @@ const RenewFranchise = () => {
                     <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                       Step 2: Latest Tricycle OR/CR (LTO)
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">
                       Take a photo or upload your latest Official Receipt & Certificate of Registration from LTO.
                     </p>
                   </div>
@@ -532,7 +532,7 @@ const RenewFranchise = () => {
               </h4>
               <button 
                 onClick={() => setFullPreview(null)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>

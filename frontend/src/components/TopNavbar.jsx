@@ -414,7 +414,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-xs text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h3>
-                      <p className="text-xs text-slate-400 font-medium">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                         {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'unread update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
                       </p>
                     </div>
@@ -433,7 +433,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                       <div className="p-8 text-center flex flex-col items-center justify-center">
                         <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
                       </div>
                     ) : (
                       allNotifs.map((notif) => {
@@ -459,8 +459,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                                 </p>
                                 {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
                               </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
-                              <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif?.time}</span>
+                              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
+                              <span className="text-[9px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif?.time}</span>
                             </div>
                           </div>
                         );
@@ -496,13 +496,13 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
           {/* Global Search Bar */}
           <div className="hidden sm:flex items-center w-full max-w-sm relative group">
-            <div className="absolute left-3 text-slate-400 group-focus-within:text-[#7A1B22] dark:group-focus-within:text-[#D4AF37] transition-colors">
+            <div className="absolute left-3 text-slate-600 dark:text-slate-400 group-focus-within:text-[#7A1B22] dark:group-focus-within:text-[#D4AF37] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
             <input 
               type="text" 
               placeholder="Search..." 
-              className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
+              className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.target.value.trim() !== '') {
                   navigate(`/franchise-masterlist?search=${encodeURIComponent(e.target.value)}`);
@@ -581,7 +581,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                         {t('nav.notifications', 'Notifications')}
                       </h4>
                     </div>
-                    <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">
                       {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
                     </p>
                   </div>
@@ -609,7 +609,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                       <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                         {t('nav.noNotifications', 'No new notifications')}
                       </p>
-                      <p className="text-xs text-slate-400 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-[200px] leading-relaxed">
                         {t('nav.noNotificationsDesc', 'System updates and notices will appear here.')}
                       </p>
                     </div>
@@ -650,10 +650,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                                 </p>
                                 {!isRead && <span className="w-2 h-2 bg-red-600 dark:bg-red-500 rounded-full shrink-0 shadow-sm" />}
                               </div>
-                              <p className={`text-xs sm:text-xs line-clamp-2 leading-snug ${!isRead ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
+                              <p className={`text-xs sm:text-xs line-clamp-2 leading-snug ${!isRead ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400'}`}>
                                 {notif?.desc}
                               </p>
-                              <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
+                              <span className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
                                 {notif?.time}
                               </span>
                             </div>

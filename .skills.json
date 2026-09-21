@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "skills": {
+    "code-review": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-21T03:15:28.033Z",
+      "platform": "gemini",
+      "contentHash": "a36edc8e90bf772b3577c3819abc824edca4e5e434b843c23cce91836e91d00c"
+    },
+    "mindrally-pwa-development": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-21T03:22:10.839Z",
+      "platform": "gemini"
+    },
+    "diagram": {
+      "version": "2.0.0",
+      "installedAt": "2026-09-21T03:23:11.454Z",
+      "platform": "gemini"
+    },
+    "integration-test": {
+      "version": "2.0.1",
+      "installedAt": "2026-09-21T03:23:31.421Z",
+      "platform": "gemini"
+    },
+    "vercel-vercel-react-best-practices": {
+      "version": "1.0.2",
+      "installedAt": "2026-09-21T03:27:14.178Z",
+      "platform": "gemini",
+      "contentHash": "93b48b102cd7d14ba6d231372b8aaccbe8359e0e729fb92aa3d788d9d9630947"
+    },
+    "accessibility-agents-contrast-master": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-21T03:27:50.461Z",
+      "platform": "gemini"
+    }
+  }
+}

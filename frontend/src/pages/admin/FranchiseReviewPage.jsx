@@ -540,7 +540,7 @@ const FranchiseReviewPage = () => {
                 <span className="text-xs font-bold text-slate-800">
                   Attached Documents
                 </span>
-                <span className="text-xs text-slate-400 font-medium">
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                   Keys [1-4]
                 </span>
               </div>

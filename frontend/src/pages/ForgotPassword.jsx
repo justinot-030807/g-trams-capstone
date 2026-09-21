@@ -183,7 +183,7 @@ const ForgotPassword = () => {
                   </button>
 
                   {isLoading && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-1.5 animate-pulse font-medium">
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 text-center mt-1.5 animate-pulse font-medium">
                       Connecting to secure gateway, please wait...
                     </p>
                   )}
