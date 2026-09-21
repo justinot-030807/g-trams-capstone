@@ -1,6 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, ExternalLink, X, ShieldCheck } from 'lucide-react';
 
+const decodeJwtPayload = (token) => {
+  try {
+    if (!token || typeof token !== 'string') return null;
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+};
+
 const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH GOOGLE', className = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
@@ -20,6 +39,78 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
         .catch(err => console.warn('Could not fetch google-client-id from server:', err));
     }
   }, [envClientId]);
+
+  // Handle One Tap credential response (ID Token JWT)
+  const handleOneTapCredentialResponse = async (response) => {
+    if (!response?.credential) return;
+    setIsLoading(true);
+
+    let decodedProfile = null;
+    try {
+      const payload = decodeJwtPayload(response.credential);
+      if (payload && (payload.email || payload.sub)) {
+        decodedProfile = {
+          email: (payload.email || '').toLowerCase().trim(),
+          name: payload.name || `${payload.given_name || ''} ${payload.family_name || ''}`.trim(),
+          picture: payload.picture || '',
+          googleId: payload.sub || ''
+        };
+      }
+    } catch (dErr) {
+      console.warn('Google One Tap JWT decode note:', dErr);
+    }
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          idToken: response.credential,
+          credential: response.credential,
+          googleProfile: decodedProfile
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) { 
+        if (data.accountDeactivated) { 
+          if (onError) onError(data); 
+          return; 
+        } 
+        throw new Error(data.message || 'Google authentication failed.'); 
+      }
+
+      if (data.isNewUser) {
+        onNewUser(data.googleProfile || decodedProfile);
+      } else {
+        onSuccess(data);
+      }
+    } catch (err) {
+      console.error('Google One Tap error:', err);
+      if (onError) onError(err.message || 'Failed to sign in with Google.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initialize Google One Tap if client ID exists
+  const initializeGoogleOneTap = () => {
+    if (!clientId || !window.google?.accounts?.id) return;
+
+    try {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleOneTapCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      // Triggers Google One Tap bottom sheet (similar to Figma)
+      window.google.accounts.id.prompt();
+    } catch (err) {
+      console.warn('Google One Tap init note:', err);
+    }
+  };
 
   // 1. Load official Google Identity Services script
   useEffect(() => {
@@ -41,54 +132,8 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
     };
 
     loadGsiScript();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
-
-  // 2. Initialize Google One Tap if client ID exists
-  const initializeGoogleOneTap = () => {
-    if (!clientId || !window.google?.accounts?.id) return;
-
-    try {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleOneTapCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      // Triggers Google One Tap bottom sheet (similar to Figma)
-      window.google.accounts.id.prompt();
-    } catch (err) {
-      console.warn('Google One Tap init note:', err);
-    }
-  };
-
-  // 3. Handle One Tap credential response (ID Token JWT)
-  const handleOneTapCredentialResponse = async (response) => {
-    if (!response?.credential) return;
-    setIsLoading(true);
-
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: response.credential })
-      });
-
-      const data = await res.json();
-      if (!res.ok) { if (data.accountDeactivated) { if (onError) onError(data); return; } throw new Error(data.message || 'Google authentication failed.'); }
-
-      if (data.isNewUser) {
-        onNewUser(data.googleProfile);
-      } else {
-        onSuccess(data);
-      }
-    } catch (err) {
-      console.error('Google One Tap error:', err);
-      if (onError) onError(err.message || 'Failed to sign in with Google.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // 4. Handle button click -> Open official Google Account Chooser popup
   const handleButtonClick = () => {
@@ -126,14 +171,34 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               if (userInfoRes.ok) {
                 const uData = await userInfoRes.json();
                 directGoogleProfile = {
-                  email: uData.email,
+                  email: (uData.email || '').toLowerCase().trim(),
                   name: uData.name || '',
                   picture: uData.picture || '',
-                  googleId: uData.sub
+                  googleId: uData.sub || ''
                 };
               }
             } catch (uErr) {
               console.warn('Direct Google userinfo fetch warning:', uErr);
+            }
+
+            // Fallback to openidconnect endpoint if oauth2/v3/userinfo was blocked or failed
+            if (!directGoogleProfile) {
+              try {
+                const oidcRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                });
+                if (oidcRes.ok) {
+                  const oData = await oidcRes.json();
+                  directGoogleProfile = {
+                    email: (oData.email || '').toLowerCase().trim(),
+                    name: oData.name || '',
+                    picture: oData.picture || '',
+                    googleId: oData.sub || ''
+                  };
+                }
+              } catch (oErr) {
+                console.warn('Direct Google OIDC userinfo warning:', oErr);
+              }
             }
 
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
@@ -146,7 +211,13 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
             });
 
             const data = await res.json();
-            if (!res.ok) { if (data.accountDeactivated) { if (onError) onError(data); return; } throw new Error(data.message || 'Google authentication failed.'); }
+            if (!res.ok) { 
+              if (data.accountDeactivated) { 
+                if (onError) onError(data); 
+                return; 
+              } 
+              throw new Error(data.message || 'Google authentication failed.'); 
+            }
 
             if (data.isNewUser) {
               onNewUser(data.googleProfile || directGoogleProfile);

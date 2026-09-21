@@ -37,16 +37,16 @@ router.get('/profile', protect, getProfile);
 router.put('/profile', protect, upload.single('profilePic'), updateProfile);
 router.post('/heartbeat', protect, heartbeat);
 
+// Import Validation Middleware
+const validate = require('../middleware/validateMiddleware');
+const { registerSchema, verifyOtpSchema, loginSchema, forgotPasswordSchema, googleAuthSchema } = require('../schemas/authSchema');
+
 // Google OAuth route
-router.post('/google', googleAuth);
+router.post('/google', validate(googleAuthSchema), googleAuth);
 router.get('/google-client-id', (req, res) => {
     const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '';
     res.status(200).json({ clientId });
 });
-
-// Import Validation Middleware
-const validate = require('../middleware/validateMiddleware');
-const { registerSchema, verifyOtpSchema, loginSchema, forgotPasswordSchema } = require('../schemas/authSchema');
 
 // Auth and registration routes
 router.post('/register', registerLimiter, validate(registerSchema), register);

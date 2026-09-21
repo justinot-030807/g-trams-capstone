@@ -417,5 +417,111 @@ describe('Registration & Auth Verification Flow', () => {
         expect(user).toBeDefined();
         expect(user.role).toBe('toda president');
     });
+
+    it('17. should seamlessly authenticate an existing registered email user via Continue with Google', async () => {
+        // User registers with email first
+        const regPayload = {
+            name: 'Maria Dela Cruz',
+            address: 'Antipolo',
+            contact: 'maria.cruz@gmail.com',
+            password: 'Password123!',
+            role: 'operator'
+        };
+
+        const regRes = await request(app)
+            .post('/api/v1/auth/register')
+            .send(regPayload);
+        expect(regRes.status).toBe(201);
+
+        const createdUser = await User.findOne({ contact: 'maria.cruz@gmail.com' });
+        expect(createdUser).toBeDefined();
+        // Verify user OTP
+        createdUser.isVerified = true;
+        await createdUser.save();
+
+        // User now clicks "Continue with Google" after registration
+        const googleLoginRes = await request(app)
+            .post('/api/v1/auth/google')
+            .send({
+                googleProfile: {
+                    email: 'maria.cruz@gmail.com',
+                    googleId: 'google-maria-12345',
+                    name: 'Maria Dela Cruz'
+                }
+            });
+
+        expect(googleLoginRes.status).toBe(200);
+        expect(googleLoginRes.body.isNewUser).toBe(false);
+        expect(googleLoginRes.body.token).toBeDefined();
+
+        const updatedUser = await User.findById(createdUser._id);
+        expect(updatedUser.googleId).toBe('google-maria-12345');
+        expect(updatedUser.authProvider).toBe('google');
+    });
+
+    it('18. should decode JWT idToken as fallback and authenticate without tokeninfo failure', async () => {
+        const jwt = require('jsonwebtoken');
+        const fakeToken = jwt.sign({
+            email: 'jwt.fallback@gmail.com',
+            sub: 'sub-jwt-777',
+            name: 'JWT Fallback User'
+        }, 'secret');
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send({ idToken: fakeToken });
+
+        expect(res.status).toBe(200);
+        expect(res.body.isNewUser).toBe(true);
+        expect(res.body.googleProfile.email).toBe('jwt.fallback@gmail.com');
+        expect(res.body.googleProfile.googleId).toBe('sub-jwt-777');
+    });
+
+    it('19. should accept credential parameter (Google One Tap standard payload name)', async () => {
+        const jwt = require('jsonwebtoken');
+        const oneTapCredential = jwt.sign({
+            email: 'onetap.user@gmail.com',
+            sub: 'sub-onetap-888',
+            name: 'One Tap User'
+        }, 'secret');
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send({ credential: oneTapCredential });
+
+        expect(res.status).toBe(200);
+        expect(res.body.isNewUser).toBe(true);
+        expect(res.body.googleProfile.email).toBe('onetap.user@gmail.com');
+    });
+
+    it('20. should unwrap nested googleProfile payload gracefully', async () => {
+        const nestedPayload = {
+            googleProfile: {
+                googleProfile: {
+                    email: 'nested.profile@gmail.com',
+                    googleId: 'sub-nested-999',
+                    name: 'Nested User'
+                }
+            },
+            onboardingData: {
+                fullName: 'Nested User',
+                address: 'Bahi',
+                contact: '09777777777',
+                todaAssociation: 'BATODA',
+                role: 'operator'
+            }
+        };
+
+        const res = await request(app)
+            .post('/api/v1/auth/google')
+            .send(nestedPayload);
+
+        expect(res.status).toBe(201);
+        expect(res.body.token).toBeDefined();
+
+        const dbUser = await User.findOne({ email: 'nested.profile@gmail.com' });
+        expect(dbUser).toBeDefined();
+        expect(dbUser.contact).toBe('09777777777');
+    });
 });
 

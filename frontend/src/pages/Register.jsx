@@ -11,10 +11,20 @@ import AuthFooter from '../components/common/AuthFooter';
 
 
 
+const unwrapGoogleProfile = (raw) => {
+  if (!raw) return null;
+  const p = raw.googleProfile || raw.profile || raw.user || raw;
+  const email = (p.email || p.mail || raw.email || '').trim().toLowerCase();
+  const name = (p.name || p.fullName || raw.name || raw.fullName || '').trim();
+  const picture = p.picture || p.photo || p.avatar || raw.picture || '';
+  const googleId = p.googleId || p.sub || p.id || raw.googleId || raw.sub || '';
+  return { email, name, picture, googleId };
+};
+
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const incomingGoogle = location.state?.googleProfile;
+  const incomingGoogle = unwrapGoogleProfile(location.state?.googleProfile);
 
   const [step, setStep] = useState(1); 
   const [error, setError] = useState('');
@@ -41,7 +51,7 @@ const Register = () => {
 
   // Google Sign-In state
   const [googleProfileData, setGoogleProfileData] = useState(incomingGoogle || null);
-  const [showGoogleToast, setShowGoogleToast] = useState(false);
+  const [showGoogleToast, setShowGoogleToast] = useState(Boolean(incomingGoogle));
   const [showGoogleWelcome, setShowGoogleWelcome] = useState(!!location.state?.fromGoogleLogin);
 
   // Ensure full-screen coverage without zoom gaps on laptops
@@ -59,20 +69,12 @@ const Register = () => {
   }, []);
 
   useEffect(() => {
-    if (incomingGoogle) {
-      setGoogleProfileData(incomingGoogle);
-      setFormData(prev => ({
-        ...prev,
-        name: incomingGoogle.name || prev.name,
-        contact: incomingGoogle.email || prev.contact
-      }));
-      setShowGoogleToast(true);
-      const timer = setTimeout(() => {
-        setShowGoogleToast(false);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [incomingGoogle]);
+    if (!showGoogleToast) return;
+    const timer = setTimeout(() => {
+      setShowGoogleToast(false);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [showGoogleToast]);
 
   useEffect(() => {
     let timer;
@@ -120,13 +122,18 @@ const Register = () => {
 
     // If registering via Google: No OTP required, instant registration and login!
     if (googleProfileData) {
+      const cleanProfile = unwrapGoogleProfile(googleProfileData) || googleProfileData;
       if (!formData.name || !formData.name.trim()) {
         return setError('PLEASE ENTER YOUR FULL LEGAL NAME.');
       }
       if (!formData.address) {
         return setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
       }
-      if (!formData.contact || !isValidContact(formData.contact)) {
+
+      const inputContact = (formData.contact || '').trim();
+      const resolvedContact = (inputContact && isValidContact(inputContact)) ? inputContact : (cleanProfile?.email || '');
+
+      if (!resolvedContact || !isValidContact(resolvedContact)) {
         return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
       }
       if (formData.role === 'toda president' && (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA')) {
@@ -138,20 +145,20 @@ const Register = () => {
 
       setIsLoading(true);
 
-      const rawContact = formData.contact.trim();
-      const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
+      const cleanContact = resolvedContact.includes('@') ? resolvedContact.toLowerCase() : resolvedContact.replace(/[\s-]/g, '');
 
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            googleProfile: googleProfileData,
+            googleProfile: cleanProfile,
             onboardingData: {
               fullName: formData.name.trim(),
               name: formData.name.trim(),
               address: formData.address.trim(),
               contact: cleanContact,
+              email: cleanProfile?.email || (cleanContact.includes('@') ? cleanContact : ''),
               todaAssociation: formData.todaAssociation || 'NON-TODA',
               role: formData.role || 'operator',
               password: formData.password || ''
@@ -171,7 +178,7 @@ const Register = () => {
           }
           setError(errorMsg.toUpperCase());
         }
-      } catch (err) {
+      } catch {
         setError('CANNOT CONNECT TO THE SERVER.');
       } finally {
         setIsLoading(false);
@@ -253,7 +260,7 @@ const Register = () => {
         }
         setError(errorMsg.toUpperCase()); 
       }
-    } catch (err) { 
+    } catch { 
       setError('CANNOT CONNECT TO THE SERVER.'); 
     } finally { 
       clearTimeout(slowTimer);
@@ -294,7 +301,7 @@ const Register = () => {
         const errorMsg = data.message || data.error || 'FAILED TO RESEND OTP.';
         setError(errorMsg.toUpperCase());
       }
-    } catch (err) {
+    } catch {
       setError('CANNOT CONNECT TO THE SERVER.');
     } finally {
       setIsLoading(false);
@@ -335,7 +342,7 @@ const Register = () => {
         }
         setError(errorMsg.toUpperCase());
       }
-    } catch (err) { 
+    } catch { 
       setError('CANNOT CONNECT TO THE SERVER.'); 
     } finally {
       setIsLoading(false);
@@ -626,11 +633,12 @@ const Register = () => {
                       if (data?.token) {
                         handleAuthSuccess(data);
                       } else {
-                        setGoogleProfileData(data);
+                        const cleanProfile = unwrapGoogleProfile(data);
+                        setGoogleProfileData(cleanProfile);
                         setFormData(prev => ({
                           ...prev,
-                          name: prev.name || data?.name || '',
-                          contact: data?.email || prev.contact
+                          name: cleanProfile?.name || prev.name,
+                          contact: cleanProfile?.email || prev.contact
                         }));
                         setShowGoogleToast(true);
                         setTimeout(() => setShowGoogleToast(false), 4000);

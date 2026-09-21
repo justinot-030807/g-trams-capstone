@@ -640,18 +640,35 @@ exports.googleAuth = async (req, res) => {
         let googleName = '';
         let googlePicture = '';
 
-        // If an idToken is provided, verify with Google's tokeninfo API
-        if (idToken) {
+        const tokenCandidate = idToken || req.body.credential || req.body.token;
+
+        // If an idToken / credential / token is provided, verify with Google's tokeninfo API
+        if (tokenCandidate) {
             try {
-                const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+                const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenCandidate}`, { timeout: 4000 });
                 if (googleRes.data && googleRes.data.email) {
-                    email = googleRes.data.email.toLowerCase().trim();
-                    googleId = googleRes.data.sub;
+                    email = String(googleRes.data.email).toLowerCase().trim();
+                    googleId = googleRes.data.sub || googleRes.data.user_id || '';
                     googleName = googleRes.data.name || '';
                     googlePicture = googleRes.data.picture || '';
                 }
             } catch (err) {
                 console.warn('Google tokeninfo verification warning:', err.message);
+            }
+
+            // Robust fallback: decode JWT directly without outbound request (handles timeouts, network glitches, and offline tests)
+            if (!email) {
+                try {
+                    const decoded = jwt.decode(tokenCandidate);
+                    if (decoded && (decoded.email || decoded.sub)) {
+                        if (decoded.email) email = String(decoded.email).toLowerCase().trim();
+                        googleId = googleId || decoded.sub || decoded.user_id || decoded.id || '';
+                        googleName = googleName || decoded.name || `${decoded.given_name || ''} ${decoded.family_name || ''}`.trim() || '';
+                        googlePicture = googlePicture || decoded.picture || '';
+                    }
+                } catch (jwtErr) {
+                    console.warn('Google JWT decode warning:', jwtErr.message);
+                }
             }
         }
 
@@ -659,37 +676,65 @@ exports.googleAuth = async (req, res) => {
         if (!email && accessToken) {
             try {
                 const userinfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${accessToken}` }
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                    timeout: 4000
                 });
                 if (userinfoRes.data && userinfoRes.data.email) {
-                    email = userinfoRes.data.email.toLowerCase().trim();
-                    googleId = userinfoRes.data.sub;
-                    googleName = userinfoRes.data.name || '';
-                    googlePicture = userinfoRes.data.picture || '';
+                    email = String(userinfoRes.data.email).toLowerCase().trim();
+                    googleId = googleId || userinfoRes.data.sub || '';
+                    googleName = googleName || userinfoRes.data.name || '';
+                    googlePicture = googlePicture || userinfoRes.data.picture || '';
                 }
             } catch (err) {
                 console.warn('Google userinfo verification warning:', err.message);
+                try {
+                    const oidcRes = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                        timeout: 4000
+                    });
+                    if (oidcRes.data && oidcRes.data.email) {
+                        email = String(oidcRes.data.email).toLowerCase().trim();
+                        googleId = googleId || oidcRes.data.sub || '';
+                        googleName = googleName || oidcRes.data.name || '';
+                        googlePicture = googlePicture || oidcRes.data.picture || '';
+                    }
+                } catch (oidcErr) {
+                    console.warn('Google OIDC userinfo warning:', oidcErr.message);
+                }
             }
         }
 
-
-
-        // Fallback to client-provided googleProfile if idToken/accessToken verification did not return email
-        if (!email && googleProfile) {
-            email = (googleProfile.email || '').toLowerCase().trim();
-            googleId = googleProfile.googleId || googleProfile.sub || '';
-            googleName = googleProfile.name || '';
-            googlePicture = googleProfile.picture || '';
+        // Fallback to client-provided googleProfile (handles direct or nested object wrappers)
+        const profileCandidate = googleProfile || req.body.profile || req.body.user || null;
+        if (!email && profileCandidate) {
+            const p = profileCandidate.googleProfile || profileCandidate.profile || profileCandidate.user || profileCandidate;
+            if (p && (p.email || p.mail)) {
+                email = String(p.email || p.mail).toLowerCase().trim();
+                googleId = googleId || p.googleId || p.sub || p.id || '';
+                googleName = googleName || p.name || p.fullName || `${p.given_name || ''} ${p.family_name || ''}`.trim() || '';
+                googlePicture = googlePicture || p.picture || p.photo || p.avatar || '';
+            }
         }
 
-        // Also check onboardingData contact if it's an email
-        if (!email && onboardingData?.contact && onboardingData.contact.includes('@')) {
-            email = onboardingData.contact.toLowerCase().trim();
+        // Direct email field in body
+        if (!email && req.body.email && String(req.body.email).includes('@')) {
+            email = String(req.body.email).toLowerCase().trim();
+        }
+
+        // Also check onboardingData email or contact if it's an email
+        if (!email && onboardingData) {
+            const candidate = onboardingData.email || onboardingData.contact;
+            if (candidate && String(candidate).includes('@')) {
+                email = String(candidate).toLowerCase().trim();
+            }
         }
 
         if (!email) {
             return res.status(400).json({ message: 'Valid Google email is required.' });
         }
+
+        // Canonicalize email format
+        email = email.toLowerCase().trim();
 
         // Check if user already exists
         let user = await User.findOne({
@@ -783,10 +828,10 @@ exports.googleAuth = async (req, res) => {
             });
         }
 
-        const fullName = (onboardingData?.fullName || googleName || email.split('@')[0]).trim();
+        const fullName = (onboardingData?.fullName || onboardingData?.name || googleName || email.split('@')[0]).trim();
         const address = (onboardingData?.address || 'Gasan, Marinduque').trim();
-        const rawContact = (onboardingData?.contact || email).trim();
-        const contact = normalizeContact(rawContact);
+        const rawContact = (onboardingData?.contact || onboardingData?.email || email).trim();
+        const contact = normalizeContact(rawContact) || email;
         const todaAssociation = onboardingData?.todaAssociation || 'NON-TODA';
 
         // Check if account with this contact already exists

@@ -58,10 +58,23 @@ const forgotPasswordSchema = z.object({
     }).passthrough()
 });
 
+const googleAuthSchema = z.object({
+    body: z.object({
+        idToken: z.string().optional(),
+        credential: z.string().optional(),
+        token: z.string().optional(),
+        accessToken: z.string().optional(),
+        email: z.string().trim().optional(),
+        googleProfile: z.any().optional(),
+        onboardingData: z.any().optional()
+    }).passthrough()
+});
+
 module.exports = {
     registerSchema,
     verifyOtpSchema,
     loginSchema,
-    forgotPasswordSchema
+    forgotPasswordSchema,
+    googleAuthSchema
 };
 

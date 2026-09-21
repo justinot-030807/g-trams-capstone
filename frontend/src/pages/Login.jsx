@@ -44,6 +44,16 @@ const Login = () => {
     };
   }, []);
 
+  const unwrapGoogleProfile = (raw) => {
+    if (!raw) return null;
+    const p = raw.googleProfile || raw.profile || raw.user || raw;
+    const email = (p.email || p.mail || raw.email || '').trim().toLowerCase();
+    const name = (p.name || p.fullName || raw.name || raw.fullName || '').trim();
+    const picture = p.picture || p.photo || p.avatar || raw.picture || '';
+    const googleId = p.googleId || p.sub || p.id || raw.googleId || raw.sub || '';
+    return { email, name, picture, googleId };
+  };
+
   const isValidContact = (value) => {
     const trimmed = value.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -106,7 +116,7 @@ const Login = () => {
           }
         }
       }
-    } catch (err) {
+    } catch {
       setError('CANNOT CONNECT TO THE SERVER.');
     } finally {
       clearTimeout(slowNetworkTimer);
@@ -321,9 +331,10 @@ const Login = () => {
                   if (data?.token) {
                     handleAuthSuccess(data);
                   } else {
+                    const cleanProfile = unwrapGoogleProfile(data);
                     navigate('/register', { 
                       state: { 
-                        googleProfile: data,
+                        googleProfile: cleanProfile,
                         fromGoogleLogin: true 
                       } 
                     });
