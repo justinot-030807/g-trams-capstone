@@ -6,6 +6,52 @@ const sendEmail = require('../utils/sendEmail');
 const axios = require('axios');
 const { logAudit } = require('../utils/auditLogger');
 
+// Helper to canonicalize contact input (email in lowercase, Philippine mobile number to 09XXXXXXXXX)
+const normalizeContact = (contactStr) => {
+    const trimmed = String(contactStr || '').trim();
+    if (!trimmed) return '';
+    if (trimmed.includes('@')) return trimmed.toLowerCase();
+    const cleanDigits = trimmed.replace(/[\s\-()]/g, '');
+    if (cleanDigits.startsWith('+639')) return '0' + cleanDigits.slice(3);
+    if (cleanDigits.startsWith('639') && cleanDigits.length === 12) return '0' + cleanDigits.slice(2);
+    return cleanDigits;
+};
+
+// Build MongoDB query matching email or various phone number formats (09..., +639..., dashes)
+const getContactQueryFilter = (contactStr) => {
+    const raw = String(contactStr || '').trim();
+    if (!raw) return { contact: '__non_existent__' };
+    if (raw.includes('@')) {
+        const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return {
+            $or: [
+                { contact: { $regex: new RegExp(`^${escaped}$`, 'i') } },
+                { email: { $regex: new RegExp(`^${escaped}$`, 'i') } }
+            ]
+        };
+    }
+    const cleanDigits = raw.replace(/[\s\-()]/g, '');
+    const variants = new Set([raw, cleanDigits]);
+    if (cleanDigits.startsWith('+639')) {
+        variants.add('0' + cleanDigits.slice(3));
+        variants.add(cleanDigits.slice(1));
+    } else if (cleanDigits.startsWith('639') && cleanDigits.length === 12) {
+        variants.add('0' + cleanDigits.slice(2));
+        variants.add('+' + cleanDigits);
+    } else if (cleanDigits.startsWith('09')) {
+        variants.add('+63' + cleanDigits.slice(1));
+        variants.add('63' + cleanDigits.slice(1));
+    }
+    const orConditions = [];
+    variants.forEach(v => {
+        if (v) {
+            const esc = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            orConditions.push({ contact: { $regex: new RegExp(`^${esc}$`, 'i') } });
+        }
+    });
+    return orConditions.length === 1 ? orConditions[0] : { $or: orConditions };
+};
+
 // Register user and send OTP
 exports.register = async (req, res) => {
     try {
@@ -18,17 +64,38 @@ exports.register = async (req, res) => {
             });
         }
 
-        const { name, address, contact, password, role, todaAssociation } = req.body;
-        const normalizedContact = String(contact || '').trim();
+        const { name, fullName, address, contact, password, role, todaAssociation } = req.body;
+        const resolvedName = String(name || fullName || '').trim().replace(/\s+/g, ' ');
+        const rawContact = String(contact || '').trim();
+        const normalizedContact = normalizeContact(rawContact);
+        const normalizedAddress = String(address || '').trim();
+        const normalizedToda = String(todaAssociation || 'NON-TODA').trim();
+
+        if (!resolvedName || resolvedName.length < 2) {
+            return res.status(400).json({ message: 'Full name must be at least 2 characters.' });
+        }
 
         if (!normalizedContact) {
             return res.status(400).json({ message: 'Contact email or phone number is required.' });
         }
+
+        if (!normalizedAddress) {
+            return res.status(400).json({ message: 'Address is required.' });
+        }
+
+        // Determine allowable role
+        let assignedRole = 'operator';
+        const requestedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
+        if (requestedRole === 'toda president' || requestedRole === 'toda_president') {
+            assignedRole = 'toda president';
+            if (!normalizedToda || normalizedToda === 'NON-TODA') {
+                return res.status(400).json({ message: 'TODA President must select a valid TODA Association.' });
+            }
+        }
         
-        // Case-insensitive check for existing user
-        let user = await User.findOne({ 
-            contact: { $regex: new RegExp(`^${normalizedContact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } 
-        });
+        // Case-insensitive check for existing user by contact or email
+        const isEmail = normalizedContact.includes('@');
+        let user = await User.findOne(getContactQueryFilter(rawContact));
 
         if (user) {
             if (user.isVerified) {
@@ -36,15 +103,20 @@ exports.register = async (req, res) => {
                     message: 'AN ACCOUNT WITH THIS EMAIL / PHONE NUMBER ALREADY EXISTS. PLEASE LOG IN INSTEAD.' 
                 });
             }
+            // Allow unverified users to re-register with fresh credentials and OTP
             await User.deleteOne({ _id: user._id }); 
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         
         user = new User({
-            name, address, contact: normalizedContact, password,
-            role: role || 'operator',
-            todaAssociation: todaAssociation || 'NON-TODA',
+            name: resolvedName,
+            address: normalizedAddress,
+            contact: normalizedContact,
+            email: isEmail ? normalizedContact : '',
+            password,
+            role: assignedRole,
+            todaAssociation: normalizedToda,
             isVerified: false,
             otp,
             otpExpire: Date.now() + 10 * 60 * 1000 
@@ -52,22 +124,40 @@ exports.register = async (req, res) => {
         
         await user.save();
 
-        try {
-            if (normalizedContact.includes('@')) {
-                await sendEmail({ email: normalizedContact, subject: 'G-TRAMS: Account Verification OTP', message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` });
-            } else {
-                await axios.post('https://api.semaphore.co/api/v4/messages', { 
-                    apikey: process.env.SEMAPHORE_API_KEY, 
-                    number: normalizedContact, 
-                    message: `G-TRAMS: Your verification code is ${otp}. Do not share this with anyone.` 
-                }, { timeout: 5000 });
+        if (process.env.NODE_ENV !== 'test') {
+            try {
+                if (isEmail) {
+                    await sendEmail({ 
+                        email: normalizedContact, 
+                        subject: 'G-TRAMS: Account Verification OTP', 
+                        message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` 
+                    });
+                } else {
+                    await axios.post('https://api.semaphore.co/api/v4/messages', { 
+                        apikey: process.env.SEMAPHORE_API_KEY, 
+                        number: normalizedContact, 
+                        message: `G-TRAMS: Your verification code is ${otp}. Do not share this with anyone.` 
+                    }, { timeout: 5000 });
+                }
+            } catch (sendErr) {
+                console.error("OTP Delivery Warning (email/SMS):", sendErr.message);
             }
-        } catch (sendErr) {
-            console.error("OTP Delivery Warning (email/SMS):", sendErr.message);
         }
-        res.status(201).json({ message: 'OTP sent successfully' });
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`[DEV/TEST OTP] Registration OTP for ${normalizedContact}: ${otp}`);
+        }
+
+        res.status(201).json({ 
+            message: 'OTP sent successfully',
+            ...(process.env.NODE_ENV === 'test' ? { testOtp: otp } : {})
+        });
     } catch (error) {
         console.error("REGISTER ERROR:", error);
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                message: 'AN ACCOUNT WITH THIS EMAIL / PHONE NUMBER ALREADY EXISTS. PLEASE LOG IN INSTEAD.' 
+            });
+        }
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
@@ -76,18 +166,44 @@ exports.register = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
     try {
         const { contact, otp } = req.body;
-        const user = await User.findOne({ contact, otp, otpExpire: { $gt: Date.now() } });
+        const rawContact = String(contact || '').trim();
+        const normalizedOtp = String(otp || '').trim();
+
+        if (!rawContact || !normalizedOtp) {
+            return res.status(400).json({ message: 'Contact and OTP code are required.' });
+        }
+
+        const contactFilter = getContactQueryFilter(rawContact);
+        const user = await User.findOne({ 
+            ...contactFilter,
+            otp: normalizedOtp, 
+            otpExpire: { $gt: Date.now() } 
+        });
         
         if (!user) return res.status(400).json({ message: 'Invalid or expired OTP.' });
         
         user.isVerified = true;
         user.otp = undefined;
         user.otpExpire = undefined;
+        const isEmail = rawContact.includes('@');
+        if (!user.email && isEmail) {
+            user.email = rawContact.toLowerCase();
+        }
         await user.save();
+
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
+        const userObj = user.toObject();
+        delete userObj.password;
         
-        res.status(200).json({ message: 'Account verified successfully.' });
+        res.status(200).json({ 
+            message: 'Account verified successfully.',
+            token,
+            role: user.role,
+            name: user.name,
+            user: userObj
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
 
@@ -95,9 +211,10 @@ exports.verifyOTP = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { contact, password } = req.body; 
-        // Use case-insensitive regex for email addresses to prevent login failures
-        const contactRegex = new RegExp('^' + contact.trim() + '$', 'i');
-        const user = await User.findOne({ contact: contactRegex });
+        const rawContact = String(contact || '').trim();
+        if (!rawContact) return res.status(400).json({ message: 'Contact is required' });
+
+        const user = await User.findOne(getContactQueryFilter(rawContact));
         
         if (!user) return res.status(400).json({ message: 'Invalid credentials' });
         if (!user.isVerified) return res.status(400).json({ message: 'Please verify your account first.' });
@@ -249,16 +366,15 @@ exports.heartbeat = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const { contact } = req.body; 
-        const normalizedContact = String(contact || '').trim();
+        const rawContact = String(contact || '').trim();
+        const normalizedContact = normalizeContact(rawContact);
 
-        if (!normalizedContact) {
+        if (!rawContact) {
             return res.status(400).json({ message: 'Contact email or phone number is required.' });
         }
 
-        // Case-insensitive lookup
-        const user = await User.findOne({
-            contact: { $regex: new RegExp(`^${normalizedContact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
-        });
+        // Robust lookup across contact, email, and phone variants
+        const user = await User.findOne(getContactQueryFilter(rawContact));
         if (!user) return res.status(404).json({ message: 'Contact is not registered.' });
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -307,15 +423,16 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { contact, otp, newPassword } = req.body; 
-        const normalizedContact = String(contact || '').trim();
+        const rawContact = String(contact || '').trim();
         const normalizedOtp = String(otp || '').trim();
 
         if (!newPassword || newPassword.length < 6) {
             return res.status(400).json({ message: 'New password must be at least 6 characters long.' });
         }
 
+        const contactFilter = getContactQueryFilter(rawContact);
         const user = await User.findOne({
-            contact: { $regex: new RegExp(`^${normalizedContact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+            ...contactFilter,
             otp: normalizedOtp,
             otpExpire: { $gt: Date.now() }
         });
@@ -557,6 +674,19 @@ exports.googleAuth = async (req, res) => {
 
 
 
+        // Fallback to client-provided googleProfile if idToken/accessToken verification did not return email
+        if (!email && googleProfile) {
+            email = (googleProfile.email || '').toLowerCase().trim();
+            googleId = googleProfile.googleId || googleProfile.sub || '';
+            googleName = googleProfile.name || '';
+            googlePicture = googleProfile.picture || '';
+        }
+
+        // Also check onboardingData contact if it's an email
+        if (!email && onboardingData?.contact && onboardingData.contact.includes('@')) {
+            email = onboardingData.contact.toLowerCase().trim();
+        }
+
         if (!email) {
             return res.status(400).json({ message: 'Valid Google email is required.' });
         }
@@ -655,15 +785,21 @@ exports.googleAuth = async (req, res) => {
 
         const fullName = (onboardingData?.fullName || googleName || email.split('@')[0]).trim();
         const address = (onboardingData?.address || 'Gasan, Marinduque').trim();
-        const contact = (onboardingData?.contact || email).trim();
+        const rawContact = (onboardingData?.contact || email).trim();
+        const contact = normalizeContact(rawContact);
         const todaAssociation = onboardingData?.todaAssociation || 'NON-TODA';
 
         // Check if account with this contact already exists
-        const existingContact = await User.findOne({
-            contact: { $regex: new RegExp(`^${contact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
-        });
+        const contactFilter = getContactQueryFilter(rawContact);
+        const existingContact = await User.findOne(contactFilter);
 
         if (existingContact) {
+            const isSameAccount = existingContact.email === email || existingContact.contact.toLowerCase() === email;
+            if (existingContact.isVerified && !isSameAccount) {
+                return res.status(400).json({ 
+                    message: 'AN ACCOUNT WITH THIS CONTACT NUMBER ALREADY EXISTS. PLEASE LOG IN INSTEAD.' 
+                });
+            }
             existingContact.googleId = googleId || existingContact.googleId || '';
             existingContact.email = email;
             existingContact.isVerified = true;
@@ -675,7 +811,7 @@ exports.googleAuth = async (req, res) => {
             existingContact.lastLogin = new Date();
             await existingContact.save();
 
-            const token = jwt.sign({ id: existingContact._id, role: existingContact.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            const token = jwt.sign({ id: existingContact._id, role: existingContact.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
             const userObj = existingContact.toObject();
             delete userObj.password;
 
@@ -688,16 +824,24 @@ exports.googleAuth = async (req, res) => {
             });
         }
 
-        // Create new operator user with isVerified: true (100% NO 6-DIGIT OTP CODE REQUIRED!)
+        const requestedRole = String(onboardingData?.role || 'operator').toLowerCase().trim().replace(/_/g, ' ');
+        const assignedRole = (requestedRole === 'toda president' || requestedRole === 'toda_president') ? 'toda president' : 'operator';
+
+        if (assignedRole === 'toda president' && (!todaAssociation || todaAssociation === 'NON-TODA')) {
+            return res.status(400).json({ message: 'TODA President must specify a valid TODA Association.' });
+        }
+
+        // Create new operator or toda president user with isVerified: true (NO 6-DIGIT OTP CODE REQUIRED!)
         const randomPass = Math.random().toString(36).slice(-8) + 'G!' + Math.floor(Math.random() * 90 + 10);
+        const chosenPassword = (onboardingData?.password && onboardingData.password.length >= 6) ? onboardingData.password : randomPass;
         user = new User({
             name: fullName,
             address: address,
             contact: contact,
             email: email,
             googleId: googleId || '',
-            password: randomPass,
-            role: 'operator',
+            password: chosenPassword,
+            role: assignedRole,
             todaAssociation: todaAssociation,
             isVerified: true, // Automatically verified via Google!
             profilePic: googlePicture || '',
@@ -741,10 +885,8 @@ exports.submitAppeal = async (req, res) => {
             return res.status(400).json({ message: 'Contact, password, and appeal message are required.' });
         }
 
-        const normalizedContact = String(contact).trim();
-        const user = await User.findOne({ 
-            contact: { $regex: new RegExp(`^${normalizedContact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } 
-        });
+        const rawContact = String(contact).trim();
+        const user = await User.findOne(getContactQueryFilter(rawContact));
 
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });

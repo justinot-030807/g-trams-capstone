@@ -8,6 +8,7 @@ const authRateLimiter = (options) => {
         message: { message: options.message || 'Too many requests, please try again later.' },
         standardHeaders: true,
         legacyHeaders: false,
+        skip: () => process.env.NODE_ENV === 'test'
     });
 };
 
@@ -17,6 +18,7 @@ const apiLimiter = rateLimit({
     message: { message: 'Too many requests from this IP.' },
     standardHeaders: true, 
     legacyHeaders: false, 
+    skip: () => process.env.NODE_ENV === 'test'
 });
 
 module.exports = { authRateLimiter, apiLimiter };

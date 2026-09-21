@@ -26,7 +26,8 @@ const Register = () => {
     contact: incomingGoogle?.email || '', 
     password: '', 
     confirmPassword: '', 
-    todaAssociation: 'NON-TODA'
+    todaAssociation: 'NON-TODA',
+    role: 'operator'
   });
   const [otpCode, setOtpCode] = useState('');
 
@@ -36,7 +37,7 @@ const Register = () => {
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [termsLang, setTermsLang] = useState('en');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Google Sign-In state
   const [googleProfileData, setGoogleProfileData] = useState(incomingGoogle || null);
@@ -73,8 +74,20 @@ const Register = () => {
     }
   }, [incomingGoogle]);
 
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown(prev => (prev > 1 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCooldown]);
+
   const isValidContact = (value) => {
-    const trimmed = value.trim();
+    const trimmed = String(value || '').trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^(09|\+639)\d{9}$/;
     return emailRegex.test(trimmed) || phoneRegex.test(trimmed.replace(/[\s-]/g, ''));
@@ -91,7 +104,12 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (name === 'role') {
+      const newToda = value === 'toda president' ? (formData.todaAssociation === 'NON-TODA' ? '' : formData.todaAssociation) : (formData.todaAssociation || 'NON-TODA');
+      setFormData(prev => ({ ...prev, role: value, todaAssociation: newToda }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     if (name === 'password') checkPasswordStrength(value);
     if (error) setError('');
   };
@@ -111,11 +129,17 @@ const Register = () => {
       if (!formData.contact || !isValidContact(formData.contact)) {
         return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
       }
+      if (formData.role === 'toda president' && (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA')) {
+        return setError('PLEASE SELECT A VALID TODA ASSOCIATION FOR TODA PRESIDENT.');
+      }
       if (!termsAccepted) {
         return setError('PLEASE ACCEPT THE TERMS AND PRIVACY POLICY.');
       }
 
       setIsLoading(true);
+
+      const rawContact = formData.contact.trim();
+      const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
 
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
@@ -125,9 +149,11 @@ const Register = () => {
             googleProfile: googleProfileData,
             onboardingData: {
               fullName: formData.name.trim(),
+              name: formData.name.trim(),
               address: formData.address.trim(),
-              contact: formData.contact.trim(),
+              contact: cleanContact,
               todaAssociation: formData.todaAssociation || 'NON-TODA',
+              role: formData.role || 'operator',
               password: formData.password || ''
             }
           })
@@ -136,9 +162,14 @@ const Register = () => {
         const data = await response.json();
         if (response.ok && data.token) {
           setSuccess('REGISTRATION SUCCESSFUL! LOGGING IN...');
-          handleGoogleSuccess(data);
+          handleAuthSuccess(data);
         } else {
-          setError(data.message || 'REGISTRATION FAILED.');
+          let errorMsg = data.message || data.error || 'REGISTRATION FAILED.';
+          if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+            const detailed = data.errors.map(err => err.message).filter(Boolean).join('. ');
+            if (detailed) errorMsg = detailed;
+          }
+          setError(errorMsg.toUpperCase());
         }
       } catch (err) {
         setError('CANNOT CONNECT TO THE SERVER.');
@@ -156,13 +187,25 @@ const Register = () => {
     e.preventDefault();
     setError(''); setSuccess('');
 
+    if (!formData.name || formData.name.trim().length < 2) {
+      return setError('PLEASE ENTER YOUR FULL LEGAL NAME (AT LEAST 2 CHARACTERS).');
+    }
+
+    if (!formData.address) {
+      return setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
+    }
+
     // Validate contact format
     if (!isValidContact(formData.contact)) {
       return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
     }
 
-    if (passwordStrength < 3) {
-      return setError('PASSWORD TOO WEAK. INCLUDE AT LEAST 8 CHARS, 1 UPPERCASE, 1 NUMBER, AND 1 SYMBOL.');
+    if (formData.role === 'toda president' && (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA')) {
+      return setError('PLEASE SELECT A VALID TODA ASSOCIATION FOR TODA PRESIDENT.');
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      return setError('PASSWORD MUST BE AT LEAST 6 CHARACTERS LONG.');
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -176,17 +219,39 @@ const Register = () => {
     setIsLoading(true);
     const slowTimer = setTimeout(() => setError('YOUR NETWORK SEEMS SLOW. PLEASE WAIT...'), 8000);
 
+    const rawContact = formData.contact.trim();
+    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
+
+    const payload = {
+      name: formData.name.trim(),
+      fullName: formData.name.trim(),
+      address: formData.address.trim(),
+      contact: cleanContact,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      todaAssociation: formData.todaAssociation || 'NON-TODA',
+      role: formData.role || 'operator'
+    };
+
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/register', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
       clearTimeout(slowTimer);
       const data = await response.json();
       if (response.ok) { 
         setSuccess('OTP CODE SENT SUCCESSFULLY!'); 
+        setResendCooldown(60);
         setStep(2); 
       } else { 
-        setError(data.message || 'REGISTRATION FAILED.'); 
+        let errorMsg = data.message || data.error || 'REGISTRATION FAILED.';
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          const detailed = data.errors.map(err => err.message).filter(Boolean).join('. ');
+          if (detailed) errorMsg = detailed;
+        }
+        setError(errorMsg.toUpperCase()); 
       }
     } catch (err) { 
       setError('CANNOT CONNECT TO THE SERVER.'); 
@@ -196,31 +261,96 @@ const Register = () => {
     }
   };
 
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0 || isLoading) return;
     setError(''); setSuccess('');
+    setIsLoading(true);
+
+    const rawContact = formData.contact.trim();
+    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
+
+    const payload = {
+      name: formData.name.trim(),
+      fullName: formData.name.trim(),
+      address: formData.address.trim(),
+      contact: cleanContact,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      todaAssociation: formData.todaAssociation || 'NON-TODA',
+      role: formData.role || 'operator'
+    };
+
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/verify-otp', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contact: formData.contact, otp: otpCode }),
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+      const data = await response.json();
       if (response.ok) {
-        setSuccess('ACCOUNT VERIFIED! REDIRECTING...');
-        setTimeout(() => { navigate('/login'); }, 1800);
+        setSuccess('NEW OTP CODE SENT SUCCESSFULLY!');
+        setResendCooldown(60);
       } else {
-        const data = await response.json();
-        setError(data.message || 'INVALID OTP CODE.');
+        const errorMsg = data.message || data.error || 'FAILED TO RESEND OTP.';
+        setError(errorMsg.toUpperCase());
       }
-    } catch (err) { 
-      setError('CANNOT CONNECT TO THE SERVER.'); 
+    } catch (err) {
+      setError('CANNOT CONNECT TO THE SERVER.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleGoogleSuccess = (data) => {
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (isLoading) return;
+    setError(''); setSuccess('');
+    setIsLoading(true);
+
+    const rawContact = formData.contact.trim();
+    const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s-]/g, '');
+
+    try {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          contact: cleanContact, 
+          otp: otpCode.trim() 
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSuccess('ACCOUNT VERIFIED! LOGGING IN...');
+        if (data.token) {
+          handleAuthSuccess(data);
+        } else {
+          setTimeout(() => { navigate('/login'); }, 1500);
+        }
+      } else {
+        let errorMsg = data.message || data.error || 'INVALID OTP CODE.';
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          const detailed = data.errors.map(err => err.message).filter(Boolean).join('. ');
+          if (detailed) errorMsg = detailed;
+        }
+        setError(errorMsg.toUpperCase());
+      }
+    } catch (err) { 
+      setError('CANNOT CONNECT TO THE SERVER.'); 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAuthSuccess = (data) => {
     const rawRole = data.role || data.user?.role || '';
     const normalizedRole = String(rawRole).toLowerCase().trim().replace(/_/g, ' ');
 
     localStorage.setItem('token', data.token);
     localStorage.setItem('role', normalizedRole);
+
+    const currentUserId = data.user?._id || data.user?.id || data._id || data.id || '';
+    if (currentUserId) localStorage.setItem('userId', currentUserId);
 
     if (data.name) localStorage.setItem('name', data.name);
     if (data.fullName) localStorage.setItem('name', data.fullName);
@@ -342,9 +472,18 @@ const Register = () => {
 
             {step === 1 && (
               <form onSubmit={handleSubmitRegisterForm} className="space-y-2">
-                <div className="animate-item-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
-                  <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 animate-item-2">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
+                    <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">ACCOUNT TYPE</label>
+                    <select name="role" value={formData.role} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
+                      <option value="operator">Operator</option>
+                      <option value="toda president">TODA President</option>
+                    </select>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 animate-item-2">
@@ -358,7 +497,8 @@ const Register = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA ASSOCIATION</label>
                     <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                      {TODA_LIST.map((toda) => <option key={toda} value={toda}>{toda}</option>)}
+                      {formData.role === 'toda president' && <option value="" disabled>Select TODA</option>}
+                      {TODA_LIST.filter(t => formData.role !== 'toda president' || t !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
                     </select>
                   </div>
                 </div>
@@ -452,7 +592,8 @@ const Register = () => {
                             contact: '',
                             password: '',
                             confirmPassword: '',
-                            todaAssociation: 'NON-TODA'
+                            todaAssociation: 'NON-TODA',
+                            role: 'operator'
                           });
                           setError('');
                           setShowGoogleToast(false);
@@ -480,10 +621,10 @@ const Register = () => {
                 <div className="animate-item-4">
                   <GoogleAuthButton 
                     text="CONTINUE WITH GOOGLE"
-                    onSuccess={handleGoogleSuccess}
+                    onSuccess={handleAuthSuccess}
                     onNewUser={(data) => {
                       if (data?.token) {
-                        handleGoogleSuccess(data);
+                        handleAuthSuccess(data);
                       } else {
                         setGoogleProfileData(data);
                         setFormData(prev => ({
@@ -519,17 +660,29 @@ const Register = () => {
                 </div>
                 <button 
                   type="submit" 
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2 rounded-xl text-xs font-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all uppercase tracking-wider"
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2 rounded-xl text-xs font-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  <CheckCircle2 size={15} /> VERIFY AND REGISTER
+                  {isLoading ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                  {isLoading ? 'VERIFYING...' : 'VERIFY AND REGISTER'}
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setStep(1)} 
-                  className="w-full text-center text-xs font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
-                >
-                  ← CHANGE CONTACT INFO
-                </button>
+                <div className="flex items-center justify-between pt-1">
+                  <button 
+                    type="button" 
+                    onClick={handleResendOTP} 
+                    disabled={resendCooldown > 0 || isLoading}
+                    className="text-xs font-bold text-[#7A1B22] hover:underline disabled:opacity-50 disabled:no-underline uppercase tracking-wider cursor-pointer"
+                  >
+                    {resendCooldown > 0 ? `RESEND IN ${resendCooldown}S` : 'RESEND CODE'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setStep(1)} 
+                    className="text-xs font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider cursor-pointer"
+                  >
+                    ← CHANGE INFO
+                  </button>
+                </div>
               </form>
             )}
 

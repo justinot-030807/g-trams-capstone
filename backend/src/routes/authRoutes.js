@@ -46,11 +46,11 @@ router.get('/google-client-id', (req, res) => {
 
 // Import Validation Middleware
 const validate = require('../middleware/validateMiddleware');
-const { registerSchema, loginSchema, forgotPasswordSchema } = require('../schemas/authSchema');
+const { registerSchema, verifyOtpSchema, loginSchema, forgotPasswordSchema } = require('../schemas/authSchema');
 
 // Auth and registration routes
 router.post('/register', registerLimiter, validate(registerSchema), register);
-router.post('/verify-otp', registerLimiter, verifyOTP);
+router.post('/verify-otp', registerLimiter, validate(verifyOtpSchema), verifyOTP);
 router.post('/login', loginLimiter, validate(loginSchema), login);
 router.get('/', protect, authorize('admin'), getUsers);
 
