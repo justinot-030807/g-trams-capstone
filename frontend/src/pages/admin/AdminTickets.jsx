@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { Mail, CheckCircle, Clock, Search, XCircle, Send, MessageSquare } from 'lucide-react';
+import ChatWidget from '../../components/operator/ChatWidget';
 
 const AdminTickets = () => {
+  const [activeTab, setActiveTab] = useState('tickets');
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -66,20 +68,39 @@ const AdminTickets = () => {
       <div className="w-full space-y-6 pb-24">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Help & Support Tickets</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1">Manage inquiries and support requests from operators.</p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Support & Live Chats</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1">Manage inquiries, support tickets, and chat with operators.</p>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search tickets..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]"
-            />
-          </div>
+          {activeTab === 'tickets' && (
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search tickets..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]"
+              />
+            </div>
+          )}
         </div>
+
+        <div className="flex gap-4 border-b border-slate-200 dark:border-slate-800">
+          <button 
+            onClick={() => setActiveTab('tickets')} 
+            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'tickets' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            Support Tickets
+          </button>
+          <button 
+            onClick={() => setActiveTab('chat')} 
+            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'chat' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            Live Chats & Broadcasts
+          </button>
+        </div>
+
+        {activeTab === 'tickets' ? (
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
           {isLoading ? (
@@ -137,6 +158,11 @@ const AdminTickets = () => {
             </div>
           )}
         </div>
+        ) : (
+          <div className="w-full max-w-4xl mx-auto h-[650px] animate-in fade-in">
+            <ChatWidget inline={true} />
+          </div>
+        )}
       </div>
 
       {/* Ticket Modal */}

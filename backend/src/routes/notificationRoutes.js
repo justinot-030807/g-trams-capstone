@@ -36,19 +36,20 @@ router.put('/:id/read', async (req, res) => {
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
+    const { emitToUser } = require('../config/socket');
+    emitToUser(req.user._id.toString(), 'notification_read', { id: notification._id });
     res.json(notification);
   } catch (error) {
     res.status(500).json({ message: 'Error marking notification as read', error: error.message });
   }
 });
 
-router.put('/read-all', async (req, res) => {
+router.delete('/read-all', async (req, res) => {
   try {
-    await Notification.updateMany(
-      { recipient: req.user._id, isRead: false },
-      { isRead: true }
-    );
-    res.json({ message: 'All notifications marked as read' });
+    await Notification.deleteMany({ recipient: req.user._id });
+    const { emitToUser } = require('../config/socket');
+    emitToUser(req.user._id.toString(), 'notifications_read_all');
+    res.json({ message: 'All notifications deleted' });
   } catch (error) {
     res.status(500).json({ message: 'Error marking all notifications as read', error: error.message });
   }

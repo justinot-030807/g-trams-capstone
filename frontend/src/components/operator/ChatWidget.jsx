@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2, ChevronDown, Check, CheckCheck, Trash2 } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 
-const ChatWidget = () => {
+const ChatWidget = ({ inline = false }) => {
   const { socket } = useSocket();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(inline ? true : false);
   const [messages, setMessages] = useState([]);
   const [isBroadcast, setIsBroadcast] = useState(false);
   const [threads, setThreads] = useState([]);
@@ -156,6 +156,9 @@ const ChatWidget = () => {
 
       const payload = { message: messageText };
       if (activeThread) {
+        if (activeThread._id && activeThread._id !== 'new') {
+          payload.threadId = activeThread._id;
+        }
         const otherParticipant = activeThread.participants?.find(p => String(p._id || p) !== String(currentUserId));
         if (otherParticipant) {
           payload.recipientId = otherParticipant._id || otherParticipant;
@@ -272,15 +275,12 @@ const ChatWidget = () => {
   // Emit typing
   const handleInputChange = (e) => {
     setInput(e.target.value);
-    if (socket && activeThread) {
-      const admin = activeThread.participants?.find(p => {
-        const role = String(p.role || '').toLowerCase().replace(/_/g, ' ');
-        return role === 'admin' || role === 'administrator';
-      });
-      if (admin) {
+    if (socket && activeThread && activeThread._id !== 'new') {
+      const otherParticipant = activeThread.participants?.find(p => String(p._id || p) !== String(currentUserId));
+      if (otherParticipant) {
         socket.emit('chat_typing', { 
           threadId: activeThread._id, 
-          recipientId: admin._id 
+          recipientId: otherParticipant._id || otherParticipant 
         });
       }
     }
@@ -309,28 +309,39 @@ const ChatWidget = () => {
     return String(sid) === String(currentUserId);
   };
 
+  const getSenderName = (sender) => {
+    if (!sender) return 'Unknown User';
+    const sRole = String(sender.role || '').toLowerCase();
+    if (sRole.includes('admin') || sRole.includes('administrator')) {
+      return 'GTRAMS Support';
+    }
+    return sender.name;
+  };
+
   return (
     <>
       {/* Floating Chat Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`fixed z-[90] bottom-20 md:bottom-6 right-4 md:right-6 w-13 h-13 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer print:hidden ${
-          isOpen 
-            ? 'bg-slate-800 dark:bg-slate-700 text-white rotate-0'
-            : 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:scale-105'
-        }`}
-        title="Chat with GTRAMS Admin"
-      >
-        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
-        {!isOpen && unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center px-1 shadow-md animate-bounce">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+      {!inline && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`fixed z-[90] bottom-20 md:bottom-6 right-4 md:right-6 w-13 h-13 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer print:hidden ${
+            isOpen 
+              ? 'bg-slate-800 dark:bg-slate-700 text-white rotate-0'
+              : 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:scale-105'
+          }`}
+          title="Chat with GTRAMS Admin"
+        >
+          {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
+          {!isOpen && unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center px-1 shadow-md animate-bounce">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Chat Backdrop with Blur */}
-      {isOpen && (
+      {!inline && isOpen && (
         <div 
           className="fixed inset-0 z-[94] bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200 print:hidden"
           onClick={() => setIsOpen(false)}
@@ -340,7 +351,10 @@ const ChatWidget = () => {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed z-[95] bottom-20 md:bottom-20 right-3 md:right-6 w-[calc(100vw-24px)] max-w-[380px] h-[70vh] max-h-[520px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 print:hidden">
+        <div className={inline 
+          ? "w-full h-[600px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden" 
+          : "fixed z-[95] bottom-20 md:bottom-20 right-3 md:right-6 w-[calc(100vw-24px)] max-w-[450px] h-[80vh] max-h-[600px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-300 print:hidden"
+        }>
           
           {/* Toast Notification */}
           {toastMsg && (
@@ -370,12 +384,14 @@ const ChatWidget = () => {
                   Back to List
                 </button>
               )}
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+              {!inline && (
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -489,11 +505,11 @@ const ChatWidget = () => {
                           ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-md'
                           : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-bl-md shadow-xs'
                       }`}>
-                        {!isMine && msg.sender?.name && (
+                        {!isMine && msg.sender && (
                           <p className={`text-xs font-bold mb-0.5 ${
                             isMine ? 'text-white/70 dark:text-slate-950/60' : 'text-[#7A1B22] dark:text-[#D4AF37]'
                           }`}>
-                            {msg.sender.name}
+                            {getSenderName(msg.sender)}
                           </p>
                         )}
                         <p className="whitespace-pre-wrap break-words">{msg.message}</p>

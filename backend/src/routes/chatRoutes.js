@@ -69,30 +69,40 @@ router.get('/messages/:threadId', async (req, res) => {
 
 router.post('/messages', async (req, res) => {
   try {
-    let { recipientId, message } = req.body;
+    let { recipientId, message, threadId } = req.body;
     
     if (!message) return res.status(400).json({ message: 'Missing message' });
     
     const User = require('../models/userModel');
+    let thread = null;
     let recipients = [];
     
-    // If no recipientId is provided, default to ALL admins.
-    if (!recipientId) {
-      const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
-      if (!admins.length) return res.status(400).json({ message: 'No admin found to receive message' });
-      recipients = admins.map(a => a._id);
-    } else {
-      recipients = [recipientId];
+    if (threadId) {
+      thread = await ChatThread.findById(threadId);
     }
 
-    const participants = [req.user._id, ...recipients];
+    if (thread) {
+      // Get recipients from existing thread (everyone except sender)
+      recipients = thread.participants.filter(pId => String(pId) !== String(req.user._id));
+    } else {
+      // New thread logic
+      if (!recipientId) {
+        const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+        if (!admins.length) return res.status(400).json({ message: 'No admin found to receive message' });
+        recipients = admins.map(a => a._id);
+      } else {
+        recipients = [recipientId];
+      }
 
-    let thread = await ChatThread.findOne({
-      participants: { $all: participants, $size: participants.length }
-    });
+      const participants = [req.user._id, ...recipients];
 
-    if (!thread) {
-      thread = await ChatThread.create({ participants });
+      thread = await ChatThread.findOne({
+        participants: { $all: participants, $size: participants.length }
+      });
+
+      if (!thread) {
+        thread = await ChatThread.create({ participants });
+      }
     }
 
     const newMessage = await ChatMessage.create({
@@ -107,9 +117,14 @@ router.post('/messages', async (req, res) => {
 
     const populatedMessage = await ChatMessage.findById(newMessage._id).populate('sender', 'name profilePic role');
 
+    // Sync to sender's other devices
+    emitToUser(req.user._id.toString(), 'chat_message', populatedMessage);
+
+    const { sendPushToUser } = require('../services/pushService');
+
     // Notify all recipients
     for (const recId of recipients) {
-      emitToUser(recId, 'chat_message', populatedMessage);
+      emitToUser(recId.toString(), 'chat_message', populatedMessage);
 
       const notification = await Notification.create({
         recipient: recId,
@@ -117,7 +132,14 @@ router.post('/messages', async (req, res) => {
         title: 'New Message',
         message: `You received a new message from ${req.user.name}`
       });
-      emitToUser(recId, 'notification', notification);
+      emitToUser(recId.toString(), 'notification', notification);
+      
+      sendPushToUser(recId, {
+        title: `New message from ${req.user.name}`,
+        message: message,
+        type: 'chat',
+        url: '/operator-dashboard'
+      });
     }
 
     const populatedThread = await ChatThread.findById(thread._id).populate('participants', 'name profilePic role');
@@ -157,14 +179,27 @@ router.post('/messages', async (req, res) => {
 
           const popAutoMsg = await ChatMessage.findById(autoMsg._id).populate('sender', 'name profilePic role');
           
-          // Emit to operator
-          emitToUser(req.user._id.toString(), 'chat_message', popAutoMsg);
+          // Emit to all participants in the thread so admins see the auto-reply too
+          const allParticipants = thread.participants;
+          for (const pId of allParticipants) {
+            emitToUser(pId.toString(), 'chat_message', popAutoMsg);
+          }
+
+          // But only notify the operator
           emitToUser(req.user._id.toString(), 'notification', await Notification.create({
             recipient: req.user._id,
             type: 'chat',
             title: 'Auto-Reply',
             message: `You received an automated reply`
           }));
+          
+          const { sendPushToUser } = require('../services/pushService');
+          sendPushToUser(req.user._id, {
+            title: 'Auto-Reply from GTRAMS',
+            message: autoReply,
+            type: 'chat',
+            url: '/operator-dashboard'
+          });
         }, 1500);
       }
     }
@@ -229,17 +264,31 @@ router.post('/broadcast', async (req, res) => {
     const { emitToUser } = require('../config/socket');
     const Notification = require('../models/notificationModel');
 
-    for (const user of users) {
-      emitToUser(user._id.toString(), 'chat_message', populatedMessage);
+    // Bulk create notifications to prevent event loop blocking
+    const notificationsToInsert = users.map(user => ({
+      recipient: user._id,
+      type: 'chat',
+      title: 'System Announcement',
+      message: `Admin broadcasted an announcement`
+    }));
+    
+    const insertedNotifications = await Notification.insertMany(notificationsToInsert);
 
-      const notification = await Notification.create({
-        recipient: user._id,
-        type: 'chat',
-        title: 'System Announcement',
-        message: `Admin broadcasted an announcement`
-      });
-      emitToUser(user._id.toString(), 'notification', notification);
-    }
+    // Emit socket events
+    users.forEach((user, index) => {
+      emitToUser(user._id.toString(), 'chat_message', populatedMessage);
+      emitToUser(user._id.toString(), 'notification', insertedNotifications[index]);
+    });
+    
+    // Trigger push notifications
+    const { broadcastPushNotification } = require('../services/pushService');
+    broadcastPushNotification({
+      role: { $in: ['operator', 'toda_president', 'toda president'] },
+      title: 'System Announcement',
+      message: message,
+      type: 'announcement',
+      url: '/operator-dashboard'
+    });
 
     res.status(200).json({ message: 'Broadcast channel updated and notifications sent successfully.' });
   } catch (error) {

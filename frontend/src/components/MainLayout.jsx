@@ -254,8 +254,9 @@ const MainLayout = ({ children, hideNav = false }) => {
         </main>
       </div>
 
+      {/* Floating Chat Widget (Hidden for Admins) */}
+      {!role.includes('admin') && <ChatWidget />}
       {/* Mobile Bottom Navigation for Operator and TODA President */}
-      <ChatWidget />
       {showBottomNav && (
         <OperatorBottomNav role={role} />
       )}

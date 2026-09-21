@@ -77,16 +77,16 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [API_URL]);
 
-  // Mark all notifications as read
+  // Mark all notifications as read (and delete them)
   const markAllRead = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/api/v1/notifications/read-all`, {
-        method: 'PUT',
+        method: 'DELETE',
         headers: getHeaders(),
       });
 
       if (res.ok) {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setNotifications([]);
         setUnreadCount(0);
       }
     } catch (err) {
