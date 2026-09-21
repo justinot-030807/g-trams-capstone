@@ -635,7 +635,6 @@ const Register = () => {
                           contact: cleanProfile?.email || prev.contact
                         }));
                         setShowGoogleToast(true);
-                        setTimeout(() => setShowGoogleToast(false), 4000);
                       }
                     }}
                     onError={(msg) => setError(msg)}
