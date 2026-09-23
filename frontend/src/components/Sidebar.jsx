@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
   FileCheck, ShieldAlert, LogOut, User, Printer, 
@@ -264,11 +264,15 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   // Auto-expand active dropdown without collapsing user-opened ones
   useEffect(() => {
-    activeMenu.forEach(item => {
+    const currentMenu = menuConfig[role] || menuConfig['operator'];
+    currentMenu.forEach(item => {
       if (item.type === 'dropdown') {
-        const isCurrentInside = item.subItems.some(sub => sub.path === location.pathname);
+        const isCurrentInside = item.subItems.some(sub => 
+          location.pathname === sub.path || (sub.path === '/franchise-approval' && location.pathname.startsWith('/franchise-approval/review'))
+        );
         if (isCurrentInside) {
           setOpenSubMenus(prev => {
+            if (prev[item.id]) return prev; // Avoid unnecessary state update if already open
             const next = { ...prev, [item.id]: true };
             localStorage.setItem('gtrams_open_submenus', JSON.stringify(next));
             return next;
@@ -276,7 +280,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
       }
     });
-  }, [location.pathname, role, activeMenu]);
+  }, [location.pathname, role]);
 
   const toggleSubMenu = (id) => {
     setOpenSubMenus(prev => {
@@ -359,8 +363,11 @@ const Sidebar = ({ isOpen, onClose }) => {
               const isActive = location.pathname === item.path;
               return (
                 <div key={index} className="relative group/navitem">
-                  <button
-                    onClick={() => handleNavigate(item.path)}
+                  <Link
+                    to={item.path}
+                    onClick={() => {
+                      if (window.innerWidth < 768 && onClose) onClose();
+                    }}
                     title={item.name}
                     className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
                       isActive 
@@ -385,7 +392,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
-                  </button>
+                  </Link>
 
                   {/* Icon Hover Tooltip (Only when sidebar is minimized) */}
                   {!isOpen && (
@@ -459,11 +466,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                         : "py-1 space-y-1.5 flex flex-col items-center bg-black/20 dark:bg-slate-950/40 rounded-xl mx-1 my-1 p-1 animate-in fade-in duration-150 border border-white/5"
                     }>
                       {item.subItems.map((sub, idx) => {
-                        const isSubActive = location.pathname === sub.path;
+                        const isSubActive = location.pathname === sub.path || (sub.path === '/franchise-approval' && location.pathname.startsWith('/franchise-approval/review'));
                         return (
                           <div key={idx} className="relative group/subitem w-full flex justify-center">
-                            <button
-                              onClick={() => handleNavigate(sub.path)}
+                            <Link
+                              to={sub.path}
+                              onClick={() => {
+                                if (window.innerWidth < 768 && onClose) onClose();
+                              }}
                               title={sub.name}
                               className={`flex items-center rounded-lg text-xs font-bold transition-colors duration-150 ${
                                 isSubActive 
@@ -483,7 +493,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                   {sub.badge}
                                 </span>
                               )}
-                            </button>
+                            </Link>
 
                             {/* Tooltip for sub folder icon in minimized mode */}
                             {!isOpen && (

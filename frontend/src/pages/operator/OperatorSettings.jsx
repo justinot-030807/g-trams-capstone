@@ -664,24 +664,11 @@ const OperatorSettings = () => {
       )}
 
       {/* Main Container - Mobile First Centered Layout */}
-      <div className="max-w-2xl mx-auto space-y-6 pb-28 sm:pb-24">
-        {/* Slim Accent Top Header */}
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-1.5 h-8 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Settings
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-              Manage your credentials, preferences, and account security
-            </p>
-          </div>
-        </div>
-
+      <div className="max-w-2xl mx-auto space-y-5 pb-28 sm:pb-24 pt-1 sm:pt-2">
         {isLoading ? (
           <SettingsSkeleton />
         ) : (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-5 animate-in fade-in duration-200">
             {/* PROFILE HEADER CARD */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
               <div className="flex items-center gap-4 sm:gap-5">
@@ -746,27 +733,22 @@ const OperatorSettings = () => {
             {/* GROUP 1: OPERATOR CREDENTIALS */}
             <div>
               <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-3 mb-2">
-                Operator Credentials &bull; Dokumento at ID
+                Operator Credentials
               </h3>
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/80">
                 {/* Digital ID Card */}
                 <button
                   type="button"
                   onClick={() => setIsIdCardModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                       <ShieldCheck size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Digital ID Card
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        MTOP QR verification &amp; official credential
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Digital ID Card
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 hidden sm:inline-flex items-center gap-1">
@@ -780,20 +762,15 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => setIsVaultModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                       <FileText size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Document Vault
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        OR/CR, License, TODA &amp; Barangay clearance
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Document Vault
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
@@ -808,11 +785,11 @@ const OperatorSettings = () => {
             {/* GROUP 2: PREFERENCES */}
             <div>
               <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-3 mb-2">
-                Preferences &bull; Mga Kagustuhan
+                Preferences
               </h3>
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/80">
                 {/* Notifications & Sounds */}
-                <div className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                <div className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                   <button
                     type="button"
                     onClick={() => setIsNotificationModalOpen(true)}
@@ -821,14 +798,9 @@ const OperatorSettings = () => {
                     <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                       <Bell size={20} />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
-                        Notifications and Sounds
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                        {isPushSubscribed ? 'Web push active • Tap to configure' : 'Web push alerts disabled'}
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
+                      Notifications and sounds
+                    </span>
                   </button>
 
                   <div className="flex items-center gap-2 shrink-0">
@@ -855,20 +827,15 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => setIsLanguageModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
                       <Globe size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Language
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Portal display language
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Language
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -882,20 +849,15 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => setIsThemeModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                       {theme === 'system' ? <Laptop size={20} /> : isDark ? <Moon size={20} /> : <Sun size={20} />}
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Theme
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Light, dark, or system mode
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Theme
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 capitalize">
@@ -910,27 +872,22 @@ const OperatorSettings = () => {
             {/* GROUP 3: ACCOUNT & SECURITY */}
             <div>
               <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-3 mb-2">
-                Account &bull; Seguridad at Suporta
+                Account
               </h3>
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/80">
                 {/* Password Row */}
                 <button
                   type="button"
                   onClick={() => setIsPasswordModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Lock size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Password
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Change portal security password
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Password
+                    </span>
                   </div>
                   <ChevronRight size={18} className="text-slate-400 dark:text-slate-500 group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -939,20 +896,15 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => setIsSupportModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
                       <HelpCircle size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Support &amp; Helpdesk
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Municipal hotlines &amp; ticket submission
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Support
+                    </span>
                   </div>
                   <ChevronRight size={18} className="text-slate-400 dark:text-slate-500 group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -961,20 +913,15 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => setIsClearCacheModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0">
                       <RefreshCw size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Clear cache
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Free up storage &amp; refresh temporary app data
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Clear cache
+                    </span>
                   </div>
                   <ChevronRight size={18} className="text-slate-400 dark:text-slate-500 group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -983,20 +930,15 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => setIsTermsModalOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0">
                       <Shield size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        Terms and Privacy Policy
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        RA 10173 &amp; Gasan Municipal Ordinances
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      Terms and Privacy Policy
+                    </span>
                   </div>
                   <ChevronRight size={18} className="text-slate-400 dark:text-slate-500 group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -1005,20 +947,15 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => setIsLogoutConfirmOpen(true)}
-                  className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-red-50/70 dark:hover:bg-red-950/20 transition-colors text-left group cursor-pointer"
+                  className="w-full flex items-center justify-between p-4 hover:bg-red-50/70 dark:hover:bg-red-950/20 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
                       <LogOut size={20} />
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                        Logout
-                      </p>
-                      <p className="text-xs text-red-500/80 dark:text-red-400/70">
-                        End active portal session
-                      </p>
-                    </div>
+                    <span className="text-sm font-bold text-red-600 dark:text-red-400">
+                      Logout
+                    </span>
                   </div>
                   <ChevronRight size={18} className="text-red-400/80 dark:text-red-500 group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -1081,7 +1018,7 @@ const OperatorSettings = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Full Name <span className="text-red-500">*</span>
+                  Full Name
                 </label>
                 <input
                   type="text"
@@ -1096,7 +1033,7 @@ const OperatorSettings = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  {contactLabel} <span className="text-red-500">*</span>
+                  {contactLabel}
                 </label>
                 <div className="relative">
                   {isEmailContact ? (
@@ -1105,20 +1042,19 @@ const OperatorSettings = () => {
                     <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   )}
                   <input
-                    type={isEmailContact ? "email" : "tel"}
-                    inputMode={isEmailContact ? "email" : "tel"}
+                    type="text"
                     value={profileData.contact}
                     onChange={(e) => setProfileData(prev => ({ ...prev, contact: e.target.value }))}
                     className={`${inputClasses} pl-10`}
                     required
-                    placeholder={isEmailContact ? "e.g. operator@gmail.com" : "e.g. 0912 345 6789"}
+                    placeholder="e.g. 0912 345 6789 or operator@gmail.com"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Phone size={14} className="text-red-500" />
+                  <Phone size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                   <span>Emergency Contact Number</span>
                 </label>
                 <input
@@ -1873,7 +1809,7 @@ const OperatorSettings = () => {
             <form onSubmit={handleUpdatePassword} className="p-5 sm:p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Current Password <span className="text-red-500">*</span>
+                  Current Password
                 </label>
                 <div className="relative">
                   <input
@@ -1896,7 +1832,7 @@ const OperatorSettings = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  New Password <span className="text-red-500">*</span>
+                  New Password
                 </label>
                 <div className="relative">
                   <input
@@ -1920,7 +1856,7 @@ const OperatorSettings = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Confirm New Password <span className="text-red-500">*</span>
+                  Confirm New Password
                 </label>
                 <div className="relative">
                   <input
@@ -2096,7 +2032,7 @@ const OperatorSettings = () => {
               <form onSubmit={handleSubmitTicket} className="p-5 space-y-3.5 overflow-y-auto flex-1">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Subject / Concern <span className="text-red-500">*</span>
+                    Subject / Concern
                   </label>
                   <input
                     type="text"
@@ -2125,7 +2061,7 @@ const OperatorSettings = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Message / Description <span className="text-red-500">*</span>
+                    Message / Description
                   </label>
                   <textarea
                     rows={4}

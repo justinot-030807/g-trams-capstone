@@ -8,11 +8,6 @@ import ChatWidget from './operator/ChatWidget';
 const MainLayout = ({ children, hideNav = false }) => {
   const location = useLocation();
   const isTicketsPage = location.pathname.includes('/admin/tickets');
-  // Elastic Rubber-band Overscroll Touch Stretch Effect for mobile
-  const [stretchOffset, setStretchOffset] = useState(0);
-  const [isStretching, setIsStretching] = useState(false);
-  const touchStartY = useRef(0);
-  const isAtEdge = useRef(false);
   // Default closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -25,6 +20,7 @@ const MainLayout = ({ children, hideNav = false }) => {
   });
 
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+  const isAdmin = role === 'admin' || role === 'administrator';
   const isOperator = role === 'operator';
   const isTodaPresident = role === 'toda president' || role === 'toda_president';
   const showBottomNav = isOperator || isTodaPresident;
@@ -113,67 +109,7 @@ const MainLayout = ({ children, hideNav = false }) => {
     };
   }, []);
 
-  // Native-feel touch stretch event listener
-  const stretchRef = useRef({ offset: 0, isStretching: false });
-  useEffect(() => {
-    const handleTouchStart = (e) => {
-      if (e.touches.length !== 1) return;
-      touchStartY.current = e.touches[0].clientY;
-      const isTop = window.scrollY <= 2;
-      const isBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 5;
-      isAtEdge.current = isTop || isBottom;
-    };
-
-    const handleTouchMove = (e) => {
-      if (!isAtEdge.current || e.touches.length !== 1) return;
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - touchStartY.current;
-
-      const isTop = window.scrollY <= 2;
-      const isBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 5;
-
-      if (isTop && deltaY > 0) {
-        // Pulling down past top edge
-        const stretch = Math.min(Math.pow(deltaY, 0.72) * 0.55, 45);
-        setStretchOffset(stretch);
-        stretchRef.current = { offset: stretch, isStretching: true };
-        setIsStretching(true);
-      } else if (isBottom && deltaY < 0) {
-        // Pulling up past bottom edge
-        const stretch = -Math.min(Math.pow(Math.abs(deltaY), 0.72) * 0.55, 45);
-        setStretchOffset(stretch);
-        stretchRef.current = { offset: stretch, isStretching: true };
-        setIsStretching(true);
-      } else {
-        if (stretchRef.current.offset !== 0) {
-          setStretchOffset(0);
-          stretchRef.current = { offset: 0, isStretching: false };
-          setIsStretching(false);
-        }
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (stretchRef.current.isStretching || stretchRef.current.offset !== 0) {
-        setStretchOffset(0);
-        stretchRef.current = { offset: 0, isStretching: false };
-        setIsStretching(false);
-      }
-      isAtEdge.current = false;
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('touchcancel', handleTouchEnd);
-    };
-  }, []); // Run only once on mount to prevent listener detach/reattach thrashing
+  // Native scrolling enabled without jittery touch event listeners
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => {
@@ -244,12 +180,7 @@ const MainLayout = ({ children, hideNav = false }) => {
         )}
 
         <main 
-          style={stretchOffset !== 0 ? {
-            transform: `translateY(${stretchOffset}px) scaleY(${1 + Math.abs(stretchOffset) / 800})`,
-            transformOrigin: stretchOffset >= 0 ? 'top center' : 'bottom center',
-            transition: isStretching ? 'none' : 'transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-          } : undefined}
-          className={`p-3.5 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${stretchOffset !== 0 ? 'will-change-transform' : ''} ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}
+          className={`p-3.5 sm:p-6 lg:p-8 flex-1 overflow-x-hidden print:p-0 print:m-0 print:overflow-visible print:block ${showBottomNav ? 'pb-28 sm:pb-24 md:pb-8' : ''}`}
         >
           <div className="w-full print:max-w-full print:m-0 print:p-0 print:w-full transition-all duration-200">
             {children}
@@ -257,8 +188,8 @@ const MainLayout = ({ children, hideNav = false }) => {
         </main>
       </div>
 
-      {/* Floating Chat Widget (Hidden on tickets page where full chat pane is displayed) */}
-      {!isTicketsPage && <ChatWidget />}
+      {/* Floating Chat Widget (Only displayed for operators and TODA presidents; admins have a dedicated tickets page) */}
+      {!isTicketsPage && !isAdmin && <ChatWidget />}
       {/* Mobile Bottom Navigation for Operator and TODA President */}
       {showBottomNav && (
         <OperatorBottomNav role={role} />
