@@ -53,7 +53,7 @@ router.post('/subscribe', async (req, res) => {
     });
   } catch (error) {
     console.error('Error saving push subscription:', error);
-    res.status(500).json({ message: 'Error saving push subscription', error: error.message });
+    res.status(500).json({ message: 'Error saving push subscription'});
   }
 });
 
@@ -71,7 +71,7 @@ router.post('/unsubscribe', async (req, res) => {
     res.json({ success: true, message: 'Unsubscribed from push notifications successfully' });
   } catch (error) {
     console.error('Error unsubscribing push:', error);
-    res.status(500).json({ message: 'Error unsubscribing', error: error.message });
+    res.status(500).json({ message: 'Error unsubscribing'});
   }
 });
 
@@ -92,7 +92,7 @@ router.get('/status', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error checking subscription status', error: error.message });
+    res.status(500).json({ message: 'Error checking subscription status'});
   }
 });
 
@@ -111,7 +111,7 @@ router.put('/preferences', async (req, res) => {
 
     res.json({ success: true, message: 'Preferences updated successfully', preferences });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating preferences', error: error.message });
+    res.status(500).json({ message: 'Error updating preferences'});
   }
 });
 
@@ -139,7 +139,7 @@ router.post('/test', async (req, res) => {
     });
   } catch (error) {
     console.error('Error sending test push:', error);
-    res.status(500).json({ message: 'Error sending test notification', error: error.message });
+    res.status(500).json({ message: 'Error sending test notification'});
   }
 });
 

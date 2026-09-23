@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
-import { Mail, CheckCircle, Clock, Search, XCircle, Send, MessageSquare } from 'lucide-react';
-import ChatWidget from '../../components/operator/ChatWidget';
+import { Mail, CheckCircle, Clock, Search, XCircle, Send, MessageSquare, Megaphone, HelpCircle } from 'lucide-react';
+import AdminLiveChat from '../../components/admin/AdminLiveChat';
+import AdminBroadcastCenter from '../../components/admin/AdminBroadcastCenter';
 
 const AdminTickets = () => {
   const [activeTab, setActiveTab] = useState('chat');
@@ -69,12 +70,12 @@ const AdminTickets = () => {
       <div className="w-full space-y-6 pb-24">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Support & Live Chats</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1">Manage inquiries, support tickets, and chat with operators.</p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Communications &amp; Support</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage live operator chats, broadcast municipal announcements, and resolve tickets.</p>
           </div>
           {activeTab === 'tickets' && (
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
                 type="text" 
                 placeholder="Search tickets..." 
@@ -86,26 +87,50 @@ const AdminTickets = () => {
           )}
         </div>
 
-        <div className="flex gap-4 border-b border-slate-200 dark:border-slate-800">
+        {/* Tab Navigation */}
+        <div className="flex gap-2 sm:gap-4 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-px">
           <button 
             onClick={() => setActiveTab('chat')} 
-            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'chat' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'chat' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
-            Live Chats & Broadcasts
+            <MessageSquare size={16} />
+            <span>Live Chat</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('broadcast')} 
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'broadcast' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            <Megaphone size={16} />
+            <span>Broadcast Announcements</span>
           </button>
           <button 
             onClick={() => setActiveTab('tickets')} 
-            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'tickets' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'tickets' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
-            Support Tickets
+            <Mail size={16} />
+            <span>Support Tickets</span>
+            {tickets.filter(t => t.status === 'Open').length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[10px] font-black">
+                {tickets.filter(t => t.status === 'Open').length}
+              </span>
+            )}
           </button>
         </div>
 
-        {activeTab === 'chat' ? (
-          <div className="w-full max-w-5xl mx-auto h-[680px] animate-in fade-in">
-            <ChatWidget inline={true} />
+        {/* Content by Active Tab */}
+        {activeTab === 'chat' && (
+          <div className="w-full animate-in fade-in">
+            <AdminLiveChat />
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'broadcast' && (
+          <div className="w-full animate-in fade-in">
+            <AdminBroadcastCenter />
+          </div>
+        )}
+
+        {activeTab === 'tickets' && (
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
             {isLoading ? (
               <div className="p-8 text-center text-slate-500">Loading tickets...</div>

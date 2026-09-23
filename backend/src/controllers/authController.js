@@ -159,7 +159,7 @@ exports.register = async (req, res) => {
                 message: 'AN ACCOUNT WITH THIS EMAIL / PHONE NUMBER ALREADY EXISTS. PLEASE LOG IN INSTEAD.' 
             });
         }
-        res.status(500).json({ message: 'Server error: ' + error.message });
+        res.status(500).json({ message: 'Server error: ' });
     }
 };
 
@@ -204,7 +204,7 @@ exports.verifyOTP = async (req, res) => {
             user: userObj
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error: ' + error.message });
+        res.status(500).json({ message: 'Server error: ' });
     }
 };
 
@@ -277,83 +277,74 @@ exports.getUsers = async (req, res) => {
             await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() }).catch(() => {});
         }
 
-        const users = await User.find().select('-password').sort({ createdAt: -1 });
-        const franchises = await Franchise.find({ isArchived: { $ne: true } })
-            .select('operator fullName status plateNo make made motorNo chassisNo zone todaName');
-
-        const userFranchisesMap = {};
-        const userByNameMap = {};
-
-        franchises.forEach(f => {
-            const unitData = {
-                _id: f._id,
-                plateNo: f.plateNo,
-                make: f.make,
-                made: f.made,
-                motorNo: f.motorNo,
-                chassisNo: f.chassisNo,
-                status: f.status,
-                zone: f.zone,
-                todaName: f.todaName
-            };
-
-            const opId = f.operator ? (f.operator._id ? f.operator._id.toString() : f.operator.toString()) : null;
-            if (opId) {
-                if (!userFranchisesMap[opId]) userFranchisesMap[opId] = [];
-                userFranchisesMap[opId].push(unitData);
-            }
-
-            if (f.fullName && f.fullName.trim()) {
-                const normName = f.fullName.trim().toLowerCase();
-                if (!userByNameMap[normName]) userByNameMap[normName] = [];
-                userByNameMap[normName].push(unitData);
-            }
-        });
+        const users = await User.aggregate([
+            { $sort: { createdAt: -1 } },
+            {
+                $lookup: {
+                    from: 'franchises',
+                    let: { userId: '$_id', userName: '$name' },
+                    pipeline: [
+                        { 
+                            $match: { 
+                                $expr: {
+                                    $and: [
+                                        { $ne: ['$isArchived', true] },
+                                        { $or: [
+                                            { $eq: ['$operator', '$$userId'] },
+                                            { $and: [
+                                                { $or: [
+                                                    { $eq: ['$operator', null] },
+                                                    { $eq: [{ $type: '$operator' }, 'missing'] }
+                                                ]},
+                                                { $eq: ['$fullName', '$$userName'] }
+                                            ]}
+                                        ]}
+                                    ]
+                                }
+                            } 
+                        },
+                        { $project: { plateNo: 1, make: 1, made: 1, motorNo: 1, chassisNo: 1, status: 1, zone: 1, todaName: 1 } }
+                    ],
+                    as: 'units'
+                }
+            },
+            { $project: { password: 0 } } // Exclude password field
+        ]);
 
         const now = Date.now();
         const enhancedUsers = users.map(u => {
-            const uObj = u.toObject();
             const uIdStr = u._id.toString();
-            let userUnits = userFranchisesMap[uIdStr] || [];
+            const userUnits = u.units || [];
 
-            // Fallback matching by name if operator reference was not explicitly linked
-            if (userUnits.length === 0 && u.name) {
-                const normName = u.name.trim().toLowerCase();
-                if (userByNameMap[normName]) {
-                    userUnits = userByNameMap[normName];
-                }
-            }
-
-            uObj.unitsCount = userUnits.length;
-            uObj.activeUnitsCount = userUnits.filter(unit => unit.status === 'Active').length;
-            uObj.pendingUnitsCount = userUnits.filter(unit => unit.status === 'Pending' || unit.status === 'For Signing' || unit.status === 'Ready for Pickup').length;
-            uObj.expiredUnitsCount = userUnits.filter(unit => unit.status === 'Expired').length;
-            uObj.cancelledUnitsCount = userUnits.filter(unit => unit.status === 'Cancelled' || unit.status === 'Revoked').length;
-            uObj.units = userUnits;
+            u.unitsCount = userUnits.length;
+            u.activeUnitsCount = userUnits.filter(unit => unit.status === 'Active').length;
+            u.pendingUnitsCount = userUnits.filter(unit => unit.status === 'Pending' || unit.status === 'For Signing' || unit.status === 'Ready for Pickup').length;
+            u.expiredUnitsCount = userUnits.filter(unit => unit.status === 'Expired').length;
+            u.cancelledUnitsCount = userUnits.filter(unit => unit.status === 'Cancelled' || unit.status === 'Revoked').length;
 
             // Real-time online presence calculation
             const isCaller = req.user && req.user._id && uIdStr === req.user._id.toString();
 
             if (isCaller) {
-                uObj.isOnline = true;
-                uObj.lastActiveSecondsAgo = 0;
-                uObj.lastActive = new Date();
-            } else if (uObj.lastActive && uObj.isActive !== false) {
-                const diffSec = Math.max(0, Math.floor((now - new Date(uObj.lastActive).getTime()) / 1000));
-                uObj.lastActiveSecondsAgo = diffSec;
-                uObj.isOnline = diffSec < 180; // Active within last 3 minutes
+                u.isOnline = true;
+                u.lastActiveSecondsAgo = 0;
+                u.lastActive = new Date();
+            } else if (u.lastActive && u.isActive !== false) {
+                const diffSec = Math.max(0, Math.floor((now - new Date(u.lastActive).getTime()) / 1000));
+                u.lastActiveSecondsAgo = diffSec;
+                u.isOnline = diffSec < 180; // Active within last 3 minutes
             } else {
-                uObj.lastActiveSecondsAgo = null;
-                uObj.isOnline = false;
+                u.lastActiveSecondsAgo = null;
+                u.isOnline = false;
             }
 
-            return uObj;
+            return u;
         });
 
         res.status(200).json(enhancedUsers);
     } catch (error) {
         console.error("GET USERS ERROR:", error);
-        res.status(500).json({ message: 'Error retrieving users: ' + error.message });
+        res.status(500).json({ message: 'Error retrieving users: ' });
     }
 };
 
@@ -424,7 +415,7 @@ exports.forgotPassword = async (req, res) => {
         }
     } catch (error) {
         console.error("FORGOT PASSWORD ERROR:", error);
-        res.status(500).json({ message: 'Server error: ' + error.message });
+        res.status(500).json({ message: 'Server error: ' });
     }
 };
 
@@ -624,7 +615,7 @@ exports.toggleUserStatus = async (req, res) => {
             user: updatedUser 
         });
     } catch (error) {
-        res.status(500).json({ message: error.message, error: 'An internal server error occurred' });
+        res.status(500).json({ message: 'An internal server error occurred', error: 'An internal server error occurred' });
     }
 };
 
@@ -979,7 +970,7 @@ exports.googleAuth = async (req, res) => {
         });
     } catch (error) {
         console.error('GOOGLE AUTH ERROR:', error);
-        res.status(500).json({ message: 'Google authentication error: ' + error.message });
+        res.status(500).json({ message: 'Google authentication error: ' });
     }
 };
 
@@ -1015,7 +1006,7 @@ exports.submitAppeal = async (req, res) => {
         res.status(200).json({ message: 'Appeal submitted successfully' });
     } catch (error) {
         console.error('SUBMIT APPEAL ERROR:', error);
-        res.status(500).json({ message: 'Server error: ' + error.message });
+        res.status(500).json({ message: 'Server error: ' });
     }
 };
 // Verify Operator for QR Code
@@ -1051,7 +1042,7 @@ exports.verifyOperator = async (req, res) => {
         });
     } catch (error) {
         console.error('VERIFY OPERATOR ERROR:', error);
-        res.status(500).json({ message: 'Server error: ' + error.message });
+        res.status(500).json({ message: 'Server error: ' });
     }
 };
 

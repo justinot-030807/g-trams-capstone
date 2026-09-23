@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
 import OperatorBottomNav from './operator/OperatorBottomNav';
 import ChatWidget from './operator/ChatWidget';
 
 const MainLayout = ({ children, hideNav = false }) => {
+  const location = useLocation();
+  const isTicketsPage = location.pathname.includes('/admin/tickets');
   // Elastic Rubber-band Overscroll Touch Stretch Effect for mobile
   const [stretchOffset, setStretchOffset] = useState(0);
   const [isStretching, setIsStretching] = useState(false);
@@ -254,8 +257,8 @@ const MainLayout = ({ children, hideNav = false }) => {
         </main>
       </div>
 
-      {/* Floating Chat Widget (Hidden for Admins) */}
-      {!role.includes('admin') && <ChatWidget />}
+      {/* Floating Chat Widget (Hidden on tickets page where full chat pane is displayed) */}
+      {!isTicketsPage && <ChatWidget />}
       {/* Mobile Bottom Navigation for Operator and TODA President */}
       {showBottomNav && (
         <OperatorBottomNav role={role} />

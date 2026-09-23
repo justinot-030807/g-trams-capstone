@@ -75,7 +75,7 @@ const sendPushToUser = async (userId, notificationData) => {
     };
   } catch (error) {
     console.error('Error in sendPushToUser:', error.message);
-    return { success: false, error: error.message };
+    return { success: false};
   }
 };
 

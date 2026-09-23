@@ -1,3 +1,26 @@
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
+
+if (typeof workbox !== 'undefined') {
+  const bgSyncPlugin = new workbox.backgroundSync.BackgroundSyncPlugin('gtrams-form-queue', {
+    maxRetentionTime: 24 * 60, // Retry for max of 24 Hours (specified in minutes)
+  });
+
+  workbox.routing.registerRoute(
+    /\/api\/v1\/franchises/,
+    new workbox.strategies.NetworkOnly({
+      plugins: [bgSyncPlugin],
+    }),
+    'POST'
+  );
+  workbox.routing.registerRoute(
+    /\/api\/v1\/franchises/,
+    new workbox.strategies.NetworkOnly({
+      plugins: [bgSyncPlugin],
+    }),
+    'PUT'
+  );
+}
+
 // G-TRAMS Official Service Worker (PWA)
 const CACHE_NAME = 'gtrams-cache-v2';
 const STATIC_ASSETS = [

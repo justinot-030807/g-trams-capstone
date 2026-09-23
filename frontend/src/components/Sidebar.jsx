@@ -218,7 +218,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       },
       { 
         type: 'link', 
-        name: 'Support Tickets', 
+        name: 'Live Chat & Support', 
         path: '/admin/tickets', 
         icon: <HelpCircle size={18} />,
         badge: chatUnreadCount > 0 ? chatUnreadCount : null

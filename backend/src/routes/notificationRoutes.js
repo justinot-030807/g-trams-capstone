@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       .populate('relatedFranchise', 'plateNo status');
     res.json(notifications);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching notifications', error: error.message });
+    res.status(500).json({ message: 'Error fetching notifications'});
   }
 });
 
@@ -22,7 +22,7 @@ router.get('/unread-count', async (req, res) => {
     const count = await Notification.countDocuments({ recipient: req.user._id, isRead: false });
     res.json({ count });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching unread count', error: error.message });
+    res.status(500).json({ message: 'Error fetching unread count'});
   }
 });
 
@@ -40,7 +40,7 @@ router.put('/:id/read', async (req, res) => {
     emitToUser(req.user._id.toString(), 'notification_read', { id: notification._id });
     res.json(notification);
   } catch (error) {
-    res.status(500).json({ message: 'Error marking notification as read', error: error.message });
+    res.status(500).json({ message: 'Error marking notification as read'});
   }
 });
 
@@ -51,7 +51,7 @@ router.delete('/read-all', async (req, res) => {
     emitToUser(req.user._id.toString(), 'notifications_read_all');
     res.json({ message: 'All notifications deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Error marking all notifications as read', error: error.message });
+    res.status(500).json({ message: 'Error marking all notifications as read'});
   }
 });
 

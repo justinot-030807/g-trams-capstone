@@ -124,6 +124,10 @@ app.use(errorHandler);
 // Initialize Socket.IO
 initSocket(server);
 
+// Initialize Cron Jobs
+const { startCleanupJobs } = require('./src/jobs/cleanupJobs');
+startCleanupJobs();
+
 // Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {
     server.listen(PORT, () => {

@@ -76,4 +76,7 @@ franchiseSchema.index({
     todaName: 'text'
 });
 
+// Index for operator to speed up population and queries
+franchiseSchema.index({ operator: 1 });
+
 module.exports = mongoose.model('Franchise', franchiseSchema);

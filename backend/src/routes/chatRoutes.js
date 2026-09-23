@@ -46,7 +46,7 @@ router.get('/unread-count', async (req, res) => {
 
     res.json({ unreadCount: count });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching unread count', error: error.message });
+    res.status(500).json({ message: 'Error fetching unread count'});
   }
 });
 
@@ -88,7 +88,7 @@ router.get('/threads', async (req, res) => {
 
     res.json(threadsWithUnread);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching threads', error: error.message });
+    res.status(500).json({ message: 'Error fetching threads'});
   }
 });
 
@@ -109,7 +109,7 @@ router.get('/messages/:threadId', async (req, res) => {
 
     res.json(messages);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching messages', error: error.message });
+    res.status(500).json({ message: 'Error fetching messages'});
   }
 });
 
@@ -292,7 +292,7 @@ router.post('/messages', async (req, res) => {
       }
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error sending message', error: error.message });
+    res.status(500).json({ message: 'Error sending message'});
   }
 });
 
@@ -333,7 +333,7 @@ router.put('/messages/:threadId/read', async (req, res) => {
 
     res.json({ message: 'Messages marked as read' });
   } catch (error) {
-    res.status(500).json({ message: 'Error marking messages as read', error: error.message });
+    res.status(500).json({ message: 'Error marking messages as read'});
   }
 });
 
@@ -401,7 +401,7 @@ router.post('/broadcast', async (req, res) => {
 
     res.status(200).json({ message: 'Broadcast channel updated and notifications sent successfully.' });
   } catch (error) {
-    res.status(500).json({ message: 'Error broadcasting message', error: error.message });
+    res.status(500).json({ message: 'Error broadcasting message'});
   }
 });
 
@@ -419,7 +419,7 @@ router.delete('/messages/:messageId', async (req, res) => {
     await ChatMessage.findByIdAndDelete(req.params.messageId);
     res.json({ message: 'Message deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting message', error: error.message });
+    res.status(500).json({ message: 'Error deleting message'});
   }
 });
 
@@ -433,7 +433,7 @@ router.delete('/threads/:threadId', async (req, res) => {
     
     res.json({ message: 'Thread and all messages deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting thread', error: error.message });
+    res.status(500).json({ message: 'Error deleting thread'});
   }
 });
 

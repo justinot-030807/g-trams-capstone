@@ -8,29 +8,7 @@ const User = require('../models/userModel');
 const Franchise = require('../models/franchiseModel');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
-const fileFilter = (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (ext === '.pdf' || ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.webp') {
-        cb(null, true);
-    } else {
-        cb(new Error('Only PDF and image files (including WebP) are allowed'), false);
-    }
-};
-
-const upload = multer({ 
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
+const upload = require('../config/cloudinary');
 
 // Upload member list (TODA President)
 router.post('/upload', protect, authorize('admin', 'toda president', 'toda_president'), upload.single('file'), async (req, res) => {
@@ -41,7 +19,7 @@ router.post('/upload', protect, authorize('admin', 'toda president', 'toda_presi
             submittedBy: req.user._id,
             presidentName: req.user.name,
             fileName: req.file.originalname,
-            filePath: req.file.path
+            filePath: req.file.path // Cloudinary URL
         });
 
         res.status(201).json({ message: 'List submitted successfully', submission: newSubmission });

@@ -10,7 +10,7 @@ const errorHandler = (err, req, res, next) => {
     }
     
     let errorResponse = {
-        message: err.message || 'Internal Server Error'
+        message: (statusCode === 500 && process.env.NODE_ENV === 'production') ? 'Internal Server Error' : (err.message || 'Internal Server Error')
     };
 
     // Include stack trace only in development

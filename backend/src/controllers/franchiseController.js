@@ -60,7 +60,9 @@ const createFranchise = async (req, res) => {
         res.status(201).json(franchise);
     } catch (error) {
         console.error('Error creating franchise:', error);
-        res.status(error?.message?.includes('registered') ? 400 : 500).json({ message: error.message || 'Server error creating franchise application.' });
+        res.status(error?.message?.includes('registered') ? 400 : 500).json({ 
+            message: error?.message?.includes('registered') ? error.message : 'Server error creating franchise application.' 
+        });
     }
 };
 

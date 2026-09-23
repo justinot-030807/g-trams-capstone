@@ -12,6 +12,9 @@ import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import TodaZoneGuideModal from '../../components/operator/TodaZoneGuideModal';
+import CancelApplicationModal from '../../components/operator/CancelApplicationModal';
+import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
+import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
 
 
 
@@ -573,7 +576,7 @@ const ApplyFranchise = () => {
                 [name]: {
                   checking: false,
                   duplicate: false,
-                  message: '✓ Available'
+                  message: 'Available'
                 }
               }));
             }
@@ -1148,10 +1151,10 @@ const ApplyFranchise = () => {
                     type="text" 
                     name="fullName" 
                     value={formData.fullName} 
-                    onChange={handleInputChange} 
-                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    className={disabledClasses} 
                     required 
-                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
+                    readOnly
+                    title="Assigned automatically based on your account."
                     placeholder="e.g. Juan Dela Cruz"
                   />
                 </div>
@@ -1713,296 +1716,26 @@ const ApplyFranchise = () => {
         </div>
       </div>
 
-      {/* Document Zoom Modal */}
-      {fullPreview && (
-        <div 
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setFullPreview(null)}
-        >
-          <div 
-            className="relative max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
-              <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <FileCheck size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                {fullPreview.title || 'Document Preview'}
-              </h4>
-              <button 
-                onClick={() => setFullPreview(null)}
-                className="p-1.5 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            
-            <div className="max-h-[70vh] overflow-auto flex items-center justify-center bg-slate-950/5 dark:bg-black/30 rounded-2xl p-2">
-              {fullPreview.url?.toLowerCase().includes('.pdf') ? (
-                <iframe 
-                  src={fullPreview.url} 
-                  title={fullPreview.title} 
-                  className="w-full h-[60vh] rounded-xl border-0"
-                />
-              ) : (
-                <img 
-                  src={fullPreview.url} 
-                  alt={fullPreview.title} 
-                  className="max-h-[65vh] w-auto object-contain rounded-xl shadow-xs" 
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <DocumentPreviewModal 
+        fullPreview={fullPreview} 
+        setFullPreview={setFullPreview} 
+      />
 
-      {/* Complete Application Summary Modal (Slide 1) */}
-      {isSummaryModalOpen && (
-        <div 
-          className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setIsSummaryModalOpen(false)}
-        >
-          <div 
-            className="relative max-w-xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 max-h-[85vh] flex flex-col animate-spring-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                  <FileText size={18} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Application Summary</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Complete application details before final submission</p>
-                </div>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsSummaryModalOpen(false)}
-                className="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
+      <ApplicationSummaryModal 
+        isSummaryModalOpen={isSummaryModalOpen} 
+        setIsSummaryModalOpen={setIsSummaryModalOpen} 
+        formData={formData} 
+        loggedInToda={loggedInToda} 
+        requirementsList={requirementsList} 
+        uploadedDocs={uploadedDocs} 
+        filePreviews={filePreviews} 
+      />
 
-            {/* Modal Scrollable Body */}
-            <div className="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
-              {/* 1. Operator Information */}
-              <div>
-                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <User size={13} /> 1. Operator Information
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Full Name</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.fullName || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Barangay Address</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.address || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Route Zone</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.zone ? `Zone ${formData.zone}` : '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">TODA Association</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.todaName || loggedInToda || '—'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Tricycle Details */}
-              <div>
-                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Car size={13} /> 2. Tricycle Details
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Make & Model</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.make || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Model Year</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.made || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Plate Number</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">{formData.plateNo || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Motor Number</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.motorNo || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 sm:col-span-2">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Chassis Number</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.chassisNo || '—'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. CTC / Cedula & Tax */}
-              <div>
-                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Receipt size={13} /> 3. CTC / Cedula Details
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Cedula Serial No.</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.cedulaSerialNo || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Date Issued</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.cedulaDate || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Place Issued</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.cedulaAddress || '—'}</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 block text-[10px] uppercase font-bold">Date Applied</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.dateApplied || '—'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. Uploaded Requirements */}
-              <div>
-                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <ShieldCheck size={13} /> 4. Attached Documents
-                </h4>
-                <div className="space-y-1.5">
-                  {requirementsList.map((req) => {
-                    const isAttached = !!(uploadedDocs[req.id] || filePreviews[req.id]);
-                    return (
-                      <div key={req.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs">
-                        <span className="font-medium text-slate-700 dark:text-slate-300 truncate">{req.label}</span>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                          isAttached ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60'
-                        }`}>
-                          {isAttached ? '✓ Attached' : 'Missing'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsSummaryModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
-              >
-                Close Summary
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Operator Application Cancellation Modal */}
-      {cancelModal.isOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" 
-            onClick={() => !cancelModal.isSubmitting && setCancelModal(prev => ({ ...prev, isOpen: false }))} 
-          />
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400">
-                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center shrink-0">
-                  <XCircle size={18} />
-                </div>
-                <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-white">Cancel Application</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
-                </div>
-              </div>
-              <button 
-                disabled={cancelModal.isSubmitting}
-                onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))} 
-                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3.5 rounded-2xl flex items-start gap-2.5">
-                <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
-                  Notice: Cancelling this application will set its status to <b>Cancelled</b>. The reason provided will be recorded in audit logs for LGU Admin review.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                  Select Reason for Cancellation:
-                </label>
-                <div className="space-y-2">
-                  {CANCEL_REASONS.map((r, idx) => (
-                    <label 
-                      key={idx} 
-                      className={`flex items-start gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
-                        cancelModal.reason === r 
-                          ? 'border-red-500 bg-red-50/40 dark:bg-red-950/20 text-slate-900 dark:text-white font-bold' 
-                          : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="cancel_reason"
-                        checked={cancelModal.reason === r}
-                        onChange={() => setCancelModal(prev => ({ ...prev, reason: r }))}
-                        className="mt-0.5 text-red-600 focus:ring-red-500"
-                      />
-                      <span>{r}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {cancelModal.reason === "Other reason (Please specify below)" && (
-                <div className="animate-in fade-in duration-150">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Additional Reason Details:
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={cancelModal.customReason}
-                    onChange={(e) => setCancelModal(prev => ({ ...prev, customReason: e.target.value }))}
-                    placeholder="Enter details on why you wish to cancel..."
-                    className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-500"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <button
-                type="button"
-                disabled={cancelModal.isSubmitting}
-                onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                disabled={cancelModal.isSubmitting || (cancelModal.reason === "Other reason (Please specify below)" && !cancelModal.customReason?.trim())}
-                onClick={handleConfirmCancel}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {cancelModal.isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                {cancelModal.isSubmitting ? 'Cancelling...' : 'Confirm Cancellation'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CancelApplicationModal 
+        cancelModal={cancelModal} 
+        setCancelModal={setCancelModal} 
+        handleConfirmCancel={handleConfirmCancel} 
+      />
 
       {/* Centered Feedback Modal */}
       <FeedbackModal
