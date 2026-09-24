@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Loader2, ChevronDown, Check, CheckCheck, Trash2 } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ChevronDown, Check, CheckCheck, Trash2, Sparkles, HelpCircle } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
+import { renderFormattedAnnouncement } from '../admin/AdminBroadcastCenter';
 
 const ChatWidget = ({ inline = false }) => {
   const { socket } = useSocket();
@@ -188,7 +189,17 @@ const ChatWidget = ({ inline = false }) => {
         const newMsg = data.message || data;
         
         setMessages(prev => {
-          if (prev.some(m => m._id === newMsg._id)) return prev;
+          if (prev.some(m => String(m._id) === String(newMsg._id))) return prev;
+          const matchIdx = prev.findIndex(m => 
+            m.message === newMsg.message &&
+            String(m.sender?._id || m.sender) === String(currentUserId) &&
+            Math.abs(new Date(m.createdAt || Date.now()) - new Date(newMsg.createdAt || Date.now())) < 20000
+          );
+          if (matchIdx !== -1) {
+            const copy = [...prev];
+            copy[matchIdx] = newMsg;
+            return copy;
+          }
           return [...prev, newMsg];
         });
         
@@ -237,9 +248,26 @@ const ChatWidget = ({ inline = false }) => {
     if (!socket) return;
 
     const handleChatMessage = (data) => {
-      if (activeThread && data.thread === activeThread._id) {
+      const incomingThreadId = typeof data.thread === 'object' ? data.thread?._id : data.thread;
+      if (activeThread && (incomingThreadId === activeThread._id || String(incomingThreadId) === String(activeThread._id))) {
         setMessages(prev => {
-          if (prev.some(m => m._id === data._id)) return prev;
+          // Deduplicate by message ID
+          if (prev.some(m => String(m._id) === String(data._id))) return prev;
+          
+          // Deduplicate self-sent messages (double bubble bug fix)
+          const isSenderSelf = String(data.sender?._id || data.sender) === String(currentUserId);
+          if (isSenderSelf) {
+            const selfMatchIdx = prev.findIndex(m => 
+              (m._id?.startsWith?.('temp_') || String(m.sender?._id || m.sender) === String(currentUserId)) &&
+              m.message === data.message &&
+              Math.abs(new Date(m.createdAt || Date.now()) - new Date(data.createdAt || Date.now())) < 20000
+            );
+            if (selfMatchIdx !== -1) {
+              const copy = [...prev];
+              copy[selfMatchIdx] = data;
+              return copy;
+            }
+          }
           return [...prev, data];
         });
         markThreadRead(activeThread._id);
@@ -377,6 +405,10 @@ const ChatWidget = ({ inline = false }) => {
     }
     return sender.name || 'Operator';
   };
+
+  if (!inline && isCurrentUserAdmin) {
+    return null;
+  }
 
   return (
     <>
@@ -584,7 +616,15 @@ const ChatWidget = ({ inline = false }) => {
                             {getSenderName(msg.sender)}
                           </p>
                         )}
-                        <p className="whitespace-pre-wrap break-words">{msg.message}</p>
+                        {activeThread?.isAnnouncement || String(msg.message || '').startsWith('[ANNOUNCEMENT]') ? (
+                          <div className="text-xs sm:text-sm">
+                            {renderFormattedAnnouncement(String(msg.message || '').replace(/^\[ANNOUNCEMENT\]\s*/i, ''))}
+                          </div>
+                        ) : (
+                          <div className="whitespace-pre-wrap break-words">
+                            {renderFormattedAnnouncement(msg.message)}
+                          </div>
+                        )}
                         <div className={`flex items-center gap-1.5 mt-1.5 ${isMine ? 'justify-end' : 'justify-start'}`}>
                           <span className={`text-[10px] font-medium ${
                             isMine ? 'text-white/70 dark:text-slate-950/60' : 'text-slate-400 dark:text-slate-400'
@@ -638,13 +678,39 @@ const ChatWidget = ({ inline = false }) => {
             )}
           </div>
 
-          {/* Input Area - Spacious and comfortable */}
+          {/* Input Area - Only when actively in a chat thread or composing broadcast */}
           {(
             isBroadcast ||
-            (activeThread && !activeThread.isAnnouncement) || 
-            (!activeThread && !isCurrentUserAdmin)
+            (activeThread && !activeThread.isAnnouncement)
           ) && (
-            <div className="border-t border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 bg-white dark:bg-slate-900 shrink-0">
+            <div className="border-t border-slate-200 dark:border-slate-800 p-3 sm:p-4 bg-white dark:bg-slate-900 shrink-0">
+              {/* Persistent Horizontal Quick-Reply Carousel for Operators */}
+              {!isCurrentUserAdmin && !isBroadcast && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-1.5 scrollbar-none overscroll-contain">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0 flex items-center gap-1 pl-1">
+                    <Sparkles size={12} className="text-[#D4AF37]" /> Tanong:
+                  </span>
+                  {[
+                    'Kailan ang release ng MTOP plate?',
+                    'Magkano ang babayarang renewal fee?',
+                    'Ano ang requirements para sa renewal?',
+                    'Paano kung nawala ang aking OR/CR?',
+                    'Saan kukunin ang Claim Stub?',
+                    'Kailan ang schedule ng inspeksyon?',
+                    'Paano mag-renew ng prangkisa?'
+                  ].map((faq, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setInput(faq)}
+                      className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                    >
+                      {faq}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-end gap-2.5">
                 <textarea
                   value={input}

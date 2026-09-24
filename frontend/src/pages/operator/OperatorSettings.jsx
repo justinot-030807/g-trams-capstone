@@ -255,9 +255,11 @@ const OperatorSettings = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
-        const list = await res.json();
+        const raw = await res.json();
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.franchises) ? raw.franchises : []));
         const docs = [];
         list.forEach(unit => {
+          if (!unit) return;
           const unitPlate = unit.plateNo || 'PENDING PLATE';
           const unitDesc = `${unit.make || 'Tricycle'} (${unit.made || 'Unit'})`;
           
@@ -690,7 +692,7 @@ const OperatorSettings = () => {
                     <input
                       id="avatar-upload-header"
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.webp,image/webp"
                       onChange={handleImageChange}
                       className="hidden"
                     />
@@ -699,28 +701,25 @@ const OperatorSettings = () => {
 
                 {/* Profile Information */}
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
-                    {profileData.name || 'Registered Operator'}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
-                    {profileData.contact || 'No contact provided'}
-                  </p>
-                  
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/30">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
+                      {profileData.name || 'Registered Operator'}
+                    </h2>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/30 shrink-0">
                       <ShieldCheck size={12} className="text-[#D4AF37]" />
                       <span>{profileData.todaAssociation || 'NON-TODA'}</span>
                     </span>
-                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                      {profileData.address || 'Municipality of Gasan'}
-                    </span>
                   </div>
+                  
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate mt-1">
+                    {profileData.contact || 'No contact provided'}
+                  </p>
 
-                  <div className="mt-3">
+                  <div className="mt-2.5">
                     <button
                       type="button"
                       onClick={() => setIsEditProfileModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-[#7A1B22] hover:bg-[#681419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#7A1B22] hover:bg-[#681419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all active:scale-95 shadow-2xs cursor-pointer min-h-[36px]"
                     >
                       <Edit3 size={13} />
                       <span>Edit profile</span>

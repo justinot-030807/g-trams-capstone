@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Camera, Upload, RotateCw, Check, X, RefreshCw, 
-  Sparkles, FlipHorizontal, ArrowLeft
+  Sparkles, FlipHorizontal, ArrowLeft,
+  AlertCircle, ShieldCheck, FileText
 } from 'lucide-react';
 
 const DocumentScannerModal = ({
@@ -366,10 +367,12 @@ const DocumentScannerModal = ({
             {!cameraError && (
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4 sm:p-6 z-20">
                 
-                {/* Floating Top Hint */}
-                <div className="mb-3 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-lg animate-pulse">
-                  <ShieldCheck size={13} className="text-[#D4AF37]" />
-                  <span>Align document edges inside the guide frame</span>
+                {/* Floating Top 2 Concise Steps */}
+                <div className="mb-3 px-3.5 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold flex items-center gap-2 shadow-lg">
+                  <span className="text-[#D4AF37]">Hakbang 1:</span>
+                  <span>Kumuha ng malinaw na litrato</span>
+                  <span className="text-white/40">•</span>
+                  <span className="text-white/70">Hakbang 2: I-confirm ang upload</span>
                 </div>
 
                 {/* Rectangular Document Frame */}
@@ -514,14 +517,14 @@ const DocumentScannerModal = ({
                 </button>
               </div>
 
-              {/* Primary Attach Button */}
+              {/* Primary Attach Button (Step 2: Confirm Upload) */}
               <button
                 type="button"
                 onClick={handleApplyAndAttach}
                 className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer border-2 border-emerald-500"
               >
                 <Check size={18} />
-                <span>Attach This Document</span>
+                <span>Hakbang 2: I-confirm ang Upload</span>
               </button>
             </div>
           </div>

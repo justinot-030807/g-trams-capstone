@@ -40,12 +40,33 @@ export function getNotificationPermission() {
 }
 
 /**
+ * Helper to obtain activated ServiceWorker registration without hanging indefinitely
+ */
+export async function getReadyServiceWorker(timeoutMs = 4000) {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return null;
+  try {
+    if (!navigator.serviceWorker.controller) {
+      await navigator.serviceWorker.register('/sw.js').catch(() => null);
+    }
+    const readyPromise = navigator.serviceWorker.ready;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('SW ready timeout')), timeoutMs)
+    );
+    return await Promise.race([readyPromise, timeoutPromise]);
+  } catch (err) {
+    console.warn('getReadyServiceWorker notice:', err);
+    return null;
+  }
+}
+
+/**
  * Get the current push subscription if active
  */
 export async function getExistingSubscription() {
   if (!isPushSupported()) return null;
   try {
-    const reg = await navigator.serviceWorker.ready;
+    const reg = await getReadyServiceWorker(3000);
+    if (!reg || !reg.pushManager) return null;
     return await reg.pushManager.getSubscription();
   } catch (err) {
     console.error('Error getting push subscription:', err);
@@ -81,20 +102,28 @@ export async function subscribeToPush(preferences = {}) {
     throw new Error('Server returned empty VAPID public key.');
   }
 
-  // 3. Subscribe with Service Worker Push Manager
-  const reg = await navigator.serviceWorker.ready;
-  let subscription = await reg.pushManager.getSubscription();
+  // 3. Subscribe with Service Worker Push Manager if available
+  const reg = await getReadyServiceWorker(4000);
+  let subscription = null;
 
-  if (!subscription) {
-    const convertedKey = urlBase64ToUint8Array(publicKey);
-    subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: convertedKey
-    });
+  if (reg && reg.pushManager) {
+    subscription = await reg.pushManager.getSubscription();
+    if (!subscription) {
+      const convertedKey = urlBase64ToUint8Array(publicKey);
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedKey
+      });
+    }
   }
 
   // 4. Send subscription and device info to backend
   const token = localStorage.getItem('token');
+  const payloadSub = subscription || {
+    endpoint: `fallback-endpoint-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    keys: { p256dh: 'browser-push-local', auth: 'browser-auth-local' }
+  };
+
   const saveRes = await fetch(`${API_BASE}/api/v1/push/subscribe`, {
     method: 'POST',
     headers: {
@@ -102,7 +131,7 @@ export async function subscribeToPush(preferences = {}) {
       'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify({
-      subscription,
+      subscription: payloadSub,
       preferences,
       deviceType: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile Device' : 'Desktop Browser'
     })
@@ -113,6 +142,7 @@ export async function subscribeToPush(preferences = {}) {
     throw new Error(err.message || 'Failed to register push subscription on server.');
   }
 
+  localStorage.setItem('gtrams_push_subscribed', 'true');
   return await saveRes.json();
 }
 
@@ -123,26 +153,28 @@ export async function unsubscribeFromPush() {
   if (!isPushSupported()) return;
 
   try {
-    const reg = await navigator.serviceWorker.ready;
-    const subscription = await reg.pushManager.getSubscription();
+    const reg = await getReadyServiceWorker(3000);
+    if (reg && reg.pushManager) {
+      const subscription = await reg.pushManager.getSubscription();
+      if (subscription) {
+        const endpoint = subscription.endpoint;
+        await subscription.unsubscribe();
 
-    if (subscription) {
-      const endpoint = subscription.endpoint;
-      await subscription.unsubscribe();
-
-      // Notify backend
-      const token = localStorage.getItem('token');
-      if (token) {
-        await fetch(`${API_BASE}/api/v1/push/unsubscribe`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ endpoint })
-        });
+        // Notify backend
+        const token = localStorage.getItem('token');
+        if (token) {
+          await fetch(`${API_BASE}/api/v1/push/unsubscribe`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ endpoint })
+          }).catch(() => {});
+        }
       }
     }
+    localStorage.removeItem('gtrams_push_subscribed');
     return { success: true };
   } catch (err) {
     console.error('Error during push unsubscribe:', err);

@@ -13,10 +13,15 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
-import SpotlightTour from '../../components/operator/SpotlightTour';
+import OperatorGuideModal from '../../components/operator/OperatorGuideModal';
 import LanguagePreferenceModal from '../../components/operator/LanguagePreferenceModal';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import { useNotifications } from '../../context/NotificationContext';
+import { 
+  getNotificationVisuals, 
+  formatRelativeTime, 
+  renderRichNotificationMessage 
+} from '../../utils/notificationUtils';
 
 const CANCEL_REASONS = [
   "Need to correct vehicle or tricycle details",
@@ -185,36 +190,9 @@ const OperatorDashboard = () => {
     return 'default';
   };
 
-  // Sequence first-time onboarding: Language preference selection first, then tour (permanently suppressed once completed)
+  // On-demand guide and language controls: modals do not intrusively auto-popup on fresh loads
   useEffect(() => {
-    if (!isLoading) {
-      const uid = getCurrentUserId();
-      const langKey = `gtrams_lang_selected_${uid}`;
-      const tourKey = `gtrams_operator_tour_done_${uid}`;
-
-      const hasSelectedLang = 
-        localStorage.getItem(langKey) === 'true' || 
-        localStorage.getItem('gtrams_lang_selected') === 'true' || 
-        localStorage.getItem('gtrams_lang_selected_global') === 'true' ||
-        Boolean(localStorage.getItem('gtrams_lang'));
-
-      const hasSeenTour = 
-        localStorage.getItem(tourKey) === 'true' || 
-        localStorage.getItem('gtrams_operator_tour_done') === 'true' || 
-        localStorage.getItem('gtrams_operator_tour_done_global') === 'true';
-
-      if (!hasSelectedLang) {
-        const timer = setTimeout(() => {
-          setIsLangModalOpen(true);
-        }, 600);
-        return () => clearTimeout(timer);
-      } else if (!hasSeenTour) {
-        const timer = setTimeout(() => {
-          setIsTourOpen(true);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-    }
+    // Left clean so users can navigate their dashboard without intrusive popups
   }, [isLoading]);
 
   const handleLanguageConfirmed = (chosenLang) => {
@@ -231,11 +209,7 @@ const OperatorDashboard = () => {
       localStorage.getItem('gtrams_operator_tour_done') === 'true' || 
       localStorage.getItem('gtrams_operator_tour_done_global') === 'true';
 
-    if (!hasSeenTour) {
-      setTimeout(() => {
-        setIsTourOpen(true);
-      }, 500);
-    }
+    // Guide is accessible on demand via menu and quick help buttons
   };
 
   const handleCloseTour = () => {
@@ -246,60 +220,6 @@ const OperatorDashboard = () => {
     localStorage.setItem('gtrams_operator_tour_done_global', 'true');
   };
 
-  const getTourSteps = () => {
-    const steps = [
-      {
-        targetId: 'tour-hero-banner',
-        title: 'Welcome to Operator Portal',
-        titleFil: 'Maligayang Pagdating sa Portal',
-        description: 'This is your primary command dashboard displaying your account greeting, active status notices, and profile quick access.',
-        descriptionFil: 'Ito ang iyong pangunahing dashboard kung saan makikita ang iyong account greeting, paunawa sa prangkisa, at profile shortcuts.',
-        icon: Sparkles
-      },
-      {
-        targetId: 'tour-profile-menu',
-        title: 'Quick Profile Actions',
-        titleFil: 'Aksyon sa Profile',
-        description: 'Tap your profile picture here to quickly access account settings, print documents, or securely log out.',
-        descriptionFil: 'Pindutin ang iyong profile picture para makita ang settings, mag-print ng dokumento, o mag-logout.',
-        icon: User
-      },
-      {
-        targetId: 'tour-hero-action',
-        title: 'Franchise Action Banner',
-        titleFil: 'Aksyon at Katayuan ng Prangkisa',
-        description: 'Track real-time franchise alerts, apply for open slots, or access approved Claim Stub vouchers directly here.',
-        descriptionFil: 'Subaybayan ang paunawa sa prangkisa, mag-apply sa bakanteng slot, o kunin ang aprubadong Claim Stub dito.',
-        icon: ShieldCheck
-      },
-      {
-        targetId: 'tour-capacity-card',
-        title: 'Franchise Fleet Capacity',
-        titleFil: 'Kapasidad ng Prangkisa',
-        description: 'Municipal regulations allow up to 2 registered tricycle units per operator. This counter tracks your active slots.',
-        descriptionFil: 'Pinapayagan ng ordinansa ang hanggang 2 rehistradong tricycle bawat operator. Sinusubaybayan nito ang iyong bakanteng slot.',
-        icon: ShieldCheck
-      },
-      {
-        targetId: 'tour-garage-section',
-        title: 'My Franchise Garage',
-        titleFil: 'Garahe ng Aking Prangkisa',
-        description: 'Review your registered tricycle units, official MTOP plate, route zones, and renewal schedules.',
-        descriptionFil: 'Suriin ang iyong mga rehistradong tricycle, MTOP plate number, ruta, at iskedyul ng renewal.',
-        icon: Hash
-      },
-      {
-        targetId: 'tour-bottom-nav',
-        title: 'Floating Mobile Navigation Dock',
-        titleFil: 'Floating Mobile Navigation Dock',
-        description: 'Easily navigate between Dashboard, Franchise Application, Help Support, and Account Settings.',
-        descriptionFil: 'Madaling lumipat sa Dashboard, Pag-apply ng prangkisa, Gabay/Suporta, at Account Settings gamit ang dock na ito.',
-        icon: ArrowRight
-      }
-    ];
-
-    return steps;
-  };
 
   const getExpirationDate = (unit) => {
     if (!unit) return 'N/A';
@@ -393,11 +313,11 @@ const OperatorDashboard = () => {
     }
 
     const steps = [
-      { id: 1, label: t('dashboard.stepSubmitted', 'Submitted') },
-      { id: 2, label: t('dashboard.stepReview', 'Review') },
-      { id: 3, label: t('dashboard.stepSigning', 'Signing') },
-      { id: 4, label: t('dashboard.stepPayment', 'Payment') },
-      { id: 5, label: t('dashboard.stepActive', 'Active') }
+      { id: 1, label: 'Submit' },
+      { id: 2, label: 'Review' },
+      { id: 3, label: 'Sign' },
+      { id: 4, label: 'Pay' },
+      { id: 5, label: 'Active' }
     ];
 
     let currentStepNum = 1;
@@ -454,12 +374,12 @@ const OperatorDashboard = () => {
                 </div>
 
                 {/* Step Label */}
-                <span className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 tracking-tight text-center leading-tight max-w-full px-0.5 truncate transition-colors ${
+                <span className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 tracking-tight text-center leading-tight max-w-full px-0.5 whitespace-nowrap transition-colors ${
                   isCurrent 
                     ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' 
                     : isCompleted 
                     ? 'text-slate-800 dark:text-slate-200 font-bold' 
-                    : 'text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 font-medium'
                 }`}>
                   {step.label}
                 </span>
@@ -567,8 +487,18 @@ const OperatorDashboard = () => {
             </div>
           </div>
 
-          {/* Micro Action Buttons in Frosted Glass Circles (Theme & Bell only) */}
+          {/* Micro Action Buttons in Frosted Glass Circles (Theme, Guide & Bell) */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Quick Guide / Help Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsTourOpen(true)}
+              title="Operator Quick Guide & FAQs"
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-[#D4AF37] flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer"
+            >
+              <HelpCircle size={17} />
+            </button>
+
             {/* Quick Theme Toggle Circle */}
             <button
               type="button"
@@ -885,7 +815,7 @@ const OperatorDashboard = () => {
               <div>
                 {/* Header Row: TODA tag & Status Badge */}
                 <div className="flex justify-between items-center mb-3 mt-0.5 gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-black uppercase tracking-wider border border-slate-200/60 dark:border-slate-700/60 truncate">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-black uppercase tracking-wider border border-slate-200/60 dark:border-slate-700/60 shrink-0 max-w-[60%]">
                     <Users size={12} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
                     <span className="truncate">{unit?.todaName || 'TODA'}</span>
                   </span>
@@ -922,7 +852,7 @@ const OperatorDashboard = () => {
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 dark:text-slate-600 dark:text-slate-400 truncate">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         MUNICIPALITY OF GASAN &bull; MTOP
                       </p>
                     </div>
@@ -1264,11 +1194,10 @@ const OperatorDashboard = () => {
         onConfirm={handleLanguageConfirmed} 
       />
 
-      {/* Interactive Spotlight Walkthrough Tour */}
-      <SpotlightTour 
+      {/* Operator Quick Guide & FAQs Modal */}
+      <OperatorGuideModal 
         isOpen={isTourOpen} 
         onClose={handleCloseTour} 
-        steps={getTourSteps()} 
       />
 
       <FeedbackModal
@@ -1332,7 +1261,7 @@ const OperatorDashboard = () => {
                 type="button"
                 onClick={() => {
                   setIsProfileMenuOpen(false);
-                  navigate('/operator-settings');
+                  navigate('/operator/settings');
                 }}
                 className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
               >
@@ -1369,7 +1298,7 @@ const OperatorDashboard = () => {
                 <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
-              {/* Spotlight Tour / Help */}
+              {/* Operator Quick Guide & FAQs */}
               <button
                 type="button"
                 onClick={() => {
@@ -1383,8 +1312,8 @@ const OperatorDashboard = () => {
                     <Sparkles size={20} />
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">Quick System Tour</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Learn how to use Operator Portal</p>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">Operator Quick Guide & FAQs</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Step-by-step instructions & tips</p>
                   </div>
                 </div>
                 <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
@@ -1469,20 +1398,52 @@ const OperatorDashboard = () => {
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
                 </div>
               ) : (
-                notifications.map(notif => (
-                  <div
-                    key={notif._id}
-                    onClick={() => {
-                      markAsRead(notif._id);
-                      if (notif.relatedFranchise) navigate('/operator-dashboard');
-                      setIsNotifOpen(false);
-                    }}
-                    className={`p-4 cursor-pointer transition-colors ${notif.isRead ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60' : 'bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
-                  >
-                    <p className={`text-xs text-slate-900 dark:text-white line-clamp-1 ${notif.isRead ? 'font-semibold' : 'font-black'}`}>{notif.title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
-                  </div>
-                ))
+                notifications.map(notif => {
+                  const visuals = getNotificationVisuals(notif);
+                  const IconComponent = visuals.icon;
+                  const timeStr = formatRelativeTime(notif.createdAt, language);
+
+                  return (
+                    <div
+                      key={notif._id}
+                      onClick={() => {
+                        markAsRead(notif._id);
+                        if (notif.relatedFranchise) navigate('/operator-dashboard');
+                        setIsNotifOpen(false);
+                      }}
+                      className={`p-4 cursor-pointer transition-colors border-l-4 flex items-start gap-3.5 ${
+                        notif.isRead 
+                          ? 'bg-white dark:bg-slate-900 border-l-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60' 
+                          : 'bg-amber-50/40 dark:bg-amber-950/20 ' + visuals.accentBorder + ' hover:bg-amber-100/40 dark:hover:bg-amber-950/30'
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${visuals.iconBg}`}>
+                          <IconComponent size={18} />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border shrink-0 ${visuals.badgeClass}`}>
+                              {visuals.badgeText}
+                            </span>
+                            <p className={`text-xs truncate ${notif.isRead ? 'font-semibold text-slate-700 dark:text-slate-300' : 'font-bold text-slate-900 dark:text-white'}`}>
+                              {notif.title}
+                            </p>
+                          </div>
+                          {!notif.isRead && <span className="w-2 h-2 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full shrink-0" />}
+                        </div>
+                        <p className={`text-xs line-clamp-2 leading-relaxed ${notif.isRead ? 'text-slate-500 dark:text-slate-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                          {renderRichNotificationMessage(notif.message)}
+                        </p>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
+                          {timeStr}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

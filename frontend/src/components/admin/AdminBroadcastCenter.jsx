@@ -1,6 +1,73 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Radio, Send, Loader2, Megaphone, Trash2, CheckCircle, AlertCircle, Users, Clock } from 'lucide-react';
+import { 
+  Radio, Send, Loader2, Megaphone, Trash2, CheckCircle, 
+  AlertCircle, Users, Clock, Bold, List, AlertTriangle, Eye, EyeOff 
+} from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
+
+// Export rich announcement renderer for use in chat and announcement feeds
+export const renderFormattedAnnouncement = (text) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+
+  const parseBoldText = (str) => {
+    const parts = str.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={i} className="font-bold text-slate-900 dark:text-white">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+  };
+
+  return (
+    <div className="space-y-1.5 leading-relaxed text-xs sm:text-sm">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-1" />;
+
+        // Important notice highlight banner
+        if (
+          trimmed.startsWith('🚨') || 
+          trimmed.toUpperCase().includes('[IMPORTANT NOTICE]') || 
+          trimmed.toUpperCase().includes('[PAALALA]') ||
+          trimmed.toUpperCase().includes('[NOTICE]')
+        ) {
+          return (
+            <div 
+              key={idx} 
+              className="my-1.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 font-bold flex items-start gap-2 shadow-xs"
+            >
+              <span className="text-base shrink-0 mt-0.5">🚨</span>
+              <span className="flex-1">{trimmed.replace(/^🚨\s*/, '')}</span>
+            </div>
+          );
+        }
+
+        // Bullet point item
+        if (trimmed.startsWith('•') || trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          const content = trimmed.replace(/^[•\-\*]\s*/, '');
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-2">
+              <span className="text-[#7A1B22] dark:text-[#D4AF37] font-black text-sm shrink-0 leading-none mt-0.5">•</span>
+              <span className="flex-1 text-slate-800 dark:text-slate-200">{parseBoldText(content)}</span>
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="text-slate-800 dark:text-slate-200">
+            {parseBoldText(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
 
 const AdminBroadcastCenter = () => {
   const { socket } = useSocket();
@@ -10,6 +77,26 @@ const AdminBroadcastCenter = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [announcementThreadId, setAnnouncementThreadId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const insertFormatting = (prefix, suffix = '') => {
+    const textarea = document.getElementById('broadcast-composer-textarea');
+    if (!textarea) {
+      setBroadcastMessage(prev => prev + prefix + suffix);
+      return;
+    }
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    const current = textarea.value;
+    const selected = current.substring(start, end);
+    const replacement = prefix + (selected || 'text') + suffix;
+    const updated = current.substring(0, start) + replacement + current.substring(end);
+    setBroadcastMessage(updated);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + prefix.length + (selected.length || 4));
+    }, 50);
+  };
 
   const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -186,17 +273,76 @@ const AdminBroadcastCenter = () => {
         {/* Composer Form */}
         <form onSubmit={handleBroadcast} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Announcement Message
-            </label>
-            <textarea
-              value={broadcastMessage}
-              onChange={(e) => setBroadcastMessage(e.target.value)}
-              rows={4}
-              placeholder="Type your official announcement here... (e.g. Please be reminded of the upcoming annual franchise inspection at the Municipal Hall grounds.)"
-              required
-              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all resize-none leading-relaxed"
-            />
+            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Announcement Message
+              </label>
+              
+              {/* Rich Formatting Toolbar */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => insertFormatting('**', '**')}
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Make text bold (**text**)"
+                >
+                  <Bold size={13} />
+                  <span>Bold</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertFormatting('\n• ')}
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Add bullet list (• item)"
+                >
+                  <List size={13} />
+                  <span>List</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertFormatting('\n🚨 [IMPORTANT NOTICE]: ')}
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Insert Important Notice callout"
+                >
+                  <AlertTriangle size={13} />
+                  <span>Notice</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(!showPreview)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                    showPreview
+                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950'
+                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                  title="Toggle announcement preview"
+                >
+                  {showPreview ? <EyeOff size={13} /> : <Eye size={13} />}
+                  <span>{showPreview ? 'Edit' : 'Preview'}</span>
+                </button>
+              </div>
+            </div>
+
+            {showPreview ? (
+              <div className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-4 min-h-[110px]">
+                <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Live Preview</p>
+                {broadcastMessage.trim() ? (
+                  renderFormattedAnnouncement(broadcastMessage)
+                ) : (
+                  <p className="text-xs text-slate-400 italic">No announcement text typed yet...</p>
+                )}
+              </div>
+            ) : (
+              <textarea
+                id="broadcast-composer-textarea"
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                rows={4}
+                placeholder="Type your official announcement here... (e.g. Please be reminded of the upcoming annual franchise inspection at the Municipal Hall grounds.)"
+                required
+                className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all resize-none leading-relaxed"
+              />
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
@@ -288,9 +434,9 @@ const AdminBroadcastCenter = () => {
                   </div>
                 </div>
 
-                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-                  {cleanMessageText(ann.message)}
-                </p>
+                <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                  {renderFormattedAnnouncement(cleanMessageText(ann.message))}
+                </div>
               </div>
             ))}
           </div>

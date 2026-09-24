@@ -5,7 +5,7 @@ const User = require('../../src/models/userModel');
 let mongoServer;
 
 beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
+    mongoServer = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
     const mongoUri = mongoServer.getUri();
     await mongoose.connect(mongoUri);
 });

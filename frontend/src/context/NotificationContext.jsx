@@ -77,17 +77,30 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [API_URL]);
 
-  // Mark all notifications as read (and delete them)
+  // Mark all notifications as read
   const markAllRead = useCallback(async () => {
     try {
+      // Optimistic state update: mark all current notifications as read
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+
+      // Broadcast event across components and tabs
+      try {
+        localStorage.setItem('gtrams_all_notifs_read_at', Date.now().toString());
+        window.dispatchEvent(new Event('gtrams_all_notifs_read'));
+      } catch {}
+
       const res = await fetch(`${API_URL}/api/v1/notifications/read-all`, {
-        method: 'DELETE',
+        method: 'PUT',
         headers: getHeaders(),
       });
 
-      if (res.ok) {
-        setNotifications([]);
-        setUnreadCount(0);
+      if (!res.ok) {
+        // Fallback to DELETE for legacy backends
+        await fetch(`${API_URL}/api/v1/notifications/read-all`, {
+          method: 'DELETE',
+          headers: getHeaders(),
+        });
       }
     } catch (err) {
       // Silent fail
@@ -112,10 +125,26 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(prev => prev + 1);
     };
 
+    const handleNotificationRead = (data) => {
+      if (data?.id) {
+        setNotifications(prev => prev.map(n => n._id === data.id ? { ...n, isRead: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    };
+
+    const handleNotificationsReadAll = () => {
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    };
+
     socket.on('notification', handleNotification);
+    socket.on('notification_read', handleNotificationRead);
+    socket.on('notifications_read_all', handleNotificationsReadAll);
 
     return () => {
       socket.off('notification', handleNotification);
+      socket.off('notification_read', handleNotificationRead);
+      socket.off('notifications_read_all', handleNotificationsReadAll);
     };
   }, [socket]);
 

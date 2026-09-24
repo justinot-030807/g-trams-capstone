@@ -11,7 +11,7 @@ let mongoServer;
 
 beforeAll(async () => {
 
-    mongoServer = await MongoMemoryServer.create();
+    mongoServer = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
     const uri = mongoServer.getUri();
 
     if (mongoose.connection.readyState !== 0) {

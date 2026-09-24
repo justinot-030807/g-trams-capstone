@@ -127,7 +127,8 @@ const ApplyFranchise = () => {
     address: loggedInAddress, 
     zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
     todaName: loggedInToda,
-    dateApplied: '', cedulaDate: '', cedulaAddress: 'Gasan, Marinduque', 
+    dateApplied: new Date().toISOString().split('T')[0], 
+    cedulaDate: '', cedulaAddress: 'Gasan, Marinduque', 
     cedulaSerialNo: ''
   });
   
@@ -378,7 +379,7 @@ const ApplyFranchise = () => {
         address: loggedInAddress, 
         zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
         todaName: loggedInToda, 
-        dateApplied: '', 
+        dateApplied: new Date().toISOString().split('T')[0], 
         cedulaDate: smartCedulaDate, 
         cedulaAddress: smartCedulaAddress, 
         cedulaSerialNo: smartCedulaSerialNo 
@@ -491,7 +492,7 @@ const ApplyFranchise = () => {
     } else if (name === 'zone') {
       sanitized = value.replace(/\D/g, '');
     } else if (name === 'cedulaSerialNo') {
-      sanitized = value.replace(/\D/g, '');
+      sanitized = value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase();
     } else if (name === 'motorNo' || name === 'chassisNo' || name === 'plateNo') {
       sanitized = value.toUpperCase();
     }
@@ -1503,8 +1504,7 @@ const ApplyFranchise = () => {
                 </label>
                 <input 
                   type="text" 
-                  inputMode="numeric"
-                  pattern="[0-9]*"
+                  maxLength={10}
                   name="cedulaSerialNo" 
                   value={formData.cedulaSerialNo} 
                   onChange={handleInputChange} 
@@ -1512,20 +1512,29 @@ const ApplyFranchise = () => {
                   placeholder="e.g. 08123456" 
                   required 
                 />
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
+                  8–10 characters (letters &amp; numbers only)
+                </p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  Date Issued
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <CalendarDays size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <span>Date Issued</span>
                 </label>
                 <input 
                   type="date" 
                   name="cedulaDate" 
+                  max={new Date().toISOString().split('T')[0]}
                   value={formData.cedulaDate} 
                   onChange={handleInputChange} 
                   className={inputClasses} 
+                  placeholder="Piliin ang Araw ng Pagkuha ng Cedula"
                   required 
                 />
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
+                  Piliin ang Araw ng Pagkuha ng Cedula
+                </p>
               </div>
 
               <div>
@@ -1543,18 +1552,25 @@ const ApplyFranchise = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  Application Date
-                </label>
-                <input 
-                  type="date" 
-                  name="dateApplied" 
-                  value={formData.dateApplied} 
-                  onChange={handleInputChange} 
-                  className={inputClasses} 
-                  required 
-                />
+              <div className="flex flex-col justify-end">
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-3 flex items-center justify-between min-h-[46px]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0">
+                      <CalendarDays size={16} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                        Application Date
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                        {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                    Automatic
+                  </span>
+                </div>
               </div>
             </div>
 

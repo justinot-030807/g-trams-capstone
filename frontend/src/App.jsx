@@ -125,6 +125,7 @@ function App() {
                   <Route path="/apply-franchise" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><ApplyFranchise /></ProtectedRoute>} />
                   <Route path="/renew-franchise/:id" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><RenewFranchise /></ProtectedRoute>} />
                   <Route path="/operator/settings" element={<ProtectedRoute allowedRoles={['operator', 'toda president']}><OperatorSettings /></ProtectedRoute>} />
+                  <Route path="/operator-settings" element={<Navigate to="/operator/settings" replace />} />
                   
                   {/* SHARED SECURE ROUTES & REDIRECTS */}
                   <Route path="/manage-profile" element={<ProfileRedirect />} />

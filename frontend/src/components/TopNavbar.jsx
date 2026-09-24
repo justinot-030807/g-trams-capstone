@@ -9,6 +9,11 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
+import { 
+  getNotificationVisuals, 
+  formatRelativeTime, 
+  renderRichNotificationMessage 
+} from '../utils/notificationUtils';
 
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const { t, language, changeLanguage } = useLanguage();
@@ -49,6 +54,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     isRead: Boolean(n?.isRead),
     title: n?.title || 'Notification',
     desc: n?.message || '',
+    rawTime: n?.createdAt,
     time: n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
     type: n?.type === 'status_change' ? 'pending' : n?.type === 'approval' ? 'success' : 'info',
     link: String(role || '').includes('admin') ? '/franchise-masterlist' : '/operator-dashboard'
@@ -274,6 +280,20 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     window.addEventListener('gtrams_settings_updated', handleSettingsUpdate);
     window.addEventListener('storage', handleSettingsUpdate);
 
+    const handleAllReadEvent = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(storageKey)) || [];
+        setLocalNotifications(prev => {
+          const allIds = prev.map(n => n.id);
+          const updated = Array.from(new Set([...stored, ...allIds]));
+          setReadIds(updated);
+          localStorage.setItem(storageKey, JSON.stringify(updated));
+          return prev;
+        });
+      } catch {}
+    };
+    window.addEventListener('gtrams_all_notifs_read', handleAllReadEvent);
+
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setIsNotifOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileOpen(false);
@@ -283,6 +303,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('gtrams_settings_updated', handleSettingsUpdate);
       window.removeEventListener('storage', handleSettingsUpdate);
+      window.removeEventListener('gtrams_all_notifs_read', handleAllReadEvent);
       clearInterval(interval);
     };
   }, []);
@@ -295,6 +316,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     const updated = Array.from(new Set([...readIds, ...allIds]));
     setReadIds(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
+    try {
+      localStorage.setItem('gtrams_all_notifs_read_at', Date.now().toString());
+      window.dispatchEvent(new Event('gtrams_all_notifs_read'));
+    } catch {}
   };
 
   const handleNotificationClick = (notif) => {
@@ -438,29 +463,41 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     ) : (
                       allNotifs.map((notif) => {
                         const isRead = notif.isCtx ? notif.isRead : readIds.includes(notif.id);
+                        const visuals = getNotificationVisuals(notif);
+                        const IconComponent = visuals.icon;
+                        const timeStr = formatRelativeTime(notif.rawTime || notif.time, language);
+
                         return (
                           <div
                             key={notif.id}
                             onClick={() => handleNotificationClick(notif)}
-                            className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer ${
-                              !isRead ? 'bg-red-50/40 dark:bg-red-950/20' : ''
+                            className={`p-3.5 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer border-b border-slate-100 dark:border-slate-800/50 last:border-b-0 ${
+                              !isRead ? 'bg-amber-50/40 dark:bg-amber-950/15 ' + visuals.accentBorder : 'border-l-4 border-l-transparent'
                             }`}
                           >
                             <div className="mt-0.5 shrink-0">
-                              {notif.type === 'pending' && <Clock size={15} className="text-amber-500" />}
-                              {notif.type === 'success' && <CheckCircle2 size={15} className="text-emerald-500" />}
-                              {notif.type === 'info' && <FileText size={15} className="text-blue-500" />}
-                              {notif.type === 'reminder' && <AlertTriangle size={15} className="text-orange-500" />}
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${visuals.iconBg}`}>
+                                <IconComponent size={16} />
+                              </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1">
-                                <p className={`text-xs truncate ${!isRead ? 'font-black text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
-                                  {notif?.title || 'Notification'}
-                                </p>
-                                {!isRead && <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
+                              <div className="flex items-center justify-between gap-1.5 mb-1">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border shrink-0 ${visuals.badgeClass}`}>
+                                    {visuals.badgeText}
+                                  </span>
+                                  <p className={`text-xs truncate ${!isRead ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
+                                    {notif?.title || 'Notification'}
+                                  </p>
+                                </div>
+                                {!isRead && <span className="w-2 h-2 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full shrink-0" />}
                               </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">{notif?.desc}</p>
-                              <span className="text-[9px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-1 block">{notif?.time}</span>
+                              <p className={`text-xs line-clamp-2 leading-relaxed ${!isRead ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                                {renderRichNotificationMessage(notif?.desc || notif?.message)}
+                              </p>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1.5 block">
+                                {timeStr || notif?.time}
+                              </span>
                             </div>
                           </div>
                         );
@@ -614,9 +651,13 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {allNotifs.map((notif) => {
                         const isRead = notif.isCtx ? notif.isRead : readIds.includes(notif.id);
+                        const visuals = getNotificationVisuals(notif);
+                        const IconComponent = visuals.icon;
+                        const timeStr = formatRelativeTime(notif.rawTime || notif.time, language);
+
                         return (
                           <div
                             key={notif.id}
@@ -624,37 +665,34 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                               setIsNotifOpen(false);
                               handleNotificationClick(notif);
                             }}
-                            className={`p-3.5 sm:p-4 rounded-2xl flex items-start gap-3.5 transition-colors cursor-pointer group ${
+                            className={`p-3.5 sm:p-4 rounded-2xl flex items-start gap-3.5 transition-colors cursor-pointer group border ${
                               !isRead 
-                                ? 'bg-red-50/60 dark:bg-[#7A1B22]/10 hover:bg-red-100/60 dark:hover:bg-[#7A1B22]/20' 
-                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                                ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-900/30 ' + visuals.accentBorder
+                                : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60'
                             }`}
                           >
                             <div className="mt-0.5 shrink-0">
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                notif.type === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
-                                notif.type === 'success' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
-                                notif.type === 'reminder' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
-                                'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                              }`}>
-                                {notif.type === 'pending' && <Clock size={18} />}
-                                {notif.type === 'success' && <CheckCircle2 size={18} />}
-                                {notif.type === 'reminder' && <AlertTriangle size={18} />}
-                                {notif.type === 'info' && <FileText size={18} />}
+                              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs ${visuals.iconBg}`}>
+                                <IconComponent size={18} />
                               </div>
                             </div>
                             <div className="flex-1 min-w-0 pr-2">
                               <div className="flex items-center justify-between gap-2 mb-1">
-                                <p className={`text-[13px] truncate ${!isRead ? 'font-bold text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
-                                  {notif?.title || 'Notification'}
-                                </p>
-                                {!isRead && <span className="w-2 h-2 bg-red-600 dark:bg-red-500 rounded-full shrink-0 shadow-sm" />}
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className={`px-2.5 py-0.5 text-[11px] font-bold rounded-lg border shrink-0 ${visuals.badgeClass}`}>
+                                    {visuals.badgeText}
+                                  </span>
+                                  <p className={`text-xs truncate ${!isRead ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
+                                    {notif?.title || 'Notification'}
+                                  </p>
+                                </div>
+                                {!isRead && <span className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full shrink-0 shadow-xs" />}
                               </div>
-                              <p className={`text-xs sm:text-xs line-clamp-2 leading-snug ${!isRead ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400'}`}>
-                                {notif?.desc}
+                              <p className={`text-xs line-clamp-2 leading-relaxed ${!isRead ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                                {renderRichNotificationMessage(notif?.desc || notif?.message)}
                               </p>
-                              <span className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
-                                {notif?.time}
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-1.5 block">
+                                {timeStr || notif?.time}
                               </span>
                             </div>
                           </div>

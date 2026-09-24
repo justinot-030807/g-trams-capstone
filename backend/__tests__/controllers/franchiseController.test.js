@@ -13,7 +13,7 @@ let operatorId;
 
 beforeAll(async () => {
     // Setup in-memory DB
-    mongoServer = await MongoMemoryServer.create();
+    mongoServer = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
     const uri = mongoServer.getUri();
     
     // Close existing mongoose connections if any, then connect to in-memory

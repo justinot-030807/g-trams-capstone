@@ -3,6 +3,8 @@ const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const Notification = require('../models/notificationModel');
 
+const mongoose = require('mongoose');
+
 router.use(protect);
 
 router.get('/', async (req, res) => {
@@ -26,8 +28,38 @@ router.get('/unread-count', async (req, res) => {
   }
 });
 
+// Mark all as read (must be defined BEFORE /:id/read to prevent CastError)
+router.put(['/read-all', '/mark-all-read'], async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { recipient: req.user._id, isRead: false },
+      { isRead: true }
+    );
+    const { emitToUser } = require('../config/socket');
+    emitToUser(req.user._id.toString(), 'notifications_read_all');
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error marking all notifications as read'});
+  }
+});
+
+// Delete / clear all notifications
+router.delete(['/read-all', '/clear-all'], async (req, res) => {
+  try {
+    await Notification.deleteMany({ recipient: req.user._id });
+    const { emitToUser } = require('../config/socket');
+    emitToUser(req.user._id.toString(), 'notifications_read_all');
+    res.json({ message: 'All notifications cleared' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error clearing all notifications'});
+  }
+});
+
 router.put('/:id/read', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid notification ID' });
+    }
     const notification = await Notification.findOneAndUpdate(
       { _id: req.params.id, recipient: req.user._id },
       { isRead: true },
@@ -41,17 +73,6 @@ router.put('/:id/read', async (req, res) => {
     res.json(notification);
   } catch (error) {
     res.status(500).json({ message: 'Error marking notification as read'});
-  }
-});
-
-router.delete('/read-all', async (req, res) => {
-  try {
-    await Notification.deleteMany({ recipient: req.user._id });
-    const { emitToUser } = require('../config/socket');
-    emitToUser(req.user._id.toString(), 'notifications_read_all');
-    res.json({ message: 'All notifications deleted' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error marking all notifications as read'});
   }
 });
 
