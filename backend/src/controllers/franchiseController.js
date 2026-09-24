@@ -60,6 +60,11 @@ const createFranchise = async (req, res) => {
         res.status(201).json(franchise);
     } catch (error) {
         console.error('Error creating franchise:', error);
+        if (error.code === 11000) {
+            return res.status(409).json({ 
+                message: 'Tricycle (Plate/Motor/Chassis) is already registered.' 
+            });
+        }
         res.status(error?.message?.includes('registered') ? 400 : 500).json({ 
             message: error?.message?.includes('registered') ? error.message : 'Server error creating franchise application.' 
         });
@@ -303,6 +308,8 @@ const cancelMyFranchise = async (req, res) => {
 
         const reason = (req.body.cancelReason || 'Cancelled by operator').trim();
         franchise.status = 'Cancelled';
+        franchise.isArchived = true;
+        franchise.archivedAt = new Date();
         franchise.cancelReason = reason;
         await franchise.save();
 
