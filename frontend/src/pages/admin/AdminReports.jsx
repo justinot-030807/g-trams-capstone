@@ -71,7 +71,7 @@ const AdminReports = () => {
     window.print();
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 transition-all";
+  const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 transition-all";
 
   return (
     <MainLayout>
@@ -155,14 +155,14 @@ const AdminReports = () => {
       `}</style>
 
       {/* Header Ribbon */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#D4AF37]/30 transition-all print:hidden print-hide">
+      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all print:hidden print-hide">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <Filter size={20} className="text-[#D4AF37]" />
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">System Reports</h1>
-            <p className="text-white/75 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
+            <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-xs max-w-xl">
               Filter, view, and print franchise records.
             </p>
           </div>
@@ -176,21 +176,21 @@ const AdminReports = () => {
       </header>
 
       {/* Filter Criteria */}
-      <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 print:hidden print-hide transition-colors">
-        <h2 className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+      <div className="bg-white dark:bg-[#111827] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 print:hidden print-hide transition-colors">
+        <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
           <Filter size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Filter Criteria
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase mb-1">Date From</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Date From</label>
             <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={inputClasses} />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase mb-1">Date To</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Date To</label>
             <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={inputClasses} />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase mb-1">Status</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Status</label>
             <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All Status</option>
               <option value="Active">Active</option>
@@ -201,14 +201,14 @@ const AdminReports = () => {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase mb-1">TODA</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">TODA</label>
             <select name="todaName" value={filters.todaName} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All TODA</option>
               {TODA_LIST.map((toda, i) => <option key={i} value={toda}>{toda}</option>)}
             </select>
           </div>
           <div className="sm:col-span-2 lg:col-span-1">
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase mb-1">Barangay</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Barangay</label>
             <select name="barangay" value={filters.barangay} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All Barangays</option>
               {GASAN_BARANGAYS.map((brgy, i) => <option key={i} value={brgy}>{brgy}</option>)}
@@ -265,44 +265,44 @@ const AdminReports = () => {
           <StatsCardsSkeleton count={6} gridClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 print-hide" baseDelay={40} stepDelay={40} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 print:grid-cols-6 print:gap-2 print:mb-4">
-            <div className="stagger-reveal bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.04s' }}>
-              <FileText size={18} className="mx-auto text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-1 print:hidden" />
+            <div className="stagger-reveal bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.04s' }}>
+              <FileText size={18} className="mx-auto text-slate-500 dark:text-slate-400 mb-1 print:hidden" />
               <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white print:text-lg">{summary.total}</p>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wide print:text-[8px] print:text-slate-600">Total Records</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Total Records</p>
             </div>
-            <div className="stagger-reveal bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.08s' }}>
+            <div className="stagger-reveal bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.08s' }}>
               <CheckCircle size={18} className="mx-auto text-emerald-600 dark:text-emerald-400 mb-1 print:hidden" />
               <p className="text-xl sm:text-2xl font-black text-emerald-900 dark:text-emerald-300 print:text-slate-900 print:text-lg">{summary.active}</p>
               <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Active</p>
             </div>
-            <div className="stagger-reveal bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.12s' }}>
+            <div className="stagger-reveal bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.12s' }}>
               <Clock size={18} className="mx-auto text-amber-600 dark:text-amber-400 mb-1 print:hidden" />
               <p className="text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-300 print:text-slate-900 print:text-lg">{summary.pending}</p>
               <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Pending</p>
             </div>
-            <div className="stagger-reveal bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.16s' }}>
+            <div className="stagger-reveal bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.16s' }}>
               <AlertTriangle size={18} className="mx-auto text-orange-600 dark:text-orange-400 mb-1 print:hidden" />
               <p className="text-xl sm:text-2xl font-black text-orange-900 dark:text-orange-300 print:text-slate-900 print:text-lg">{summary.expired}</p>
               <p className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Expired</p>
             </div>
-            <div className="stagger-reveal bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.2s' }}>
+            <div className="stagger-reveal bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.2s' }}>
               <XCircle size={18} className="mx-auto text-red-600 dark:text-red-400 mb-1 print:hidden" />
               <p className="text-xl sm:text-2xl font-black text-red-900 dark:text-red-300 print:text-slate-900 print:text-lg">{summary.cancelled}</p>
               <p className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Cancelled</p>
             </div>
-            <div className="stagger-reveal bg-slate-800 dark:bg-slate-800/90 border border-slate-900 dark:border-slate-700 p-3 sm:p-4 rounded-2xl text-center shadow-sm transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.24s' }}>
-              <Ban size={18} className="mx-auto text-slate-300 mb-1 print:hidden" />
+            <div className="stagger-reveal bg-slate-800 dark:bg-[#111827] border border-slate-900 dark:border-slate-800 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.24s' }}>
+              <Ban size={18} className="mx-auto text-slate-300 dark:text-slate-400 mb-1 print:hidden" />
               <p className="text-xl sm:text-2xl font-black text-white print:text-slate-900 print:text-lg">{summary.revoked}</p>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Revoked</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Revoked</p>
             </div>
           </div>
         )}
 
         {/* Responsive Data Table */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-colors print:border-none print:shadow-none print:rounded-none">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-colors print:border-none print:shadow-none print:rounded-none">
           <div className="overflow-x-auto print:overflow-visible">
             <table className="w-full text-left text-xs sm:text-sm print:text-xs print:table">
-              <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-600 dark:text-slate-400 font-bold uppercase text-xs tracking-wider whitespace-nowrap print:bg-slate-100 print:text-slate-900 print:border-b-2 print:border-slate-400">
+              <thead className="bg-slate-50/80 dark:bg-[#0c101c] border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider whitespace-nowrap print:bg-slate-100 print:text-slate-900 print:border-b-2 print:border-slate-400">
                 <tr>
                   <th className="p-3.5 sm:p-4 print:p-1.5 w-10 text-center">#</th>
                   <th className="p-3.5 sm:p-4 print:p-1.5">Plate No.</th>
@@ -318,7 +318,7 @@ const AdminReports = () => {
                   <TableRowsSkeleton rows={6} columns={7} baseDelay={140} stepDelay={40} />
                 ) : reports.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="p-8 text-center text-slate-600 dark:text-slate-400 dark:text-slate-500 text-xs sm:text-sm print:p-4">
+                    <td colSpan="7" className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm print:p-4">
                       No records found for the selected filters.
                     </td>
                   </tr>
@@ -326,10 +326,10 @@ const AdminReports = () => {
                   reports.map((report, rIdx) => (
                     <tr 
                       key={report._id} 
-                      className="stagger-reveal hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors print:hover:bg-transparent"
+                      className="stagger-reveal hover:bg-slate-50/80 dark:hover:bg-[#161f30]/40 transition-colors print:hover:bg-transparent"
                       style={{ animationDelay: `${rIdx * 30}ms` }}
                     >
-                      <td className="p-3.5 sm:p-4 print:p-1.5 text-center font-mono text-slate-600 dark:text-slate-400 print:text-slate-600 text-xs print:text-[9px]">
+                      <td className="p-3.5 sm:p-4 print:p-1.5 text-center font-mono text-slate-500 dark:text-slate-400 print:text-slate-600 text-xs print:text-[9px]">
                         {rIdx + 1}
                       </td>
                       <td className="p-3.5 sm:p-4 print:p-1.5 font-black text-slate-900 dark:text-white print:text-black">
@@ -344,7 +344,7 @@ const AdminReports = () => {
                       <td className="p-3.5 sm:p-4 print:p-1.5 text-slate-600 dark:text-slate-300 print:text-slate-800">
                         {report.todaName || 'NON-TODA'}
                       </td>
-                      <td className="p-3.5 sm:p-4 print:p-1.5 text-slate-500 dark:text-slate-600 dark:text-slate-400 print:text-slate-700 font-mono">
+                      <td className="p-3.5 sm:p-4 print:p-1.5 text-slate-500 dark:text-slate-400 print:text-slate-700 font-mono">
                         {report.dateApplied ? new Date(report.dateApplied).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
                       </td>
                       <td className="p-3.5 sm:p-4 print:p-1.5">

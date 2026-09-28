@@ -225,7 +225,7 @@ const FranchiseMasterlist = () => {
       {/* Minimalist Floating Toast Notification */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+          <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
             <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
               toast.type === 'error'
                 ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
@@ -272,10 +272,10 @@ const FranchiseMasterlist = () => {
             className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setSelectedFranchise(null)}
           />
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-5 sm:p-6 flex justify-between items-center z-20 rounded-t-3xl">
+            <div className="sticky top-0 bg-white dark:bg-[#111827] border-b border-slate-100 dark:border-slate-800 p-5 sm:p-6 flex justify-between items-center z-20 rounded-t-3xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-bold">
                   <Car size={20} />
@@ -294,12 +294,12 @@ const FranchiseMasterlist = () => {
                       {selectedFranchise.status}
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-mono">System ID: {selectedFranchise._id}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">System ID: {selectedFranchise._id}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setSelectedFranchise(null)} 
-                className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
               >
                 <X size={18} />
               </button>
@@ -315,19 +315,19 @@ const FranchiseMasterlist = () => {
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Date Applied</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold block text-xs uppercase">Date Applied</span>
                     <span className="font-bold text-slate-900 dark:text-white">{formatDate(selectedFranchise.dateApplied || selectedFranchise.createdAt)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Expiration Date</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold block text-xs uppercase">Expiration Date</span>
                     <span className="font-black text-emerald-800 dark:text-emerald-400">{getExpirationDate(selectedFranchise.dateApplied)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Application Type</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold block text-xs uppercase">Application Type</span>
                     <span className="font-bold text-slate-900 dark:text-white">{selectedFranchise.applicationType || 'New'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Fiscal Year</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold block text-xs uppercase">Fiscal Year</span>
                     <span className="font-bold text-slate-900 dark:text-white">FY {new Date(selectedFranchise.dateApplied || selectedFranchise.createdAt).getFullYear()}</span>
                   </div>
                 </div>
@@ -335,16 +335,16 @@ const FranchiseMasterlist = () => {
 
               {/* OPERATOR DETAILS */}
               <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-                <h3 className="text-xs font-black text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <User size={14} /> Operator Information
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Full Name</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold block text-xs uppercase">Full Name</span>
                     <span className="font-bold text-slate-900 dark:text-white text-sm">{selectedFranchise.fullName || (selectedFranchise.operator?.name) || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Registered Barangay / Address</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold block text-xs uppercase">Registered Barangay / Address</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.address || 'N/A'}</span>
                   </div>
                   <div>
@@ -398,7 +398,7 @@ const FranchiseMasterlist = () => {
                     <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(selectedFranchise.cedulaDate)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-bold block text-xs uppercase">Place Issued</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold block text-xs uppercase">Place Issued</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFranchise.cedulaAddress || 'Gasan, Marinduque'}</span>
                   </div>
                 </div>
@@ -406,7 +406,7 @@ const FranchiseMasterlist = () => {
 
               {/* UPLOADED ATTACHMENTS */}
               <div>
-                <h3 className="text-xs font-black text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
                   Document Attachments
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -427,7 +427,7 @@ const FranchiseMasterlist = () => {
                           <Eye size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
                         </button>
                       ) : (
-                        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 dark:text-slate-500 text-xs font-medium text-center">
+                        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 text-xs font-medium text-center">
                           {doc.label} (None)
                         </div>
                       )}
@@ -449,7 +449,7 @@ const FranchiseMasterlist = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-3xl">
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50/50 dark:bg-[#0c101c]/80 rounded-b-3xl">
               {selectedFranchise.status === 'Active' && (
                 <button
                   type="button"
@@ -472,7 +472,7 @@ const FranchiseMasterlist = () => {
       )}
 
       {/* HEADER RIBBON */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#D4AF37]/30 transition-all print-hide">
+      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all print-hide">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <CalendarDays size={20} className="text-[#D4AF37]" />
@@ -484,7 +484,7 @@ const FranchiseMasterlist = () => {
                 FY {currentFiscalYear}
               </span>
             </div>
-            <p className="text-white/75 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
+            <p className="text-white/80 dark:text-white/70 font-medium text-xs sm:text-xs max-w-xl">
               Manage, query, multi-filter, inspect, and paginate official tricycle records.
             </p>
           </div>
@@ -492,14 +492,14 @@ const FranchiseMasterlist = () => {
 
         <button 
           onClick={() => window.print()}
-          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#7A1B22] text-white hover:bg-[#5A1419] rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95"
+          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#7A1B22] text-white hover:bg-[#5A1419] rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 border border-white/10"
         >
           <Printer size={16} /> Print / Save as PDF
         </button>
       </header>
 
       {/* MAIN TABLE CONTAINER */}
-      <div id="printable-masterlist" className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden print:border-none print:shadow-none transition-colors">
+      <div id="printable-masterlist" className="bg-white dark:bg-[#111827] rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden print:border-none print:shadow-none transition-colors">
         
         {/* PRINT HEADER */}
         <div className="hidden print:block text-center border-b-2 border-black pb-4 mb-4 pt-4">
@@ -509,11 +509,11 @@ const FranchiseMasterlist = () => {
         </div>
 
         {/* TABS */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 print-hide">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0c101c] print-hide">
           <button 
             onClick={() => handleTabChange('active')}
             className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'active' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'active' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={18} /> Active Records
@@ -521,7 +521,7 @@ const FranchiseMasterlist = () => {
           <button 
             onClick={() => handleTabChange('archived')}
             className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'archived' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'archived' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <Archive size={18} /> Archives
@@ -529,10 +529,10 @@ const FranchiseMasterlist = () => {
         </div>
 
         {/* SEARCH AND CUSTOM FILTER CONTROLS */}
-        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-3 sm:gap-4 justify-between items-stretch md:items-center bg-white dark:bg-slate-900 print-hide">
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-3 sm:gap-4 justify-between items-stretch md:items-center bg-white dark:bg-[#111827] print-hide">
           
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={18} />
             <input
               type="text"
               placeholder="Search Name, Plate, Motor, Chassis..."
@@ -556,7 +556,7 @@ const FranchiseMasterlist = () => {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Filter size={15} className={selectedStatuses.length > 0 ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
+                  <Filter size={15} className={selectedStatuses.length > 0 ? 'text-white' : 'text-slate-500 dark:text-slate-400'} />
                   <span>Status Filter</span>
                   {selectedStatuses.length > 0 && (
                     <span className="w-5 h-5 rounded-full bg-white text-[#7A1B22] text-xs font-black flex items-center justify-center">
@@ -568,9 +568,9 @@ const FranchiseMasterlist = () => {
               </button>
 
               {isFilterDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#111827] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 px-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-500">Select Statuses</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Select Statuses</span>
                     {selectedStatuses.length > 0 && (
                       <button
                         type="button"
@@ -592,14 +592,14 @@ const FranchiseMasterlist = () => {
                           className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
                             isSelected 
                               ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' 
-                              : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
                             {isSelected ? (
                               <CheckSquare size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                             ) : (
-                              <Square size={16} className="text-slate-300 dark:text-slate-600" />
+                              <Square size={16} className="text-slate-300 dark:text-slate-500" />
                             )}
                             <span>{opt.label}</span>
                           </div>
@@ -627,7 +627,7 @@ const FranchiseMasterlist = () => {
               </button>
 
               {isPageSizeDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-28 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-28 bg-white dark:bg-[#111827] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                   {PAGE_SIZE_OPTIONS.map((size) => (
                     <button
                       key={size}
@@ -657,7 +657,7 @@ const FranchiseMasterlist = () => {
         {/* ACTIVE FILTER PILLS */}
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 print-hide animate-in fade-in duration-150">
-            <span className="text-xs font-black text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1 mr-1">
+            <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1 mr-1">
               <Tag size={12} /> Active Filters:
             </span>
 
@@ -667,7 +667,7 @@ const FranchiseMasterlist = () => {
                 <button
                   type="button"
                   onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
-                  className="p-0.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-600 dark:text-slate-400 hover:text-red-500 transition-colors"
+                  className="p-0.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                 >
                   <X size={13} />
                 </button>
@@ -696,7 +696,7 @@ const FranchiseMasterlist = () => {
             <button
               type="button"
               onClick={clearAllFilters}
-              className="text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] flex items-center gap-1 ml-1 cursor-pointer transition-colors"
+              className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] flex items-center gap-1 ml-1 cursor-pointer transition-colors"
             >
               <RotateCcw size={12} /> Clear all
             </button>
@@ -707,7 +707,7 @@ const FranchiseMasterlist = () => {
         <div className="overflow-x-auto min-h-[320px]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
+              <tr className="bg-slate-50/90 dark:bg-[#0c101c] border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider font-bold">
                 <th className="p-4 pl-6">Operator Details</th>
                 <th className="p-4">Tricycle Info</th>
                 <th className="p-4">TODA / Zone</th>
@@ -720,11 +720,11 @@ const FranchiseMasterlist = () => {
                 <TableRowsSkeleton rows={Math.min(pageSize, 10)} columns={5} baseDelay={30} stepDelay={45} />
               ) : franchises.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="p-12 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400 print-hide">
+                  <td colSpan="5" className="p-12 text-center text-slate-500 dark:text-slate-400 print-hide">
                     <div className="flex flex-col items-center justify-center">
-                      {activeTab === 'archived' ? <Archive size={40} className="text-slate-300 dark:text-slate-600 mb-3"/> : <FileText size={40} className="text-slate-300 dark:text-slate-600 mb-3"/>}
+                      {activeTab === 'archived' ? <Archive size={40} className="text-slate-400 dark:text-slate-500 mb-3"/> : <FileText size={40} className="text-slate-400 dark:text-slate-500 mb-3"/>}
                       <p className="font-bold text-base text-slate-700 dark:text-slate-200">No records found</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 mt-0.5">Try changing search keywords or remove some filter tags.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Try changing search keywords or remove some filter tags.</p>
                     </div>
                   </td>
                 </tr>
@@ -748,17 +748,17 @@ const FranchiseMasterlist = () => {
                                </span>
                             )}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">{f.address}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{f.address}</p>
                         </td>
                         <td className="p-4">
-                          <p className="font-black text-slate-800 dark:text-slate-900 tracking-wider bg-yellow-100 inline-block px-2 py-0.5 border border-yellow-300 rounded mb-1 text-xs shadow-xs">
+                          <p className="font-black text-slate-900 dark:text-amber-200 tracking-wider bg-yellow-100 dark:bg-amber-950/60 inline-block px-2 py-0.5 border border-yellow-300 dark:border-amber-700/60 rounded mb-1 text-xs shadow-xs">
                             {f.plateNo || 'N/A'}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">Motor: {f.motorNo}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Motor: {f.motorNo}</p>
                         </td>
                         <td className="p-4">
                           <p className="font-bold text-slate-800 dark:text-slate-200">{f.todaName}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Zone {f.zone}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Zone {f.zone}</p>
                         </td>
                         <td className="p-4 text-center">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-black rounded-lg uppercase tracking-wider border shadow-xs ${
@@ -804,7 +804,7 @@ const FranchiseMasterlist = () => {
                             {/* ARCHIVE / RESTORE BUTTON */}
                             {!f.isArchived ? (
                               f.status === 'Active' ? (
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
                                   Protected
                                 </span>
                               ) : (
@@ -836,8 +836,8 @@ const FranchiseMasterlist = () => {
         </div>
 
         {/* PAGINATION CONTROLS */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 flex flex-col sm:flex-row justify-between items-center gap-4 print-hide">
-          <p className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400">
+        <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-[#0c101c]/80 flex flex-col sm:row justify-between items-center gap-4 print-hide">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
             Showing <span className="text-slate-900 dark:text-white font-black">{startRecordIndex}</span> to <span className="text-slate-900 dark:text-white font-black">{endRecordIndex}</span> of <span className="text-[#7A1B22] dark:text-[#D4AF37] font-black">{paginationMeta.totalRecords}</span> entries
           </p>
 
@@ -892,11 +892,11 @@ const FranchiseMasterlist = () => {
             onClick={() => !isProcessing && setConfirmModal({ isOpen: false, data: null })}
           />
           
-          <div className="relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-8 text-center animate-in zoom-in-95 duration-200">
+          <div className="relative bg-white dark:bg-[#111827] border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-8 text-center animate-in zoom-in-95 duration-200">
             <button 
               disabled={isProcessing}
               onClick={() => setConfirmModal({ isOpen: false, data: null })}
-              className="absolute top-4 right-4 text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
+              className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
             >
               <X size={20} />
             </button>
@@ -911,7 +911,7 @@ const FranchiseMasterlist = () => {
               {confirmModal.data.action} Record?
             </h3>
             
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
               Are you sure you want to {confirmModal.data.action.toLowerCase()} the franchise record of <strong className="text-slate-800 dark:text-slate-200">{confirmModal.data.name}</strong>?
             </p>
 

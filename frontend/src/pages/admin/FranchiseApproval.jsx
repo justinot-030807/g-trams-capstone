@@ -422,7 +422,7 @@ const FranchiseApproval = () => {
       {/* Minimalist Floating Toast Notification */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+          <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
             <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
               toast.type === 'error'
                 ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
@@ -467,7 +467,7 @@ const FranchiseApproval = () => {
       {/* Quick Approve Confirmation Modal */}
       {quickApproveTarget && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={22} />
@@ -480,7 +480,7 @@ const FranchiseApproval = () => {
                     ? 'Mark Signed & Ready for Pickup?'
                     : 'Acknowledge Payment & Release?'}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {quickApproveTarget.status === 'Pending' 
                     ? 'Queue for Mayor/Licensing Official signature' 
                     : quickApproveTarget.status === 'For Signing'
@@ -534,14 +534,14 @@ const FranchiseApproval = () => {
       {/* Quick Reject Modal */}
       {quickRejectTarget && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
                 <XCircle size={22} />
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">Reject Application</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Select reason for rejecting {quickRejectTarget.fullName}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Select reason for rejecting {quickRejectTarget.fullName}</p>
               </div>
             </div>
 
@@ -592,14 +592,14 @@ const FranchiseApproval = () => {
       {/* Batch Approve Confirmation Modal */}
       {batchApproveModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <Layers size={22} />
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">Confirm Batch Approval</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   You are approving <strong>{selectedIds.length}</strong> application(s) at once.
                 </p>
               </div>
@@ -614,7 +614,7 @@ const FranchiseApproval = () => {
               ))}
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-600 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               {activeTab === 'signing' ? (
                 <>All selected applications will transition to <strong className="text-blue-600 dark:text-blue-400">Ready for Pickup</strong>. Operators will immediately be notified to present their Claim Stub at the Municipal Cashier.</>
               ) : (
@@ -646,14 +646,14 @@ const FranchiseApproval = () => {
       {/* Batch Release Confirmation Modal */}
       {batchReleaseModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={22} />
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">Confirm Batch Release</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   You are releasing and activating <strong>{selectedIds.length}</strong> franchise(s).
                 </p>
               </div>
@@ -668,7 +668,7 @@ const FranchiseApproval = () => {
               ))}
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-600 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               All selected franchises will officially transition to <strong className="text-emerald-600 dark:text-emerald-400">Active</strong> status. MTOP certificates and official receipts are acknowledged as validated and released to operators.
             </p>
 
@@ -694,14 +694,14 @@ const FranchiseApproval = () => {
       )}
 
       {/* Header Ribbon */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#D4AF37]/30 transition-all">
+      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <CheckCircle2 size={20} className="text-[#D4AF37]" />
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">Franchise Approval Queue</h1>
-            <p className="text-white/75 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
+            <p className="text-white/80 dark:text-white/70 font-medium text-xs sm:text-xs max-w-xl">
               Review, batch-approve, and generate official MTOPs and transmittal summaries.
             </p>
           </div>
@@ -743,7 +743,7 @@ const FranchiseApproval = () => {
 
           {/* Search Input */}
           <div className="relative w-full sm:w-64">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
             <input 
               type="text" 
               placeholder="Search Name or Plate..." 
@@ -764,7 +764,7 @@ const FranchiseApproval = () => {
           </button>
         </div>
       {/* Status Tabs Bar & Select All Control */}
-      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
+      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
         {/* Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto">
           <button
@@ -772,7 +772,7 @@ const FranchiseApproval = () => {
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'pending'
                 ? 'bg-[#7A1B22] text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={14} />
@@ -789,7 +789,7 @@ const FranchiseApproval = () => {
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'signing'
                 ? 'bg-purple-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <ShieldCheck size={14} />
@@ -806,7 +806,7 @@ const FranchiseApproval = () => {
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'ready'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <Printer size={14} />
@@ -823,7 +823,7 @@ const FranchiseApproval = () => {
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'all'
                 ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <span>All in Queue</span>
@@ -844,7 +844,7 @@ const FranchiseApproval = () => {
             {isAllSelected ? (
               <CheckSquare size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
             ) : (
-              <Square size={16} className="text-slate-600 dark:text-slate-400" />
+              <Square size={16} className="text-slate-500 dark:text-slate-400" />
             )}
             <span>Select All in View ({filteredApps.length})</span>
           </button>
@@ -855,10 +855,10 @@ const FranchiseApproval = () => {
       {isLoading ? (
         <QueueListSkeleton count={4} baseDelay={50} stepDelay={70} />
       ) : filteredApps.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400 transition-colors">
+        <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 transition-colors">
           <CheckCircle size={48} className="mx-auto mb-4 text-emerald-400 opacity-50" />
           <p className="font-bold text-base text-slate-800 dark:text-slate-200">No applications found!</p>
-          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {searchQuery || selectedToda !== 'all' 
               ? 'Try adjusting your search or TODA filter.' 
               : activeTab === 'pending'
@@ -876,7 +876,7 @@ const FranchiseApproval = () => {
             return (
               <div 
                 key={app._id} 
-                className={`stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                className={`stagger-reveal bg-white dark:bg-[#111827] rounded-3xl p-4 sm:p-5 border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                   isSelected 
                     ? 'border-[#7A1B22] dark:border-[#D4AF37] ring-2 ring-[#7A1B22]/15 dark:ring-[#D4AF37]/20 shadow-md' 
                     : 'border-slate-200 dark:border-slate-800 shadow-xs hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30'
@@ -887,18 +887,18 @@ const FranchiseApproval = () => {
                   {/* Selection Checkbox */}
                   <button
                     onClick={() => toggleSelect(app._id)}
-                    className="p-1 text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
                     title={isSelected ? "Deselect" : "Select"}
                   >
                     {isSelected ? (
                       <CheckSquare size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     ) : (
-                      <Square size={18} className="text-slate-300 dark:text-slate-600 hover:text-slate-500" />
+                      <Square size={18} className="text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300" />
                     )}
                   </button>
 
                   {/* 1. Queue Number */}
-                  <span className="text-xs font-black text-slate-600 dark:text-slate-400 dark:text-slate-500 font-mono w-6 shrink-0">
+                  <span className="text-xs font-black text-slate-500 dark:text-slate-400 font-mono w-6 shrink-0">
                     {startIndex + index + 1}.
                   </span>
 
@@ -912,7 +912,7 @@ const FranchiseApproval = () => {
                       Plate: {app.plateNo || 'PENDING'}
                     </span>
 
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 truncate">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
                       TODA: {app.todaName || 'NON-TODA'}
                     </span>
 
@@ -1016,8 +1016,8 @@ const FranchiseApproval = () => {
 
         {/* Pagination Bar for Queue */}
         {!isLoading && filteredApps.length > 0 && (
-          <div className="mt-2 mb-20 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
+          <div className="mt-2 mb-20 p-4 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
               <span>Showing</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{startIndex + 1}</span>
               <span>to</span>

@@ -389,18 +389,18 @@ const FranchiseReviewPage = () => {
   }
 
   return (
-    <div className="fixed inset-0 w-full h-full flex flex-col bg-slate-50 text-slate-800 overflow-hidden select-none z-40">
+    <div className="fixed inset-0 w-full h-full flex flex-col bg-slate-50 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 overflow-hidden select-none z-40">
       
       {/* Toast Notification */}
       {toast.show && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[300] pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200">
-          <div className="bg-white border border-slate-200 shadow-xl rounded-2xl px-4 py-2.5 flex items-center gap-2.5 max-w-md">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xl rounded-2xl px-4 py-2.5 flex items-center gap-2.5 max-w-md">
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-              toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+              toast.type === 'error' ? 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60' : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60'
             }`}>
               {toast.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
             </div>
-            <p className="text-xs font-semibold text-slate-800">{toast.message}</p>
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">{toast.message}</p>
           </div>
         </div>
       )}
@@ -408,7 +408,7 @@ const FranchiseReviewPage = () => {
       {/* ========================================================================= */}
       {/* TOP HEADER: MUNICIPAL HERITAGE MAROON RIBBON */}
       {/* ========================================================================= */}
-      <header className="h-14 px-4 bg-gradient-to-r from-[#681419] via-[#7A1B22] to-[#801820] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-md border-b border-[#D4AF37]/30">
+      <header className="h-14 px-4 bg-gradient-to-r from-[#681419] via-[#7A1B22] to-[#801820] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-md border-b border-[#D4AF37]/30">
         
         {/* Left: Back & Applicant Info */}
         <div className="flex items-center gap-3 min-w-0">
@@ -547,17 +547,17 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* LEFT INSPECTION SHEET: COMPLETE OPERATOR FORM SUBMISSION DETAILS        */}
         {/* ======================================================================= */}
-        <aside className="w-full md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs">
+        <aside className="w-full md:w-[350px] lg:w-[380px] bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs">
           
           <div className="p-4 space-y-3.5 flex-1">
             
             {/* 1. DOCUMENT SELECTOR BUTTONS */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   Attached Documents
                 </span>
-                <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Keys [1-4]
                 </span>
               </div>
@@ -577,13 +577,13 @@ const FranchiseReviewPage = () => {
                       }}
                       className={`flex items-center justify-between p-2 rounded-xl text-left border transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-[#7A1B22] border-[#7A1B22] text-white shadow-xs'
-                          : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                          ? 'bg-[#7A1B22] border-[#7A1B22] dark:border-[#D4AF37]/40 text-white shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
                       }`}
                     >
                       <div className="min-w-0 flex items-center gap-1.5">
                         <span className={`w-4 h-4 rounded flex items-center justify-center text-[11px] font-bold ${
-                          isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                         }`}>
                           {idx + 1}
                         </span>
@@ -602,14 +602,14 @@ const FranchiseReviewPage = () => {
 
             {/* 2. REJECTION ACCORDION (If Admin clicked Reject) */}
             {isRejecting && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-3 space-y-2.5 animate-in fade-in">
-                <div className="flex items-center justify-between text-red-800 text-xs font-bold">
+              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl p-3 space-y-2.5 animate-in fade-in">
+                <div className="flex items-center justify-between text-red-800 dark:text-red-300 text-xs font-bold">
                   <span className="flex items-center gap-1.5">
-                    <XCircle size={14} className="text-red-600" /> Rejection Details
+                    <XCircle size={14} className="text-red-600 dark:text-red-400" /> Rejection Details
                   </span>
                   <button 
                     onClick={() => setIsRejecting(false)} 
-                    className="text-slate-500 hover:text-slate-700 text-xs underline cursor-pointer"
+                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs underline cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -618,7 +618,7 @@ const FranchiseReviewPage = () => {
                 <select
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full bg-white border border-red-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:ring-1 focus:ring-red-500 font-medium"
+                  className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
                 >
                   {REJECT_REASONS.map((r, i) => (
                     <option key={i} value={r}>{r}</option>
@@ -631,7 +631,7 @@ const FranchiseReviewPage = () => {
                     placeholder="Enter specific reason..."
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
-                    className="w-full bg-white border border-red-300 rounded-xl p-2 text-xs text-slate-800 outline-none focus:ring-1 focus:ring-red-500 font-medium"
+                    className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl p-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
                   />
                 )}
 
@@ -651,105 +651,105 @@ const FranchiseReviewPage = () => {
 
             {/* 3. COMPLETE APPLICATION FORM DETAILS */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                <span className="text-xs font-bold text-slate-800">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1.5">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   Application Form Inputs
                 </span>
-                <span className="text-xs font-semibold text-[#7A1B22] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                <span className="text-xs font-semibold text-[#7A1B22] dark:text-[#D4AF37] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700/60 px-2 py-0.5 rounded-md">
                   {currentApp.applicationType || 'New Application'}
                 </span>
               </div>
 
               {/* CARD 1: APPLICANT & OPERATOR INFORMATION */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5">
-                <h4 className="text-xs font-bold text-[#7A1B22] pb-1 border-b border-slate-200/80">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5">
+                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] pb-1 border-b border-slate-200/80 dark:border-slate-700/80">
                   Applicant &amp; Association Info
                 </h4>
-                <div className="space-y-1 text-xs text-slate-600">
+                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Full Name:</span>
-                    <span className="font-bold text-slate-900 text-right truncate max-w-[200px]">{currentApp.fullName}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Full Name:</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[200px]">{currentApp.fullName}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Barangay Address:</span>
-                    <span className="font-semibold text-slate-800 text-right truncate max-w-[200px]">{currentApp.address}, Gasan</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Barangay Address:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.address}, Gasan</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">TODA Association:</span>
-                    <span className="font-bold text-[#7A1B22] text-right truncate max-w-[200px]">{currentApp.todaName || 'Non-TODA'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">TODA Association:</span>
+                    <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37] text-right truncate max-w-[200px]">{currentApp.todaName || 'Non-TODA'}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Operational Zone:</span>
-                    <span className="font-semibold text-slate-800 text-right">Zone {currentApp.zone || 1}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Operational Zone:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">Zone {currentApp.zone || 1}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Application Type:</span>
-                    <span className="font-semibold text-slate-800 text-right">{currentApp.applicationType || 'New'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Application Type:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.applicationType || 'New'}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Date Filed:</span>
-                    <span className="font-semibold text-slate-800 text-right">{formatDate(currentApp.dateApplied || currentApp.createdAt)}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Date Filed:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.dateApplied || currentApp.createdAt)}</span>
                   </div>
                 </div>
               </div>
 
               {/* CARD 2: VEHICLE SPECIFICATIONS */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5">
-                <h4 className="text-xs font-bold text-[#7A1B22] pb-1 border-b border-slate-200/80">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5">
+                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] pb-1 border-b border-slate-200/80 dark:border-slate-700/80">
                   Vehicle Specifications
                 </h4>
-                <div className="space-y-1 text-xs text-slate-600">
+                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Plate Number:</span>
-                    <span className="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-right">{currentApp.plateNo || 'Pending'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Plate Number:</span>
+                    <span className="font-bold text-slate-900 dark:text-amber-200 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-right">{currentApp.plateNo || 'Pending'}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Motor / Engine No:</span>
-                    <span className="font-semibold text-slate-800 text-right truncate max-w-[200px]">{currentApp.motorNo || 'N/A'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Motor / Engine No:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.motorNo || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Chassis Serial No:</span>
-                    <span className="font-semibold text-slate-800 text-right truncate max-w-[200px]">{currentApp.chassisNo || 'N/A'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Chassis Serial No:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.chassisNo || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Vehicle Make:</span>
-                    <span className="font-semibold text-slate-800 text-right truncate max-w-[200px]">{currentApp.make}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Vehicle Make:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.make}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Year Model:</span>
-                    <span className="font-semibold text-slate-800 text-right">{currentApp.made}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Year Model:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.made}</span>
                   </div>
                 </div>
               </div>
 
               {/* CARD 3: COMMUNITY TAX CERTIFICATE (CEDULA) */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5">
-                <h4 className="text-xs font-bold text-[#7A1B22] pb-1 border-b border-slate-200/80">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5">
+                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] pb-1 border-b border-slate-200/80 dark:border-slate-700/80">
                   Community Tax Certificate (Cedula)
                 </h4>
-                <div className="space-y-1 text-xs text-slate-600">
+                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">CTC / Cedula Serial No:</span>
-                    <span className="font-bold text-slate-900 text-right">{currentApp.cedulaSerialNo || 'N/A'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">CTC / Cedula Serial No:</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-right">{currentApp.cedulaSerialNo || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Date of Issue:</span>
-                    <span className="font-semibold text-slate-800 text-right">{formatDate(currentApp.cedulaDate)}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Date of Issue:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.cedulaDate)}</span>
                   </div>
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 font-medium">Place of Issue:</span>
-                    <span className="font-semibold text-slate-800 text-right truncate max-w-[190px]">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Place of Issue:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[190px]">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 4. KEYBOARD SHORTCUT HELPER */}
-            <div className="p-2 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-1">
-              <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">A</kbd> Approve</span>
-              <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">R</kbd> Reject</span>
-              <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">1-4</kbd> Docs</span>
-              <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-700 font-semibold">&larr;/&rarr;</kbd> Queue</span>
+            <div className="p-2 bg-slate-50 dark:bg-[#0c101c] rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-1">
+              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">A</kbd> Approve</span>
+              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">R</kbd> Reject</span>
+              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">1-4</kbd> Docs</span>
+              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">&larr;/&rarr;</kbd> Queue</span>
             </div>
 
           </div>
@@ -758,14 +758,14 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* RIGHT DOCUMENT VIEWER CANVAS (STUDIO DESK VIEWPORT)                    */}
         {/* ======================================================================= */}
-        <main className="flex-1 flex flex-col bg-slate-100 relative overflow-hidden h-full">
+        <main className="flex-1 flex flex-col bg-slate-100 dark:bg-[#070a12] relative overflow-hidden h-full">
           
           {/* FLOATING TOP CANVAS TOOLBAR */}
-          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-1.5 rounded-2xl border border-slate-200 shadow-md text-slate-700">
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-2 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md text-slate-700 dark:text-slate-200">
             {/* Zoom Out */}
             <button
               onClick={() => setZoomScale(prev => Math.max(0.5, Number((prev - 0.25).toFixed(2))))}
-              className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut size={16} />
@@ -774,7 +774,7 @@ const FranchiseReviewPage = () => {
             {/* Percentage Badge */}
             <button
               onClick={resetCanvasView}
-              className="text-xs font-semibold px-2 py-0.5 rounded hover:bg-slate-100 text-[#7A1B22] min-w-[46px] text-center cursor-pointer"
+              className="text-xs font-semibold px-2 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] min-w-[46px] text-center cursor-pointer"
               title="Click to reset to 100%"
             >
               {Math.round(zoomScale * 100)}%
@@ -783,18 +783,18 @@ const FranchiseReviewPage = () => {
             {/* Zoom In */}
             <button
               onClick={() => setZoomScale(prev => Math.min(4.0, Number((prev + 0.25).toFixed(2))))}
-              className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn size={16} />
             </button>
 
-            <div className="h-4 w-px bg-slate-200 mx-0.5" />
+            <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
 
             {/* Rotate 90 deg */}
             <button
               onClick={() => setRotation(prev => (prev + 90) % 360)}
-              className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Rotate 90° Clockwise"
             >
               <RotateCw size={16} />
@@ -803,7 +803,7 @@ const FranchiseReviewPage = () => {
             {/* Reset View */}
             <button
               onClick={resetCanvasView}
-              className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Reset View (Center & 100%)"
             >
               <RefreshCw size={14} />
@@ -812,12 +812,12 @@ const FranchiseReviewPage = () => {
             {/* Open Original File in New Tab */}
             {currentDoc?.url && (
               <>
-                <div className="h-4 w-px bg-slate-200 mx-0.5" />
+                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
                 <a
                   href={currentDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 hover:bg-slate-100 text-[#7A1B22] rounded-lg transition-colors flex items-center cursor-pointer"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center cursor-pointer"
                   title="Open Raw Original in New Tab"
                 >
                   <ExternalLink size={15} />
@@ -828,9 +828,9 @@ const FranchiseReviewPage = () => {
 
           {/* ACTIVE DOCUMENT LABEL BADGE (TOP LEFT OF CANVAS) */}
           <div className="absolute top-3 left-3 z-20 pointer-events-none">
-            <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
-              <FileText size={15} className="text-[#7A1B22]" />
-              <span className="text-xs font-semibold text-slate-800">
+            <div className="bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-2">
+              <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                 {currentDoc.label}
               </span>
             </div>
@@ -853,15 +853,15 @@ const FranchiseReviewPage = () => {
               isDragging ? 'cursor-grabbing' : 'cursor-grab'
             }`}
             style={{
-              backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)',
+              backgroundImage: 'radial-gradient(var(--tw-dark-dot, #cbd5e1) 1px, transparent 1px)',
               backgroundSize: '20px 20px'
             }}
           >
             {!currentDoc?.url ? (
-              <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-md max-w-sm">
+              <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md max-w-sm">
                 <AlertCircle size={38} className="text-amber-500 mx-auto mb-2" />
-                <h3 className="font-bold text-sm text-slate-800">No Document Uploaded</h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">No Document Uploaded</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   The applicant has not attached a file for {currentDoc.short}.
                 </p>
               </div>
@@ -884,23 +884,23 @@ const FranchiseReviewPage = () => {
                   src={currentDoc.url}
                   alt={currentDoc.label}
                   draggable={false}
-                  className="max-h-[82vh] max-w-[85vw] object-contain rounded-2xl shadow-2xl bg-white border border-slate-200/80 p-1 select-none"
+                  className="max-h-[82vh] max-w-[85vw] object-contain rounded-2xl shadow-2xl bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-700/80 p-1 select-none"
                 />
               </div>
             )}
           </div>
 
           {/* FLOATING BOTTOM HINT */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 text-xs text-slate-600 shadow-sm flex items-center gap-3">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 shadow-sm flex items-center gap-3">
             <span className="flex items-center gap-1.5">
-              <Move size={13} className="text-[#7A1B22]" /> Drag to move
+              <Move size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Drag to move
             </span>
-            <span className="text-slate-300">&bull;</span>
+            <span className="text-slate-300 dark:text-slate-500">&bull;</span>
             <span className="flex items-center gap-1.5">
-              <ZoomIn size={13} className="text-[#7A1B22]" /> Scroll wheel to zoom
+              <ZoomIn size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Scroll wheel to zoom
             </span>
-            <span className="text-slate-300">&bull;</span>
-            <span className="text-xs text-slate-500">Double-click to reset</span>
+            <span className="text-slate-300 dark:text-slate-500">&bull;</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Double-click to reset</span>
           </div>
         </main>
       </div>

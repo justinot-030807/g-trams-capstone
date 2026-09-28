@@ -363,7 +363,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const isDashboard = location.pathname === '/operator-dashboard';
 
   return (
-    <header className={`sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 items-center justify-between shadow-xs transition-colors print:hidden print-hide ${
+    <header className={`sticky top-0 z-30 bg-white dark:bg-[#0c101c] border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 items-center justify-between shadow-xs transition-colors print:hidden print-hide ${
       isOperatorOrToda && isDashboard ? 'hidden md:flex' : 'flex'
     }`}>
       
@@ -383,7 +383,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               title="Bumalik / Back"
               aria-label="Back"
             >
-              <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 shadow-xs flex items-center justify-center group-hover:-translate-x-0.5 transition-transform">
+              <div className="w-6 h-6 rounded-full bg-white dark:bg-[#111827] shadow-xs flex items-center justify-center group-hover:-translate-x-0.5 transition-transform">
                 <ArrowLeft size={14} className="text-slate-700 dark:text-slate-200" />
               </div>
               <span className="text-xs font-bold tracking-wide uppercase hidden sm:block">Back</span>
@@ -435,7 +435,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-40" 
                     onClick={() => setIsNotifOpen(false)} 
                   />
-                  <div className="fixed inset-x-3 top-16 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="fixed inset-x-3 top-16 bg-white dark:bg-[#111827] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-xs text-slate-900 dark:text-white">{t('nav.notifications', 'Notifications')}</h3>
@@ -456,7 +456,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   <div className="max-h-72 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60">
                     {allNotifs.length === 0 ? (
                       <div className="p-8 text-center flex flex-col items-center justify-center">
-                        <Bell size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
+                        <Bell size={24} className="text-slate-400 dark:text-slate-500 mb-2" />
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
                         <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
                       </div>
@@ -533,13 +533,13 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
           {/* Global Search Bar */}
           <div className="hidden sm:flex items-center w-full max-w-sm relative group">
-            <div className="absolute left-3 text-slate-600 dark:text-slate-400 group-focus-within:text-[#7A1B22] dark:group-focus-within:text-[#D4AF37] transition-colors">
+            <div className="absolute left-3 text-slate-500 dark:text-slate-400 group-focus-within:text-[#7A1B22] dark:group-focus-within:text-[#D4AF37] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
             <input 
               type="text" 
               placeholder="Search..." 
-              className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
+              className="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22] dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.target.value.trim() !== '') {
                   navigate(`/franchise-masterlist?search=${encodeURIComponent(e.target.value)}`);
@@ -563,12 +563,12 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         <button
           onClick={toggleTheme}
           title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
-          className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all focus:outline-none shrink-0 cursor-pointer"
+          className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-all focus:outline-none shrink-0 cursor-pointer shadow-2xs"
         >
           {theme === 'system' ? (
             <Laptop size={18} className="text-blue-500 dark:text-blue-400" />
           ) : isDark ? (
-            <Moon size={18} className="text-indigo-600 dark:text-indigo-400" />
+            <Moon size={18} className="text-indigo-400" />
           ) : (
             <Sun size={18} className="text-amber-500" />
           )}
@@ -578,10 +578,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className={`relative p-2 rounded-xl border transition-all ${
+            className={`relative p-2 rounded-xl border transition-all shadow-2xs ${
               isNotifOpen 
-                ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-[#7A1B22] dark:text-[#D4AF37]' 
-                : 'bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-[#7A1B22] dark:text-[#D4AF37]' 
+                : 'bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Bell size={18} />
@@ -604,7 +604,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               <div 
                 role="dialog"
                 aria-modal="true"
-                className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col pointer-events-auto"
+                className="relative z-10 w-full sm:w-96 bg-white dark:bg-[#111827] rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col pointer-events-auto"
               >
                 {/* Mobile drag bar */}
                 <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
@@ -641,7 +641,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   {allNotifs.length === 0 ? (
                     <div className="p-10 text-center flex flex-col items-center justify-center h-48">
                       <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/80 rounded-full flex items-center justify-center mb-4">
-                        <Bell size={28} className="text-slate-300 dark:text-slate-600" />
+                        <Bell size={28} className="text-slate-400 dark:text-slate-500" />
                       </div>
                       <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                         {t('nav.noNotifications', 'No new notifications')}
@@ -726,7 +726,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#111827] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                 <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{userName}</p>
                 <p className="text-xs text-[#7A1B22] dark:text-[#D4AF37] font-bold uppercase tracking-wide mt-0.5">{getRoleBadge()}</p>

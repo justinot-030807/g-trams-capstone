@@ -243,9 +243,9 @@ const AdminBroadcastCenter = () => {
       )}
 
       {/* Broadcast Composer Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0 border border-[#7A1B22]/20 dark:border-[#D4AF37]/30">
             <Megaphone size={20} />
           </div>
           <div>
@@ -259,13 +259,13 @@ const AdminBroadcastCenter = () => {
         </div>
 
         {/* Target Audience Banner */}
-        <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 flex items-center gap-2.5 text-xs">
+        <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-[#0c101c] border border-slate-200/80 dark:border-slate-800 flex items-center gap-2.5 text-xs">
           <Users size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
           <div className="flex-1 min-w-0">
             <span className="font-bold text-slate-700 dark:text-slate-200">Recipients: </span>
             <span className="text-slate-600 dark:text-slate-400">All Tricycle Operators &amp; TODA Presidents across Gasan</span>
           </div>
-          <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] uppercase tracking-wider shrink-0">
+          <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] uppercase tracking-wider shrink-0 border border-emerald-200 dark:border-emerald-800/60">
             All Channels
           </span>
         </div>
@@ -283,7 +283,7 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => insertFormatting('**', '**')}
-                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 transition-colors flex items-center gap-1 cursor-pointer"
                   title="Make text bold (**text**)"
                 >
                   <Bold size={13} />
@@ -292,7 +292,7 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => insertFormatting('\n• ')}
-                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 transition-colors flex items-center gap-1 cursor-pointer"
                   title="Add bullet list (• item)"
                 >
                   <List size={13} />
@@ -301,7 +301,7 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => insertFormatting('\n🚨 [IMPORTANT NOTICE]: ')}
-                  className="px-2 py-1 rounded-md text-xs font-bold bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 transition-colors flex items-center gap-1 cursor-pointer"
                   title="Insert Important Notice callout"
                 >
                   <AlertTriangle size={13} />
@@ -310,10 +310,10 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => setShowPreview(!showPreview)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer border ${
                     showPreview
-                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950'
-                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 border-[#7A1B22] dark:border-[#D4AF37]'
+                      : 'bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/80'
                   }`}
                   title="Toggle announcement preview"
                 >
@@ -324,12 +324,12 @@ const AdminBroadcastCenter = () => {
             </div>
 
             {showPreview ? (
-              <div className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-4 min-h-[110px]">
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Live Preview</p>
+              <div className="w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 min-h-[110px]">
+                <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-2 tracking-wider">Live Preview</p>
                 {broadcastMessage.trim() ? (
                   renderFormattedAnnouncement(broadcastMessage)
                 ) : (
-                  <p className="text-xs text-slate-400 italic">No announcement text typed yet...</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 italic">No announcement text typed yet...</p>
                 )}
               </div>
             ) : (
@@ -340,13 +340,13 @@ const AdminBroadcastCenter = () => {
                 rows={4}
                 placeholder="Type your official announcement here... (e.g. Please be reminded of the upcoming annual franchise inspection at the Municipal Hall grounds.)"
                 required
-                className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all resize-none leading-relaxed"
+                className="w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-[#0c101c] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 transition-all resize-none leading-relaxed shadow-2xs"
               />
             )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-            <span className="text-xs text-slate-400 order-2 sm:order-1">
+            <span className="text-xs text-slate-400 dark:text-slate-500 order-2 sm:order-1">
               {broadcastMessage.length} characters
             </span>
 
@@ -372,7 +372,7 @@ const AdminBroadcastCenter = () => {
       </div>
 
       {/* Broadcast History Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <Clock size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
@@ -380,28 +380,28 @@ const AdminBroadcastCenter = () => {
               Broadcast History ({announcements.length})
             </h3>
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-400 dark:text-slate-500">
             Past announcements sent to operators
           </span>
         </div>
 
         {isLoadingHistory ? (
-          <div className="text-center py-10 text-slate-400 text-xs">
+          <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs">
             <Loader2 size={20} className="animate-spin mx-auto mb-2" />
             Loading previous announcements...
           </div>
         ) : announcements.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
+          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
             <Megaphone size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-700" />
             <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No broadcasts sent yet</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Use the composer above to broadcast an official announcement.</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Use the composer above to broadcast an official announcement.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {announcements.map((ann) => (
               <div
                 key={ann._id}
-                className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60 hover:border-slate-300 transition-colors relative group"
+                className="p-4 rounded-xl bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200/70 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors relative group"
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
@@ -409,13 +409,13 @@ const AdminBroadcastCenter = () => {
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                       {ann.sender?.name || 'Municipal Administrator'}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] font-bold text-[10px] uppercase">
+                    <span className="px-1.5 py-0.5 rounded bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] font-bold text-[10px] uppercase border border-[#7A1B22]/20 dark:border-[#D4AF37]/30">
                       Official Broadcast
                     </span>
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
                       {new Date(ann.createdAt).toLocaleString([], {
                         month: 'short',
                         day: 'numeric',

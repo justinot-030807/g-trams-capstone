@@ -159,14 +159,14 @@ const ValidateTODA = () => {
   return (
     <MainLayout>
       {/* PAGE HEADER RIBBON */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#D4AF37]/30 transition-all">
+      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <Building2 size={20} className="text-[#D4AF37]" />
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">TODA Management</h1>
-            <p className="text-white/75 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
+            <p className="text-white/80 dark:text-white/70 font-medium text-xs sm:text-xs max-w-xl">
               Manage recognized TODA directories, member rosters, and masterlist submissions.
             </p>
           </div>
@@ -179,69 +179,69 @@ const ValidateTODA = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         
         {/* Total TODAs */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30">
           <div className="w-11 h-11 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 border border-[#7A1B22]/20">
             <Building2 size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Recognized TODAs</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recognized TODAs</p>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {totalRecognizedTodas} <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-sans">100% Gasan</span>
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 truncate">Official Associations</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Official Associations</p>
           </div>
         </div>
 
         {/* Total Members */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30">
           <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 border border-blue-200 dark:border-blue-800/40">
             <Users size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Total Operators</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Operators</p>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {totalOperatorsCount}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 truncate">Registered in Directory</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Registered in Directory</p>
           </div>
         </div>
 
         {/* Active MTOP */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-emerald-500/30">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-emerald-500/30">
           <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800/40">
             <ShieldCheck size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Active MTOPs</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active MTOPs</p>
             <h3 className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
               {activeMtopCount}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 truncate">Street-Legal Franchises</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Street-Legal Franchises</p>
           </div>
         </div>
 
         {/* Pending Validations */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-amber-500/30">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-amber-500/30">
           <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 border border-amber-200 dark:border-amber-800/40">
             <Clock size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Pending Actions</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pending Actions</p>
             <h3 className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
               {pendingValidationCount}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 truncate">Submissions & Reviews</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Submissions & Reviews</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
         {/* TABS */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0c101c]">
           <button 
             onClick={() => { setActiveTab('directory'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'directory' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'directory' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FolderTree size={18} /> Live Members Directory
@@ -249,7 +249,7 @@ const ValidateTODA = () => {
           <button 
             onClick={() => { setActiveTab('validations'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'validations' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white dark:bg-slate-900' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'validations' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={18} /> Document Validations
@@ -298,7 +298,7 @@ const ValidateTODA = () => {
             {isLoading ? (
               <AccordionListSkeleton count={5} baseDelay={30} stepDelay={45} />
             ) : groupedToda.length === 0 ? (
-               <div className="text-center py-16 text-slate-500 dark:text-slate-600 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+               <div className="text-center py-16 text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-[#0c101c]/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                  <Users size={36} className="mx-auto mb-3 opacity-30"/>
                  <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
                    {isSearching ? `No members or TODAs match "${searchQuery}"` : 'No registered members found yet.'}
@@ -331,8 +331,8 @@ const ValidateTODA = () => {
                         onClick={() => setExpandedToda(expandedToda === toda.name ? null : toda.name)}
                         className={`w-full p-4 flex justify-between items-center transition-colors text-left ${
                           isOpen 
-                            ? 'bg-slate-100/70 dark:bg-slate-800' 
-                            : 'bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100/60 dark:hover:bg-slate-800/80'
+                            ? 'bg-slate-100/80 dark:bg-[#161f30]' 
+                            : 'bg-slate-50 dark:bg-[#0c101c]/90 hover:bg-slate-100/60 dark:hover:bg-[#161f30]/60'
                         }`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
@@ -343,7 +343,7 @@ const ValidateTODA = () => {
                             <h3 className="font-black text-slate-900 dark:text-white text-sm sm:text-base truncate">
                               {toda.name}
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                               {toda.members.length} {toda.members.length === 1 ? 'Driver' : 'Drivers'} 
                               {toda.totalCount !== toda.members.length && ` (filtered from ${toda.totalCount})`}
                             </p>
@@ -351,7 +351,7 @@ const ValidateTODA = () => {
                         </div>
 
                         <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300 shadow-2xs">
+                          <span className="text-xs font-bold bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300 shadow-2xs">
                             {toda.members.length} Member{toda.members.length > 1 ? 's' : ''}
                           </span>
                           <div className={`p-1 text-slate-600 dark:text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-slate-600 dark:text-slate-200' : ''}`}>
@@ -364,10 +364,10 @@ const ValidateTODA = () => {
                       {/* 🛵 ITEM 4: MEMBER ROSTER WITH LIVE FRANCHISE STATUS BADGES */}
                       {/* ========================================================================= */}
                       {isOpen && (
-                        <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 overflow-x-auto">
+                        <div className="bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-slate-800 overflow-x-auto">
                           <table className="w-full text-left border-collapse min-w-[650px]">
                             <thead>
-                              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider font-bold bg-slate-50/50 dark:bg-slate-800/40">
+                              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold bg-slate-50/70 dark:bg-[#0c101c]">
                                 <th className="py-2.5 px-4">Operator / Driver</th>
                                 <th className="py-2.5 px-4">Barangay Address</th>
                                 <th className="py-2.5 px-4">Role</th>
@@ -379,7 +379,7 @@ const ValidateTODA = () => {
                                 const franchise = getMemberFranchise(member);
 
                                 return (
-                                  <tr key={member._id} className="text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                  <tr key={member._id} className="text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50/80 dark:hover:bg-[#161f30]/40 transition-colors">
                                     {/* Name & Contact */}
                                     <td className="py-3 px-4">
                                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -398,7 +398,7 @@ const ValidateTODA = () => {
                                           </span>
                                         )}
                                       </div>
-                                      <div className="text-xs text-slate-600 dark:text-slate-400 font-mono mt-0.5">
+                                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                                         {member.contact || 'No contact'}
                                       </div>
                                     </td>
@@ -413,7 +413,7 @@ const ValidateTODA = () => {
                                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
                                         member.role === 'toda_president' 
                                           ? 'bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/40' 
-                                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                                       }`}>
                                         {member.role === 'toda_president' ? 'TODA President' : 'Operator'}
                                       </span>
@@ -429,7 +429,7 @@ const ValidateTODA = () => {
                                               Active MTOP
                                             </span>
                                             <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-                                              Plate: {franchise.plateNo || 'N/A'} &bull; <span className="font-sans font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400">{franchise.make || 'Tricycle'}</span>
+                                              Plate: {franchise.plateNo || 'N/A'} &bull; <span className="font-sans font-medium text-slate-500 dark:text-slate-400">{franchise.make || 'Tricycle'}</span>
                                             </span>
                                           </div>
                                         ) : franchise.status === 'For Signing' ? (
@@ -438,7 +438,7 @@ const ValidateTODA = () => {
                                               <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
                                               For Signing
                                             </span>
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                                               Plate: {franchise.plateNo || 'PENDING'}
                                             </span>
                                           </div>
@@ -448,7 +448,7 @@ const ValidateTODA = () => {
                                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                               {franchise.status === 'Ready for Pickup' ? 'Awaiting Release' : 'Pending MTOP'}
                                             </span>
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                                               Plate: {franchise.plateNo || 'PENDING'}
                                             </span>
                                           </div>
@@ -458,17 +458,17 @@ const ValidateTODA = () => {
                                               <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                                               Expired MTOP
                                             </span>
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                                               Plate: {franchise.plateNo || 'N/A'}
                                             </span>
                                           </div>
                                         ) : (
-                                          <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
+                                          <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
                                             {franchise.status}
                                           </span>
                                         )
                                       ) : (
-                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
+                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
                                           No Franchise Record
                                         </span>
                                       )}
@@ -491,17 +491,17 @@ const ValidateTODA = () => {
         {/* Document validations content */}
         {activeTab === 'validations' && (
           <>
-            <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50 dark:bg-slate-800/60">
+            <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/70 dark:bg-[#0c101c]">
               <div className="relative w-full sm:w-96">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={18} />
-                <input type="text" placeholder="Search by TODA President or filename..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 transition-all shadow-sm" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
+                <input type="text" placeholder="Search by TODA President or filename..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/20 transition-all shadow-xs" />
               </div>
             </div>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
+                  <tr className="bg-slate-50/80 dark:bg-[#0c101c] border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                     <th className="p-4 pl-6">Submitted By</th>
                     <th className="p-4">Document</th>
                     <th className="p-4">Date Submitted</th>
@@ -513,17 +513,17 @@ const ValidateTODA = () => {
                   {isLoading ? (
                     <TableRowsSkeleton rows={4} columns={5} baseDelay={30} stepDelay={45} />
                   ) : filteredSubmissions.length === 0 ? (
-                    <tr><td colSpan="5" className="p-12 text-center text-sm font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400">No TODA member lists found.</td></tr>
+                    <tr><td colSpan="5" className="p-12 text-center text-sm font-medium text-slate-500 dark:text-slate-400">No TODA member lists found.</td></tr>
                   ) : (
                     filteredSubmissions.map((sub, sIdx) => (
                       <tr 
                         key={sub._id} 
-                        className="stagger-reveal hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group"
+                        className="stagger-reveal hover:bg-slate-50 dark:hover:bg-[#161f30]/40 transition-colors group"
                         style={{ animationDelay: `${sIdx * 35}ms` }}
                       >
                         <td className="p-4 pl-6"><p className="font-bold text-slate-900 dark:text-white">{sub.presidentName}</p></td>
                         <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37]"><FileText size={16} /> {sub.fileName}</div></td>
-                        <td className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-600 dark:text-slate-400">{new Date(sub.createdAt).toLocaleDateString()}</td>
+                        <td className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300">{new Date(sub.createdAt).toLocaleDateString()}</td>
                         <td className="p-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${sub.status === 'Approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'}`}>
                             {sub.status}
@@ -533,7 +533,7 @@ const ValidateTODA = () => {
                          <a href={`${import.meta.env.VITE_API_URL}/${sub.filePath}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
                             <Eye size={14} /> View
                           </a>
-                          <button onClick={() => handleApprove(sub._id)} disabled={sub.status === 'Approved'} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${sub.status === 'Approved' ? 'bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'}`}>
+                          <button onClick={() => handleApprove(sub._id)} disabled={sub.status === 'Approved'} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${sub.status === 'Approved' ? 'bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'}`}>
                             <CheckCircle size={14} /> {sub.status === 'Approved' ? 'Approved' : 'Approve'}
                           </button>
                         </td>

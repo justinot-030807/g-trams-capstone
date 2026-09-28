@@ -482,14 +482,14 @@ const AdminSettings = () => {
     showToast(nextVal ? 'Toast notifications enabled' : 'Toast notifications silenced', 'success');
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all";
+  const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 dark:focus:ring-[#D4AF37]/20 transition-all shadow-xs";
 
   return (
     <MainLayout>
       {/* Minimalist Floating Toast Notification */}
       {toast.show && preferences.inAppToastAlerts && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+          <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
             <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
               toast.type === 'error'
                 ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
@@ -514,15 +514,15 @@ const AdminSettings = () => {
         </div>
       )}
 
-      {/* Thin Ribbon Banner */}
-      <div className="bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-2xl p-4 sm:px-6 sm:py-5 mb-6 text-white shadow-lg relative overflow-hidden border border-[#D4AF37]/30 transition-all">
+      {/* Header Ribbon */}
+      <div className="bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 mb-6 text-white shadow-lg relative overflow-hidden border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
         <div className="relative z-10 flex items-center gap-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <Sliders size={20} className="text-[#D4AF37]" />
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">Settings</h1>
-            <p className="text-white/75 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs max-w-xl">
+            <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-xs max-w-xl">
               Manage your account, preferences, and system configurations.
             </p>
           </div>
@@ -534,13 +534,13 @@ const AdminSettings = () => {
       ) : (
         <div className="space-y-6 w-full">
           {/* TAB NAVIGATION PILLS */}
-          <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full sm:w-fit overflow-x-auto">
+          <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl w-full sm:w-fit overflow-x-auto">
             <button
               onClick={() => setActiveTab('system')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'system'
-                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Sliders size={16} />
@@ -549,10 +549,10 @@ const AdminSettings = () => {
 
             <button
               onClick={() => setActiveTab('account')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'account'
-                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <User size={16} />
@@ -561,10 +561,10 @@ const AdminSettings = () => {
 
             <button
               onClick={() => setActiveTab('preferences')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'preferences'
-                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Globe size={16} />
@@ -573,10 +573,10 @@ const AdminSettings = () => {
 
             <button
               onClick={() => { setActiveTab('audit'); fetchAuditLogs(1, auditActionFilter, auditSearchQuery); }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'audit'
-                  ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-sm'
-                  : 'text-slate-600 dark:text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Shield size={16} />
@@ -588,14 +588,14 @@ const AdminSettings = () => {
           {activeTab === 'system' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               {/* Franchise Rules & Validity */}
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl">
                     <Clock size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                   </div>
                   <div>
                     <h2 className="text-base font-black text-slate-900 dark:text-white">Franchise Validity Period</h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Configure validity duration for first-time and renewed permits</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Configure validity duration for first-time and renewed permits</p>
                   </div>
                 </div>
 
@@ -657,14 +657,14 @@ const AdminSettings = () => {
               </div>
 
               {/* Fiscal & Fare Settings */}
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="p-2 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800/60">
                     <Wallet size={20} className="text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
                     <h2 className="text-base font-black text-slate-900 dark:text-white">Fiscal & Fare Rates</h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Establish municipal fees, penalties, and official TODA fare tariffs</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Establish municipal fees, penalties, and official TODA fare tariffs</p>
                   </div>
                 </div>
 
@@ -701,7 +701,7 @@ const AdminSettings = () => {
                         className={inputClasses}
                       />
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Default is 2 units</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Default is 2 units</p>
                   </div>
 
                   <div>
@@ -759,7 +759,7 @@ const AdminSettings = () => {
 
               {/* Requirement Checklist Builder & Maintenance Mode */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between">
+                <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-3">
@@ -769,17 +769,17 @@ const AdminSettings = () => {
                       <button
                         type="button"
                         onClick={handleResetDefaultDocs}
-                        className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors"
+                        className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
                       >
                         Reset Defaults
                       </button>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-4">Manage the list of documents required from operators when submitting franchise applications:</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Manage the list of documents required from operators when submitting franchise applications:</p>
 
                     {/* DYNAMIC DOCUMENT LIST */}
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                       {(Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).map((doc, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/60 transition-colors">
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#0c101c] border border-slate-200/80 dark:border-slate-800 transition-colors">
                           <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
                             {doc}
@@ -787,7 +787,7 @@ const AdminSettings = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveRequirement(doc)}
-                            className="text-slate-600 dark:text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            className="text-slate-500 dark:text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
                             title="Remove document requirement"
                           >
                             <X size={14} />
@@ -795,7 +795,7 @@ const AdminSettings = () => {
                         </div>
                       ))}
                       {(Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).length === 0 && (
-                        <p className="text-xs text-slate-600 dark:text-slate-400 italic py-2 text-center">No document requirements defined. Add one below.</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 italic py-2 text-center">No document requirements defined. Add one below.</p>
                       )}
                     </div>
                   </div>
@@ -814,20 +814,20 @@ const AdminSettings = () => {
                     <button
                       type="button"
                       onClick={handleAddRequirement}
-                      className="px-4 py-2 bg-[#7A1B22] hover:bg-[#5A1419] text-white rounded-xl text-xs font-bold shrink-0 transition-colors shadow-xs"
+                      className="px-4 py-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 rounded-xl text-xs font-bold shrink-0 transition-colors shadow-xs cursor-pointer"
                     >
                       + Add
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors">
+                <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors">
                   <div>
                     <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
                       <AlertTriangle size={20} className="text-orange-500" />
                       <h2 className="text-base font-black text-slate-900 dark:text-white">Maintenance Mode</h2>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
                       Enabling Maintenance Mode prevents operators from submitting new applications while system maintenance or database migration is in progress.
                     </p>
                   </div>
@@ -862,7 +862,7 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('system')}
-                  className="flex items-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] text-white px-8 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-sm active:scale-98 transition-all"
+                  className="flex items-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-sm active:scale-98 transition-all cursor-pointer"
                 >
                   <Save size={16} /> Save System Configurations
                 </button>
@@ -874,7 +874,7 @@ const AdminSettings = () => {
           {activeTab === 'account' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-200">
               {/* Profile Details */}
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                   <User size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                   <h2 className="text-base font-black text-slate-900 dark:text-white">Admin Profile</h2>
@@ -927,14 +927,14 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('account')}
-                  className="mt-6 w-full bg-[#7A1B22] hover:bg-[#5A1419] text-white py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
+                  className="mt-6 w-full bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
                 >
                   <Save size={16} /> Save Profile Changes
                 </button>
               </div>
 
               {/* Password Change */}
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-fit transition-colors">
+              <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-fit transition-colors">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                   <Lock size={20} className="text-[#D4AF37]" />
                   <h2 className="text-base font-black text-slate-900 dark:text-white">Security & Password</h2>
@@ -984,7 +984,7 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('password')}
-                  className="mt-6 w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
+                  className="mt-6 w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
                 >
                   <ShieldCheck size={16} /> Update Password
                 </button>
@@ -994,20 +994,20 @@ const AdminSettings = () => {
 
           {/* TAB 3: PREFERENCES & APPEARANCE */}
           {activeTab === 'preferences' && (
-            <div className="w-full bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5 animate-in fade-in duration-200 transition-colors">
+            <div className="w-full bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5 animate-in fade-in duration-200 transition-colors">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <Globe size={20} className="text-[#D4AF37]" />
                 <h2 className="text-base font-black text-slate-900 dark:text-white">System Appearance & Preferences</h2>
               </div>
 
               {/* Theme Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 transition-colors">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-[#0c101c] border border-slate-100 dark:border-slate-800 transition-colors">
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     {isDark ? <Moon size={16} className="text-indigo-400" /> : <Sun size={16} className="text-amber-500" />}
                     Theme Mode
                   </p>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                     {isDark ? 'Dark Theme active (High Contrast)' : 'Light Theme active'}
                   </p>
                 </div>
@@ -1032,13 +1032,13 @@ const AdminSettings = () => {
               </div>
 
               {/* Language Selector */}
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 transition-colors">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-[#0c101c] border border-slate-100 dark:border-slate-800 transition-colors">
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <Globe size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     Display Language
                   </p>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                     Select language for UI labels and notifications
                   </p>
                 </div>
@@ -1046,7 +1046,7 @@ const AdminSettings = () => {
                 <select
                   value={preferences.language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2"
+                  className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/20"
                 >
                   <option value="en">English (US)</option>
                   <option value="fil">Tagalog / Filipino</option>
@@ -1054,13 +1054,13 @@ const AdminSettings = () => {
               </div>
 
               {/* In-App Toast Alerts */}
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 transition-colors">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-[#0c101c] border border-slate-100 dark:border-slate-800 transition-colors">
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                     In-App Action Toasts
                   </p>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                     Show centered pop-up toasts on save and updates
                   </p>
                 </div>
@@ -1085,7 +1085,7 @@ const AdminSettings = () => {
           {/* TAB 4: AUDIT TRAIL & SECURITY LOGS */}
           {activeTab === 'audit' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-2xl border border-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37]">
@@ -1098,7 +1098,7 @@ const AdminSettings = () => {
                           Immutable Ledger
                         </span>
                       </h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Chronological record of administrative operations, approvals, revocations, and security events.
                       </p>
                     </div>
@@ -1107,7 +1107,7 @@ const AdminSettings = () => {
                   <button
                     onClick={() => fetchAuditLogs(auditPage, auditActionFilter, auditSearchQuery)}
                     disabled={auditLoading}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all active:scale-95 shrink-0 border border-slate-200 dark:border-slate-700"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all active:scale-95 shrink-0 border border-slate-200 dark:border-slate-700/80"
                   >
                     <RefreshCw size={14} className={auditLoading ? 'animate-spin' : ''} />
                     <span>Refresh Logs</span>
@@ -1117,7 +1117,7 @@ const AdminSettings = () => {
                 {/* Filter and Search Bar */}
                 <div className="pt-6 grid grid-cols-1 sm:grid-cols-12 gap-3">
                   <div className="sm:col-span-8 relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
                     <input
                       type="text"
                       placeholder="Search by Actor Name, Action, or Record ID..."
@@ -1157,7 +1157,7 @@ const AdminSettings = () => {
                 <div className="mt-6 overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
+                      <tr className="bg-slate-50/80 dark:bg-[#0c101c] border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                         <th className="py-3 px-4">Timestamp & IP</th>
                         <th className="py-3 px-4">Administrator / Actor</th>
                         <th className="py-3 px-4">Action Event</th>
@@ -1167,17 +1167,17 @@ const AdminSettings = () => {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {auditLoading ? (
                         <tr>
-                          <td colSpan="4" className="py-12 text-center text-slate-600 dark:text-slate-400">
+                          <td colSpan="4" className="py-12 text-center text-slate-500 dark:text-slate-400">
                             <Loader2 className="animate-spin mx-auto mb-2 text-[#7A1B22] dark:text-[#D4AF37]" size={24} />
                             <p className="font-bold text-xs">Loading audit ledger...</p>
                           </td>
                         </tr>
                       ) : auditLogs.length === 0 ? (
                         <tr>
-                          <td colSpan="4" className="py-12 text-center text-slate-600 dark:text-slate-400">
+                          <td colSpan="4" className="py-12 text-center text-slate-500 dark:text-slate-400">
                             <ShieldCheck size={32} className="mx-auto mb-2 opacity-30" />
                             <p className="font-bold text-slate-700 dark:text-slate-300">No audit log entries recorded yet.</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Admin operations will automatically appear here in real time.</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Admin operations will automatically appear here in real time.</p>
                           </td>
                         </tr>
                       ) : (
@@ -1186,12 +1186,12 @@ const AdminSettings = () => {
                           const isSuccess = log.action?.includes('APPROVE') || log.action?.includes('ACTIVATE') || log.action?.includes('RESTORE');
                           
                           return (
-                            <tr key={log._id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                              <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                            <tr key={log._id} className="hover:bg-slate-50/70 dark:hover:bg-[#161f30]/40 transition-colors">
+                              <td className="py-3.5 px-4 font-mono text-xs text-slate-600 dark:text-slate-400">
                                 <div className="font-bold text-slate-800 dark:text-slate-200">
                                   {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </div>
-                                <div className="text-xs text-slate-600 dark:text-slate-400">
+                                <div className="text-xs text-slate-500 dark:text-slate-400">
                                   {new Date(log.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} &bull; IP: {log.ipAddress || '127.0.0.1'}
                                 </div>
                               </td>
@@ -1201,7 +1201,7 @@ const AdminSettings = () => {
                                   <User size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
                                   {log.actorName || 'System'}
                                 </div>
-                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-600 dark:text-slate-400">
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-500 dark:text-slate-400">
                                   {log.actorRole || 'admin'}
                                 </span>
                               </td>
@@ -1228,7 +1228,7 @@ const AdminSettings = () => {
                                   </p>
                                 )}
                                 {log.details?.previousStatus && log.details?.newStatus && (
-                                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-mono">
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                                     {log.details.previousStatus} ➜ {log.details.newStatus}
                                   </p>
                                 )}
@@ -1243,7 +1243,7 @@ const AdminSettings = () => {
 
                 {/* Pagination Controls */}
                 {auditPagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs font-bold text-slate-600 dark:text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs font-bold text-slate-600 dark:text-slate-400">
                     <div>
                       Page {auditPagination.currentPage} of {auditPagination.totalPages} ({auditPagination.totalRecords} total records)
                     </div>
@@ -1251,14 +1251,14 @@ const AdminSettings = () => {
                       <button
                         onClick={() => fetchAuditLogs(auditPage - 1, auditActionFilter, auditSearchQuery)}
                         disabled={!auditPagination.hasPrevPage || auditLoading}
-                        className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        className="p-2 rounded-xl border border-slate-200 dark:border-slate-700/80 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-200 transition-colors"
                       >
                         <ChevronLeft size={16} />
                       </button>
                       <button
                         onClick={() => fetchAuditLogs(auditPage + 1, auditActionFilter, auditSearchQuery)}
                         disabled={!auditPagination.hasNextPage || auditLoading}
-                        className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        className="p-2 rounded-xl border border-slate-200 dark:border-slate-700/80 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-200 transition-colors"
                       >
                         <ChevronRight size={16} />
                       </button>
@@ -1278,7 +1278,7 @@ const AdminSettings = () => {
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200"
             onClick={() => !isProcessing && setConfirmModal({ isOpen: false, type: null, data: null })}
           />
-          <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 animate-in zoom-in-95 duration-150 transition-colors">
+          <div className="relative bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 animate-in zoom-in-95 duration-150 transition-colors">
             
             {/* Minimalist Header */}
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4">
@@ -1290,14 +1290,14 @@ const AdminSettings = () => {
                   <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
                     {confirmModal.type === 'system' ? 'Save System Configuration' : 'Confirm Action'}
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Apply updates to platform database</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Apply updates to platform database</p>
                 </div>
               </div>
               <button
                 type="button"
                 disabled={isProcessing}
                 onClick={() => setConfirmModal({ isOpen: false, type: null, data: null })}
-                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
+                className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1306,31 +1306,31 @@ const AdminSettings = () => {
             {/* Content Summary Breakdown */}
             {confirmModal.type === 'system' ? (
               <div className="space-y-3 mb-5">
-                <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 space-y-2 text-xs">
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
+                <div className="bg-slate-50 dark:bg-[#0c101c] rounded-xl p-3.5 border border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
                     <span>Max Units / Operator:</span>
                     <span className="font-bold text-slate-900 dark:text-white">{systemConfig.maxUnitsPerOperator} unit(s)</span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
                     <span>Fiscal Year Cycle:</span>
                     <span className="font-bold text-slate-900 dark:text-white">{systemConfig.fiscalYear}</span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
                     <span>Franchise Application Fee:</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">₱{Number(systemConfig.franchiseFee).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
                     <span>Maintenance Mode:</span>
-                    <span className={`font-bold ${systemConfig.maintenanceMode ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400'}`}>
+                    <span className={`font-bold ${systemConfig.maintenanceMode ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500 dark:text-slate-400'}`}>
                       {systemConfig.maintenanceMode ? 'Active (Restricted)' : 'Inactive (Public Access)'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
                     <span>Required Documents:</span>
                     <span className="font-bold text-slate-900 dark:text-white">{Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs.length : 0} items</span>
                   </div>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                   Changes will take effect immediately across all operator portals.
                 </p>
               </div>
@@ -1346,7 +1346,7 @@ const AdminSettings = () => {
                 type="button"
                 disabled={isProcessing}
                 onClick={() => setConfirmModal({ isOpen: false, type: null, data: null })}
-                className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs"
+                className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] border border-slate-200 dark:border-slate-700/80 transition-colors text-xs"
               >
                 Cancel
               </button>

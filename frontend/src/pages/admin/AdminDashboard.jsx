@@ -29,12 +29,12 @@ const CustomTodaTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 text-xs z-50 relative pointer-events-none select-none">
+      <div className="bg-white dark:bg-[#111827] p-3.5 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 text-xs z-50 relative pointer-events-none select-none">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: data.color }} />
           <span className="font-black text-slate-900 dark:text-white">{data.name}</span>
         </div>
-        <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">
+        <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-400 font-medium">
           <span>Units: <strong className="text-slate-900 dark:text-white font-bold">{data.value}</strong></span>
           <span className="font-black text-[#7A1B22] dark:text-[#D4AF37]">{data.percentage}% share</span>
         </div>
@@ -231,15 +231,15 @@ const AdminDashboard = () => {
 
       {/* 1. HERO BANNER */}
       <div 
-        className="animate-smooth-card bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#D4AF37]/30 transition-colors duration-300"
+        className="animate-smooth-card bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all duration-300"
         style={{ animationDelay: '0.05s' }}
       >
         <div className="relative z-10 text-center md:text-left min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-white/10 shadow-sm">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-[#D4AF37]/30 shadow-sm">
             <GreetingIcon size={13} className={greeting.badgeColor} />
             <span>{greeting.tag}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1 text-white">
             {greeting.text}, {loggedInAdminName}!
           </h1>
           <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
@@ -247,21 +247,21 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* Right Side: Interactive Action Badge & Compact Date (Replacing bulky clock) */}
+        {/* Right Side: Interactive Action Badge & Compact Date */}
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
           {isLoading ? (
             <div className="h-10 w-36 rounded-2xl bg-white/10 dark:bg-white/5 animate-pulse border border-white/10" />
           ) : stats.pending > 0 ? (
             <button
               onClick={() => navigate('/franchise-approval')}
-              className="group flex items-center gap-3 bg-white/15 hover:bg-white/25 dark:bg-amber-500/15 dark:hover:bg-amber-500/25 border border-white/20 dark:border-amber-400/30 px-4 py-2.5 rounded-2xl transition-all shadow-sm cursor-pointer active:scale-95 text-left"
+              className="group flex items-center gap-3 bg-white/15 hover:bg-white/25 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 border border-white/20 dark:border-[#D4AF37]/40 px-4 py-2.5 rounded-2xl transition-all shadow-sm cursor-pointer active:scale-95 text-left"
               title="Open Approvals Queue"
             >
               <div className="w-8 h-8 rounded-xl bg-amber-400/25 border border-amber-400/40 text-[#D4AF37] flex items-center justify-center shrink-0">
                 <Clock size={16} />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
                 <p className="text-xs font-black text-white">{stats.pending} Pending Review</p>
               </div>
               <ArrowRight size={15} className="text-[#D4AF37] group-hover:translate-x-1 transition-transform ml-0.5" />
@@ -273,7 +273,7 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          <div className="hidden sm:flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-white/90">
+          <div className="hidden sm:flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 dark:border-slate-800 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-white/90">
             <GreetingIcon size={14} className={greeting.badgeColor} />
             <span>{currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
           </div>
@@ -288,24 +288,23 @@ const AdminDashboard = () => {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {[
-            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, color: 'from-[#7A1B22] to-[#5A1419]', iconBg: 'bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37]' },
-            { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' },
-            { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, color: 'from-[#D4AF37] to-[#B89628]', iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-[#D4AF37] dark:text-[#D4AF37]' },
-            { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, color: 'from-rose-400 to-red-500', iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-500 dark:text-red-400' }
+            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, iconBg: 'bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37]' },
+            { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 dark:border dark:border-emerald-800/40' },
+            { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-[#D4AF37] dark:border dark:border-amber-800/40' },
+            { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-500 dark:text-red-400 dark:border dark:border-red-800/40' }
           ].map((stat, index) => (
             <div 
               key={index} 
-              className="animate-smooth-card bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
+              className="animate-smooth-card bg-white dark:bg-[#111827] p-5 sm:p-6 rounded-3xl shadow-xs border border-slate-200/80 dark:border-slate-800 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 relative overflow-hidden group"
               style={{ animationDelay: `${0.06 + (index * 0.06)}s` }}
             >
-              <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${stat.color}`} />
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-xs sm:text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</p>
                   <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{stat.count}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium mt-0.5">{stat.sub}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{stat.sub}</p>
                 </div>
-                <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+                <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform duration-300 shadow-2xs`}>
                   {stat.icon}
                 </div>
               </div>
@@ -319,7 +318,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* SKELETON: FRANCHISE HEALTH OVERVIEW (Matches horizontal stacked bar + 4 status cards) */}
           <div 
-            className="stagger-reveal lg:col-span-2 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" 
+            className="stagger-reveal lg:col-span-2 bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" 
             style={{ animationDelay: '200ms' }}
           >
             <div className="flex items-center justify-between mb-6">
@@ -361,7 +360,7 @@ const AdminDashboard = () => {
 
           {/* SKELETON: QUICK INSIGHTS (Matches 4 insights cards) */}
           <div 
-            className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col" 
+            className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col" 
             style={{ animationDelay: '280ms' }}
           >
             <div className="flex items-center gap-2.5 mb-5">
@@ -413,7 +412,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* FRANCHISE HEALTH OVERVIEW — Horizontal stacked bar + status breakdown */}
           <div 
-            className="animate-smooth-card lg:col-span-2 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
+            className="animate-smooth-card lg:col-span-2 bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
             style={{ animationDelay: '0.2s' }}
           >
             <div className="flex items-center justify-between mb-6">
@@ -423,7 +422,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Franchise Health Overview</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">Status distribution across all registered units</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Status distribution across all registered units</p>
                 </div>
               </div>
               <span className="text-xs font-bold bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-wider border border-[#7A1B22]/20">
@@ -462,17 +461,17 @@ const AdminDashboard = () => {
               ].map((item, i) => (
                 <div 
                   key={i} 
-                  className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors group"
+                  className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors group"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`w-2.5 h-2.5 rounded-full ${item.dotColor} shrink-0 shadow-xs group-hover:scale-125 transition-transform`} />
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider">{item.label}</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">{item.label}</span>
                   </div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xl font-black text-slate-900 dark:text-white">{item.count}</span>
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500">{item.pct}%</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{item.pct}%</span>
                   </div>
-                  <p className="text-[9px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.desc}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -480,7 +479,7 @@ const AdminDashboard = () => {
 
           {/* QUICK INSIGHTS — Transport-contextual snapshot */}
           <div 
-            className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col"
+            className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col"
             style={{ animationDelay: '0.28s' }}
           >
             <div className="flex items-center gap-2.5 mb-5">
@@ -503,14 +502,14 @@ const AdminDashboard = () => {
                     style={{ width: isGraphAnimated ? `${getPercentage(stats.active)}%` : '0%', transitionDelay: '200ms' }}
                   />
                 </div>
-                <p className="text-[9px] text-emerald-600/80 dark:text-emerald-400/70 font-medium mt-1.5">{stats.active} of {stats.total} franchises are active and compliant</p>
+                <p className="text-[10px] text-emerald-700/80 dark:text-emerald-400 font-medium mt-1.5">{stats.active} of {stats.total} franchises are active and compliant</p>
               </div>
 
               {/* New Applications */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider">New Applications</p>
-                  <p className="text-[9px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-0.5">First-time franchise filings</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">New Applications</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">First-time franchise filings</p>
                 </div>
                 <span className="text-xl font-black text-slate-900 dark:text-white">{stats.newApps}</span>
               </div>
@@ -519,13 +518,13 @@ const AdminDashboard = () => {
               <div className={`p-3.5 rounded-2xl border flex items-center justify-between ${
                 stats.pending > 0 
                   ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/40'
-                  : 'bg-slate-50/80 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800'
+                  : 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-100 dark:border-slate-800'
               }`}>
                 <div>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-600 dark:text-slate-400'}`}>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-300'}`}>
                     Approval Queue
                   </p>
-                  <p className="text-[9px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                     {stats.pending > 0 ? 'Action needed from Office of the Vice Mayor Extension' : 'All queues cleared'}
                   </p>
                 </div>
@@ -533,10 +532,10 @@ const AdminDashboard = () => {
               </div>
 
               {/* Last Activity */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider">Last System Activity</p>
-                  <p className="text-[9px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-0.5">Most recent franchise update</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Last System Activity</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Most recent franchise update</p>
                 </div>
                 <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
                   {historyLogs.length > 0 ? getRelativeTime(historyLogs[0]?.updatedAt) : '—'}
@@ -550,7 +549,7 @@ const AdminDashboard = () => {
       {/* 4. TODA DISTRIBUTION DONUT CHART */}
       {isLoading ? (
         <div 
-          className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
+          className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
           style={{ animationDelay: '320ms' }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -604,7 +603,7 @@ const AdminDashboard = () => {
         </div>
       ) : todaStats.length > 0 ? (
         <div 
-          className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
+          className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
           style={{ animationDelay: '0.32s' }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -616,7 +615,7 @@ const AdminDashboard = () => {
                 <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">
                   TODA Unit Distribution &amp; Share
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Breakdown of active tricycle units per transport association across Gasan
                 </p>
               </div>
@@ -642,7 +641,7 @@ const AdminDashboard = () => {
                     hoveredTodaIndex !== null ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
                   }`}
                 >
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-500">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Unit Share
                   </span>
                   <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
@@ -688,7 +687,7 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {todaStats.map((toda, idx) => (
                   <div 
-                    key={idx}
+                    key={idx} 
                     className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col justify-between"
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -705,7 +704,7 @@ const AdminDashboard = () => {
                         <span className="text-xs font-black text-slate-900 dark:text-white">
                           {toda.value}
                         </span>
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                           ({toda.percentage}%)
                         </span>
                       </div>
@@ -733,7 +732,7 @@ const AdminDashboard = () => {
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* ACTIVITY HISTORY SKELETON */}
-          <div className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '460ms' }}>
+          <div className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '460ms' }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <SkeletonElement rounded="rounded-lg" className="w-6 h-6" delay={470} />
@@ -758,7 +757,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* PENDING APPROVAL QUEUE SKELETON */}
-          <div className="stagger-reveal bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '520ms' }}>
+          <div className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '520ms' }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <SkeletonElement rounded="rounded-lg" className="w-6 h-6" delay={530} />
@@ -787,7 +786,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* ACTIVITY HISTORY — Upgraded with icons, relative time, bold names */}
           <div 
-            className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
+            className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
             style={{ animationDelay: '0.34s' }}
           >
             <div className="flex items-center justify-between mb-5">
@@ -802,7 +801,7 @@ const AdminDashboard = () => {
 
             <div className="space-y-2.5">
               {historyLogs.length === 0 ? (
-                <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 text-center py-8">No recent system actions logged.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-8">No recent system actions logged.</p>
               ) : (
                 historyLogs.map((log) => {
                   const actionData = getActionDetails(log);
@@ -821,7 +820,7 @@ const AdminDashboard = () => {
                         <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                           {actionData.verb} <span className="font-black text-slate-900 dark:text-white">{actionData.name}</span>
                         </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                           {getRelativeTime(log.updatedAt)}
                         </p>
                       </div>
@@ -839,7 +838,7 @@ const AdminDashboard = () => {
 
           {/* PENDING APPROVAL QUEUE — Upgraded with urgency indicators */}
           <div 
-            className="animate-smooth-card bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
+            className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
             style={{ animationDelay: '0.4s' }}
           >
             <div className="flex items-center justify-between mb-5">
@@ -856,7 +855,7 @@ const AdminDashboard = () => {
 
             <div className="space-y-2.5">
               {recentApps.length === 0 ? (
-                <div className="text-center py-8 text-slate-600 dark:text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center">
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center">
                   <CheckCircle size={28} className="text-emerald-500 mb-1" />
                   All caught up! No pending applications.
                 </div>
@@ -878,7 +877,7 @@ const AdminDashboard = () => {
                       {/* Applicant Info */}
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-black text-slate-900 dark:text-white truncate">{app.fullName || 'Applicant'}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium truncate">{app.todaName} • {app.make || 'Tricycle'}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{app.todaName} • {app.make || 'Tricycle'}</p>
                       </div>
 
                       {/* Review CTA */}

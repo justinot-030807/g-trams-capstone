@@ -325,7 +325,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside 
-        className={`bg-[#7A1B22] dark:bg-slate-900 fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 dark:border-white/5 print:hidden print-hide ${
+        className={`bg-[#7A1B22] dark:bg-[#0c101c] fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 dark:border-slate-800 print:hidden print-hide ${
           isOperatorOrToda ? 'hidden md:flex' : 'flex'
         } ${
           isOpen 
@@ -334,7 +334,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         }`}
       >
         {/* Brand Header */}
-        <div className={`p-4 sm:p-5 flex items-center border-b border-white/10 dark:border-white/5 shrink-0 bg-[#6c171e]/70 dark:bg-slate-950/60 ${isOpen ? 'justify-between' : 'justify-center'}`}>
+        <div className={`p-4 sm:p-5 flex items-center border-b border-white/10 dark:border-slate-800/80 shrink-0 bg-[#6c171e]/70 dark:bg-[#080c16] ${isOpen ? 'justify-between' : 'justify-center'}`}>
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-10 h-10 shrink-0 flex items-center justify-center">
               <img src="/gasan-logo.png" alt="Gasan Seal" className="w-10 h-10 object-contain drop-shadow-md shrink-0" />
@@ -342,7 +342,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             {isOpen && (
               <div className="flex flex-col min-w-0 transition-opacity duration-200">
                 <span className="text-white font-black text-sm tracking-wider whitespace-nowrap">G-TRAMS</span>
-                <span className="text-white/60 dark:text-slate-600 dark:text-slate-400 text-xs font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
+                <span className="text-white/70 dark:text-slate-400 text-xs font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
               </div>
             )}
           </div>
@@ -371,8 +371,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                     title={item.name}
                     className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
                       isActive 
-                        ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-sm' 
-                        : 'text-white/80 dark:text-slate-600 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
+                        ? 'bg-white text-[#7A1B22] dark:bg-white/10 dark:text-[#D4AF37] dark:border dark:border-[#D4AF37]/30 shadow-xs' 
+                        : 'text-white/80 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white dark:hover:text-white'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -420,8 +420,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                     title={item.name}
                     className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
                       isAnySubActive 
-                        ? (isExpanded ? 'bg-white/15 dark:bg-slate-800/80 text-white' : 'bg-white/20 dark:bg-slate-800 text-white shadow-sm ring-1 ring-white/20') 
-                        : 'text-white/80 dark:text-slate-600 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
+                        ? (isExpanded ? 'bg-white/15 dark:bg-white/10 dark:text-white dark:border dark:border-white/15' : 'bg-white/20 dark:bg-white/10 text-white shadow-sm ring-1 ring-white/20 dark:ring-[#D4AF37]/30 dark:text-[#D4AF37]') 
+                        : 'text-white/80 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white dark:hover:text-white'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -440,7 +440,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         )}
                         <ChevronDown 
                           size={14} 
-                          className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-white' : 'text-white/60 dark:text-slate-500'}`} 
+                          className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-white' : 'text-white/60 dark:text-slate-400'}`} 
                         />
                       </div>
                     )}
@@ -463,7 +463,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <div className={
                       isOpen 
                         ? "ml-3 pl-3 py-1 border-l-2 border-white/20 dark:border-slate-800 space-y-1 animate-in fade-in duration-150" 
-                        : "py-1 space-y-1.5 flex flex-col items-center bg-black/20 dark:bg-slate-950/40 rounded-xl mx-1 my-1 p-1 animate-in fade-in duration-150 border border-white/5"
+                        : "py-1 space-y-1.5 flex flex-col items-center bg-black/20 dark:bg-slate-950/60 rounded-xl mx-1 my-1 p-1 animate-in fade-in duration-150 border border-white/5 dark:border-slate-800/60"
                     }>
                       {item.subItems.map((sub, idx) => {
                         const isSubActive = location.pathname === sub.path || (sub.path === '/franchise-approval' && location.pathname.startsWith('/franchise-approval/review'));
@@ -477,8 +477,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                               title={sub.name}
                               className={`flex items-center rounded-lg text-xs font-bold transition-colors duration-150 ${
                                 isSubActive 
-                                  ? 'bg-white text-[#7A1B22] dark:bg-slate-800 dark:text-white shadow-sm font-black' 
-                                  : 'text-white/75 dark:text-slate-600 dark:text-slate-400 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white'
+                                  ? 'bg-white text-[#7A1B22] dark:bg-white/15 dark:text-[#D4AF37] shadow-sm font-black dark:border dark:border-[#D4AF37]/30' 
+                                  : 'text-white/75 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/10 hover:text-white dark:hover:text-white'
                               } ${isOpen ? 'w-full px-2.5 py-2 justify-between' : 'w-9 h-9 justify-center'}`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
@@ -520,13 +520,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* User Profile & Logout - Bottom */}
-        <div className={`p-3 border-t border-white/10 dark:border-white/5 shrink-0 bg-[#6c171e]/60 dark:bg-slate-950/60 ${isOpen ? 'space-y-2' : 'flex flex-col items-center gap-2'}`}>
-          <div className={`flex items-center gap-2.5 ${isOpen ? 'px-2 py-1.5 rounded-xl bg-white/5 dark:bg-slate-800/50' : 'justify-center relative group/profile'}`}>
+        <div className={`p-3 border-t border-white/10 dark:border-slate-800/80 shrink-0 bg-[#6c171e]/60 dark:bg-[#080c16] ${isOpen ? 'space-y-2' : 'flex flex-col items-center gap-2'}`}>
+          <div className={`flex items-center gap-2.5 ${isOpen ? 'px-2 py-1.5 rounded-xl bg-white/5 dark:bg-slate-800/60 border border-transparent dark:border-slate-700/60' : 'justify-center relative group/profile'}`}>
             <div className="w-9 h-9 rounded-full bg-black/20 dark:bg-slate-800 border border-white/20 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
               {userData.profilePic ? (
                 <img src={userData.profilePic} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <User size={16} className="text-white/80 dark:text-slate-600 dark:text-slate-400" />
+                <User size={16} className="text-white/80 dark:text-slate-300" />
               )}
             </div>
             {isOpen ? (
@@ -534,7 +534,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <span className="text-white font-bold text-xs tracking-tight truncate leading-tight">
                   {userData.name}
                 </span>
-                <span className="text-[#D4AF37] text-[9px] font-black tracking-wider uppercase">
+                <span className="text-[#D4AF37] text-[10px] font-black tracking-wider uppercase">
                   {getRoleLabel()}
                 </span>
               </div>
@@ -552,7 +552,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 window.location.href = '/login';
               }}
               title={!isOpen ? t('nav.logOut', 'Log Out') : undefined}
-              className={`flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-200 text-white/90 hover:text-white bg-white/10 hover:bg-red-600 dark:bg-white/5 dark:text-rose-400 dark:hover:bg-rose-500/10 border border-white/10 hover:border-red-500/40 shadow-xs ${isOpen ? 'w-full py-2 gap-2' : 'w-10 h-10'}`}
+              className={`flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-200 text-white/90 hover:text-white bg-white/10 hover:bg-red-600 dark:bg-slate-800/90 dark:text-slate-300 dark:hover:text-red-400 dark:hover:bg-red-950/40 border border-white/10 dark:border-slate-700/70 hover:border-red-500/40 shadow-xs ${isOpen ? 'w-full py-2 gap-2' : 'w-10 h-10'}`}
             >
               <div className="shrink-0 transition-transform duration-200 group-hover/logout:scale-125">
                 <LogOut size={16} />
