@@ -3,7 +3,7 @@ import { TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileText, CheckCircle, CheckCircle2, Search, Eye, FolderTree,
-  Building2, ShieldCheck, AlertCircle, Clock, ChevronDown, ChevronRight,
+  Building2, ShieldCheck, AlertCircle, AlertTriangle, Clock, ChevronDown, ChevronRight,
   Car, Sparkles, X, Check
 } from 'lucide-react';
 import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
@@ -19,6 +19,12 @@ const ValidateTODA = () => {
   const [submissions, setSubmissions] = useState([]);
   const [users, setUsers] = useState([]);
   const [franchises, setFranchises] = useState([]);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
+  };
   
   // Accordion state for directory
   const [expandedToda, setExpandedToda] = useState(null);
@@ -68,7 +74,7 @@ const ValidateTODA = () => {
 
   const fetchFranchises = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Awaiting%20TODA%20Verification&limit=1000`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?limit=2000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
@@ -91,8 +97,13 @@ const ValidateTODA = () => {
       });
       if (response.ok) {
         setSubmissions(submissions.map(sub => sub._id === id ? { ...sub, status: 'Approved' } : sub));
-      } else { alert('Failed to approve list.'); }
-    } catch (error) { alert('Cannot connect to server.'); }
+        showToast('TODA member list approved successfully!', 'success');
+      } else { 
+        showToast('Failed to approve list.', 'error'); 
+      }
+    } catch (error) { 
+      showToast('Cannot connect to server.', 'error'); 
+    }
   };
 
   // Helper to find a member's corresponding franchise record
@@ -140,9 +151,20 @@ const ValidateTODA = () => {
         return nameMatch || addressMatch || contactMatch || plateMatch || motorMatch;
       });
 
+      const totalCount = allMembersInToda.length;
+      const activeCount = allMembersInToda.filter(m => getMemberFranchise(m)?.status === 'Active').length;
+      const colorumCount = allMembersInToda.filter(m => {
+        const f = getMemberFranchise(m);
+        return !f || f.status === 'Expired' || f.status === 'Cancelled' || f.status === 'Revoked';
+      }).length;
+      const complianceRate = totalCount > 0 ? Math.round((activeCount / totalCount) * 100) : 0;
+
       return {
         name: todaName,
-        totalCount: allMembersInToda.length,
+        totalCount,
+        activeCount,
+        colorumCount,
+        complianceRate,
         members: matchingMembers
       };
     }).filter(toda => toda.members.length > 0);
@@ -206,15 +228,15 @@ const ValidateTODA = () => {
           </div>
         </div>
 
-        {/* Active MTOP */}
+        {/* Active MTOP & Compliance */}
         <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-emerald-500/30">
           <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800/40">
             <ShieldCheck size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active MTOPs</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active & Compliant</p>
             <h3 className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-              {activeMtopCount}
+              {activeMtopCount} <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-sans">({totalOperatorsCount > 0 ? Math.round((activeMtopCount / totalOperatorsCount) * 100) : 0}%)</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Street-Legal Franchises</p>
           </div>
@@ -249,7 +271,7 @@ const ValidateTODA = () => {
           <button 
             onClick={() => { setActiveTab('validations'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'validations' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'validations' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={18} /> Document Validations
@@ -350,7 +372,21 @@ const ValidateTODA = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap justify-end">
+                          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                            toda.complianceRate >= 80 
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
+                              : toda.complianceRate >= 50 
+                                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' 
+                                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+                          }`}>
+                            {toda.complianceRate}% Compliant
+                          </span>
+                          {toda.colorumCount > 0 && (
+                            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60" title={`${toda.colorumCount} driver(s) without active MTOP`}>
+                              <AlertTriangle size={11} /> {toda.colorumCount} At-Risk
+                            </span>
+                          )}
                           <span className="text-xs font-bold bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300 shadow-2xs">
                             {toda.members.length} Member{toda.members.length > 1 ? 's' : ''}
                           </span>
@@ -530,9 +566,14 @@ const ValidateTODA = () => {
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-center space-x-2 flex justify-center">
-                         <a href={`${import.meta.env.VITE_API_URL}/${sub.filePath}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
-                            <Eye size={14} /> View
-                          </a>
+                          {(() => {
+                            const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
+                            return (
+                              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
+                                <Eye size={14} /> View
+                              </a>
+                            );
+                          })()}
                           <button onClick={() => handleApprove(sub._id)} disabled={sub.status === 'Approved'} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${sub.status === 'Approved' ? 'bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'}`}>
                             <CheckCircle size={14} /> {sub.status === 'Approved' ? 'Approved' : 'Approve'}
                           </button>
@@ -546,6 +587,30 @@ const ValidateTODA = () => {
           </>
         )}
       </div>
+
+      {/* Floating Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+              toast.type === 'error'
+                ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+            }`}>
+              {toast.type === 'error' ? (
+                <AlertCircle size={15} />
+              ) : (
+                <CheckCircle2 size={15} />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                {toast.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

@@ -339,7 +339,7 @@ router.put('/messages/:threadId/read', async (req, res) => {
 
 router.post('/broadcast', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, targetToda = 'ALL', targetStatus = 'ALL' } = req.body;
     if (!message) return res.status(400).json({ message: 'Missing message' });
 
     // Ensure only admins can broadcast
@@ -348,8 +348,25 @@ router.post('/broadcast', async (req, res) => {
       return res.status(403).json({ message: 'Only admins can broadcast messages' });
     }
 
-    // Find all operators and TODA presidents
-    const users = await User.find({ role: { $in: ['operator', 'toda_president', 'toda president'] } });
+    const Franchise = require('../models/franchiseModel');
+    let userQuery = { role: { $in: ['operator', 'toda_president', 'toda president'] } };
+
+    if (targetStatus && targetStatus !== 'ALL') {
+      const franchiseQuery = { status: targetStatus, isArchived: false };
+      if (targetToda && targetToda !== 'ALL') {
+        franchiseQuery.todaName = targetToda;
+      }
+      const operatorIds = await Franchise.find(franchiseQuery).distinct('operator');
+      userQuery._id = { $in: operatorIds };
+    } else if (targetToda && targetToda !== 'ALL') {
+      const franchiseOperators = await Franchise.find({ todaName: targetToda, isArchived: false }).distinct('operator');
+      userQuery.$or = [
+        { todaAssociation: targetToda },
+        { _id: { $in: franchiseOperators } }
+      ];
+    }
+
+    const users = await User.find(userQuery);
 
     let thread = await ChatThread.findOne({ isAnnouncement: true });
     if (!thread) {
@@ -359,13 +376,25 @@ router.post('/broadcast', async (req, res) => {
       });
     }
 
+    let formattedHeader = '[ANNOUNCEMENT]';
+    if (targetToda !== 'ALL' || targetStatus !== 'ALL') {
+      const parts = [];
+      if (targetToda !== 'ALL') parts.push(`TODA: ${targetToda}`);
+      if (targetStatus !== 'ALL') parts.push(`Status: ${targetStatus}`);
+      formattedHeader = `[ANNOUNCEMENT - ${parts.join(' | ')}]`;
+    }
+
+    const fullMessage = `${formattedHeader}\n\n${message}`;
+
     const newMessage = await ChatMessage.create({
       thread: thread._id,
       sender: req.user._id,
-      message: `[ANNOUNCEMENT]\n\n${message}`
+      message: fullMessage,
+      targetToda,
+      targetStatus
     });
 
-    thread.lastMessage = `[ANNOUNCEMENT]\n\n${message}`;
+    thread.lastMessage = fullMessage;
     thread.lastMessageAt = new Date();
     await thread.save();
 
@@ -374,33 +403,46 @@ router.post('/broadcast', async (req, res) => {
     const Notification = require('../models/notificationModel');
 
     // Bulk create notifications to prevent event loop blocking
+    const notifTitle = targetToda !== 'ALL' || targetStatus !== 'ALL'
+      ? `Advisory for ${targetToda !== 'ALL' ? targetToda : targetStatus}`
+      : 'System Announcement';
+
     const notificationsToInsert = users.map(user => ({
       recipient: user._id,
       type: 'chat',
-      title: 'System Announcement',
-      message: `Admin broadcasted an announcement`
+      title: notifTitle,
+      message: `Admin broadcasted an announcement${targetToda !== 'ALL' ? ` for ${targetToda}` : ''}`
     }));
     
-    const insertedNotifications = await Notification.insertMany(notificationsToInsert);
+    let insertedNotifications = [];
+    if (notificationsToInsert.length > 0) {
+      insertedNotifications = await Notification.insertMany(notificationsToInsert);
+    }
 
     // Emit socket events
     users.forEach((user, index) => {
       emitToUser(user._id.toString(), 'chat_message', populatedMessage);
-      emitToUser(user._id.toString(), 'notification', insertedNotifications[index]);
+      if (insertedNotifications[index]) {
+        emitToUser(user._id.toString(), 'notification', insertedNotifications[index]);
+      }
     });
     
     // Trigger push notifications
-    const { broadcastPushNotification } = require('../services/pushService');
-    broadcastPushNotification({
-      role: { $in: ['operator', 'toda_president', 'toda president'] },
-      title: 'System Announcement',
+    const { sendPushToUser } = require('../services/pushService');
+    const pushPromises = users.map(user => sendPushToUser(user._id, {
+      title: notifTitle,
       message: message,
       type: 'announcement',
       url: '/operator-dashboard'
-    });
+    }));
+    await Promise.allSettled(pushPromises);
 
-    res.status(200).json({ message: 'Broadcast channel updated and notifications sent successfully.' });
+    res.status(200).json({ 
+      message: `Broadcast successfully dispatched to ${users.length} recipient(s).`,
+      recipientCount: users.length 
+    });
   } catch (error) {
+    console.error('Error broadcasting message:', error);
     res.status(500).json({ message: 'Error broadcasting message'});
   }
 });

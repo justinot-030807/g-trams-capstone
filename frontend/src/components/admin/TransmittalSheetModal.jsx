@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
-import { Printer, X, FileSpreadsheet, ShieldCheck } from 'lucide-react';
+import { Printer, X, FileSpreadsheet, ShieldCheck, Download } from 'lucide-react';
 
 const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Date() }) => {
   useEffect(() => {
@@ -32,6 +32,51 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
   const batchRef = `TRANS-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(units.length).padStart(3, '0')}`;
 
+  const handleExportCSV = () => {
+    if (!units || units.length === 0) return;
+
+    const headers = [
+      'Seq No',
+      'Permit Reference',
+      'Operator Full Name',
+      'TODA Association',
+      'Plate No',
+      'Motor No',
+      'Chassis No',
+      'Application Type',
+      'Status',
+      'Date Applied'
+    ];
+
+    const rows = units.map((u, i) => {
+      const cleanPlate = u.plateNo && u.plateNo.toUpperCase() !== 'PENDING' ? u.plateNo : null;
+      const permitNo = cleanPlate ? `MTOP-GASAN-${cleanPlate}` : `MTOP-GASAN-${String(u._id).slice(-6).toUpperCase()}`;
+      return [
+        i + 1,
+        permitNo,
+        `"${(u.fullName || '').replace(/"/g, '""')}"`,
+        `"${(u.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
+        `"${(u.plateNo || 'PENDING').replace(/"/g, '""')}"`,
+        `"${(u.motorNo || 'N/A').replace(/"/g, '""')}"`,
+        `"${(u.chassisNo || 'N/A').replace(/"/g, '""')}"`,
+        `"${(u.applicationType || 'New').replace(/"/g, '""')}"`,
+        `"${(u.status || '').replace(/"/g, '""')}"`,
+        `"${u.dateApplied ? new Date(u.dateApplied).toLocaleDateString() : 'N/A'}"`
+      ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Transmittal_Sheet_${batchRef}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div 
       id="printable-transmittal-root" 
@@ -59,8 +104,17 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
             <div className="flex items-center gap-2">
               <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+                title="Export transmittal data to CSV (Excel compatible)"
+              >
+                <Download size={14} />
+                <span>Export CSV</span>
+              </button>
+
+              <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
                 title="Print Transmittal Sheet"
               >
                 <Printer size={14} />
@@ -135,11 +189,16 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                     padding: 16px 20px !important;
                     box-shadow: none !important;
                     border: none !important;
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
                     color-adjust: exact !important;
+                  }
+                  body.printing-transmittal thead {
+                    display: table-header-group !important;
+                  }
+                  body.printing-transmittal tr {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
                   }
                   body.printing-transmittal .print-hide,
                   body.printing-transmittal header,

@@ -37,13 +37,17 @@ const AdminTickets = () => {
     setIsUpdating(true);
     try {
       const token = localStorage.getItem('token');
+      const payload = { status: newStatus };
+      if (responseMessage && responseMessage.trim()) {
+        payload.adminResponse = responseMessage.trim();
+      }
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/tickets/${ticketId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ status: newStatus, adminResponse: responseMessage })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setAdminResponse('');

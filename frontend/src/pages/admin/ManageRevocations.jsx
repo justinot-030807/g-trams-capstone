@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { VIOLATIONS_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
-import { ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, CheckCircle, FileText, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, CheckCircle, CheckCircle2, AlertCircle, FileText, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
 
@@ -20,6 +20,12 @@ const ManageRevocations = () => {
   const [evidenceFile, setEvidenceFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
+  };
 
   useEffect(() => {
     fetchFranchises();
@@ -28,7 +34,7 @@ const ManageRevocations = () => {
   const fetchFranchises = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active&limit=1000`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active,Revoked&limit=1000`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
@@ -44,7 +50,7 @@ const ManageRevocations = () => {
 
   const handleRevokeSubmit = async (e) => {
     e.preventDefault();
-    if (!evidenceFile) return alert("Please upload documentary evidence to proceed with revocation.");
+    if (!evidenceFile) return showToast("Please upload documentary evidence to proceed with revocation.", "error");
     
     setIsSubmitting(true);
     const formData = new FormData();
@@ -59,15 +65,15 @@ const ManageRevocations = () => {
       });
 
       if (response.ok) {
-        alert("Franchise successfully revoked.");
+        showToast("Franchise successfully revoked.", "success");
         setSelectedFranchise(null);
         setEvidenceFile(null);
         fetchFranchises();
       } else {
-        alert("Failed to revoke franchise.");
+        showToast("Failed to revoke franchise.", "error");
       }
     } catch (error) {
-      alert("Network Error.");
+      showToast("Network Error occurred while revoking franchise.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -386,6 +392,30 @@ const ManageRevocations = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+              toast.type === 'error'
+                ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+            }`}>
+              {toast.type === 'error' ? (
+                <AlertCircle size={15} />
+              ) : (
+                <CheckCircle2 size={15} />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                {toast.message}
+              </p>
+            </div>
           </div>
         </div>
       )}

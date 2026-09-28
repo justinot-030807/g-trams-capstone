@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, Award, Layers } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
   useEffect(() => {
@@ -151,10 +152,10 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                   position: relative !important;
                   width: 198mm !important;
                   max-width: 198mm !important;
-                  height: 312mm !important;
-                  min-height: 312mm !important;
-                  max-height: 312mm !important;
-                  margin: 8mm auto !important;
+                  height: 292mm !important;
+                  min-height: 292mm !important;
+                  max-height: 292mm !important;
+                  margin: 6mm auto !important;
                   box-sizing: border-box !important;
                   padding: 22px 26px !important;
                   box-shadow: none !important;
@@ -182,7 +183,8 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
             {units.map((unit, index) => {
               const issueDate = unit.dateApplied ? formatDate(unit.dateApplied) : formatDate(new Date());
               const expiryDate = unit.dateApplied ? getExpirationDate(unit.dateApplied) : getExpirationDate(new Date());
-              const mtopNumber = `MTOP-GASAN-${unit.plateNo || String(unit._id).slice(-6).toUpperCase()}`;
+              const cleanPlate = unit.plateNo && unit.plateNo.toUpperCase() !== 'PENDING' ? unit.plateNo : null;
+              const mtopNumber = cleanPlate ? `MTOP-GASAN-${cleanPlate}` : `MTOP-GASAN-${String(unit._id).slice(-6).toUpperCase()}`;
 
               return (
                 <div key={unit._id || index} className="batch-mtop-page-wrapper w-full flex flex-col items-center">
@@ -335,10 +337,19 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
 
                         {/* Official Signatory Section */}
                         <div className="relative z-10 pt-2 flex items-end justify-between gap-4">
-                          <div className="text-left font-sans text-[9px] text-slate-500 space-y-1">
-                            <p className="font-semibold text-slate-600">Certified Official Copy</p>
-                            <p>G-TRAMS Electronic Authentication</p>
-                            <p className="font-mono text-[8.5px]">DOC-ID: {String(unit._id).toUpperCase()}</p>
+                          <div className="flex items-center gap-2.5">
+                            <div className="p-1 bg-white border border-slate-300 rounded-lg shadow-2xs shrink-0">
+                              <QRCodeSVG 
+                                value={`${window.location.origin}/verify/${unit._id}`} 
+                                size={46} 
+                                level="M" 
+                              />
+                            </div>
+                            <div className="text-left font-sans text-[8.5px] text-slate-500 space-y-0.5">
+                              <p className="font-bold text-slate-800">Scan to Verify Permit</p>
+                              <p>G-TRAMS Electronic Authentication</p>
+                              <p className="font-mono text-[8px] text-slate-400">DOC-ID: {String(unit._id).slice(-8).toUpperCase()}</p>
+                            </div>
                           </div>
 
                           <div className="text-right">

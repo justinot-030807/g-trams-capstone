@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
-import { Printer, Filter, CheckCircle, Clock, AlertTriangle, XCircle, FileText, Ban, Loader2 } from 'lucide-react';
+import { Printer, Filter, CheckCircle, Clock, AlertTriangle, XCircle, FileText, Ban, Loader2, Download } from 'lucide-react';
 import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
-
-
-
-
 
 const AdminReports = () => {
   const [reports, setReports] = useState([]);
@@ -69,6 +65,42 @@ const AdminReports = () => {
   const handlePrint = () => {
     document.body.classList.add('printing-reports');
     window.print();
+  };
+
+  const handleExportCSV = () => {
+    if (!reports || reports.length === 0) return;
+
+    const headers = [
+      'Seq No',
+      'Plate No',
+      'Operator Full Name',
+      'Address / Barangay',
+      'TODA Association',
+      'Date Applied',
+      'Status'
+    ];
+
+    const rows = reports.map((r, i) => [
+      i + 1,
+      `"${(r.plateNo || 'PENDING').replace(/"/g, '""')}"`,
+      `"${(r.fullName || '').replace(/"/g, '""')}"`,
+      `"${(r.address || 'N/A').replace(/"/g, '""')}"`,
+      `"${(r.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
+      `"${r.dateApplied ? new Date(r.dateApplied).toLocaleDateString() : 'N/A'}"`,
+      `"${(r.status || '').replace(/"/g, '""')}"`
+    ].join(','));
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.download = `GTRAMS_Report_${filters.status || 'All'}_${dateStr}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 transition-all";
@@ -167,12 +199,21 @@ const AdminReports = () => {
             </p>
           </div>
         </div>
-        <button 
-          onClick={handlePrint}
-          className="relative z-10 w-full md:w-auto bg-white text-[#7A1B22] dark:bg-[#D4AF37] dark:text-slate-900 hover:bg-slate-100 dark:hover:bg-[#c29e2f] px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
-        >
-          <Printer size={16} /> Print Report
-        </button>
+        <div className="relative z-10 flex items-center gap-2 w-full md:w-auto">
+          <button 
+            onClick={handleExportCSV}
+            className="flex-1 md:flex-initial bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            title="Export filtered reports to CSV"
+          >
+            <Download size={16} /> Export CSV
+          </button>
+          <button 
+            onClick={handlePrint}
+            className="flex-1 md:flex-initial bg-white text-[#7A1B22] dark:bg-[#D4AF37] dark:text-slate-900 hover:bg-slate-100 dark:hover:bg-[#c29e2f] px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
+          >
+            <Printer size={16} /> Print Report
+          </button>
+        </div>
       </header>
 
       {/* Filter Criteria */}
@@ -290,10 +331,10 @@ const AdminReports = () => {
               <p className="text-xl sm:text-2xl font-black text-red-900 dark:text-red-300 print:text-slate-900 print:text-lg">{summary.cancelled}</p>
               <p className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Cancelled</p>
             </div>
-            <div className="stagger-reveal bg-slate-800 dark:bg-[#111827] border border-slate-900 dark:border-slate-800 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.24s' }}>
-              <Ban size={18} className="mx-auto text-slate-300 dark:text-slate-400 mb-1 print:hidden" />
-              <p className="text-xl sm:text-2xl font-black text-white print:text-slate-900 print:text-lg">{summary.revoked}</p>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Revoked</p>
+            <div className="stagger-reveal bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.24s' }}>
+              <Ban size={18} className="mx-auto text-rose-600 dark:text-rose-400 mb-1 print:hidden" />
+              <p className="text-xl sm:text-2xl font-black text-rose-900 dark:text-rose-300 print:text-slate-900 print:text-lg">{summary.revoked}</p>
+              <p className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Revoked</p>
             </div>
           </div>
         )}

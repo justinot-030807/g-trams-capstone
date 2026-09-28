@@ -145,7 +145,7 @@ const AdminSettings = () => {
                   renewFranchise: d.validityRenew ?? prev.renewFranchise,
                   fiscalYear: d.fiscalYear || prev.fiscalYear,
                   franchiseFee: d.franchiseFee ?? prev.franchiseFee,
-                  penaltyRate: d.penaltyRate ?? prev.penaltyFee,
+                  penaltyFee: d.penaltyRate ?? prev.penaltyFee,
                   fareBase: d.baseFare ?? prev.fareBase,
                   maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
                   maintenanceMode: Boolean(d.maintenanceMode),

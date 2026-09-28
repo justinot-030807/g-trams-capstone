@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -35,6 +35,7 @@ const FranchiseApproval = () => {
 
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedIds([]);
   }, [activeTab, selectedToda, searchQuery]);
 
   // Batch selection state
@@ -48,32 +49,10 @@ const FranchiseApproval = () => {
   const [quickRejectTarget, setQuickRejectTarget] = useState(null);
   const [quickRejectReason, setQuickRejectReason] = useState(REJECT_REASONS[0]);
   const [quickRejectCustom, setQuickRejectCustom] = useState('');
-
-  // Workstation state
-  const [selectedApp, setSelectedApp] = useState(null); 
-  const [activeDocKey, setActiveDocKey] = useState('orCr');
-  const [mobilePane, setMobilePane] = useState('details'); // 'details' | 'document'
-
-  // Workstation Rejection state
-  const [isRejecting, setIsRejecting] = useState(false);
-  const [rejectReason, setRejectReason] = useState(REJECT_REASONS[0]);
-  const [customReason, setCustomReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-
-  // Document viewer state
-  const [zoomScale, setZoomScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [copiedKey, setCopiedKey] = useState(null);
-
-  const handleCopyText = (text, key) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 1800);
-  };
 
   // Print modals state
   const [printTargetUnit, setPrintTargetUnit] = useState(null);
@@ -133,8 +112,8 @@ const FranchiseApproval = () => {
     };
   };
 
-  // Status Update for Single Unit (from Workstation or Quick Action)
-  const handleUpdateStatus = async (status, targetApp = selectedApp, customReasonText = '', autoAdvance = false) => {
+  // Status Update for Single Unit (from Quick Action)
+  const handleUpdateStatus = async (status, targetApp, customReasonText = '') => {
     if (!targetApp) return;
     setIsProcessing(true);
     const finalReason = status === 'Cancelled' ? customReasonText : '';
@@ -157,30 +136,6 @@ const FranchiseApproval = () => {
 
       if (response.ok) {
         showToast(`Application for ${targetApp.fullName} updated to ${status}!`, "success");
-        if (selectedApp?._id === targetApp._id) {
-          setIsRejecting(false);
-          if (autoAdvance) {
-            // Find next eligible applicant in filteredApps
-            const currIdx = filteredApps.findIndex(a => a._id === targetApp._id);
-            const remaining = filteredApps.filter(a => a._id !== targetApp._id);
-
-            let nextTarget = null;
-            if (currIdx >= 0 && currIdx < filteredApps.length - 1) {
-              nextTarget = filteredApps[currIdx + 1];
-            } else if (remaining.length > 0) {
-              nextTarget = remaining[Math.min(currIdx, remaining.length - 1)];
-            }
-
-            if (nextTarget) {
-              handleOpenWorkstation(nextTarget);
-            } else {
-              showToast("Queue completed! All applications in view reviewed.", "success");
-              setSelectedApp(null);
-            }
-          } else {
-            setSelectedApp(null);
-          }
-        }
         setQuickApproveTarget(null);
         setQuickRejectTarget(null);
         fetchApplications(); 
@@ -200,10 +155,18 @@ const FranchiseApproval = () => {
     setIsBatchProcessing(true);
 
     const targetStatus = activeTab === 'signing' ? 'Ready for Pickup' : 'For Signing';
+    const sourceStatus = activeTab === 'signing' ? 'For Signing' : 'Pending';
 
     try {
-      const promises = selectedIds.map(async (id) => {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
+      const eligibleUnits = applications.filter(a => selectedIds.includes(a._id) && (a.status === sourceStatus || activeTab === 'all'));
+      if (eligibleUnits.length === 0) {
+        showToast('No eligible units found for batch approval.', 'error');
+        setIsBatchProcessing(false);
+        return;
+      }
+
+      const promises = eligibleUnits.map(async (unit) => {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/status`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -211,15 +174,15 @@ const FranchiseApproval = () => {
           },
           body: JSON.stringify({ status: targetStatus })
         });
-        if (!res.ok) throw new Error(`Failed to update ${id}`);
+        if (!res.ok) throw new Error(`Failed to update ${unit._id}`);
         return res;
       });
 
       await Promise.all(promises);
       showToast(
         targetStatus === 'Ready for Pickup'
-          ? `Successfully marked ${selectedIds.length} application(s) as Signed & Ready for Pickup!`
-          : `Successfully approved ${selectedIds.length} application(s) for Municipal Signatures!`,
+          ? `Successfully marked ${eligibleUnits.length} application(s) as Signed & Ready for Pickup!`
+          : `Successfully approved ${eligibleUnits.length} application(s) for Municipal Signatures!`,
         "success"
       );
       setSelectedIds([]);
@@ -239,8 +202,15 @@ const FranchiseApproval = () => {
     setIsBatchProcessing(true);
 
     try {
-      const promises = selectedIds.map(async (id) => {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/status`, {
+      const eligibleUnits = applications.filter(a => selectedIds.includes(a._id) && a.status === 'Ready for Pickup');
+      if (eligibleUnits.length === 0) {
+        showToast('Only units with status "Ready for Pickup" can be released.', 'error');
+        setIsBatchProcessing(false);
+        return;
+      }
+
+      const promises = eligibleUnits.map(async (unit) => {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/status`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -248,12 +218,12 @@ const FranchiseApproval = () => {
           },
           body: JSON.stringify({ status: 'Active' })
         });
-        if (!res.ok) throw new Error(`Failed to release ${id}`);
+        if (!res.ok) throw new Error(`Failed to release ${unit._id}`);
         return res;
       });
 
       await Promise.all(promises);
-      showToast(`Successfully released and activated ${selectedIds.length} franchise(s)!`, "success");
+      showToast(`Successfully released and activated ${eligibleUnits.length} franchise(s)!`, "success");
       setSelectedIds([]);
       setBatchReleaseModal(false);
       fetchApplications();
@@ -303,6 +273,16 @@ const FranchiseApproval = () => {
     return true;
   });
 
+  // Count applications per TODA in the current active tab
+  const todaCounts = useMemo(() => {
+    const counts = { all: tabFiltered.length };
+    tabFiltered.forEach(app => {
+      const t = app.todaName || 'NON-TODA';
+      counts[t] = (counts[t] || 0) + 1;
+    });
+    return counts;
+  }, [tabFiltered]);
+
   const todaFiltered = tabFiltered.filter(app => {
     if (selectedToda === 'all') return true;
     return (app.todaName || 'NON-TODA').toLowerCase() === selectedToda.toLowerCase();
@@ -342,82 +322,8 @@ const FranchiseApproval = () => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  // Workstation Queue Navigator Helpers
-  const currentWorkstationIndex = filteredApps.findIndex(a => a._id === selectedApp?._id);
-  const hasPrevApp = currentWorkstationIndex > 0;
-  const hasNextApp = currentWorkstationIndex >= 0 && currentWorkstationIndex < filteredApps.length - 1;
-
-  const handlePrevApp = () => {
-    if (hasPrevApp) handleOpenWorkstation(filteredApps[currentWorkstationIndex - 1]);
-  };
-
-  const handleNextApp = () => {
-    if (hasNextApp) handleOpenWorkstation(filteredApps[currentWorkstationIndex + 1]);
-  };
-
-  // Keyboard Shortcuts for Rapid Admin Workstation Verification
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ignore keystrokes when typing inside inputs, textareas, or selects
-      const activeTag = document.activeElement?.tagName?.toLowerCase();
-      if (['input', 'textarea', 'select'].includes(activeTag)) return;
-
-      if (!selectedApp) return;
-
-      if (e.key === 'Escape') {
-        setSelectedApp(null);
-      } else if (e.key === '1') {
-        setActiveDocKey('orCr');
-      } else if (e.key === '2') {
-        setActiveDocKey('license');
-      } else if (e.key === '3') {
-        setActiveDocKey('toda');
-      } else if (e.key === '4') {
-        setActiveDocKey('brgy');
-      } else if (e.key === 'ArrowLeft') {
-        if (hasPrevApp) handlePrevApp();
-      } else if (e.key === 'ArrowRight') {
-        if (hasNextApp) handleNextApp();
-      } else if ((e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        if (selectedApp.status === 'Pending' && !isProcessing) {
-          handleUpdateStatus('Ready for Pickup', selectedApp, '', true);
-        } else if (selectedApp.status === 'Ready for Pickup' && !isProcessing) {
-          handleUpdateStatus('Active', selectedApp, '', true);
-        }
-      } else if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey) {
-        if (selectedApp.status === 'Pending') {
-          e.preventDefault();
-          setIsRejecting(prev => !prev);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedApp, hasPrevApp, hasNextApp, filteredApps, isProcessing]);
-
-  // Documents list for workstation
-  const docTabs = selectedApp ? [
-    { key: 'orCr', label: 'OR / CR Document', url: selectedApp.orCrUrl, short: 'OR/CR' },
-    { key: 'license', label: "Driver's License", url: selectedApp.licenseUrl, short: 'License' },
-    { key: 'toda', label: 'TODA Endorsement', url: selectedApp.todaEndorsementUrl, short: 'TODA' },
-    { key: 'brgy', label: 'Barangay Clearance', url: selectedApp.brgyClearanceUrl, short: 'Barangay' }
-  ] : [];
-
-  const currentDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
-
   return (
     <MainLayout>
-      <style>{`
-        @media print {
-          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) * { visibility: hidden; }
-          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) #printable-document,
-          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) #printable-document * { visibility: visible; }
-          body:not(.printing-mtop):not(.printing-batch-mtop):not(.printing-transmittal) #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
-          .print-hide { display: none !important; }
-        }
-      `}</style>
 
       {/* Minimalist Floating Toast Notification */}
       {toast.show && (
@@ -850,6 +756,57 @@ const FranchiseApproval = () => {
           </button>
         )}
       </div>
+
+      {/* TODA Association Quick-Filter Chips Bar (Feature 3) */}
+      {uniqueTodas.length > 0 && (
+        <div className="mb-4 flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0 mr-1">
+            <Filter size={12} />
+            <span>TODA:</span>
+          </div>
+          <button
+            onClick={() => setSelectedToda('all')}
+            className={`px-3 py-1 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+              selectedToda === 'all'
+                ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                : 'bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            <span>All</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+              selectedToda === 'all'
+                ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+            }`}>
+              {todaCounts.all || 0}
+            </span>
+          </button>
+          {uniqueTodas.map((toda) => {
+            const count = todaCounts[toda] || 0;
+            const isSelected = selectedToda.toLowerCase() === toda.toLowerCase();
+            return (
+              <button
+                key={toda}
+                onClick={() => setSelectedToda(isSelected ? 'all' : toda)}
+                className={`px-3 py-1 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                    : 'bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <span>{toda}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                  isSelected
+                    ? 'bg-white/20 dark:bg-slate-950/20 text-white dark:text-slate-950'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Applications List */}
       {isLoading ? (

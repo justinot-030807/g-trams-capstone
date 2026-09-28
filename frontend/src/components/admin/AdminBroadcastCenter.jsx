@@ -1,9 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Radio, Send, Loader2, Megaphone, Trash2, CheckCircle, 
-  AlertCircle, Users, Clock, Bold, List, AlertTriangle, Eye, EyeOff 
+  AlertCircle, Users, Clock, Bold, List, AlertTriangle, Eye, EyeOff, Filter
 } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
+import { TODA_LIST } from '../../utils/constants';
+
+const STATUS_OPTIONS = [
+  { value: 'ALL', label: 'All Franchise Statuses' },
+  { value: 'Pending', label: 'Pending Applications' },
+  { value: 'For Signing', label: 'For Signing' },
+  { value: 'Ready for Pickup', label: 'Ready for Pickup' },
+  { value: 'Active', label: 'Active Franchises' },
+  { value: 'Expired', label: 'Expired Franchises' },
+  { value: 'Revoked', label: 'Revoked Franchises' },
+];
 
 // Export rich announcement renderer for use in chat and announcement feeds
 export const renderFormattedAnnouncement = (text) => {
@@ -78,6 +89,8 @@ const AdminBroadcastCenter = () => {
   const [announcementThreadId, setAnnouncementThreadId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [targetToda, setTargetToda] = useState('ALL');
+  const [targetStatus, setTargetStatus] = useState('ALL');
 
   const insertFormatting = (prefix, suffix = '') => {
     const textarea = document.getElementById('broadcast-composer-textarea');
@@ -176,7 +189,11 @@ const AdminBroadcastCenter = () => {
     const text = broadcastMessage.trim();
     if (!text || isBroadcasting) return;
 
-    if (!window.confirm('Are you sure you want to broadcast this announcement to all operators and TODA presidents?')) {
+    const audienceDesc = targetToda === 'ALL' && targetStatus === 'ALL'
+      ? 'all registered operators and TODA presidents'
+      : `${targetToda === 'ALL' ? 'All TODAs' : `TODA: ${targetToda}`}${targetStatus === 'ALL' ? '' : ` (${targetStatus} status)`}`;
+
+    if (!window.confirm(`Are you sure you want to broadcast this announcement to ${audienceDesc}?`)) {
       return;
     }
 
@@ -185,12 +202,17 @@ const AdminBroadcastCenter = () => {
       const res = await fetch(`${API_URL}/api/v1/chat/broadcast`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ 
+          message: text,
+          targetToda,
+          targetStatus
+        })
       });
 
       if (res.ok) {
+        const data = await res.json().catch(() => ({}));
         setBroadcastMessage('');
-        showToast('Announcement successfully broadcasted to all operators and TODA presidents!');
+        showToast(data.message || `Announcement broadcasted to ${audienceDesc}!`);
         fetchAnnouncements();
       } else {
         const err = await res.json().catch(() => ({}));
@@ -215,16 +237,30 @@ const AdminBroadcastCenter = () => {
         setAnnouncements(prev => prev.filter(m => String(m._id) !== String(msgId)));
         showToast('Announcement removed from broadcast channel.');
       } else {
-        alert('Failed to delete announcement');
+        showToast('Failed to delete announcement', 'error');
       }
     } catch {
-      alert('Network error deleting announcement');
+      showToast('Network error deleting announcement', 'error');
     }
   };
 
   const cleanMessageText = (raw) => {
     if (!raw) return '';
-    return raw.replace(/^\[ANNOUNCEMENT\]\s*/i, '').trim();
+    return raw.replace(/^\[ANNOUNCEMENT[^\]]*\]\s*/i, '').trim();
+  };
+
+  const getTargetBadge = (ann) => {
+    if (ann.targetToda && (ann.targetToda !== 'ALL' || (ann.targetStatus && ann.targetStatus !== 'ALL'))) {
+      const parts = [];
+      if (ann.targetToda && ann.targetToda !== 'ALL') parts.push(ann.targetToda);
+      if (ann.targetStatus && ann.targetStatus !== 'ALL') parts.push(ann.targetStatus);
+      return parts.join(' • ');
+    }
+    const match = ann.message?.match(/^\[ANNOUNCEMENT\s*-\s*([^\]]+)\]/i);
+    if (match) {
+      return match[1];
+    }
+    return null;
   };
 
   return (
@@ -258,16 +294,69 @@ const AdminBroadcastCenter = () => {
           </div>
         </div>
 
-        {/* Target Audience Banner */}
-        <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-[#0c101c] border border-slate-200/80 dark:border-slate-800 flex items-center gap-2.5 text-xs">
-          <Users size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
-          <div className="flex-1 min-w-0">
-            <span className="font-bold text-slate-700 dark:text-slate-200">Recipients: </span>
-            <span className="text-slate-600 dark:text-slate-400">All Tricycle Operators &amp; TODA Presidents across Gasan</span>
+        {/* Target Audience Controls */}
+        <div className="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-[#0c101c] border border-slate-200/80 dark:border-slate-800 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Users size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+              <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                Audience Targeting Filters
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1.5 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400">Selected Scope:</span>
+              <span className={`px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[10px] border ${
+                targetToda === 'ALL' && targetStatus === 'ALL'
+                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
+                  : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+              }`}>
+                {targetToda === 'ALL' && targetStatus === 'ALL' ? 'LGU-Wide (All Operators)' : 'Targeted Group'}
+              </span>
+            </div>
           </div>
-          <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] uppercase tracking-wider shrink-0 border border-emerald-200 dark:border-emerald-800/60">
-            All Channels
-          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                Target TODA Association
+              </label>
+              <select
+                value={targetToda}
+                onChange={(e) => setTargetToda(e.target.value)}
+                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#7A1B22]/20 transition-all cursor-pointer"
+              >
+                <option value="ALL">All TODA Associations (LGU-Wide)</option>
+                {TODA_LIST.map((toda) => (
+                  <option key={toda} value={toda}>{toda}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                Target Franchise Status
+              </label>
+              <select
+                value={targetStatus}
+                onChange={(e) => setTargetStatus(e.target.value)}
+                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#7A1B22]/20 transition-all cursor-pointer"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {(targetToda !== 'ALL' || targetStatus !== 'ALL') && (
+            <div className="flex items-center gap-2 pt-1 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200/50 dark:border-amber-800/40">
+              <AlertCircle size={14} className="shrink-0" />
+              <span>
+                Targeted Broadcast: Only operators registered in <strong>{targetToda === 'ALL' ? 'all TODAs' : targetToda}</strong> with status <strong>{targetStatus === 'ALL' ? 'any status' : targetStatus}</strong> will receive push notifications and inbox alerts.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Composer Form */}
@@ -363,7 +452,7 @@ const AdminBroadcastCenter = () => {
               ) : (
                 <>
                   <Send size={15} />
-                  <span>Send Broadcast to All</span>
+                  <span>{targetToda === 'ALL' && targetStatus === 'ALL' ? 'Send Broadcast to All' : 'Send Targeted Broadcast'}</span>
                 </>
               )}
             </button>
@@ -404,7 +493,7 @@ const AdminBroadcastCenter = () => {
                 className="p-4 rounded-xl bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200/70 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors relative group"
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="w-2 h-2 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                       {ann.sender?.name || 'Municipal Administrator'}
@@ -412,6 +501,16 @@ const AdminBroadcastCenter = () => {
                     <span className="px-1.5 py-0.5 rounded bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] font-bold text-[10px] uppercase border border-[#7A1B22]/20 dark:border-[#D4AF37]/30">
                       Official Broadcast
                     </span>
+                    {(() => {
+                      const target = getTargetBadge(ann);
+                      if (!target) return null;
+                      return (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-bold text-[10px] border border-amber-300 dark:border-amber-800/60 flex items-center gap-1">
+                          <Filter size={10} />
+                          <span>{target}</span>
+                        </span>
+                      );
+                    })()}
                   </div>
                   
                   <div className="flex items-center gap-3">

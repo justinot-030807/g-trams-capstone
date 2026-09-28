@@ -176,6 +176,9 @@ const AdminLiveChat = () => {
 
     try {
       const otherParticipant = activeThread.participants?.find(p => 
+        String(p._id || p) !== String(currentUser._id || currentUser.id) &&
+        !String(p.role || '').toLowerCase().includes('admin')
+      ) || activeThread.participants?.find(p => 
         String(p._id || p) !== String(currentUser._id || currentUser.id)
       );
 
@@ -252,7 +255,10 @@ const AdminLiveChat = () => {
 
   const getThreadOperator = (thread) => {
     if (!thread || !thread.participants) return { name: 'Operator', email: '', picture: '' };
-    const op = thread.participants.find(p => String(p._id || p) !== String(currentUser._id || currentUser.id));
+    const op = thread.participants.find(p => 
+      String(p._id || p) !== String(currentUser._id || currentUser.id) &&
+      !String(p.role || '').toLowerCase().includes('admin')
+    ) || thread.participants.find(p => String(p._id || p) !== String(currentUser._id || currentUser.id));
     return op || { name: 'Operator', email: '', picture: '' };
   };
 
