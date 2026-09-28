@@ -512,19 +512,19 @@ const FranchiseMasterlist = () => {
         <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0c101c] print-hide">
           <button 
             onClick={() => handleTabChange('active')}
-            className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
+            className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
               activeTab === 'active' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <FileText size={18} /> Active Records
+            <FileText size={18} /> Master Records
           </button>
           <button 
             onClick={() => handleTabChange('archived')}
-            className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
+            className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
               activeTab === 'archived' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <Archive size={18} /> Archives
+            <Archive size={18} /> Historical Archives
           </button>
         </div>
 
@@ -740,28 +740,29 @@ const FranchiseMasterlist = () => {
                       style={{ animationDelay: `${fIdx * 35}ms` }}
                     >
                         <td className="p-4 pl-6">
-                          <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <p className="font-bold text-slate-900 dark:text-white">
                             {displayName}
-                            {recordYear !== currentFiscalYear && (
-                               <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] rounded uppercase tracking-wider font-black border border-slate-300 dark:border-slate-700">
-                                 FY {recordYear}
-                               </span>
-                            )}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{f.address}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                            <MapPin size={11} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                            <span className="truncate max-w-[200px]">{f.address ? `${f.address}, Gasan` : 'Gasan, Marinduque'}</span>
+                          </p>
                         </td>
                         <td className="p-4">
-                          <p className="font-black text-slate-900 dark:text-amber-200 tracking-wider bg-yellow-100 dark:bg-amber-950/60 inline-block px-2 py-0.5 border border-yellow-300 dark:border-amber-700/60 rounded mb-1 text-xs shadow-xs">
-                            {f.plateNo || 'N/A'}
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono font-bold text-xs text-slate-800 dark:text-slate-100 shadow-xs">
+                            <Car size={12} className="text-slate-400 dark:text-slate-500" />
+                            <span>{f.plateNo || 'PENDING'}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium truncate max-w-[190px]">
+                            {f.make ? `${f.make} ${f.made || ''}`.trim() : (f.motorNo ? `Motor: ${f.motorNo}` : 'Motorcycle Unit')}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Motor: {f.motorNo}</p>
                         </td>
                         <td className="p-4">
-                          <p className="font-bold text-slate-800 dark:text-slate-200">{f.todaName}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">Zone {f.zone}</p>
+                          <p className="font-bold text-slate-800 dark:text-slate-200">{f.todaName || 'Non-TODA'}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Zone {f.zone || 1}</p>
                         </td>
                         <td className="p-4 text-center">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-black rounded-lg uppercase tracking-wider border shadow-xs ${
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider border shadow-xs ${
                             f.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
                             f.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
                             f.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
@@ -783,47 +784,46 @@ const FranchiseMasterlist = () => {
                             <button
                               type="button"
                               onClick={() => setSelectedFranchise(f)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-xs active:scale-95"
-                              title="View Full Specifications"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-xs active:scale-95 cursor-pointer"
+                              title="Tingnan ang kumpletong detalye"
                             >
                               <Eye size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Details
                             </button>
 
-                            {/* PRINT MTOP BUTTON FOR ACTIVE FRANCHISES */}
-                            {f.status === 'Active' && (
+                            {/* PRINT MTOP BUTTON (For Active, For Signing, or Ready for Pickup) */}
+                            {(f.status === 'Active' || f.status === 'For Signing' || f.status === 'Ready for Pickup') && (
                               <button
                                 type="button"
                                 onClick={() => setPrintMtopUnit(f)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all shadow-xs active:scale-95"
-                                title="Print Official MTOP Certificate"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all shadow-xs active:scale-95 cursor-pointer"
+                                title="I-print ang Opisyal na MTOP Certificate"
                               >
                                 <Printer size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> MTOP
                               </button>
                             )}
 
-                            {/* ARCHIVE / RESTORE BUTTON */}
-                            {!f.isArchived ? (
-                              f.status === 'Active' ? (
-                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                                  Protected
-                                </span>
-                              ) : (
+                            {/* ARCHIVE / RESTORE LOGIC */}
+                            {activeTab === 'archived' ? (
+                              <button 
+                                type="button"
+                                onClick={() => initiateToggleArchive(f._id, displayName, true)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl transition-all border shadow-xs bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 active:scale-95 cursor-pointer"
+                                title="Ibalik sa Masterlist"
+                              >
+                                <ArchiveRestore size={13} /> Restore
+                              </button>
+                            ) : (
+                              // In Master Records: ONLY terminal/inactive statuses can be archived!
+                              ['Expired', 'Cancelled', 'Revoked'].includes(f.status) && (
                                 <button 
-                                  onClick={() => initiateToggleArchive(f._id, displayName, f.isArchived)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 active:scale-95"
-                                  title="Archive Record"
+                                  type="button"
+                                  onClick={() => initiateToggleArchive(f._id, displayName, false)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl transition-all border shadow-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 active:scale-95 cursor-pointer"
+                                  title="Ilipat sa Archives ang lumang record"
                                 >
                                   <Archive size={13} /> Archive
                                 </button>
                               )
-                            ) : (
-                              <button 
-                                onClick={() => initiateToggleArchive(f._id, displayName, f.isArchived)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-xs bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 active:scale-95"
-                                title="Restore Record"
-                              >
-                                <ArchiveRestore size={13} /> Restore
-                              </button>
                             )}
                           </div>
                         </td>
