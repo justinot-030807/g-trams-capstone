@@ -796,7 +796,7 @@ const FranchiseMasterlist = () => {
                                 type="button"
                                 onClick={() => setPrintMtopUnit(f)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all shadow-xs active:scale-95 cursor-pointer"
-                                title="I-print ang Opisyal na MTOP Certificate"
+                                title="Print Official MTOP Certificate"
                               >
                                 <Printer size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> MTOP
                               </button>

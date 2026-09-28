@@ -380,7 +380,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 }
               }}
               className="group flex items-center gap-1.5 pl-2 pr-3 py-1.5 rounded-full bg-slate-100/80 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-xs shrink-0"
-              title="Bumalik / Back"
+              title="Back"
               aria-label="Back"
             >
               <div className="w-6 h-6 rounded-full bg-white dark:bg-[#111827] shadow-xs flex items-center justify-center group-hover:-translate-x-0.5 transition-transform">

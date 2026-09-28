@@ -426,7 +426,7 @@ const FranchiseReviewPage = () => {
       <div className="fixed inset-0 w-full h-full bg-slate-50 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center z-50">
         <Loader2 size={36} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37] mb-3" />
         <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Loading Franchise Review Workbench...</p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Naghahanda ng mga dokumento at talaan...</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Preparing documents and records...</p>
       </div>
     );
   }
@@ -616,7 +616,7 @@ const FranchiseReviewPage = () => {
               <div className="flex items-center justify-between px-0.5">
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                   <Layers size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
-                  Mga Dokumento
+                  Attached Documents
                 </span>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                   Keyboard [1 - 4]
@@ -681,13 +681,13 @@ const FranchiseReviewPage = () => {
               <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl p-3 space-y-2.5 animate-in fade-in">
                 <div className="flex items-center justify-between text-red-800 dark:text-red-300 text-xs font-bold">
                   <span className="flex items-center gap-1.5">
-                    <XCircle size={14} className="text-red-600 dark:text-red-400" /> Dahilan ng Rejection
+                    <XCircle size={14} className="text-red-600 dark:text-red-400" /> Reason for Rejection
                   </span>
                   <button 
                     onClick={() => setIsRejecting(false)} 
                     className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs underline cursor-pointer"
                   >
-                    Kanselahin
+                    Cancel
                   </button>
                 </div>
 
@@ -704,7 +704,7 @@ const FranchiseReviewPage = () => {
                 {rejectReason === 'Others (Please specify)' && (
                   <textarea
                     rows={2}
-                    placeholder="Ilagay ang espesipikong dahilan..."
+                    placeholder="Enter specific reason for rejection..."
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
                     className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl p-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
@@ -858,7 +858,7 @@ const FranchiseReviewPage = () => {
 
                   <div className="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
                     <ShieldCheck size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                    <span>Ikumpara ang Chassis at Motor No. sa ipinakitang opisyal na OR/CR document sa kanan bago i-apruba.</span>
+                    <span>Compare Chassis and Motor No. with the official OR/CR document displayed on the right before approving.</span>
                   </div>
                 </div>
               )}
@@ -1077,9 +1077,9 @@ const FranchiseReviewPage = () => {
             {!currentDoc?.url ? (
               <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md max-w-sm">
                 <AlertCircle size={38} className="text-amber-500 mx-auto mb-2" />
-                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Walang Nakalakip na Dokumento</h3>
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">No Attached Document</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Hindi pa nag-upload ang aplikante ng kopya para sa {currentDoc.short}.
+                  The applicant has not uploaded a file for {currentDoc.short} yet.
                 </p>
               </div>
             ) : currentDoc.url.toLowerCase().includes('.pdf') ? (
@@ -1101,8 +1101,8 @@ const FranchiseReviewPage = () => {
                 {isDocLoading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 dark:bg-[#111827]/85 backdrop-blur-xs rounded-2xl z-10 p-6 min-w-[280px] min-h-[280px] border border-slate-200 dark:border-slate-800 shadow-xl animate-in fade-in duration-150">
                     <Loader2 size={32} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37] mb-2" />
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Kinukuha ang kopya...</span>
-                    <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Ipinapakita ang {currentDoc.short}</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Loading document...</span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Rendering {currentDoc.short}</span>
                   </div>
                 )}
 
@@ -1110,9 +1110,9 @@ const FranchiseReviewPage = () => {
                 {docError ? (
                   <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-2xl border border-red-200 dark:border-red-900/60 shadow-xl max-w-sm pointer-events-auto">
                     <AlertTriangle size={36} className="text-red-500 mx-auto mb-2" />
-                    <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Hindi Mabuksan ang Dokumento</h3>
+                    <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Unable to Load Document</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Nagkaroon ng network error sa pag-load ng imahe. Maaari mong buksan ang original file.
+                      A network error occurred while loading the image. You can open the original file directly.
                     </p>
                     <a
                       href={currentDoc.url}
@@ -1120,7 +1120,7 @@ const FranchiseReviewPage = () => {
                       rel="noopener noreferrer"
                       className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                     >
-                      <ExternalLink size={13} /> Buksan sa Bagong Tab
+                      <ExternalLink size={13} /> Open in New Tab
                     </a>
                   </div>
                 ) : (
@@ -1146,14 +1146,14 @@ const FranchiseReviewPage = () => {
           {/* FLOATING BOTTOM HINT */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 shadow-sm flex items-center gap-3">
             <span className="flex items-center gap-1.5">
-              <Move size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> I-drag para ilipat
+              <Move size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Drag to pan
             </span>
             <span className="text-slate-300 dark:text-slate-600">&bull;</span>
             <span className="flex items-center gap-1.5">
-              <ZoomIn size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Scroll para mag-zoom
+              <ZoomIn size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Scroll to zoom
             </span>
             <span className="text-slate-300 dark:text-slate-600">&bull;</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Double-click para i-reset</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Double-click to reset</span>
           </div>
         </main>
       </div>
