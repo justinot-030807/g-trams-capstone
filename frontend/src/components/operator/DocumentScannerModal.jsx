@@ -429,7 +429,7 @@ const DocumentScannerModal = ({
                 type="button"
                 onClick={handleShutterCapture}
                 disabled={!isCameraReady && !cameraError}
-                className="w-18 h-18 rounded-full bg-white p-1 shadow-2xl active:scale-90 transition-transform cursor-pointer flex items-center justify-center ring-4 ring-[#7A1B22]/50 hover:ring-[#7A1B22]"
+                className="w-20 h-20 rounded-full bg-white p-1 shadow-2xl active:scale-90 transition-transform cursor-pointer flex items-center justify-center ring-4 ring-[#7A1B22]/50 hover:ring-[#7A1B22]"
                 title="Take Document Photo"
               >
                 <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#7A1B22] to-[#99222B] border-3 border-white flex items-center justify-center text-white">

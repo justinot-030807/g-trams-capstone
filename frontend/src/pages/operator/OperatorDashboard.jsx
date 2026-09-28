@@ -33,8 +33,14 @@ const CANCEL_REASONS = [
 
 const OperatorDashboard = () => {
   const { t, language, changeLanguage } = useLanguage();
-  const { theme, toggleTheme, isDark } = useTheme();
-  const [franchises, setFranchises] = useState([]);
+  const [franchises, setFranchises] = useState(() => {
+    try {
+      const cached = localStorage.getItem('gtrams_cached_franchises');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
@@ -164,14 +170,22 @@ const OperatorDashboard = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        // Ensure data is an array before updating state
-        setFranchises(Array.isArray(data) ? data : []);
-      } else {
+        const list = Array.isArray(data) ? data : [];
+        setFranchises(list);
+        try {
+          localStorage.setItem('gtrams_cached_franchises', JSON.stringify(list));
+        } catch (e) {}
+      } else if (response.status === 401 || response.status === 403) {
         setFranchises([]);
       }
     } catch (error) {
-      console.error('Error loading dashboard units:', error);
-      setFranchises([]);
+      console.warn('Network offline or error loading dashboard units; preserving cached fleet:', error);
+      try {
+        const cached = localStorage.getItem('gtrams_cached_franchises');
+        if (cached) {
+          setFranchises(JSON.parse(cached));
+        }
+      } catch (e) {}
     } finally {
       setIsLoading(false);
     }
@@ -958,7 +972,7 @@ const OperatorDashboard = () => {
                                 </p>
                                 <button
                                   onClick={() => navigate(`/renew-franchise/${unit._id}`)}
-                                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase px-2 py-0.5 rounded-md shadow-2xs transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer"
+                                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black uppercase px-3.5 py-2.5 min-h-[44px] rounded-xl shadow-sm transition-all shrink-0 ml-2 active:scale-95 cursor-pointer flex items-center justify-center"
                                 >
                                   Renew Now
                                 </button>

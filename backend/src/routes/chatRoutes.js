@@ -327,6 +327,12 @@ router.put('/messages/:threadId/read', async (req, res) => {
         { isRead: true }
       );
 
+      // Sync notification bell: mark chat notifications for this user as read
+      await Notification.updateMany(
+        { recipient: req.user._id, type: 'chat', isRead: false },
+        { isRead: true }
+      );
+
       emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
       emitToAdmins('chat_read', { threadId: thread._id });
     }

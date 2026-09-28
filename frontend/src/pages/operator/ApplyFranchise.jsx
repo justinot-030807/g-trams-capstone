@@ -271,6 +271,17 @@ const ApplyFranchise = () => {
     }
   }, [formData, currentStep, formMode, selectedId]);
 
+  // Cleanup object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      Object.values(filePreviews).forEach(url => {
+        if (url && typeof url === 'string' && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, []);
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
@@ -501,6 +512,10 @@ const ApplyFranchise = () => {
 
   const handleFileChange = (reqId, file) => {
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 5MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 5MB.', 'error');
+        return;
+      }
       setFilePreviews(prev => {
         if (prev[reqId]) URL.revokeObjectURL(prev[reqId]);
         return { ...prev, [reqId]: URL.createObjectURL(file) };
@@ -649,6 +664,7 @@ const ApplyFranchise = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     
     if (formMode === 'New') {
       const missing = requirementsList.filter(req => !uploadedDocs[req.id]);

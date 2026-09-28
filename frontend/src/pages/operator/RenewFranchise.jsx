@@ -86,6 +86,10 @@ const RenewFranchise = () => {
 
   const handleFileSelect = (fieldId, file) => {
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 5MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 5MB.', 'error');
+        return;
+      }
       setOrcrFile(file);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(URL.createObjectURL(file));
@@ -98,8 +102,18 @@ const RenewFranchise = () => {
     setPreviewUrl('');
   };
 
+  // Revoke object URL on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!formData.ctcNo || !formData.dateIssued || !formData.placeIssued) {
       showToast('Please fill out all Community Tax Certificate (CTC) fields.', 'error');
