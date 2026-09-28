@@ -265,7 +265,7 @@ const FranchiseApproval = () => {
     }
   };
 
-  // Navigate to dedicated full-screen inspection workstation
+  // Navigate to dedicated full-screen review workstation
   const handleOpenWorkstation = (app) => {
     navigate(`/franchise-approval/review/${app._id}`);
   };
@@ -557,7 +557,7 @@ const FranchiseApproval = () => {
 
               {quickRejectReason === 'Others (Please specify)' && (
                 <textarea
-                  placeholder="Specify inspection defect or instruction for the operator..."
+                  placeholder="Specify review defect or instruction for the operator..."
                   value={quickRejectCustom}
                   onChange={(e) => setQuickRejectCustom(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white min-h-[70px] outline-none focus:ring-2 focus:ring-red-200"
@@ -715,7 +715,7 @@ const FranchiseApproval = () => {
                 if (firstPending) navigate(`/franchise-approval/review/${firstPending._id}`);
               }}
               className="px-4 py-2.5 bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
-              title="Open full-screen inspection station for pending applications"
+              title="Open full-screen review station for pending applications"
             >
               <Eye size={16} />
               <span>Start Review Queue ({pendingCount})</span>
@@ -862,7 +862,7 @@ const FranchiseApproval = () => {
             {searchQuery || selectedToda !== 'all' 
               ? 'Try adjusting your search or TODA filter.' 
               : activeTab === 'pending'
-              ? 'There are no pending applications awaiting inspection right now.'
+              ? 'There are no pending applications awaiting review right now.'
               : 'There are no applications currently in this queue view.'}
           </p>
         </div>
@@ -998,14 +998,14 @@ const FranchiseApproval = () => {
                     </button>
                   )}
 
-                  {/* Deep Inspection Workstation Button */}
+                  {/* Deep Review Workstation Button */}
                   <button 
                     onClick={() => handleOpenWorkstation(app)} 
                     className="bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#7A1B22] dark:hover:bg-[#7A1B22] px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer"
-                    title="Open Full Inspection Workbench"
+                    title="Open Full Review Workbench"
                   >
                     <Eye size={14} />
-                    <span>Inspect</span>
+                    <span>Review</span>
                     <ChevronRight size={14} className="hidden sm:inline" />
                   </button>
                 </div>

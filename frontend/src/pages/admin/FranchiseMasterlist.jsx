@@ -485,7 +485,7 @@ const FranchiseMasterlist = () => {
               </span>
             </div>
             <p className="text-white/80 dark:text-white/70 font-medium text-xs sm:text-xs max-w-xl">
-              Manage, query, multi-filter, inspect, and paginate official tricycle records.
+              Manage, query, multi-filter, review, and paginate official tricycle records.
             </p>
           </div>
         </div>

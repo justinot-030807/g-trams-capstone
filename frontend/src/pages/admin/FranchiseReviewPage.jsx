@@ -3,7 +3,8 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
   ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, 
-  FileText, AlertCircle, Loader2, Printer, Move, Check, AlertTriangle
+  FileText, AlertCircle, Loader2, Printer, Move, Check, AlertTriangle,
+  Copy, ShieldCheck, User, Car, FileCheck, Layers
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 
@@ -32,12 +33,18 @@ const FranchiseReviewPage = () => {
 
   // Document Viewer State
   const [activeDocKey, setActiveDocKey] = useState('orCrDocument');
+  const [isDocLoading, setIsDocLoading] = useState(true);
+  const [docError, setDocError] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const canvasRef = useRef(null);
+
+  // Inspector Tabs State ('match' | 'applicant' | 'cedula')
+  const [inspectorTab, setInspectorTab] = useState('match');
+  const [copiedField, setCopiedField] = useState(null);
 
   // Rejection State
   const [isRejecting, setIsRejecting] = useState(false);
@@ -61,6 +68,13 @@ const FranchiseReviewPage = () => {
       month: 'short', 
       day: 'numeric' 
     });
+  };
+
+  const copyToClipboard = (text, fieldName) => {
+    if (!text || text === 'N/A' || text === 'Pending') return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   // Phase 1: INSTANT — fetch only the single franchise being reviewed
@@ -106,11 +120,27 @@ const FranchiseReviewPage = () => {
   }, []);
 
   useEffect(() => {
-    // Phase 1: Load the current app instantly (stops the loading spinner)
     fetchCurrentApp(id);
-    // Phase 2: Load queue in background (for prev/next arrows)
     fetchQueue();
   }, [id, fetchCurrentApp, fetchQueue]);
+
+  // Preload all document images as soon as currentApp is available to eliminate switching delays
+  useEffect(() => {
+    if (!currentApp) return;
+    const urls = [
+      currentApp.orCrUrl,
+      currentApp.licenseUrl,
+      currentApp.todaEndorsementUrl,
+      currentApp.brgyClearanceUrl
+    ].filter(Boolean);
+
+    urls.forEach(url => {
+      if (!url.toLowerCase().includes('.pdf')) {
+        const img = new Image();
+        img.src = url;
+      }
+    });
+  }, [currentApp]);
 
   // Enforce 100% full-screen edge-to-edge layout without 0.9 desktop zoom shrinking
   useEffect(() => {
@@ -129,13 +159,60 @@ const FranchiseReviewPage = () => {
     };
   }, []);
 
-  // When active applicant changes, reset viewer position and zoom
+  // Document Tabs List Definition
+  const docTabs = [
+    { 
+      key: 'orCrDocument', 
+      label: 'Tricycle OR / CR Document (LTO)', 
+      short: 'OR / CR (LTO)', 
+      sub: 'Official Receipt & Registration',
+      url: currentApp?.orCrUrl 
+    },
+    { 
+      key: 'license', 
+      label: "Driver's License (LTO)", 
+      short: "Driver's License", 
+      sub: 'Professional / Non-Prof',
+      url: currentApp?.licenseUrl 
+    },
+    { 
+      key: 'todaEndorsement', 
+      label: 'TODA Endorsement Certificate', 
+      short: 'TODA Endorsement', 
+      sub: 'Zone Route Recommendation',
+      url: currentApp?.todaEndorsementUrl 
+    },
+    { 
+      key: 'brgyClearance', 
+      label: 'Barangay Clearance (Gasan)', 
+      short: 'Barangay Clearance', 
+      sub: 'Community Residency Proof',
+      url: currentApp?.brgyClearanceUrl 
+    }
+  ];
+
+  const currentDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
+
+  // Document switching helper with loading protection
+  const handleSelectDoc = (key) => {
+    if (key === activeDocKey) return;
+    const targetDoc = docTabs.find(d => d.key === key);
+    setIsDocLoading(Boolean(targetDoc?.url && !targetDoc.url.toLowerCase().includes('.pdf')));
+    setDocError(false);
+    setActiveDocKey(key);
+    resetCanvasView();
+  };
+
+  // When active applicant changes, reset viewer position, zoom, and error states
   useEffect(() => {
     setZoomScale(1);
     setPosition({ x: 0, y: 0 });
     setRotation(0);
     setIsRejecting(false);
-  }, [id]);
+    setDocError(false);
+    const initialDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
+    setIsDocLoading(Boolean(initialDoc?.url && !initialDoc.url.toLowerCase().includes('.pdf')));
+  }, [id, currentApp?._id]);
 
   // Current Queue Position
   const currentIndex = queue.findIndex(item => item._id === (currentApp?._id || id));
@@ -154,19 +231,7 @@ const FranchiseReviewPage = () => {
     }
   };
 
-  // Document Tabs List
-  const docTabs = [
-    { key: 'orCrDocument', label: 'Tricycle OR / CR Document (LTO)', short: 'OR / CR Document', url: currentApp?.orCrUrl },
-    { key: 'license', label: "Driver's License", short: "Driver's License", url: currentApp?.licenseUrl },
-    { key: 'todaEndorsement', label: 'TODA Endorsement Certificate', short: 'TODA Certificate', url: currentApp?.todaEndorsementUrl },
-    { key: 'brgyClearance', label: 'Barangay Clearance (Gasan)', short: 'Barangay Clearance', url: currentApp?.brgyClearanceUrl }
-  ];
-
-  const currentDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
-
-  // --------------------------------------------------------------------------
-  // ISOLATED CANVAS ZOOM (Reliably bound whenever canvas is mounted)
-  // --------------------------------------------------------------------------
+  // Isolated Canvas Wheel Zoom
   useEffect(() => {
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
@@ -191,9 +256,7 @@ const FranchiseReviewPage = () => {
     };
   }, [isLoading, currentApp?._id, activeDocKey]);
 
-  // --------------------------------------------------------------------------
-  // INTERACTIVE PAN & DRAG HANDLERS (MOUSE & TOUCH)
-  // --------------------------------------------------------------------------
+  // Pan & Drag Handlers
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
     setIsDragging(true);
@@ -259,7 +322,7 @@ const FranchiseReviewPage = () => {
     try {
       const payload = {
         status: newStatus,
-        cancelReason: newStatus === 'Cancelled' ? (customCancelReason || 'Application rejected during technical inspection.') : null
+        cancelReason: newStatus === 'Cancelled' ? (customCancelReason || 'Application rejected during technical review.') : null
       };
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${currentApp._id}/status`, {
@@ -285,13 +348,10 @@ const FranchiseReviewPage = () => {
 
         setIsRejecting(false);
 
-        // Update local queue: remove completed/rejected items, update in-progress ones
         const TERMINAL_STATUSES = ['Active', 'Cancelled', 'Revoked', 'Expired'];
         if (TERMINAL_STATUSES.includes(newStatus)) {
-          // Remove from queue — this item is done
           setQueue(prev => prev.filter(item => item._id !== currentApp._id));
         } else {
-          // Keep in queue but update status (e.g. Pending → For Signing)
           setQueue(prev => prev.map(item => item._id === currentApp._id ? { ...item, status: newStatus } : item));
         }
 
@@ -315,7 +375,7 @@ const FranchiseReviewPage = () => {
     }
   };
 
-  // Keyboard Shortcuts (A for Approve, R for Reject, 1-4 for Docs, Arrows for Nav)
+  // Keyboard Shortcuts (A for Approve, R for Reject, 1-4 for Docs, Arrows for Nav, Esc for Exit)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) {
@@ -335,17 +395,17 @@ const FranchiseReviewPage = () => {
         e.preventDefault();
         setIsRejecting(prev => !prev);
       } else if (e.key === '1') {
-        setActiveDocKey('orCrDocument');
-        resetCanvasView();
+        e.preventDefault();
+        handleSelectDoc('orCrDocument');
       } else if (e.key === '2') {
-        setActiveDocKey('license');
-        resetCanvasView();
+        e.preventDefault();
+        handleSelectDoc('license');
       } else if (e.key === '3') {
-        setActiveDocKey('todaEndorsement');
-        resetCanvasView();
+        e.preventDefault();
+        handleSelectDoc('todaEndorsement');
       } else if (e.key === '4') {
-        setActiveDocKey('brgyClearance');
-        resetCanvasView();
+        e.preventDefault();
+        handleSelectDoc('brgyClearance');
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         goToNext();
@@ -359,30 +419,31 @@ const FranchiseReviewPage = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentApp, hasNext, hasPrev, queue, currentIndex]);
+  }, [currentApp, hasNext, hasPrev, queue, currentIndex, activeDocKey]);
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 w-full h-full bg-slate-50 text-slate-700 flex flex-col items-center justify-center z-50">
-        <Loader2 size={32} className="animate-spin text-[#7A1B22] mb-3" />
-        <p className="text-sm font-semibold text-slate-700">Loading Franchise Inspection Station...</p>
+      <div className="fixed inset-0 w-full h-full bg-slate-50 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center z-50">
+        <Loader2 size={36} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37] mb-3" />
+        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Loading Franchise Review Workbench...</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Naghahanda ng mga dokumento at talaan...</p>
       </div>
     );
   }
 
   if (!currentApp) {
     return (
-      <div className="fixed inset-0 w-full h-full bg-slate-50 text-slate-800 flex flex-col items-center justify-center p-6 text-center z-50">
+      <div className="fixed inset-0 w-full h-full bg-slate-50 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 flex flex-col items-center justify-center p-6 text-center z-50">
         <AlertCircle size={44} className="text-amber-500 mb-3" />
-        <h2 className="text-base font-bold text-slate-800">Franchise Application Not Found</h2>
-        <p className="text-xs text-slate-500 mt-1 max-w-sm">
+        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Franchise Application Not Found</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
           This record may have been processed or the queue has finished.
         </p>
         <button
           onClick={() => navigate('/franchise-approval')}
           className="mt-4 px-4 py-2 bg-[#7A1B22] hover:bg-[#65151c] text-white rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer"
         >
-          Return to Approval Queue
+          Return to Review Queue
         </button>
       </div>
     );
@@ -406,16 +467,16 @@ const FranchiseReviewPage = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* TOP HEADER: MUNICIPAL HERITAGE MAROON RIBBON */}
+      {/* TOP HEADER: MUNICIPAL HERITAGE VELVET MAROON RIBBON                       */}
       {/* ========================================================================= */}
-      <header className="h-14 px-4 bg-gradient-to-r from-[#681419] via-[#7A1B22] to-[#801820] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-md border-b border-[#D4AF37]/30">
+      <header className="h-14 px-4 bg-gradient-to-r from-[#681419] via-[#7A1B22] to-[#801820] dark:from-[#180407] dark:via-[#24060a] dark:to-[#120204] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-md border-b border-[#D4AF37]/30">
         
-        {/* Left: Back & Applicant Info */}
+        {/* Left: Back & Applicant Summary */}
         <div className="flex items-center gap-3 min-w-0">
           <Link
             to="/franchise-approval"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-            title="Return to Table (Esc)"
+            title="Return to Table (Shortcut: Esc)"
           >
             <ArrowLeft size={15} />
             <span className="hidden sm:inline">Back to List</span>
@@ -445,31 +506,31 @@ const FranchiseReviewPage = () => {
         </div>
 
         {/* Center: Queue Progress Navigator */}
-        <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/15 text-xs font-semibold">
+        <div className="flex items-center gap-1 bg-black/25 p-1 rounded-xl border border-white/15 text-xs font-semibold">
           <button
             onClick={goToPrev}
             disabled={!hasPrev}
             className="p-1 rounded-lg hover:bg-white/15 text-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-            title="Previous (ArrowLeft)"
+            title="Previous Application (ArrowLeft)"
           >
             <ChevronLeft size={16} />
           </button>
           <span className="px-2 text-xs text-white select-none">
-            {currentIndex >= 0 ? currentIndex + 1 : 1} / {queue.length}
+            {currentIndex >= 0 ? currentIndex + 1 : 1} / {queue.length || 1}
           </span>
           <button
             onClick={goToNext}
             disabled={!hasNext}
             className="p-1 rounded-lg hover:bg-white/15 text-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-            title="Next (ArrowRight)"
+            title="Next Application (ArrowRight)"
           >
             <ChevronRight size={16} />
           </button>
         </div>
 
-        {/* Right: Primary Actions */}
+        {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          {/* MTOP Print if For Signing, Ready or Active */}
+          {/* MTOP Print */}
           {(currentApp.status === 'For Signing' || currentApp.status === 'Ready for Pickup' || currentApp.status === 'Active') && (
             <button
               onClick={() => setIsPrintOpen(true)}
@@ -494,7 +555,7 @@ const FranchiseReviewPage = () => {
           >
             <XCircle size={14} />
             <span>Reject</span>
-            <span className="hidden lg:inline text-xs px-1 bg-black/25 rounded text-white/80">R</span>
+            <kbd className="hidden lg:inline text-[10px] px-1 bg-black/25 rounded text-white/80 font-mono">R</kbd>
           </button>
 
           {/* Primary: Approve / Sign / Release */}
@@ -507,7 +568,7 @@ const FranchiseReviewPage = () => {
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               <span>Approve for Signing</span>
-              <span className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-bold">A</span>
+              <kbd className="hidden lg:inline text-[10px] px-1 bg-white/20 rounded font-mono">A</kbd>
               <ChevronRight size={14} />
             </button>
           ) : currentApp.status === 'For Signing' ? (
@@ -519,7 +580,7 @@ const FranchiseReviewPage = () => {
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               <span>Mark Signed &amp; Ready</span>
-              <span className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-bold">A</span>
+              <kbd className="hidden lg:inline text-[10px] px-1 bg-white/20 rounded font-mono">A</kbd>
               <ChevronRight size={14} />
             </button>
           ) : (
@@ -531,7 +592,7 @@ const FranchiseReviewPage = () => {
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               <span>Release &amp; Next</span>
-              <span className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-bold">A</span>
+              <kbd className="hidden lg:inline text-[10px] px-1 bg-white/20 rounded font-mono">A</kbd>
               <ChevronRight size={14} />
             </button>
           )}
@@ -539,30 +600,30 @@ const FranchiseReviewPage = () => {
       </header>
 
       {/* ========================================================================= */}
-      {/* MAIN WORKBENCH: STREAMLINED SIDEBAR | CRISP STUDIO CANVAS */}
+      {/* MAIN WORKBENCH: STREAMLINED REVIEW PANEL & CRISP STUDIO CANVAS            */}
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         
         {/* ======================================================================= */}
+        {/* LEFT REVIEW SHEET: DOCUMENT CHECKLIST & TABBED METADATA INSPECTOR       */}
         {/* ======================================================================= */}
-        {/* LEFT INSPECTION SHEET: COMPLETE OPERATOR FORM SUBMISSION DETAILS        */}
-        {/* ======================================================================= */}
-        <aside className="w-full md:w-[350px] lg:w-[380px] bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs">
+        <aside className="w-full md:w-[360px] lg:w-[400px] bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
           
-          <div className="p-4 space-y-3.5 flex-1">
+          <div className="p-3.5 space-y-3.5 flex-1 flex flex-col">
             
-            {/* 1. DOCUMENT SELECTOR BUTTONS */}
+            {/* 1. DOCUMENT CHECKLIST CARDS */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Attached Documents
+              <div className="flex items-center justify-between px-0.5">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <Layers size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  Mga Dokumento
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Keys [1-4]
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  Keyboard [1 - 4]
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="space-y-1.5">
                 {docTabs.map((tab, idx) => {
                   const isActive = tab.key === activeDocKey;
                   const hasFile = Boolean(tab.url);
@@ -571,29 +632,44 @@ const FranchiseReviewPage = () => {
                     <button
                       key={tab.key}
                       type="button"
-                      onClick={() => {
-                        setActiveDocKey(tab.key);
-                        resetCanvasView();
-                      }}
-                      className={`flex items-center justify-between p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                      onClick={() => handleSelectDoc(tab.key)}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-[#7A1B22] border-[#7A1B22] dark:border-[#D4AF37]/40 text-white shadow-xs'
-                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
+                          ? 'bg-gradient-to-r from-red-50 to-white dark:from-[#2a0c10] dark:to-[#161f30] border-[#7A1B22] dark:border-[#D4AF37]/60 shadow-xs ring-1 ring-[#7A1B22]/20 dark:ring-[#D4AF37]/30'
+                          : 'bg-slate-50/80 dark:bg-[#0c101c] border-slate-200 dark:border-slate-800/80 hover:bg-slate-100/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                       }`}
                     >
-                      <div className="min-w-0 flex items-center gap-1.5">
-                        <span className={`w-4 h-4 rounded flex items-center justify-center text-[11px] font-bold ${
-                          isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      <div className="min-w-0 flex items-center gap-2.5">
+                        <span className={`w-5 h-5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                          isActive 
+                            ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs' 
+                            : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                         }`}>
                           {idx + 1}
                         </span>
-                        <span className="text-xs font-semibold truncate">{tab.short}</span>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-bold truncate ${isActive ? 'text-[#7A1B22] dark:text-[#D4AF37]' : 'text-slate-800 dark:text-slate-200'}`}>
+                            {tab.short}
+                          </p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                            {tab.sub}
+                          </p>
+                        </div>
                       </div>
 
-                      <span 
-                        className={`w-2 h-2 rounded-full shrink-0 ${hasFile ? 'bg-emerald-500' : 'bg-amber-400'}`}
-                        title={hasFile ? 'Document Attached' : 'Missing Document'}
-                      />
+                      <div className="shrink-0 ml-2">
+                        {hasFile ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60">
+                            <Check size={11} className="stroke-[3]" />
+                            <span className="hidden sm:inline">Attached</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+                            <AlertCircle size={11} />
+                            <span className="hidden sm:inline">Missing</span>
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -605,13 +681,13 @@ const FranchiseReviewPage = () => {
               <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl p-3 space-y-2.5 animate-in fade-in">
                 <div className="flex items-center justify-between text-red-800 dark:text-red-300 text-xs font-bold">
                   <span className="flex items-center gap-1.5">
-                    <XCircle size={14} className="text-red-600 dark:text-red-400" /> Rejection Details
+                    <XCircle size={14} className="text-red-600 dark:text-red-400" /> Dahilan ng Rejection
                   </span>
                   <button 
                     onClick={() => setIsRejecting(false)} 
                     className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs underline cursor-pointer"
                   >
-                    Cancel
+                    Kanselahin
                   </button>
                 </div>
 
@@ -628,7 +704,7 @@ const FranchiseReviewPage = () => {
                 {rejectReason === 'Others (Please specify)' && (
                   <textarea
                     rows={2}
-                    placeholder="Enter specific reason..."
+                    placeholder="Ilagay ang espesipikong dahilan..."
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
                     className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl p-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
@@ -644,112 +720,256 @@ const FranchiseReviewPage = () => {
                   className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
                 >
                   {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                  <span>Confirm Rejection &amp; Next</span>
+                  <span>Kumpirmahin ang Rejection &amp; Sunod</span>
                 </button>
               </div>
             )}
 
-            {/* 3. COMPLETE APPLICATION FORM DETAILS */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1.5">
+            {/* 3. TABBED METADATA INSPECTOR */}
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center justify-between px-0.5">
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Application Form Inputs
+                  Form Verification Inspector
                 </span>
-                <span className="text-xs font-semibold text-[#7A1B22] dark:text-[#D4AF37] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700/60 px-2 py-0.5 rounded-md">
+                <span className="text-[11px] font-semibold text-[#7A1B22] dark:text-[#D4AF37] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700/60 px-2 py-0.5 rounded-md">
                   {currentApp.applicationType || 'New Application'}
                 </span>
               </div>
 
-              {/* CARD 1: APPLICANT & OPERATOR INFORMATION */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5">
-                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] pb-1 border-b border-slate-200/80 dark:border-slate-700/80">
-                  Applicant &amp; Association Info
-                </h4>
-                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Full Name:</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[200px]">{currentApp.fullName}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Barangay Address:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.address}, Gasan</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">TODA Association:</span>
-                    <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37] text-right truncate max-w-[200px]">{currentApp.todaName || 'Non-TODA'}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Operational Zone:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">Zone {currentApp.zone || 1}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Application Type:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.applicationType || 'New'}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Date Filed:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.dateApplied || currentApp.createdAt)}</span>
-                  </div>
-                </div>
+              {/* Segmented Control Tabs */}
+              <div className="flex items-center bg-slate-100 dark:bg-[#0c101c] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab('match')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    inspectorTab === 'match'
+                      ? 'bg-white dark:bg-[#1f293d] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Car size={13} />
+                  <span>Match</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab('applicant')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    inspectorTab === 'applicant'
+                      ? 'bg-white dark:bg-[#1f293d] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <User size={13} />
+                  <span>Operator</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab('cedula')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    inspectorTab === 'cedula'
+                      ? 'bg-white dark:bg-[#1f293d] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <FileCheck size={13} />
+                  <span>Cedula</span>
+                </button>
               </div>
 
-              {/* CARD 2: VEHICLE SPECIFICATIONS */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5">
-                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] pb-1 border-b border-slate-200/80 dark:border-slate-700/80">
-                  Vehicle Specifications
-                </h4>
-                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Plate Number:</span>
-                    <span className="font-bold text-slate-900 dark:text-amber-200 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-right">{currentApp.plateNo || 'Pending'}</span>
+              {/* TAB 1: VEHICLE VERIFICATION MATCH (CRITICAL FOR OR/CR INSPECTION) */}
+              {inspectorTab === 'match' && (
+                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Vehicle Specifications
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      Click serial to copy
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Motor / Engine No:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.motorNo || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Chassis Serial No:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.chassisNo || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Vehicle Make:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.make}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Year Model:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.made}</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* CARD 3: COMMUNITY TAX CERTIFICATE (CEDULA) */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5">
-                <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] pb-1 border-b border-slate-200/80 dark:border-slate-700/80">
-                  Community Tax Certificate (Cedula)
-                </h4>
-                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">CTC / Cedula Serial No:</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-right">{currentApp.cedulaSerialNo || 'N/A'}</span>
+                  <div className="space-y-1.5 text-xs">
+                    {/* Plate Number */}
+                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Plate Number:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900 dark:text-amber-300 font-mono tracking-wide">
+                          {currentApp.plateNo || 'Pending'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.plateNo, 'plateNo')}
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
+                          title="Copy Plate Number"
+                        >
+                          {copiedField === 'plateNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Chassis Serial No */}
+                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Chassis No:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37] font-mono truncate max-w-[170px]">
+                          {currentApp.chassisNo || 'N/A'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.chassisNo, 'chassisNo')}
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
+                          title="Copy Chassis Serial Number"
+                        >
+                          {copiedField === 'chassisNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Motor / Engine No */}
+                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Motor / Engine:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 font-mono truncate max-w-[170px]">
+                          {currentApp.motorNo || 'N/A'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.motorNo, 'motorNo')}
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
+                          title="Copy Motor Number"
+                        >
+                          {copiedField === 'motorNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Vehicle Make & Year Model */}
+                    <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                      <div className="p-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-medium block">Make</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{currentApp.make || 'N/A'}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-medium block">Year Model</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{currentApp.made || 'N/A'}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Date of Issue:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.cedulaDate)}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Place of Issue:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[190px]">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
+
+                  <div className="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
+                    <ShieldCheck size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                    <span>Ikumpara ang Chassis at Motor No. sa ipinakitang opisyal na OR/CR document sa kanan bago i-apruba.</span>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* TAB 2: APPLICANT & TODA INFO */}
+              {inspectorTab === 'applicant' && (
+                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Operator &amp; Association
+                    </span>
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      Zone {currentApp.zone || 1}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Full Name:</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[210px]">{currentApp.fullName}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Contact Number:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.contact || currentApp.operator?.contact || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Barangay:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[210px]">{currentApp.address}, Gasan</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">TODA Association:</span>
+                      <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37] text-right truncate max-w-[210px]">{currentApp.todaName || 'Non-TODA'}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Application Type:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.applicationType || 'New'}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Date Filed:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.dateApplied || currentApp.createdAt)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: CEDULA / COMMUNITY TAX CERTIFICATE */}
+              {inspectorTab === 'cedula' && (
+                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Cedula Record
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      Official CTC
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Serial No:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900 dark:text-white font-mono">
+                          {currentApp.cedulaSerialNo || 'N/A'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.cedulaSerialNo, 'cedulaSerial')}
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
+                          title="Copy Cedula Serial"
+                        >
+                          {copiedField === 'cedulaSerial' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Date of Issue:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.cedulaDate)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Place of Issue:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 4. KEYBOARD SHORTCUT HELPER */}
-            <div className="p-2 bg-slate-50 dark:bg-[#0c101c] rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-1">
-              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">A</kbd> Approve</span>
-              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">R</kbd> Reject</span>
-              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">1-4</kbd> Docs</span>
-              <span><kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded text-xs text-slate-700 dark:text-slate-300 font-semibold">&larr;/&rarr;</kbd> Queue</span>
+            <div className="mt-auto pt-2">
+              <div className="p-2.5 bg-slate-50 dark:bg-[#0c101c] rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-1.5">
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300">A</kbd>
+                  <span>Approve</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300">R</kbd>
+                  <span>Reject</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300">1-4</kbd>
+                  <span>Docs</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300">&larr;/&rarr;</kbd>
+                  <span>Queue</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300">Esc</kbd>
+                  <span>Exit</span>
+                </span>
+              </div>
             </div>
 
           </div>
@@ -758,7 +978,7 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* RIGHT DOCUMENT VIEWER CANVAS (STUDIO DESK VIEWPORT)                    */}
         {/* ======================================================================= */}
-        <main className="flex-1 flex flex-col bg-slate-100 dark:bg-[#070a12] relative overflow-hidden h-full">
+        <main className="flex-1 flex flex-col bg-slate-200/75 dark:bg-[#070a12] relative overflow-hidden h-full">
           
           {/* FLOATING TOP CANVAS TOOLBAR */}
           <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-2 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md text-slate-700 dark:text-slate-200">
@@ -837,7 +1057,7 @@ const FranchiseReviewPage = () => {
           </div>
 
           {/* ===================================================================== */}
-          {/* THE INTERACTIVE PAN/DRAG CANVAS VIEWPORT */}
+          {/* THE INTERACTIVE PAN/DRAG CANVAS VIEWPORT                              */}
           {/* ===================================================================== */}
           <div
             ref={canvasRef}
@@ -852,17 +1072,14 @@ const FranchiseReviewPage = () => {
             className={`flex-1 w-full h-full relative flex items-center justify-center overflow-hidden select-none ${
               isDragging ? 'cursor-grabbing' : 'cursor-grab'
             }`}
-            style={{
-              backgroundImage: 'radial-gradient(var(--tw-dark-dot, #cbd5e1) 1px, transparent 1px)',
-              backgroundSize: '20px 20px'
-            }}
           >
+            {/* If no document uploaded */}
             {!currentDoc?.url ? (
               <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md max-w-sm">
                 <AlertCircle size={38} className="text-amber-500 mx-auto mb-2" />
-                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">No Document Uploaded</h3>
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Walang Nakalakip na Dokumento</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  The applicant has not attached a file for {currentDoc.short}.
+                  Hindi pa nag-upload ang aplikante ng kopya para sa {currentDoc.short}.
                 </p>
               </div>
             ) : currentDoc.url.toLowerCase().includes('.pdf') ? (
@@ -878,14 +1095,50 @@ const FranchiseReviewPage = () => {
                   transformOrigin: 'center center',
                   transition: isDragging ? 'none' : 'transform 0.08s ease-out'
                 }}
-                className="max-w-none flex items-center justify-center pointer-events-none"
+                className="max-w-none flex items-center justify-center pointer-events-none relative"
               >
-                <img
-                  src={currentDoc.url}
-                  alt={currentDoc.label}
-                  draggable={false}
-                  className="max-h-[82vh] max-w-[85vw] object-contain rounded-2xl shadow-2xl bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-700/80 p-1 select-none"
-                />
+                {/* Instant Loading Shimmer / Spinner Overlay */}
+                {isDocLoading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 dark:bg-[#111827]/85 backdrop-blur-xs rounded-2xl z-10 p-6 min-w-[280px] min-h-[280px] border border-slate-200 dark:border-slate-800 shadow-xl animate-in fade-in duration-150">
+                    <Loader2 size={32} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37] mb-2" />
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Kinukuha ang kopya...</span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Ipinapakita ang {currentDoc.short}</span>
+                  </div>
+                )}
+
+                {/* Error Fallback */}
+                {docError ? (
+                  <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-2xl border border-red-200 dark:border-red-900/60 shadow-xl max-w-sm pointer-events-auto">
+                    <AlertTriangle size={36} className="text-red-500 mx-auto mb-2" />
+                    <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Hindi Mabuksan ang Dokumento</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Nagkaroon ng network error sa pag-load ng imahe. Maaari mong buksan ang original file.
+                    </p>
+                    <a
+                      href={currentDoc.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <ExternalLink size={13} /> Buksan sa Bagong Tab
+                    </a>
+                  </div>
+                ) : (
+                  <img
+                    key={currentDoc.url}
+                    src={currentDoc.url}
+                    alt={currentDoc.label}
+                    draggable={false}
+                    onLoad={() => setIsDocLoading(false)}
+                    onError={() => {
+                      setIsDocLoading(false);
+                      setDocError(true);
+                    }}
+                    className={`max-h-[82vh] max-w-[85vw] object-contain rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-black/70 bg-white dark:bg-[#111827] border border-slate-300/80 dark:border-slate-700/80 p-1.5 select-none transition-opacity duration-200 ${
+                      isDocLoading ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -893,14 +1146,14 @@ const FranchiseReviewPage = () => {
           {/* FLOATING BOTTOM HINT */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 shadow-sm flex items-center gap-3">
             <span className="flex items-center gap-1.5">
-              <Move size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Drag to move
+              <Move size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> I-drag para ilipat
             </span>
-            <span className="text-slate-300 dark:text-slate-500">&bull;</span>
+            <span className="text-slate-300 dark:text-slate-600">&bull;</span>
             <span className="flex items-center gap-1.5">
-              <ZoomIn size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Scroll wheel to zoom
+              <ZoomIn size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Scroll para mag-zoom
             </span>
-            <span className="text-slate-300 dark:text-slate-500">&bull;</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Double-click to reset</span>
+            <span className="text-slate-300 dark:text-slate-600">&bull;</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Double-click para i-reset</span>
           </div>
         </main>
       </div>
@@ -918,5 +1171,3 @@ const FranchiseReviewPage = () => {
 };
 
 export default FranchiseReviewPage;
-
-
