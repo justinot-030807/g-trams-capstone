@@ -652,6 +652,43 @@ const processCashierPayment = async (req, res) => {
     }
 };
 
+const verifyDocuments = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const franchise = await Franchise.findById(id).populate('operator', 'name address contact');
+        if (!franchise) {
+            return res.status(404).json({ message: 'Franchise not found' });
+        }
+
+        const { verifyFranchiseDocuments } = require('../services/documentVerificationService');
+        const verificationResult = await verifyFranchiseDocuments(franchise);
+
+        franchise.aiVerification = verificationResult;
+        await franchise.save();
+
+        logAudit(req, {
+            action: 'AI_DOCUMENT_VERIFICATION',
+            targetType: 'Franchise',
+            targetId: franchise._id,
+            details: {
+                plateNo: franchise.plateNo,
+                status: verificationResult.status,
+                matched: verificationResult.summary.matchedFields,
+                mismatched: verificationResult.summary.mismatchedFields
+            }
+        });
+
+        res.status(200).json({
+            message: 'Document verification completed successfully',
+            aiVerification: verificationResult,
+            franchise
+        });
+    } catch (error) {
+        console.error('Error verifying documents:', error);
+        res.status(500).json({ message: 'Failed to verify documents.' });
+    }
+};
+
 module.exports = { 
     createFranchise, 
     searchHistoricalFranchise,
@@ -668,5 +705,7 @@ module.exports = {
     getFranchiseReports,
     checkUniqueFranchiseField,
     getCashierQueue,
-    processCashierPayment
+    processCashierPayment,
+    verifyDocuments
 };
+

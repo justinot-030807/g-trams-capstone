@@ -67,7 +67,27 @@ const franchiseSchema = new mongoose.Schema({
     eSigned: { type: Boolean, default: false },
     releaseDate: { type: String, default: '' },
     isArchived: { type: Boolean, default: false },
-    archivedAt: { type: Date }
+    archivedAt: { type: Date },
+
+    // AI-Powered Document Verification (Gemini Vision OCR & Field Cross-Check)
+    aiVerification: {
+        status: { type: String, enum: ['unverified', 'pending', 'verified', 'flagged', 'error'], default: 'unverified' },
+        verifiedAt: { type: Date },
+        summary: {
+            totalFields: { type: Number, default: 0 },
+            matchedFields: { type: Number, default: 0 },
+            mismatchedFields: { type: Number, default: 0 },
+            unclearFields: { type: Number, default: 0 }
+        },
+        documents: {
+            orCr: { type: mongoose.Schema.Types.Mixed, default: null },
+            license: { type: mongoose.Schema.Types.Mixed, default: null },
+            todaEndorsement: { type: mongoose.Schema.Types.Mixed, default: null },
+            brgyClearance: { type: mongoose.Schema.Types.Mixed, default: null },
+            cedula: { type: mongoose.Schema.Types.Mixed, default: null }
+        },
+        overallNotes: { type: String, default: '' }
+    }
 
 }, { timestamps: true });
 

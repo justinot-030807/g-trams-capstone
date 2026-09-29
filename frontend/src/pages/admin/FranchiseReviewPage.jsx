@@ -4,7 +4,7 @@ import {
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
   ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, 
   FileText, AlertCircle, Loader2, Printer, Move, Check, AlertTriangle,
-  Copy, ShieldCheck, User, Car, FileCheck, Layers, FileSpreadsheet
+  Copy, ShieldCheck, User, Car, FileCheck, Layers, FileSpreadsheet, Sparkles
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
@@ -43,9 +43,12 @@ const FranchiseReviewPage = () => {
   const dragStartRef = useRef({ x: 0, y: 0 });
   const canvasRef = useRef(null);
 
-  // Inspector Tabs State ('match' | 'applicant' | 'cedula')
+  // Inspector Tabs State ('match' | 'applicant' | 'cedula' | 'ai')
   const [inspectorTab, setInspectorTab] = useState('match');
   const [copiedField, setCopiedField] = useState(null);
+
+  // AI Verification State
+  const [isAiVerifying, setIsAiVerifying] = useState(false);
 
   // Rejection State
   const [isRejecting, setIsRejecting] = useState(false);
@@ -62,6 +65,41 @@ const FranchiseReviewPage = () => {
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
+
+  const handleRunAiVerification = async () => {
+    if (!currentApp?._id) return;
+    setIsAiVerifying(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${currentApp._id}/verify-documents`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.franchise) {
+        setCurrentApp(data.franchise);
+        setInspectorTab('ai');
+        showToast('Natapos ang AI Document Verification gamit ang Gemini!', 'success');
+      } else {
+        showToast(data.message || 'Hindi natapos ang verification.', 'error');
+      }
+    } catch (err) {
+      console.error('AI verification failed:', err);
+      showToast('Error habang sinusuri ang mga dokumento gamit ang AI.', 'error');
+    } finally {
+      setIsAiVerifying(false);
+    }
+  };
+
+  const handleApplyMismatchRejection = (comparison) => {
+    setIsRejecting(true);
+    setRejectField(comparison.field || 'chassisNo');
+    setCustomReason(`Discrepancy detected by AI: ${comparison.label} mismatch. In-enter ng operator: "${comparison.inputValue}", ngunit nakita sa opisyal na dokumento: "${comparison.extractedValue}". Mangyaring i-upload ang tamang dokumento o itama ang impormasyon.`);
+    setRejectReason('Others (Please specify)');
+    showToast(`Inilagay ang ${comparison.label} discrepancy sa rejection form.`, 'success');
   };
 
   const formatDate = (dateStr) => {
@@ -577,6 +615,35 @@ const FranchiseReviewPage = () => {
             <span className="hidden md:inline">Application Dossier</span>
           </button>
 
+          {/* AI Verify Gemini Button */}
+          <button
+            onClick={() => {
+              if (currentApp?.aiVerification?.status && currentApp?.aiVerification?.status !== 'unverified') {
+                setInspectorTab('ai');
+              } else {
+                handleRunAiVerification();
+              }
+            }}
+            disabled={isAiVerifying}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border cursor-pointer ${
+              currentApp?.aiVerification?.status === 'flagged'
+                ? 'bg-rose-600/40 hover:bg-rose-600/60 text-rose-100 border-rose-400/60 shadow-xs ring-1 ring-rose-400/40'
+                : currentApp?.aiVerification?.status === 'verified'
+                ? 'bg-emerald-600/40 hover:bg-emerald-600/60 text-emerald-100 border-emerald-400/60'
+                : 'bg-indigo-600/40 hover:bg-indigo-600/60 text-indigo-100 border-indigo-400/50'
+            }`}
+            title="Suriin ang mga dokumento gamit ang Gemini Vision AI"
+          >
+            {isAiVerifying ? (
+              <Loader2 size={14} className="animate-spin text-[#D4AF37]" />
+            ) : (
+              <Sparkles size={14} className="text-[#D4AF37]" />
+            )}
+            <span className="hidden md:inline">
+              {isAiVerifying ? 'Verifying...' : currentApp?.aiVerification?.status === 'flagged' ? 'AI Flagged' : currentApp?.aiVerification?.status === 'verified' ? 'AI Verified' : 'AI Verify'}
+            </span>
+          </button>
+
           {/* Reject Trigger */}
           <button
             onClick={() => setIsRejecting(prev => !prev)}
@@ -829,6 +896,21 @@ const FranchiseReviewPage = () => {
                 >
                   <FileCheck size={13} />
                   <span>Cedula</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab('ai')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
+                    inspectorTab === 'ai'
+                      ? 'bg-white dark:bg-[#1f293d] text-indigo-700 dark:text-indigo-400 shadow-xs ring-1 ring-indigo-500/30'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Sparkles size={13} className={currentApp.aiVerification?.status === 'flagged' ? 'text-rose-500' : 'text-indigo-500'} />
+                  <span>AI Verify</span>
+                  {currentApp.aiVerification?.summary?.mismatchedFields > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-1 right-1 animate-pulse" />
+                  )}
                 </button>
               </div>
 
@@ -1182,6 +1264,180 @@ const FranchiseReviewPage = () => {
                       <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* TAB 4: GEMINI VISION AI DOCUMENT VERIFICATION */}
+              {inspectorTab === 'ai' && (
+                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-3 animate-in fade-in duration-150">
+                  {/* Header */}
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400" />
+                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                        Gemini Vision Verification
+                      </span>
+                    </div>
+                    {currentApp.aiVerification?.status && currentApp.aiVerification?.status !== 'unverified' && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        currentApp.aiVerification.status === 'flagged'
+                          ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-900/60'
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-900/60'
+                      }`}>
+                        {currentApp.aiVerification.status === 'flagged' ? 'DISCREPANCY DETECTED' : 'VERIFIED TUGMA'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* If never verified or to re-run */}
+                  {(!currentApp.aiVerification || currentApp.aiVerification.status === 'unverified') ? (
+                    <div className="p-3 text-center space-y-2.5 bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800">
+                      <div className="w-10 h-10 mx-auto rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <Sparkles size={20} />
+                      </div>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        Awtomatikong Basahin at I-crosscheck ang mga Dokumento
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Gagamitin ang Google Gemini Multimodal Vision upang basahin ang litrato ng OR/CR, Lisensya, atbp. at suriin kung tugma sa in-enter ng operator.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleRunAiVerification}
+                        disabled={isAiVerifying}
+                        className="w-full py-2 px-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+                      >
+                        {isAiVerifying ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                        <span>{isAiVerifying ? 'Sinisuri ang mga Dokumento...' : 'Simulan ang AI Verification'}</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Summary stats pill */}
+                      <div className="grid grid-cols-3 gap-1.5 text-center">
+                        <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60">
+                          <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400 block">Tugma</span>
+                          <span className="text-sm font-extrabold text-emerald-800 dark:text-emerald-300">
+                            {currentApp.aiVerification.summary?.matchedFields || 0}
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60">
+                          <span className="text-[10px] uppercase font-bold text-rose-700 dark:text-rose-400 block">Hindi Tugma</span>
+                          <span className="text-sm font-extrabold text-rose-800 dark:text-rose-300">
+                            {currentApp.aiVerification.summary?.mismatchedFields || 0}
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                          <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 block">Malabo/Di Basa</span>
+                          <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                            {currentApp.aiVerification.summary?.unclearFields || 0}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Notes / Assessment */}
+                      {currentApp.aiVerification.overallNotes && (
+                        <div className={`p-2.5 rounded-xl border text-xs leading-relaxed ${
+                          currentApp.aiVerification.status === 'flagged'
+                            ? 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
+                            : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
+                        }`}>
+                          <p className="font-semibold">{currentApp.aiVerification.overallNotes}</p>
+                        </div>
+                      )}
+
+                      {/* Document Details List */}
+                      {Object.entries(currentApp.aiVerification.documents || {}).map(([docKey, docData]) => {
+                        if (!docData || !docData.hasDocument || !Array.isArray(docData.comparisons) || docData.comparisons.length === 0) return null;
+                        
+                        const docLabels = {
+                          orCr: 'LTO OR/CR Document',
+                          license: "Driver's License Card",
+                          cedula: 'Community Tax Certificate (Cedula)',
+                          todaEndorsement: 'TODA Endorsement Certificate',
+                          brgyClearance: 'Barangay Clearance'
+                        };
+
+                        return (
+                          <div key={docKey} className="p-2.5 bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                            <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800/80">
+                              <span className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                                {docLabels[docKey] || docKey}
+                              </span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                docData.status === 'mismatch'
+                                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
+                                  : docData.status === 'match'
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}>
+                                {docData.status === 'mismatch' ? 'Mismatch' : docData.status === 'match' ? 'Match' : 'Inspect'}
+                              </span>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              {docData.comparisons.map((comp, cIdx) => (
+                                <div key={cIdx} className={`p-1.5 rounded-lg border text-[11px] ${
+                                  comp.status === 'mismatch'
+                                    ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60'
+                                    : comp.status === 'match'
+                                    ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/40'
+                                    : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
+                                }`}>
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                      {comp.label}
+                                    </span>
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                      comp.status === 'match' ? 'text-emerald-600 dark:text-emerald-400' : comp.status === 'mismatch' ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-slate-500'
+                                    }`}>
+                                      {comp.status === 'match' ? '✓ Tugma' : comp.status === 'mismatch' ? '✗ Hindi Tugma' : '? Malabo'}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-1 mt-1 text-[10px]">
+                                    <div>
+                                      <span className="text-slate-400 dark:text-slate-500 block">In-enter:</span>
+                                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{comp.inputValue}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-400 dark:text-slate-500 block">Nasa Dokumento:</span>
+                                      <span className={`font-mono font-bold truncate block ${
+                                        comp.status === 'mismatch' ? 'text-rose-600 dark:text-rose-400 underline' : 'text-slate-800 dark:text-slate-200'
+                                      }`}>{comp.extractedValue}</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Quick Auto-Fill Rejection if Mismatch */}
+                                  {comp.status === 'mismatch' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleApplyMismatchRejection(comp)}
+                                      className="mt-1.5 w-full py-1 px-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-md flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                      title="Auto-fill this mismatch reason in rejection form"
+                                    >
+                                      <XCircle size={11} />
+                                      <span>I-reject Dahil sa Discrepancy na Ito</span>
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Re-analyze Button */}
+                      <button
+                        type="button"
+                        onClick={handleRunAiVerification}
+                        disabled={isAiVerifying}
+                        className="w-full py-1.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {isAiVerifying ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                        <span>{isAiVerifying ? 'Muling sinusuri...' : 'Muling Suriin Gamit ang AI'}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
