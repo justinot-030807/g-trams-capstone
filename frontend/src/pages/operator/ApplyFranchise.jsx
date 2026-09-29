@@ -39,9 +39,11 @@ const POPULAR_MAKES = [
 ];
 
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ApplyFranchise = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [myFranchises, setMyFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [formMode, setFormMode] = useState(null); 

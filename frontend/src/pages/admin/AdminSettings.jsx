@@ -153,15 +153,17 @@ const AdminSettings = () => {
                   requiredDocs: loadedDocs
                 };
                 setInitialSystemConfig(newState);
+
+                localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
+                localStorage.setItem('fiscal_year', newState.fiscalYear || '');
+                localStorage.setItem('franchise_fee', String(newState.franchiseFee ?? ''));
+                localStorage.setItem('validity_new', String(newState.newFranchise ?? ''));
+                localStorage.setItem('validity_renew', String(newState.renewFranchise ?? ''));
+                localStorage.setItem('max_units_per_operator', String(newState.maxUnitsPerOperator ?? 2));
+                localStorage.setItem('required_docs', JSON.stringify(loadedDocs));
+
                 return newState;
               });
-              localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
-              localStorage.setItem('fiscal_year', d.fiscalYear || prev.fiscalYear);
-              localStorage.setItem('franchise_fee', d.franchiseFee ?? prev.franchiseFee);
-              localStorage.setItem('validity_new', d.validityNew ?? prev.newFranchise);
-              localStorage.setItem('validity_renew', d.validityRenew ?? prev.renewFranchise);
-              localStorage.setItem('max_units_per_operator', d.maxUnitsPerOperator ?? 2);
-              localStorage.setItem('required_docs', JSON.stringify(loadedDocs));
             }
           }
         } catch (err) {

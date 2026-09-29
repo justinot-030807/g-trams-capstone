@@ -7,10 +7,12 @@ import {
   RefreshCw, ArrowLeft, CheckCircle2, AlertCircle, Loader2, 
   X, FileCheck, ShieldCheck, Car, Calendar, MapPin, Hash, Sparkles
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const RenewFranchise = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { language } = useLanguage();
 
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 

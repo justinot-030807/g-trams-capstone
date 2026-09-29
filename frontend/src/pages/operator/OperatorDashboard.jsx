@@ -33,6 +33,7 @@ const CANCEL_REASONS = [
 
 const OperatorDashboard = () => {
   const { t, language, changeLanguage } = useLanguage();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [franchises, setFranchises] = useState(() => {
     try {
       const cached = localStorage.getItem('gtrams_cached_franchises');
