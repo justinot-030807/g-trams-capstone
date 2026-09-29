@@ -24,7 +24,7 @@ const Register = () => {
     contact: incomingGoogle?.email || '', 
     password: '', 
     confirmPassword: '', 
-    todaAssociation: 'NON-TODA',
+    todaAssociation: 'BATODA',
     role: 'operator'
   });
   const [otpCode, setOtpCode] = useState('');
@@ -96,6 +96,10 @@ const Register = () => {
 
     if (!formData.address) {
       return setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
+    }
+
+    if (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA') {
+      return setError('ACCORDING TO MUNICIPAL ORDINANCE, OPERATORS MUST BELONG TO AN ACCREDITED TODA ASSOCIATION.');
     }
 
     // Validate contact format
@@ -350,7 +354,8 @@ const Register = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA ASSOCIATION</label>
                     <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                      {TODA_LIST.map((toda) => <option key={toda} value={toda}>{toda}</option>)}
+                      <option value="" disabled>Select Accredited TODA</option>
+                      {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
                     </select>
                   </div>
                 </div>

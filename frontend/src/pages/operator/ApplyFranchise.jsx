@@ -792,6 +792,26 @@ const ApplyFranchise = () => {
         showToast(language === 'fil' ? 'Piliin ang Araw ng Pagkuha ng Cedula (Date Issued).' : 'Please select the Date Issued of your Cedula.', 'error');
         return;
       }
+      const currentYear = new Date().getFullYear();
+      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+      if (cedulaYear < currentYear) {
+        showToast(
+          language === 'fil'
+            ? `Paso na ang Cedula (CTC). Ang Cedula para sa taong ${cedulaYear} ay hindi na tanggap; kinakailangan ang Cedula para sa kasalukuyang taon (${currentYear}).`
+            : `Expired Community Tax Certificate (Cedula). A Cedula issued in ${cedulaYear} is not valid for this fiscal year (${currentYear}).`,
+          'error'
+        );
+        return;
+      }
+      if (formData.cedulaDate > today) {
+        showToast(
+          language === 'fil'
+            ? 'Hindi maaaring sa hinaharap ang petsa ng pagkuha ng Cedula.'
+            : 'Date issued for Cedula cannot be in the future.',
+          'error'
+        );
+        return;
+      }
       if (!formData.cedulaAddress || !formData.cedulaAddress.trim()) {
         showToast(language === 'fil' ? 'Pakilagay ang Lugar ng Pagkuha ng Cedula (Place Issued).' : 'Please enter the Place Issued of your Cedula.', 'error');
         return;
@@ -843,6 +863,21 @@ const ApplyFranchise = () => {
     if (isSubmitting) return;
 
     const today = new Date().toISOString().split('T')[0];
+
+    // Cedula Current Fiscal Year Check
+    if (formData.cedulaDate) {
+      const currentYear = new Date().getFullYear();
+      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+      if (cedulaYear < currentYear) {
+        showToast(
+          language === 'fil'
+            ? `Paso na ang Cedula (CTC). Ang Cedula para sa taong ${cedulaYear} ay hindi na tanggap; kinakailangan ang Cedula na kinuha para sa kasalukuyang taon (${currentYear}).`
+            : `Expired Community Tax Certificate (Cedula). A Cedula issued in ${cedulaYear} is not valid for this fiscal year (${currentYear}).`,
+          'error'
+        );
+        return;
+      }
+    }
 
     // Expiry check: If orCrExpiryDate < today, show toast error and abort submit
     if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {

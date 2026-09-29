@@ -163,6 +163,30 @@ const RenewFranchise = () => {
 
     const today = new Date().toISOString().split('T')[0];
 
+    // Cedula Current Fiscal Year Check
+    if (formData.dateIssued) {
+      const currentYear = new Date().getFullYear();
+      const cedulaYear = new Date(formData.dateIssued).getFullYear();
+      if (cedulaYear < currentYear) {
+        showToast(
+          language === 'fil'
+            ? `Paso na ang Cedula (CTC). Ang Cedula para sa taong ${cedulaYear} ay hindi na tanggap; kinakailangan ang Cedula na kinuha para sa kasalukuyang taon (${currentYear}).`
+            : `Expired Community Tax Certificate (Cedula). A Cedula issued in ${cedulaYear} is not valid for this fiscal year (${currentYear}).`,
+          'error'
+        );
+        return;
+      }
+      if (formData.dateIssued > today) {
+        showToast(
+          language === 'fil'
+            ? 'Hindi maaaring sa hinaharap ang petsa ng pagkuha ng Cedula.'
+            : 'Date issued for Cedula cannot be in the future.',
+          'error'
+        );
+        return;
+      }
+    }
+
     // Expiry validation: Warn operator that LTO renewal is required before franchise renewal
     if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
       showToast(
