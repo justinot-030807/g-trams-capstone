@@ -323,6 +323,7 @@ const ApplyFranchise = () => {
       if (savedDraft && savedDraft.formData) {
         setFormData({
           ...savedDraft.formData,
+          dateApplied: savedDraft.formData.dateApplied || new Date().toISOString().split('T')[0],
           todaName: loggedInToda 
         });
         setCurrentStep(savedDraft.currentStep || 1);
@@ -357,7 +358,7 @@ const ApplyFranchise = () => {
       address: loggedInAddress, 
       zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
       todaName: loggedInToda, 
-      dateApplied: '', 
+      dateApplied: new Date().toISOString().split('T')[0], 
       cedulaDate: smartCedulaDate, 
       cedulaAddress: smartCedulaAddress, 
       cedulaSerialNo: smartCedulaSerialNo 
@@ -505,7 +506,7 @@ const ApplyFranchise = () => {
     } else if (name === 'zone') {
       sanitized = value.replace(/\D/g, '');
     } else if (name === 'cedulaSerialNo') {
-      sanitized = value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase();
+      sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 16).toUpperCase();
     } else if (name === 'motorNo' || name === 'chassisNo' || name === 'plateNo') {
       sanitized = value.toUpperCase();
     }
@@ -634,8 +635,20 @@ const ApplyFranchise = () => {
         return;
       }
     } else if (currentStep === 3) {
-      if (!formData.dateApplied || !formData.cedulaDate || !formData.cedulaSerialNo || !formData.cedulaAddress) {
-        showToast("Please provide complete Community Tax Certificate (Cedula) details.", "error");
+      const today = new Date().toISOString().split('T')[0];
+      if (!formData.dateApplied) {
+        setFormData(prev => ({ ...prev, dateApplied: today }));
+      }
+      if (!formData.cedulaSerialNo || !formData.cedulaSerialNo.trim()) {
+        showToast(language === 'fil' ? 'Pakilagay ang CTC / Cedula Serial No.' : 'Please enter your CTC / Cedula Serial No.', 'error');
+        return;
+      }
+      if (!formData.cedulaDate) {
+        showToast(language === 'fil' ? 'Piliin ang Araw ng Pagkuha ng Cedula (Date Issued).' : 'Please select the Date Issued of your Cedula.', 'error');
+        return;
+      }
+      if (!formData.cedulaAddress || !formData.cedulaAddress.trim()) {
+        showToast(language === 'fil' ? 'Pakilagay ang Lugar ng Pagkuha ng Cedula (Place Issued).' : 'Please enter the Place Issued of your Cedula.', 'error');
         return;
       }
     }
@@ -1522,7 +1535,7 @@ const ApplyFranchise = () => {
                 </label>
                 <input 
                   type="text" 
-                  maxLength={10}
+                  maxLength={16}
                   name="cedulaSerialNo" 
                   value={formData.cedulaSerialNo} 
                   onChange={handleInputChange} 
@@ -1531,7 +1544,7 @@ const ApplyFranchise = () => {
                   required 
                 />
                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
-                  8–10 characters (letters &amp; numbers only)
+                  8–16 characters (letters &amp; numbers)
                 </p>
               </div>
 

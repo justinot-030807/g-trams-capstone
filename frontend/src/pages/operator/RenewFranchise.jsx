@@ -81,7 +81,7 @@ const RenewFranchise = () => {
     const { name, value } = e.target;
     let sanitized = value;
     if (name === 'ctcNo') {
-      sanitized = value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase();
+      sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 16).toUpperCase();
     }
     setFormData(prev => ({ ...prev, [name]: sanitized }));
   };
@@ -403,7 +403,7 @@ const RenewFranchise = () => {
                     </label>
                     <input 
                       type="text" 
-                      maxLength={10}
+                      maxLength={16}
                       name="ctcNo" 
                       value={formData.ctcNo}
                       onChange={handleChange} 
@@ -411,7 +411,7 @@ const RenewFranchise = () => {
                       className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 transition-all shadow-xs placeholder:text-slate-600 dark:text-slate-400 min-h-[46px]" 
                       placeholder="e.g. 08123456"
                     />
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">8–10 characters (letters &amp; numbers only)</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">8–16 characters (letters &amp; numbers)</p>
                   </div>
 
                   <div>
