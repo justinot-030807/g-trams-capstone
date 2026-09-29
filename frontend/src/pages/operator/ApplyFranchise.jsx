@@ -1,4 +1,4 @@
-﻿import localforage from 'localforage';
+import localforage from 'localforage';
 import React, { useState, useEffect, useRef } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
@@ -38,20 +38,31 @@ const POPULAR_MAKES = [
   'Yamaha YTX 125'
 ];
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 
 const ApplyFranchise = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { language } = useLanguage();
+
+  const modeParam = searchParams.get('mode');
+  const stepParam = parseInt(searchParams.get('step') || '1', 10);
+  const initialStep = (stepParam >= 1 && stepParam <= 4) ? stepParam : 1;
+
   const [myFranchises, setMyFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [formMode, setFormMode] = useState(null); 
+  const [formMode, setFormMode] = useState(() => {
+    if (modeParam === 'reapply') return 'Re-apply';
+    if (modeParam === 'renewal') return 'Renewal';
+    return 'New';
+  }); 
   const [selectedId, setSelectedId] = useState(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadPhase, setUploadPhase] = useState('');
   
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [slideDirection, setSlideDirection] = useState('forward');
   const [showChecklist, setShowChecklist] = useState(false);
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
@@ -176,8 +187,36 @@ const ApplyFranchise = () => {
         handleReapplyClick(parsed);
         localStorage.removeItem('reapply_target');
       } catch (e) { console.error(e); }
+    } else {
+      handleStartNewApplication();
     }
   }, []);
+
+  // Sync step and formMode from searchParams (handles browser / gesture back & forward)
+  useEffect(() => {
+    const s = parseInt(searchParams.get('step') || '1', 10);
+    const validS = (s >= 1 && s <= 4) ? s : 1;
+    if (validS !== currentStep) {
+      setSlideDirection(validS < currentStep ? 'backward' : 'forward');
+      if (!document.startViewTransition) {
+        setCurrentStep(validS);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        document.startViewTransition(() => {
+          setCurrentStep(validS);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+    }
+    const m = searchParams.get('mode');
+    if (m === 'reapply' && formMode !== 'Re-apply') {
+      setFormMode('Re-apply');
+    } else if (m === 'renewal' && formMode !== 'Renewal') {
+      setFormMode('Renewal');
+    } else if (m === 'new' && formMode !== 'New') {
+      setFormMode('New');
+    }
+  }, [searchParams]);
 
   const getDraftKey = () => {
     if (formMode === 'Renewal' && selectedId) {
@@ -326,7 +365,9 @@ const ApplyFranchise = () => {
           dateApplied: savedDraft.formData.dateApplied || new Date().toISOString().split('T')[0],
           todaName: loggedInToda 
         });
-        setCurrentStep(savedDraft.currentStep || 1);
+        const urlStep = parseInt(searchParams.get('step') || '0', 10);
+        const targetStep = (urlStep >= 1 && urlStep <= 4) ? urlStep : (savedDraft.currentStep || 1);
+        setCurrentStep(targetStep);
         setHasDraftRestored(true);
         setLastSavedTime(savedDraft.timeFormatted || null);
         showToast("Your saved draft has been restored.", "success");
@@ -411,16 +452,11 @@ const ApplyFranchise = () => {
     });
   };
 
-  const handleBackToMyFranchises = () => {
-    const exitFn = () => {
-      setFormMode(null);
-      setCurrentStep(1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-    if (document.startViewTransition) {
-      document.startViewTransition(exitFn);
+  const handleBackToDashboard = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
     } else {
-      exitFn();
+      navigate('/operator-dashboard');
     }
   };
 
@@ -428,7 +464,7 @@ const ApplyFranchise = () => {
     if (currentStep > 1) {
       prevStep();
     } else {
-      handleBackToMyFranchises();
+      handleBackToDashboard();
     }
   };
 
@@ -652,28 +688,44 @@ const ApplyFranchise = () => {
         return;
       }
     }
+    const nextStep = currentStep + 1;
     setSlideDirection('forward');
     if (!document.startViewTransition) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep(nextStep);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       document.startViewTransition(() => {
-        setCurrentStep(prev => prev + 1);
+        setCurrentStep(nextStep);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
+    const currentMode = (formMode || 'New').toLowerCase();
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('mode', currentMode);
+    newParams.set('step', String(nextStep));
+    navigate(`?${newParams.toString()}`);
   };
 
   const prevStep = () => {
     setSlideDirection('backward');
-    if (!document.startViewTransition) {
-      setCurrentStep(prev => Math.max(prev - 1, 1));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
     } else {
-      document.startViewTransition(() => {
-        setCurrentStep(prev => Math.max(prev - 1, 1));
+      const prev = Math.max(currentStep - 1, 1);
+      if (!document.startViewTransition) {
+        setCurrentStep(prev);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+      } else {
+        document.startViewTransition(() => {
+          setCurrentStep(prev);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+      const currentMode = (formMode || 'New').toLowerCase();
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('mode', currentMode);
+      newParams.set('step', String(prev));
+      navigate(`?${newParams.toString()}`);
     }
   };
 
@@ -754,11 +806,7 @@ const ApplyFranchise = () => {
           confirmText: 'OK',
           onConfirm: () => {
             setFeedbackModal(prev => ({ ...prev, isOpen: false }));
-            setFormMode(null);
-            setCurrentStep(1);
-            fetchMyFranchises(); 
-            setUploadedDocs({});
-            setFilePreviews({});
+            navigate('/operator-dashboard');
           }
         });
       } else {
@@ -784,9 +832,9 @@ const ApplyFranchise = () => {
   const inputClasses = "w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]";
   const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-300/80 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-600 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[46px]";
 
-  if (formMode === null) {
+  if (!isLoading && myFranchises.length >= maxAllowedUnits && formMode === 'New') {
     return (
-      <MainLayout>
+      <MainLayout hideNav={true}>
         {/* Minimalist Floating Toast Notification */}
         {toast.show && (
           <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -796,11 +844,7 @@ const ApplyFranchise = () => {
                   ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
                   : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
               }`}>
-                {toast.type === 'error' ? (
-                  <AlertCircle size={15} />
-                ) : (
-                  <CheckCircle2 size={15} />
-                )}
+                {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
@@ -811,172 +855,27 @@ const ApplyFranchise = () => {
           </div>
         )}
 
-        <header className="mb-6 flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full" />
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">My Franchises</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 font-medium">Manage your active tricycle units and pending applications.</p>
-          </div>
-        </header>
-
-        {/* Draft Resume Alert Banner */}
-        {localStorage.getItem(DRAFT_STORAGE_KEY) && myFranchises.length < maxAllowedUnits && (
-          <div className="mb-6 w-full bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <FileText size={20} />
-              </div>
-              <div>
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Unfinished Application Draft Detected</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5">You have a saved draft. You can resume editing where you left off or discard it.</p>
-              </div>
+        <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col items-center justify-center p-4 sm:p-6 transition-colors">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={28} />
             </div>
-            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem(DRAFT_STORAGE_KEY);
-                  showToast("Draft discarded successfully.", "success");
-                }}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Discard Draft
-              </button>
-              <button
-                type="button"
-                onClick={handleStartNewApplication}
-                className="bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                Resume Draft <ChevronRight size={14} />
-              </button>
-            </div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">
+              Maximum Fleet Capacity Reached
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+              You have already registered the maximum allowed limit of {maxAllowedUnits} tricycle units for your operator account in Gasan, Marinduque.
+            </p>
+            <button
+              type="button"
+              onClick={handleBackToDashboard}
+              className="w-full inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-sm cursor-pointer active:scale-95 min-h-[44px]"
+            >
+              <ArrowLeft size={16} />
+              <span>Back to Dashboard</span>
+            </button>
           </div>
-        )}
-
-        {isLoading ? (
-          <div className="w-full">
-            <GarageGridSkeleton count={2} baseDelay={50} />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-            {myFranchises.map((unit, index) => {
-              const hasRenewalDraft = localStorage.getItem(`gtrams_renewal_draft_${unit._id}`);
-
-              return (
-              <div 
-                key={unit._id} 
-                className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div>
-                  <div className="absolute top-0 right-0 w-2 h-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
-                  <h3 className="text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Unit {index + 1}</h3>
-                  <div className="text-lg sm:text-xl font-mono font-bold text-slate-900 dark:text-white mb-1">{unit.plateNo || 'PENDING PLATE'}</div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-4">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2 gap-2 flex-wrap">
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
-                      unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
-                      unit.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
-                      unit.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
-                      unit.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
-                      unit.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
-                      'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
-                    }`}>
-                      {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={13}/>}
-                      {unit.status === 'Active' && <CheckCircle size={13}/>}
-                      {unit.status === 'For Signing' ? 'For Signing' : unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
-                    </span>
-                    
-                    <div className="flex items-center gap-2">
-                      {unit.status === 'Expired' && (
-                        <button 
-                          onClick={() => handleRenewClick(unit)}
-                          className="text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-                        >
-                          <RefreshCw size={13} /> {hasRenewalDraft ? 'Continue Renewal' : 'Renew Now'}
-                        </button>
-                      )}
-
-                      {unit.status === 'Cancelled' && (
-                        <button 
-                          onClick={() => handleReapplyClick(unit)}
-                          className="text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white px-3.5 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-                        >
-                          <RefreshCw size={13} /> Fix Issues
-                        </button>
-                      )}
-
-                      {(unit.status === 'Pending' || unit.status === 'For Signing' || unit.status === 'Ready for Pickup') && (
-                        <button 
-                          onClick={() => setCancelModal({
-                            isOpen: true,
-                            unit,
-                            reason: CANCEL_REASONS[0],
-                            customReason: '',
-                            isSubmitting: false
-                          })}
-                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900/60 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 active:scale-95"
-                        >
-                          <XCircle size={13} /> Cancel
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {unit.status === 'Active' && (
-                    <div className="mt-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-3 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CalendarDays size={15} className="text-emerald-600 dark:text-emerald-400" />
-                        <div>
-                          <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Validity</p>
-                          <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">1 Year</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Expires On</p>
-                        <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">{getExpirationDate(unit.dateApplied)}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {unit.status === 'Cancelled' && (
-                    <div className="mt-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 p-3.5 rounded-2xl">
-                      <h4 className="text-red-900 dark:text-red-300 font-bold text-xs uppercase mb-1 flex items-center gap-1.5">
-                        <AlertCircle size={13} className="text-red-600 dark:text-red-400" /> Reason for Rejection
-                      </h4>
-                      <p className="text-xs font-medium text-red-700 dark:text-red-300 leading-snug">
-                        {unit.cancelReason || 'LGU did not provide a specific reason. Please visit the office.'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              );
-            })}
-
-            {myFranchises.length < maxAllowedUnits ? (
-              <button 
-                onClick={handleStartNewApplication}
-                className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[190px] group active:scale-98 cursor-pointer"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:border-[#9E2A2B]/30 dark:group-hover:border-[#D4AF37]/30 transition-all">
-                  <PlusCircle size={26} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                </div>
-                <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
-              </button>
-            ) : (
-              <div className="bg-red-50/60 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-3xl p-6 flex flex-col items-center justify-center text-red-700 dark:text-red-300 min-h-[190px] text-center">
-                <AlertCircle size={28} className="mb-2 opacity-60 text-red-600 dark:text-red-400" />
-                <span className="font-bold text-xs sm:text-sm text-red-900 dark:text-red-200">Maximum Limit Reached</span>
-                <span className="text-xs font-medium mt-1 px-4 text-red-600 dark:text-red-400 leading-snug">You have reached the maximum allowed limit of {maxAllowedUnits} registered tricycle units per operator.</span>
-              </div>
-            )}
-          </div>
-        )}
+        </div>
       </MainLayout>
     );
   }
@@ -1070,6 +969,11 @@ const ApplyFranchise = () => {
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           });
                         }
+                        const currentMode = (formMode || 'New').toLowerCase();
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.set('mode', currentMode);
+                        newParams.set('step', String(step.num));
+                        navigate(`?${newParams.toString()}`);
                       }
                     }}
                     className={`relative flex-1 flex flex-col items-center select-none ${
@@ -1232,9 +1136,10 @@ const ApplyFranchise = () => {
                 <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
                   <button 
                     type="button" 
-                    onClick={handleBackToMyFranchises}
+                    onClick={handleBackToDashboard}
                     className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
                   >
+                    <ArrowLeft size={15} />
                     <span>Back</span>
                   </button>
                   <button 

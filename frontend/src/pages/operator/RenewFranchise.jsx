@@ -1,11 +1,11 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import { 
   RefreshCw, ArrowLeft, CheckCircle2, AlertCircle, Loader2, 
-  X, FileCheck, ShieldCheck, Car, Calendar, MapPin, Hash, Sparkles
+  X, FileCheck, ShieldCheck, Car, Calendar, CalendarDays, MapPin, Hash, Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -13,6 +13,14 @@ const RenewFranchise = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { language } = useLanguage();
+
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/operator-dashboard');
+    }
+  };
 
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
 
@@ -223,7 +231,7 @@ const RenewFranchise = () => {
             <div className="flex items-center justify-between mb-2">
               <button
                 type="button"
-                onClick={() => navigate('/apply-franchise')}
+                onClick={handleBack}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-xs font-bold transition-all border border-white/15 shadow-xs cursor-pointer"
                 title="Back"
               >
@@ -266,11 +274,11 @@ const RenewFranchise = () => {
               </p>
               <button
                 type="button"
-                onClick={() => navigate('/apply-franchise')}
+                onClick={handleBack}
                 className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#9E2A2B] text-white font-bold text-xs sm:text-sm shadow-sm hover:bg-[#7A1B22] cursor-pointer active:scale-95"
               >
                 <ArrowLeft size={15} />
-                <span>Back to My Franchises</span>
+                <span>Back</span>
               </button>
             </div>
           )}
@@ -504,7 +512,7 @@ const RenewFranchise = () => {
               <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 gap-2.5">
                 <button 
                   type="button" 
-                  onClick={() => navigate('/apply-franchise')} 
+                  onClick={handleBack} 
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95 shadow-xs"
                 >
                   <span>Back</span>

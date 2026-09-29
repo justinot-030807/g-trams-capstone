@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -632,7 +632,13 @@ const OperatorDashboard = () => {
                 </div>
               </div>
               <button
-                onClick={() => navigate('/apply-franchise')}
+                onClick={() => {
+                  const attentionUnit = franchises.find(f => f.status === 'Cancelled');
+                  if (attentionUnit) {
+                    localStorage.setItem('reapply_target', JSON.stringify(attentionUnit));
+                  }
+                  navigate('/apply-franchise?mode=reapply&step=1');
+                }}
                 className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <RefreshCw size={15} />
@@ -655,7 +661,7 @@ const OperatorDashboard = () => {
               </div>
               {franchises.length < maxUnits && (
                 <button
-                  onClick={() => navigate('/apply-franchise')}
+                  onClick={() => navigate('/apply-franchise?mode=new&step=1')}
                   className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <PlusCircle size={15} />
@@ -803,7 +809,7 @@ const OperatorDashboard = () => {
           </p>
 
           <button 
-            onClick={() => navigate('/apply-franchise')} 
+            onClick={() => navigate('/apply-franchise?mode=new&step=1')} 
             className="inline-flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             <PlusCircle size={16} />
@@ -1013,7 +1019,7 @@ const OperatorDashboard = () => {
                 className="flex flex-col sm:flex-row gap-2 mt-auto pt-3 border-t border-slate-100 dark:border-slate-800"
               >
                 {unit?.status === 'Expired' ? (
-                  <button onClick={() => navigate('/apply-franchise')} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
+                  <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
                   <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                 ) : unit?.status === 'Ready for Pickup' ? (
@@ -1040,7 +1046,7 @@ const OperatorDashboard = () => {
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs">
+                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise?mode=reapply&step=1'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs">
                     <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                   </button>
                 ) : (
