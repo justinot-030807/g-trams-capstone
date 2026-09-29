@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { X, FileCheck } from 'lucide-react';
 
 const DocumentPreviewModal = ({ fullPreview, setFullPreview }) => {
@@ -15,7 +15,7 @@ const DocumentPreviewModal = ({ fullPreview, setFullPreview }) => {
       >
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
           <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-            <FileCheck size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            <FileCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             {fullPreview.title || 'Document Preview'}
           </h4>
           <button 

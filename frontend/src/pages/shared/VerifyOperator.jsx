@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShieldCheck, User, MapPin, Award, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -51,7 +51,7 @@ const VerifyOperator = () => {
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
-        <Loader2 size={48} className="text-[#7A1B22] dark:text-[#D4AF37] animate-spin mb-4" />
+        <Loader2 size={48} className="text-[#9E2A2B] dark:text-[#D4AF37] animate-spin mb-4" />
         <p className="text-slate-500 font-medium animate-pulse">Verifying LGU Credentials...</p>
       </div>
     );
@@ -80,7 +80,7 @@ const VerifyOperator = () => {
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
-        <div className="bg-[#7A1B22] rounded-t-3xl pt-6 pb-16 px-6 text-center relative overflow-hidden">
+        <div className="bg-[#9E2A2B] rounded-t-3xl pt-6 pb-16 px-6 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg p-2">
             <img src="/gasan-logo.png" alt="LGU" className="w-full h-full object-contain" />

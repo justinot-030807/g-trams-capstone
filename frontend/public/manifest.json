@@ -1,4 +1,4 @@
-{
+﻿{
   "short_name": "GTRAMS",
   "name": "GTRAMS",
   "description": "Gasan Tricycle Records and Application Management System - Municipality of Gasan, Marinduque",
@@ -27,7 +27,7 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#7A1B22",
+  "theme_color": "#9E2A2B",
   "background_color": "#ffffff",
   "categories": ["government", "productivity", "utilities"]
 }

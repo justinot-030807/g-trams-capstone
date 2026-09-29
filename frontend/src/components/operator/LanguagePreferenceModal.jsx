@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Check, ArrowRight, Globe } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
@@ -36,11 +36,11 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
       {/* Sleek Compact Card */}
       <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-5 sm:p-6 animate-spring-in z-10 overflow-hidden">
         {/* Accent Top Ribbon */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#9E2A2B] via-[#D4AF37] to-[#9E2A2B]" />
 
         {/* Compact Header */}
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
             <Globe size={18} />
           </div>
           <div className="min-w-0 flex-1">
@@ -61,7 +61,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
             onClick={() => handleSelect('fil')}
             className={`p-3 rounded-2xl border text-left transition-all duration-200 active:scale-95 cursor-pointer relative flex flex-col justify-between ${
               selectedLang === 'fil'
-                ? 'border-2 border-[#7A1B22] dark:border-[#D4AF37] bg-[#7A1B22]/5 dark:bg-[#D4AF37]/10 shadow-xs'
+                ? 'border-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 shadow-xs'
                 : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300'
             }`}
           >
@@ -69,7 +69,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
               <span className="text-2xl">🇵🇭</span>
               <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
                 selectedLang === 'fil'
-                  ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950'
+                  ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950'
                   : 'border border-slate-300 dark:border-slate-600'
               }`}>
                 {selectedLang === 'fil' && <Check size={12} className="stroke-[3]" />}
@@ -87,7 +87,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
             onClick={() => handleSelect('en')}
             className={`p-3 rounded-2xl border text-left transition-all duration-200 active:scale-95 cursor-pointer relative flex flex-col justify-between ${
               selectedLang === 'en'
-                ? 'border-2 border-[#7A1B22] dark:border-[#D4AF37] bg-[#7A1B22]/5 dark:bg-[#D4AF37]/10 shadow-xs'
+                ? 'border-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 shadow-xs'
                 : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300'
             }`}
           >
@@ -95,7 +95,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
               <span className="text-2xl">🇺🇸</span>
               <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
                 selectedLang === 'en'
-                  ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950'
+                  ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950'
                   : 'border border-slate-300 dark:border-slate-600'
               }`}>
                 {selectedLang === 'en' && <Check size={12} className="stroke-[3]" />}
@@ -112,7 +112,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
         <button
           type="button"
           onClick={handleContinue}
-          className="w-full py-3 px-4 rounded-xl font-black text-xs text-white bg-gradient-to-r from-[#7A1B22] to-[#922129] hover:from-[#5A1419] hover:to-[#7A1B22] dark:from-[#D4AF37] dark:to-[#bfa035] dark:text-slate-950 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer"
+          className="w-full py-3 px-4 rounded-xl font-black text-xs text-white bg-gradient-to-r from-[#9E2A2B] to-[#922129] hover:from-[#7A1B22] hover:to-[#9E2A2B] dark:from-[#D4AF37] dark:to-[#bfa035] dark:text-slate-950 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <span>{isFilipino ? 'Magpatuloy sa Portal' : 'Continue to Portal'}</span>
           <ArrowRight size={14} />

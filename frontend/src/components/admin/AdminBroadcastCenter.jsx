@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Radio, Send, Loader2, Megaphone, Trash2, CheckCircle, 
   AlertCircle, Users, Clock, Bold, List, AlertTriangle, Eye, EyeOff, Filter
@@ -64,7 +64,7 @@ export const renderFormattedAnnouncement = (text) => {
           const content = trimmed.replace(/^[•\-\*]\s*/, '');
           return (
             <div key={idx} className="flex items-start gap-2 pl-2">
-              <span className="text-[#7A1B22] dark:text-[#D4AF37] font-black text-sm shrink-0 leading-none mt-0.5">•</span>
+              <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-black text-sm shrink-0 leading-none mt-0.5">•</span>
               <span className="flex-1 text-slate-800 dark:text-slate-200">{parseBoldText(content)}</span>
             </div>
           );
@@ -281,7 +281,7 @@ const AdminBroadcastCenter = () => {
       {/* Broadcast Composer Section */}
       <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0 border border-[#7A1B22]/20 dark:border-[#D4AF37]/30">
+          <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
             <Megaphone size={20} />
           </div>
           <div>
@@ -298,7 +298,7 @@ const AdminBroadcastCenter = () => {
         <div className="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-[#0c101c] border border-slate-200/80 dark:border-slate-800 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <Users size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+              <Users size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
               <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
                 Audience Targeting Filters
               </span>
@@ -324,7 +324,7 @@ const AdminBroadcastCenter = () => {
               <select
                 value={targetToda}
                 onChange={(e) => setTargetToda(e.target.value)}
-                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#7A1B22]/20 transition-all cursor-pointer"
+                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B]/20 transition-all cursor-pointer"
               >
                 <option value="ALL">All TODA Associations (LGU-Wide)</option>
                 {TODA_LIST.map((toda) => (
@@ -340,7 +340,7 @@ const AdminBroadcastCenter = () => {
               <select
                 value={targetStatus}
                 onChange={(e) => setTargetStatus(e.target.value)}
-                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#7A1B22]/20 transition-all cursor-pointer"
+                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B]/20 transition-all cursor-pointer"
               >
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -401,7 +401,7 @@ const AdminBroadcastCenter = () => {
                   onClick={() => setShowPreview(!showPreview)}
                   className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer border ${
                     showPreview
-                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 border-[#7A1B22] dark:border-[#D4AF37]'
+                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 border-[#9E2A2B] dark:border-[#D4AF37]'
                       : 'bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/80'
                   }`}
                   title="Toggle announcement preview"
@@ -429,7 +429,7 @@ const AdminBroadcastCenter = () => {
                 rows={4}
                 placeholder="Type your official announcement here... (e.g. Please be reminded of the upcoming annual franchise inspection at the Municipal Hall grounds.)"
                 required
-                className="w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-[#0c101c] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 transition-all resize-none leading-relaxed shadow-2xs"
+                className="w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-[#0c101c] focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/10 dark:focus:ring-[#D4AF37]/20 transition-all resize-none leading-relaxed shadow-2xs"
               />
             )}
           </div>
@@ -442,7 +442,7 @@ const AdminBroadcastCenter = () => {
             <button
               type="submit"
               disabled={!broadcastMessage.trim() || isBroadcasting}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer order-1 sm:order-2"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer order-1 sm:order-2"
             >
               {isBroadcasting ? (
                 <>
@@ -464,7 +464,7 @@ const AdminBroadcastCenter = () => {
       <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <Clock size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            <Clock size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
               Broadcast History ({announcements.length})
             </h3>
@@ -494,11 +494,11 @@ const AdminBroadcastCenter = () => {
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="w-2 h-2 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
+                    <span className="w-2 h-2 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                       {ann.sender?.name || 'Municipal Administrator'}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] font-bold text-[10px] uppercase border border-[#7A1B22]/20 dark:border-[#D4AF37]/30">
+                    <span className="px-1.5 py-0.5 rounded bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-[10px] uppercase border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
                       Official Broadcast
                     </span>
                     {(() => {

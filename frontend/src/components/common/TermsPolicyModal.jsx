@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   ShieldCheck, 
   X, 
@@ -182,7 +182,7 @@ const TermsPolicyModal = ({
       <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-card-entrance">
         
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] p-5 sm:p-6 text-white shrink-0">
+        <div className="relative bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] p-5 sm:p-6 text-white shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 p-1.5 flex items-center justify-center shrink-0">
@@ -228,7 +228,7 @@ const TermsPolicyModal = ({
               <div key={section.id} className={sIdx > 0 ? "pt-6 space-y-4" : "space-y-4"}>
                 {/* Section Header */}
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
                     <SectionIcon size={18} />
                   </div>
                   <div>
@@ -249,7 +249,7 @@ const TermsPolicyModal = ({
                       className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-1 hover:border-[#D4AF37]/50 transition-colors"
                     >
                       <h5 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] shrink-0" />
                         {pt.title}
                       </h5>
                       <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-normal pl-3.5">
@@ -264,7 +264,7 @@ const TermsPolicyModal = ({
 
           {/* Municipal Helpdesk Banner */}
           <div className="pt-6">
-            <div className="p-4 rounded-2xl bg-[#7A1B22]/5 dark:bg-[#7A1B22]/15 border border-[#7A1B22]/15 dark:border-[#7A1B22]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="p-4 rounded-2xl bg-[#9E2A2B]/5 dark:bg-[#9E2A2B]/15 border border-[#9E2A2B]/15 dark:border-[#9E2A2B]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <div>
                 <p className="font-bold text-slate-900 dark:text-white">Office of the Vice Mayor Extension &amp; MTFRB Municipal Office</p>
                 <p className="text-slate-500 dark:text-slate-400 mt-0.5">Gasan Municipal Hall, Ground Floor • ovm-extension@gasan.ph</p>
@@ -273,7 +273,7 @@ const TermsPolicyModal = ({
                 href="https://gasan.ph" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#7A1B22] hover:bg-[#5a1419] text-white font-bold transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#9E2A2B] hover:bg-[#5a1419] text-white font-bold transition-colors shrink-0"
               >
                 <span>Visit gasan.ph</span>
                 <ExternalLink size={12} />
@@ -298,7 +298,7 @@ const TermsPolicyModal = ({
                 onAccept();
                 onClose();
               }}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white font-bold text-xs uppercase tracking-wider hover:shadow-md transition-all cursor-pointer min-h-[44px]"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#9E2A2B] to-[#7A1B22] text-white font-bold text-xs uppercase tracking-wider hover:shadow-md transition-all cursor-pointer min-h-[44px]"
             >
               {current.acceptBtn}
             </button>

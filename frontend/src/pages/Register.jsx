@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
@@ -45,8 +45,8 @@ const Register = () => {
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#120204';
-    document.body.style.backgroundColor = '#120204';
+    document.documentElement.style.backgroundColor = '#1A0B0E';
+    document.body.style.backgroundColor = '#1A0B0E';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -274,7 +274,7 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
 
   const getStrengthLabel = () => {
     if (passwordStrength === 0) return { label: 'Empty', color: 'text-slate-600 dark:text-slate-400', bar: 'w-0 bg-slate-200' };
@@ -285,7 +285,7 @@ const Register = () => {
   };
 
   return (
-    <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
+    <div className="relative w-full bg-[#1A0B0E] flex flex-col overflow-x-hidden select-none">
       
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -325,7 +325,7 @@ const Register = () => {
               <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
                 <p>{error}</p>
                 {error.includes('ALREADY EXISTS') && (
-                  <Link to="/login" className="inline-block mt-1 font-black text-[#7A1B22] underline tracking-wider">
+                  <Link to="/login" className="inline-block mt-1 font-black text-[#9E2A2B] underline tracking-wider">
                     CLICK HERE TO LOG IN →
                   </Link>
                 )}
@@ -370,7 +370,7 @@ const Register = () => {
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
                     <div className="relative">
                       <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22]">
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B]">
                         {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
                     </div>
@@ -379,7 +379,7 @@ const Register = () => {
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
                     <div className="relative">
                       <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22]">
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B]">
                         {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
                     </div>
@@ -405,10 +405,10 @@ const Register = () => {
                     id="terms" 
                     checked={termsAccepted} 
                     onChange={() => setTermsAccepted(!termsAccepted)} 
-                    className="mt-0.5 accent-[#7A1B22] w-3.5 h-3.5 rounded cursor-pointer"
+                    className="mt-0.5 accent-[#9E2A2B] w-3.5 h-3.5 rounded cursor-pointer"
                   />
                   <label htmlFor="terms" className="text-xs text-slate-600 leading-tight cursor-pointer font-medium uppercase tracking-tight">
-                    I ACCEPT THE <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#7A1B22] hover:underline">TERMS & PRIVACY POLICY</button>.
+                    I ACCEPT THE <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#9E2A2B] hover:underline">TERMS & PRIVACY POLICY</button>.
                   </label>
                 </div>
                 
@@ -417,7 +417,7 @@ const Register = () => {
                     type="submit" 
                     disabled={isLoading}
                     className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider cursor-pointer ${
-                      isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/25 hover:shadow-[#7A1B22]/50 hover:brightness-110 active:scale-[0.98]'
+                      isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] shadow-[#9E2A2B]/25 hover:shadow-[#9E2A2B]/50 hover:brightness-110 active:scale-[0.98]'
                     }`}
                   >
                     <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000 ease-out pointer-events-none" />
@@ -477,7 +477,7 @@ const Register = () => {
                     value={otpCode} 
                     onChange={(e) => setOtpCode(e.target.value)} 
                     required 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center text-xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 shadow-inner" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center text-xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 shadow-inner" 
                     placeholder="000000" 
                   />
                 </div>
@@ -494,14 +494,14 @@ const Register = () => {
                     type="button" 
                     onClick={handleResendOTP} 
                     disabled={resendCooldown > 0 || isLoading}
-                    className="text-xs font-bold text-[#7A1B22] hover:underline disabled:opacity-50 disabled:no-underline uppercase tracking-wider cursor-pointer"
+                    className="text-xs font-bold text-[#9E2A2B] hover:underline disabled:opacity-50 disabled:no-underline uppercase tracking-wider cursor-pointer"
                   >
                     {resendCooldown > 0 ? `RESEND IN ${resendCooldown}S` : 'RESEND CODE'}
                   </button>
                   <button 
                     type="button" 
                     onClick={() => setStep(1)} 
-                    className="text-xs font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider cursor-pointer"
+                    className="text-xs font-bold text-slate-500 hover:text-[#9E2A2B] transition-colors uppercase tracking-wider cursor-pointer"
                   >
                     ← CHANGE INFO
                   </button>
@@ -512,7 +512,7 @@ const Register = () => {
             {step === 1 && (
               <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-                  ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#7A1B22] hover:underline">LOG IN HERE &gt;</Link>
+                  ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#9E2A2B] hover:underline">LOG IN HERE &gt;</Link>
                 </p>
               </div>
             )}

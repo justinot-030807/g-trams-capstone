@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -37,8 +37,8 @@ const Home = () => {
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#120204';
-    document.body.style.backgroundColor = '#120204';
+    document.documentElement.style.backgroundColor = '#1A0B0E';
+    document.body.style.backgroundColor = '#1A0B0E';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -66,7 +66,7 @@ const Home = () => {
   };
 
   return (
-    <div className="relative w-full bg-[#120204] text-white flex flex-col overflow-x-hidden select-none">
+    <div className="relative w-full bg-[#1A0B0E] text-white flex flex-col overflow-x-hidden select-none">
       
       {/* Dynamic Animated Ambient Background with Official Gasan Seal */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -113,7 +113,7 @@ const Home = () => {
               {/* Sign In Button */}
               <Link
                 to="/login"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#7A1B22] via-[#9B222B] to-[#5A1419] text-white font-bold text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(155,34,43,0.65)] hover:shadow-[0_15px_30px_-5px_rgba(155,34,43,0.85)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-white/10 hover:border-white/20 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#9E2A2B] via-[#9B222B] to-[#7A1B22] text-white font-bold text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(155,34,43,0.65)] hover:shadow-[0_15px_30px_-5px_rgba(155,34,43,0.85)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-white/10 hover:border-white/20 cursor-pointer"
               >
                 <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[260%] transition-transform duration-1000 ease-out pointer-events-none" />
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
@@ -125,10 +125,10 @@ const Home = () => {
               {/* Create Account Button (Solid Yellow) */}
               <Link
                 to="/register"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#120204] font-black text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(212,175,55,0.45)] hover:shadow-[0_15px_30px_-5px_rgba(212,175,55,0.65)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#1A0B0E] font-black text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(212,175,55,0.45)] hover:shadow-[0_15px_30px_-5px_rgba(212,175,55,0.65)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
               >
                 <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <UserPlus size={14} className="text-[#120204]" />
+                  <UserPlus size={14} className="text-[#1A0B0E]" />
                 </div>
                 <span>Create Account</span>
               </Link>
@@ -139,7 +139,7 @@ const Home = () => {
             <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-12 sm:mt-16 w-full text-left">
               
               <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
                   <FileText size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-white">Online Application</h3>
@@ -149,7 +149,7 @@ const Home = () => {
               </motion.div>
 
               <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
                   <ShieldCheck size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-white">TODA Masterlist</h3>
@@ -159,7 +159,7 @@ const Home = () => {
               </motion.div>
 
               <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
                   <Clock size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-white">Claim Stub &amp; Tracking</h3>
@@ -169,7 +169,7 @@ const Home = () => {
               </motion.div>
 
               <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#7A1B22]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
                   <Award size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-white">Official Compliance</h3>

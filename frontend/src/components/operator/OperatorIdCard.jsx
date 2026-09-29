@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
 import { ShieldCheck, MapPin, Phone, Award, User, RefreshCw, Smartphone } from 'lucide-react';
@@ -31,7 +31,7 @@ const OperatorIdCard = ({ user }) => {
           style={{ backfaceVisibility: 'hidden' }}
         >
           {/* Header */}
-          <div className="bg-[#7A1B22] p-4 flex items-center justify-between border-b-4 border-[#D4AF37]">
+          <div className="bg-[#9E2A2B] p-4 flex items-center justify-between border-b-4 border-[#D4AF37]">
             <div className="flex items-center gap-2">
               <ShieldCheck className="text-[#D4AF37]" size={24} />
               <div>

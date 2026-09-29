@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import MainLayout from '../../components/MainLayout';
 import { Users, GraduationCap, Code, Server, ShieldCheck, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +30,7 @@ const About = () => {
         </button>
 
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-          <div className="bg-[#7A1B22] dark:bg-slate-800 text-white p-8 sm:p-10 text-center relative overflow-hidden">
+          <div className="bg-[#9E2A2B] dark:bg-slate-800 text-white p-8 sm:p-10 text-center relative overflow-hidden">
             <GraduationCap size={120} className="absolute -right-6 -top-6 text-white/10 rotate-12 pointer-events-none" />
             <div className="relative z-10">
               <h1 className="text-3xl sm:text-4xl font-black mb-3">About GTRAMS</h1>

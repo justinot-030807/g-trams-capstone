@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wrench, RefreshCw, ShieldAlert, Phone, Mail, ArrowRight, Lock } from 'lucide-react';
 
@@ -43,11 +43,11 @@ const MaintenanceMode = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#120204] flex flex-col justify-between items-center px-4 py-8 sm:p-10 select-none relative overflow-hidden text-white">
+    <div className="min-h-[100dvh] w-full bg-[#1A0B0E] flex flex-col justify-between items-center px-4 py-8 sm:p-10 select-none relative overflow-hidden text-white">
       
       {/* Dynamic Background Glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#7A1B22]/40 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#9E2A2B]/40 rounded-full blur-[100px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#D4AF37]/20 rounded-full blur-[110px]" />
       </div>
 
@@ -84,7 +84,7 @@ const MaintenanceMode = () => {
 
         <div className="my-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-left text-xs text-slate-600 space-y-1.5">
           <p className="font-bold text-slate-800 flex items-center gap-2">
-            <Lock size={14} className="text-[#7A1B22]" /> Public & Operator Access Paused
+            <Lock size={14} className="text-[#9E2A2B]" /> Public & Operator Access Paused
           </p>
           <p className="text-xs text-slate-500 leading-snug">
             Franchise submissions, renewals, and member validation are temporarily locked to ensure data integrity during maintenance.
@@ -104,7 +104,7 @@ const MaintenanceMode = () => {
           <button
             onClick={checkStatus}
             disabled={isChecking}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#7A1B22] text-white py-3 px-4 rounded-xl text-xs font-bold hover:bg-[#5A1419] active:scale-95 transition-all shadow-md"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#9E2A2B] text-white py-3 px-4 rounded-xl text-xs font-bold hover:bg-[#7A1B22] active:scale-95 transition-all shadow-md"
           >
             <RefreshCw size={15} className={isChecking ? 'animate-spin' : ''} />
             {isChecking ? 'Checking Server...' : 'Check Status'}
@@ -121,11 +121,11 @@ const MaintenanceMode = () => {
         {/* Hotline */}
         <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-slate-600 dark:text-slate-400 font-medium">
           <span className="flex items-center gap-1">
-            <Phone size={12} className="text-[#7A1B22]" /> (042) 342-1234
+            <Phone size={12} className="text-[#9E2A2B]" /> (042) 342-1234
           </span>
           <span className="hidden sm:inline">•</span>
           <span className="flex items-center gap-1">
-            <Mail size={12} className="text-[#7A1B22]" /> Office of the Vice Mayor Extension@gasan.ph
+            <Mail size={12} className="text-[#9E2A2B]" /> Office of the Vice Mayor Extension@gasan.ph
           </span>
         </div>
 

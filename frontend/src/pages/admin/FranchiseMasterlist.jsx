@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, CheckCircle2,
@@ -277,7 +277,7 @@ const FranchiseMasterlist = () => {
             {/* Modal Header */}
             <div className="sticky top-0 bg-white dark:bg-[#111827] border-b border-slate-100 dark:border-slate-800 p-5 sm:p-6 flex justify-between items-center z-20 rounded-t-3xl">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center font-bold">
                   <Car size={20} />
                 </div>
                 <div>
@@ -310,7 +310,7 @@ const FranchiseMasterlist = () => {
 
               {/* TIMELINE & DATES CARD */}
               <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5">
-                <h3 className="text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <h3 className="text-xs font-black text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <CalendarDays size={14} /> Registration Timeline & Validity
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -454,7 +454,7 @@ const FranchiseMasterlist = () => {
                 <button
                   type="button"
                   onClick={() => setPrintMtopUnit(selectedFranchise)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#7A1B22] hover:bg-[#5A1419] text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95"
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95"
                 >
                   <Printer size={14} /> Print Official MTOP
                 </button>
@@ -472,7 +472,7 @@ const FranchiseMasterlist = () => {
       )}
 
       {/* HEADER RIBBON */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all print-hide">
+      <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all print-hide">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <CalendarDays size={20} className="text-[#D4AF37]" />
@@ -492,7 +492,7 @@ const FranchiseMasterlist = () => {
 
         <button 
           onClick={() => window.print()}
-          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#7A1B22] text-white hover:bg-[#5A1419] rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 border border-white/10"
+          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#9E2A2B] text-white hover:bg-[#7A1B22] rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 border border-white/10"
         >
           <Printer size={16} /> Print / Save as PDF
         </button>
@@ -504,7 +504,7 @@ const FranchiseMasterlist = () => {
         {/* PRINT HEADER */}
         <div className="hidden print:block text-center border-b-2 border-black pb-4 mb-4 pt-4">
           <p className="text-xs font-bold uppercase tracking-wider">Municipality of Gasan</p>
-          <p className="text-lg font-black uppercase mt-0.5 text-[#7A1B22]">Franchise Masterlist Report</p>
+          <p className="text-lg font-black uppercase mt-0.5 text-[#9E2A2B]">Franchise Masterlist Report</p>
           <p className="text-xs text-slate-500 font-medium mt-1">Fiscal Year {currentFiscalYear} | Tab: {activeTab.toUpperCase()}</p>
         </div>
 
@@ -513,7 +513,7 @@ const FranchiseMasterlist = () => {
           <button 
             onClick={() => handleTabChange('active')}
             className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-              activeTab === 'active' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'active' ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={18} /> Master Records
@@ -538,7 +538,7 @@ const FranchiseMasterlist = () => {
               placeholder="Search Name, Plate, Motor, Chassis..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 transition-all"
             />
           </div>
           
@@ -551,7 +551,7 @@ const FranchiseMasterlist = () => {
                 onClick={() => setIsFilterDropdownOpen(prev => !prev)}
                 className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border flex items-center justify-between gap-2.5 transition-all shadow-xs ${
                   selectedStatuses.length > 0 
-                    ? 'bg-[#7A1B22] text-white border-[#7A1B22]' 
+                    ? 'bg-[#9E2A2B] text-white border-[#9E2A2B]' 
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
@@ -559,7 +559,7 @@ const FranchiseMasterlist = () => {
                   <Filter size={15} className={selectedStatuses.length > 0 ? 'text-white' : 'text-slate-500 dark:text-slate-400'} />
                   <span>Status Filter</span>
                   {selectedStatuses.length > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-white text-[#7A1B22] text-xs font-black flex items-center justify-center">
+                    <span className="w-5 h-5 rounded-full bg-white text-[#9E2A2B] text-xs font-black flex items-center justify-center">
                       {selectedStatuses.length}
                     </span>
                   )}
@@ -575,7 +575,7 @@ const FranchiseMasterlist = () => {
                       <button
                         type="button"
                         onClick={() => { setSelectedStatuses([]); setCurrentPage(1); }}
-                        className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                        className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline"
                       >
                         Reset
                       </button>
@@ -597,7 +597,7 @@ const FranchiseMasterlist = () => {
                         >
                           <div className="flex items-center gap-2.5">
                             {isSelected ? (
-                              <CheckSquare size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                              <CheckSquare size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                             ) : (
                               <Square size={16} className="text-slate-300 dark:text-slate-500" />
                             )}
@@ -639,7 +639,7 @@ const FranchiseMasterlist = () => {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                         pageSize === size 
-                          ? 'bg-[#7A1B22] text-white' 
+                          ? 'bg-[#9E2A2B] text-white' 
                           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -679,13 +679,13 @@ const FranchiseMasterlist = () => {
               return (
                 <span
                   key={statusVal}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 text-[#7A1B22] dark:text-[#D4AF37] text-xs font-bold shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/40 text-[#9E2A2B] dark:text-[#D4AF37] text-xs font-bold shadow-xs"
                 >
                   <span>Status: <strong className="font-black">{matchedOption ? matchedOption.label : statusVal}</strong></span>
                   <button
                     type="button"
                     onClick={() => removeSingleStatus(statusVal)}
-                    className="p-0.5 hover:bg-[#7A1B22]/20 rounded-md text-[#7A1B22] dark:text-[#D4AF37] hover:text-red-600 transition-colors"
+                    className="p-0.5 hover:bg-[#9E2A2B]/20 rounded-md text-[#9E2A2B] dark:text-[#D4AF37] hover:text-red-600 transition-colors"
                   >
                     <X size={13} />
                   </button>
@@ -696,7 +696,7 @@ const FranchiseMasterlist = () => {
             <button
               type="button"
               onClick={clearAllFilters}
-              className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] flex items-center gap-1 ml-1 cursor-pointer transition-colors"
+              className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] flex items-center gap-1 ml-1 cursor-pointer transition-colors"
             >
               <RotateCcw size={12} /> Clear all
             </button>
@@ -787,7 +787,7 @@ const FranchiseMasterlist = () => {
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-xs active:scale-95 cursor-pointer"
                               title="Tingnan ang kumpletong detalye"
                             >
-                              <Eye size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Details
+                              <Eye size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Details
                             </button>
 
                             {/* PRINT MTOP BUTTON (For Active, For Signing, or Ready for Pickup) */}
@@ -798,7 +798,7 @@ const FranchiseMasterlist = () => {
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all shadow-xs active:scale-95 cursor-pointer"
                                 title="Print Official MTOP Certificate"
                               >
-                                <Printer size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> MTOP
+                                <Printer size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> MTOP
                               </button>
                             )}
 
@@ -838,7 +838,7 @@ const FranchiseMasterlist = () => {
         {/* PAGINATION CONTROLS */}
         <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-[#0c101c]/80 flex flex-col sm:row justify-between items-center gap-4 print-hide">
           <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-            Showing <span className="text-slate-900 dark:text-white font-black">{startRecordIndex}</span> to <span className="text-slate-900 dark:text-white font-black">{endRecordIndex}</span> of <span className="text-[#7A1B22] dark:text-[#D4AF37] font-black">{paginationMeta.totalRecords}</span> entries
+            Showing <span className="text-slate-900 dark:text-white font-black">{startRecordIndex}</span> to <span className="text-slate-900 dark:text-white font-black">{endRecordIndex}</span> of <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-black">{paginationMeta.totalRecords}</span> entries
           </p>
 
           <div className="flex items-center gap-1.5">
@@ -859,7 +859,7 @@ const FranchiseMasterlist = () => {
               <ChevronLeft size={14} /> Prev
             </button>
 
-            <span className="px-3 py-1 text-xs font-black text-[#7A1B22] dark:text-[#D4AF37] bg-white dark:bg-slate-800 border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 rounded-xl shadow-xs">
+            <span className="px-3 py-1 text-xs font-black text-[#9E2A2B] dark:text-[#D4AF37] bg-white dark:bg-slate-800 border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/40 rounded-xl shadow-xs">
               Page {paginationMeta.currentPage} of {paginationMeta.totalPages}
             </span>
 
@@ -927,7 +927,7 @@ const FranchiseMasterlist = () => {
                 disabled={isProcessing}
                 onClick={confirmAction}
                 className={`flex-1 py-3 rounded-xl font-bold text-white transition-all text-xs shadow-sm flex justify-center items-center gap-2 ${
-                  confirmModal.data.action === 'Archive' ? 'bg-[#7A1B22] hover:bg-[#5A1419]' : 'bg-blue-600 hover:bg-blue-700'
+                  confirmModal.data.action === 'Archive' ? 'bg-[#9E2A2B] hover:bg-[#7A1B22]' : 'bg-blue-600 hover:bg-blue-700'
                 } disabled:opacity-80 disabled:cursor-not-allowed`}
               >
                 {isProcessing && <Loader2 size={15} className="animate-spin" />}

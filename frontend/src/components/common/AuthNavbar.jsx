@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -74,7 +74,7 @@ const AuthNavbar = () => {
           {currentPath !== '/login' && (
             <Link
               to="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7A1B22] via-[#9B222B] to-[#5A1419] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer border border-white/10"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#9E2A2B] via-[#9B222B] to-[#7A1B22] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer border border-white/10"
             >
               <LogIn size={13} className="text-[#D4AF37]" />
               <span>Sign In</span>
@@ -84,9 +84,9 @@ const AuthNavbar = () => {
           {currentPath !== '/register' && (
             <Link
               to="/register"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-[#120204] bg-[#D4AF37] hover:bg-[#E5C158] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-[#1A0B0E] bg-[#D4AF37] hover:bg-[#E5C158] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer"
             >
-              <UserPlus size={13} className="text-[#120204]" />
+              <UserPlus size={13} className="text-[#1A0B0E]" />
               <span>Register</span>
             </Link>
           )}
@@ -156,7 +156,7 @@ const AuthNavbar = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
                       currentPath === '/' 
-                        ? 'bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white font-bold shadow-md' 
+                        ? 'bg-gradient-to-r from-[#9E2A2B] to-[#7A1B22] text-white font-bold shadow-md' 
                         : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
                     }`}
                   >
@@ -172,7 +172,7 @@ const AuthNavbar = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
                       currentPath === '/login' 
-                        ? 'bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white font-bold shadow-md' 
+                        ? 'bg-gradient-to-r from-[#9E2A2B] to-[#7A1B22] text-white font-bold shadow-md' 
                         : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
                     }`}
                   >
@@ -188,7 +188,7 @@ const AuthNavbar = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
                       currentPath === '/register' 
-                        ? 'bg-gradient-to-r from-[#7A1B22] to-[#5A1419] text-white font-bold shadow-md' 
+                        ? 'bg-gradient-to-r from-[#9E2A2B] to-[#7A1B22] text-white font-bold shadow-md' 
                         : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
                     }`}
                   >

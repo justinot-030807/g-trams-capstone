@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+﻿import React, { useRef, useEffect, useState } from 'react';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, Award, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -147,7 +147,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             {/* Print MTOP Button */}
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#922029] active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
               title="Print or Save as PDF (1 Page)"
             >
               <Printer size={14} />
@@ -177,7 +177,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           <div 
             ref={certRef}
             id="printable-mtop-certificate" 
-            className="relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] min-h-[880px] flex flex-col justify-between shrink-0 rounded-2xl shadow-2xl p-7 sm:p-9 md:p-10 border-4 sm:border-8 border-double border-[#7A1B22] overflow-hidden print:border-[4px] print:border-double print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full"
+            className="relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] min-h-[880px] flex flex-col justify-between shrink-0 rounded-2xl shadow-2xl p-7 sm:p-9 md:p-10 border-4 sm:border-8 border-double border-[#9E2A2B] overflow-hidden print:border-[4px] print:border-double print:border-[#9E2A2B] print:shadow-none print:m-0 print:max-w-full"
             style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
           >
           {/* Print Stylesheet - Precision 1-Page Fit on Long Bond Paper (8.5 x 13 in) */}
@@ -237,7 +237,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 padding: 22px 26px !important;
                 box-shadow: none !important;
                 background: #FFFDF9 !important;
-                border: 4px double #7A1B22 !important;
+                border: 4px double #9E2A2B !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 page-break-after: avoid !important;
@@ -271,7 +271,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           {/* TOP SECTION: Header, Preamble, Grantee Box */}
           <div>
             {/* Certificate Header */}
-            <div className="text-center relative z-10 border-b-2 border-[#7A1B22]/40 pb-3 mb-3">
+            <div className="text-center relative z-10 border-b-2 border-[#9E2A2B]/40 pb-3 mb-3">
               <div className="flex items-center justify-center gap-4 mb-2">
                 <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden shrink-0 border-2 border-[#D4AF37] shadow-xs">
                   <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-cover" />
@@ -279,7 +279,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 <div className="text-center">
                   <p className="text-xs uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
                   <p className="text-xs uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
-                  <h2 className="text-lg sm:text-xl font-black text-[#7A1B22] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
+                  <h2 className="text-lg sm:text-xl font-black text-[#9E2A2B] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
                   <p className="text-[9.5px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Municipal Vice Mayor / Sangguniang Bayan</p>
                 </div>
                 <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden shrink-0 border-2 border-[#D4AF37] shadow-xs">
@@ -291,10 +291,10 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-wide uppercase font-serif">
                   MOTORIZED TRICYCLE OPERATOR'S PERMIT
                 </h1>
-                <p className="text-xs font-bold tracking-widest text-[#7A1B22] uppercase font-sans mt-0.5">
+                <p className="text-xs font-bold tracking-widest text-[#9E2A2B] uppercase font-sans mt-0.5">
                   MUNICIPAL (TRICYCLE) FRANCHISE
                 </p>
-                <div className="inline-block mt-1.5 px-4 py-1 bg-amber-50 border border-amber-300 rounded text-xs sm:text-sm font-mono font-bold text-[#7A1B22] shadow-2xs">
+                <div className="inline-block mt-1.5 px-4 py-1 bg-amber-50 border border-amber-300 rounded text-xs sm:text-sm font-mono font-bold text-[#9E2A2B] shadow-2xs">
                   PERMIT NO: {mtopNumber}
                 </div>
               </div>
@@ -302,7 +302,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
 
             {/* Grant Preamble */}
             <div className="relative z-10 text-xs leading-relaxed text-slate-800 mb-3 text-justify font-serif">
-              <p className="font-bold text-xs sm:text-sm text-[#7A1B22] mb-1">TO WHOM IT MAY CONCERN:</p>
+              <p className="font-bold text-xs sm:text-sm text-[#9E2A2B] mb-1">TO WHOM IT MAY CONCERN:</p>
               <p>
                 Pursuant to the provisions of Section 447 (a)(3)(vi) of <strong>Republic Act No. 7160</strong> (Local Government Code of 1991), 
                 and existing Municipal Ordinances and Franchising Regulations of the Municipality of Gasan, Marinduque, authority and permission is hereby granted to:
@@ -322,7 +322,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                 </div>
                 <div>
                   <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Classification:</span>
-                  <span className="font-bold text-[#7A1B22] text-xs sm:text-sm">{unit.applicationType === 'Renewal' ? 'RENEWAL' : 'NEW APPLICATION'}</span>
+                  <span className="font-bold text-[#9E2A2B] text-xs sm:text-sm">{unit.applicationType === 'Renewal' ? 'RENEWAL' : 'NEW APPLICATION'}</span>
                 </div>
                 <div>
                   <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Authorized Route &amp; Zone:</span>
@@ -355,7 +355,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                     <td className="border border-slate-300 py-2 px-3">{unit.made || 'N/A'}</td>
                     <td className="border border-slate-300 py-2 px-3">{unit.motorNo || 'N/A'}</td>
                     <td className="border border-slate-300 py-2 px-3">{unit.chassisNo || 'N/A'}</td>
-                    <td className="border border-slate-300 py-2 px-3 text-[#7A1B22] font-black">{unit.plateNo || 'PENDING'}</td>
+                    <td className="border border-slate-300 py-2 px-3 text-[#9E2A2B] font-black">{unit.plateNo || 'PENDING'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -363,7 +363,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
 
             {/* Standard 7 Legal Terms and Conditions (Appendix C) */}
             <div className="relative z-10 mb-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200">
-              <p className="text-xs font-sans font-black uppercase tracking-wider text-[#7A1B22] mb-1.5">
+              <p className="text-xs font-sans font-black uppercase tracking-wider text-[#9E2A2B] mb-1.5">
                 TERMS AND CONDITIONS (APPENDIX C - MUNICIPAL FRANCHISE):
               </p>
               <ol className="list-decimal list-outside pl-4 space-y-1 text-[9.5px] sm:text-xs text-slate-700 leading-snug">
@@ -392,7 +392,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
               </div>
               <div>
                 <span className="text-[9.5px] font-sans font-bold text-slate-500 uppercase block">Expiration Date:</span>
-                <span className="font-black text-[#7A1B22] text-xs sm:text-sm">{expiryDate}</span>
+                <span className="font-black text-[#9E2A2B] text-xs sm:text-sm">{expiryDate}</span>
               </div>
             </div>
 

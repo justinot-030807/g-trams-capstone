@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Camera, Upload, RotateCw, Check, X, RefreshCw, 
   Sparkles, FlipHorizontal, ArrowLeft,
@@ -291,7 +291,7 @@ const DocumentScannerModal = ({
         {/* TOP BAR */}
         <div className="px-4 sm:px-5 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#7A1B22] flex items-center justify-center text-[#D4AF37] font-bold text-xs shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] flex items-center justify-center text-[#D4AF37] font-bold text-xs shrink-0">
               <Camera size={16} />
             </div>
             <div className="min-w-0">
@@ -356,7 +356,7 @@ const DocumentScannerModal = ({
                 <button
                   type="button"
                   onClick={() => galleryInputRef.current?.click()}
-                  className="px-4 py-2.5 bg-[#7A1B22] hover:bg-[#8E2028] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
+                  className="px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#8E2028] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
                 >
                   <Upload size={15} /> Upload from Gallery / Files
                 </button>
@@ -429,10 +429,10 @@ const DocumentScannerModal = ({
                 type="button"
                 onClick={handleShutterCapture}
                 disabled={!isCameraReady && !cameraError}
-                className="w-20 h-20 rounded-full bg-white p-1 shadow-2xl active:scale-90 transition-transform cursor-pointer flex items-center justify-center ring-4 ring-[#7A1B22]/50 hover:ring-[#7A1B22]"
+                className="w-20 h-20 rounded-full bg-white p-1 shadow-2xl active:scale-90 transition-transform cursor-pointer flex items-center justify-center ring-4 ring-[#9E2A2B]/50 hover:ring-[#9E2A2B]"
                 title="Take Document Photo"
               >
-                <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#7A1B22] to-[#99222B] border-3 border-white flex items-center justify-center text-white">
+                <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#9E2A2B] to-[#99222B] border-3 border-white flex items-center justify-center text-white">
                   <Camera size={26} />
                 </div>
               </button>
@@ -476,7 +476,7 @@ const DocumentScannerModal = ({
                 {/* Status Badge */}
                 <div className={`absolute top-3 left-3 font-black text-[10px] uppercase px-2.5 py-1 rounded-lg shadow-md tracking-wider flex items-center gap-1.5 ${
                   isEnhanced 
-                    ? 'bg-[#7A1B22] text-[#D4AF37] border border-[#D4AF37]/50' 
+                    ? 'bg-[#9E2A2B] text-[#D4AF37] border border-[#D4AF37]/50' 
                     : 'bg-slate-800 text-slate-200 border border-slate-700'
                 }`}>
                   <Sparkles size={12} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-600 dark:text-slate-400'} />
@@ -496,7 +496,7 @@ const DocumentScannerModal = ({
                   onClick={() => setIsEnhanced(prev => !prev)}
                   className={`flex-1 py-3 px-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm border-2 active:scale-95 ${
                     isEnhanced
-                      ? 'bg-gradient-to-r from-[#7A1B22] to-[#99222B] text-white border-[#D4AF37] shadow-[#7A1B22]/30'
+                      ? 'bg-gradient-to-r from-[#9E2A2B] to-[#99222B] text-white border-[#D4AF37] shadow-[#9E2A2B]/30'
                       : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                   }`}
                   title={isEnhanced ? 'CamScanner Magic Color Active (Tap to view original)' : 'Tap to enhance document'}

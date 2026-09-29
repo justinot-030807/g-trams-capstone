@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   Sliders, User, Lock, Camera, Save, Loader2, 
@@ -484,7 +484,7 @@ const AdminSettings = () => {
     showToast(nextVal ? 'Toast notifications enabled' : 'Toast notifications silenced', 'success');
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 dark:focus:ring-[#D4AF37]/20 transition-all shadow-xs";
+  const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 dark:focus:ring-[#D4AF37]/20 transition-all shadow-xs";
 
   return (
     <MainLayout>
@@ -517,7 +517,7 @@ const AdminSettings = () => {
       )}
 
       {/* Header Ribbon */}
-      <div className="bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 mb-6 text-white shadow-lg relative overflow-hidden border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
+      <div className="bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 mb-6 text-white shadow-lg relative overflow-hidden border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all">
         <div className="relative z-10 flex items-center gap-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <Sliders size={20} className="text-[#D4AF37]" />
@@ -541,7 +541,7 @@ const AdminSettings = () => {
               onClick={() => setActiveTab('system')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'system'
-                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  ? 'bg-white dark:bg-[#161f30] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -553,7 +553,7 @@ const AdminSettings = () => {
               onClick={() => setActiveTab('account')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'account'
-                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  ? 'bg-white dark:bg-[#161f30] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -565,7 +565,7 @@ const AdminSettings = () => {
               onClick={() => setActiveTab('preferences')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'preferences'
-                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  ? 'bg-white dark:bg-[#161f30] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -577,7 +577,7 @@ const AdminSettings = () => {
               onClick={() => { setActiveTab('audit'); fetchAuditLogs(1, auditActionFilter, auditSearchQuery); }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === 'audit'
-                  ? 'bg-white dark:bg-[#161f30] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
+                  ? 'bg-white dark:bg-[#161f30] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-transparent dark:border-[#D4AF37]/30'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -592,8 +592,8 @@ const AdminSettings = () => {
               {/* Franchise Rules & Validity */}
               <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl">
-                    <Clock size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 rounded-xl">
+                    <Clock size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   </div>
                   <div>
                     <h2 className="text-base font-black text-slate-900 dark:text-white">Franchise Validity Period</h2>
@@ -765,13 +765,13 @@ const AdminSettings = () => {
                   <div>
                     <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-3">
-                        <FileCheck size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                        <FileCheck size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                         <h2 className="text-base font-black text-slate-900 dark:text-white">Required Documents</h2>
                       </div>
                       <button
                         type="button"
                         onClick={handleResetDefaultDocs}
-                        className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
+                        className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
                       >
                         Reset Defaults
                       </button>
@@ -783,7 +783,7 @@ const AdminSettings = () => {
                       {(Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).map((doc, idx) => (
                         <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#0c101c] border border-slate-200/80 dark:border-slate-800 transition-colors">
                           <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
                             {doc}
                           </span>
                           <button
@@ -816,7 +816,7 @@ const AdminSettings = () => {
                     <button
                       type="button"
                       onClick={handleAddRequirement}
-                      className="px-4 py-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 rounded-xl text-xs font-bold shrink-0 transition-colors shadow-xs cursor-pointer"
+                      className="px-4 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 rounded-xl text-xs font-bold shrink-0 transition-colors shadow-xs cursor-pointer"
                     >
                       + Add
                     </button>
@@ -864,7 +864,7 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('system')}
-                  className="flex items-center gap-2 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-sm active:scale-98 transition-all cursor-pointer"
+                  className="flex items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-8 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-sm active:scale-98 transition-all cursor-pointer"
                 >
                   <Save size={16} /> Save System Configurations
                 </button>
@@ -878,7 +878,7 @@ const AdminSettings = () => {
               {/* Profile Details */}
               <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <User size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <User size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <h2 className="text-base font-black text-slate-900 dark:text-white">Admin Profile</h2>
                 </div>
 
@@ -929,7 +929,7 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('account')}
-                  className="mt-6 w-full bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
+                  className="mt-6 w-full bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
                 >
                   <Save size={16} /> Save Profile Changes
                 </button>
@@ -1018,7 +1018,7 @@ const AdminSettings = () => {
                   type="button"
                   onClick={() => handleThemeToggle(isDark ? 'light' : 'dark')}
                   className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isDark ? 'bg-[#7A1B22]' : 'bg-slate-300'
+                    isDark ? 'bg-[#9E2A2B]' : 'bg-slate-300'
                   }`}
                   role="switch"
                   aria-checked={isDark}
@@ -1037,7 +1037,7 @@ const AdminSettings = () => {
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-[#0c101c] border border-slate-100 dark:border-slate-800 transition-colors">
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Globe size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                    <Globe size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                     Display Language
                   </p>
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1048,7 +1048,7 @@ const AdminSettings = () => {
                 <select
                   value={preferences.language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
-                  className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/20"
+                  className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-2 focus:ring-[#9E2A2B]/20 dark:focus:ring-[#D4AF37]/20"
                 >
                   <option value="en">English (US)</option>
                   <option value="fil">Tagalog / Filipino</option>
@@ -1059,7 +1059,7 @@ const AdminSettings = () => {
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-[#0c101c] border border-slate-100 dark:border-slate-800 transition-colors">
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                    <Bell size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                     In-App Action Toasts
                   </p>
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1071,7 +1071,7 @@ const AdminSettings = () => {
                   type="button"
                   onClick={handleToastPrefToggle}
                   className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    preferences.inAppToastAlerts ? 'bg-[#7A1B22]' : 'bg-slate-300 dark:bg-slate-700'
+                    preferences.inAppToastAlerts ? 'bg-[#9E2A2B]' : 'bg-slate-300 dark:bg-slate-700'
                   }`}
                 >
                   <span
@@ -1090,7 +1090,7 @@ const AdminSettings = () => {
               <div className="bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-2xl border border-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37]">
+                    <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 rounded-2xl border border-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37]">
                       <Shield size={22} />
                     </div>
                     <div>
@@ -1170,7 +1170,7 @@ const AdminSettings = () => {
                       {auditLoading ? (
                         <tr>
                           <td colSpan="4" className="py-12 text-center text-slate-500 dark:text-slate-400">
-                            <Loader2 className="animate-spin mx-auto mb-2 text-[#7A1B22] dark:text-[#D4AF37]" size={24} />
+                            <Loader2 className="animate-spin mx-auto mb-2 text-[#9E2A2B] dark:text-[#D4AF37]" size={24} />
                             <p className="font-bold text-xs">Loading audit ledger...</p>
                           </td>
                         </tr>
@@ -1200,7 +1200,7 @@ const AdminSettings = () => {
 
                               <td className="py-3.5 px-4">
                                 <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                                  <User size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                                  <User size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                                   {log.actorName || 'System'}
                                 </div>
                                 <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-500 dark:text-slate-400">
@@ -1285,7 +1285,7 @@ const AdminSettings = () => {
             {/* Minimalist Header */}
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37]">
+                <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37]">
                   <Save size={16} />
                 </div>
                 <div>
@@ -1356,7 +1356,7 @@ const AdminSettings = () => {
                 type="button"
                 onClick={executeSave}
                 disabled={isProcessing}
-                className="flex-1 py-2.5 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] transition-all text-xs shadow-xs flex items-center justify-center gap-1.5 active:scale-98"
+                className="flex-1 py-2.5 rounded-xl font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-all text-xs shadow-xs flex items-center justify-center gap-1.5 active:scale-98"
               >
                 {isProcessing ? (
                   <>

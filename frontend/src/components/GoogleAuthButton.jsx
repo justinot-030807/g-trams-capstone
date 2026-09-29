@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Loader2, ShieldCheck, X } from 'lucide-react';
 import { unwrapGoogleProfile } from '../utils/googleAuthUtils';
 
@@ -295,7 +295,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5 font-mono text-xs">
                 <div className="text-slate-500 font-sans font-bold text-xs uppercase">Add Environment Variable in Render or Vercel:</div>
-                <div className="text-[#7A1B22] font-bold select-all bg-white px-2 py-1 rounded border border-slate-200">
+                <div className="text-[#9E2A2B] font-bold select-all bg-white px-2 py-1 rounded border border-slate-200">
                   GOOGLE_CLIENT_ID
                 </div>
               </div>
@@ -313,7 +313,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               <button
                 type="button"
                 onClick={() => setShowConfigModal(false)}
-                className="bg-[#7A1B22] hover:bg-[#8E2028] text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-md"
+                className="bg-[#9E2A2B] hover:bg-[#8E2028] text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-md"
               >
                 Understood
               </button>

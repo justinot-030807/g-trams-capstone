@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+﻿import React, { useRef, useState, useEffect } from 'react';
 import { 
   FileText, Download, X, Printer, CheckCircle2, ShieldCheck, 
   User, AlertCircle, Loader2, Scissors 
@@ -134,7 +134,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
             width: 140mm !important;
             max-width: 140mm !important;
             box-sizing: border-box !important;
-            border: 2px dashed #7A1B22 !important;
+            border: 2px dashed #9E2A2B !important;
             border-radius: 12px !important;
             box-shadow: none !important;
             background: #ffffff !important;
@@ -199,7 +199,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
             {/* Print / Save PDF */}
             <button
               onClick={handlePrint}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#922029] active:scale-95 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
               title="Print (1 Page Cutout)"
             >
               <Printer size={14} />
@@ -233,10 +233,10 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
         <div 
           ref={voucherRef}
           id="printable-document" 
-          className="relative bg-white text-slate-900 w-full max-w-[500px] rounded-2xl shadow-2xl border border-slate-200 overflow-hidden print:border-2 print:border-dashed print:border-[#7A1B22] print:shadow-none print:m-0 print:max-w-full"
+          className="relative bg-white text-slate-900 w-full max-w-[500px] rounded-2xl shadow-2xl border border-slate-200 overflow-hidden print:border-2 print:border-dashed print:border-[#9E2A2B] print:shadow-none print:m-0 print:max-w-full"
         >
           {/* Top Header Banner */}
-          <div className="bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] p-3.5 sm:p-4 text-white text-center relative border-b-3 border-[#D4AF37]">
+          <div className="bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] p-3.5 sm:p-4 text-white text-center relative border-b-3 border-[#D4AF37]">
             <div className="flex items-center justify-center gap-2.5 mb-1.5">
               <div className="w-10 h-10 bg-white rounded-full p-0.5 shadow-md flex items-center justify-center overflow-hidden shrink-0">
                 <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-cover scale-105" />
@@ -258,7 +258,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
             <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
               <div>
                 <p className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Voucher Reference No.</p>
-                <p className="text-xs sm:text-sm font-black font-mono text-[#7A1B22] tracking-wider">{refNumber}</p>
+                <p className="text-xs sm:text-sm font-black font-mono text-[#9E2A2B] tracking-wider">{refNumber}</p>
                 <p className="text-[9.5px] text-slate-500 mt-0.5">Approved: <strong>{formattedDateApproved}</strong></p>
               </div>
 
@@ -283,7 +283,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
               
               {/* Operator Information */}
               <div className="bg-slate-50/80 rounded-xl p-2.5 border border-slate-200/80 space-y-1.5">
-                <p className="text-[9.5px] font-black text-[#7A1B22] uppercase tracking-wider flex items-center gap-1 pb-1 border-b border-slate-200">
+                <p className="text-[9.5px] font-black text-[#9E2A2B] uppercase tracking-wider flex items-center gap-1 pb-1 border-b border-slate-200">
                   <User size={11} /> Operator Details
                 </p>
 
@@ -299,7 +299,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
                 <div>
                   <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">TODA</span>
-                  <span className="font-black text-[#7A1B22] bg-[#7A1B22]/10 px-1.5 py-0.5 rounded text-xs inline-block mt-0.5 max-w-full break-words whitespace-normal leading-tight">
+                  <span className="font-black text-[#9E2A2B] bg-[#9E2A2B]/10 px-1.5 py-0.5 rounded text-xs inline-block mt-0.5 max-w-full break-words whitespace-normal leading-tight">
                     {unit?.todaName || 'NON-TODA'}
                   </span>
                 </div>
@@ -307,7 +307,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
               {/* Vehicle & Permit Specifications */}
               <div className="bg-slate-50/80 rounded-xl p-2.5 border border-slate-200/80 space-y-1.5">
-                <p className="text-[9.5px] font-black text-[#7A1B22] uppercase tracking-wider flex items-center gap-1 pb-1 border-b border-slate-200">
+                <p className="text-[9.5px] font-black text-[#9E2A2B] uppercase tracking-wider flex items-center gap-1 pb-1 border-b border-slate-200">
                   <ShieldCheck size={11} /> Unit Details
                 </p>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Sparkles, ArrowRight, ArrowLeft, X, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
@@ -190,11 +190,11 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
       >
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.4)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-4 sm:p-5 animate-spring-in relative overflow-hidden flex flex-col">
           {/* Subtle top gold accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#9E2A2B] via-[#D4AF37] to-[#9E2A2B]" />
 
           {/* Header Row: Step counter pill & Close button */}
           <div className="flex items-center justify-between mb-2.5 pt-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] text-xs font-black uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] text-xs font-black uppercase tracking-wider">
               <StepIcon size={12} />
               <span>
                 {`Step ${currentStepIndex + 1} of ${steps.length}`}
@@ -230,7 +230,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
                   key={sIdx}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     sIdx === currentStepIndex
-                      ? 'w-5 bg-[#7A1B22] dark:bg-[#D4AF37]'
+                      ? 'w-5 bg-[#9E2A2B] dark:bg-[#D4AF37]'
                       : 'w-1.5 bg-slate-200 dark:bg-slate-700'
                   }`}
                 />

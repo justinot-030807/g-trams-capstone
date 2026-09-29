@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, PlusCircle, Settings, Users } from 'lucide-react';
 
@@ -84,13 +84,13 @@ const OperatorBottomNav = ({ role }) => {
               }}
               className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 sm:py-1.5 px-1 rounded-2xl transition-all duration-200 active:scale-90 cursor-pointer ${
                 item.active
-                  ? 'text-[#7A1B22] dark:text-[#D4AF37]'
+                  ? 'text-[#9E2A2B] dark:text-[#D4AF37]'
                   : 'text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
               <div className={`relative p-1 rounded-xl transition-all duration-300 shrink-0 ${
                 item.active 
-                  ? 'bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 scale-105' 
+                  ? 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 scale-105' 
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
               }`}>
                 <Icon size={18} className={item.active ? 'stroke-[2.5]' : 'stroke-[2]'} />

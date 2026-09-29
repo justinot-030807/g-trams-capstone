@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { X, FileText, User, Car, Receipt, ShieldCheck } from 'lucide-react';
 
 const ApplicationSummaryModal = ({
@@ -24,7 +24,7 @@ const ApplicationSummaryModal = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
               <FileText size={18} />
             </div>
             <div>
@@ -45,7 +45,7 @@ const ApplicationSummaryModal = ({
         <div className="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
           {/* 1. Operator Information */}
           <div>
-            <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <User size={13} /> 1. Operator Information
             </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
@@ -70,7 +70,7 @@ const ApplicationSummaryModal = ({
 
           {/* 2. Tricycle Details */}
           <div>
-            <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Car size={13} /> 2. Tricycle Details
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -99,7 +99,7 @@ const ApplicationSummaryModal = ({
 
           {/* 3. CTC / Cedula & Tax */}
           <div>
-            <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Receipt size={13} /> 3. CTC / Cedula Details
             </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
@@ -124,7 +124,7 @@ const ApplicationSummaryModal = ({
 
           {/* 4. Uploaded Requirements */}
           <div>
-            <h4 className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <ShieldCheck size={13} /> 4. Attached Documents
             </h4>
             <div className="space-y-1.5">
@@ -150,7 +150,7 @@ const ApplicationSummaryModal = ({
           <button
             type="button"
             onClick={() => setIsSummaryModalOpen(false)}
-            className="px-5 py-2.5 rounded-xl bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
           >
             Close Summary
           </button>

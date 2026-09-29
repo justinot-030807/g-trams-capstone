@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
 import AuthNavbar from '../components/common/AuthNavbar';
@@ -20,8 +20,8 @@ const ForgotPassword = () => {
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#120204';
-    document.body.style.backgroundColor = '#120204';
+    document.documentElement.style.backgroundColor = '#1A0B0E';
+    document.body.style.backgroundColor = '#1A0B0E';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -116,10 +116,10 @@ const ForgotPassword = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all duration-200 shadow-sm font-medium";
 
   return (
-    <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
+    <div className="relative w-full bg-[#1A0B0E] flex flex-col overflow-x-hidden select-none">
       
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -146,7 +146,7 @@ const ForgotPassword = () => {
             
             <div className="flex flex-col items-center mb-2.5 text-center">
               <div className="w-10 h-10 bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center mb-1.5 ring-4 ring-[#D4AF37]/30 shrink-0 animate-logo-entrance">
-                {step === 1 ? <ShieldAlert className="text-[#7A1B22]" size={20} /> : <KeyRound className="text-[#7A1B22]" size={20} />}
+                {step === 1 ? <ShieldAlert className="text-[#9E2A2B]" size={20} /> : <KeyRound className="text-[#9E2A2B]" size={20} />}
               </div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
                 {step === 1 ? 'FORGOT PASSWORD?' : 'RESET PASSWORD'}
@@ -177,7 +177,7 @@ const ForgotPassword = () => {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white py-2 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
+                    className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] text-white py-2 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'}`}
                   >
                     {isLoading ? <><Loader2 className="animate-spin" size={15} /> SENDING CODE...</> : 'SEND RESET CODE'}
                   </button>
@@ -188,7 +188,7 @@ const ForgotPassword = () => {
                     </p>
                   )}
 
-                  <Link to="/login" className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#7A1B22] mt-2.5 transition-colors uppercase tracking-wider">
+                  <Link to="/login" className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#9E2A2B] mt-2.5 transition-colors uppercase tracking-wider">
                     <ArrowLeft size={13} /> BACK TO LOGIN
                   </Link>
                 </div>
@@ -205,7 +205,7 @@ const ForgotPassword = () => {
                     value={otpCode} 
                     onChange={(e) => setOtpCode(e.target.value)} 
                     required 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-center text-lg font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#7A1B22]" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-center text-lg font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#9E2A2B]" 
                     placeholder="000000" 
                   />
                 </div>
@@ -242,7 +242,7 @@ const ForgotPassword = () => {
                   {isLoading ? <><Loader2 className="animate-spin" size={15} /> PROCESSING...</> : <><RefreshCw size={15} /> RESET PASSWORD</>}
                 </button>
                 
-                <button type="button" onClick={() => setStep(1)} className="w-full text-center text-xs font-bold text-slate-500 hover:text-[#7A1B22] mt-1 transition-colors uppercase tracking-wider">
+                <button type="button" onClick={() => setStep(1)} className="w-full text-center text-xs font-bold text-slate-500 hover:text-[#9E2A2B] mt-1 transition-colors uppercase tracking-wider">
                   ← CHANGE CONTACT INFO
                 </button>
               </form>

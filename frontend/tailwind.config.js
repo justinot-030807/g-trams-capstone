@@ -9,9 +9,13 @@ export default {
     extend: {
       colors: {
         maroon: {
-          light: '#9E2A2B',
-          DEFAULT: '#7A1B22', 
-          dark: '#540B0E',
+          50: '#FDF2F4',
+          100: '#FCE7EA',
+          200: '#F8C5CA',
+          light: '#B83D40',
+          DEFAULT: '#9E2A2B', 
+          hover: '#7A1B22',
+          dark: '#7A1B22',
         },
         gold: {
           light: '#F4D03F',

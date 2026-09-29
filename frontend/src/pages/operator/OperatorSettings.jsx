@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -631,7 +631,7 @@ const OperatorSettings = () => {
     navigate('/login');
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs";
+  const inputClasses = "w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs";
   const lockedClasses = "w-full bg-slate-100/90 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed select-none";
 
   const isEmailContact = (profileData.contact || '').includes('@');
@@ -685,7 +685,7 @@ const OperatorSettings = () => {
                   </div>
                   <label
                     htmlFor="avatar-upload-header"
-                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-all"
                     title="Change Profile Photo"
                   >
                     <Camera size={13} />
@@ -705,7 +705,7 @@ const OperatorSettings = () => {
                     <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
                       {profileData.name || 'Registered Operator'}
                     </h2>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/30 shrink-0">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#D4AF37]/30 shrink-0">
                       <ShieldCheck size={12} className="text-[#D4AF37]" />
                       <span>{profileData.todaAssociation || 'NON-TODA'}</span>
                     </span>
@@ -719,7 +719,7 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditProfileModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#7A1B22] hover:bg-[#681419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all active:scale-95 shadow-2xs cursor-pointer min-h-[36px]"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#9E2A2B] hover:bg-[#852024] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all active:scale-95 shadow-2xs cursor-pointer min-h-[36px]"
                     >
                       <Edit3 size={13} />
                       <span>Edit profile</span>
@@ -742,7 +742,7 @@ const OperatorSettings = () => {
                   className="w-full flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                       <ShieldCheck size={20} />
                     </div>
                     <span className="text-sm font-bold text-slate-900 dark:text-white">
@@ -797,19 +797,19 @@ const OperatorSettings = () => {
                     <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                       <Bell size={20} />
                     </div>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#9E2A2B] dark:group-hover:text-[#D4AF37] transition-colors">
                       Notifications and sounds
                     </span>
                   </button>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {isPushLoading && <Loader2 size={16} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37]" />}
+                    {isPushLoading && <Loader2 size={16} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37]" />}
                     <button
                       type="button"
                       disabled={!pushSupported || isPushLoading}
                       onClick={handleTogglePushSubscription}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                        isPushSubscribed ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isPushSubscribed ? 'bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
                       }`}
                       aria-label="Toggle push notifications"
                     >
@@ -979,7 +979,7 @@ const OperatorSettings = () => {
             {/* Header */}
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <User size={18} />
                 </div>
                 <div>
@@ -1009,7 +1009,7 @@ const OperatorSettings = () => {
                   )}
                 </div>
                 <label className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs cursor-pointer active:scale-95 transition-all border border-slate-200 dark:border-slate-700 shadow-2xs">
-                  <Camera size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <Camera size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>Choose Photo</span>
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 </label>
@@ -1053,7 +1053,7 @@ const OperatorSettings = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Phone size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <Phone size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>Emergency Contact Number</span>
                 </label>
                 <input
@@ -1113,7 +1113,7 @@ const OperatorSettings = () => {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-5 py-2.5 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
+                  className="px-5 py-2.5 rounded-xl font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
                 >
                   {isProcessing ? (
                     <>
@@ -1144,7 +1144,7 @@ const OperatorSettings = () => {
             {/* Header */}
             <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <ShieldCheck size={18} />
                 </div>
                 <div>
@@ -1156,7 +1156,7 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs cursor-pointer"
                   title="Print ID Card"
                 >
                   <Printer size={13} />
@@ -1236,7 +1236,7 @@ const OperatorSettings = () => {
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {isVaultLoading ? (
                 <div className="py-12 flex flex-col items-center justify-center">
-                  <Loader2 size={32} className="text-[#7A1B22] dark:text-[#D4AF37] animate-spin mb-3" />
+                  <Loader2 size={32} className="text-[#9E2A2B] dark:text-[#D4AF37] animate-spin mb-3" />
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading documents...</p>
                 </div>
               ) : vaultDocuments.length === 0 ? (
@@ -1254,7 +1254,7 @@ const OperatorSettings = () => {
                       setIsVaultModalOpen(false);
                       navigate('/apply-franchise');
                     }}
-                    className="px-4 py-2 rounded-xl font-bold text-xs bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
                   >
                     <FileText size={14} />
                     <span>Apply / Upload Documents</span>
@@ -1288,7 +1288,7 @@ const OperatorSettings = () => {
                             </span>
                           </div>
 
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1 group-hover:text-[#7A1B22] dark:group-hover:text-[#D4AF37] transition-colors">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1 group-hover:text-[#9E2A2B] dark:group-hover:text-[#D4AF37] transition-colors">
                             {doc.title}
                           </h4>
                           <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mb-3">
@@ -1310,7 +1310,7 @@ const OperatorSettings = () => {
                             target="_blank"
                             rel="noreferrer"
                             download
-                            className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#7A1B22]/10 hover:bg-[#7A1B22]/20 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 text-[#7A1B22] dark:text-[#D4AF37] text-xs font-bold transition-all cursor-pointer"
+                            className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/20 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 text-[#9E2A2B] dark:text-[#D4AF37] text-xs font-bold transition-all cursor-pointer"
                             title="Download"
                           >
                             <Download size={13} />
@@ -1379,7 +1379,7 @@ const OperatorSettings = () => {
                 target="_blank"
                 rel="noreferrer"
                 download
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs cursor-pointer"
               >
                 <Download size={14} />
                 <span>Download Document</span>
@@ -1441,7 +1441,7 @@ const OperatorSettings = () => {
               {/* Master Push Toggle Card */}
               <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0">
                     <Smartphone size={18} />
                   </div>
                   <div>
@@ -1459,7 +1459,7 @@ const OperatorSettings = () => {
                   disabled={!pushSupported || isPushLoading}
                   onClick={handleTogglePushSubscription}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isPushSubscribed ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                    isPushSubscribed ? 'bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
                   }`}
                 >
                   <span
@@ -1486,7 +1486,7 @@ const OperatorSettings = () => {
                   onClick={handleSendTestPush}
                   className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs active:scale-95 ${
                     isPushSubscribed
-                      ? 'bg-[#7A1B22] hover:bg-[#601015] text-white dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
+                      ? 'bg-[#9E2A2B] hover:bg-[#601015] text-white dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                   }`}
                 >
@@ -1520,7 +1520,7 @@ const OperatorSettings = () => {
                     type="button"
                     onClick={() => handleTogglePushPreference('statusUpdates')}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      pushPreferences.statusUpdates ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                      pushPreferences.statusUpdates ? 'bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
                     }`}
                   >
                     <span
@@ -1541,7 +1541,7 @@ const OperatorSettings = () => {
                     type="button"
                     onClick={() => handleTogglePushPreference('renewalReminders')}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      pushPreferences.renewalReminders ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                      pushPreferences.renewalReminders ? 'bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
                     }`}
                   >
                     <span
@@ -1562,7 +1562,7 @@ const OperatorSettings = () => {
                     type="button"
                     onClick={() => handleTogglePushPreference('announcements')}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      pushPreferences.announcements ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
+                      pushPreferences.announcements ? 'bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'bg-slate-300 dark:bg-slate-700'
                     }`}
                   >
                     <span
@@ -1614,7 +1614,7 @@ const OperatorSettings = () => {
                 }}
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer ${
                   preferences.language === 'en'
-                    ? 'bg-[#7A1B22]/5 dark:bg-[#D4AF37]/10 border-[#7A1B22] dark:border-[#D4AF37]'
+                    ? 'bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 border-[#9E2A2B] dark:border-[#D4AF37]'
                     : 'bg-slate-50 dark:bg-slate-800/40 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                 }`}
               >
@@ -1623,7 +1623,7 @@ const OperatorSettings = () => {
                   <p className="text-xs text-slate-500 dark:text-slate-400">Default portal language</p>
                 </div>
                 {preferences.language === 'en' && (
-                  <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
                     <Check size={12} className="stroke-[3]" />
                   </div>
                 )}
@@ -1637,7 +1637,7 @@ const OperatorSettings = () => {
                 }}
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer ${
                   preferences.language === 'fil'
-                    ? 'bg-[#7A1B22]/5 dark:bg-[#D4AF37]/10 border-[#7A1B22] dark:border-[#D4AF37]'
+                    ? 'bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 border-[#9E2A2B] dark:border-[#D4AF37]'
                     : 'bg-slate-50 dark:bg-slate-800/40 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                 }`}
               >
@@ -1646,7 +1646,7 @@ const OperatorSettings = () => {
                   <p className="text-xs text-slate-500 dark:text-slate-400">Wikang Tagalog</p>
                 </div>
                 {preferences.language === 'fil' && (
-                  <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
                     <Check size={12} className="stroke-[3]" />
                   </div>
                 )}
@@ -1693,7 +1693,7 @@ const OperatorSettings = () => {
                 }}
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer ${
                   theme === 'light'
-                    ? 'bg-[#7A1B22]/5 dark:bg-[#D4AF37]/10 border-[#7A1B22] dark:border-[#D4AF37]'
+                    ? 'bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 border-[#9E2A2B] dark:border-[#D4AF37]'
                     : 'bg-slate-50 dark:bg-slate-800/40 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                 }`}
               >
@@ -1707,7 +1707,7 @@ const OperatorSettings = () => {
                   </div>
                 </div>
                 {theme === 'light' && (
-                  <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
                     <Check size={12} className="stroke-[3]" />
                   </div>
                 )}
@@ -1722,7 +1722,7 @@ const OperatorSettings = () => {
                 }}
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer ${
                   theme === 'dark'
-                    ? 'bg-[#7A1B22]/5 dark:bg-[#D4AF37]/10 border-[#7A1B22] dark:border-[#D4AF37]'
+                    ? 'bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 border-[#9E2A2B] dark:border-[#D4AF37]'
                     : 'bg-slate-50 dark:bg-slate-800/40 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                 }`}
               >
@@ -1751,7 +1751,7 @@ const OperatorSettings = () => {
                 }}
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer ${
                   theme === 'system'
-                    ? 'bg-[#7A1B22]/5 dark:bg-[#D4AF37]/10 border-[#7A1B22] dark:border-[#D4AF37]'
+                    ? 'bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 border-[#9E2A2B] dark:border-[#D4AF37]'
                     : 'bg-slate-50 dark:bg-slate-800/40 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                 }`}
               >
@@ -1765,7 +1765,7 @@ const OperatorSettings = () => {
                   </div>
                 </div>
                 {theme === 'system' && (
-                  <div className="w-5 h-5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 flex items-center justify-center shrink-0">
                     <Check size={12} className="stroke-[3]" />
                   </div>
                 )}
@@ -1889,7 +1889,7 @@ const OperatorSettings = () => {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-5 py-2.5 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
+                  className="px-5 py-2.5 rounded-xl font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
                 >
                   {isProcessing ? (
                     <>
@@ -1945,7 +1945,7 @@ const OperatorSettings = () => {
                 onClick={() => setSupportTab('hotlines')}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   supportTab === 'hotlines'
-                    ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                    ? 'bg-white dark:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
@@ -1957,7 +1957,7 @@ const OperatorSettings = () => {
                 onClick={() => setSupportTab('ticket')}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   supportTab === 'ticket'
-                    ? 'bg-white dark:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                    ? 'bg-white dark:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
@@ -1978,7 +1978,7 @@ const OperatorSettings = () => {
                     href="tel:09123456789" 
                     className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                       <Phone size={18} />
                     </div>
                     <div>
@@ -1991,7 +1991,7 @@ const OperatorSettings = () => {
                     href="mailto:ovme@gasan.ph" 
                     className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                       <Mail size={18} />
                     </div>
                     <div>
@@ -2001,7 +2001,7 @@ const OperatorSettings = () => {
                   </a>
 
                   <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 text-left">
-                    <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                       <Building2 size={18} />
                     </div>
                     <div>
@@ -2019,7 +2019,7 @@ const OperatorSettings = () => {
                       setIsSupportModalOpen(false);
                       navigate('/help-support');
                     }}
-                    className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <ExternalLink size={14} />
                     <span>Browse Help &amp; Support FAQs</span>
@@ -2069,7 +2069,7 @@ const OperatorSettings = () => {
                     placeholder="Please explain your question or issue in detail..."
                     value={ticketMessage}
                     onChange={(e) => setTicketMessage(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs resize-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs resize-none"
                   />
                 </div>
 
@@ -2084,7 +2084,7 @@ const OperatorSettings = () => {
                   <button
                     type="submit"
                     disabled={isSubmittingTicket}
-                    className="px-5 py-2 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
+                    className="px-5 py-2 rounded-xl font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
                   >
                     {isSubmittingTicket ? (
                       <>
@@ -2135,7 +2135,7 @@ const OperatorSettings = () => {
                 type="button"
                 disabled={isClearingCache}
                 onClick={handleClearCache}
-                className="flex-1 py-2.5 px-4 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all"
+                className="flex-1 py-2.5 px-4 rounded-xl font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all"
               >
                 {isClearingCache ? (
                   <>

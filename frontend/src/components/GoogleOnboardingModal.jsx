@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import TermsPolicyModal from './common/TermsPolicyModal';
 import { Loader2, X } from 'lucide-react';
@@ -107,7 +107,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       <div className="relative w-full max-w-[420px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Top Gold & Maroon Decorative Ribbon */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#9E2A2B] via-[#D4AF37] to-[#9E2A2B]" />
 
         {/* Modal Header */}
         <div className="p-5 pb-2 relative">
@@ -121,11 +121,11 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
           </button>
 
           <div className="flex items-center gap-2.5 mb-1.5">
-            <div className="w-8 h-8 rounded-full bg-[#7A1B22]/10 border border-[#7A1B22]/20 flex items-center justify-center p-1 shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center p-1 shrink-0">
               <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-[10px] font-bold tracking-wider text-[#7A1B22] uppercase block">
+              <span className="text-[10px] font-bold tracking-wider text-[#9E2A2B] uppercase block">
                 Municipality of Gasan
               </span>
               <h2 id="google-onboarding-title" className="text-base sm:text-lg font-black text-slate-900 leading-tight">
@@ -148,7 +148,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 className="w-11 h-11 rounded-full object-cover border border-slate-200 shadow-xs"
               />
             ) : (
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#7A1B22] to-[#9E1B27] text-white flex items-center justify-center font-black text-base shadow-xs">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#9E2A2B] to-[#9E1B27] text-white flex items-center justify-center font-black text-base shadow-xs">
                 {(name || email || 'O')[0].toUpperCase()}
               </div>
             )}
@@ -190,7 +190,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 if (error) setError('');
               }}
               required
-              className="w-full bg-slate-50/90 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-3 focus:ring-[#7A1B22]/15 transition-all shadow-2xs font-medium cursor-pointer"
+              className="w-full bg-slate-50/90 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-3 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs font-medium cursor-pointer"
             >
               <option value="" disabled>Select your Barangay</option>
               {GASAN_BARANGAYS.map((brgy) => (
@@ -209,7 +209,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             <select
               value={selectedToda}
               onChange={(e) => setSelectedToda(e.target.value)}
-              className="w-full bg-slate-50/90 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-3 focus:ring-[#7A1B22]/15 transition-all shadow-2xs font-medium cursor-pointer"
+              className="w-full bg-slate-50/90 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-3 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs font-medium cursor-pointer"
             >
               {TODA_LIST.map((toda) => (
                 <option key={toda} value={toda}>
@@ -229,7 +229,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 setTermsAccepted(e.target.checked);
                 if (error) setError('');
               }}
-              className="mt-0.5 accent-[#7A1B22] w-4 h-4 rounded cursor-pointer shrink-0"
+              className="mt-0.5 accent-[#9E2A2B] w-4 h-4 rounded cursor-pointer shrink-0"
             />
             <label
               htmlFor="google-onboarding-terms"
@@ -242,7 +242,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   e.preventDefault();
                   setShowTermsModal(true);
                 }}
-                className="font-bold text-[#7A1B22] hover:underline cursor-pointer"
+                className="font-bold text-[#9E2A2B] hover:underline cursor-pointer"
               >
                 Terms &amp; Privacy Policy
               </button>.
@@ -257,7 +257,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
               className={`w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer ${
                 isLoading
                   ? 'bg-slate-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-[#7A1B22] to-[#9B2A33] hover:brightness-105 active:scale-[0.99] shadow-[#7A1B22]/20'
+                  : 'bg-gradient-to-r from-[#9E2A2B] to-[#9B2A33] hover:brightness-105 active:scale-[0.99] shadow-[#9E2A2B]/20'
               }`}
             >
               {isLoading ? (

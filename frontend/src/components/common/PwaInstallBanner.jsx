@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Download, X, Smartphone, Share2, PlusSquare, Check } from 'lucide-react';
 
 const PwaInstallBanner = () => {
@@ -90,7 +90,7 @@ const PwaInstallBanner = () => {
     <>
       {/* Floating PWA Install Banner */}
       <div 
-        className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-sm z-[999] bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] text-white p-4 rounded-2xl shadow-2xl border-2 border-[#D4AF37]/50 animate-bounce-short transition-all"
+        className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-sm z-[999] bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] text-white p-4 rounded-2xl shadow-2xl border-2 border-[#D4AF37]/50 animate-bounce-short transition-all"
         style={{
           boxShadow: '0 20px 35px -10px rgba(122, 27, 34, 0.65)'
         }}
@@ -145,7 +145,7 @@ const PwaInstallBanner = () => {
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37]">
+                <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37]">
                   <Smartphone size={18} />
                 </div>
                 <h3 className="font-extrabold text-sm">Install on iPhone / iPad</h3>
@@ -189,7 +189,7 @@ const PwaInstallBanner = () => {
                 setShowIOSModal(false);
                 setShowBanner(false);
               }}
-              className="w-full bg-[#7A1B22] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#631419] transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full bg-[#9E2A2B] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#631419] transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Check size={14} />
               <span>Got it, thanks!</span>

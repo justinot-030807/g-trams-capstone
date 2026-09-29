@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -362,7 +362,7 @@ const OperatorDashboard = () => {
                     <div className="w-full h-full bg-slate-200 dark:bg-slate-700/80 rounded-full" />
                     {/* Active Progress Fill */}
                     <div 
-                      className={`absolute top-0 left-0 h-full bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full transition-all duration-500 ease-out ${
+                      className={`absolute top-0 left-0 h-full bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full transition-all duration-500 ease-out ${
                         currentStepNum > step.id ? 'w-full' : 'w-0'
                       }`} 
                     />
@@ -373,16 +373,16 @@ const OperatorDashboard = () => {
                 <div 
                   className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
                     isCompleted 
-                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs' 
+                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs' 
                       : isCurrent 
-                      ? 'bg-white dark:bg-slate-800 border-2 border-[#7A1B22] dark:border-[#D4AF37] ring-4 ring-[#7A1B22]/15 dark:ring-[#D4AF37]/20 shadow-xs' 
+                      ? 'bg-white dark:bg-slate-800 border-2 border-[#9E2A2B] dark:border-[#D4AF37] ring-4 ring-[#9E2A2B]/15 dark:ring-[#D4AF37]/20 shadow-xs' 
                       : 'bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   {isCompleted ? (
                     <Check size={14} className="stroke-[3]" />
                   ) : isCurrent ? (
-                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full animate-pulse" />
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full animate-pulse" />
                   ) : (
                     <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-slate-300 dark:bg-slate-700 rounded-full" />
                   )}
@@ -391,7 +391,7 @@ const OperatorDashboard = () => {
                 {/* Step Label */}
                 <span className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 tracking-tight text-center leading-tight max-w-full px-0.5 whitespace-nowrap transition-colors ${
                   isCurrent 
-                    ? 'text-[#7A1B22] dark:text-[#D4AF37] font-black' 
+                    ? 'text-[#9E2A2B] dark:text-[#D4AF37] font-black' 
                     : isCompleted 
                     ? 'text-slate-800 dark:text-slate-200 font-bold' 
                     : 'text-slate-600 dark:text-slate-400 font-medium'
@@ -468,7 +468,7 @@ const OperatorDashboard = () => {
       {/* 1. ELEVATED MOBILE & DESKTOP HERO APP HEADER (Matching media_1788958383307.jpg) */}
       <div 
         id="tour-hero-banner"
-        className="animate-spring-in bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-4 sm:p-7 mb-6 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden border border-[#D4AF37]/30 transition-all"
+        className="animate-spring-in bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-4 sm:p-7 mb-6 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden border border-[#D4AF37]/30 transition-all"
       >
         {/* Top Native Mobile Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
         <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
@@ -591,7 +591,7 @@ const OperatorDashboard = () => {
                     setIsPrintOpen(true);
                   }
                 }}
-                className="w-full sm:w-auto bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Receipt size={15} />
                 <span>Get Claim Stub</span>
@@ -718,7 +718,7 @@ const OperatorDashboard = () => {
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Unit Capacity
                 </span>
-                <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
+                <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
                   {franchises.length} / {maxUnits}
                 </span>
               </div>
@@ -742,7 +742,7 @@ const OperatorDashboard = () => {
                     <div 
                       className={`h-2 rounded-full transition-all duration-300 ${
                         isFilled 
-                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37]' 
+                          ? 'bg-[#9E2A2B] dark:bg-[#D4AF37]' 
                           : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
                       }`} 
                     />
@@ -757,7 +757,7 @@ const OperatorDashboard = () => {
       {/* 3. GARAGE SECTION HEADER */}
       <header id="tour-garage-section" className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75 mb-4 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+          <div className="w-1.5 h-5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full" />
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               {t('dashboard.garageTitle', 'My Franchise Garage')}
@@ -789,8 +789,8 @@ const OperatorDashboard = () => {
         >
           {/* Glowing Halo Icon Container */}
           <div className="relative mb-3">
-            <div className="absolute inset-0 bg-[#7A1B22]/15 dark:bg-[#D4AF37]/20 rounded-full blur-lg scale-125 animate-pulse pointer-events-none" />
-            <div className="relative w-14 h-14 bg-gradient-to-br from-red-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-red-200/60 dark:border-amber-800/40 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
+            <div className="absolute inset-0 bg-[#9E2A2B]/15 dark:bg-[#D4AF37]/20 rounded-full blur-lg scale-125 animate-pulse pointer-events-none" />
+            <div className="relative w-14 h-14 bg-gradient-to-br from-red-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-red-200/60 dark:border-amber-800/40 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shadow-2xs">
               <Car size={26} />
             </div>
           </div>
@@ -804,7 +804,7 @@ const OperatorDashboard = () => {
 
           <button 
             onClick={() => navigate('/apply-franchise')} 
-            className="inline-flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             <PlusCircle size={16} />
             <span>{t('dashboard.applyNew', 'Apply New Franchise')}</span>
@@ -831,7 +831,7 @@ const OperatorDashboard = () => {
                 {/* Header Row: TODA tag & Status Badge */}
                 <div className="flex justify-between items-center mb-3 mt-0.5 gap-2">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-black uppercase tracking-wider border border-slate-200/60 dark:border-slate-700/60 shrink-0 max-w-[60%]">
-                    <Users size={12} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                    <Users size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                     <span className="truncate">{unit?.todaName || 'TODA'}</span>
                   </span>
 
@@ -866,7 +866,7 @@ const OperatorDashboard = () => {
                 >
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         MUNICIPALITY OF GASAN &bull; MTOP
                       </p>
@@ -892,7 +892,7 @@ const OperatorDashboard = () => {
                   className="grid grid-cols-2 gap-2.5 mb-3.5"
                 >
                   <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-2xs">
                       <MapPin size={12} />
                     </div>
                     <div className="min-w-0">
@@ -902,7 +902,7 @@ const OperatorDashboard = () => {
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-2xs">
                       <Hash size={12} />
                     </div>
                     <div className="min-w-0">
@@ -1241,7 +1241,7 @@ const OperatorDashboard = () => {
 
             {/* Header Profile Info */}
             <div className="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="w-14 h-14 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#7A1B22] flex items-center justify-center shrink-0">
+              <div className="w-14 h-14 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#9E2A2B] flex items-center justify-center shrink-0">
                 {profilePic ? (
                   <img src={profilePic} alt="User" className="w-full h-full object-cover" />
                 ) : (
@@ -1281,7 +1281,7 @@ const OperatorDashboard = () => {
                 className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center">
                     <Settings size={20} />
                   </div>
                   <div>
@@ -1371,7 +1371,7 @@ const OperatorDashboard = () => {
             <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <Bell size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <h4 className="font-black text-sm text-slate-900 dark:text-white">
                     {t('nav.notifications', 'Notifications')}
                   </h4>
@@ -1386,7 +1386,7 @@ const OperatorDashboard = () => {
                   <button 
                     type="button"
                     onClick={markAllNotifsRead} 
-                    className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
                   >
                     {t('nav.markAllRead', 'Mark all read')}
                   </button>
@@ -1447,7 +1447,7 @@ const OperatorDashboard = () => {
                               {notif.title}
                             </p>
                           </div>
-                          {!notif.isRead && <span className="w-2 h-2 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full shrink-0" />}
+                          {!notif.isRead && <span className="w-2 h-2 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0" />}
                         </div>
                         <p className={`text-xs line-clamp-2 leading-relaxed ${notif.isRead ? 'text-slate-500 dark:text-slate-400' : 'text-slate-800 dark:text-slate-200'}`}>
                           {renderRichNotificationMessage(notif.message)}

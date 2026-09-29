@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -417,7 +417,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
                 className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-2xs ${
                   isNotifOpen 
-                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-[#7A1B22] dark:text-[#D4AF37]' 
+                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-[#9E2A2B] dark:text-[#D4AF37]' 
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
                 }`}
               >
@@ -446,7 +446,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     {unreadCount > 0 && (
                       <button 
                         onClick={markAllAsRead} 
-                        className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                        className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline"
                       >
                         {t('nav.markAllRead', 'Mark all read')}
                       </button>
@@ -490,7 +490,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                                     {notif?.title || 'Notification'}
                                   </p>
                                 </div>
-                                {!isRead && <span className="w-2 h-2 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full shrink-0" />}
+                                {!isRead && <span className="w-2 h-2 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0" />}
                               </div>
                               <p className={`text-xs line-clamp-2 leading-relaxed ${!isRead ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
                                 {renderRichNotificationMessage(notif?.desc || notif?.message)}
@@ -527,19 +527,19 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             {isSidebarOpen ? (
               <PanelLeftOpen size={20} className="text-slate-700 dark:text-slate-300 rotate-180" />
             ) : (
-              <PanelLeftOpen size={20} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+              <PanelLeftOpen size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             )}
           </button>
 
           {/* Global Search Bar */}
           <div className="hidden sm:flex items-center w-full max-w-sm relative group">
-            <div className="absolute left-3 text-slate-500 dark:text-slate-400 group-focus-within:text-[#7A1B22] dark:group-focus-within:text-[#D4AF37] transition-colors">
+            <div className="absolute left-3 text-slate-500 dark:text-slate-400 group-focus-within:text-[#9E2A2B] dark:group-focus-within:text-[#D4AF37] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
             <input 
               type="text" 
               placeholder="Search..." 
-              className="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22] dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] transition-all"
+              className="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37]/30 focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] transition-all"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.target.value.trim() !== '') {
                   navigate(`/franchise-masterlist?search=${encodeURIComponent(e.target.value)}`);
@@ -580,7 +580,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             className={`relative p-2 rounded-xl border transition-all shadow-2xs ${
               isNotifOpen 
-                ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-[#7A1B22] dark:text-[#D4AF37]' 
+                ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-[#9E2A2B] dark:text-[#D4AF37]' 
                 : 'bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -613,7 +613,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <Bell size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                      <Bell size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                       <h4 className="font-black text-sm text-slate-900 dark:text-white">
                         {t('nav.notifications', 'Notifications')}
                       </h4>
@@ -628,7 +628,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                       <button 
                         type="button"
                         onClick={markAllAsRead} 
-                        className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                        className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
                       >
                         {t('nav.markAllRead', 'Mark all read')}
                       </button>
@@ -686,7 +686,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                                     {notif?.title || 'Notification'}
                                   </p>
                                 </div>
-                                {!isRead && <span className="w-2.5 h-2.5 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full shrink-0 shadow-xs" />}
+                                {!isRead && <span className="w-2.5 h-2.5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0 shadow-xs" />}
                               </div>
                               <p className={`text-xs line-clamp-2 leading-relaxed ${!isRead ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
                                 {renderRichNotificationMessage(notif?.desc || notif?.message)}
@@ -711,10 +711,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/30"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-[#9E2A2B]/30"
             title="Profile Options"
           >
-            <div className="w-full h-full rounded-full bg-[#7A1B22] text-[#D4AF37] font-bold text-xs flex items-center justify-center shadow-inner overflow-hidden border border-[#D4AF37]/30">
+            <div className="w-full h-full rounded-full bg-[#9E2A2B] text-[#D4AF37] font-bold text-xs flex items-center justify-center shadow-inner overflow-hidden border border-[#D4AF37]/30">
               {profilePic ? (
                 <img src={profilePic} alt="User" className="w-full h-full object-cover" />
               ) : role === 'admin' ? (
@@ -729,7 +729,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#111827] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                 <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{userName}</p>
-                <p className="text-xs text-[#7A1B22] dark:text-[#D4AF37] font-bold uppercase tracking-wide mt-0.5">{getRoleBadge()}</p>
+                <p className="text-xs text-[#9E2A2B] dark:text-[#D4AF37] font-bold uppercase tracking-wide mt-0.5">{getRoleBadge()}</p>
               </div>
 
               <div className="py-1">
@@ -745,7 +745,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   }}
                   className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
                 >
-                  <Settings size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" /> {t('nav.settings', 'Settings')}
+                  <Settings size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> {t('nav.settings', 'Settings')}
                 </button>
               </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2, ChevronDown, Check, CheckCheck, Trash2, Sparkles, HelpCircle } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 import { renderFormattedAnnouncement } from '../admin/AdminBroadcastCenter';
@@ -419,7 +419,7 @@ const ChatWidget = ({ inline = false }) => {
           className={`fixed z-[90] bottom-20 md:bottom-6 right-4 md:right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer print:hidden ${
             isOpen 
               ? 'bg-slate-800 dark:bg-slate-700 text-white rotate-0'
-              : 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:scale-105'
+              : 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:scale-105'
           }`}
           title="Chat with GTRAMS Admin"
         >
@@ -458,7 +458,7 @@ const ChatWidget = ({ inline = false }) => {
           )}
           
           {/* Header */}
-          <div className="bg-[#7A1B22] dark:bg-slate-800 text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-sm">
+          <div className="bg-[#9E2A2B] dark:bg-slate-800 text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-sm">
             <div className="min-w-0 pr-3">
               <h3 className="font-bold text-sm sm:text-base tracking-tight truncate">
                 {isBroadcast 
@@ -512,7 +512,7 @@ const ChatWidget = ({ inline = false }) => {
                 {isCurrentUserAdmin && (
                   <button
                     onClick={() => setIsBroadcast(true)}
-                    className="w-full mb-3 flex items-center justify-center gap-2 p-3.5 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] hover:bg-[#7A1B22]/20 dark:hover:bg-[#D4AF37]/20 rounded-2xl font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs"
+                    className="w-full mb-3 flex items-center justify-center gap-2 p-3.5 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-[#9E2A2B]/20 dark:hover:bg-[#D4AF37]/20 rounded-2xl font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs"
                   >
                     <MessageCircle size={18} /> Broadcast Announcement
                   </button>
@@ -520,7 +520,7 @@ const ChatWidget = ({ inline = false }) => {
                 {!isCurrentUserAdmin && !threads.some(t => !t.isAnnouncement) && (
                   <button
                     onClick={() => setActiveThread({ _id: 'new', participants: [], isAnnouncement: false })}
-                    className="w-full mb-3 flex items-center justify-center gap-2 p-3.5 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] hover:bg-[#7A1B22]/20 dark:hover:bg-[#D4AF37]/20 rounded-2xl font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs"
+                    className="w-full mb-3 flex items-center justify-center gap-2 p-3.5 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-[#9E2A2B]/20 dark:hover:bg-[#D4AF37]/20 rounded-2xl font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs"
                   >
                     <MessageCircle size={18} /> Start Chat with Admin Support
                   </button>
@@ -542,7 +542,7 @@ const ChatWidget = ({ inline = false }) => {
                       <div
                         key={t._id}
                         onClick={() => setActiveThread(t)}
-                        className="w-full text-left p-3.5 sm:p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between group cursor-pointer shadow-2xs"
+                        className="w-full text-left p-3.5 sm:p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between group cursor-pointer shadow-2xs"
                       >
                         <div className="overflow-hidden pr-3">
                           <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{title}</p>
@@ -571,8 +571,8 @@ const ChatWidget = ({ inline = false }) => {
               </div>
             ) : isBroadcast || messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8">
-                <div className="w-16 h-16 bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-4">
-                  <MessageCircle size={30} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                <div className="w-16 h-16 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-4">
+                  <MessageCircle size={30} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 </div>
                 <p className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1.5">
                   {isBroadcast ? 'Broadcast Announcement' : (isCurrentUserAdmin ? 'Conversation with Operator' : 'GTRAMS Admin Support')}
@@ -590,7 +590,7 @@ const ChatWidget = ({ inline = false }) => {
                       <button
                         key={i}
                         onClick={() => { setInput(q); }}
-                        className="block w-full p-2.5 sm:p-3 text-xs sm:text-sm text-left font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-[#7A1B22] dark:hover:border-[#D4AF37] transition-all cursor-pointer shadow-2xs"
+                        className="block w-full p-2.5 sm:p-3 text-xs sm:text-sm text-left font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] transition-all cursor-pointer shadow-2xs"
                       >
                         {q}
                       </button>
@@ -606,12 +606,12 @@ const ChatWidget = ({ inline = false }) => {
                     <div key={msg._id || idx} className={`flex group ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[85%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                         isMine
-                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-md shadow-xs'
+                          ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-md shadow-xs'
                           : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-bl-md shadow-xs'
                       }`}>
                         {!isMine && msg.sender && (
                           <p className={`text-xs font-bold mb-1 ${
-                            isMine ? 'text-white/70 dark:text-slate-950/60' : 'text-[#7A1B22] dark:text-[#D4AF37]'
+                            isMine ? 'text-white/70 dark:text-slate-950/60' : 'text-[#9E2A2B] dark:text-[#D4AF37]'
                           }`}>
                             {getSenderName(msg.sender)}
                           </p>
@@ -703,7 +703,7 @@ const ChatWidget = ({ inline = false }) => {
                       key={i}
                       type="button"
                       onClick={() => setInput(faq)}
-                      className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer whitespace-nowrap active:scale-95"
+                      className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer whitespace-nowrap active:scale-95"
                     >
                       {faq}
                     </button>
@@ -718,7 +718,7 @@ const ChatWidget = ({ inline = false }) => {
                   onKeyDown={handleKeyDown}
                   placeholder="Type your message..."
                   rows={1}
-                  className="flex-1 resize-none border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs sm:text-sm font-medium bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1B22]/30 dark:focus:ring-[#D4AF37]/30 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] min-h-[46px] max-h-[120px] transition-colors leading-relaxed"
+                  className="flex-1 resize-none border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs sm:text-sm font-medium bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9E2A2B]/30 dark:focus:ring-[#D4AF37]/30 focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] min-h-[46px] max-h-[120px] transition-colors leading-relaxed"
                   style={{ fieldSizing: 'content' }}
                 />
                 <button
@@ -726,7 +726,7 @@ const ChatWidget = ({ inline = false }) => {
                   disabled={!input.trim() || isSending}
                   className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
                     input.trim() && !isSending
-                      ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:opacity-90 active:scale-90 shadow-sm'
+                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 hover:opacity-90 active:scale-90 shadow-sm'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                   }`}
                   title="Send message"

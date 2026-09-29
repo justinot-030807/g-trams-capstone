@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -399,7 +399,7 @@ const FranchiseApproval = () => {
             <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1.5">
               <p><span className="font-bold text-slate-500">Operator:</span> <strong className="text-slate-900 dark:text-white">{quickApproveTarget.fullName}</strong></p>
               <p><span className="font-bold text-slate-500">TODA / Zone:</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
-              <p><span className="font-bold text-slate-500">Plate Number:</span> <span className="font-mono font-bold text-[#7A1B22] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
+              <p><span className="font-bold text-slate-500">Plate Number:</span> <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
               {quickApproveTarget.status === 'For Signing' && (
                 <p className="text-xs text-blue-600 dark:text-blue-400 pt-1 font-medium">
                   &bull; A digital Claim Stub Voucher will be immediately released for the operator to pay at Cashier.
@@ -600,7 +600,7 @@ const FranchiseApproval = () => {
       )}
 
       {/* Header Ribbon */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
+      <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <CheckCircle2 size={20} className="text-[#D4AF37]" />
@@ -638,7 +638,7 @@ const FranchiseApproval = () => {
             <select
               value={selectedToda}
               onChange={(e) => setSelectedToda(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#7A1B22] cursor-pointer"
+              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] cursor-pointer"
             >
               <option value="all">All TODA Associations</option>
               {uniqueTodas.map(t => (
@@ -655,7 +655,7 @@ const FranchiseApproval = () => {
               placeholder="Search Name or Plate..." 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)} 
-              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]"
+              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
             />
           </div>
 
@@ -666,7 +666,7 @@ const FranchiseApproval = () => {
             className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-all cursor-pointer shadow-sm"
             title="Refresh Applications Queue"
           >
-            <RefreshCw size={16} className={isLoading ? 'animate-spin text-[#7A1B22] dark:text-[#D4AF37]' : ''} />
+            <RefreshCw size={16} className={isLoading ? 'animate-spin text-[#9E2A2B] dark:text-[#D4AF37]' : ''} />
           </button>
         </div>
       {/* Status Tabs Bar & Select All Control */}
@@ -677,7 +677,7 @@ const FranchiseApproval = () => {
             onClick={() => setActiveTab('pending')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'pending'
-                ? 'bg-[#7A1B22] text-white shadow-xs'
+                ? 'bg-[#9E2A2B] text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -748,7 +748,7 @@ const FranchiseApproval = () => {
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer self-end sm:self-center"
           >
             {isAllSelected ? (
-              <CheckSquare size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+              <CheckSquare size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             ) : (
               <Square size={16} className="text-slate-500 dark:text-slate-400" />
             )}
@@ -768,7 +768,7 @@ const FranchiseApproval = () => {
             onClick={() => setSelectedToda('all')}
             className={`px-3 py-1 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedToda === 'all'
-                ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
                 : 'bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
@@ -790,7 +790,7 @@ const FranchiseApproval = () => {
                 onClick={() => setSelectedToda(isSelected ? 'all' : toda)}
                 className={`px-3 py-1 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                   isSelected
-                    ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                    ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
                     : 'bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
@@ -835,8 +835,8 @@ const FranchiseApproval = () => {
                 key={app._id} 
                 className={`stagger-reveal bg-white dark:bg-[#111827] rounded-3xl p-4 sm:p-5 border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                   isSelected 
-                    ? 'border-[#7A1B22] dark:border-[#D4AF37] ring-2 ring-[#7A1B22]/15 dark:ring-[#D4AF37]/20 shadow-md' 
-                    : 'border-slate-200 dark:border-slate-800 shadow-xs hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30'
+                    ? 'border-[#9E2A2B] dark:border-[#D4AF37] ring-2 ring-[#9E2A2B]/15 dark:ring-[#D4AF37]/20 shadow-md' 
+                    : 'border-slate-200 dark:border-slate-800 shadow-xs hover:border-[#9E2A2B]/30 dark:hover:border-[#D4AF37]/30'
                 }`}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
@@ -848,7 +848,7 @@ const FranchiseApproval = () => {
                     title={isSelected ? "Deselect" : "Select"}
                   >
                     {isSelected ? (
-                      <CheckSquare size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                      <CheckSquare size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                     ) : (
                       <Square size={18} className="text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300" />
                     )}
@@ -923,7 +923,7 @@ const FranchiseApproval = () => {
                   {(app.status === 'For Signing' || app.status === 'Ready for Pickup') && (
                     <button
                       onClick={() => setPrintTargetUnit(app)}
-                      className="px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-[#7A1B22] dark:text-[#D4AF37] border border-amber-300 dark:border-amber-700/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      className="px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-[#9E2A2B] dark:text-[#D4AF37] border border-amber-300 dark:border-amber-700/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
                       title="Print Official MTOP Certificate"
                     >
                       <Printer size={14} />
@@ -958,7 +958,7 @@ const FranchiseApproval = () => {
                   {/* Deep Review Workstation Button */}
                   <button 
                     onClick={() => handleOpenWorkstation(app)} 
-                    className="bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#7A1B22] dark:hover:bg-[#7A1B22] px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    className="bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#9E2A2B] dark:hover:bg-[#9E2A2B] px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer"
                     title="Open Full Review Workbench"
                   >
                     <Eye size={14} />
@@ -993,7 +993,7 @@ const FranchiseApproval = () => {
                     setPageSize(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] cursor-pointer"
+                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] cursor-pointer"
                 >
                   <option value={10}>10</option>
                   <option value={20}>20</option>
@@ -1043,7 +1043,7 @@ const FranchiseApproval = () => {
                         onClick={() => setCurrentPage(item)}
                         className={`min-w-[30px] h-[30px] rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
                           isCurrent
-                            ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                            ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
                             : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                         }`}
                       >
@@ -1134,7 +1134,7 @@ const FranchiseApproval = () => {
                 {/* Batch Print MTOP */}
                 <button
                   onClick={() => setIsBatchPrintOpen(true)}
-                  className="px-3.5 py-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#922029] active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                   title="Print MTOP Certificates for all selected units in 1 continuous job"
                 >
                   <Printer size={14} />

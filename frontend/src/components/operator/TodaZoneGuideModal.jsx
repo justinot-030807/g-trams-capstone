@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { MapPin, Search, X, Compass, CheckCircle2, Shield, Info, Navigation, Users } from 'lucide-react';
 
 const TODA_DIRECTORY = [
@@ -122,7 +122,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
       <div className="relative bg-white dark:bg-slate-900 w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#7A1B22] via-[#8C2028] to-[#5A1419] p-5 sm:p-6 text-white relative shrink-0">
+        <div className="bg-gradient-to-r from-[#9E2A2B] via-[#8C2028] to-[#7A1B22] p-5 sm:p-6 text-white relative shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[#D4AF37]">
@@ -178,7 +178,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
               onClick={() => setSelectedBrgyTag(b)}
               className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all ${
                 selectedBrgyTag === b
-                  ? 'bg-[#7A1B22] text-white shadow-xs'
+                  ? 'bg-[#9E2A2B] text-white shadow-xs'
                   : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600'
               }`}
             >
@@ -214,7 +214,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
                       </span>
                     </div>
 
-                    <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1">
+                    <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1">
                       <Navigation size={11} /> {toda.zone}
                     </span>
                   </div>
@@ -225,7 +225,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
 
                   <div className="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50 space-y-2 text-xs">
                     <div className="flex items-start gap-2">
-                      <MapPin size={14} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0 mt-0.5" />
+                      <MapPin size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
                       <div>
                         <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">Terminal Base</span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">{toda.terminal}</span>

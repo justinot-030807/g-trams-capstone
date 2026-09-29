@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useLocation, useNavigate, Link, Navigate } from 'react-router-dom';
 import { AlertCircle, Lock, Loader2, MessageSquare, ArrowLeft, ShieldAlert } from 'lucide-react';
 import FeedbackModal from '../components/common/FeedbackModal';
@@ -64,7 +64,7 @@ const AccountDeactivated = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/10 transition-all font-medium";
+  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/10 transition-all font-medium";
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-4">
@@ -102,7 +102,7 @@ const AccountDeactivated = () => {
               </p>
               <Link 
                 to="/login"
-                className="inline-flex items-center gap-2 text-[#7A1B22] dark:text-red-400 font-bold hover:underline"
+                className="inline-flex items-center gap-2 text-[#9E2A2B] dark:text-red-400 font-bold hover:underline"
               >
                 <ArrowLeft size={16} /> Return to Login
               </Link>
@@ -160,7 +160,7 @@ const AccountDeactivated = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 rounded-xl font-bold text-sm text-white bg-[#7A1B22] hover:bg-[#8E2028] disabled:opacity-50 transition-colors shadow-md"
+                  className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 rounded-xl font-bold text-sm text-white bg-[#9E2A2B] hover:bg-[#8E2028] disabled:opacity-50 transition-colors shadow-md"
                 >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Submit Appeal'}
                 </button>

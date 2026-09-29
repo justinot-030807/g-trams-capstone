@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -181,7 +181,7 @@ const ValidateTODA = () => {
   return (
     <MainLayout>
       {/* PAGE HEADER RIBBON */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
+      <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <Building2 size={20} className="text-[#D4AF37]" />
@@ -201,8 +201,8 @@ const ValidateTODA = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         
         {/* Total TODAs */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30">
-          <div className="w-11 h-11 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0 border border-[#7A1B22]/20">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#9E2A2B]/30 dark:hover:border-[#D4AF37]/30">
+          <div className="w-11 h-11 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 border border-[#9E2A2B]/20">
             <Building2 size={22} />
           </div>
           <div className="min-w-0">
@@ -215,7 +215,7 @@ const ValidateTODA = () => {
         </div>
 
         {/* Total Members */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#7A1B22]/30 dark:hover:border-[#D4AF37]/30">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#9E2A2B]/30 dark:hover:border-[#D4AF37]/30">
           <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 border border-blue-200 dark:border-blue-800/40">
             <Users size={22} />
           </div>
@@ -263,7 +263,7 @@ const ValidateTODA = () => {
           <button 
             onClick={() => { setActiveTab('directory'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'directory' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'directory' ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FolderTree size={18} /> Live Members Directory
@@ -271,7 +271,7 @@ const ValidateTODA = () => {
           <button 
             onClick={() => { setActiveTab('validations'); setSearchQuery(''); }}
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'validations' ? 'text-[#7A1B22] dark:text-[#D4AF37] border-b-2 border-[#7A1B22] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              activeTab === 'validations' ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={18} /> Document Validations
@@ -293,7 +293,7 @@ const ValidateTODA = () => {
                   placeholder="Search by driver name, plate no., barangay, motor no., or TODA..." 
                   value={searchQuery} 
                   onChange={(e) => setSearchQuery(e.target.value)} 
-                  className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-xs" 
+                  className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 transition-all shadow-xs" 
                 />
                 {searchQuery && (
                   <button 
@@ -308,7 +308,7 @@ const ValidateTODA = () => {
 
               {/* Match Feedback Badge */}
               {isSearching && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#7A1B22]/10 text-[#7A1B22] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] border border-[#7A1B22]/20 dark:border-[#D4AF37]/30 text-xs font-bold animate-in fade-in">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 text-xs font-bold animate-in fade-in">
                   <Search size={14} />
                   <span>
                     Found {totalMatchingMembers} driver{totalMatchingMembers === 1 ? '' : 's'} across {groupedToda.length} TODA{groupedToda.length === 1 ? '' : 's'}
@@ -328,7 +328,7 @@ const ValidateTODA = () => {
                  {isSearching && (
                    <button 
                      onClick={() => setSearchQuery('')}
-                     className="mt-3 text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline"
+                     className="mt-3 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline"
                    >
                      Reset Search Filters
                    </button>
@@ -344,7 +344,7 @@ const ValidateTODA = () => {
                       key={toda.name} 
                       className={`border rounded-2xl overflow-hidden shadow-xs transition-all ${
                         isOpen 
-                          ? 'border-[#7A1B22]/40 dark:border-[#D4AF37]/40 ring-1 ring-[#7A1B22]/10 dark:ring-[#D4AF37]/10' 
+                          ? 'border-[#9E2A2B]/40 dark:border-[#D4AF37]/40 ring-1 ring-[#9E2A2B]/10 dark:ring-[#D4AF37]/10' 
                           : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                       }`}
                       style={{ animationDelay: `${tIdx * 30}ms` }}
@@ -358,7 +358,7 @@ const ValidateTODA = () => {
                         }`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#7A1B22] to-[#5A1419] text-white font-black rounded-xl flex items-center justify-center text-xs shadow-xs shrink-0 border border-[#D4AF37]/30">
+                          <div className="w-10 h-10 bg-gradient-to-br from-[#9E2A2B] to-[#7A1B22] text-white font-black rounded-xl flex items-center justify-center text-xs shadow-xs shrink-0 border border-[#D4AF37]/30">
                             {toda.name.substring(0, 3)}
                           </div>
                           <div className="min-w-0">
@@ -448,7 +448,7 @@ const ValidateTODA = () => {
                                     <td className="py-3 px-4">
                                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
                                         member.role === 'toda_president' 
-                                          ? 'bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#7A1B22] dark:text-[#D4AF37] border border-[#D4AF37]/40' 
+                                          ? 'bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#D4AF37]/40' 
                                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                                       }`}>
                                         {member.role === 'toda_president' ? 'TODA President' : 'Operator'}
@@ -530,7 +530,7 @@ const ValidateTODA = () => {
             <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/70 dark:bg-[#0c101c]">
               <div className="relative w-full sm:w-96">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
-                <input type="text" placeholder="Search by TODA President or filename..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/20 transition-all shadow-xs" />
+                <input type="text" placeholder="Search by TODA President or filename..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/20 dark:focus:ring-[#D4AF37]/20 transition-all shadow-xs" />
               </div>
             </div>
             
@@ -558,7 +558,7 @@ const ValidateTODA = () => {
                         style={{ animationDelay: `${sIdx * 35}ms` }}
                       >
                         <td className="p-4 pl-6"><p className="font-bold text-slate-900 dark:text-white">{sub.presidentName}</p></td>
-                        <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37]"><FileText size={16} /> {sub.fileName}</div></td>
+                        <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37]"><FileText size={16} /> {sub.fileName}</div></td>
                         <td className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300">{new Date(sub.createdAt).toLocaleDateString()}</td>
                         <td className="p-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${sub.status === 'Approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'}`}>

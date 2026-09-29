@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { Mail, CheckCircle, Clock, Search, XCircle, Send, MessageSquare, Megaphone, HelpCircle } from 'lucide-react';
 import AdminLiveChat from '../../components/admin/AdminLiveChat';
@@ -73,7 +73,7 @@ const AdminTickets = () => {
     <MainLayout>
       <div className="w-full space-y-6 pb-24">
         {/* Header Ribbon */}
-        <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
+        <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all">
           <div className="relative z-10 flex items-center gap-4 min-w-0">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
                <MessageSquare size={20} className="text-[#D4AF37]" />
@@ -93,7 +93,7 @@ const AdminTickets = () => {
                 placeholder="Search tickets..." 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white/95 dark:bg-[#0c101c] border border-white/20 dark:border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/20 dark:focus:ring-[#D4AF37]/20 shadow-xs transition-all"
+                className="w-full pl-9 pr-4 py-2 bg-white/95 dark:bg-[#0c101c] border border-white/20 dark:border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/20 dark:focus:ring-[#D4AF37]/20 shadow-xs transition-all"
               />
             </div>
           )}
@@ -103,21 +103,21 @@ const AdminTickets = () => {
         <div className="flex gap-2 sm:gap-4 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-px">
           <button 
             onClick={() => setActiveTab('chat')} 
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'chat' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'chat' ? 'border-[#9E2A2B] text-[#9E2A2B] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
           >
             <MessageSquare size={16} />
             <span>Live Chat</span>
           </button>
           <button 
             onClick={() => setActiveTab('broadcast')} 
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'broadcast' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'broadcast' ? 'border-[#9E2A2B] text-[#9E2A2B] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
           >
             <Megaphone size={16} />
             <span>Broadcast Announcements</span>
           </button>
           <button 
             onClick={() => setActiveTab('tickets')} 
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'tickets' ? 'border-[#7A1B22] text-[#7A1B22] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === 'tickets' ? 'border-[#9E2A2B] text-[#9E2A2B] dark:border-[#D4AF37] dark:text-[#D4AF37]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
           >
             <Mail size={16} />
             <span>Support Tickets</span>
@@ -187,7 +187,7 @@ const AdminTickets = () => {
                         <td className="p-4 text-right">
                           <button 
                             onClick={() => setSelectedTicket(ticket)}
-                            className="text-xs font-bold text-white dark:text-slate-950 bg-[#7A1B22] dark:bg-[#D4AF37] px-3.5 py-1.5 rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-xs cursor-pointer"
+                            className="text-xs font-bold text-white dark:text-slate-950 bg-[#9E2A2B] dark:bg-[#D4AF37] px-3.5 py-1.5 rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-xs cursor-pointer"
                           >
                             View / Reply
                           </button>
@@ -208,7 +208,7 @@ const AdminTickets = () => {
           <div className="bg-white dark:bg-[#111827] rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-[#0c101c]">
               <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-[#7A1B22] dark:text-[#D4AF37]" />
+                <MessageSquare className="w-5 h-5 text-[#9E2A2B] dark:text-[#D4AF37]" />
                 Ticket Details
               </h3>
               <button onClick={() => setSelectedTicket(null)} className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
@@ -232,8 +232,8 @@ const AdminTickets = () => {
               </div>
 
               {selectedTicket.adminResponse && (
-                <div className="bg-[#7A1B22]/5 dark:bg-[#D4AF37]/5 p-4 rounded-2xl border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
-                  <h4 className="font-bold text-xs text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wide mb-2 flex items-center gap-2">
+                <div className="bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/5 p-4 rounded-2xl border border-[#9E2A2B]/20 dark:border-[#D4AF37]/20">
+                  <h4 className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wide mb-2 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" /> Previous Admin Response
                   </h4>
                   <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
@@ -248,7 +248,7 @@ const AdminTickets = () => {
                   <textarea 
                     rows="3" 
                     placeholder="Type your response here. This will be sent as a notification to the operator."
-                    className="w-full bg-white dark:bg-[#0c101c] border border-slate-300 dark:border-slate-700/80 rounded-xl p-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 resize-none shadow-xs"
+                    className="w-full bg-white dark:bg-[#0c101c] border border-slate-300 dark:border-slate-700/80 rounded-xl p-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/10 dark:focus:ring-[#D4AF37]/20 resize-none shadow-xs"
                     value={adminResponse}
                     onChange={(e) => setAdminResponse(e.target.value)}
                   ></textarea>

@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy } from 'react';
+﻿import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -48,8 +48,8 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 
 const PageLoader = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-    <div className="w-10 h-10 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] mb-2.5">
-      <div className="w-5 h-5 border-2 border-[#7A1B22] dark:border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+    <div className="w-10 h-10 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] mb-2.5">
+      <div className="w-5 h-5 border-2 border-[#9E2A2B] dark:border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
     </div>
     <span className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400">Loading...</span>
   </div>

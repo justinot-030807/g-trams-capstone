@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, Search, Info, MapPin, Phone, Calendar, ShieldCheck, X, 
@@ -383,7 +383,7 @@ const UserManagement = () => {
   return (
     <MainLayout>
       {/* Header Ribbon */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all">
+      <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <User size={20} className="text-[#D4AF37]" />
@@ -417,7 +417,7 @@ const UserManagement = () => {
           </button>
 
           {/* Total Users Count */}
-          <div className="flex items-center gap-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] px-4 py-2 rounded-xl font-bold text-sm border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 shadow-sm">
+          <div className="flex items-center gap-2 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] px-4 py-2 rounded-xl font-bold text-sm border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/40 shadow-sm">
             <Users size={18} />
             Total: {users.length}
           </div>
@@ -427,9 +427,9 @@ const UserManagement = () => {
             onClick={() => fetchUsers(false)} 
             disabled={isRefreshing}
             title="Refresh user list"
-            className="p-2.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+            className="p-2.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
           >
-            <RefreshCw size={16} className={isRefreshing ? "animate-spin text-[#7A1B22] dark:text-[#D4AF37]" : ""} />
+            <RefreshCw size={16} className={isRefreshing ? "animate-spin text-[#9E2A2B] dark:text-[#D4AF37]" : ""} />
           </button>
         </div>
 
@@ -439,8 +439,8 @@ const UserManagement = () => {
           onClick={() => setRoleFilter('all')}
           className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
             roleFilter === 'all'
-              ? 'bg-[#7A1B22] text-white shadow-sm'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+              ? 'bg-[#9E2A2B] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#9E2A2B]'
           }`}
         >
           All Users ({allCount})
@@ -449,8 +449,8 @@ const UserManagement = () => {
           onClick={() => setRoleFilter('operator')}
           className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
             roleFilter === 'operator'
-              ? 'bg-[#7A1B22] text-white shadow-sm'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+              ? 'bg-[#9E2A2B] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#9E2A2B]'
           }`}
         >
           Operators ({operatorCount})
@@ -459,8 +459,8 @@ const UserManagement = () => {
           onClick={() => setRoleFilter('toda_president')}
           className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
             roleFilter === 'toda_president'
-              ? 'bg-[#7A1B22] text-white shadow-sm'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+              ? 'bg-[#9E2A2B] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#9E2A2B]'
           }`}
         >
           TODA Presidents ({todaPresidentCount})
@@ -469,8 +469,8 @@ const UserManagement = () => {
           onClick={() => setRoleFilter('admin')}
           className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
             roleFilter === 'admin'
-              ? 'bg-[#7A1B22] text-white shadow-sm'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#7A1B22]'
+              ? 'bg-[#9E2A2B] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#9E2A2B]'
           }`}
         >
           Administrators ({adminCount})
@@ -497,7 +497,7 @@ const UserManagement = () => {
               placeholder="Search user by name, contact, TODA, or plate..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22] transition-all shadow-sm"
+              className="w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] transition-all shadow-sm"
             />
           </div>
           
@@ -572,7 +572,7 @@ const UserManagement = () => {
                       {/* Contact & TODA */}
                       <td className="py-3 px-3">
                         <p className="text-xs font-bold text-slate-900 dark:text-white">{user.contact}</p>
-                        <p className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 inline-block px-1.5 py-0.5 rounded border border-[#7A1B22]/20 dark:border-[#7A1B22]/40 mt-0.5">
+                        <p className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 inline-block px-1.5 py-0.5 rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/40 mt-0.5">
                           {user.todaAssociation || 'NON-TODA'}
                         </p>
                       </td>
@@ -646,7 +646,7 @@ const UserManagement = () => {
                       {/* Manage Role */}
                       <td className="py-3 px-3 text-center">
                         {isAdminUser ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] border border-[#7A1B22]/20 dark:border-[#7A1B22]/40">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/40">
                             Administrator
                           </span>
                         ) : (
@@ -656,7 +656,7 @@ const UserManagement = () => {
                             onChange={(e) => initiateRoleChange(user, e.target.value)}
                             className={`border text-xs font-bold rounded-lg px-2.5 py-1.5 outline-none shadow-sm transition-colors ${
                               user.isActive === false ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed' :
-                              (user.role === 'toda_president' || user.role === 'toda president') ? 'bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#7A1B22] dark:text-[#D4AF37] border-[#D4AF37] cursor-pointer' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-[#7A1B22] dark:hover:border-[#D4AF37] cursor-pointer'
+                              (user.role === 'toda_president' || user.role === 'toda president') ? 'bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#9E2A2B] dark:text-[#D4AF37] border-[#D4AF37] cursor-pointer' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] cursor-pointer'
                             }`}
                           >
                             <option value="operator">Operator</option>
@@ -724,7 +724,7 @@ const UserManagement = () => {
                     setPageSize(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] cursor-pointer"
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] cursor-pointer"
                 >
                   <option value={10}>10</option>
                   <option value={20}>20</option>
@@ -775,7 +775,7 @@ const UserManagement = () => {
                         onClick={() => setCurrentPage(item)}
                         className={`min-w-[30px] h-[30px] rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
                           isCurrent
-                            ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
+                            ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs'
                             : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                         }`}
                       >
@@ -828,7 +828,7 @@ const UserManagement = () => {
                   value={deactivateReason}
                   onChange={(e) => setDeactivateReason(e.target.value)}
                   placeholder="Enter reason..."
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/10 transition-all min-h-[80px] resize-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/10 transition-all min-h-[80px] resize-none"
                   required
                 />
               </div>
@@ -867,11 +867,11 @@ const UserManagement = () => {
               Are you sure you want to change <strong className="text-slate-800 dark:text-slate-200">{pendingRoleChange.userName}</strong>'s role from <br/>
               <span className="inline-block mt-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs rounded uppercase tracking-wider border border-slate-200 dark:border-slate-700">{pendingRoleChange.oldRole}</span> 
               <span className="mx-2 text-slate-400 dark:text-slate-500">➔</span> 
-              <span className="inline-block px-2 py-1 bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#7A1B22] dark:text-[#D4AF37] font-bold text-xs rounded uppercase tracking-wider border border-[#D4AF37]/40">{pendingRoleChange.newRole}</span> ?
+              <span className="inline-block px-2 py-1 bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-xs rounded uppercase tracking-wider border border-[#D4AF37]/40">{pendingRoleChange.newRole}</span> ?
             </p>
             <div className="flex gap-3">
               <button onClick={() => setIsConfirmOpen(false)} className="flex-1 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm">Cancel</button>
-              <button onClick={confirmAndSaveRole} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#7A1B22] hover:bg-[#5A1419] transition-colors text-sm shadow-sm">Yes, Change It</button>
+              <button onClick={confirmAndSaveRole} className="flex-1 py-3 rounded-xl font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-colors text-sm shadow-sm">Yes, Change It</button>
             </div>
           </div>
         </div>
@@ -883,7 +883,7 @@ const UserManagement = () => {
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsDetailsModalOpen(false)}></div>
           <div className="relative bg-white dark:bg-[#111827] border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="bg-[#7A1B22] p-6 text-center relative shrink-0">
+            <div className="bg-[#9E2A2B] p-6 text-center relative shrink-0">
               <button onClick={() => setIsDetailsModalOpen(false)} className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/20 p-1.5 rounded-lg transition-colors"><X size={18} /></button>
               <div className="relative inline-block mx-auto mb-3">
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center shadow-md border-2 border-[#D4AF37] overflow-hidden">
@@ -950,7 +950,7 @@ const UserManagement = () => {
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TODA Association</p>
                   <div className="mt-1">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37] border border-[#7A1B22]/20 dark:border-[#7A1B22]/40">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/40">
                       {selectedUser.todaAssociation || 'NON-TODA'}
                     </span>
                   </div>
@@ -1024,7 +1024,7 @@ const UserManagement = () => {
               <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-800/40">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]"></span>
+                    <span className="w-2 h-2 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]"></span>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                       Assigned Tricycle Units
                     </h4>
@@ -1046,7 +1046,7 @@ const UserManagement = () => {
                       <div key={unit._id || idx} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-2xs">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#7A1B22] dark:bg-[#D4AF37]"></span>
+                            <span className="w-2 h-2 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]"></span>
                             Plate No: {unit.plateNo || 'Pending Plate'}
                           </span>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
@@ -1067,7 +1067,7 @@ const UserManagement = () => {
                           </div>
                           <div>
                             <span className="font-medium text-slate-500 dark:text-slate-400">TODA/Route:</span>{' '}
-                            <strong className="text-[#7A1B22] dark:text-[#D4AF37]">{unit.todaName || unit.zone || 'N/A'}</strong>
+                            <strong className="text-[#9E2A2B] dark:text-[#D4AF37]">{unit.todaName || unit.zone || 'N/A'}</strong>
                           </div>
                           <div>
                             <span className="font-medium text-slate-500 dark:text-slate-400">Motor No:</span>{' '}

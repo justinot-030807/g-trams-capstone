@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
@@ -38,8 +38,8 @@ const Login = () => {
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#120204';
-    document.body.style.backgroundColor = '#120204';
+    document.documentElement.style.backgroundColor = '#1A0B0E';
+    document.body.style.backgroundColor = '#1A0B0E';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -169,10 +169,10 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#7A1B22] focus:ring-4 focus:ring-[#7A1B22]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
+  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
 
   return (
-    <div className="relative w-full bg-[#120204] flex flex-col overflow-x-hidden select-none">
+    <div className="relative w-full bg-[#1A0B0E] flex flex-col overflow-x-hidden select-none">
       
       {/* Dynamic Background Mesh */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -207,7 +207,7 @@ const Login = () => {
               <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
                 <span>MUNICIPALITY OF GASAN</span>
                 <span>•</span>
-                <span className="text-[#7A1B22]">OFFICIAL SYSTEM</span>
+                <span className="text-[#9E2A2B]">OFFICIAL SYSTEM</span>
               </div>
             </div>
 
@@ -219,7 +219,7 @@ const Login = () => {
               }`}>
                 <p>{error}</p>
                 {error.toLowerCase().includes('maintenance') && (
-                  <Link to="/maintenance" className="inline-block mt-1 font-black text-[#7A1B22] underline tracking-wider">
+                  <Link to="/maintenance" className="inline-block mt-1 font-black text-[#9E2A2B] underline tracking-wider">
                     VIEW SYSTEM STATUS PAGE →
                   </Link>
                 )}
@@ -261,7 +261,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] transition-colors p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B] transition-colors p-1"
                   >
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
@@ -269,7 +269,7 @@ const Login = () => {
                 <div className="text-right mt-0.5">
                   <Link 
                     to="/forgot-password" 
-                    className="text-[9px] font-bold text-slate-500 hover:text-[#7A1B22] transition-colors uppercase tracking-wider"
+                    className="text-[9px] font-bold text-slate-500 hover:text-[#9E2A2B] transition-colors uppercase tracking-wider"
                   >
                     FORGOT PASSWORD?
                   </Link>
@@ -283,7 +283,7 @@ const Login = () => {
                   className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2 rounded-xl text-xs font-black shadow-md transition-all duration-300 uppercase tracking-wider cursor-pointer ${
                     isLoading || lockoutSeconds > 0
                       ? 'bg-slate-400 cursor-not-allowed' 
-                      : 'bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] shadow-[#7A1B22]/30 hover:shadow-[#7A1B22]/60 hover:brightness-110 active:scale-[0.98]'
+                      : 'bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] shadow-[#9E2A2B]/30 hover:shadow-[#9E2A2B]/60 hover:brightness-110 active:scale-[0.98]'
                   }`}
                 >
                   <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000 ease-out pointer-events-none" />
@@ -346,7 +346,7 @@ const Login = () => {
             <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
                 UNREGISTERED OPERATOR?{' '}
-                <Link to="/register" className="font-black text-[#7A1B22] hover:underline">
+                <Link to="/register" className="font-black text-[#9E2A2B] hover:underline">
                   CREATE AN ACCOUNT &gt;
                 </Link>
               </p>

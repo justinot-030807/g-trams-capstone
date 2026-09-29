@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
@@ -424,7 +424,7 @@ const FranchiseReviewPage = () => {
   if (isLoading) {
     return (
       <div className="fixed inset-0 w-full h-full bg-slate-50 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center z-50">
-        <Loader2 size={36} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37] mb-3" />
+        <Loader2 size={36} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37] mb-3" />
         <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Loading Franchise Review Workbench...</p>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Preparing documents and records...</p>
       </div>
@@ -441,7 +441,7 @@ const FranchiseReviewPage = () => {
         </p>
         <button
           onClick={() => navigate('/franchise-approval')}
-          className="mt-4 px-4 py-2 bg-[#7A1B22] hover:bg-[#65151c] text-white rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer"
+          className="mt-4 px-4 py-2 bg-[#9E2A2B] hover:bg-[#65151c] text-white rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer"
         >
           Return to Review Queue
         </button>
@@ -469,7 +469,7 @@ const FranchiseReviewPage = () => {
       {/* ========================================================================= */}
       {/* TOP HEADER: MUNICIPAL HERITAGE VELVET MAROON RIBBON                       */}
       {/* ========================================================================= */}
-      <header className="h-14 px-4 bg-gradient-to-r from-[#681419] via-[#7A1B22] to-[#801820] dark:from-[#180407] dark:via-[#24060a] dark:to-[#120204] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-md border-b border-[#D4AF37]/30">
+      <header className="h-14 px-4 bg-gradient-to-r from-[#852024] via-[#9E2A2B] to-[#801820] dark:from-[#180407] dark:via-[#24060a] dark:to-[#1A0B0E] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-md border-b border-[#D4AF37]/30">
         
         {/* Left: Back & Applicant Summary */}
         <div className="flex items-center gap-3 min-w-0">
@@ -615,7 +615,7 @@ const FranchiseReviewPage = () => {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between px-0.5">
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <Layers size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <Layers size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   Attached Documents
                 </span>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
@@ -635,20 +635,20 @@ const FranchiseReviewPage = () => {
                       onClick={() => handleSelectDoc(tab.key)}
                       className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-gradient-to-r from-red-50 to-white dark:from-[#2a0c10] dark:to-[#161f30] border-[#7A1B22] dark:border-[#D4AF37]/60 shadow-xs ring-1 ring-[#7A1B22]/20 dark:ring-[#D4AF37]/30'
+                          ? 'bg-gradient-to-r from-red-50 to-white dark:from-[#2a0c10] dark:to-[#161f30] border-[#9E2A2B] dark:border-[#D4AF37]/60 shadow-xs ring-1 ring-[#9E2A2B]/20 dark:ring-[#D4AF37]/30'
                           : 'bg-slate-50/80 dark:bg-[#0c101c] border-slate-200 dark:border-slate-800/80 hover:bg-slate-100/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                       }`}
                     >
                       <div className="min-w-0 flex items-center gap-2.5">
                         <span className={`w-5 h-5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
                           isActive 
-                            ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs' 
+                            ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs' 
                             : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                         }`}>
                           {idx + 1}
                         </span>
                         <div className="min-w-0">
-                          <p className={`text-xs font-bold truncate ${isActive ? 'text-[#7A1B22] dark:text-[#D4AF37]' : 'text-slate-800 dark:text-slate-200'}`}>
+                          <p className={`text-xs font-bold truncate ${isActive ? 'text-[#9E2A2B] dark:text-[#D4AF37]' : 'text-slate-800 dark:text-slate-200'}`}>
                             {tab.short}
                           </p>
                           <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
@@ -731,7 +731,7 @@ const FranchiseReviewPage = () => {
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   Form Verification Inspector
                 </span>
-                <span className="text-[11px] font-semibold text-[#7A1B22] dark:text-[#D4AF37] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700/60 px-2 py-0.5 rounded-md">
+                <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700/60 px-2 py-0.5 rounded-md">
                   {currentApp.applicationType || 'New Application'}
                 </span>
               </div>
@@ -743,7 +743,7 @@ const FranchiseReviewPage = () => {
                   onClick={() => setInspectorTab('match')}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     inspectorTab === 'match'
-                      ? 'bg-white dark:bg-[#1f293d] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                      ? 'bg-white dark:bg-[#1f293d] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
@@ -755,7 +755,7 @@ const FranchiseReviewPage = () => {
                   onClick={() => setInspectorTab('applicant')}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     inspectorTab === 'applicant'
-                      ? 'bg-white dark:bg-[#1f293d] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                      ? 'bg-white dark:bg-[#1f293d] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
@@ -767,7 +767,7 @@ const FranchiseReviewPage = () => {
                   onClick={() => setInspectorTab('cedula')}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     inspectorTab === 'cedula'
-                      ? 'bg-white dark:bg-[#1f293d] text-[#7A1B22] dark:text-[#D4AF37] shadow-xs'
+                      ? 'bg-white dark:bg-[#1f293d] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
@@ -811,7 +811,7 @@ const FranchiseReviewPage = () => {
                     <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">Chassis No:</span>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37] font-mono truncate max-w-[170px]">
+                        <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] font-mono truncate max-w-[170px]">
                           {currentApp.chassisNo || 'N/A'}
                         </span>
                         <button
@@ -890,7 +890,7 @@ const FranchiseReviewPage = () => {
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">TODA Association:</span>
-                      <span className="font-bold text-[#7A1B22] dark:text-[#D4AF37] text-right truncate max-w-[210px]">{currentApp.todaName || 'Non-TODA'}</span>
+                      <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] text-right truncate max-w-[210px]">{currentApp.todaName || 'Non-TODA'}</span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">Application Type:</span>
@@ -994,7 +994,7 @@ const FranchiseReviewPage = () => {
             {/* Percentage Badge */}
             <button
               onClick={resetCanvasView}
-              className="text-xs font-semibold px-2 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] min-w-[46px] text-center cursor-pointer"
+              className="text-xs font-semibold px-2 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] min-w-[46px] text-center cursor-pointer"
               title="Click to reset to 100%"
             >
               {Math.round(zoomScale * 100)}%
@@ -1037,7 +1037,7 @@ const FranchiseReviewPage = () => {
                   href={currentDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#7A1B22] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center cursor-pointer"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center cursor-pointer"
                   title="Open Raw Original in New Tab"
                 >
                   <ExternalLink size={15} />
@@ -1049,7 +1049,7 @@ const FranchiseReviewPage = () => {
           {/* ACTIVE DOCUMENT LABEL BADGE (TOP LEFT OF CANVAS) */}
           <div className="absolute top-3 left-3 z-20 pointer-events-none">
             <div className="bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-2">
-              <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+              <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
               <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                 {currentDoc.label}
               </span>
@@ -1100,7 +1100,7 @@ const FranchiseReviewPage = () => {
                 {/* Instant Loading Shimmer / Spinner Overlay */}
                 {isDocLoading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 dark:bg-[#111827]/85 backdrop-blur-xs rounded-2xl z-10 p-6 min-w-[280px] min-h-[280px] border border-slate-200 dark:border-slate-800 shadow-xl animate-in fade-in duration-150">
-                    <Loader2 size={32} className="animate-spin text-[#7A1B22] dark:text-[#D4AF37] mb-2" />
+                    <Loader2 size={32} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37] mb-2" />
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Loading document...</span>
                     <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Rendering {currentDoc.short}</span>
                   </div>
@@ -1146,11 +1146,11 @@ const FranchiseReviewPage = () => {
           {/* FLOATING BOTTOM HINT */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 shadow-sm flex items-center gap-3">
             <span className="flex items-center gap-1.5">
-              <Move size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Drag to pan
+              <Move size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Drag to pan
             </span>
             <span className="text-slate-300 dark:text-slate-600">&bull;</span>
             <span className="flex items-center gap-1.5">
-              <ZoomIn size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Scroll to zoom
+              <ZoomIn size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Scroll to zoom
             </span>
             <span className="text-slate-300 dark:text-slate-600">&bull;</span>
             <span className="text-xs text-slate-500 dark:text-slate-400">Double-click to reset</span>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, FileSpreadsheet, ShieldCheck, Download } from 'lucide-react';
 
@@ -88,7 +88,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
           {/* Action Toolbar (Hidden during print) */}
           <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#7A1B22] border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
                 <FileSpreadsheet size={18} />
               </div>
               <div>
@@ -114,7 +114,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 bg-[#7A1B22] hover:bg-[#922029] active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#922029] active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
                 title="Print Transmittal Sheet"
               >
                 <Printer size={14} />
@@ -210,7 +210,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
               `}</style>
 
               {/* Header */}
-              <div className="text-center border-b-2 border-[#7A1B22] pb-3 mb-3">
+              <div className="text-center border-b-2 border-[#9E2A2B] pb-3 mb-3">
                 <div className="flex items-center justify-center gap-3.5 mb-1">
                   <div className="w-13 h-13 rounded-full overflow-hidden shrink-0 border border-[#D4AF37]">
                     <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-cover" />
@@ -218,7 +218,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                   <div className="text-center">
                     <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
                     <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
-                    <h2 className="text-base font-black text-[#7A1B22] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
+                    <h2 className="text-base font-black text-[#9E2A2B] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
                     <p className="text-[9px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Sangguniang Bayan / Office of the Vice Mayor Extension Franchising Unit</p>
                   </div>
                   <div className="w-13 h-13 rounded-full overflow-hidden shrink-0 border border-[#D4AF37]">
@@ -230,7 +230,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                   <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-wide uppercase font-serif">
                     BATCH FRANCHISE TRANSMITTAL &amp; ENDORSEMENT SUMMARY
                   </h1>
-                  <p className="text-[9.5px] font-bold tracking-widest text-[#7A1B22] uppercase font-sans mt-0.5">
+                  <p className="text-[9.5px] font-bold tracking-widest text-[#9E2A2B] uppercase font-sans mt-0.5">
                     MOTORIZED TRICYCLE OPERATOR'S PERMIT (MTOP) APPROVAL QUEUE
                   </p>
                 </div>
@@ -240,7 +240,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-3 text-xs flex items-center justify-between font-sans">
                 <div>
                   <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Transmittal Ref:</span>
-                  <span className="font-mono font-bold text-[#7A1B22] text-xs">{batchRef}</span>
+                  <span className="font-mono font-bold text-[#9E2A2B] text-xs">{batchRef}</span>
                 </div>
                 <div>
                   <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Date Processed:</span>
@@ -276,7 +276,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                         <td className="border border-slate-300 py-1 px-2 text-center font-bold">{i + 1}</td>
                         <td className="border border-slate-300 py-1 px-2 font-bold uppercase">{unit.fullName}</td>
                         <td className="border border-slate-300 py-1 px-2 text-center font-semibold">{unit.todaName || 'NON-TODA'} (Z{unit.zone || 1})</td>
-                        <td className="border border-slate-300 py-1 px-2 text-center font-mono font-black text-[#7A1B22]">{unit.plateNo || 'PENDING'}</td>
+                        <td className="border border-slate-300 py-1 px-2 text-center font-mono font-black text-[#9E2A2B]">{unit.plateNo || 'PENDING'}</td>
                         <td className="border border-slate-300 py-1 px-2 text-center">{unit.make} {unit.made ? `(${unit.made})` : ''}</td>
                         <td className="border border-slate-300 py-1 px-2 text-center font-mono">{unit.motorNo}</td>
                         <td className="border border-slate-300 py-1 px-2 text-center">

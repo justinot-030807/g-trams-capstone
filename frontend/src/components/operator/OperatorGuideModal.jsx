@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   BookOpen, X, ChevronRight, FileCheck, RefreshCw, 
   ShieldCheck, HelpCircle, CheckCircle2, Clock, Sparkles,
@@ -43,7 +43,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
         <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 mb-1 sm:hidden shrink-0" />
 
         {/* Modal Header */}
-        <div className="relative bg-gradient-to-r from-[#7A1B22] via-[#8E2028] to-[#5A1419] p-5 sm:p-6 text-white shrink-0">
+        <div className="relative bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] p-5 sm:p-6 text-white shrink-0">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-[#D4AF37] font-bold shrink-0">
@@ -76,7 +76,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('apply')}
               className={`flex-1 min-w-[110px] py-2 px-3 rounded-xl transition-all text-center cursor-pointer min-h-[38px] ${
                 activeTab === 'apply' 
-                  ? 'bg-white text-[#7A1B22] font-black shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-black shadow-xs' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -87,7 +87,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('renew')}
               className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl transition-all text-center cursor-pointer min-h-[38px] ${
                 activeTab === 'renew' 
-                  ? 'bg-white text-[#7A1B22] font-black shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-black shadow-xs' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -98,7 +98,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('status')}
               className={`flex-1 min-w-[110px] py-2 px-3 rounded-xl transition-all text-center cursor-pointer min-h-[38px] ${
                 activeTab === 'status' 
-                  ? 'bg-white text-[#7A1B22] font-black shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-black shadow-xs' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -109,7 +109,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('faqs')}
               className={`flex-1 min-w-[80px] py-2 px-3 rounded-xl transition-all text-center cursor-pointer min-h-[38px] ${
                 activeTab === 'faqs' 
-                  ? 'bg-white text-[#7A1B22] font-black shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-black shadow-xs' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -125,7 +125,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
           {activeTab === 'apply' && (
             <div className="space-y-4 animate-in fade-in duration-200">
               <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl p-3.5 flex items-center gap-3">
-                <Sparkles size={18} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                <Sparkles size={18} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                 <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
                   3 simpleng hakbang lamang para makapag-apply ng bagong prangkisa online.
                 </p>
@@ -133,7 +133,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
 
               <div className="space-y-3">
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     1
                   </div>
                   <div className="space-y-1">
@@ -147,7 +147,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     2
                   </div>
                   <div className="space-y-1">
@@ -161,7 +161,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     3
                   </div>
                   <div className="space-y-1">
@@ -189,7 +189,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
 
               <div className="space-y-3">
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     1
                   </div>
                   <div className="space-y-1">
@@ -203,7 +203,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     2
                   </div>
                   <div className="space-y-1">
@@ -217,7 +217,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7A1B22] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                     3
                   </div>
                   <div className="space-y-1">
@@ -328,7 +328,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#7A1B22] hover:bg-[#681419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer min-h-[44px]"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#9E2A2B] hover:bg-[#852024] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer min-h-[44px]"
           >
             Naintindihan Ko (Got It)
           </button>

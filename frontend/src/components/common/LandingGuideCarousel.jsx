@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, ShieldCheck, FileCheck, CreditCard, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -192,7 +192,7 @@ const LandingGuideCarousel = () => {
                   filter: styles.filter,
                 }}
                 transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-3xl bg-gradient-to-b from-[#7A1B22]/95 via-[#5A1419]/95 to-[#120204]/95 backdrop-blur-xl border border-[#D4AF37]/30 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] text-center cursor-pointer select-none shrink-0"
+                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-3xl bg-gradient-to-b from-[#9E2A2B]/95 via-[#7A1B22]/95 to-[#1A0B0E]/95 backdrop-blur-xl border border-[#D4AF37]/30 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] text-center cursor-pointer select-none shrink-0"
                 onClick={() => {
                   pauseInteraction();
                   setCurrentIndex(index);
@@ -200,7 +200,7 @@ const LandingGuideCarousel = () => {
                 }}
               >
                 {/* Step Badge */}
-                <div className="absolute -top-5 w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8972E] text-[#120204] rounded-full flex items-center justify-center font-black text-lg sm:text-xl border-4 border-[#120204] shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                <div className="absolute -top-5 w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8972E] text-[#1A0B0E] rounded-full flex items-center justify-center font-black text-lg sm:text-xl border-4 border-[#1A0B0E] shadow-[0_0_15px_rgba(212,175,55,0.4)]">
                   {step.id}
                 </div>
 
@@ -224,7 +224,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handlePrev}
           aria-label="Previous Slide"
-          className="absolute left-1 sm:left-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[#120204]/85 hover:bg-[#7A1B22] text-white hover:text-[#D4AF37] backdrop-blur-md transition-all duration-300 border border-[#D4AF37]/40 hover:border-[#D4AF37] shadow-lg cursor-pointer active:scale-90"
+          className="absolute left-1 sm:left-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[#1A0B0E]/85 hover:bg-[#9E2A2B] text-white hover:text-[#D4AF37] backdrop-blur-md transition-all duration-300 border border-[#D4AF37]/40 hover:border-[#D4AF37] shadow-lg cursor-pointer active:scale-90"
         >
           <ChevronLeft size={20} />
         </button>
@@ -232,7 +232,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handleNext}
           aria-label="Next Slide"
-          className="absolute right-1 sm:right-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[#120204]/85 hover:bg-[#7A1B22] text-white hover:text-[#D4AF37] backdrop-blur-md transition-all duration-300 border border-[#D4AF37]/40 hover:border-[#D4AF37] shadow-lg cursor-pointer active:scale-90"
+          className="absolute right-1 sm:right-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[#1A0B0E]/85 hover:bg-[#9E2A2B] text-white hover:text-[#D4AF37] backdrop-blur-md transition-all duration-300 border border-[#D4AF37]/40 hover:border-[#D4AF37] shadow-lg cursor-pointer active:scale-90"
         >
           <ChevronRight size={20} />
         </button>

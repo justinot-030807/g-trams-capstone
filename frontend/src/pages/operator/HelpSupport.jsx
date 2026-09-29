@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   HelpCircle, Phone, Mail, Building, ChevronDown, 
@@ -180,7 +180,7 @@ const HelpSupport = () => {
     <MainLayout>
       <div className="w-full space-y-8 pb-28 sm:pb-24">
         {/* Header Ribbon */}
-        <div className="bg-gradient-to-br from-[#7A1B22] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#9E2A2B] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
           <div className="relative z-10">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-950 bg-[#D4AF37] px-2.5 py-0.5 rounded-md">
@@ -202,14 +202,14 @@ const HelpSupport = () => {
           <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors">
             <div>
               <div className="flex items-center gap-3 mb-3.5">
-                <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl shrink-0">
+                <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] rounded-xl shrink-0">
                   <Info size={22} />
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
                     About the G-TRAMS Portal
                   </h2>
-                  <p className="text-xs text-[#7A1B22] dark:text-[#D4AF37] font-semibold">
+                  <p className="text-xs text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">
                     Web-Based Tricycle Franchise Management System • Gasan, Marinduque
                   </p>
                 </div>
@@ -221,18 +221,18 @@ const HelpSupport = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                <Building size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                <Building size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                 <span>Sangguniang Bayan Office / Office of the Vice Mayor Extension</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                <MapPin size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                <MapPin size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                 <span>Municipal Hall, Gasan, Marinduque</span>
               </div>
             </div>
           </div>
 
           {/* Admin Contact Info Card */}
-          <div className="bg-gradient-to-br from-[#7A1B22] to-[#4D1115] dark:from-[#1b0d11] dark:to-[#0d121f] border border-transparent dark:border-slate-800 text-white rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div className="bg-gradient-to-br from-[#9E2A2B] to-[#4D1115] dark:from-[#1b0d11] dark:to-[#0d121f] border border-transparent dark:border-slate-800 text-white rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck size={18} className="text-[#D4AF37]" />
@@ -287,14 +287,14 @@ const HelpSupport = () => {
         {/* Office of the Vice Mayor Extension Office Hours & Fee Schedule */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8">
           <div className="flex items-center gap-2 mb-5">
-            <Building size={24} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+            <Building size={24} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Office Hours & Fees</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
               <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-sm flex items-center gap-2">
-                <Clock size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                <Clock size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 Operating Hours
               </h3>
               <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
@@ -318,7 +318,7 @@ const HelpSupport = () => {
 
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
               <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-sm flex items-center gap-2">
-                <FileText size={16} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 Standard Fees
               </h3>
               <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
@@ -343,7 +343,7 @@ const HelpSupport = () => {
         </div>
 
         {/* Legal & Privacy Policy Banner */}
-        <div className="bg-gradient-to-r from-[#7A1B22] via-[#5A1419] to-[#3D0A0E] rounded-3xl p-5 sm:p-6 text-white mb-8 border border-amber-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-[#9E2A2B] via-[#7A1B22] to-[#3D0A0E] rounded-3xl p-5 sm:p-6 text-white mb-8 border border-amber-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 text-center sm:text-left">
             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[#D4AF37] shrink-0 mx-auto sm:mx-0 shadow-inner">
               <ShieldCheck size={26} />
@@ -382,7 +382,7 @@ const HelpSupport = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 border-b border-slate-100 dark:border-slate-800">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <HelpCircle className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
+                <HelpCircle className="text-[#9E2A2B] dark:text-[#D4AF37]" size={20} /> 
                 <span>Frequently Asked Questions (FAQ)</span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
@@ -397,7 +397,7 @@ const HelpSupport = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search help topics (e.g. renewal, permit)..."
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 transition-all shadow-2xs placeholder:text-slate-600 dark:text-slate-400 min-h-[40px]"
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs placeholder:text-slate-600 dark:text-slate-400 min-h-[40px]"
               />
             </div>
           </div>
@@ -430,7 +430,7 @@ const HelpSupport = () => {
                     </div>
                     <ChevronDown 
                       size={18} 
-                      className={`text-slate-500 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#7A1B22] dark:text-[#D4AF37]' : ''}`} 
+                      className={`text-slate-500 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#9E2A2B] dark:text-[#D4AF37]' : ''}`} 
                     />
                   </button>
 
@@ -461,7 +461,7 @@ const HelpSupport = () => {
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
           <div className="mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <Mail className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
+              <Mail className="text-[#9E2A2B] dark:text-[#D4AF37]" size={20} /> 
               <span>Submit a Support Ticket</span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 font-medium">
@@ -470,10 +470,10 @@ const HelpSupport = () => {
           </div>
           
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-black/20 border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#7A1B22]/5 to-[#D4AF37]/5 dark:from-[#7A1B22]/10 dark:to-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#9E2A2B]/5 to-[#D4AF37]/5 dark:from-[#9E2A2B]/10 dark:to-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700" />
             
             <div className="flex items-center gap-3 mb-6 relative z-10">
-              <div className="p-2.5 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/20 rounded-xl text-[#7A1B22] dark:text-[#E8C340]">
+              <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 rounded-xl text-[#9E2A2B] dark:text-[#E8C340]">
                 <MessageSquare className="w-5 h-5" />
               </div>
               <h3 className="text-xl font-bold text-slate-800 dark:text-white">
@@ -488,7 +488,7 @@ const HelpSupport = () => {
                     {currentLang === 'fil' ? 'Paksa' : 'Subject'}
                   </label>
                   <select 
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]"
+                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
                     value={ticketData.subject}
                     onChange={(e) => setTicketData({...ticketData, subject: e.target.value})}
                     required
@@ -506,7 +506,7 @@ const HelpSupport = () => {
                   <input 
                     type="text" 
                     placeholder="09123456789" 
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37]" 
+                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]" 
                     value={ticketData.contactNumber}
                     onChange={(e) => setTicketData({...ticketData, contactNumber: e.target.value})}
                     required
@@ -520,7 +520,7 @@ const HelpSupport = () => {
                 <textarea 
                   rows="4" 
                   placeholder={currentLang === 'fil' ? 'Ilarawan ang iyong isyu...' : 'Describe your issue in detail...'} 
-                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] resize-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] resize-none"
                   value={ticketData.message}
                   onChange={(e) => setTicketData({...ticketData, message: e.target.value})}
                   required
@@ -529,7 +529,7 @@ const HelpSupport = () => {
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#7A1B22] to-[#B22222] hover:from-[#5A1419] hover:to-[#7A1B22] dark:from-[#D4AF37] dark:to-[#F1C40F] dark:hover:from-[#B8962E] dark:hover:to-[#D4AF37] text-white dark:text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-[#7A1B22]/20 dark:shadow-[#D4AF37]/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#9E2A2B] to-[#B22222] hover:from-[#7A1B22] hover:to-[#9E2A2B] dark:from-[#D4AF37] dark:to-[#F1C40F] dark:hover:from-[#B8962E] dark:hover:to-[#D4AF37] text-white dark:text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-[#9E2A2B]/20 dark:shadow-[#D4AF37]/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 flex items-center justify-center gap-2"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmitting ? (currentLang === 'fil' ? 'Sinasubmit...' : 'Submitting...') : (currentLang === 'fil' ? 'Ipadala ang Ticket' : 'Send Ticket')}</span>
@@ -543,14 +543,14 @@ const HelpSupport = () => {
           <div className="mb-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <Users className="text-[#7A1B22] dark:text-[#D4AF37]" size={20} /> 
+                <Users className="text-[#9E2A2B] dark:text-[#D4AF37]" size={20} /> 
                 <span>About the Development Team</span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 font-medium">
                 G-TRAMS is a Capstone Project developed by students from <strong className="text-slate-700 dark:text-slate-300">Marinduque State University (MarSU)</strong>.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-[#7A1B22] dark:text-[#D4AF37] border border-red-200 dark:border-red-900/60 text-xs font-black uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-[#9E2A2B] dark:text-[#D4AF37] border border-red-200 dark:border-red-900/60 text-xs font-black uppercase tracking-wider">
               <GraduationCap size={14} /> MarSU Capstone
             </span>
           </div>

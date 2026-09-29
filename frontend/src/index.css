@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /* Advanced Liquid Aurora & Form Animations — Smooth, Cinematic & Fluid */
 @keyframes liquidOrbit1 {
@@ -95,7 +95,7 @@
   /* Dark canvas consistency for auth pages */
   html.auth-view,
   body.auth-view {
-    background-color: #120204 !important;
+    background-color: #1A0B0E !important;
     min-height: 100% !important;
     overflow-x: hidden !important;
   }
@@ -133,8 +133,8 @@
 
   :root {
     /* Brand (10% Accent) */
-    --color-brand: #7A1B22;       /* Maroon - CTAs, Active States */
-    --color-brand-hover: #5A1419; /* Darker Maroon for hover */
+    --color-brand: #9E2A2B;       /* Maroon - CTAs, Active States */
+    --color-brand-hover: #7A1B22; /* Darker Maroon for hover */
     --color-accent: #D4AF37;      /* Gold - Highlights, borders */
 
     /* Surfaces (60% Canvas, 30% Surface) */

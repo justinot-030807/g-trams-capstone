@@ -1,4 +1,4 @@
-import localforage from 'localforage';
+﻿import localforage from 'localforage';
 import React, { useState, useEffect, useRef } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
@@ -781,7 +781,7 @@ const ApplyFranchise = () => {
     }
   };
 
-  const inputClasses = "w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#7A1B22] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]";
+  const inputClasses = "w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]";
   const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-300/80 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-600 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[46px]";
 
   if (formMode === null) {
@@ -812,7 +812,7 @@ const ApplyFranchise = () => {
         )}
 
         <header className="mb-6 flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-[#7A1B22] dark:bg-[#D4AF37] rounded-full" />
+          <div className="w-1.5 h-6 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full" />
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">My Franchises</h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 font-medium">Manage your active tricycle units and pending applications.</p>
@@ -845,7 +845,7 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={handleStartNewApplication}
-                className="bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 Resume Draft <ChevronRight size={14} />
               </button>
@@ -869,7 +869,7 @@ const ApplyFranchise = () => {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div>
-                  <div className="absolute top-0 right-0 w-2 h-full bg-[#7A1B22] dark:bg-[#D4AF37]" />
+                  <div className="absolute top-0 right-0 w-2 h-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
                   <h3 className="text-xs font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Unit {index + 1}</h3>
                   <div className="text-lg sm:text-xl font-mono font-bold text-slate-900 dark:text-white mb-1">{unit.plateNo || 'PENDING PLATE'}</div>
                   <p className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-4">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
@@ -894,7 +894,7 @@ const ApplyFranchise = () => {
                       {unit.status === 'Expired' && (
                         <button 
                           onClick={() => handleRenewClick(unit)}
-                          className="text-xs font-bold bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
+                          className="text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
                         >
                           <RefreshCw size={13} /> {hasRenewalDraft ? 'Continue Renewal' : 'Renew Now'}
                         </button>
@@ -960,10 +960,10 @@ const ApplyFranchise = () => {
             {myFranchises.length < maxAllowedUnits ? (
               <button 
                 onClick={handleStartNewApplication}
-                className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-[#7A1B22] dark:hover:text-[#D4AF37] hover:border-[#7A1B22]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[190px] group active:scale-98 cursor-pointer"
+                className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[190px] group active:scale-98 cursor-pointer"
               >
-                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:border-[#7A1B22]/30 dark:group-hover:border-[#D4AF37]/30 transition-all">
-                  <PlusCircle size={26} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:border-[#9E2A2B]/30 dark:group-hover:border-[#D4AF37]/30 transition-all">
+                  <PlusCircle size={26} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 </div>
                 <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
@@ -1017,7 +1017,7 @@ const ApplyFranchise = () => {
       {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
       <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
         {/* Top Hero Banner */}
-        <div className="w-full bg-gradient-to-br from-[#541116] via-[#7A1B22] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-7 px-4 sm:px-6 relative overflow-hidden shadow-md">
+        <div className="w-full bg-gradient-to-br from-[#541116] via-[#9E2A2B] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-7 px-4 sm:px-6 relative overflow-hidden shadow-md">
           {/* Official Gasan Seal Watermark in Full Color */}
           <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
             <img 
@@ -1094,7 +1094,7 @@ const ApplyFranchise = () => {
                         isCompleted 
                           ? 'bg-[#D4AF37] text-slate-950 font-black shadow-xs' 
                           : isCurrent 
-                          ? 'bg-white text-[#7A1B22] font-black ring-4 ring-white/30 scale-105 shadow-md' 
+                          ? 'bg-white text-[#9E2A2B] font-black ring-4 ring-white/30 scale-105 shadow-md' 
                           : 'bg-white/10 text-white/60 border border-white/20'
                       }`}
                     >
@@ -1127,7 +1127,7 @@ const ApplyFranchise = () => {
             <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl p-3 sm:p-3.5 transition-all">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <ShieldCheck size={16} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                  <ShieldCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                   <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                     <span>Requirements Checklist: </span>
                     <span className="font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400">4 items needed</span>
@@ -1136,7 +1136,7 @@ const ApplyFranchise = () => {
                 <button
                   type="button"
                   onClick={() => setShowChecklist(prev => !prev)}
-                  className="text-[11px] font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline shrink-0 cursor-pointer"
+                  className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline shrink-0 cursor-pointer"
                 >
                   {showChecklist ? 'Hide List' : 'View Checklist'}
                 </button>
@@ -1166,7 +1166,7 @@ const ApplyFranchise = () => {
             {/* Section 1: Operator Information */}
             <div className="space-y-3.5">
               <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <User size={16} />
                 </div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
@@ -1240,7 +1240,7 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={validateAndNext}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                   >
                     <span>Continue to Step 2</span>
                   </button>
@@ -1277,7 +1277,7 @@ const ApplyFranchise = () => {
             {/* Section 2: Vehicle Details */}
             <div className="space-y-3.5">
               <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                <div className="w-7 h-7 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <Car size={16} />
                 </div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
@@ -1316,7 +1316,7 @@ const ApplyFranchise = () => {
                             onClick={() => setFormData(prev => ({ ...prev, make: brand }))}
                             className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border-2 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               formData.make === brand
-                                ? 'bg-[#7A1B22] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950 dark:border-[#b89428]'
+                                ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950 dark:border-[#b89428]'
                                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50'
                             }`}
                           >
@@ -1352,7 +1352,7 @@ const ApplyFranchise = () => {
                     <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                       Route / Zone
                     </label>
-                    <button type="button" onClick={() => setShowTodaGuide(true)} className="p-1 rounded-xl text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="View TODA Zone Guide">
+                    <button type="button" onClick={() => setShowTodaGuide(true)} className="p-1 rounded-xl text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="View TODA Zone Guide">
                       <Info size={16} />
                     </button>
                   </div>
@@ -1480,7 +1480,7 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={validateAndNext}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                   >
                     <span>Continue to Step 3</span>
                   </button>
@@ -1515,7 +1515,7 @@ const ApplyFranchise = () => {
         {currentStep === 3 && (
           <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                 <FileText size={18} />
               </div>
               <div>
@@ -1550,7 +1550,7 @@ const ApplyFranchise = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
-                  <CalendarDays size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                  <CalendarDays size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>Date Issued</span>
                 </label>
                 <input 
@@ -1586,7 +1586,7 @@ const ApplyFranchise = () => {
               <div className="flex flex-col justify-end">
                 <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-3 flex items-center justify-between min-h-[46px]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0">
                       <CalendarDays size={16} />
                     </div>
                     <div>
@@ -1619,7 +1619,7 @@ const ApplyFranchise = () => {
                 <button 
                   type="button" 
                   onClick={validateAndNext}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
                 >
                   <span>Continue to Step 4</span>
                 </button>
@@ -1653,7 +1653,7 @@ const ApplyFranchise = () => {
         {currentStep === 4 && (
           <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
             <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="w-8 h-8 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                 <UploadCloud size={18} />
               </div>
               <div>
@@ -1690,9 +1690,9 @@ const ApplyFranchise = () => {
             )}
 
             {/* Slide 1: See Application Summary Button */}
-            <div className="bg-gradient-to-r from-[#7A1B22]/5 via-amber-500/5 to-transparent dark:from-[#D4AF37]/10 dark:via-transparent border border-[#7A1B22]/15 dark:border-[#D4AF37]/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
+            <div className="bg-gradient-to-r from-[#9E2A2B]/5 via-amber-500/5 to-transparent dark:from-[#D4AF37]/10 dark:via-transparent border border-[#9E2A2B]/15 dark:border-[#D4AF37]/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
                   <FileText size={20} />
                 </div>
                 <div>
@@ -1703,7 +1703,7 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={() => setIsSummaryModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
               >
                 <Eye size={15} />
                 <span>See Summary</span>
@@ -1726,7 +1726,7 @@ const ApplyFranchise = () => {
                   className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] border-2 border-[#541116] dark:border-[#b89428] ${
                     isSubmitting 
                       ? 'bg-slate-500 dark:bg-slate-700 cursor-not-allowed border-transparent' 
-                      : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
+                      : 'bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
                   }`}
                 >
                   {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}

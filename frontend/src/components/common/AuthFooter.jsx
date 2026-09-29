@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ExternalLink, ShieldCheck, FileText, Lock } from 'lucide-react';
 import TermsPolicyModal from './TermsPolicyModal';
@@ -66,9 +66,9 @@ const AuthFooter = () => {
           <div className="flex flex-col space-y-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Quick Links</h3>
             <ul className="space-y-3 text-sm text-white/60">
-              <li><Link to="/" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#7A1B22]" /> Landing Page</Link></li>
-              <li><Link to="/login" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#7A1B22]" /> Sign In</Link></li>
-              <li><Link to="/register" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#7A1B22]" /> Create Account</Link></li>
+              <li><Link to="/" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Landing Page</Link></li>
+              <li><Link to="/login" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Sign In</Link></li>
+              <li><Link to="/register" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Create Account</Link></li>
               <li><a href="https://marinduque.gov.ph" target="_blank" rel="noreferrer" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-500" /> Provincial Government</a></li>
             </ul>
           </div>
@@ -112,7 +112,7 @@ const AuthFooter = () => {
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Contact</h3>
             <ul className="space-y-4 text-sm text-white/60">
               <li className="flex items-start gap-3">
-                <MapPin size={16} className="text-[#7A1B22] shrink-0 mt-0.5" />
+                <MapPin size={16} className="text-[#9E2A2B] shrink-0 mt-0.5" />
                 <span>Municipal Hall Compound,<br/>Gasan, Marinduque, Philippines</span>
               </li>
               <li className="flex items-center gap-3">

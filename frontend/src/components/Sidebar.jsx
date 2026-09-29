@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
@@ -325,7 +325,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside 
-        className={`bg-[#7A1B22] dark:bg-[#0c101c] fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 dark:border-slate-800 print:hidden print-hide ${
+        className={`bg-[#9E2A2B] dark:bg-[#0c101c] fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 dark:border-slate-800 print:hidden print-hide ${
           isOperatorOrToda ? 'hidden md:flex' : 'flex'
         } ${
           isOpen 
@@ -371,7 +371,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     title={item.name}
                     className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
                       isActive 
-                        ? 'bg-white text-[#7A1B22] dark:bg-white/10 dark:text-[#D4AF37] dark:border dark:border-[#D4AF37]/30 shadow-xs' 
+                        ? 'bg-white text-[#9E2A2B] dark:bg-white/10 dark:text-[#D4AF37] dark:border dark:border-[#D4AF37]/30 shadow-xs' 
                         : 'text-white/80 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white dark:hover:text-white'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
@@ -379,7 +379,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                       <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-110 group-active/navitem:scale-95 origin-center relative">
                         {item.icon}
                         {!isOpen && Boolean(item.badge) && (
-                          <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22]">
+                          <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#9E2A2B]">
                             {item.badge > 99 ? '99+' : item.badge}
                           </span>
                         )}
@@ -434,7 +434,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     {isOpen && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         {Boolean(item.badge) && (
-                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#7A1B22]">
+                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#9E2A2B]">
                             {item.badge}
                           </span>
                         )}
@@ -477,7 +477,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                               title={sub.name}
                               className={`flex items-center rounded-lg text-xs font-bold transition-colors duration-150 ${
                                 isSubActive 
-                                  ? 'bg-white text-[#7A1B22] dark:bg-white/15 dark:text-[#D4AF37] shadow-sm font-black dark:border dark:border-[#D4AF37]/30' 
+                                  ? 'bg-white text-[#9E2A2B] dark:bg-white/15 dark:text-[#D4AF37] shadow-sm font-black dark:border dark:border-[#D4AF37]/30' 
                                   : 'text-white/75 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/10 hover:text-white dark:hover:text-white'
                               } ${isOpen ? 'w-full px-2.5 py-2 justify-between' : 'w-9 h-9 justify-center'}`}
                             >

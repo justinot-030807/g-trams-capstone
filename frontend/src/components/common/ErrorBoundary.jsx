@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -30,7 +30,7 @@ class ErrorBoundary extends React.Component {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
               <button 
                 onClick={() => window.location.reload()}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm rounded-xl transition-all cursor-pointer"
               >
                 Refresh Page
               </button>

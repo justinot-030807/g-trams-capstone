@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 
 const SplashScreen = () => {
   const [shouldShow, setShouldShow] = useState(() => {
@@ -102,7 +102,7 @@ const SplashScreen = () => {
               : 'opacity-0 scale-90 translate-y-2'
           }`}
         >
-          <h1 className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-[#7A1B22] dark:text-[#e84c58] font-sans">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-[#9E2A2B] dark:text-[#e84c58] font-sans">
             GTRAMS
           </h1>
         </div>
@@ -116,7 +116,7 @@ const SplashScreen = () => {
           }`}
         >
           <div
-            className="h-full bg-[#7A1B22] dark:bg-[#e84c58] rounded-full transition-all duration-500 ease-out shadow-sm"
+            className="h-full bg-[#9E2A2B] dark:bg-[#e84c58] rounded-full transition-all duration-500 ease-out shadow-sm"
             style={{ width: `${progress}%` }}
           />
         </div>

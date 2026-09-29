@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { StatsCardsSkeleton, SkeletonElement } from '../../components/skeleton';
 
 const TODA_COLORS = [
-  '#7A1B22', // Maroon (Municipal Core)
+  '#9E2A2B', // Maroon (Municipal Core)
   '#D4AF37', // Gold (Accent)
   '#2563EB', // Blue (BATODA)
   '#059669', // Emerald (POB TODA)
@@ -36,7 +36,7 @@ const CustomTodaTooltip = ({ active, payload }) => {
         </div>
         <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-400 font-medium">
           <span>Units: <strong className="text-slate-900 dark:text-white font-bold">{data.value}</strong></span>
-          <span className="font-black text-[#7A1B22] dark:text-[#D4AF37]">{data.percentage}% share</span>
+          <span className="font-black text-[#9E2A2B] dark:text-[#D4AF37]">{data.percentage}% share</span>
         </div>
       </div>
     );
@@ -231,7 +231,7 @@ const AdminDashboard = () => {
 
       {/* 1. HERO BANNER */}
       <div 
-        className="animate-smooth-card bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all duration-300"
+        className="animate-smooth-card bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all duration-300"
         style={{ animationDelay: '0.05s' }}
       >
         <div className="relative z-10 text-center md:text-left min-w-0">
@@ -288,7 +288,7 @@ const AdminDashboard = () => {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {[
-            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, iconBg: 'bg-[#7A1B22]/10 dark:bg-[#7A1B22]/25 text-[#7A1B22] dark:text-[#D4AF37]' },
+            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, iconBg: 'bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37]' },
             { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 dark:border dark:border-emerald-800/40' },
             { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-[#D4AF37] dark:border dark:border-amber-800/40' },
             { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-500 dark:text-red-400 dark:border dark:border-red-800/40' }
@@ -417,7 +417,7 @@ const AdminDashboard = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl">
+                <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 text-[#9E2A2B] dark:text-[#D4AF37] rounded-xl">
                   <BarChart3 size={18} />
                 </div>
                 <div>
@@ -425,7 +425,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Status distribution across all registered units</p>
                 </div>
               </div>
-              <span className="text-xs font-bold bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-wider border border-[#7A1B22]/20">
+              <span className="text-xs font-bold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 text-[#9E2A2B] dark:text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-wider border border-[#9E2A2B]/20">
                 {stats.total} Units
               </span>
             </div>
@@ -537,7 +537,7 @@ const AdminDashboard = () => {
                   <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Last System Activity</p>
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Most recent franchise update</p>
                 </div>
-                <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37]">
+                <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
                   {historyLogs.length > 0 ? getRelativeTime(historyLogs[0]?.updatedAt) : '—'}
                 </span>
               </div>
@@ -608,7 +608,7 @@ const AdminDashboard = () => {
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-[#7A1B22]/10 dark:bg-[#7A1B22]/30 text-[#7A1B22] dark:text-[#D4AF37] rounded-xl">
+              <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 text-[#9E2A2B] dark:text-[#D4AF37] rounded-xl">
                 <PieChartIcon size={18} />
               </div>
               <div>
@@ -625,7 +625,7 @@ const AdminDashboard = () => {
               <span className="text-xs sm:text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700">
                 {todaStats.length} Transport Associations
               </span>
-              <span className="text-xs sm:text-xs font-black bg-[#7A1B22]/10 text-[#7A1B22] dark:text-[#D4AF37] px-3 py-1.5 rounded-xl border border-[#7A1B22]/20">
+              <span className="text-xs sm:text-xs font-black bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] px-3 py-1.5 rounded-xl border border-[#9E2A2B]/20">
                 {stats.total} Total Units
               </span>
             </div>
@@ -791,10 +791,10 @@ const AdminDashboard = () => {
           >
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <History size={18} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                <History size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">System Activity History</h2>
               </div>
-              <button onClick={() => navigate('/franchise-masterlist')} className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] hover:underline flex items-center gap-1">
+              <button onClick={() => navigate('/franchise-masterlist')} className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1">
                 Masterlist <ArrowRight size={12} />
               </button>
             </div>
@@ -847,7 +847,7 @@ const AdminDashboard = () => {
                 <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">Pending Approvals Queue</h2>
               </div>
               {stats.pending > 0 && (
-                <span className="bg-[#7A1B22] text-white text-xs font-black px-2.5 py-0.5 rounded-full">
+                <span className="bg-[#9E2A2B] text-white text-xs font-black px-2.5 py-0.5 rounded-full">
                   {stats.pending} New
                 </span>
               )}
@@ -883,7 +883,7 @@ const AdminDashboard = () => {
                       {/* Review CTA */}
                       <button 
                         onClick={() => navigate('/franchise-approval')}
-                        className="px-4 py-2 bg-[#7A1B22] hover:bg-[#5A1419] text-white text-xs font-bold rounded-xl transition-all shrink-0 active:scale-95 shadow-sm flex items-center gap-1.5"
+                        className="px-4 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold rounded-xl transition-all shrink-0 active:scale-95 shadow-sm flex items-center gap-1.5"
                       >
                         <ArrowRight size={13} />
                         Review

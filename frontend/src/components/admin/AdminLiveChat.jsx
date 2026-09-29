@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Search, Send, Loader2, Trash2, Check, CheckCheck, User, Sparkles } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 
@@ -302,7 +302,7 @@ const AdminLiveChat = () => {
               placeholder="Search operators or messages..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2 text-xs sm:text-sm bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded-xl outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 transition-all text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
+              className="w-full pl-9 pr-3.5 py-2 text-xs sm:text-sm bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded-xl outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/10 dark:focus:ring-[#D4AF37]/20 transition-all text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
             />
           </div>
         </div>
@@ -329,7 +329,7 @@ const AdminLiveChat = () => {
                   onClick={() => setActiveThread(t)}
                   className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors relative group ${
                     isSelected 
-                      ? 'bg-white dark:bg-[#161f30] border-l-4 border-[#7A1B22] dark:border-[#D4AF37] shadow-xs' 
+                      ? 'bg-white dark:bg-[#161f30] border-l-4 border-[#9E2A2B] dark:border-[#D4AF37] shadow-xs' 
                       : 'hover:bg-slate-100/70 dark:hover:bg-[#161f30]/40'
                   }`}
                 >
@@ -401,7 +401,7 @@ const AdminLiveChat = () => {
                   {activeOperator?.profilePic ? (
                     <img src={activeOperator.profilePic} alt={activeOperator.name} className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37] font-bold flex items-center justify-center text-sm border border-[#7A1B22]/20 dark:border-[#D4AF37]/30">
+                    <div className="w-9 h-9 rounded-full bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-bold flex items-center justify-center text-sm border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
                       {(activeOperator?.name || 'O')[0].toUpperCase()}
                     </div>
                   )}
@@ -453,11 +453,11 @@ const AdminLiveChat = () => {
                     >
                       <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm ${
                         isMine 
-                          ? 'bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-xs shadow-xs font-medium' 
+                          ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 rounded-br-xs shadow-xs font-medium' 
                           : 'bg-white dark:bg-[#161f30] text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80 rounded-bl-xs shadow-xs'
                       }`}>
                         {!isMine && (
-                          <p className="text-[10px] font-bold text-[#7A1B22] dark:text-[#D4AF37] mb-0.5">
+                          <p className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] mb-0.5">
                             {msg.sender?.name || activeOperator?.name || 'Operator'}
                           </p>
                         )}
@@ -502,12 +502,12 @@ const AdminLiveChat = () => {
                   }}
                   placeholder={`Reply to ${activeOperator?.name || 'operator'}... (Press Enter to send)`}
                   rows={2}
-                  className="flex-1 resize-none border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-[#0c101c] text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-[#0c101c] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 transition-all shadow-2xs"
+                  className="flex-1 resize-none border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-[#0c101c] text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-[#0c101c] focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/10 dark:focus:ring-[#D4AF37]/20 transition-all shadow-2xs"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isSending}
-                  className="h-10 px-4 rounded-xl bg-[#7A1B22] dark:bg-[#D4AF37] text-white dark:text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 shadow-xs"
+                  className="h-10 px-4 rounded-xl bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 shadow-xs"
                 >
                   {isSending ? (
                     <Loader2 size={15} className="animate-spin" />
@@ -524,7 +524,7 @@ const AdminLiveChat = () => {
         ) : (
           /* Empty State when no conversation is selected */
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/30 dark:bg-[#0c101c]/50">
-            <div className="w-16 h-16 rounded-2xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/10 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] mb-3 border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
+            <div className="w-16 h-16 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] mb-3 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/20">
               <MessageSquare size={30} />
             </div>
             <h3 className="text-base font-bold text-slate-800 dark:text-white">

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Bell,
   CheckCircle2,
@@ -150,8 +150,8 @@ export const getNotificationVisuals = (notif) => {
     icon: Bell,
     badgeText: 'Update',
     badgeClass: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-    iconBg: 'bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 text-[#7A1B22] dark:text-[#D4AF37]',
-    accentBorder: 'border-l-4 border-l-[#7A1B22] dark:border-l-[#D4AF37]'
+    iconBg: 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37]',
+    accentBorder: 'border-l-4 border-l-[#9E2A2B] dark:border-l-[#D4AF37]'
   };
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { Printer, Filter, CheckCircle, Clock, AlertTriangle, XCircle, FileText, Ban, Loader2, Download } from 'lucide-react';
@@ -103,7 +103,7 @@ const AdminReports = () => {
     URL.revokeObjectURL(url);
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/10 dark:focus:ring-[#D4AF37]/20 transition-all";
+  const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/10 dark:focus:ring-[#D4AF37]/20 transition-all";
 
   return (
     <MainLayout>
@@ -187,7 +187,7 @@ const AdminReports = () => {
       `}</style>
 
       {/* Header Ribbon */}
-      <header className="mb-6 bg-gradient-to-br from-[#681419] via-[#7A1B22] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#7A1B22]/30 dark:border-[#D4AF37]/25 transition-all print:hidden print-hide">
+      <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all print:hidden print-hide">
         <div className="relative z-10 flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
              <Filter size={20} className="text-[#D4AF37]" />
@@ -209,7 +209,7 @@ const AdminReports = () => {
           </button>
           <button 
             onClick={handlePrint}
-            className="flex-1 md:flex-initial bg-white text-[#7A1B22] dark:bg-[#D4AF37] dark:text-slate-900 hover:bg-slate-100 dark:hover:bg-[#c29e2f] px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
+            className="flex-1 md:flex-initial bg-white text-[#9E2A2B] dark:bg-[#D4AF37] dark:text-slate-900 hover:bg-slate-100 dark:hover:bg-[#c29e2f] px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
           >
             <Printer size={16} /> Print Report
           </button>
@@ -219,7 +219,7 @@ const AdminReports = () => {
       {/* Filter Criteria */}
       <div className="bg-white dark:bg-[#111827] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 print:hidden print-hide transition-colors">
         <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Filter size={14} className="text-[#7A1B22] dark:text-[#D4AF37]" /> Filter Criteria
+          <Filter size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Filter Criteria
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
@@ -271,7 +271,7 @@ const AdminReports = () => {
               <p className="text-xs uppercase tracking-widest font-serif text-slate-700 font-semibold">Republic of the Philippines</p>
               <p className="text-xs uppercase tracking-wider font-serif text-slate-700">Province of Marinduque</p>
               <p className="text-sm font-black uppercase tracking-wide text-slate-950">Municipality of Gasan</p>
-              <p className="text-xs font-bold text-[#7A1B22] uppercase tracking-wider mt-0.5">Office of the Municipal Mayor &bull; Office of the Vice Mayor Extension / Licensing Division</p>
+              <p className="text-xs font-bold text-[#9E2A2B] uppercase tracking-wider mt-0.5">Office of the Municipal Mayor &bull; Office of the Vice Mayor Extension / Licensing Division</p>
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 mt-1">
                 Official Franchise System Report
               </h2>

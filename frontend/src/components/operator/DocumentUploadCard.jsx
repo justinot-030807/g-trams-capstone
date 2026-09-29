@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Sparkles, SlidersHorizontal } from 'lucide-react';
 import DocumentScannerModal from './DocumentScannerModal';
 
@@ -117,7 +117,7 @@ const DocumentUploadCard = ({
               <button
                 type="button"
                 onClick={() => setIsScannerOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-[#7A1B22] hover:bg-[#65151c] text-white px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#65151c] text-white px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
               >
                 <Camera size={15} className="text-[#D4AF37]" />
                 <span>Scan Document</span>
@@ -171,7 +171,7 @@ const DocumentUploadCard = ({
                 <button
                   type="button"
                   onClick={() => setIsScannerOpen(true)}
-                  className="text-[#7A1B22] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-2 -mx-2 text-xs"
+                  className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-2 -mx-2 text-xs"
                 >
                   <RotateCcw size={12} /> Re-scan
                 </button>

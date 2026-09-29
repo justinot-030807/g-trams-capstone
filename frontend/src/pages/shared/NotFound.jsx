@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
@@ -15,7 +15,7 @@ const NotFound = () => {
         </p>
         <button
           onClick={() => navigate('/')}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#7A1B22] dark:bg-[#D4AF37] hover:bg-[#5A1419] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#9E2A2B] dark:bg-[#D4AF37] hover:bg-[#7A1B22] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
         >
           <ArrowLeft size={18} />
           Go to Dashboard

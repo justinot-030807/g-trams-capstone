@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   UploadCloud, FileText, CheckCircle2, Clock3, ArrowLeft, X, Loader2, 
@@ -252,7 +252,7 @@ const SubmitMembers = () => {
             </button>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full border border-[#7A1B22]/15 dark:border-[#D4AF37]/25">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full border border-[#9E2A2B]/15 dark:border-[#D4AF37]/25">
                   {todaData.todaName || 'TODA Association'}
                 </span>
               </div>
@@ -293,7 +293,7 @@ const SubmitMembers = () => {
             onClick={() => setActiveTab('roster')}
             className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[42px] active:scale-95 ${
               activeTab === 'roster'
-                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs'
+                ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs'
                 : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
           >
@@ -313,7 +313,7 @@ const SubmitMembers = () => {
             onClick={() => setActiveTab('upload')}
             className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[42px] active:scale-95 ${
               activeTab === 'upload'
-                ? 'bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs'
+                ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs'
                 : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
           >
@@ -337,7 +337,7 @@ const SubmitMembers = () => {
             {/* Association Statistics Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0">
                   <Users size={18} />
                 </div>
                 <div className="min-w-0">
@@ -402,7 +402,7 @@ const SubmitMembers = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by member name, plate #, contact..."
-                  className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-[#7A1B22] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#7A1B22]/15 shadow-2xs min-h-[42px]"
+                  className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 shadow-2xs min-h-[42px]"
                 />
                 {searchTerm && (
                   <button 
@@ -500,7 +500,7 @@ const SubmitMembers = () => {
                   >
                     {/* Top Subtle Gold/Maroon Highlight for President */}
                     {member.isPresident && (
-                      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#7A1B22] via-[#D4AF37] to-[#7A1B22]" />
+                      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#9E2A2B] via-[#D4AF37] to-[#9E2A2B]" />
                     )}
 
                     <div>
@@ -514,7 +514,7 @@ const SubmitMembers = () => {
                               className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7A1B22]/15 to-[#D4AF37]/20 border border-[#D4AF37]/30 flex items-center justify-center text-[#7A1B22] dark:text-[#D4AF37] font-bold text-xs shrink-0 shadow-2xs">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#9E2A2B]/15 to-[#D4AF37]/20 border border-[#D4AF37]/30 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-xs shrink-0 shadow-2xs">
                               {member.name.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -554,15 +554,15 @@ const SubmitMembers = () => {
                       {/* Contact & Address Bar */}
                       <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-1 mb-3 text-xs">
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                          <Phone size={13} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <Phone size={13} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                           {member.contact && member.contact !== 'N/A' ? (
                             <a 
                               href={`tel:${member.contact}`} 
-                              className="inline-flex items-center gap-1.5 font-semibold text-[#7A1B22] dark:text-[#D4AF37] hover:underline text-xs"
+                              className="inline-flex items-center gap-1.5 font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline text-xs"
                               title="Call member"
                             >
                               <span>{member.contact}</span>
-                              <span className="text-xs uppercase font-bold bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Call</span>
+                              <span className="text-xs uppercase font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 px-1.5 py-0.5 rounded">Call</span>
                             </a>
                           ) : (
                             <span className="text-slate-600 dark:text-slate-400 italic text-xs">No contact number listed</span>
@@ -570,7 +570,7 @@ const SubmitMembers = () => {
                         </div>
 
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                          <MapPin size={13} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                          <MapPin size={13} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                           <span className="truncate text-xs font-normal text-slate-600 dark:text-slate-600 dark:text-slate-400">
                             {member.address || 'Address not listed'}
                           </span>
@@ -580,7 +580,7 @@ const SubmitMembers = () => {
                       {/* Member's Registered Units Roster */}
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
-                          <Car size={13} className="text-[#7A1B22] dark:text-[#D4AF37]" />
+                          <Car size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                           <span>Registered Tricycle Units</span>
                         </p>
 
@@ -650,7 +650,7 @@ const SubmitMembers = () => {
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     Upload Member Roster Document
                   </h2>
-                  <span className="text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] uppercase tracking-wider bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-lg">
+                  <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-lg">
                     PDF • Excel • CSV
                   </span>
                 </div>
@@ -659,7 +659,7 @@ const SubmitMembers = () => {
                   <div 
                     className={`border-2 border-dashed rounded-2xl p-5 sm:p-8 text-center transition-colors relative group ${
                       isDragging 
-                        ? 'border-[#7A1B22] dark:border-[#D4AF37] bg-[#7A1B22]/5 dark:bg-[#D4AF37]/5' 
+                        ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/5' 
                         : 'border-slate-200 dark:border-slate-700/80 hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
                     }`}
                     onDragOver={handleDragOver}
@@ -667,7 +667,7 @@ const SubmitMembers = () => {
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-2.5 text-[#7A1B22] dark:text-[#D4AF37] shadow-2xs">
+                    <div className="w-12 h-12 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-2.5 text-[#9E2A2B] dark:text-[#D4AF37] shadow-2xs">
                       <UploadCloud size={24} />
                     </div>
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-0.5">
@@ -692,7 +692,7 @@ const SubmitMembers = () => {
                     </label>
 
                     {file && (
-                      <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-[#7A1B22] dark:text-[#D4AF37] bg-[#7A1B22]/10 dark:bg-[#D4AF37]/15 py-2 px-3 rounded-xl inline-flex border border-[#7A1B22]/20 dark:border-[#D4AF37]/20">
+                      <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 py-2 px-3 rounded-xl inline-flex border border-[#9E2A2B]/20 dark:border-[#D4AF37]/20">
                         <FileSpreadsheet size={16} />
                         <span className="truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
                         <button 
@@ -712,7 +712,7 @@ const SubmitMembers = () => {
                     className={`w-full mt-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs flex items-center justify-center gap-1.5 min-h-[42px] active:scale-95 ${
                       !file || isUploading 
                       ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-600 cursor-not-allowed' 
-                      : 'bg-[#7A1B22] hover:bg-[#5A1419] dark:bg-[#D4AF37] dark:text-slate-950 dark:hover:bg-[#c29e2f] cursor-pointer shadow-[#7A1B22]/20'
+                      : 'bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:text-slate-950 dark:hover:bg-[#c29e2f] cursor-pointer shadow-[#9E2A2B]/20'
                     }`}
                   >
                     {isUploading ? (
@@ -750,7 +750,7 @@ const SubmitMembers = () => {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 min-w-0">
-                            <FileText size={15} className="text-[#7A1B22] dark:text-[#D4AF37] shrink-0" />
+                            <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                             <span className="truncate">{sub.fileName}</span>
                           </div>
                           
