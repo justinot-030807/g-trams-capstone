@@ -6,12 +6,13 @@ import {
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw,
-  Save, XCircle, CheckCircle2, Clock, Sparkles, User, Eye, Receipt
+  Save, XCircle, CheckCircle2, Clock, Sparkles, User, Eye, Receipt,
+  Compass, MapPin
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
-import TodaZoneGuideModal from '../../components/operator/TodaZoneGuideModal';
+import TodaZoneGuideModal, { TODA_DIRECTORY, GASAN_ZONES } from '../../components/operator/TodaZoneGuideModal';
 import CancelApplicationModal from '../../components/operator/CancelApplicationModal';
 import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
@@ -49,6 +50,7 @@ const ApplyFranchise = () => {
 
   const modeParam = searchParams.get('mode');
   const stepParam = parseInt(searchParams.get('step') || '1', 10);
+  const focusParam = searchParams.get('focus');
   const initialStep = (stepParam >= 1 && stepParam <= 4) ? stepParam : 1;
 
   const [myFranchises, setMyFranchises] = useState([]);
@@ -59,6 +61,8 @@ const ApplyFranchise = () => {
     return 'New';
   }); 
   const [selectedId, setSelectedId] = useState(null); 
+  const [reapplyTarget, setReapplyTarget] = useState(null);
+  const [focusField, setFocusField] = useState(focusParam || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadPhase, setUploadPhase] = useState('');
   
@@ -216,7 +220,41 @@ const ApplyFranchise = () => {
     } else if (m === 'new' && formMode !== 'New') {
       setFormMode('New');
     }
+    const f = searchParams.get('focus');
+    if (f && f !== focusField) {
+      setFocusField(f);
+    }
   }, [searchParams]);
+
+  // Auto-scroll and focus to rejected/highlighted field if focusField is present
+  useEffect(() => {
+    if (focusField) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`field-${focusField}`) || document.querySelector(`[name="${focusField}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const targetInput = el.tagName === 'INPUT' || el.tagName === 'SELECT' ? el : el.querySelector('input, select');
+          targetInput?.focus?.();
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [focusField, currentStep]);
+
+  const isFieldFocused = (field) => focusField === field;
+
+  // Auto-sync route/zone with TODA association if zone is not yet chosen
+  useEffect(() => {
+    if (!formData.zone && formData.todaName) {
+      const match = TODA_DIRECTORY.find(t => t.id === formData.todaName || t.name.startsWith(formData.todaName));
+      if (match) {
+        const zoneNum = match.zone.match(/Zone\s*(\d+)/i)?.[1];
+        if (zoneNum) {
+          setFormData(prev => ({ ...prev, zone: zoneNum }));
+        }
+      }
+    }
+  }, [formData.todaName]);
 
   const getDraftKey = () => {
     if (formMode === 'Renewal' && selectedId) {
@@ -507,7 +545,17 @@ const ApplyFranchise = () => {
   const handleReapplyClick = (franchise) => {
     setFormMode('Re-apply');
     setSelectedId(franchise._id);
-    setCurrentStep(1);
+    setReapplyTarget(franchise);
+    
+    const s = parseInt(searchParams.get('step') || '1', 10);
+    const validStep = (s >= 1 && s <= 4) ? s : 1;
+    setCurrentStep(validStep);
+
+    if (focusParam) {
+      setFocusField(focusParam);
+    } else if (franchise.rejectedField) {
+      setFocusField(franchise.rejectedField);
+    }
     
     setFormData({
       fullName: franchise.fullName || '',
@@ -530,6 +578,7 @@ const ApplyFranchise = () => {
     if (franchise.licenseUrl) previews.license = franchise.licenseUrl;
     if (franchise.todaEndorsementUrl) previews.todaEndorsement = franchise.todaEndorsementUrl;
     if (franchise.brgyClearanceUrl) previews.brgyClearance = franchise.brgyClearanceUrl;
+    if (franchise.cedulaUrl) previews.cedulaDoc = franchise.cedulaUrl;
     setFilePreviews(previews);
     setUploadedDocs({});
   };
@@ -551,8 +600,8 @@ const ApplyFranchise = () => {
 
   const handleFileChange = (reqId, file) => {
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 5MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 5MB.', 'error');
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 10MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 10MB.', 'error');
         return;
       }
       setFilePreviews(prev => {
@@ -781,6 +830,10 @@ const ApplyFranchise = () => {
             }
           }
         });
+
+        if (uploadedDocs['cedulaDoc']) {
+          submitData.append('cedulaDoc', uploadedDocs['cedulaDoc']);
+        }
 
         const url = formMode === 'Re-apply' ? `${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}` : `${import.meta.env.VITE_API_URL}/api/v1/franchises`;
         response = await fetch(url, {
@@ -1191,9 +1244,9 @@ const ApplyFranchise = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                <div className="sm:col-span-2 lg:col-span-1">
+                <div id="field-make" className="sm:col-span-2 lg:col-span-1">
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Make / Brand
+                    Make / Brand <span className="text-red-500">*</span>
                   </label>
 
                   <input 
@@ -1201,11 +1254,18 @@ const ApplyFranchise = () => {
                     name="make" 
                     value={formData.make} 
                     onChange={handleInputChange} 
-                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('make') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="e.g. Honda TMX 125 or enter brand" 
                   />
+
+                  {isFieldFocused('make') && (
+                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>Correction Required: Please correct the Make / Brand ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                    </div>
+                  )}
 
                   {/* Quick Select Brand Chips placed cleanly BELOW input box */}
                   {formMode === 'New' && (
@@ -1233,9 +1293,9 @@ const ApplyFranchise = () => {
                   )}
                 </div>
 
-                <div>
+                <div id="field-made">
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Model Year
+                    Model Year <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1245,39 +1305,83 @@ const ApplyFranchise = () => {
                     name="made" 
                     value={formData.made} 
                     onChange={handleInputChange} 
-                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('made') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="e.g. 2024" 
                   />
+                  {isFieldFocused('made') && (
+                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>Correction Required: Please update the Model Year ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                      Route / Zone
-                    </label>
-                    <button type="button" onClick={() => setShowTodaGuide(true)} className="p-1 rounded-xl text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="View TODA Zone Guide">
-                      <Info size={16} />
-                    </button>
-                  </div>
-                  <input 
-                    type="text" 
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    name="zone" 
-                    value={formData.zone} 
-                    onChange={handleInputChange} 
-                    className={formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} 
-                    required 
-                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="e.g. 1 or 2" 
-                  />
+                {/* Route / Zone Selection Dropdown & Inline Guide (No tooltip needed) */}
+                <div id="field-zone" className="space-y-1">
+                  <label htmlFor="zone-select" className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Route / Zone Selection <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="zone-select"
+                    name="zone"
+                    value={formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, zone: val }));
+                    }}
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('zone') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} cursor-pointer font-medium`}
+                    required
+                    disabled={formMode === 'Renewal' || formMode === 'Re-apply'}
+                  >
+                    <option value="" disabled>-- Select Municipal Route &amp; Zone --</option>
+                    {GASAN_ZONES.map(z => (
+                      <option key={z.id} value={z.id}>
+                        {z.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Inline Route Guide Card */}
+                  {(() => {
+                    const currentZ = formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : '';
+                    const zInfo = GASAN_ZONES.find(z => z.id === currentZ);
+                    const matchingToda = TODA_DIRECTORY.find(t => t.id === formData.todaName || t.name.startsWith(formData.todaName));
+                    if (!zInfo) return null;
+                    return (
+                      <div className="p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-left space-y-1 mt-1.5 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                          <Compass size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                          <span>{zInfo.name}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                          <strong className="text-slate-700 dark:text-slate-200">Ruta at Sakop:</strong> {zInfo.coverage}
+                        </p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          <strong className="text-slate-700 dark:text-slate-200">Terminal:</strong> {zInfo.terminal}
+                        </p>
+                        {matchingToda && (
+                          <div className="pt-1 mt-1 border-t border-slate-200/80 dark:border-slate-700/60 flex items-center gap-1 text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400">
+                            <MapPin size={12} className="shrink-0" />
+                            <span>Kaugnay na TODA: {matchingToda.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {isFieldFocused('zone') && (
+                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>Correction Required: Please choose the valid Route &amp; Zone ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                    </div>
+                  )}
                 </div>
 
-                <div>
+                <div id="field-plateNo">
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Plate Number
+                    Plate Number <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1285,11 +1389,17 @@ const ApplyFranchise = () => {
                     maxLength="8"
                     value={formData.plateNo} 
                     onChange={handleInputChange} 
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('plateNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="e.g. 123-ABC" 
                   />
+                  {isFieldFocused('plateNo') && (
+                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>Correction Required: Plate number needs verification ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                    </div>
+                  )}
                   {duplicateStatus.plateNo.checking && (
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
                       <Loader2 size={11} className="animate-spin" /> Checking plate number...
@@ -1307,9 +1417,9 @@ const ApplyFranchise = () => {
                   )}
                 </div>
 
-                <div>
+                <div id="field-motorNo">
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Engine / Motor No.
+                    Engine / Motor No. <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1317,11 +1427,17 @@ const ApplyFranchise = () => {
                     maxLength="25"
                     value={formData.motorNo} 
                     onChange={handleInputChange} 
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('motorNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="Motor Serial Number" 
                   />
+                  {isFieldFocused('motorNo') && (
+                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>Correction Required: Motor Number mismatch ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                    </div>
+                  )}
                   {duplicateStatus.motorNo.checking && (
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
                       <Loader2 size={11} className="animate-spin" /> Checking motor number...
@@ -1339,9 +1455,9 @@ const ApplyFranchise = () => {
                   )}
                 </div>
                 
-                <div>
+                <div id="field-chassisNo">
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Chassis Serial No.
+                    Chassis Serial No. <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -1349,11 +1465,17 @@ const ApplyFranchise = () => {
                     maxLength="25"
                     value={formData.chassisNo} 
                     onChange={handleInputChange} 
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
+                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('chassisNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
                     placeholder="Chassis Serial Number" 
                   />
+                  {isFieldFocused('chassisNo') && (
+                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>Correction Required: Chassis Number mismatch ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                    </div>
+                  )}
                   {duplicateStatus.chassisNo.checking && (
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
                       <Loader2 size={11} className="animate-spin" /> Checking chassis number...
@@ -1434,9 +1556,9 @@ const ApplyFranchise = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+              <div id="field-cedulaSerialNo">
                 <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  CTC / Cedula Serial No.
+                  CTC / Cedula Serial No. <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="text" 
@@ -1444,19 +1566,25 @@ const ApplyFranchise = () => {
                   name="cedulaSerialNo" 
                   value={formData.cedulaSerialNo} 
                   onChange={handleInputChange} 
-                  className={inputClasses} 
+                  className={`${inputClasses} ${isFieldFocused('cedulaSerialNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
                   placeholder="e.g. 08123456" 
                   required 
                 />
                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
                   8–16 characters (letters &amp; numbers)
                 </p>
+                {isFieldFocused('cedulaSerialNo') && (
+                  <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>Correction Required: Please correct the Cedula Serial No. ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                  </div>
+                )}
               </div>
 
-              <div>
+              <div id="field-cedulaDate">
                 <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
                   <CalendarDays size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                  <span>Date Issued</span>
+                  <span>Date Issued</span> <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="date" 
@@ -1464,28 +1592,40 @@ const ApplyFranchise = () => {
                   max={new Date().toISOString().split('T')[0]}
                   value={formData.cedulaDate} 
                   onChange={handleInputChange} 
-                  className={inputClasses} 
+                  className={`${inputClasses} ${isFieldFocused('cedulaDate') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
                   placeholder="Piliin ang Araw ng Pagkuha ng Cedula"
                   required 
                 />
                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
                   Piliin ang Araw ng Pagkuha ng Cedula
                 </p>
+                {isFieldFocused('cedulaDate') && (
+                  <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>Correction Required: Please update the Date Issued ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                  </div>
+                )}
               </div>
 
-              <div>
+              <div id="field-cedulaAddress">
                 <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  Place Issued
+                  Place Issued <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="text" 
                   name="cedulaAddress" 
                   value={formData.cedulaAddress} 
                   onChange={handleInputChange} 
-                  className={inputClasses} 
+                  className={`${inputClasses} ${isFieldFocused('cedulaAddress') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
                   placeholder="Gasan, Marinduque"
                   required 
                 />
+                {isFieldFocused('cedulaAddress') && (
+                  <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>Correction Required: Place Issued ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col justify-end">
@@ -1507,6 +1647,39 @@ const ApplyFranchise = () => {
                     Automatic
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Cedula Photo Upload Card (Item 3) */}
+            <div id="field-cedulaDoc" className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                    Cedula / CTC Photo Document
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Kumuha ng litrato o mag-upload ng opisyal na Cedula mula sa Munisipyo (Max 10MB)
+                  </p>
+                </div>
+              </div>
+
+              {isFieldFocused('cedulaDoc') && (
+                <div className="p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>Correction Required: Please upload a clear photo of your Cedula ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                </div>
+              )}
+
+              <div className="max-w-xl">
+                <DocumentUploadCard
+                  id="cedulaDoc"
+                  label="Community Tax Certificate (Cedula) Document"
+                  file={uploadedDocs['cedulaDoc'] || null}
+                  previewUrl={filePreviews['cedulaDoc'] || ''}
+                  onFileSelect={(id, file) => handleFileChange(id, file)}
+                  onFileRemove={(id) => handleRemoveFile(id)}
+                  onPreviewZoom={(prev) => setFullPreview(prev)}
+                />
               </div>
             </div>
 
@@ -1579,17 +1752,26 @@ const ApplyFranchise = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 {requirementsList.map((req) => (
-                  <DocumentUploadCard
-                    key={req.id}
-                    id={req.id}
-                    label={req.label}
-                    file={uploadedDocs[req.id]}
-                    previewUrl={filePreviews[req.id]}
-                    onFileSelect={handleFileChange}
-                    onFileRemove={handleRemoveFile}
-                    onPreviewZoom={setFullPreview}
-                    required={formMode === 'New'}
-                  />
+                  <div key={req.id} id={`field-${req.id}`} className="space-y-1">
+                    {isFieldFocused(req.id) && (
+                      <div className="p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                        <AlertCircle size={14} className="shrink-0" />
+                        <span>Correction Required: Please update this document ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
+                      </div>
+                    )}
+                    <div className={isFieldFocused(req.id) ? 'ring-4 ring-red-500/70 rounded-3xl animate-pulse' : ''}>
+                      <DocumentUploadCard
+                        id={req.id}
+                        label={req.label}
+                        file={uploadedDocs[req.id]}
+                        previewUrl={filePreviews[req.id]}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        required={formMode === 'New'}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

@@ -1,9 +1,9 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
   FileCheck, ShieldAlert, LogOut, User, Printer, 
-  HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers
+  HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers, Receipt
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSocket } from '../context/SocketContext';
@@ -225,9 +225,23 @@ const Sidebar = ({ isOpen, onClose }) => {
       },
       { 
         type: 'link', 
+        name: 'Municipal Cashier', 
+        path: '/cashier-dashboard', 
+        icon: <Receipt size={18} /> 
+      },
+      { 
+        type: 'link', 
         name: t('nav.settings', 'Settings'), 
         path: '/admin/settings', 
         icon: <Settings size={18} /> 
+      }
+    ],
+    'cashier': [
+      { 
+        type: 'link', 
+        name: 'Cashier Terminal', 
+        path: '/cashier-dashboard', 
+        icon: <Receipt size={18} /> 
       }
     ],
     'operator': [

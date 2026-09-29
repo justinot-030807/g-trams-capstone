@@ -1,7 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { MapPin, Search, X, Compass, CheckCircle2, Shield, Info, Navigation, Users } from 'lucide-react';
 
-const TODA_DIRECTORY = [
+export const TODA_DIRECTORY = [
   {
     id: 'BATODA',
     name: 'BATODA (Bachao TODA)',
@@ -82,6 +82,37 @@ const TODA_DIRECTORY = [
     terminal: 'Non-Exclusive / Operator Residence',
     barangays: ['All Gasan Barangays'],
     description: 'Operators operating independently within permitted municipal municipal boundaries.'
+  }
+];
+
+export const GASAN_ZONES = [
+  {
+    id: '1',
+    name: 'Zone 1 - Poblacion Town Proper Loop',
+    route: 'Brgy. I, II, III (Poblacion), Mahunig',
+    terminal: 'Gasan Central Integrated Terminal & Municipal Plaza',
+    coverage: 'Poblacion town center, public market, schools, banks, and municipal hall loop'
+  },
+  {
+    id: '2',
+    name: 'Zone 2 - Coastal & Highway Route',
+    route: 'Bachao Ibaba/Ilaya, Tapuyan, Dili, Libtangin, Bognuyan, Bahi, Pinggan',
+    terminal: 'Bachao Junction, Tapuyan Crossing, Bognuyan Port, Bahi Terminal',
+    coverage: 'Main provincial highway and coastal barangays connected to downtown'
+  },
+  {
+    id: '3',
+    name: 'Zone 3 - Interior & Upland Feeder Route',
+    route: 'Bangbang, Banot, Banuyo, Tabionan, Tiguion, Masiga, Matandang Gasan',
+    terminal: 'Bangbang Outpost & Tabionan Junction Outpost',
+    coverage: 'Upland farm-to-market communities and interior residential feeders'
+  },
+  {
+    id: '4',
+    name: 'Zone 4 - Perimeter & Special Municipal Route',
+    route: 'All Authorized Municipal Routes (Non-TODA / Free Franchise)',
+    terminal: 'Non-Exclusive / Operator Residence Base',
+    coverage: 'Special authorized non-exclusive franchise operations within municipal limits'
   }
 ];
 

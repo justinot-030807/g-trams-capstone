@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
@@ -164,6 +164,8 @@ const Login = () => {
 
     if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
       navigate('/admin-dashboard');
+    } else if (normalizedRole === 'cashier') {
+      navigate('/cashier-dashboard');
     } else {
       navigate('/operator-dashboard');
     }

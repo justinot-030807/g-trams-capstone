@@ -16,6 +16,7 @@ const franchiseSchema = new mongoose.Schema({
     licenseUrl: { type: String },
     todaEndorsementUrl: { type: String },
     brgyClearanceUrl: { type: String },
+    cedulaUrl: { type: String, default: '' },
     
     deficiencies: {
         hasOrcr: { type: Boolean, default: false },
@@ -33,10 +34,21 @@ const franchiseSchema = new mongoose.Schema({
     status: { type: String, enum: ['Pending', 'For Signing', 'Ready for Pickup', 'Active', 'Expired', 'Cancelled', 'Revoked'], default: 'Pending' },
     applicationType: { type: String, default: 'New' },
     
-    // Cancellation or revocation reason and evidence
+    // Cancellation or rejection field tracking and evidence
     cancelReason: { type: String, default: '' },
+    rejectedField: { type: String, default: '' },
     evidenceUrl: { type: String, default: '' }, 
     
+    // Official Treasury Cashier & Payment Receipt fields
+    paymentStatus: { type: String, enum: ['Unpaid', 'Paid'], default: 'Unpaid' },
+    officialReceiptNo: { type: String, default: '' },
+    amountPaid: { type: Number, default: 500 },
+    paymentMethod: { type: String, enum: ['Cash', 'GCash', 'Landbank'], default: 'Cash' },
+    paymentDate: { type: Date },
+    paidByCashier: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    cashierName: { type: String, default: '' },
+    paymentRemarks: { type: String, default: '' },
+
     eSigned: { type: Boolean, default: false },
     releaseDate: { type: String, default: '' },
     isArchived: { type: Boolean, default: false },

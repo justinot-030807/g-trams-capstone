@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -48,6 +48,7 @@ const FranchiseApproval = () => {
   const [quickApproveTarget, setQuickApproveTarget] = useState(null);
   const [quickRejectTarget, setQuickRejectTarget] = useState(null);
   const [quickRejectReason, setQuickRejectReason] = useState(REJECT_REASONS[0]);
+  const [quickRejectField, setQuickRejectField] = useState('chassisNo');
   const [quickRejectCustom, setQuickRejectCustom] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -95,6 +96,7 @@ const FranchiseApproval = () => {
     const docs = [
       { name: 'OR/CR', uploaded: Boolean(app.orCrUrl) },
       { name: "License", uploaded: Boolean(app.licenseUrl) },
+      { name: 'Cedula', uploaded: Boolean(app.cedulaUrl) },
       { name: 'TODA', uploaded: Boolean(app.todaEndorsementUrl), optional: isRenewal },
       { name: 'Barangay', uploaded: Boolean(app.brgyClearanceUrl), optional: isRenewal }
     ];
@@ -113,7 +115,7 @@ const FranchiseApproval = () => {
   };
 
   // Status Update for Single Unit (from Quick Action)
-  const handleUpdateStatus = async (status, targetApp, customReasonText = '') => {
+  const handleUpdateStatus = async (status, targetApp, customReasonText = '', rejectedField = '') => {
     if (!targetApp) return;
     setIsProcessing(true);
     const finalReason = status === 'Cancelled' ? customReasonText : '';
@@ -131,7 +133,11 @@ const FranchiseApproval = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status: status, cancelReason: finalReason })
+        body: JSON.stringify({ 
+          status: status, 
+          cancelReason: finalReason,
+          rejectedField: status === 'Cancelled' ? (rejectedField || undefined) : undefined
+        })
       });
 
       if (response.ok) {
@@ -452,6 +458,26 @@ const FranchiseApproval = () => {
             </div>
 
             <div className="space-y-2.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Defective / Incorrect Field (Directs Operator)</label>
+              <select
+                value={quickRejectField}
+                onChange={(e) => setQuickRejectField(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-200"
+              >
+                <option value="chassisNo">Chassis Number (Numero ng Chassis)</option>
+                <option value="motorNo">Motor / Engine Number (Numero ng Makina)</option>
+                <option value="plateNo">Plate Number (Plaka)</option>
+                <option value="cedulaDoc">Community Tax Certificate (Cedula) Document</option>
+                <option value="orCrDocument">Tricycle OR/CR Document (LTO)</option>
+                <option value="license">Driver's License (Lisensya)</option>
+                <option value="todaEndorsement">TODA Endorsement Certificate</option>
+                <option value="brgyClearance">Barangay Clearance</option>
+                <option value="make">Vehicle Make / Brand</option>
+                <option value="made">Model Year</option>
+                <option value="zone">Route / Zone Assignment</option>
+                <option value="applicantName">Applicant / Personal Details</option>
+              </select>
+
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Rejection Reason</label>
               <select
                 value={quickRejectReason}
@@ -482,7 +508,7 @@ const FranchiseApproval = () => {
               <button
                 onClick={() => {
                   const reasonText = quickRejectReason === 'Others (Please specify)' ? quickRejectCustom : quickRejectReason;
-                  handleUpdateStatus('Cancelled', quickRejectTarget, reasonText);
+                  handleUpdateStatus('Cancelled', quickRejectTarget, reasonText, quickRejectField);
                 }}
                 disabled={isProcessing}
                 className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"

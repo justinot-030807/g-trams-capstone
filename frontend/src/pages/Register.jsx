@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2, Check, X } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
@@ -32,7 +32,6 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -67,19 +66,18 @@ const Register = () => {
     };
   }, [resendCooldown]);
 
-  const checkPasswordStrength = (pass) => {
-    let strength = 0;
-    if (pass.length >= 8) strength += 1;
-    if (/[A-Z]/.test(pass)) strength += 1;
-    if (/[0-9]/.test(pass)) strength += 1;
-    if (/[^A-Za-z0-9]/.test(pass)) strength += 1;
-    setPasswordStrength(strength);
-  };
+  const passwordRules = [
+    { id: 'length', label: 'At least 8 characters', met: (formData.password || '').length >= 8 },
+    { id: 'upper', label: 'At least 1 uppercase letter (A-Z)', met: /[A-Z]/.test(formData.password || '') },
+    { id: 'lower', label: 'At least 1 lowercase letter (a-z)', met: /[a-z]/.test(formData.password || '') },
+    { id: 'number', label: 'At least 1 number (0-9)', met: /[0-9]/.test(formData.password || '') },
+    { id: 'special', label: 'At least 1 special symbol (!@#$%^&*)', met: /[^A-Za-z0-9]/.test(formData.password || '') }
+  ];
+  const isPasswordQualified = passwordRules.every(r => r.met);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (name === 'password') checkPasswordStrength(value);
     if (error) setError('');
   };
 
@@ -105,8 +103,12 @@ const Register = () => {
       return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
     }
 
-    if (!formData.password || formData.password.length < 6) {
-      return setError('PASSWORD MUST BE AT LEAST 6 CHARACTERS LONG.');
+    if (!formData.password || formData.password.length < 8) {
+      return setError('PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.');
+    }
+
+    if (!isPasswordQualified) {
+      return setError('PASSWORD DOES NOT MEET ALL QUALIFICATIONS. PLEASE CHECK THE REQUIREMENTS LIST.');
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -276,13 +278,6 @@ const Register = () => {
 
   const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
 
-  const getStrengthLabel = () => {
-    if (passwordStrength === 0) return { label: 'Empty', color: 'text-slate-600 dark:text-slate-400', bar: 'w-0 bg-slate-200' };
-    if (passwordStrength === 1) return { label: 'Weak', color: 'text-red-500', bar: 'w-1/4 bg-red-500' };
-    if (passwordStrength === 2) return { label: 'Fair', color: 'text-amber-500', bar: 'w-2/4 bg-amber-500' };
-    if (passwordStrength === 3) return { label: 'Good', color: 'text-blue-500', bar: 'w-3/4 bg-blue-500' };
-    return { label: 'Strong', color: 'text-emerald-500', bar: 'w-full bg-emerald-500' };
-  };
 
   return (
     <div className="relative w-full bg-[#1A0B0E] flex flex-col overflow-x-hidden select-none">
@@ -386,18 +381,37 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* VISUAL PASSWORD STRENGTH METER */}
-                {formData.password && (
-                  <div className="space-y-0.5 pt-0 animate-item-3">
-                    <div className="flex justify-between items-center text-[9px] font-bold">
-                      <span className="text-slate-500 uppercase">Strength:</span>
-                      <span className={getStrengthLabel().color}>{getStrengthLabel().label}</span>
-                    </div>
-                    <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
-                      <div className={`h-full transition-all duration-300 ${getStrengthLabel().bar}`} />
-                    </div>
+                {/* PASSWORD QUALIFICATIONS CHECKLIST */}
+                <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl p-2.5 sm:p-3 text-left animate-item-3 space-y-1.5 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">
+                      PASSWORD QUALIFICATIONS
+                    </span>
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
+                      {isPasswordQualified ? '✓ ALL MET' : `${passwordRules.filter(r => r.met).length}/5 MET`}
+                    </span>
                   </div>
-                )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                    {passwordRules.map((rule) => {
+                      const isMet = rule.met;
+                      return (
+                        <div
+                          key={rule.id}
+                          className={`flex items-center gap-1.5 text-[10.5px] leading-tight transition-colors duration-200 ${
+                            isMet ? 'text-emerald-600 font-bold' : 'text-red-500 font-semibold'
+                          }`}
+                        >
+                          {isMet ? (
+                            <Check size={12} className="shrink-0 stroke-[3] text-emerald-600" />
+                          ) : (
+                            <X size={12} className="shrink-0 stroke-[2.5] text-red-500" />
+                          )}
+                          <span>{rule.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 <div className="flex items-start gap-1.5 pt-0.5 animate-item-4">
                   <input 

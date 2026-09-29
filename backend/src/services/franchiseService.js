@@ -101,6 +101,7 @@ class FranchiseService {
             licenseUrl: data.licenseUrl, 
             todaEndorsementUrl: data.todaEndorsementUrl, 
             brgyClearanceUrl: data.brgyClearanceUrl,
+            cedulaUrl: data.cedulaUrl || '',
             deficiencies: {
                 hasOrcr: !!data.orCrUrl,
                 hasLicense: !!data.licenseUrl,

@@ -36,6 +36,8 @@ const RenewFranchise = () => {
 
   const [orcrFile, setOrcrFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [cedulaFile, setCedulaFile] = useState(null);
+  const [cedulaPreviewUrl, setCedulaPreviewUrl] = useState('');
   const [fullPreview, setFullPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -68,6 +70,9 @@ const RenewFranchise = () => {
                 placeIssued: target.cedulaAddress
               }));
             }
+            if (target.cedulaUrl) {
+              setCedulaPreviewUrl(target.cedulaUrl);
+            }
           }
         }
       } catch (err) {
@@ -96,30 +101,45 @@ const RenewFranchise = () => {
 
   const handleFileSelect = (fieldId, file) => {
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 5MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 5MB.', 'error');
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 10MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 10MB.', 'error');
         return;
       }
-      setOrcrFile(file);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(URL.createObjectURL(file));
+      if (fieldId === 'cedulaDoc') {
+        setCedulaFile(file);
+        if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(cedulaPreviewUrl);
+        setCedulaPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setOrcrFile(file);
+        if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(URL.createObjectURL(file));
+      }
     }
   };
 
-  const handleFileRemove = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setOrcrFile(null);
-    setPreviewUrl('');
+  const handleFileRemove = (fieldId) => {
+    if (fieldId === 'cedulaDoc') {
+      if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(cedulaPreviewUrl);
+      setCedulaFile(null);
+      setCedulaPreviewUrl('');
+    } else {
+      if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+      setOrcrFile(null);
+      setPreviewUrl('');
+    }
   };
 
-  // Revoke object URL on unmount to prevent memory leaks
+  // Revoke object URLs on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
       if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
+      if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(cedulaPreviewUrl);
+      }
     };
-  }, [previewUrl]);
+  }, [previewUrl, cedulaPreviewUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -146,6 +166,9 @@ const RenewFranchise = () => {
 
     if (orcrFile) {
       submitData.append('orcrFile', orcrFile);
+    }
+    if (cedulaFile) {
+      submitData.append('cedulaDoc', cedulaFile);
     }
 
     try {
@@ -463,6 +486,20 @@ const RenewFranchise = () => {
                     />
                   </div>
                 </div>
+
+                {/* Cedula Photo Upload */}
+                <div className="mt-4 max-w-xl">
+                  <DocumentUploadCard
+                    id="cedulaDoc"
+                    label="Community Tax Certificate (Cedula) Photo / Scanned Copy"
+                    file={cedulaFile}
+                    previewUrl={cedulaPreviewUrl || franchise?.cedulaUrl}
+                    onFileSelect={handleFileSelect}
+                    onFileRemove={() => handleFileRemove('cedulaDoc')}
+                    onPreviewZoom={setFullPreview}
+                    required={false}
+                  />
+                </div>
               </div>
 
               {/* Step 2: Vehicle Document (Mobile-first Camera Upload) */}
@@ -488,7 +525,7 @@ const RenewFranchise = () => {
                     file={orcrFile}
                     previewUrl={previewUrl || franchise?.orCrUrl}
                     onFileSelect={handleFileSelect}
-                    onFileRemove={handleFileRemove}
+                    onFileRemove={() => handleFileRemove('orcrFile')}
                     onPreviewZoom={setFullPreview}
                     required={false}
                   />

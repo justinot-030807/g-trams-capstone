@@ -17,7 +17,9 @@ const {
     toggleArchiveFranchise,
     revokeFranchise,
     getFranchiseReports,
-    checkUniqueFranchiseField
+    checkUniqueFranchiseField,
+    getCashierQueue,
+    processCashierPayment
 } = require('../controllers/franchiseController');
 
 // Check unique plateNo / motorNo / chassisNo in real-time
@@ -73,8 +75,12 @@ router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
-router.put('/:id/renew', protect, authorize('operator', 'toda president'), upload.fields([{ name: 'orcrFile', maxCount: 1 }]), renewFranchise);
+router.put('/:id/renew', protect, authorize('operator', 'toda president'), upload.fields([{ name: 'orcrFile', maxCount: 1 }, { name: 'cedulaDoc', maxCount: 1 }]), renewFranchise);
 router.put('/:id/cancel', protect, authorize('operator', 'toda president'), cancelMyFranchise);
+
+// Municipal Cashier & Treasury routes
+router.get('/cashier-queue', protect, authorize('cashier', 'admin'), getCashierQueue);
+router.post('/:id/pay', protect, authorize('cashier', 'admin'), processCashierPayment);
 
 // Update and delete franchise
 router.route('/:id')

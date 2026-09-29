@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, Search, Info, MapPin, Phone, Calendar, ShieldCheck, X, 
@@ -306,6 +306,10 @@ const UserManagement = () => {
     const r = (u.role || '').toLowerCase();
     return r === 'admin' || r === 'administrator';
   }).length;
+  const cashierCount = users.filter(u => {
+    const r = (u.role || '').toLowerCase();
+    return r === 'cashier';
+  }).length;
   const onlineUsersCount = users.filter(u => getActivityStatus(u).isOnline).length;
 
   const filteredUsers = users.filter(user => {
@@ -314,6 +318,7 @@ const UserManagement = () => {
     if (roleFilter === 'operator' && r !== 'operator' && r !== '') return false;
     if (roleFilter === 'toda_president' && r !== 'toda_president' && r !== 'toda president') return false;
     if (roleFilter === 'admin' && r !== 'admin' && r !== 'administrator') return false;
+    if (roleFilter === 'cashier' && r !== 'cashier') return false;
     if (roleFilter === 'online' && !getActivityStatus(user).isOnline) return false;
 
     // Search query
@@ -474,6 +479,16 @@ const UserManagement = () => {
           }`}
         >
           Administrators ({adminCount})
+        </button>
+        <button
+          onClick={() => setRoleFilter('cashier')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
+            roleFilter === 'cashier'
+              ? 'bg-[#9E2A2B] text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-[#9E2A2B]'
+          }`}
+        >
+          Cashiers ({cashierCount})
         </button>
         <button
           onClick={() => setRoleFilter('online')}
@@ -661,6 +676,7 @@ const UserManagement = () => {
                           >
                             <option value="operator">Operator</option>
                             <option value="toda_president">TODA President</option>
+                            <option value="cashier">Cashier</option>
                           </select>
                         )}
                       </td>

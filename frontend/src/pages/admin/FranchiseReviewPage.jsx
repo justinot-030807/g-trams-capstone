@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
@@ -49,6 +49,7 @@ const FranchiseReviewPage = () => {
   // Rejection State
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState(REJECT_REASONS[0]);
+  const [rejectField, setRejectField] = useState('chassisNo');
   const [customReason, setCustomReason] = useState('');
 
   // Print Modal
@@ -174,6 +175,13 @@ const FranchiseReviewPage = () => {
       short: "Driver's License", 
       sub: 'Professional / Non-Prof',
       url: currentApp?.licenseUrl 
+    },
+    { 
+      key: 'cedulaDoc', 
+      label: 'Community Tax Certificate (Cedula)', 
+      short: 'Cedula / CTC', 
+      sub: 'Official Municipal Tax Receipt',
+      url: currentApp?.cedulaUrl 
     },
     { 
       key: 'todaEndorsement', 
@@ -315,14 +323,15 @@ const FranchiseReviewPage = () => {
   };
 
   // Status Action (Approve / Reject / Release)
-  const handleUpdateStatus = async (newStatus, customCancelReason = null, autoAdvance = true) => {
+  const handleUpdateStatus = async (newStatus, customCancelReason = null, autoAdvance = true, rejectedField = '') => {
     if (!currentApp) return;
     setIsProcessing(true);
 
     try {
       const payload = {
         status: newStatus,
-        cancelReason: newStatus === 'Cancelled' ? (customCancelReason || 'Application rejected during technical review.') : null
+        cancelReason: newStatus === 'Cancelled' ? (customCancelReason || 'Application rejected during technical review.') : null,
+        rejectedField: newStatus === 'Cancelled' ? (rejectedField || undefined) : undefined
       };
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${currentApp._id}/status`, {
@@ -406,6 +415,9 @@ const FranchiseReviewPage = () => {
       } else if (e.key === '4') {
         e.preventDefault();
         handleSelectDoc('brgyClearance');
+      } else if (e.key === '5') {
+        e.preventDefault();
+        handleSelectDoc('cedulaDoc');
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         goToNext();
@@ -691,6 +703,27 @@ const FranchiseReviewPage = () => {
                   </button>
                 </div>
 
+                <label className="text-[10px] font-bold text-red-900 dark:text-red-300 uppercase tracking-wider block">Defective Field (Directs Operator)</label>
+                <select
+                  value={rejectField}
+                  onChange={(e) => setRejectField(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
+                >
+                  <option value="chassisNo">Chassis Number (Numero ng Chassis)</option>
+                  <option value="motorNo">Motor / Engine Number (Numero ng Makina)</option>
+                  <option value="plateNo">Plate Number (Plaka)</option>
+                  <option value="cedulaDoc">Community Tax Certificate (Cedula) Document</option>
+                  <option value="orCrDocument">Tricycle OR/CR Document (LTO)</option>
+                  <option value="license">Driver's License (Lisensya)</option>
+                  <option value="todaEndorsement">TODA Endorsement Certificate</option>
+                  <option value="brgyClearance">Barangay Clearance</option>
+                  <option value="make">Vehicle Make / Brand</option>
+                  <option value="made">Model Year</option>
+                  <option value="zone">Route / Zone Assignment</option>
+                  <option value="applicantName">Applicant / Personal Details</option>
+                </select>
+
+                <label className="text-[10px] font-bold text-red-900 dark:text-red-300 uppercase tracking-wider block">Reason for Rejection</label>
                 <select
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
@@ -714,7 +747,7 @@ const FranchiseReviewPage = () => {
                 <button
                   onClick={() => {
                     const reason = rejectReason === 'Others (Please specify)' ? customReason : rejectReason;
-                    handleUpdateStatus('Cancelled', reason, true);
+                    handleUpdateStatus('Cancelled', reason, true, rejectField);
                   }}
                   disabled={isProcessing}
                   className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"

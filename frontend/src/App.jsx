@@ -1,4 +1,4 @@
-﻿import React, { useEffect, Suspense, lazy } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -35,6 +35,7 @@ const ManageRevocations = lazy(() => import('./pages/admin/ManageRevocations'));
 const ValidateTODA = lazy(() => import('./pages/admin/ValidateTODA'));
 const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
 const AdminTickets = lazy(() => import('./pages/admin/AdminTickets'));
+const CashierDashboard = lazy(() => import('./pages/cashier/CashierDashboard'));
 
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -59,6 +60,9 @@ const ProfileRedirect = () => {
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
   if (role === 'admin' || role === 'administrator') {
     return <Navigate to="/admin/settings" replace />;
+  }
+  if (role === 'cashier') {
+    return <Navigate to="/cashier-dashboard" replace />;
   }
   return <Navigate to="/operator/settings" replace />;
 };
@@ -116,6 +120,9 @@ function App() {
                   <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
                   <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
                   <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['admin']}><AdminTickets /></ProtectedRoute>} />
+
+                  {/* MUNICIPAL CASHIER & TREASURY ROUTES */}
+                  <Route path="/cashier-dashboard" element={<ProtectedRoute allowedRoles={['cashier', 'admin']}><CashierDashboard /></ProtectedRoute>} />
 
                   {/* TODA PRESIDENT SECURE ROUTES */}
                   <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['toda president']}><SubmitMembers /></ProtectedRoute>} />

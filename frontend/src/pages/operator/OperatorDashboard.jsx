@@ -246,6 +246,81 @@ const OperatorDashboard = () => {
     return date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  const handleFixIssues = (targetUnit) => {
+    if (!targetUnit) return;
+    localStorage.setItem('reapply_target', JSON.stringify(targetUnit));
+    
+    // Determine target field from rejectedField or parse from cancelReason
+    let targetField = targetUnit.rejectedField || '';
+    if (!targetField && targetUnit.cancelReason) {
+      const lower = targetUnit.cancelReason.toLowerCase();
+      if (lower.includes('chassis')) targetField = 'chassisNo';
+      else if (lower.includes('motor') || lower.includes('engine')) targetField = 'motorNo';
+      else if (lower.includes('plate')) targetField = 'plateNo';
+      else if (lower.includes('make') || lower.includes('brand')) targetField = 'make';
+      else if (lower.includes('year') || lower.includes('made')) targetField = 'made';
+      else if (lower.includes('route') || lower.includes('zone')) targetField = 'zone';
+      else if (lower.includes('cedula') || lower.includes('ctc')) targetField = 'cedulaDoc';
+      else if (lower.includes('or/cr') || lower.includes('orcr') || lower.includes('cr')) targetField = 'orCrDocument';
+      else if (lower.includes('license')) targetField = 'license';
+      else if (lower.includes('toda')) targetField = 'todaEndorsement';
+      else if (lower.includes('barangay') || lower.includes('clearance')) targetField = 'brgyClearance';
+    }
+
+    // Determine target step based on targetField
+    let targetStep = 1;
+    if (['make', 'made', 'motorNo', 'chassisNo', 'plateNo', 'zone'].includes(targetField)) {
+      targetStep = 2;
+    } else if (['cedulaSerialNo', 'cedulaDate', 'cedulaAddress'].includes(targetField)) {
+      targetStep = 3;
+    } else if (['orCrDocument', 'license', 'todaEndorsement', 'brgyClearance', 'cedulaDoc'].includes(targetField)) {
+      targetStep = 4;
+    }
+
+    const focusQuery = targetField ? `&focus=${targetField}` : '';
+    navigate(`/apply-franchise?mode=reapply&step=${targetStep}${focusQuery}`);
+  };
+
+  const getApplicationValidityInfo = (unit) => {
+    if (!unit) return null;
+    const filingDate = unit.dateApplied ? new Date(unit.dateApplied) : null;
+    const locale = language === 'fil' ? 'tl-PH' : 'en-US';
+
+    if (unit.status === 'Pending' || unit.status === 'For Signing') {
+      if (!filingDate) return null;
+      // 30 calendar days evaluation window
+      const deadline = new Date(filingDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const now = new Date();
+      const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        filingDateStr: filingDate.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' }),
+        deadlineStr: deadline.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' }),
+        diffDays,
+        isUrgent: diffDays <= 7 && diffDays >= 0,
+        isOverdue: diffDays < 0,
+        type: 'evaluation'
+      };
+    }
+
+    if (unit.status === 'Ready for Pickup') {
+      const baseDate = unit.approvalDate ? new Date(unit.approvalDate) : (filingDate || new Date());
+      // 30 calendar days payment & claim window
+      const deadline = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const now = new Date();
+      const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        filingDateStr: baseDate.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' }),
+        deadlineStr: deadline.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' }),
+        diffDays,
+        isUrgent: diffDays <= 7 && diffDays >= 0,
+        isOverdue: diffDays < 0,
+        type: 'payment'
+      };
+    }
+
+    return null;
+  };
+
   const handleDirectDownload = (unit) => {
     setSelectedUnit(unit);
     setIsPrintOpen(true);
@@ -634,10 +709,7 @@ const OperatorDashboard = () => {
               <button
                 onClick={() => {
                   const attentionUnit = franchises.find(f => f.status === 'Cancelled');
-                  if (attentionUnit) {
-                    localStorage.setItem('reapply_target', JSON.stringify(attentionUnit));
-                  }
-                  navigate('/apply-franchise?mode=reapply&step=1');
+                  handleFixIssues(attentionUnit);
                 }}
                 className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
@@ -991,22 +1063,96 @@ const OperatorDashboard = () => {
                     );
                   })()}
 
-                  {unit?.status === 'For Signing' && (
-                    <div className="mb-3.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 p-3 rounded-2xl flex items-start gap-2.5">
-                      <FileText className="text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" size={16} />
-                      <div>
-                        <h4 className="text-purple-900 dark:text-purple-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}</h4>
-                        <p className="text-xs font-normal text-purple-700 dark:text-purple-300 leading-snug">{t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}</p>
+                  {unit?.status === 'Pending' && (() => {
+                    const info = getApplicationValidityInfo(unit);
+                    if (!info) return null;
+                    return (
+                      <div className="mb-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 p-3 rounded-2xl space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-500 dark:text-slate-400">
+                            Filing Date: <strong className="text-slate-800 dark:text-slate-200">{info.filingDateStr}</strong>
+                          </span>
+                          <span className="font-semibold text-slate-500 dark:text-slate-400">
+                            Eval Window: <strong className="text-slate-800 dark:text-slate-200">{info.deadlineStr}</strong>
+                          </span>
+                        </div>
+                        <div className={`text-xs font-bold flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60 ${
+                          info.isOverdue ? 'text-red-600 dark:text-red-400' : info.isUrgent ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-300'
+                        }`}>
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} className={info.isUrgent ? 'animate-pulse' : ''} />
+                            {info.isOverdue ? 'Evaluation period lapsed' : `${info.diffDays} day(s) remaining for evaluation`}
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-700 font-semibold text-slate-700 dark:text-slate-300">
+                            30-Day Charter
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
-                  {unit?.status === 'Ready for Pickup' && (
-                    <div className="mb-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3 rounded-2xl flex items-start gap-2.5">
-                      <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
-                      <div>
-                        <h4 className="text-blue-900 dark:text-blue-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
-                        <p className="text-xs font-normal text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                  {unit?.status === 'For Signing' && (() => {
+                    const info = getApplicationValidityInfo(unit);
+                    return (
+                      <div className="mb-3.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 p-3 rounded-2xl space-y-1.5">
+                        <div className="flex items-start gap-2.5">
+                          <FileText className="text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" size={16} />
+                          <div>
+                            <h4 className="text-purple-900 dark:text-purple-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}</h4>
+                            <p className="text-xs font-normal text-purple-700 dark:text-purple-300 leading-snug">{t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}</p>
+                          </div>
+                        </div>
+                        {info && (
+                          <div className="flex justify-between items-center text-[11px] font-semibold text-purple-700 dark:text-purple-300 pt-1 border-t border-purple-200/60 dark:border-purple-800/60">
+                            <span>Processing Window: {info.filingDateStr} → {info.deadlineStr}</span>
+                            <span>⏳ {info.diffDays > 0 ? `${info.diffDays} days left` : 'Finalizing'}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {unit?.status === 'Ready for Pickup' && (() => {
+                    const info = getApplicationValidityInfo(unit);
+                    return (
+                      <div className="mb-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3 rounded-2xl space-y-1.5">
+                        <div className="flex items-start gap-2.5">
+                          <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
+                          <div>
+                            <h4 className="text-blue-900 dark:text-blue-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
+                            <p className="text-xs font-normal text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                          </div>
+                        </div>
+                        {info && (
+                          <div className={`flex justify-between items-center text-[11px] font-bold pt-1 border-t border-blue-200/60 dark:border-blue-800/60 ${
+                            info.isOverdue ? 'text-red-600 dark:text-red-400' : info.isUrgent ? 'text-amber-600 dark:text-amber-400' : 'text-blue-800 dark:text-blue-300'
+                          }`}>
+                            <span>Claim Deadline: {info.deadlineStr}</span>
+                            <span className="flex items-center gap-1">
+                              <Clock size={11} />
+                              {info.isOverdue ? '⚠️ Payment window overdue' : `💰 Settle payment within ${info.diffDays} day(s)`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {unit?.status === 'Cancelled' && (
+                    <div className="mb-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 p-3 rounded-2xl">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={15} />
+                        <div className="min-w-0">
+                          <h4 className="text-red-950 dark:text-red-200 font-bold text-xs uppercase mb-0.5">Application Needs Correction</h4>
+                          <p className="text-xs text-red-800 dark:text-red-300 font-medium leading-relaxed">
+                            {unit.cancelReason || 'Application requires correction. Click Fix Issues below.'}
+                          </p>
+                          {unit.rejectedField && (
+                            <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 text-[10px] font-bold uppercase tracking-wider">
+                              Target Field: {unit.rejectedField}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1046,7 +1192,7 @@ const OperatorDashboard = () => {
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => { localStorage.setItem('reapply_target', JSON.stringify(unit)); navigate('/apply-franchise?mode=reapply&step=1'); }} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs">
+                  <button onClick={() => handleFixIssues(unit)} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs">
                     <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                   </button>
                 ) : (
@@ -1094,6 +1240,26 @@ const OperatorDashboard = () => {
               <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
+              {selectedUnit?.cedulaSerialNo && (
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
+                  <p className="text-slate-600 dark:text-slate-400 font-semibold uppercase text-xs">Cedula / CTC No.</p>
+                  <p className="font-mono font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.cedulaSerialNo}</p>
+                </div>
+              )}
+              {selectedUnit?.officialReceiptNo && (
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-emerald-700 dark:text-emerald-400 font-semibold uppercase text-xs">Official Receipt (OR) No.</p>
+                  <p className="font-mono font-bold text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 mt-0.5">{selectedUnit?.officialReceiptNo} (₱{selectedUnit?.amountPaid || 500})</p>
+                </div>
+              )}
+              {selectedUnit?.cedulaUrl && (
+                <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
+                  <p className="text-slate-600 dark:text-slate-400 font-semibold uppercase text-xs mb-1.5">Cedula / CTC Document</p>
+                  <a href={selectedUnit.cedulaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline">
+                    <FileText size={14} /> View Uploaded Cedula
+                  </a>
+                </div>
+              )}
             </div>
             <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
           </div>

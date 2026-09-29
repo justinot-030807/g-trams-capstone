@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Sparkles, SlidersHorizontal } from 'lucide-react';
 import DocumentScannerModal from './DocumentScannerModal';
 
@@ -23,7 +23,7 @@ const DocumentUploadCard = ({
   const handleGalleryChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
-      if (selected.size > 15 * 1024 * 1024) {
+      if (selected.size > 10 * 1024 * 1024) {
         setSizeError(true);
         setTimeout(() => setSizeError(false), 4000);
         return;
@@ -133,7 +133,7 @@ const DocumentUploadCard = ({
               </button>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-              Accepts JPG, PNG, WebP, or PDF (up to 15MB)
+              Accepts JPG, PNG, WebP, or PDF (up to 10MB)
             </p>
           </div>
         ) : (
@@ -183,12 +183,12 @@ const DocumentUploadCard = ({
         {/* Footer Helper */}
         <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
           <span>JPG, PNG, or PDF</span>
-          <span>Max 15MB</span>
+          <span>Max 10MB</span>
         </div>
         
         {sizeError && (
           <p className="mt-1 text-xs font-bold text-red-600 dark:text-red-400">
-            File exceeds size limit. Please choose a smaller file.
+            File exceeds 10MB size limit. Please choose a smaller file.
           </p>
         )}
 
