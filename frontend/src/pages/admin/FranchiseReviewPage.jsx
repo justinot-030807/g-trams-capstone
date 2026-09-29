@@ -4,9 +4,10 @@ import {
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
   ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, 
   FileText, AlertCircle, Loader2, Printer, Move, Check, AlertTriangle,
-  Copy, ShieldCheck, User, Car, FileCheck, Layers
+  Copy, ShieldCheck, User, Car, FileCheck, Layers, FileSpreadsheet
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
+import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
 
 const REJECT_REASONS = [
   'Missing or Expired LTO Official Receipt / Certificate of Registration (OR/CR)',
@@ -55,6 +56,9 @@ const FranchiseReviewPage = () => {
   // Print Modal
   const [isPrintOpen, setIsPrintOpen] = useState(false);
 
+  // Application Dossier Modal
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
@@ -69,6 +73,15 @@ const FranchiseReviewPage = () => {
       month: 'short', 
       day: 'numeric' 
     });
+  };
+
+  const isDateExpired = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d < today;
   };
 
   const copyToClipboard = (text, fieldName) => {
@@ -554,6 +567,16 @@ const FranchiseReviewPage = () => {
             </button>
           )}
 
+          {/* Application Dossier */}
+          <button
+            onClick={() => setIsDossierOpen(true)}
+            className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/20 cursor-pointer"
+            title="Open Application Dossier & Evaluation Sheet"
+          >
+            <FileSpreadsheet size={14} className="text-[#D4AF37]" />
+            <span className="hidden md:inline">Application Dossier</span>
+          </button>
+
           {/* Reject Trigger */}
           <button
             onClick={() => setIsRejecting(prev => !prev)}
@@ -887,6 +910,45 @@ const FranchiseReviewPage = () => {
                         <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{currentApp.made || 'N/A'}</span>
                       </div>
                     </div>
+
+                    {/* LTO OR/CR No */}
+                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">LTO OR/CR No:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 font-mono truncate max-w-[170px]">
+                          {currentApp.orCrNo || 'N/A'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.orCrNo, 'orCrNo')}
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
+                          title="Copy LTO OR/CR Number"
+                        >
+                          {copiedField === 'orCrNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* LTO Registration Validity / Expiry Date */}
+                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">LTO Validity:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          {formatDate(currentApp.orCrExpiryDate)}
+                        </span>
+                        {currentApp.orCrExpiryDate && (
+                          isDateExpired(currentApp.orCrExpiryDate) ? (
+                            <span className="text-[10px] font-bold text-red-600 bg-red-100 dark:bg-red-950/60 dark:text-red-400 border border-red-300 dark:border-red-900/60 px-1.5 py-0.5 rounded">
+                              EXPIRED
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-900/60 px-1.5 py-0.5 rounded">
+                              VALID
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
@@ -896,43 +958,188 @@ const FranchiseReviewPage = () => {
                 </div>
               )}
 
-              {/* TAB 2: APPLICANT & TODA INFO */}
+              {/* TAB 2: APPLICANT & OPERATOR / DRIVER INFO */}
               {inspectorTab === 'applicant' && (
-                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Operator &amp; Association
-                    </span>
-                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      Zone {currentApp.zone || 1}
-                    </span>
+                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-3 animate-in fade-in duration-150">
+                  {/* Operator Profile */}
+                  <div>
+                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800 mb-2">
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Operator Profile
+                      </span>
+                      <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        Zone {currentApp.zone || 1}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Full Name:</span>
+                        <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[210px]">{currentApp.fullName}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Contact Number:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.contact || currentApp.operator?.contact || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Barangay:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[210px]">{currentApp.address}, Gasan</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">TODA Association:</span>
+                        <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] text-right truncate max-w-[210px]">{currentApp.todaName || 'Non-TODA'}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Application Type:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.applicationType || 'New'}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Date Filed:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.dateApplied || currentApp.createdAt)}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Full Name:</span>
-                      <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[210px]">{currentApp.fullName}</span>
+                  {/* Authorized Driver Designation */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center justify-between pb-1.5 mb-2">
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <User size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                        Authorized Driver
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        currentApp.isOperatorDriver !== false
+                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
+                          : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800'
+                      }`}>
+                        {currentApp.isOperatorDriver !== false ? 'Self-Operated (Owner-Driver)' : 'Designated Driver'}
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Contact Number:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.contact || currentApp.operator?.contact || 'N/A'}</span>
+
+                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                      {currentApp.isOperatorDriver === false && (
+                        <>
+                          <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                            <span className="text-slate-500 dark:text-slate-400 font-medium">Driver's Name:</span>
+                            <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[200px]">{currentApp.driverName || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                            <span className="text-slate-500 dark:text-slate-400 font-medium">Driver Contact:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.driverContact || 'N/A'}</span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Driver's License No with copy */}
+                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">License No:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-slate-900 dark:text-white font-mono">
+                            {currentApp.driverLicenseNo || 'N/A'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(currentApp.driverLicenseNo, 'driverLicenseNo')}
+                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
+                            title="Copy Driver's License Number"
+                          >
+                            {copiedField === 'driverLicenseNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* License Expiry Date */}
+                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">License Expiry:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {formatDate(currentApp.driverLicenseExpiryDate)}
+                          </span>
+                          {currentApp.driverLicenseExpiryDate && (
+                            isDateExpired(currentApp.driverLicenseExpiryDate) ? (
+                              <span className="text-[10px] font-bold text-red-600 bg-red-100 dark:bg-red-950/60 dark:text-red-400 border border-red-300 dark:border-red-900/60 px-1.5 py-0.5 rounded">
+                                EXPIRED
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-900/60 px-1.5 py-0.5 rounded">
+                                VALID
+                              </span>
+                            )
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Barangay:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[210px]">{currentApp.address}, Gasan</span>
+                  </div>
+
+                  {/* TODA & Barangay Statutory Verification */}
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <ShieldCheck size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      Clearances &amp; Statutory Records
+                    </span>
+
+                    {/* TODA Certificate Card */}
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase">TODA Certificate</span>
+                        {currentApp.todaCertNo && (
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(currentApp.todaCertNo, 'todaCertNo')}
+                            className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            title="Copy TODA Cert No"
+                          >
+                            {copiedField === 'todaCertNo' ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-[11px]">
+                        <div>
+                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Cert No:</span>
+                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.todaCertNo || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Date Issued:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 block">{formatDate(currentApp.todaCertDate)}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Signatory:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.todaSignatory || 'TODA President'}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">TODA Association:</span>
-                      <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] text-right truncate max-w-[210px]">{currentApp.todaName || 'Non-TODA'}</span>
+
+                    {/* Barangay Clearance Card */}
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase">Barangay Clearance</span>
+                        {currentApp.brgyClearanceNo && (
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(currentApp.brgyClearanceNo, 'brgyClearanceNo')}
+                            className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            title="Copy Barangay Clearance No"
+                          >
+                            {copiedField === 'brgyClearanceNo' ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-[11px]">
+                        <div>
+                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Clearance No:</span>
+                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.brgyClearanceNo || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Date Issued:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 block">{formatDate(currentApp.brgyClearanceDate)}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Issuer:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.brgyIssuer || 'Punong Barangay'}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Application Type:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.applicationType || 'New'}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Date Filed:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.dateApplied || currentApp.createdAt)}</span>
-                    </div>
+
                   </div>
                 </div>
               )}
@@ -1199,6 +1406,22 @@ const FranchiseReviewPage = () => {
           unit={currentApp}
         />
       )}
+
+      {/* Application Dossier Modal */}
+      <ApplicationDossierModal 
+        isOpen={isDossierOpen} 
+        onClose={() => setIsDossierOpen(false)} 
+        franchise={currentApp} 
+        onApprove={() => { 
+          setIsDossierOpen(false); 
+          handleUpdateStatus('For Signing', null, true); 
+        }} 
+        onReject={() => { 
+          setIsDossierOpen(false); 
+          setIsRejecting(true); 
+        }} 
+        isProcessing={isProcessing} 
+      />
     </div>
   );
 };

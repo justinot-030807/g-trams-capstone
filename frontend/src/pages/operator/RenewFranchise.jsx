@@ -5,7 +5,8 @@ import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import { 
   RefreshCw, ArrowLeft, CheckCircle2, AlertCircle, Loader2, 
-  X, FileCheck, ShieldCheck, Car, Calendar, CalendarDays, MapPin, Hash, Sparkles
+  X, FileCheck, ShieldCheck, Car, Calendar, CalendarDays, MapPin, Hash, Sparkles,
+  FileText, User
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -31,7 +32,11 @@ const RenewFranchise = () => {
   const [formData, setFormData] = useState({
     ctcNo: '',
     dateIssued: new Date().toISOString().substring(0, 10),
-    placeIssued: 'Gasan, Marinduque'
+    placeIssued: 'Gasan, Marinduque',
+    orCrNo: '',
+    orCrExpiryDate: '',
+    driverLicenseNo: '',
+    driverLicenseExpiryDate: ''
   });
 
   const [orcrFile, setOrcrFile] = useState(null);
@@ -64,14 +69,20 @@ const RenewFranchise = () => {
           const target = list.find(f => f._id === id);
           if (target) {
             setFranchise(target);
-            if (target.cedulaAddress) {
-              setFormData(prev => ({
-                ...prev,
-                placeIssued: target.cedulaAddress
-              }));
-            }
+            setFormData(prev => ({
+              ...prev,
+              placeIssued: target.cedulaAddress || prev.placeIssued,
+              ctcNo: target.cedulaSerialNo || prev.ctcNo,
+              orCrNo: target.orCrNo || '',
+              orCrExpiryDate: target.orCrExpiryDate ? target.orCrExpiryDate.substring(0, 10) : '',
+              driverLicenseNo: target.driverLicenseNo || '',
+              driverLicenseExpiryDate: target.driverLicenseExpiryDate ? target.driverLicenseExpiryDate.substring(0, 10) : ''
+            }));
             if (target.cedulaUrl) {
               setCedulaPreviewUrl(target.cedulaUrl);
+            }
+            if (target.orCrUrl) {
+              setPreviewUrl(target.orCrUrl);
             }
           }
         }
@@ -150,6 +161,29 @@ const RenewFranchise = () => {
       return;
     }
 
+    const today = new Date().toISOString().split('T')[0];
+
+    // Expiry validation: Warn operator that LTO renewal is required before franchise renewal
+    if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
+      showToast(
+        language === 'fil'
+          ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa.'
+          : 'Expired LTO OR/CR: Renewal with LTO is required before franchise renewal.',
+        'error'
+      );
+      return;
+    }
+
+    if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
+      showToast(
+        language === 'fil'
+          ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa."
+          : "Expired Driver's License: Renewal with LTO is required before franchise renewal.",
+        'error'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     const slowNetTimer = setTimeout(() => {
       showToast("Network seems slow. Please wait while uploading...", "warning");
@@ -163,6 +197,11 @@ const RenewFranchise = () => {
     submitData.append('cedulaDate', formData.dateIssued);
     submitData.append('cedulaAddress', formData.placeIssued);
     submitData.append('dateApplied', new Date().toISOString());
+
+    submitData.append('orCrNo', formData.orCrNo || '');
+    submitData.append('orCrExpiryDate', formData.orCrExpiryDate || '');
+    submitData.append('driverLicenseNo', formData.driverLicenseNo || '');
+    submitData.append('driverLicenseExpiryDate', formData.driverLicenseExpiryDate || '');
 
     if (orcrFile) {
       submitData.append('orcrFile', orcrFile);
@@ -518,10 +557,51 @@ const RenewFranchise = () => {
                   </div>
                 </div>
 
-                <div className="max-w-xl mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                      OR / CR Number
+                    </label>
+                    <input 
+                      type="text" 
+                      name="orCrNo" 
+                      value={formData.orCrNo}
+                      onChange={handleChange} 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      placeholder="e.g. OR-12345678 / CR-87654321"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                      <CalendarDays size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <span>LTO Registration Expiry Date</span>
+                    </label>
+                    <input 
+                      type="date" 
+                      name="orCrExpiryDate" 
+                      value={formData.orCrExpiryDate}
+                      onChange={handleChange} 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                    />
+                  </div>
+                </div>
+
+                {Boolean(formData.orCrExpiryDate && formData.orCrExpiryDate < new Date().toISOString().split('T')[0]) && (
+                  <div className="max-w-xl p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2.5 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+                    <p className="leading-snug">
+                      {language === 'fil'
+                        ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa.'
+                        : 'Expired LTO OR/CR: Renewal with LTO is required before franchise renewal.'}
+                    </p>
+                  </div>
+                )}
+
+                <div className="max-w-xl mt-3">
                   <DocumentUploadCard
                     id="orcrFile"
-                    label="Official Receipt / Certificate of Registration (OR/CR)"
+                    label="Official Receipt / Certificate of Registration (OR/CR) Document"
                     file={orcrFile}
                     previewUrl={previewUrl || franchise?.orCrUrl}
                     onFileSelect={handleFileSelect}
@@ -530,6 +610,64 @@ const RenewFranchise = () => {
                     required={false}
                   />
                 </div>
+              </div>
+
+              {/* Step 3: Driver's License Information */}
+              <div className="space-y-3.5 pt-2">
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                    3
+                  </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      Step 3: Driver's License Information
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium">
+                      Enter the current Driver's License number and validity details.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                      Driver's License No.
+                    </label>
+                    <input 
+                      type="text" 
+                      name="driverLicenseNo" 
+                      value={formData.driverLicenseNo}
+                      onChange={handleChange} 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      placeholder="e.g. D01-23-456789"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                      <CalendarDays size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <span>License Expiry Date</span>
+                    </label>
+                    <input 
+                      type="date" 
+                      name="driverLicenseExpiryDate" 
+                      value={formData.driverLicenseExpiryDate}
+                      onChange={handleChange} 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                    />
+                  </div>
+                </div>
+
+                {Boolean(formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < new Date().toISOString().split('T')[0]) && (
+                  <div className="max-w-xl p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2.5 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+                    <p className="leading-snug">
+                      {language === 'fil'
+                        ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa."
+                        : "Expired Driver's License: Renewal with LTO is required before franchise renewal."}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Claim Stub Notice */}

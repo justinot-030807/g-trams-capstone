@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { X, FileText, User, Car, Receipt, ShieldCheck } from 'lucide-react';
+import React from 'react';
+import { X, FileText, User, Car, Receipt, ShieldCheck, FileCheck } from 'lucide-react';
 
 const ApplicationSummaryModal = ({
   isSummaryModalOpen,
@@ -35,7 +35,7 @@ const ApplicationSummaryModal = ({
           <button 
             type="button"
             onClick={() => setIsSummaryModalOpen(false)}
-            className="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -122,10 +122,113 @@ const ApplicationSummaryModal = ({
             </div>
           </div>
 
-          {/* 4. Uploaded Requirements */}
+          {/* 4. Document Metadata */}
           <div>
             <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <ShieldCheck size={13} /> 4. Attached Documents
+              <FileCheck size={13} /> 4. Document Metadata &amp; Validity
+            </h4>
+            
+            <div className="space-y-2.5">
+              {/* OR/CR Box */}
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block">
+                  LTO OR / CR Details
+                </span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">OR / CR No.</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.orCrNo || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Expiration Date</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.orCrExpiryDate || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Driver & License Box */}
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block">
+                  Driver &amp; License Details
+                </span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="col-span-2">
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Driver Designation</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {formData.isOperatorDriver ? 'Operator is Driver (Self)' : 'Designated Driver (Boundary)'}
+                    </span>
+                  </div>
+                  {!formData.isOperatorDriver && (
+                    <>
+                      <div>
+                        <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Driver Name</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{formData.driverName || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Driver Contact</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{formData.driverContact || '—'}</span>
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">License No.</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.driverLicenseNo || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">License Expiry Date</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.driverLicenseExpiryDate || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TODA Certificate Box */}
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block">
+                  TODA Endorsement Certificate
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Certificate No.</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.todaCertNo || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Date Issued</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.todaCertDate || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Signatory</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.todaSignatory || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Barangay Clearance Box */}
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block">
+                  Barangay Clearance
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Clearance No.</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.brgyClearanceNo || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Date Issued</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formData.brgyClearanceDate || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Issuing Official</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.brgyIssuer || '—'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 5. Uploaded Requirements */}
+          <div>
+            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <ShieldCheck size={13} /> 5. Attached Documents
             </h4>
             <div className="space-y-1.5">
               {requirementsList.map((req) => {

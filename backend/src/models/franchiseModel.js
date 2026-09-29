@@ -18,6 +18,21 @@ const franchiseSchema = new mongoose.Schema({
     brgyClearanceUrl: { type: String },
     cedulaUrl: { type: String, default: '' },
     
+    // Structured document metadata fields
+    orCrNo: { type: String, default: '' },
+    orCrExpiryDate: { type: Date },
+    isOperatorDriver: { type: Boolean, default: true },
+    driverName: { type: String, default: '' },
+    driverContact: { type: String, default: '' },
+    driverLicenseNo: { type: String, default: '' },
+    driverLicenseExpiryDate: { type: Date },
+    todaCertNo: { type: String, default: '' },
+    todaCertDate: { type: Date },
+    todaSignatory: { type: String, default: '' },
+    brgyClearanceNo: { type: String, default: '' },
+    brgyClearanceDate: { type: Date },
+    brgyIssuer: { type: String, default: '' },
+
     deficiencies: {
         hasOrcr: { type: Boolean, default: false },
         hasLicense: { type: Boolean, default: false },

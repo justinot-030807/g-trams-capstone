@@ -115,14 +115,44 @@ const updateFranchise = async (req, res) => {
         }
 
         let updateData = { ...req.body };
+        const wasCancelled = existingFranchise.status === 'Cancelled';
+
         if (!isAdmin) {
-            delete updateData.status;
             delete updateData.operator;
             delete updateData.isArchived;
             delete updateData.eSigned;
             delete updateData.releaseDate;
             delete updateData.deficiencies;
+
+            // When an operator re-submits a cancelled/rejected application to fix issues,
+            // transition it back to Pending and clear previous rejection remarks.
+            if (wasCancelled) {
+                updateData.status = 'Pending';
+                updateData.cancelReason = '';
+                updateData.rejectedField = '';
+                updateData.isArchived = false;
+            } else {
+                delete updateData.status;
+            }
         }
+
+        // Parse structured metadata date fields if provided
+        if (updateData.orCrExpiryDate) {
+            updateData.orCrExpiryDate = !isNaN(new Date(updateData.orCrExpiryDate).getTime()) ? new Date(updateData.orCrExpiryDate) : null;
+        }
+        if (updateData.driverLicenseExpiryDate) {
+            updateData.driverLicenseExpiryDate = !isNaN(new Date(updateData.driverLicenseExpiryDate).getTime()) ? new Date(updateData.driverLicenseExpiryDate) : null;
+        }
+        if (updateData.todaCertDate) {
+            updateData.todaCertDate = !isNaN(new Date(updateData.todaCertDate).getTime()) ? new Date(updateData.todaCertDate) : null;
+        }
+        if (updateData.brgyClearanceDate) {
+            updateData.brgyClearanceDate = !isNaN(new Date(updateData.brgyClearanceDate).getTime()) ? new Date(updateData.brgyClearanceDate) : null;
+        }
+        if (updateData.isOperatorDriver !== undefined) {
+            updateData.isOperatorDriver = updateData.isOperatorDriver === true || updateData.isOperatorDriver === 'true';
+        }
+
         const files = req.files || {};
         const findFilePath = (keys) => {
             if (Array.isArray(files)) {
@@ -156,6 +186,27 @@ const updateFranchise = async (req, res) => {
                 targetId: req.params.id,
                 details: { plateNo: updatedFranchise.plateNo, updatedFields: Object.keys(updateData) }
             });
+        } else if (wasCancelled && updatedFranchise.status === 'Pending') {
+            // Notify admins of re-submitted corrected application
+            try {
+                const User = require('../models/userModel');
+                const admins = await User.find({ role: { $in: ['admin', 'Administrator'] } });
+                for (const adm of admins) {
+                    await Notification.create({
+                        recipient: adm._id,
+                        type: 'INFO',
+                        title: 'Franchise Application Re-submitted',
+                        message: `Operator ${updatedFranchise.fullName || 'User'} has updated and re-submitted their franchise application for ${updatedFranchise.plateNo}.`,
+                        relatedFranchise: updatedFranchise._id
+                    });
+                    emitToUser(adm._id.toString(), 'new_notification', {
+                        title: 'Franchise Application Re-submitted',
+                        message: `Operator ${updatedFranchise.fullName || 'User'} has updated and re-submitted their franchise application for ${updatedFranchise.plateNo}.`
+                    });
+                }
+            } catch (notifyErr) {
+                console.error('Error notifying admins on re-submission:', notifyErr);
+            }
         }
 
         res.status(200).json(updatedFranchise);
@@ -196,15 +247,23 @@ const renewFranchise = async (req, res) => {
             return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to renew this franchise record.' });
         }
 
-        const { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo, ctcNo, dateIssued, placeIssued } = req.body;
+        const { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo, ctcNo, dateIssued, placeIssued, orCrNo, orCrExpiryDate, driverLicenseNo, driverLicenseExpiryDate } = req.body;
         const updateData = {
             dateApplied: dateApplied || new Date().toISOString(),
             cedulaDate: cedulaDate || dateIssued || existingFranchise.cedulaDate,
             cedulaAddress: cedulaAddress || placeIssued || existingFranchise.cedulaAddress || 'Gasan, Marinduque',
             cedulaSerialNo: cedulaSerialNo || ctcNo || existingFranchise.cedulaSerialNo,
             status: 'Pending',
+            cancelReason: '',
+            rejectedField: '',
+            isArchived: false,
             applicationType: 'Renewal'
         };
+
+        if (orCrNo) updateData.orCrNo = orCrNo;
+        if (orCrExpiryDate && !isNaN(new Date(orCrExpiryDate).getTime())) updateData.orCrExpiryDate = new Date(orCrExpiryDate);
+        if (driverLicenseNo) updateData.driverLicenseNo = driverLicenseNo;
+        if (driverLicenseExpiryDate && !isNaN(new Date(driverLicenseExpiryDate).getTime())) updateData.driverLicenseExpiryDate = new Date(driverLicenseExpiryDate);
 
         if (req.files && req.files['orcrFile'] && req.files['orcrFile'][0]) {
             updateData.orCrUrl = req.files['orcrFile'][0].path;

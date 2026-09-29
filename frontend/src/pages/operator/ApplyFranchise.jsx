@@ -146,7 +146,21 @@ const ApplyFranchise = () => {
     todaName: loggedInToda,
     dateApplied: new Date().toISOString().split('T')[0], 
     cedulaDate: '', cedulaAddress: 'Gasan, Marinduque', 
-    cedulaSerialNo: ''
+    cedulaSerialNo: '',
+    // Structured document metadata fields
+    orCrNo: '',
+    orCrExpiryDate: '',
+    isOperatorDriver: true,
+    driverName: '',
+    driverContact: '',
+    driverLicenseNo: '',
+    driverLicenseExpiryDate: '',
+    todaCertNo: '',
+    todaCertDate: '',
+    todaSignatory: '',
+    brgyClearanceNo: '',
+    brgyClearanceDate: '',
+    brgyIssuer: ''
   });
   
   const [uploadedDocs, setUploadedDocs] = useState({});
@@ -440,7 +454,20 @@ const ApplyFranchise = () => {
       dateApplied: new Date().toISOString().split('T')[0], 
       cedulaDate: smartCedulaDate, 
       cedulaAddress: smartCedulaAddress, 
-      cedulaSerialNo: smartCedulaSerialNo 
+      cedulaSerialNo: smartCedulaSerialNo,
+      orCrNo: '',
+      orCrExpiryDate: '',
+      isOperatorDriver: true,
+      driverName: '',
+      driverContact: '',
+      driverLicenseNo: '',
+      driverLicenseExpiryDate: '',
+      todaCertNo: '',
+      todaCertDate: '',
+      todaSignatory: '',
+      brgyClearanceNo: '',
+      brgyClearanceDate: '',
+      brgyIssuer: ''
     });
   };
 
@@ -448,7 +475,14 @@ const ApplyFranchise = () => {
     const key = getDraftKey();
     try {
       await localforage.removeItem(key);
+      await localforage.removeItem(DRAFT_STORAGE_KEY);
+      await localforage.removeItem('gtrams_apply_draft');
+      await localforage.removeItem('apply_form_draft');
     } catch(e) { console.error('Error removing draft', e); }
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem('gtrams_apply_draft');
+    localStorage.removeItem('apply_form_draft');
+    localStorage.removeItem('reapply_target');
     setHasDraftRestored(false);
     setLastSavedTime(null);
     setCurrentStep(1);
@@ -475,7 +509,20 @@ const ApplyFranchise = () => {
         dateApplied: new Date().toISOString().split('T')[0], 
         cedulaDate: smartCedulaDate, 
         cedulaAddress: smartCedulaAddress, 
-        cedulaSerialNo: smartCedulaSerialNo 
+        cedulaSerialNo: smartCedulaSerialNo,
+        orCrNo: '',
+        orCrExpiryDate: '',
+        isOperatorDriver: true,
+        driverName: '',
+        driverContact: '',
+        driverLicenseNo: '',
+        driverLicenseExpiryDate: '',
+        todaCertNo: '',
+        todaCertDate: '',
+        todaSignatory: '',
+        brgyClearanceNo: '',
+        brgyClearanceDate: '',
+        brgyIssuer: ''
       });
       setUploadedDocs({});
       setFilePreviews({});
@@ -570,7 +617,20 @@ const ApplyFranchise = () => {
       dateApplied: franchise.dateApplied ? franchise.dateApplied.substring(0, 10) : '',
       cedulaDate: franchise.cedulaDate ? franchise.cedulaDate.substring(0, 10) : '',
       cedulaAddress: franchise.cedulaAddress || 'Gasan, Marinduque',
-      cedulaSerialNo: franchise.cedulaSerialNo || ''
+      cedulaSerialNo: franchise.cedulaSerialNo || '',
+      orCrNo: franchise.orCrNo || '',
+      orCrExpiryDate: franchise.orCrExpiryDate ? franchise.orCrExpiryDate.substring(0, 10) : '',
+      isOperatorDriver: franchise.isOperatorDriver !== undefined ? Boolean(franchise.isOperatorDriver) : true,
+      driverName: franchise.driverName || '',
+      driverContact: franchise.driverContact || '',
+      driverLicenseNo: franchise.driverLicenseNo || '',
+      driverLicenseExpiryDate: franchise.driverLicenseExpiryDate ? franchise.driverLicenseExpiryDate.substring(0, 10) : '',
+      todaCertNo: franchise.todaCertNo || '',
+      todaCertDate: franchise.todaCertDate ? franchise.todaCertDate.substring(0, 10) : '',
+      todaSignatory: franchise.todaSignatory || '',
+      brgyClearanceNo: franchise.brgyClearanceNo || '',
+      brgyClearanceDate: franchise.brgyClearanceDate ? franchise.brgyClearanceDate.substring(0, 10) : '',
+      brgyIssuer: franchise.brgyIssuer || ''
     });
 
     const previews = {};
@@ -781,8 +841,56 @@ const ApplyFranchise = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
-    
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Expiry check: If orCrExpiryDate < today, show toast error and abort submit
+    if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
+      showToast(
+        language === 'fil'
+          ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa.'
+          : 'Expired LTO OR/CR: Renewal with LTO is required before franchise application.',
+        'error'
+      );
+      return;
+    }
+
+    // Expiry check: If driverLicenseExpiryDate < today, show toast error and abort submit
+    if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
+      showToast(
+        language === 'fil'
+          ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa."
+          : "Expired Driver's License: Renewal with LTO is required before franchise application.",
+        'error'
+      );
+      return;
+    }
+
+    // If isOperatorDriver is false, ensure driverName and driverContact are provided
+    if (!formData.isOperatorDriver) {
+      if (!formData.driverName?.trim() || !formData.driverContact?.trim()) {
+        showToast(
+          language === 'fil'
+            ? 'Pakilagay ang pangalan at numero ng itinalagang drayber.'
+            : "Please provide designated driver's name and contact number.",
+          'error'
+        );
+        return;
+      }
+    }
+
+    // If formMode === 'New', ensure orCrNo and driverLicenseNo are provided
     if (formMode === 'New') {
+      if (!formData.orCrNo?.trim() || !formData.driverLicenseNo?.trim()) {
+        showToast(
+          language === 'fil'
+            ? "Pakilagay ang OR/CR Number at Driver's License Number."
+            : "Please provide OR/CR Number and Driver's License Number.",
+          'error'
+        );
+        return;
+      }
+
       const missing = requirementsList.filter(req => !uploadedDocs[req.id]);
       if (missing.length > 0) {
         showToast(`Please ensure all ${requirementsList.length} required documents are uploaded.`, "error");
@@ -847,7 +955,23 @@ const ApplyFranchise = () => {
       const data = await response.json();
 
       if (response.ok) {
+        // Clear localforage drafts and local storage keys
+        try {
+          await localforage.removeItem(getDraftKey());
+          await localforage.removeItem(DRAFT_STORAGE_KEY);
+          await localforage.removeItem('gtrams_apply_draft');
+          await localforage.removeItem('apply_form_draft');
+          if (selectedId) {
+            await localforage.removeItem(`gtrams_renewal_draft_${selectedId}`);
+          }
+        } catch (storageErr) {
+          console.error('Error clearing localforage draft on submit:', storageErr);
+        }
+
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.removeItem('gtrams_apply_draft');
+        localStorage.removeItem('apply_form_draft');
+        localStorage.removeItem('reapply_target');
         if (selectedId) {
           localStorage.removeItem(`gtrams_renewal_draft_${selectedId}`);
         }
@@ -884,6 +1008,306 @@ const ApplyFranchise = () => {
 
   const inputClasses = "w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]";
   const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-300/80 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-600 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[46px]";
+
+  const todayDateStr = new Date().toISOString().split('T')[0];
+
+  const renderDocMetadata = (reqId) => {
+    const lowerId = (reqId || '').toLowerCase();
+
+    // 1. OR/CR Card Metadata
+    if (lowerId === 'orcrdocument' || lowerId.includes('orcr') || lowerId === 'doc_0') {
+      const isExpired = Boolean(formData.orCrExpiryDate && formData.orCrExpiryDate < todayDateStr);
+      return (
+        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+            <span>LTO OR/CR Document Details</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Official Receipt (OR) / CR No. {formMode === 'New' && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="text"
+                name="orCrNo"
+                value={formData.orCrNo}
+                onChange={handleInputChange}
+                placeholder="e.g. OR-12345678 / CR-87654321"
+                className={inputClasses}
+                required={formMode === 'New'}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span>LTO Registration Expiry Date</span>
+              </label>
+              <input
+                type="date"
+                name="orCrExpiryDate"
+                value={formData.orCrExpiryDate}
+                onChange={handleInputChange}
+                className={inputClasses}
+              />
+            </div>
+          </div>
+          {isExpired && (
+            <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
+              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+              <p className="leading-snug">
+                {language === 'fil'
+                  ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa.'
+                  : 'Expired LTO OR/CR: Renewal with LTO is required before franchise application.'}
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 2. Driver's License Card Metadata
+    if (lowerId === 'license' || lowerId.includes('license') || lowerId === 'doc_1') {
+      const isExpired = Boolean(formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < todayDateStr);
+      return (
+        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+            <User size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+            <span>Driver Designation & License Information</span>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Sino ang magpapatakbo ng traysikel? <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: true }))}
+                className={`px-3 py-2.5 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  formData.isOperatorDriver
+                    ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950 dark:border-[#b89428] shadow-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                  formData.isOperatorDriver ? 'border-white dark:border-slate-950 bg-white dark:bg-slate-950' : 'border-slate-400'
+                }`}>
+                  {formData.isOperatorDriver && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
+                  )}
+                </span>
+                <span>Operator is Driver (Self)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: false }))}
+                className={`px-3 py-2.5 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  !formData.isOperatorDriver
+                    ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950 dark:border-[#b89428] shadow-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                  !formData.isOperatorDriver ? 'border-white dark:border-slate-950 bg-white dark:bg-slate-950' : 'border-slate-400'
+                }`}>
+                  {!formData.isOperatorDriver && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
+                  )}
+                </span>
+                <span>Designated Driver (Boundary)</span>
+              </button>
+            </div>
+          </div>
+
+          {!formData.isOperatorDriver && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/80 dark:border-slate-700/60 animate-in fade-in duration-200">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Driver's Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="driverName"
+                  value={formData.driverName}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Pedro Santos"
+                  className={inputClasses}
+                  required={!formData.isOperatorDriver}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Driver's Contact Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  name="driverContact"
+                  value={formData.driverContact}
+                  onChange={handleInputChange}
+                  placeholder="e.g. 09123456789"
+                  className={inputClasses}
+                  required={!formData.isOperatorDriver}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Driver's License No. {formMode === 'New' && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="text"
+                name="driverLicenseNo"
+                value={formData.driverLicenseNo}
+                onChange={handleInputChange}
+                placeholder="e.g. D01-23-456789"
+                className={inputClasses}
+                required={formMode === 'New'}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span>License Expiry Date</span>
+              </label>
+              <input
+                type="date"
+                name="driverLicenseExpiryDate"
+                value={formData.driverLicenseExpiryDate}
+                onChange={handleInputChange}
+                className={inputClasses}
+              />
+            </div>
+          </div>
+
+          {isExpired && (
+            <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
+              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+              <p className="leading-snug">
+                {language === 'fil'
+                  ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa."
+                  : "Expired Driver's License: Renewal with LTO is required before franchise application."}
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 3. TODA Endorsement Card Metadata
+    if (lowerId === 'todaendorsement' || lowerId.includes('toda') || lowerId === 'doc_2') {
+      return (
+        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+            <span>TODA Endorsement Certificate Details</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                TODA Certificate No.
+              </label>
+              <input
+                type="text"
+                name="todaCertNo"
+                value={formData.todaCertNo}
+                onChange={handleInputChange}
+                placeholder="e.g. TODA-2026-001"
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span>Date Issued</span>
+              </label>
+              <input
+                type="date"
+                name="todaCertDate"
+                max={todayDateStr}
+                value={formData.todaCertDate}
+                onChange={handleInputChange}
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Signatory / Officer
+              </label>
+              <input
+                type="text"
+                name="todaSignatory"
+                value={formData.todaSignatory}
+                onChange={handleInputChange}
+                placeholder="e.g. Juan Perez (President)"
+                className={inputClasses}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 4. Barangay Clearance Card Metadata
+    if (lowerId === 'brgyclearance' || lowerId.includes('brgy') || lowerId.includes('clearance') || lowerId === 'doc_3') {
+      return (
+        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+            <span>Barangay Clearance Details</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Clearance No.
+              </label>
+              <input
+                type="text"
+                name="brgyClearanceNo"
+                value={formData.brgyClearanceNo}
+                onChange={handleInputChange}
+                placeholder="e.g. BC-2026-089"
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span>Date Issued</span>
+              </label>
+              <input
+                type="date"
+                name="brgyClearanceDate"
+                max={todayDateStr}
+                value={formData.brgyClearanceDate}
+                onChange={handleInputChange}
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Issuing Official
+              </label>
+              <input
+                type="text"
+                name="brgyIssuer"
+                value={formData.brgyIssuer}
+                onChange={handleInputChange}
+                placeholder="e.g. Hon. Maria Reyes"
+                className={inputClasses}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   if (!isLoading && myFranchises.length >= maxAllowedUnits && formMode === 'New') {
     return (
@@ -1750,7 +2174,7 @@ const ApplyFranchise = () => {
                 <p className="leading-relaxed">No new document uploads required for renewal. Please review the summary below before submitting.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="space-y-6 mb-6">
                 {requirementsList.map((req) => (
                   <div key={req.id} id={`field-${req.id}`} className="space-y-1">
                     {isFieldFocused(req.id) && (
@@ -1770,6 +2194,7 @@ const ApplyFranchise = () => {
                         onPreviewZoom={setFullPreview}
                         required={formMode === 'New'}
                       />
+                      {renderDocMetadata(req.id)}
                     </div>
                   </div>
                 ))}

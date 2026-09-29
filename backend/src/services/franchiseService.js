@@ -102,6 +102,22 @@ class FranchiseService {
             todaEndorsementUrl: data.todaEndorsementUrl, 
             brgyClearanceUrl: data.brgyClearanceUrl,
             cedulaUrl: data.cedulaUrl || '',
+
+            // Structured document metadata fields
+            orCrNo: data.orCrNo || '',
+            orCrExpiryDate: data.orCrExpiryDate && !isNaN(new Date(data.orCrExpiryDate).getTime()) ? new Date(data.orCrExpiryDate) : undefined,
+            isOperatorDriver: data.isOperatorDriver !== undefined ? (data.isOperatorDriver === true || data.isOperatorDriver === 'true') : true,
+            driverName: data.driverName || '',
+            driverContact: data.driverContact || '',
+            driverLicenseNo: data.driverLicenseNo || '',
+            driverLicenseExpiryDate: data.driverLicenseExpiryDate && !isNaN(new Date(data.driverLicenseExpiryDate).getTime()) ? new Date(data.driverLicenseExpiryDate) : undefined,
+            todaCertNo: data.todaCertNo || '',
+            todaCertDate: data.todaCertDate && !isNaN(new Date(data.todaCertDate).getTime()) ? new Date(data.todaCertDate) : undefined,
+            todaSignatory: data.todaSignatory || '',
+            brgyClearanceNo: data.brgyClearanceNo || '',
+            brgyClearanceDate: data.brgyClearanceDate && !isNaN(new Date(data.brgyClearanceDate).getTime()) ? new Date(data.brgyClearanceDate) : undefined,
+            brgyIssuer: data.brgyIssuer || '',
+
             deficiencies: {
                 hasOrcr: !!data.orCrUrl,
                 hasLicense: !!data.licenseUrl,

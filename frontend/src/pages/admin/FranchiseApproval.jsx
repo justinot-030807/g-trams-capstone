@@ -11,6 +11,7 @@ import { QueueListSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import BatchMtopModal from '../../components/admin/BatchMtopModal';
 import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal';
+import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
 
 const REJECT_REASONS = [
   "Incomplete Requirements",
@@ -52,6 +53,13 @@ const FranchiseApproval = () => {
   const [quickRejectCustom, setQuickRejectCustom] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Application Dossier Modal state
+  const [dossierTargetUnit, setDossierTargetUnit] = useState(null);
+
+  const handleQuickApprove = (unit) => {
+    setQuickApproveTarget(unit);
+  };
+
   // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -374,6 +382,24 @@ const FranchiseApproval = () => {
         isOpen={isTransmittalOpen}
         onClose={() => setIsTransmittalOpen(false)}
         units={applications.filter(a => selectedIds.includes(a._id))}
+      />
+
+      {/* Official Application Evaluation Dossier Modal */}
+      <ApplicationDossierModal 
+        isOpen={Boolean(dossierTargetUnit)} 
+        onClose={() => setDossierTargetUnit(null)} 
+        franchise={dossierTargetUnit} 
+        onApprove={() => { 
+          const unit = dossierTargetUnit; 
+          setDossierTargetUnit(null); 
+          handleQuickApprove(unit); 
+        }} 
+        onReject={() => { 
+          const unit = dossierTargetUnit; 
+          setDossierTargetUnit(null); 
+          setQuickRejectTarget(unit); 
+        }} 
+        isProcessing={isProcessing} 
       />
 
       {/* Quick Approve Confirmation Modal */}
@@ -980,6 +1006,16 @@ const FranchiseApproval = () => {
                       <span className="hidden sm:inline">Release</span>
                     </button>
                   )}
+
+                  {/* Application Dossier Quick View */}
+                  <button
+                    onClick={() => setDossierTargetUnit(app)}
+                    className="px-2.5 sm:px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                    title="View Application Dossier & Evaluation Sheet"
+                  >
+                    <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    <span>Dossier</span>
+                  </button>
 
                   {/* Deep Review Workstation Button */}
                   <button 
