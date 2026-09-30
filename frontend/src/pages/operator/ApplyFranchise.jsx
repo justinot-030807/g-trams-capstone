@@ -658,8 +658,8 @@ const ApplyFranchise = () => {
     } else if (name === 'zone') {
       sanitized = value.replace(/\D/g, '');
     } else if (name === 'cedulaSerialNo') {
-      sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 16).toUpperCase();
-    } else if (name === 'motorNo' || name === 'chassisNo' || name === 'plateNo') {
+      sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 20).toUpperCase();
+    } else if (['motorNo', 'chassisNo', 'plateNo', 'orCrNo', 'driverLicenseNo', 'todaCertNo', 'brgyClearanceNo'].includes(name)) {
       sanitized = value.toUpperCase();
     }
     setFormData(prev => ({ ...prev, [name]: sanitized }));
@@ -1060,15 +1060,11 @@ const ApplyFranchise = () => {
     if (lowerId === 'orcrdocument' || lowerId.includes('orcr') || lowerId === 'doc_0') {
       const isExpired = Boolean(formData.orCrExpiryDate && formData.orCrExpiryDate < todayDateStr);
       return (
-        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-            <span>LTO OR/CR Document Details</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2.5 shadow-2xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Official Receipt (OR) / CR No. {formMode === 'New' && <span className="text-red-500">*</span>}
+                OR / CR Number {formMode === 'New' && <span className="text-red-500">*</span>}
               </label>
               <input
                 type="text"
@@ -1076,7 +1072,7 @@ const ApplyFranchise = () => {
                 value={formData.orCrNo}
                 onChange={handleInputChange}
                 maxLength={30}
-                placeholder="e.g. OR-12345678 / CR-87654321"
+                placeholder="e.g. OR-12345678"
                 className={inputClasses}
                 required={formMode === 'New'}
               />
@@ -1084,7 +1080,7 @@ const ApplyFranchise = () => {
             <div>
               <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
                 <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <span>LTO Registration Expiry Date</span>
+                <span>Registration Expiry Date</span>
               </label>
               <input
                 type="date"
@@ -1099,9 +1095,7 @@ const ApplyFranchise = () => {
             <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
               <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
               <p className="leading-snug">
-                {language === 'fil'
-                  ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa.'
-                  : 'Expired LTO OR/CR: Renewal with LTO is required before franchise application.'}
+                Expired LTO OR/CR: Please ensure registration is renewed with LTO.
               </p>
             </div>
           )}
@@ -1113,62 +1107,42 @@ const ApplyFranchise = () => {
     if (lowerId === 'license' || lowerId.includes('license') || lowerId === 'doc_1') {
       const isExpired = Boolean(formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < todayDateStr);
       return (
-        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-            <User size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-            <span>Driver Designation & License Information</span>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Who will operate this tricycle? <span className="text-red-500">*</span>
+        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2.5 shadow-2xs">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+              Who is driving? <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="inline-flex p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl text-xs">
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: true }))}
-                className={`px-3 py-2.5 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  formData.isOperatorDriver
-                    ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950 dark:border-[#b89428] shadow-xs'
-                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  formData.isOperatorDriver 
+                    ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                  formData.isOperatorDriver ? 'border-white dark:border-slate-950 bg-white dark:bg-slate-950' : 'border-slate-400'
-                }`}>
-                  {formData.isOperatorDriver && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
-                  )}
-                </span>
-                <span>Operator is Driver (Self)</span>
+                Self (Operator)
               </button>
-
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: false }))}
-                className={`px-3 py-2.5 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  !formData.isOperatorDriver
-                    ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950 dark:border-[#b89428] shadow-xs'
-                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  !formData.isOperatorDriver 
+                    ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                  !formData.isOperatorDriver ? 'border-white dark:border-slate-950 bg-white dark:bg-slate-950' : 'border-slate-400'
-                }`}>
-                  {!formData.isOperatorDriver && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
-                  )}
-                </span>
-                <span>Designated Driver (Boundary)</span>
+                Designated Driver
               </button>
             </div>
           </div>
 
           {!formData.isOperatorDriver && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/80 dark:border-slate-700/60 animate-in fade-in duration-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1.5 border-t border-slate-200/80 dark:border-slate-700/60 animate-in fade-in duration-200">
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Driver's Full Name <span className="text-red-500">*</span>
+                  Driver's Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -1183,7 +1157,7 @@ const ApplyFranchise = () => {
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Driver's Contact Number <span className="text-red-500">*</span>
+                  Driver's Contact <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -1199,10 +1173,10 @@ const ApplyFranchise = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Driver's License No. {formMode === 'New' && <span className="text-red-500">*</span>}
+                License Number {formMode === 'New' && <span className="text-red-500">*</span>}
               </label>
               <input
                 type="text"
@@ -1234,9 +1208,7 @@ const ApplyFranchise = () => {
             <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
               <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
               <p className="leading-snug">
-                {language === 'fil'
-                  ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa."
-                  : "Expired Driver's License: Renewal with LTO is required before franchise application."}
+                Expired Driver's License: Please ensure the license is renewed with LTO.
               </p>
             </div>
           )}
@@ -1247,15 +1219,11 @@ const ApplyFranchise = () => {
     // 3. TODA Endorsement Card Metadata
     if (lowerId === 'todaendorsement' || lowerId.includes('toda') || lowerId === 'doc_2') {
       return (
-        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-            <span>TODA Endorsement Certificate Details</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                TODA Certificate No.
+                Certificate No. (Optional)
               </label>
               <input
                 type="text"
@@ -1281,20 +1249,6 @@ const ApplyFranchise = () => {
                 className={inputClasses}
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Signatory / Officer
-              </label>
-              <input
-                type="text"
-                name="todaSignatory"
-                value={formData.todaSignatory}
-                onChange={handleInputChange}
-                maxLength={60}
-                placeholder="e.g. Juan Perez (President)"
-                className={inputClasses}
-              />
-            </div>
           </div>
         </div>
       );
@@ -1303,15 +1257,11 @@ const ApplyFranchise = () => {
     // 4. Barangay Clearance Card Metadata
     if (lowerId === 'brgyclearance' || lowerId.includes('brgy') || lowerId.includes('clearance') || lowerId === 'doc_3') {
       return (
-        <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-            <span>Barangay Clearance Details</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Clearance No.
+                Clearance No. (Optional)
               </label>
               <input
                 type="text"
@@ -1334,20 +1284,6 @@ const ApplyFranchise = () => {
                 max={todayDateStr}
                 value={formData.brgyClearanceDate}
                 onChange={handleInputChange}
-                className={inputClasses}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Issuing Official
-              </label>
-              <input
-                type="text"
-                name="brgyIssuer"
-                value={formData.brgyIssuer}
-                onChange={handleInputChange}
-                maxLength={60}
-                placeholder="e.g. Hon. Maria Reyes"
                 className={inputClasses}
               />
             </div>
@@ -2380,10 +2316,10 @@ const ApplyFranchise = () => {
               </div>
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Step 4: Upload Required Documents
+                  Required Documents
                 </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
-                  Take a clear photo with your mobile camera or upload from device gallery
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Attach photos or PDF copies of required documents.
                 </p>
               </div>
             </div>
@@ -2394,7 +2330,7 @@ const ApplyFranchise = () => {
                 <p className="leading-relaxed">No new document uploads required for renewal. Please review the summary below before submitting.</p>
               </div>
             ) : (
-              <div className="space-y-6 mb-6">
+              <div className="space-y-4 mb-4">
                 {requirementsList.map((req) => (
                   <div key={req.id} id={`field-${req.id}`} className="space-y-1">
                     {isFieldFocused(req.id) && (
@@ -2421,24 +2357,19 @@ const ApplyFranchise = () => {
               </div>
             )}
 
-            {/* Slide 1: See Application Summary Button */}
-            <div className="bg-gradient-to-r from-[#9E2A2B]/5 via-amber-500/5 to-transparent dark:from-[#D4AF37]/10 dark:via-transparent border border-[#9E2A2B]/15 dark:border-[#D4AF37]/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                  <FileText size={20} />
-                </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Application Summary</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Review all operator, vehicle, cedula, and document details before final submission.</p>
-                </div>
+            {/* Application Summary Preview Strip */}
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 flex items-center justify-between gap-3 mb-4 shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Application Summary</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsSummaryModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
               >
-                <Eye size={15} />
-                <span>See Summary</span>
+                <Eye size={13} />
+                <span>View Summary</span>
               </button>
             </div>
 

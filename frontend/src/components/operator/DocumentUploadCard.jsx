@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Loader2 } from 'lucide-react';
+import { compressImage } from '../../utils/imageCompressor';
 
 const DocumentUploadCard = ({ 
   id, 
@@ -14,14 +15,15 @@ const DocumentUploadCard = ({
   const galleryInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const [sizeError, setSizeError] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const hasFile = !!file || !!previewUrl;
   const isPdf = previewUrl?.toLowerCase().includes('.pdf') || (file && file.type === 'application/pdf');
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
-      if (selected.size > 10 * 1024 * 1024) {
+      if (selected.size > 15 * 1024 * 1024) {
         setSizeError(true);
         setTimeout(() => setSizeError(false), 4000);
         return;
@@ -33,7 +35,16 @@ const DocumentUploadCard = ({
         URL.revokeObjectURL(previewUrl);
       }
       
-      onFileSelect(id, selected);
+      try {
+        setIsCompressing(true);
+        const optimized = await compressImage(selected);
+        onFileSelect(id, optimized);
+      } catch (err) {
+        console.error('Compression error:', err);
+        onFileSelect(id, selected);
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
@@ -68,15 +79,19 @@ const DocumentUploadCard = ({
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
             <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate leading-snug">
-              {label}
+              {label} {required && <span className="text-red-500">*</span>}
             </p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium mt-0.5">
-              {hasFile ? (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              {isCompressing ? (
+                <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                  <Loader2 size={12} className="animate-spin" /> Optimizing photo...
+                </span>
+              ) : hasFile ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Document Attached {appliedFilter === 'enhanced' && '(Magic Enhanced)'}
+                  <CheckCircle2 size={12} /> Ready
                 </span>
               ) : (
-                'Clear photo or file (JPG, PNG, WebP, PDF)'
+                'Attach photo or PDF (Max 10MB)'
               )}
             </p>
           </div>
@@ -86,28 +101,27 @@ const DocumentUploadCard = ({
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                setAppliedFilter(null);
                 if (previewUrl && previewUrl.startsWith('blob:')) {
                   URL.revokeObjectURL(previewUrl);
                 }
                 onFileRemove(id);
               }}
-              className="text-slate-600 dark:text-slate-400 hover:text-red-500 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2 -mt-2"
+              className="text-slate-500 dark:text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center -mr-1 -mt-1"
               title="Remove document"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           )}
         </div>
 
         {/* Middle Body */}
         {!hasFile ? (
-          <div className="my-2 py-3 px-3 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/70 dark:bg-slate-800/40">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full justify-center mb-2">
+          <div className="my-1.5 py-2.5 px-3 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/70 dark:bg-slate-800/40">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full justify-center">
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px]"
               >
                 <Camera size={15} className="text-[#D4AF37]" />
                 <span>Take Photo</span>
@@ -116,15 +130,12 @@ const DocumentUploadCard = ({
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs min-h-[44px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs min-h-[42px]"
               >
                 <Upload size={15} />
-                <span>Upload File / PDF</span>
+                <span>Upload File</span>
               </button>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-              Accepts JPG, PNG, WebP, or PDF (up to 10MB)
-            </p>
           </div>
         ) : (
           <div className="my-1.5 relative rounded-2xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[120px]">
@@ -170,14 +181,8 @@ const DocumentUploadCard = ({
           </div>
         )}
 
-        {/* Footer Helper */}
-        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
-          <span>JPG, PNG, or PDF</span>
-          <span>Max 10MB</span>
-        </div>
-        
         {sizeError && (
-          <p className="mt-1 text-xs font-bold text-red-600 dark:text-red-400">
+          <p className="mt-1.5 text-xs font-bold text-red-600 dark:text-red-400">
             File exceeds 10MB size limit. Please choose a smaller file.
           </p>
         )}
