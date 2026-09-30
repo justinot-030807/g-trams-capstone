@@ -96,10 +96,10 @@ const Home = () => {
             variants={staggerContainer}
             className="flex flex-col items-center w-full"
           >
-            {/* Primary Headline - Crisp White with Gold Accent */}
+            {/* Primary Headline - Pure White */}
             <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-5xl px-1 sm:px-0 drop-shadow-md">
               <span className="block sm:inline">Gasan Tricycle Records &amp; </span>
-              <span className="inline sm:inline-block sm:whitespace-nowrap text-[#F3CD65]">
+              <span className="inline sm:inline-block sm:whitespace-nowrap text-white">
                 Application Management System
               </span>
             </motion.h1>
@@ -136,45 +136,45 @@ const Home = () => {
 
             </motion.div>
 
-            {/* 4 CORE SERVICE CARDS */}
+            {/* 4 CORE SERVICE CARDS (FROSTED GLASSMORPHISM WITH REDUCED OPACITY) */}
             <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-12 sm:mt-16 w-full text-left">
               
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 shadow-xl hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-white/20 text-white border border-white/30 mb-3 shadow-xs">
                   <FileText size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Online Application</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm sm:text-base text-white tracking-wide">Online Application</h3>
+                <p className="text-xs text-white/80 mt-1.5 leading-relaxed font-normal">
                   Submit new MTOP applications, renewal requests, and digital requirements without queuing.
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 shadow-xl hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-white/20 text-white border border-white/30 mb-3 shadow-xs">
                   <ShieldCheck size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">TODA Masterlist</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm sm:text-base text-white tracking-wide">TODA Masterlist</h3>
+                <p className="text-xs text-white/80 mt-1.5 leading-relaxed font-normal">
                   Verified registry of accredited TODA associations, designated zones, and authorized units.
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 shadow-xl hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-white/20 text-white border border-white/30 mb-3 shadow-xs">
                   <Clock size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Claim Stub &amp; Tracking</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm sm:text-base text-white tracking-wide">Claim Stub &amp; Tracking</h3>
+                <p className="text-xs text-white/80 mt-1.5 leading-relaxed font-normal">
                   Track approval milestones live and generate official printable payment claim stubs.
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 shadow-xl hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-white/20 text-white border border-white/30 mb-3 shadow-xs">
                   <Award size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Official Compliance</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm sm:text-base text-white tracking-wide">Official Compliance</h3>
+                <p className="text-xs text-white/80 mt-1.5 leading-relaxed font-normal">
                   Full compliance with Gasan Municipal Ordinances, fare matrices, and MTFRB standards.
                 </p>
               </motion.div>
@@ -198,9 +198,38 @@ const Home = () => {
 
         {/* Municipal Bulletin Board */}
         <LandingAnnouncements />
+
+        {/* OFFICIAL SEAL OF GASAN - Placed right between Announcements and Public Stats on white background */}
+        <div className="relative w-full py-10 sm:py-14 flex flex-col items-center justify-center overflow-hidden select-none border-t border-slate-200/60">
+          {/* Soft Watermark in background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08]">
+            <img src="/gasan-logo.png" alt="" className="w-80 h-80 sm:w-96 sm:h-96 object-contain filter grayscale" />
+          </div>
+
+          {/* Centered High-Definition Seal Emblem */}
+          <div className="relative z-10 flex items-center justify-center w-full max-w-4xl px-4 sm:px-8">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-slate-400" />
+            <div className="mx-4 sm:mx-8 flex flex-col items-center group">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-2 bg-white shadow-xl border-2 border-[#801820]/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <img 
+                  src="/gasan-logo.png" 
+                  alt="Official Seal of the Municipality of Gasan" 
+                  className="w-full h-full object-contain filter drop-shadow-xs" 
+                />
+              </div>
+              <p className="mt-3 text-xs sm:text-sm font-black text-[#801820] tracking-wider uppercase text-center">
+                Bayan ng Gasan
+              </p>
+              <p className="text-[11px] text-slate-500 font-semibold tracking-widest uppercase text-center">
+                Lalawigan ng Marinduque
+              </p>
+            </div>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-slate-300 to-slate-400" />
+          </div>
+        </div>
       </div>
 
-      {/* Public Stats Section (100% Maroon & Gold) */}
+      {/* Public Stats Section */}
       <PublicStats />
 
       {/* Shared Full-Width Footer */}

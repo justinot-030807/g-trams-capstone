@@ -32,13 +32,13 @@ const AuthNavbar = () => {
 
   return (
     <>
-      {/* FULL-WIDTH TOP NAVBAR (Municipal Velvet Maroon Header) */}
-      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-[#801820] via-[#9E2A2B] to-[#801820] text-white shadow-md border-b border-[#D4AF37]/35 flex items-center justify-between select-none shrink-0">
+      {/* FULL-WIDTH TOP NAVBAR (Velvet Maroon Header with Glass Backdrop) */}
+      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-[#6E1219]/95 backdrop-blur-md text-white shadow-md border-b border-white/15 flex items-center justify-between select-none shrink-0 transition-colors">
         
         {/* FAR LEFT: Interactive Flip Medallion (G-TRAMS <-> Sangguniang Bayan Seal) */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-3 sm:gap-3.5">
           <InteractiveLogo 
-            size="w-9 h-9 sm:w-11 sm:h-11"
+            size="w-11 h-11 sm:w-13 sm:h-13"
             showBadgeHint={false}
           />
           <Link 
@@ -46,10 +46,10 @@ const AuthNavbar = () => {
             className="flex flex-col group cursor-pointer"
             title="Go to G-TRAMS Home"
           >
-            <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none group-hover:text-[#D4AF37] transition-colors">
+            <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none group-hover:text-amber-200 transition-colors">
               G-TRAMS
             </span>
-            <span className="text-[9px] sm:text-[10px] text-[#F3CD65] font-bold tracking-wider uppercase mt-0.5">
+            <span className="text-[9px] sm:text-[10px] text-white/80 font-bold tracking-wider uppercase mt-0.5">
               Municipality of Gasan
             </span>
           </Link>
@@ -61,7 +61,7 @@ const AuthNavbar = () => {
           {/* Back to Home Icon Button */}
           <Link
             to="/"
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white hover:text-[#D4AF37] transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5"
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5"
             title="Back to Home"
           >
             <Home size={17} />

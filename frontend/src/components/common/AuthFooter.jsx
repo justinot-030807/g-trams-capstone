@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ExternalLink, ShieldCheck, FileText, Lock } from 'lucide-react';
 import TermsPolicyModal from './TermsPolicyModal';
@@ -35,8 +35,8 @@ const AuthFooter = () => {
           {/* Col 1: Brand / Description */}
           <div className="flex flex-col space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37]">
-                <img src="/gasan-logo.png" alt="Gasan Logo" className="w-full h-full object-contain" />
+              <div className="w-12 h-12 rounded-full overflow-hidden shadow-md flex items-center justify-center shrink-0">
+                <img src="/gtrams-logo.png" alt="G-TRAMS Logo" className="w-full h-full object-cover scale-[1.04]" />
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-lg text-white leading-tight">G-TRAMS</span>

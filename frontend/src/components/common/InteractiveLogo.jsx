@@ -8,7 +8,7 @@ import React, { useState, useRef, useEffect } from 'react';
  * - Mobile / Touch: Flips on click/tap, holds for 2.8s, then smoothly returns to front
  */
 const InteractiveLogo = ({ 
-  size = "w-10 h-10 sm:w-11 sm:h-11", 
+  size = "w-11 h-11 sm:w-12 sm:h-12", 
   className = "",
   showBadgeHint = false,
   onClick
@@ -79,9 +79,9 @@ const InteractiveLogo = ({
           transform: active ? 'rotateY(180deg)' : 'rotateY(0deg)',
         }}
       >
-        {/* FRONT: G-TRAMS OFFICIAL LOGO */}
+        {/* FRONT: G-TRAMS OFFICIAL LOGO (No Yellow Ring) */}
         <div 
-          className="absolute inset-0 w-full h-full rounded-full bg-[#7B1824] border-2 border-[#D4AF37] shadow-[0_4px_16px_rgba(212,175,55,0.4)] flex items-center justify-center overflow-hidden ring-2 ring-[#D4AF37]/35 group-hover:ring-[#D4AF37] group-hover:scale-105 transition-all duration-300"
+          className="absolute inset-0 w-full h-full rounded-full bg-[#7B1824] border border-white/20 shadow-md flex items-center justify-center overflow-hidden group-hover:scale-105 transition-all duration-300"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -95,9 +95,9 @@ const InteractiveLogo = ({
           />
         </div>
 
-        {/* BACK: SANGGUNIANG BAYAN GASAN SEAL */}
+        {/* BACK: SANGGUNIANG BAYAN GASAN SEAL (No Yellow Ring) */}
         <div 
-          className="absolute inset-0 w-full h-full rounded-full bg-[#180407] border-2 border-[#D4AF37] shadow-[0_4px_16px_rgba(212,175,55,0.5)] flex items-center justify-center overflow-hidden ring-2 ring-[#9E2A2B]/40 group-hover:ring-[#9E2A2B] group-hover:scale-105 transition-all duration-300"
+          className="absolute inset-0 w-full h-full rounded-full bg-[#180407] border border-white/20 shadow-md flex items-center justify-center overflow-hidden group-hover:scale-105 transition-all duration-300"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
