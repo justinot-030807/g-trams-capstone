@@ -502,7 +502,7 @@ const RenewFranchise = () => {
                       value={formData.ctcNo}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs placeholder:text-slate-600 dark:text-slate-400 min-h-[46px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs placeholder:text-slate-600 dark:text-slate-400 min-h-[46px]" 
                       placeholder="e.g. 08123456"
                     />
                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">8–16 characters (letters &amp; numbers)</p>
@@ -520,7 +520,7 @@ const RenewFranchise = () => {
                       value={formData.dateIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[46px]" 
                       placeholder="Piliin ang Araw ng Pagkuha ng Cedula"
                     />
                     <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -544,7 +544,7 @@ const RenewFranchise = () => {
                       value={formData.placeIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[46px]" 
                       placeholder="Gasan, Marinduque"
                     />
                   </div>
@@ -591,7 +591,7 @@ const RenewFranchise = () => {
                       name="orCrNo" 
                       value={formData.orCrNo}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[46px]" 
                       placeholder="e.g. OR-12345678 / CR-87654321"
                     />
                   </div>
@@ -606,7 +606,7 @@ const RenewFranchise = () => {
                       name="orCrExpiryDate" 
                       value={formData.orCrExpiryDate}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[46px]" 
                     />
                   </div>
                 </div>
@@ -662,7 +662,7 @@ const RenewFranchise = () => {
                       name="driverLicenseNo" 
                       value={formData.driverLicenseNo}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[46px]" 
                       placeholder="e.g. D01-23-456789"
                     />
                   </div>
@@ -677,7 +677,7 @@ const RenewFranchise = () => {
                       name="driverLicenseExpiryDate" 
                       value={formData.driverLicenseExpiryDate}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]" 
+                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[46px]" 
                     />
                   </div>
                 </div>

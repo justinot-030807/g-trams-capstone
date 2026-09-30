@@ -301,7 +301,7 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 transition-all shadow-xs font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-1 focus:ring-[#801820] focus:ring-offset-0 transition-all font-medium";
 
   return (
     <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
@@ -517,10 +517,10 @@ const Register = () => {
                           </button>
                         </div>
 
-                        {/* MOBILE ONLY: Directly below Password field (Task 4) */}
+                        {/* MOBILE ONLY: Directly below Password field (Only shows when typing) */}
                         <div className="block sm:hidden mt-2">
-                          {(isPasswordFocused || (formData.password && formData.password.length > 0)) && (
-                            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all">
+                          {Boolean(formData.password && formData.password.length > 0) && (
+                            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-slate-700">
                                   Password Qualifications
@@ -545,7 +545,7 @@ const Register = () => {
                                       ) : showRed ? (
                                         <X size={13} className="shrink-0 stroke-[2.5] text-red-500" />
                                       ) : (
-                                        <span className="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center shrink-0 text-[9px] font-bold text-slate-400">•</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mx-1" />
                                       )}
                                       <span>{rule.label}</span>
                                     </div>
@@ -593,42 +593,44 @@ const Register = () => {
                       </div>
                     </div>
 
-                    {/* DESKTOP ONLY: Full-width below the two-column row (Task 4 & R32: permanently rendered to eliminate layout shift) */}
-                    <div className="hidden sm:block">
-                      <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-700">
-                            Password Qualifications
-                          </span>
-                          <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
-                            {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1.5">
-                          {passwordRules.map((rule) => {
-                            const isMet = rule.met;
-                            const showRed = hasAttemptedSubmit || (passwordBlurred && formData.password);
-                            return (
-                              <div
-                                key={rule.id}
-                                className={`flex items-center gap-1.5 text-xs sm:text-[13px] leading-tight transition-colors duration-200 ${
-                                  isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-slate-500 font-medium'
-                                }`}
-                              >
-                                {isMet ? (
-                                  <Check size={13} className="shrink-0 stroke-[3] text-emerald-600" />
-                                ) : showRed ? (
-                                  <X size={13} className="shrink-0 stroke-[2.5] text-red-500" />
-                                ) : (
-                                  <span className="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center shrink-0 text-[9px] font-bold text-slate-400">•</span>
-                                )}
-                                <span>{rule.label}</span>
-                              </div>
-                            );
-                          })}
+                    {/* DESKTOP ONLY: Full-width below the two-column row (Only shows when typing) */}
+                    {Boolean(formData.password && formData.password.length > 0) && (
+                      <div className="hidden sm:block">
+                        <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700">
+                              Password Qualifications
+                            </span>
+                            <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
+                              {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1.5">
+                            {passwordRules.map((rule) => {
+                              const isMet = rule.met;
+                              const showRed = hasAttemptedSubmit || (passwordBlurred && formData.password);
+                              return (
+                                <div
+                                  key={rule.id}
+                                  className={`flex items-center gap-1.5 text-xs sm:text-[13px] leading-tight transition-colors duration-200 ${
+                                    isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-slate-500 font-medium'
+                                  }`}
+                                >
+                                  {isMet ? (
+                                    <Check size={13} className="shrink-0 stroke-[3] text-emerald-600" />
+                                  ) : showRed ? (
+                                    <X size={13} className="shrink-0 stroke-[2.5] text-red-500" />
+                                  ) : (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mx-1" />
+                                  )}
+                                  <span>{rule.label}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Terms Checkbox (Task 13: 24px checkbox, 44px min row, isolated modal click) */}
                     <div className="flex items-center gap-3 min-h-[44px] pt-1">

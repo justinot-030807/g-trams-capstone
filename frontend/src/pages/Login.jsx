@@ -173,7 +173,7 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-300 text-base text-slate-900 placeholder:text-slate-500 outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 transition-all shadow-xs font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-300 text-base text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-1 focus:ring-[#801820] focus:ring-offset-0 transition-all font-medium";
 
   return (
     <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
@@ -285,7 +285,7 @@ const Login = () => {
                       onChange={handleChange}
                       autoComplete="current-password"
                       required
-                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 text-base text-slate-900 placeholder:text-slate-500 outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 transition-all shadow-xs font-medium"
+                      className={`${inputClasses} pr-10`}
                       placeholder="Enter password"
                     />
                     <button
