@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   ShieldCheck, 
   X, 
@@ -8,6 +8,24 @@ import {
   ExternalLink,
   BookOpen
 } from 'lucide-react';
+import { 
+  HELP_DESK_EMAIL, 
+  MUNICIPAL_WEBSITE, 
+  MUNICIPAL_OFFICE_NAME, 
+  MUNICIPAL_OFFICE_SHORT,
+  OFFICE_LOCATION
+} from '../../utils/contactConfig';
+
+/**
+ * G-TRAMS Terms of Service and Data Privacy Policy Modal
+ * Municipality of Gasan, Marinduque
+ * 
+ * TODO Items for Municipal Office / Legal Confirmation:
+ * 1. Data Retention Period: Confirm official retention duration for tricycle franchise records, OR/CR, and Driver's License scans (e.g. 5 years per COA/LGU guidelines).
+ * 2. Data Subject Rights: Confirm LGU procedure for operator data deletion/rectification requests under RA 10173.
+ * 3. Data Protection Officer (DPO): Confirm the designated municipal DPO email address and official contact number.
+ * 4. Cloud Storage Encryption: Verify cloud encryption standards (AES-256 at rest, TLS 1.3 in transit) with LGU IT administrators.
+ */
 
 const TermsPolicyModal = ({
   isOpen,
@@ -23,7 +41,7 @@ const TermsPolicyModal = ({
   const content = {
     tl: {
       headerTitle: "MGA TUNTUNIN SA SERBISYO AT PATAKARAN SA PRIVACY",
-      headerSubtitle: "Bayan ng Gasan • Office of the Vice Mayor Extension Registry",
+      headerSubtitle: `Bayan ng Gasan • ${MUNICIPAL_OFFICE_SHORT} Registry`,
       closeBtn: "Isara",
       acceptBtn: "Naintindihan at Tinatanggap Ko",
       sections: [
@@ -39,15 +57,17 @@ const TermsPolicyModal = ({
             },
             {
               title: "Layunin ng Pagproseso ng Datos",
-              desc: "Gagamitin ang inyong mga dokumento para lamang sa pagsusuri ng Office of the Vice Mayor Extension, pagtatala sa opisyal na TODA Masterlist, paglikha ng MTOP Certificate, at beripikasyon ng roadworthiness ng inyong sasakyan alinsunod sa Municipal Ordinances."
+              desc: `Gagamitin ang inyong mga dokumento para lamang sa pagsusuri ng ${MUNICIPAL_OFFICE_NAME}, pagtatala sa opisyal na TODA Masterlist, paglikha ng MTOP Certificate, at beripikasyon ng roadworthiness ng inyong sasakyan alinsunod sa Municipal Ordinances.`
             },
             {
+              // TODO: Verify cloud encryption standards (e.g. AES-256 at rest, TLS 1.3 in transit) and specify precise cloud retention duration with LGU IT administrators.
               title: "Seguridad at Pagtatago ng Impormasyon",
-              desc: "Lahat ng personal na tala at mga larawan ng dokumento ay ligtas na naka-encrypt sa cloud database ng Munisipyo. Hindi kailanman ibebenta, ipamamahagi, o ipapagamit ang inyong mga datos sa mga pribadong ahensya o third-party advertisers."
+              desc: "Lahat ng personal na tala at mga larawan ng dokumento ay ligtas na naka-encrypt sa cloud database ng Munisipyo. Ang mga rekord ay itinatago ayon sa panuntunan ng National Archives of the Philippines at LGU record retention schedules. Hindi kailanman ibebenta o ipamamahagi ang inyong datos sa mga pribadong ahensya."
             },
             {
+              // TODO: Confirm formal LGU procedure for data subject rights (access, correction, deletion) under RA 10173.
               title: "Karapatan ng Operator bilang Data Subject",
-              desc: "May karapatan kayong humiling ng pagwawasto sa inyong maling impormasyon, magbago ng inyong contact number sa Settings, o humingi ng opisyal na kopya ng inyong talaan sa pamamagitan ng direktang pagdulog sa Office of the Vice Mayor Extension Office."
+              desc: `May karapatan kayong humiling ng pagwawasto sa inyong maling impormasyon, magbago ng inyong contact number sa Settings, o humingi ng opisyal na kopya ng inyong talaan sa pamamagitan ng direktang pagdulog sa ${MUNICIPAL_OFFICE_NAME}.`
             }
           ]
         },
@@ -83,11 +103,12 @@ const TermsPolicyModal = ({
           points: [
             {
               title: "Pamantayan sa Oras ng Pagproseso (ARTA Compliance)",
-              desc: "Alinsunod sa RA 11032 (Ease of Doing Business), ang bagong aplikasyon o renewal ng prangkisa na kumpleto ang dokumento ay pinoproseso ng Office of the Vice Mayor Extension sa loob ng tatlo (3) hanggang limang (5) araw ng trabaho."
+              desc: `Alinsunod sa RA 11032 (Ease of Doing Business), ang bagong aplikasyon o renewal ng prangkisa na kumpleto ang dokumento ay pinoproseso ng ${MUNICIPAL_OFFICE_SHORT} sa loob ng tatlo (3) hanggang limang (5) araw ng trabaho.`
             },
             {
+              // TODO: Confirm the designated municipal DPO email address and official contact number.
               title: "Data Protection Officer (DPO) ng Munisipyo",
-              desc: "Maaaring makipag-ugnayan sa itinalagang Data Protection Officer ng Munisipyo ng Gasan para sa anumang katanungan ukol sa privacy at seguridad ng inyong datos sa dpo@gasan.ph."
+              desc: `Maaaring makipag-ugnayan sa itinalagang Data Protection Officer ng Munisipyo ng Gasan para sa anumang katanungan ukol sa privacy at seguridad ng inyong datos sa dpo@gasan.ph o sa ${HELP_DESK_EMAIL}.`
             },
             {
               title: "Aksyon Laban sa Pangingikil at Red Tape",
@@ -99,7 +120,7 @@ const TermsPolicyModal = ({
     },
     en: {
       headerTitle: "MUNICIPAL TERMS OF SERVICE & DATA PRIVACY POLICY",
-      headerSubtitle: "Municipality of Gasan • Office of the Vice Mayor Extension Registry",
+      headerSubtitle: `Municipality of Gasan • ${MUNICIPAL_OFFICE_SHORT} Registry`,
       closeBtn: "Close",
       acceptBtn: "I Understand & Accept",
       sections: [
@@ -111,19 +132,21 @@ const TermsPolicyModal = ({
           points: [
             {
               title: "What Information is Collected?",
-              desc: "GTRAMS collects strictly necessary operator data including full legal name, contact telephone, residence (Barangay), TODA affiliation, Driver's License copy, vehicle LTO OR/CR, and Barangay Clearance for legitimate municipal franchise processing."
+              desc: "G-TRAMS collects strictly necessary operator data including full legal name, contact telephone, residence (Barangay), TODA affiliation, Driver's License copy, vehicle LTO OR/CR, and Barangay Clearance for legitimate municipal franchise processing."
             },
             {
               title: "Purpose of Data Processing",
-              desc: "Your records and uploaded documents are utilized solely for Office of the Vice Mayor Extension review, entry into the official TODA Masterlist, MTOP Certificate generation, and roadworthiness verification pursuant to Gasan Municipal Ordinances."
+              desc: `Your records and uploaded documents are utilized solely for ${MUNICIPAL_OFFICE_NAME} review, entry into the official TODA Masterlist, MTOP Certificate generation, and roadworthiness verification pursuant to Gasan Municipal Ordinances.`
             },
             {
+              // TODO: Verify cloud encryption standards (AES-256 at rest, TLS 1.3 in transit) and specify precise cloud retention duration with LGU IT administrators.
               title: "Security and Cloud Storage",
-              desc: "All personal information and document scans are encrypted and safely stored in the municipality's secure cloud database. Data is never sold, shared, or released to private marketing companies or third-party advertisers."
+              desc: "All personal information and document scans are encrypted and safely stored in the municipality's secure cloud database. Records are retained in accordance with National Archives and LGU retention schedules. Data is never sold, shared, or released to private marketing companies or third-party advertisers."
             },
             {
+              // TODO: Confirm formal LGU procedure for data subject rights (access, correction, deletion) under RA 10173.
               title: "Operator Rights as Data Subject",
-              desc: "You retain full rights under Philippine Law to inspect your registered details, request corrections to erroneous data, update your mobile phone number in Settings, or obtain official copies directly at the Office of the Vice Mayor Extension Office."
+              desc: `You retain full rights under Philippine Law to inspect your registered details, request corrections to erroneous data, update your mobile phone number in Settings, or obtain official copies directly at the ${MUNICIPAL_OFFICE_NAME}.`
             }
           ]
         },
@@ -135,7 +158,7 @@ const TermsPolicyModal = ({
           points: [
             {
               title: "Authorized Account Usage",
-              desc: "Each registered GTRAMS account is personal to the designated franchise owner or driver. Transferring, sharing credentials, or assuming false identities is strictly prohibited and subject to immediate account revocation."
+              desc: "Each registered G-TRAMS account is personal to the designated franchise owner or driver. Transferring, sharing credentials, or assuming false identities is strictly prohibited and subject to immediate account revocation."
             },
             {
               title: "Integrity of Submitted Documentation",
@@ -162,12 +185,13 @@ const TermsPolicyModal = ({
               desc: "In accordance with RA 11032 (Ease of Doing Business and Efficient Government Service Delivery Act of 2018), franchise applications with complete requirements are processed within 3 to 5 business days."
             },
             {
+              // TODO: Confirm the designated municipal DPO email address and official contact number.
               title: "Municipal Data Protection Officer",
-              desc: "For inquiries or formal requests regarding your data privacy, contact the Gasan LGU Data Protection Officer at dpo@gasan.ph or visit the Municipal Legal Office."
+              desc: `For inquiries or formal requests regarding your data privacy, contact the Gasan LGU Data Protection Officer at dpo@gasan.ph or the Helpdesk at ${HELP_DESK_EMAIL}.`
             },
             {
               title: "Zero-Tolerance Anti-Graft Provision",
-              desc: "GTRAMS strictly enforces anti-corruption policies. No facilitation fees or unauthorized charges are allowed. All payments must be made exclusively through official treasury counters with valid Official Receipts (OR)."
+              desc: "G-TRAMS strictly enforces anti-corruption policies. No facilitation fees or unauthorized charges are allowed. All payments must be made exclusively through official treasury counters with valid Official Receipts (OR)."
             }
           ]
         }
@@ -176,23 +200,24 @@ const TermsPolicyModal = ({
   };
 
   const current = content[lang];
+  const shouldShowAccept = showAcceptButton || Boolean(onAccept);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in select-none">
       <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-card-entrance">
         
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] p-5 sm:p-6 text-white shrink-0">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 p-1.5 flex items-center justify-center shrink-0">
+        <div className="relative bg-gradient-to-r from-[#801820] via-[#8E2028] to-[#70141B] p-4 sm:p-6 text-white shrink-0">
+          <div className="flex items-center justify-between gap-2.5 sm:gap-4">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-white/10 border border-white/20 p-1 sm:p-1.5 flex items-center justify-center shrink-0">
                 <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
               </div>
-              <div className="min-w-0">
-                <h3 className="font-black text-sm sm:text-base tracking-wide uppercase truncate">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-black text-xs sm:text-sm md:text-base tracking-wide uppercase leading-tight break-words">
                   {current.headerTitle}
                 </h3>
-                <p className="text-xs text-[#D4AF37] font-semibold mt-0.5 truncate">
+                <p className="text-[10px] sm:text-xs text-[#D4AF37] font-semibold mt-0.5 leading-snug break-words">
                   {current.headerSubtitle}
                 </p>
               </div>
@@ -228,7 +253,7 @@ const TermsPolicyModal = ({
               <div key={section.id} className={sIdx > 0 ? "pt-6 space-y-4" : "space-y-4"}>
                 {/* Section Header */}
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#801820]/10 dark:bg-[#D4AF37]/15 text-[#801820] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
                     <SectionIcon size={18} />
                   </div>
                   <div>
@@ -249,7 +274,7 @@ const TermsPolicyModal = ({
                       className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-1 hover:border-[#D4AF37]/50 transition-colors"
                     >
                       <h5 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#801820] dark:bg-[#D4AF37] shrink-0" />
                         {pt.title}
                       </h5>
                       <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-normal pl-3.5">
@@ -264,16 +289,16 @@ const TermsPolicyModal = ({
 
           {/* Municipal Helpdesk Banner */}
           <div className="pt-6">
-            <div className="p-4 rounded-2xl bg-[#9E2A2B]/5 dark:bg-[#9E2A2B]/15 border border-[#9E2A2B]/15 dark:border-[#9E2A2B]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="p-4 rounded-2xl bg-[#801820]/5 dark:bg-[#801820]/15 border border-[#801820]/15 dark:border-[#801820]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <div>
-                <p className="font-bold text-slate-900 dark:text-white">Office of the Vice Mayor Extension &amp; MTFRB Municipal Office</p>
-                <p className="text-slate-500 dark:text-slate-400 mt-0.5">Gasan Municipal Hall, Ground Floor • ovm-extension@gasan.ph</p>
+                <p className="font-bold text-slate-900 dark:text-white">{MUNICIPAL_OFFICE_NAME} &amp; MTFRB</p>
+                <p className="text-slate-500 dark:text-slate-400 mt-0.5">{OFFICE_LOCATION} • {HELP_DESK_EMAIL}</p>
               </div>
               <a 
-                href="https://gasan.ph" 
+                href={MUNICIPAL_WEBSITE} 
                 target="_blank" 
                 rel="noreferrer" 
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#9E2A2B] hover:bg-[#5a1419] text-white font-bold transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#801820] hover:bg-[#5a1419] text-white font-bold transition-colors shrink-0"
               >
                 <span>Visit gasan.ph</span>
                 <ExternalLink size={12} />
@@ -282,7 +307,7 @@ const TermsPolicyModal = ({
           </div>
         </div>
 
-        {/* Modal Footer Actions */}
+        {/* Modal Footer Actions (Task 17: I Understand & Accept button) */}
         <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -291,14 +316,14 @@ const TermsPolicyModal = ({
           >
             {current.closeBtn}
           </button>
-          {showAcceptButton && onAccept && (
+          {shouldShowAccept && (
             <button
               type="button"
               onClick={() => {
-                onAccept();
+                if (onAccept) onAccept();
                 onClose();
               }}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#9E2A2B] to-[#7A1B22] text-white font-bold text-xs uppercase tracking-wider hover:shadow-md transition-all cursor-pointer min-h-[44px]"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#801820] to-[#70141B] text-white font-bold text-xs uppercase tracking-wider hover:shadow-md transition-all cursor-pointer min-h-[44px]"
             >
               {current.acceptBtn}
             </button>

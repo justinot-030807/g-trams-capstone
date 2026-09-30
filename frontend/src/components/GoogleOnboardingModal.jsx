@@ -1,29 +1,33 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import TermsPolicyModal from './common/TermsPolicyModal';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, User, Mail, Phone, MapPin, Building2, ShieldCheck } from 'lucide-react';
 
 const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) => {
+  const [editableName, setEditableName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedBarangay, setSelectedBarangay] = useState('');
-  const [selectedToda, setSelectedToda] = useState('NON-TODA');
+  const [selectedToda, setSelectedToda] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && googleProfile) {
       setError('');
+      const initialName = (googleProfile.name || googleProfile.fullName || '').trim();
+      setEditableName(initialName);
+      setPhoneNumber(googleProfile.phoneNumber || googleProfile.phone || '');
       setSelectedBarangay('');
-      setSelectedToda('NON-TODA');
+      setSelectedToda('');
       setTermsAccepted(false);
     }
-  }, [isOpen]);
+  }, [isOpen, googleProfile]);
 
   if (!isOpen || !googleProfile) return null;
 
   const email = (googleProfile.email || '').trim().toLowerCase();
-  const name = (googleProfile.name || googleProfile.fullName || email.split('@')[0] || 'Operator').trim();
   const picture = googleProfile.picture || '';
 
   const handleSubmit = async (e) => {
@@ -31,8 +35,25 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
     if (isLoading) return;
     setError('');
 
+    if (!editableName || editableName.trim().length < 2) {
+      setError('PLEASE ENTER YOUR FULL LEGAL NAME (AT LEAST 2 CHARACTERS).');
+      return;
+    }
+
+    const cleanPhone = phoneNumber.replace(/[\s\-()]/g, '');
+    const isValidPHPhone = /^09\d{9}$/.test(cleanPhone) || /^\+639\d{9}$/.test(cleanPhone);
+    if (!phoneNumber || !isValidPHPhone) {
+      setError('PLEASE ENTER A VALID PHILIPPINE MOBILE NUMBER (E.G. 09123456789).');
+      return;
+    }
+
     if (!selectedBarangay) {
       setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
+      return;
+    }
+
+    if (!selectedToda || selectedToda === 'NON-TODA') {
+      setError('ACCORDING TO MUNICIPAL ORDINANCE, OPERATORS MUST SELECT AN ACCREDITED TODA.');
       return;
     }
 
@@ -43,6 +64,8 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
     setIsLoading(true);
 
+    const formattedPhone = cleanPhone.startsWith('+63') ? '0' + cleanPhone.slice(3) : cleanPhone;
+
     const payload = {
       email,
       idToken: googleProfile.idToken || googleProfile.credential || undefined,
@@ -50,17 +73,18 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       accessToken: googleProfile.accessToken || undefined,
       googleProfile: {
         email,
-        name,
+        name: editableName.trim(),
         picture,
         googleId: googleProfile.googleId || ''
       },
       onboardingData: {
-        fullName: name,
-        name: name,
+        fullName: editableName.trim(),
+        name: editableName.trim(),
         address: selectedBarangay.trim(),
-        todaAssociation: (selectedToda || 'NON-TODA').trim(),
+        todaAssociation: selectedToda.trim(),
         email,
-        contact: email,
+        phone: formattedPhone,
+        contact: formattedPhone || email,
         role: 'operator'
       }
     };
@@ -96,18 +120,20 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
     }
   };
 
+  const inputClasses = "w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:bg-white focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium";
+
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200 select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="google-onboarding-title"
     >
       {/* Centered Modal Card */}
-      <div className="relative w-full max-w-[420px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-[440px] max-h-[92vh] overflow-y-auto bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Top Gold & Maroon Decorative Ribbon */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#9E2A2B] via-[#D4AF37] to-[#9E2A2B]" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#801820] via-[#D4AF37] to-[#801820]" />
 
         {/* Modal Header */}
         <div className="p-5 pb-2 relative">
@@ -120,12 +146,12 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             <X size={18} />
           </button>
 
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <div className="w-8 h-8 rounded-full bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center p-1 shrink-0">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="w-8 h-8 rounded-full bg-[#801820]/10 border border-[#801820]/20 flex items-center justify-center p-1 shrink-0">
               <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-[10px] font-bold tracking-wider text-[#9E2A2B] uppercase block">
+              <span className="text-[10px] font-bold tracking-wider text-[#801820] uppercase block">
                 Municipality of Gasan
               </span>
               <h2 id="google-onboarding-title" className="text-base sm:text-lg font-black text-slate-900 leading-tight">
@@ -133,44 +159,21 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
               </h2>
             </div>
           </div>
-          <p className="text-xs text-slate-500 font-medium">
-            Please select your barangay and association to continue.
-          </p>
-        </div>
 
-        {/* Google Identity Verified Card */}
-        <div className="mx-5 p-3 rounded-2xl bg-slate-50/90 border border-slate-200/80 flex items-center gap-3">
-          <div className="relative shrink-0">
-            {picture ? (
-              <img 
-                src={picture} 
-                alt={name} 
-                className="w-11 h-11 rounded-full object-cover border border-slate-200 shadow-xs"
-              />
-            ) : (
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#9E2A2B] to-[#9E1B27] text-white flex items-center justify-center font-black text-base shadow-xs">
-                {(name || email || 'O')[0].toUpperCase()}
-              </div>
-            )}
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-slate-200 shadow flex items-center justify-center">
-              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-            </div>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-900 truncate">{name}</p>
-            <p className="text-xs text-slate-500 truncate">{email}</p>
+          {/* Step Indicator & Intro (Task 20) */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
+              Step 2 of 2
+            </span>
+            <p className="text-xs text-slate-600 font-medium">
+              Almost done! Piliin ang Barangay at TODA mo.
+            </p>
           </div>
         </div>
 
         {/* Error Banner */}
         {error && (
-          <div className="mx-5 mt-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2.5 text-center shadow-xs uppercase tracking-wide animate-shake">
+          <div className="mx-5 mt-2 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2.5 text-center shadow-xs uppercase tracking-wide animate-shake">
             <p>{error}</p>
           </div>
         )}
@@ -178,49 +181,139 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           
+          {/* Editable Full Name (Task 21) */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Full Name <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <User size={18} />
+              </div>
+              <input
+                type="text"
+                name="fullName"
+                value={editableName}
+                onChange={(e) => {
+                  setEditableName(e.target.value);
+                  if (error) setError('');
+                }}
+                required
+                maxLength={50}
+                className={inputClasses}
+                placeholder="Juan D. Cruz"
+              />
+            </div>
+          </div>
+
+          {/* Read-Only Google Email (Task 22) */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Google Account Email
+              </label>
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                <ShieldCheck size={13} /> Verified
+              </span>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Mail size={18} />
+              </div>
+              <input
+                type="text"
+                value={email}
+                readOnly
+                disabled
+                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-slate-100 text-base sm:text-sm text-slate-600 font-medium cursor-not-allowed select-none"
+              />
+            </div>
+          </div>
+
+          {/* Mobile Phone Number (Task 23: Philippine validation) */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Phone Number (Mobile) <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Phone size={18} />
+              </div>
+              <input
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                value={phoneNumber}
+                onChange={(e) => {
+                  setPhoneNumber(e.target.value);
+                  if (error) setError('');
+                }}
+                required
+                maxLength={13}
+                className={inputClasses}
+                placeholder="09123456789"
+              />
+            </div>
+          </div>
+
           {/* Barangay Dropdown */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              Barangay in Gasan <span className="text-red-500">*</span>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Barangay <span className="text-red-500">*</span>
             </label>
-            <select
-              value={selectedBarangay}
-              onChange={(e) => {
-                setSelectedBarangay(e.target.value);
-                if (error) setError('');
-              }}
-              required
-              className="w-full bg-slate-50/90 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-3 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs font-medium cursor-pointer"
-            >
-              <option value="" disabled>Select your Barangay</option>
-              {GASAN_BARANGAYS.map((brgy) => (
-                <option key={brgy} value={brgy}>
-                  {brgy}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                <MapPin size={18} />
+              </div>
+              <select
+                value={selectedBarangay}
+                onChange={(e) => {
+                  setSelectedBarangay(e.target.value);
+                  if (error) setError('');
+                }}
+                required
+                className={`${inputClasses} cursor-pointer`}
+              >
+                <option value="" disabled>Select Barangay</option>
+                {GASAN_BARANGAYS.map((brgy) => (
+                  <option key={brgy} value={brgy}>
+                    {brgy}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* TODA Association Dropdown */}
+          {/* TODA Dropdown */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              TODA Association
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              TODA <span className="text-red-500">*</span>
             </label>
-            <select
-              value={selectedToda}
-              onChange={(e) => setSelectedToda(e.target.value)}
-              className="w-full bg-slate-50/90 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-3 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs font-medium cursor-pointer"
-            >
-              {TODA_LIST.map((toda) => (
-                <option key={toda} value={toda}>
-                  {toda}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                <Building2 size={18} />
+              </div>
+              <select
+                value={selectedToda}
+                onChange={(e) => {
+                  setSelectedToda(e.target.value);
+                  if (error) setError('');
+                }}
+                required
+                className={`${inputClasses} cursor-pointer`}
+              >
+                <option value="" disabled>Select TODA</option>
+                {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => (
+                  <option key={toda} value={toda}>
+                    {toda}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Terms & Privacy Policy Checkbox */}
-          <div className="flex items-start gap-2.5 pt-1">
+          {/* Terms & Privacy Policy Checkbox (Task 13: 24px checkbox, min 44px touch target) */}
+          <div className="flex items-center gap-3 min-h-[44px] pt-1">
             <input
               type="checkbox"
               id="google-onboarding-terms"
@@ -229,20 +322,21 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 setTermsAccepted(e.target.checked);
                 if (error) setError('');
               }}
-              className="mt-0.5 accent-[#9E2A2B] w-4 h-4 rounded cursor-pointer shrink-0"
+              className="w-6 h-6 rounded-md accent-[#801820] cursor-pointer shrink-0"
             />
             <label
               htmlFor="google-onboarding-terms"
-              className="text-xs text-slate-600 leading-snug cursor-pointer font-medium select-none"
+              className="text-xs sm:text-sm text-slate-600 leading-snug cursor-pointer font-medium select-none"
             >
               I accept the{' '}
               <button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   setShowTermsModal(true);
                 }}
-                className="font-bold text-[#9E2A2B] hover:underline cursor-pointer"
+                className="font-bold text-[#801820] hover:underline cursor-pointer focus:outline-none"
               >
                 Terms &amp; Privacy Policy
               </button>.
@@ -254,15 +348,11 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer ${
-                isLoading
-                  ? 'bg-slate-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-[#9E2A2B] to-[#9B2A33] hover:brightness-105 active:scale-[0.99] shadow-[#9E2A2B]/20'
-              }`}
+              className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                   <span>Activating Account...</span>
                 </>
               ) : (

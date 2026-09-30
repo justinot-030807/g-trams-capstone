@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   HelpCircle, Phone, Mail, Building, ChevronDown, 
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import TermsPolicyModal from '../../components/common/TermsPolicyModal';
+import { HELP_DESK_EMAIL, HOTLINE_DISPLAY, HOTLINE_NUMBER, MUNICIPAL_OFFICE_NAME } from '../../utils/contactConfig';
 
 const FAQS_DATA = {
   en: [
@@ -222,7 +223,7 @@ const HelpSupport = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
                 <Building size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-                <span>Sangguniang Bayan Office / Office of the Vice Mayor Extension</span>
+                <span>{MUNICIPAL_OFFICE_NAME}</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
                 <MapPin size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
@@ -244,15 +245,15 @@ const HelpSupport = () => {
                 Have Questions or Concerns?
               </h2>
               <p className="text-white/80 text-xs leading-relaxed mb-4 font-normal">
-                You may reach out to municipal officers and Office of the Vice Mayor Extension staff through the following official channels:
+                You may reach out to municipal officers and administrative staff through the following official channels:
               </p>
             </div>
 
             <div className="space-y-2.5 text-xs">
               <a 
-                href="tel:09123456789" 
+                href={`tel:${HOTLINE_NUMBER}`} 
                 className="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:scale-95 p-3 rounded-xl border border-white/15 transition-all shadow-xs cursor-pointer min-h-[46px]"
-                title="Call Office of the Vice Mayor Extension Hotline"
+                title="Call Municipal Hotline"
               >
                 <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
                   <Phone size={15} />
@@ -261,14 +262,14 @@ const HelpSupport = () => {
                   <p className="text-xs text-[#D4AF37] uppercase font-bold tracking-wider">
                     Hotline (Office Hours)
                   </p>
-                  <p className="font-bold text-xs tracking-wide">+63 (042) 342-1234 / 0912 345 6789</p>
+                  <p className="font-bold text-xs tracking-wide">{HOTLINE_DISPLAY}</p>
                 </div>
               </a>
 
               <a 
-                href="mailto:Office of the Vice Mayor Extension@gasan.ph" 
+                href={`mailto:${HELP_DESK_EMAIL}`} 
                 className="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:scale-95 p-3 rounded-xl border border-white/15 transition-all shadow-xs cursor-pointer min-h-[46px]"
-                title="Send Email to Office of the Vice Mayor Extension"
+                title="Send Email to Municipal Helpdesk"
               >
                 <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
                   <Mail size={15} />
@@ -277,14 +278,14 @@ const HelpSupport = () => {
                   <p className="text-xs text-[#D4AF37] uppercase font-bold tracking-wider">
                     Official Email
                   </p>
-                  <p className="font-bold text-xs tracking-wide">Office of the Vice Mayor Extension@gasan.ph</p>
+                  <p className="font-bold text-xs tracking-wide">{HELP_DESK_EMAIL}</p>
                 </div>
               </a>
             </div>
           </div>
         </div>
 
-        {/* Office of the Vice Mayor Extension Office Hours & Fee Schedule */}
+        {/* Municipal Office Hours & Fee Schedule */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8">
           <div className="flex items-center gap-2 mb-5">
             <Building size={24} className="text-[#9E2A2B] dark:text-[#D4AF37]" />

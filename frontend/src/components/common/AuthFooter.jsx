@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, ExternalLink, ShieldCheck, FileText, Lock } from 'lucide-react';
 import TermsPolicyModal from './TermsPolicyModal';
+import { 
+  HELP_DESK_EMAIL, 
+  HOTLINE_DISPLAY, 
+  HOTLINE_NUMBER, 
+  MUNICIPAL_WEBSITE, 
+  FB_PAGE_URL, 
+  OFFICE_LOCATION 
+} from '../../utils/contactConfig';
 
 const FacebookIcon = ({ size = 16, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -47,28 +55,28 @@ const AuthFooter = () => {
               Simple, secure, and open access to local municipal services for every operator and citizen of Gasan, Marinduque.
             </p>
             <div className="flex gap-3 pt-2">
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1877F2] border border-white/10 hover:border-[#1877F2] flex items-center justify-center transition-all">
+              <a href={FB_PAGE_URL} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1877F2] border border-white/10 hover:border-[#1877F2] flex items-center justify-center transition-all" aria-label="LGU Gasan Facebook">
                 <FacebookIcon size={16} className="text-white" />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1DA1F2] border border-white/10 hover:border-[#1DA1F2] flex items-center justify-center transition-all">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1DA1F2] border border-white/10 hover:border-[#1DA1F2] flex items-center justify-center transition-all" aria-label="Twitter">
                 <TwitterIcon size={16} className="text-white" />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#E1306C] border border-white/10 hover:border-[#E1306C] flex items-center justify-center transition-all">
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#E1306C] border border-white/10 hover:border-[#E1306C] flex items-center justify-center transition-all" aria-label="Instagram">
                 <InstagramIcon size={16} className="text-white" />
               </a>
-              <a href="https://gasan.ph" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-emerald-600 border border-white/10 hover:border-emerald-600 flex items-center justify-center transition-all">
+              <a href={MUNICIPAL_WEBSITE} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 hover:bg-emerald-600 border border-white/10 hover:border-emerald-600 flex items-center justify-center transition-all" aria-label="Official Gasan Website">
                 <ExternalLink size={16} className="text-white" />
               </a>
             </div>
           </div>
 
-          {/* Col 2: Quick Links */}
+          {/* Col 2: Quick Links (R30 Standardized) */}
           <div className="flex flex-col space-y-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Quick Links</h3>
             <ul className="space-y-3 text-sm text-white/60">
-              <li><Link to="/" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Landing Page</Link></li>
-              <li><Link to="/login" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Sign In</Link></li>
-              <li><Link to="/register" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Create Account</Link></li>
+              <li><Link to="/" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#801820]" /> Home</Link></li>
+              <li><Link to="/login" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#801820]" /> Log In</Link></li>
+              <li><Link to="/register" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#801820]" /> Register</Link></li>
               <li><a href="https://marinduque.gov.ph" target="_blank" rel="noreferrer" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-500" /> Provincial Government</a></li>
             </ul>
           </div>
@@ -79,7 +87,7 @@ const AuthFooter = () => {
             <ul className="space-y-3 text-sm text-white/60">
               <li>
                 <button 
-                  type="button"
+                  type="button" 
                   onClick={() => { setLegalTab('privacy'); setShowTermsModal(true); }} 
                   className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"
                 >
@@ -88,7 +96,7 @@ const AuthFooter = () => {
               </li>
               <li>
                 <button 
-                  type="button"
+                  type="button" 
                   onClick={() => { setLegalTab('terms'); setShowTermsModal(true); }} 
                   className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"
                 >
@@ -97,7 +105,7 @@ const AuthFooter = () => {
               </li>
               <li>
                 <button 
-                  type="button"
+                  type="button" 
                   onClick={() => { setLegalTab('dpa'); setShowTermsModal(true); }} 
                   className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 cursor-pointer"
                 >
@@ -107,21 +115,21 @@ const AuthFooter = () => {
             </ul>
           </div>
 
-          {/* Col 4: Contact */}
+          {/* Col 4: Contact (R35, R36 Config integration) */}
           <div className="flex flex-col space-y-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Contact</h3>
             <ul className="space-y-4 text-sm text-white/60">
               <li className="flex items-start gap-3">
-                <MapPin size={16} className="text-[#9E2A2B] shrink-0 mt-0.5" />
-                <span>Municipal Hall Compound,<br/>Gasan, Marinduque, Philippines</span>
+                <MapPin size={16} className="text-[#801820] shrink-0 mt-0.5" />
+                <span>{OFFICE_LOCATION}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={16} className="text-[#D4AF37] shrink-0" />
-                <span>(042) 342-1234</span>
+                <a href={`tel:${HOTLINE_NUMBER}`} className="hover:text-white transition-colors">{HOTLINE_DISPLAY}</a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-[#D4AF37] shrink-0" />
-                <span>Office of the Vice Mayor Extension@gasan.ph</span>
+                <a href={`mailto:${HELP_DESK_EMAIL}`} className="hover:text-white transition-colors">{HELP_DESK_EMAIL}</a>
               </li>
             </ul>
           </div>
@@ -149,4 +157,3 @@ const AuthFooter = () => {
 };
 
 export default AuthFooter;
-

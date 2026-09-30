@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2, Check, X, ArrowLeft, User, Lock } from 'lucide-react';
+import { 
+  UserPlus, 
+  Eye, 
+  EyeOff, 
+  Loader2, 
+  CheckCircle2, 
+  Check, 
+  X, 
+  ArrowLeft, 
+  User, 
+  Lock, 
+  MapPin, 
+  Building2, 
+  Mail, 
+  AlertCircle 
+} from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
@@ -9,6 +24,7 @@ import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
 import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
+import { HELP_DESK_EMAIL } from '../utils/contactConfig';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -25,7 +41,7 @@ const Register = () => {
     contact: incomingGoogle?.email || '', 
     password: '', 
     confirmPassword: '', 
-    todaAssociation: 'BATODA',
+    todaAssociation: '',
     role: 'operator'
   });
   const [otpCode, setOtpCode] = useState('');
@@ -34,6 +50,8 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [passwordBlurred, setPasswordBlurred] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -90,6 +108,7 @@ const Register = () => {
 
   const handleRequestOTP = async (e) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
     setError(''); setSuccess('');
 
     if (!formData.name || formData.name.trim().length < 2) {
@@ -100,8 +119,8 @@ const Register = () => {
       return setError('PLEASE SELECT YOUR BARANGAY IN GASAN.');
     }
 
-    if (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA') {
-      return setError('ACCORDING TO MUNICIPAL ORDINANCE, OPERATORS MUST BELONG TO AN ACCREDITED TODA ASSOCIATION.');
+    if (!formData.todaAssociation || formData.todaAssociation === '' || formData.todaAssociation === 'NON-TODA') {
+      return setError('ACCORDING TO MUNICIPAL ORDINANCE, OPERATORS MUST SELECT AN ACCREDITED TODA.');
     }
 
     // Validate contact format
@@ -282,7 +301,7 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 transition-all shadow-xs font-medium";
 
   return (
     <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
@@ -298,38 +317,38 @@ const Register = () => {
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* MAIN FULL-WIDTH SPLIT LAYOUT (GYMSTAT STYLE) */}
+        {/* MAIN FULL-WIDTH SPLIT LAYOUT */}
         <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
-          {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
-          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-12 lg:p-14 h-28 sm:h-36 md:h-auto md:min-h-[640px]">
+          {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY (R27, R28, Task 5, 6, 8) */}
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-12 lg:p-14 h-28 sm:h-32 md:sticky md:top-[61px] md:h-[calc(100dvh-61px)] min-h-[110px] md:min-h-0">
             {/* Background Photo (Tricycle 2 for Register) */}
             <img 
               src="/tricycle-register.jpg" 
               alt="Gasan Tricycle" 
               className="absolute inset-0 w-full h-full object-cover object-center" 
             />
-            {/* Velvet Maroon Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
-            <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
+            {/* Lightened Velvet Maroon Overlay - clearly shows tricycle photo with >=4.5:1 text contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/90 via-[#5E0D14]/70 to-[#3D080D]/75" />
+            <div className="absolute inset-0 bg-black/20" />
 
-            {/* Bottom: Brand Title & Subtitle */}
+            {/* Bottom: Brand Title & Subtitle (R27, Task 6: Slim hero with nowrap and balanced tagline) */}
             <div className="relative z-10">
-              <h1 className="text-xl sm:text-2xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-0.5 md:mb-2 uppercase">
-                REGISTER TO G-TRAMS
+              <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-0.5 md:mb-1.5 uppercase">
+                <span className="whitespace-nowrap">G-TRAMS</span>
               </h1>
-              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-tight max-w-sm line-clamp-1 md:line-clamp-none">
+              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-tight max-w-sm [text-wrap:balance] line-clamp-2 md:line-clamp-none">
                 Gasan Tricycle Records &amp; Application Management System
               </p>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: CLEAN FORM PANEL */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-center items-center px-6 sm:px-10 md:px-14 lg:px-20 py-8 sm:py-12 bg-white">
+          {/* RIGHT COLUMN: CLEAN FORM PANEL (Task 7: Reduced top gap, R29: 16px inputs) */}
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-center items-center px-4 sm:px-8 md:px-14 lg:px-20 py-4 sm:py-6 md:py-10 bg-white">
             <div className="w-full max-w-lg">
-              <div className="mb-5">
+              <div className="mb-4 sm:mb-5">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
-                  {step === 1 ? 'Create Account' : 'Verify Contact'}
+                  {step === 1 ? 'Register' : 'Verify Contact'}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
                   {step === 1 ? 'Fill in your details below to register your operator account.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
@@ -352,152 +371,11 @@ const Register = () => {
                 </div>
               )}
 
-              {step === 1 && (
-                <form onSubmit={handleSubmitRegisterForm} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
-                    <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay</label>
-                      <select name="address" value={formData.address} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                        <option value="" disabled>Select Barangay</option>
-                        {GASAN_BARANGAYS.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">TODA Association</label>
-                      <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                        <option value="" disabled>Select Accredited TODA</option>
-                        {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email or Phone Number</label>
-                    <input type="text" name="contact" maxLength="50" value={formData.contact} onChange={handleChange} required className={inputClasses} placeholder="juan@gmail.com or 09123456789" />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
-                      <div className="relative">
-                        <input 
-                          type={showPassword ? "text" : "password"} 
-                          name="password" 
-                          value={formData.password} 
-                          onChange={handleChange} 
-                          onFocus={() => setIsPasswordFocused(true)}
-                          onBlur={() => setIsPasswordFocused(false)}
-                          required 
-                          className={`${inputClasses} pr-9`} 
-                          placeholder="••••••••" 
-                        />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer">
-                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm Password</label>
-                      <div className="relative">
-                        <input 
-                          type={showConfirmPassword ? "text" : "password"} 
-                          name="confirmPassword" 
-                          value={formData.confirmPassword} 
-                          onChange={handleChange} 
-                          required 
-                          className={`${inputClasses} pr-9`} 
-                          placeholder="••••••••" 
-                        />
-                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer">
-                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PASSWORD QUALIFICATIONS CHECKLIST - ONLY APPEARS WHEN TYPING PASSWORD */}
-                  {(isPasswordFocused || (formData.password && formData.password.length > 0)) && (
-                    <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700">
-                          Password Qualifications
-                        </span>
-                        <span className={`text-[10px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
-                          {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
-                        {passwordRules.map((rule) => {
-                          const isMet = rule.met;
-                          return (
-                            <div
-                              key={rule.id}
-                              className={`flex items-center gap-1.5 text-[10.5px] leading-tight transition-colors duration-200 ${
-                                isMet ? 'text-emerald-600 font-bold' : 'text-red-500 font-semibold'
-                              }`}
-                            >
-                              {isMet ? (
-                                <Check size={12} className="shrink-0 stroke-[3] text-emerald-600" />
-                              ) : (
-                                <X size={12} className="shrink-0 stroke-[2.5] text-red-500" />
-                              )}
-                              <span>{rule.label}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-start gap-2 pt-1">
-                    <input 
-                      type="checkbox" 
-                      id="terms" 
-                      checked={termsAccepted} 
-                      onChange={() => setTermsAccepted(!termsAccepted)} 
-                      className="mt-0.5 accent-[#801820] w-4 h-4 rounded cursor-pointer"
-                    />
-                    <label htmlFor="terms" className="text-xs text-slate-600 leading-tight cursor-pointer font-medium">
-                      I accept the <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#801820] hover:underline">Terms &amp; Privacy Policy</button>.
-                    </label>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <button 
-                      type="submit" 
-                      disabled={isLoading}
-                      className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" /> Sending Code...
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus size={16} /> Continue to Verification
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              )}
-
+              {/* STEP 1: REGISTRATION FORM */}
               {step === 1 && (
                 <>
-                  {/* DIVIDER */}
-                  <div className="flex items-center gap-3 my-4">
-                    <div className="flex-1 h-px bg-slate-200" />
-                    <span className="text-xs font-bold text-slate-400">OR</span>
-                    <div className="flex-1 h-px bg-slate-200" />
-                  </div>
-
-                  {/* GOOGLE SIGN UP BUTTON */}
-                  <div>
+                  {/* GOOGLE SIGN UP AT TOP (Task 16) */}
+                  <div className="mb-4">
                     <GoogleAuthButton 
                       text="Continue with Google"
                       onSuccess={handleAuthSuccess}
@@ -512,14 +390,304 @@ const Register = () => {
                       }}
                       onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
                     />
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-slate-200" />
+                      <span className="text-xs font-semibold text-slate-400">Or register with email/phone</span>
+                      <div className="flex-1 h-px bg-slate-200" />
+                    </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-                    <p className="text-xs text-slate-600 font-medium">
+                  <form onSubmit={handleSubmitRegisterForm} className="space-y-3.5">
+                    {/* Full Name */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                          <User size={18} />
+                        </div>
+                        <input 
+                          type="text" 
+                          name="name" 
+                          maxLength="50" 
+                          value={formData.name} 
+                          onChange={handleChange} 
+                          autoComplete="name"
+                          required 
+                          className={inputClasses} 
+                          placeholder="Juan D. Cruz" 
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Barangay & TODA */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                            <MapPin size={18} />
+                          </div>
+                          <select 
+                            name="address" 
+                            value={formData.address} 
+                            onChange={handleChange} 
+                            required 
+                            className={`${inputClasses} cursor-pointer`}
+                          >
+                            <option value="" disabled>Select Barangay</option>
+                            {GASAN_BARANGAYS.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">TODA</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                            <Building2 size={18} />
+                          </div>
+                          <select 
+                            name="todaAssociation" 
+                            value={formData.todaAssociation} 
+                            onChange={handleChange} 
+                            required 
+                            className={`${inputClasses} cursor-pointer`}
+                          >
+                            <option value="" disabled>Select TODA</option>
+                            {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Email or Phone Number */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Email or Phone Number</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                          <Mail size={18} />
+                        </div>
+                        <input 
+                          type="text" 
+                          name="contact" 
+                          maxLength="50" 
+                          value={formData.contact} 
+                          onChange={handleChange} 
+                          autoComplete="username"
+                          inputMode="email"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          required 
+                          className={inputClasses} 
+                          placeholder="juan@gmail.com or 09123456789" 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password & Confirm Password */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <Lock size={18} />
+                          </div>
+                          <input 
+                            type={showPassword ? "text" : "password"} 
+                            name="password" 
+                            value={formData.password} 
+                            onChange={handleChange} 
+                            onFocus={() => setIsPasswordFocused(true)}
+                            onBlur={() => {
+                              setIsPasswordFocused(false);
+                              setPasswordBlurred(true);
+                            }}
+                            autoComplete="new-password"
+                            required 
+                            className={`${inputClasses} pr-10`} 
+                            placeholder="Enter password" 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPassword(!showPassword)} 
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                          >
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+
+                        {/* MOBILE ONLY: Directly below Password field (Task 4) */}
+                        <div className="block sm:hidden mt-2">
+                          {(isPasswordFocused || (formData.password && formData.password.length > 0)) && (
+                            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-700">
+                                  Password Qualifications
+                                </span>
+                                <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                  {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 gap-y-1.5">
+                                {passwordRules.map((rule) => {
+                                  const isMet = rule.met;
+                                  const showRed = hasAttemptedSubmit || (passwordBlurred && formData.password);
+                                  return (
+                                    <div
+                                      key={rule.id}
+                                      className={`flex items-center gap-1.5 text-xs leading-tight transition-colors duration-200 ${
+                                        isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-slate-500 font-medium'
+                                      }`}
+                                    >
+                                      {isMet ? (
+                                        <Check size={13} className="shrink-0 stroke-[3] text-emerald-600" />
+                                      ) : showRed ? (
+                                        <X size={13} className="shrink-0 stroke-[2.5] text-red-500" />
+                                      ) : (
+                                        <span className="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center shrink-0 text-[9px] font-bold text-slate-400">•</span>
+                                      )}
+                                      <span>{rule.label}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm Password</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <Lock size={18} />
+                          </div>
+                          <input 
+                            type={showConfirmPassword ? "text" : "password"} 
+                            name="confirmPassword" 
+                            value={formData.confirmPassword} 
+                            onChange={handleChange} 
+                            autoComplete="new-password"
+                            required 
+                            className={`${inputClasses} pr-10`} 
+                            placeholder="Re-enter password" 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer"
+                            aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                          >
+                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+
+                        {/* Password Mismatch Notice (Task 12) */}
+                        {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                          <div className="flex items-center gap-1.5 text-xs text-red-600 font-semibold mt-1.5">
+                            <AlertCircle size={14} className="shrink-0" />
+                            <span>Hindi magkapareho ang password.</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* DESKTOP ONLY: Full-width below the two-column row (Task 4 & R32: permanently rendered to eliminate layout shift) */}
+                    <div className="hidden sm:block">
+                      <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-700">
+                            Password Qualifications
+                          </span>
+                          <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
+                            {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1.5">
+                          {passwordRules.map((rule) => {
+                            const isMet = rule.met;
+                            const showRed = hasAttemptedSubmit || (passwordBlurred && formData.password);
+                            return (
+                              <div
+                                key={rule.id}
+                                className={`flex items-center gap-1.5 text-xs sm:text-[13px] leading-tight transition-colors duration-200 ${
+                                  isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-slate-500 font-medium'
+                                }`}
+                              >
+                                {isMet ? (
+                                  <Check size={13} className="shrink-0 stroke-[3] text-emerald-600" />
+                                ) : showRed ? (
+                                  <X size={13} className="shrink-0 stroke-[2.5] text-red-500" />
+                                ) : (
+                                  <span className="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center shrink-0 text-[9px] font-bold text-slate-400">•</span>
+                                )}
+                                <span>{rule.label}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Terms Checkbox (Task 13: 24px checkbox, 44px min row, isolated modal click) */}
+                    <div className="flex items-center gap-3 min-h-[44px] pt-1">
+                      <input 
+                        type="checkbox" 
+                        id="terms" 
+                        checked={termsAccepted} 
+                        onChange={() => setTermsAccepted(!termsAccepted)} 
+                        className="w-6 h-6 rounded-md accent-[#801820] cursor-pointer shrink-0"
+                      />
+                      <label htmlFor="terms" className="text-sm text-slate-600 leading-snug cursor-pointer font-medium select-none">
+                        I accept the{' '}
+                        <button 
+                          type="button" 
+                          onClick={(e) => { 
+                            e.preventDefault(); 
+                            e.stopPropagation(); 
+                            setShowTermsModal(true); 
+                          }} 
+                          className="font-bold text-[#801820] hover:underline focus:outline-none"
+                        >
+                          Terms &amp; Privacy Policy
+                        </button>.
+                      </label>
+                    </div>
+                    
+                    {/* Submit CTA */}
+                    <div className="pt-2">
+                      <button 
+                        type="submit" 
+                        disabled={isLoading}
+                        className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin" /> Sending Code...
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={18} /> Continue to Verification
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* BOTTOM LINKS (R30, R38) */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 text-center space-y-2">
+                    <p className="text-sm text-slate-600 font-medium">
                       Already have an account?{' '}
                       <Link to="/login" className="font-bold text-[#801820] hover:underline">
-                        Log in here
+                        Log In
                       </Link>
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Kailangan ng tulong?{' '}
+                      <a href={`mailto:${HELP_DESK_EMAIL}`} className="font-bold text-[#801820] hover:underline">
+                        Makipag-ugnayan sa Helpdesk
+                      </a>
                     </p>
                   </div>
                 </>

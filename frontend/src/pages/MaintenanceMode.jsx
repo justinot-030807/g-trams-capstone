@@ -1,6 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wrench, RefreshCw, ShieldAlert, Phone, Mail, ArrowRight, Lock } from 'lucide-react';
+import { HELP_DESK_EMAIL, HOTLINE_DISPLAY, HOTLINE_NUMBER } from '../utils/contactConfig';
 
 const MaintenanceMode = () => {
   const navigate = useNavigate();
@@ -112,21 +113,21 @@ const MaintenanceMode = () => {
 
           <button
             onClick={() => navigate('/login')}
-            className="flex items-center justify-center gap-1.5 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+            className="flex items-center justify-center gap-1.5 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
           >
-            Admin Sign In <ArrowRight size={14} />
+            Admin Log In <ArrowRight size={14} />
           </button>
         </div>
 
         {/* Hotline */}
         <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-slate-600 dark:text-slate-400 font-medium">
-          <span className="flex items-center gap-1">
-            <Phone size={12} className="text-[#9E2A2B]" /> (042) 342-1234
-          </span>
+          <a href={`tel:${HOTLINE_NUMBER}`} className="flex items-center gap-1 hover:text-[#9E2A2B] transition-colors">
+            <Phone size={12} className="text-[#9E2A2B]" /> {HOTLINE_DISPLAY}
+          </a>
           <span className="hidden sm:inline">•</span>
-          <span className="flex items-center gap-1">
-            <Mail size={12} className="text-[#9E2A2B]" /> Office of the Vice Mayor Extension@gasan.ph
-          </span>
+          <a href={`mailto:${HELP_DESK_EMAIL}`} className="flex items-center gap-1 hover:text-[#9E2A2B] transition-colors">
+            <Mail size={12} className="text-[#9E2A2B]" /> {HELP_DESK_EMAIL}
+          </a>
         </div>
 
       </main>
