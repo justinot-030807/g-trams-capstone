@@ -172,10 +172,10 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-500 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all shadow-xs font-medium min-h-[46px] sm:min-h-[48px]";
+  const inputClasses = "w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium";
 
   return (
-    <div className="relative w-full bg-slate-50 flex flex-col overflow-x-hidden select-none min-h-screen">
+    <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
       
       {/* Zero-Lag Lightweight Watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -184,59 +184,44 @@ const Login = () => {
         </div>
       </div>
 
-      <div className="relative min-h-[100dvh] flex flex-col justify-between">
+      <div className="relative flex flex-col flex-1 min-h-screen">
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* MAIN SPLIT AUTH CONTAINER */}
-        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 my-auto py-6 sm:py-10 flex flex-col items-center justify-center animate-card-entrance">
-          <div className="w-full bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-fit">
-            
-            {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
-            <div className="md:col-span-5 lg:col-span-6 relative overflow-hidden flex flex-col justify-between p-6 sm:p-8 min-h-[220px] md:min-h-[560px]">
-              {/* Background Photo */}
-              <img 
-                src="/tricycle-bg.jpg" 
-                alt="Gasan Tricycle" 
-                className="absolute inset-0 w-full h-full object-cover object-center" 
-              />
-              {/* Velvet Maroon Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
-              <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
+        {/* MAIN FULL-WIDTH SPLIT LAYOUT (GYMSTAT STYLE) */}
+        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
+          
+          {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-8 sm:p-12 md:p-14 min-h-[260px] md:min-h-[640px]">
+            {/* Background Photo (Tricycle 1 for Login) */}
+            <img 
+              src="/tricycle-login.jpg" 
+              alt="Gasan Tricycle" 
+              className="absolute inset-0 w-full h-full object-cover object-center" 
+            />
+            {/* Velvet Maroon Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
+            <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
 
-              {/* Top: Back Button */}
-              <div className="relative z-10">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#801820]/90 hover:bg-[#9E2A2B] text-white border border-[#D4AF37] text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all w-fit cursor-pointer"
-                >
-                  <ArrowLeft size={14} className="text-[#D4AF37]" />
-                  <span>Back</span>
-                </Link>
-              </div>
-
-              {/* Bottom: Municipal Badge + Brand Title & Subtitle */}
-              <div className="relative z-10 mt-auto pt-8">
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-[#D4AF37] text-[#D4AF37] bg-black/25 text-[10px] font-black uppercase tracking-widest mb-3 backdrop-blur-xs">
-                  <span>MUNICIPALITY OF GASAN</span>
-                </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-none mb-2">
-                  G-TRAMS
-                </h1>
-                <p className="text-xs sm:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
-                  Gasan Tricycle Records &amp; Application Management System
-                </p>
-              </div>
+            {/* Bottom: Brand Title & Subtitle */}
+            <div className="relative z-10">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none mb-2">
+                G-TRAMS
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-sm">
+                Gasan Tricycle Records &amp; Application Management System
+              </p>
             </div>
+          </div>
 
-            {/* RIGHT COLUMN: CLEAN FORM PANEL */}
-            <div className="md:col-span-7 lg:col-span-6 p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
-              
+          {/* RIGHT COLUMN: CLEAN FORM PANEL */}
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-center items-center px-6 sm:px-10 md:px-14 lg:px-20 py-8 sm:py-12 bg-white">
+            <div className="w-full max-w-md">
               <div className="mb-6">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
                   Log In
                 </h2>
-                <p className="text-xs text-slate-500 font-medium mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
                   Enter your credentials to access your operator portal.
                 </p>
               </div>
@@ -250,7 +235,7 @@ const Login = () => {
                   <p>{error}</p>
                   {error.toLowerCase().includes('maintenance') && (
                     <Link to="/maintenance" className="inline-block mt-1 font-black text-[#801820] underline tracking-wider">
-                      VIEW SYSTEM STATUS PAGE →
+                      View System Status Page →
                     </Link>
                   )}
                 </div>
@@ -271,7 +256,7 @@ const Login = () => {
                       value={formData.contact}
                       onChange={handleChange}
                       required
-                      className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-500 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium"
+                      className={inputClasses}
                       placeholder="Enter your email or phone number"
                     />
                   </div>
@@ -293,7 +278,7 @@ const Login = () => {
                       value={formData.password}
                       onChange={handleChange}
                       required
-                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-500 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium"
                       placeholder="Enter your password"
                     />
                     <button
@@ -318,15 +303,15 @@ const Login = () => {
                   <button
                     type="submit"
                     disabled={isLoading || lockoutSeconds > 0}
-                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-black shadow-md hover:shadow-lg active:scale-[0.99] transition-all uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {isLoading ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        SIGNING IN...
+                        Signing In...
                       </>
                     ) : lockoutSeconds > 0 ? (
-                      `LOCKED (${lockoutSeconds}s)`
+                      `Locked (${lockoutSeconds}s)`
                     ) : (
                       'Log In'
                     )}
@@ -344,7 +329,7 @@ const Login = () => {
               {/* GOOGLE SIGN IN BUTTON */}
               <div>
                 <GoogleAuthButton 
-                  text="CONTINUE WITH GOOGLE"
+                  text="Continue with Google"
                   onSuccess={handleAuthSuccess}
                   onNewUser={(data) => {
                     if (data?.token) {
@@ -381,7 +366,6 @@ const Login = () => {
               </div>
 
             </div>
-
           </div>
         </main>
       </div>

@@ -33,6 +33,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -281,10 +282,10 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-500 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all duration-200 shadow-xs font-medium min-h-[46px] sm:min-h-[48px]";
+  const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium";
 
   return (
-    <div className="relative w-full bg-slate-50 flex flex-col overflow-x-hidden select-none min-h-screen">
+    <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
       
       {/* Zero-Lag Lightweight Watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -293,277 +294,281 @@ const Register = () => {
         </div>
       </div>
 
-      <div className="relative min-h-[100dvh] flex flex-col justify-between">
+      <div className="relative flex flex-col flex-1 min-h-screen">
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* MAIN SPLIT AUTH CONTAINER */}
-        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 my-auto py-6 sm:py-10 flex flex-col items-center justify-center animate-card-entrance">
-          <div className="w-full bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-fit">
-            
-            {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
-            <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-between p-6 sm:p-8 min-h-[220px] md:min-h-[580px]">
-              {/* Background Photo */}
-              <img 
-                src="/tricycle-bg.jpg" 
-                alt="Gasan Tricycle" 
-                className="absolute inset-0 w-full h-full object-cover object-center" 
-              />
-              {/* Velvet Maroon Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
-              <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
+        {/* MAIN FULL-WIDTH SPLIT LAYOUT (GYMSTAT STYLE) */}
+        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
+          
+          {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-8 sm:p-12 md:p-14 min-h-[260px] md:min-h-[640px]">
+            {/* Background Photo (Tricycle 2 for Register) */}
+            <img 
+              src="/tricycle-register.jpg" 
+              alt="Gasan Tricycle" 
+              className="absolute inset-0 w-full h-full object-cover object-center" 
+            />
+            {/* Velvet Maroon Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
+            <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
 
-              {/* Top: Back Button */}
-              <div className="relative z-10">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#801820]/90 hover:bg-[#9E2A2B] text-white border border-[#D4AF37] text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all w-fit cursor-pointer"
-                >
-                  <ArrowLeft size={14} className="text-[#D4AF37]" />
-                  <span>Back</span>
-                </Link>
-              </div>
-
-              {/* Bottom: Municipal Badge + Brand Title & Subtitle */}
-              <div className="relative z-10 mt-auto pt-8">
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-[#D4AF37] text-[#D4AF37] bg-black/25 text-[10px] font-black uppercase tracking-widest mb-3 backdrop-blur-xs">
-                  <span>MUNICIPALITY OF GASAN</span>
-                </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-none mb-2">
-                  G-TRAMS
-                </h1>
-                <p className="text-xs sm:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
-                  Gasan Tricycle Records &amp; Application Management System
-                </p>
-              </div>
+            {/* Bottom: Brand Title & Subtitle */}
+            <div className="relative z-10">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none mb-2">
+                G-TRAMS
+              </h1>
+              <p className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-sm">
+                Gasan Tricycle Records &amp; Application Management System
+              </p>
             </div>
+          </div>
 
-            {/* RIGHT COLUMN: CLEAN FORM PANEL */}
-            <div className="md:col-span-7 lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-center bg-white">
-              <div className="mb-4">
+          {/* RIGHT COLUMN: CLEAN FORM PANEL */}
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-center items-center px-6 sm:px-10 md:px-14 lg:px-20 py-8 sm:py-12 bg-white">
+            <div className="w-full max-w-lg">
+              <div className="mb-5">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
                   {step === 1 ? 'Create Account' : 'Verify Contact'}
                 </h2>
-                <p className="text-xs text-slate-500 font-medium mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
                   {step === 1 ? 'Fill in your details below to register your operator account.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
                 </p>
               </div>
 
-            {error && (
-              <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
-                <p>{error}</p>
-                {error.includes('ALREADY EXISTS') && (
-                  <Link to="/login" className="inline-block mt-1 font-black text-[#9E2A2B] underline tracking-wider">
-                    CLICK HERE TO LOG IN →
-                  </Link>
-                )}
-              </div>
-            )}
-            {success && (
-              <div className="mb-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
-                {success}
-              </div>
-            )}
-
-            {step === 1 && (
-              <form onSubmit={handleSubmitRegisterForm} className="space-y-2">
-                <div className="animate-item-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">FULL NAME</label>
-                  <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
+              {error && (
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                  <p>{error}</p>
+                  {error.includes('ALREADY EXISTS') && (
+                    <Link to="/login" className="inline-block mt-1 font-black text-[#801820] underline tracking-wider">
+                      Click here to log in →
+                    </Link>
+                  )}
                 </div>
-                
-                <div className="grid grid-cols-2 gap-2 animate-item-2">
+              )}
+              {success && (
+                <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                  {success}
+                </div>
+              )}
+
+              {step === 1 && (
+                <form onSubmit={handleSubmitRegisterForm} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">BARANGAY</label>
-                    <select name="address" value={formData.address} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                      <option value="" disabled>Select Brgy</option>
-                      {GASAN_BARANGAYS.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
-                    </select>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                    <input type="text" name="name" maxLength="50" value={formData.name} onChange={handleChange} required className={inputClasses} placeholder="Juan D. Cruz" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">TODA ASSOCIATION</label>
-                    <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
-                      <option value="" disabled>Select Accredited TODA</option>
-                      {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="animate-item-3">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">EMAIL OR PHONE NUMBER</label>
-                  <input type="text" name="contact" maxLength="50" value={formData.contact} onChange={handleChange} required className={inputClasses} placeholder="juan@gmail.com or 09123456789" />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 animate-item-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">PASSWORD</label>
-                    <div className="relative">
-                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B]">
-                        {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                      </button>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay</label>
+                      <select name="address" value={formData.address} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
+                        <option value="" disabled>Select Barangay</option>
+                        {GASAN_BARANGAYS.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">TODA Association</label>
+                      <select name="todaAssociation" value={formData.todaAssociation} onChange={handleChange} required className={`${inputClasses} cursor-pointer`}>
+                        <option value="" disabled>Select Accredited TODA</option>
+                        {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
+                      </select>
                     </div>
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">CONFIRM</label>
-                    <div className="relative">
-                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={`${inputClasses} pr-8`} placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B]">
-                        {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                      </button>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email or Phone Number</label>
+                    <input type="text" name="contact" maxLength="50" value={formData.contact} onChange={handleChange} required className={inputClasses} placeholder="juan@gmail.com or 09123456789" />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+                      <div className="relative">
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          name="password" 
+                          value={formData.password} 
+                          onChange={handleChange} 
+                          onFocus={() => setIsPasswordFocused(true)}
+                          onBlur={() => setIsPasswordFocused(false)}
+                          required 
+                          className={`${inputClasses} pr-9`} 
+                          placeholder="••••••••" 
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer">
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm Password</label>
+                      <div className="relative">
+                        <input 
+                          type={showConfirmPassword ? "text" : "password"} 
+                          name="confirmPassword" 
+                          value={formData.confirmPassword} 
+                          onChange={handleChange} 
+                          required 
+                          className={`${inputClasses} pr-9`} 
+                          placeholder="••••••••" 
+                        />
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer">
+                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* PASSWORD QUALIFICATIONS CHECKLIST */}
-                <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl p-2.5 sm:p-3 text-left animate-item-3 space-y-1.5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">
-                      PASSWORD QUALIFICATIONS
-                    </span>
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
-                      {isPasswordQualified ? '✓ ALL MET' : `${passwordRules.filter(r => r.met).length}/5 MET`}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
-                    {passwordRules.map((rule) => {
-                      const isMet = rule.met;
-                      return (
-                        <div
-                          key={rule.id}
-                          className={`flex items-center gap-1.5 text-[10.5px] leading-tight transition-colors duration-200 ${
-                            isMet ? 'text-emerald-600 font-bold' : 'text-red-500 font-semibold'
-                          }`}
-                        >
-                          {isMet ? (
-                            <Check size={12} className="shrink-0 stroke-[3] text-emerald-600" />
-                          ) : (
-                            <X size={12} className="shrink-0 stroke-[2.5] text-red-500" />
-                          )}
-                          <span>{rule.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                  {/* PASSWORD QUALIFICATIONS CHECKLIST - ONLY APPEARS WHEN TYPING PASSWORD */}
+                  {(isPasswordFocused || (formData.password && formData.password.length > 0)) && (
+                    <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-700">
+                          Password Qualifications
+                        </span>
+                        <span className={`text-[10px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
+                          {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                        {passwordRules.map((rule) => {
+                          const isMet = rule.met;
+                          return (
+                            <div
+                              key={rule.id}
+                              className={`flex items-center gap-1.5 text-[10.5px] leading-tight transition-colors duration-200 ${
+                                isMet ? 'text-emerald-600 font-bold' : 'text-red-500 font-semibold'
+                              }`}
+                            >
+                              {isMet ? (
+                                <Check size={12} className="shrink-0 stroke-[3] text-emerald-600" />
+                              ) : (
+                                <X size={12} className="shrink-0 stroke-[2.5] text-red-500" />
+                              )}
+                              <span>{rule.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-                <div className="flex items-start gap-1.5 pt-0.5 animate-item-4">
-                  <input 
-                    type="checkbox" 
-                    id="terms" 
-                    checked={termsAccepted} 
-                    onChange={() => setTermsAccepted(!termsAccepted)} 
-                    className="mt-0.5 accent-[#9E2A2B] w-3.5 h-3.5 rounded cursor-pointer"
-                  />
-                  <label htmlFor="terms" className="text-xs text-slate-600 leading-tight cursor-pointer font-medium uppercase tracking-tight">
-                    I ACCEPT THE <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#9E2A2B] hover:underline">TERMS & PRIVACY POLICY</button>.
-                  </label>
-                </div>
-                
-                <div className="animate-item-4 pt-1">
+                  <div className="flex items-start gap-2 pt-1">
+                    <input 
+                      type="checkbox" 
+                      id="terms" 
+                      checked={termsAccepted} 
+                      onChange={() => setTermsAccepted(!termsAccepted)} 
+                      className="mt-0.5 accent-[#801820] w-4 h-4 rounded cursor-pointer"
+                    />
+                    <label htmlFor="terms" className="text-xs text-slate-600 leading-tight cursor-pointer font-medium">
+                      I accept the <button type="button" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="font-bold text-[#801820] hover:underline">Terms &amp; Privacy Policy</button>.
+                    </label>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={isLoading}
+                      className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Sending Code...
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={16} /> Continue to Verification
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {step === 1 && (
+                <>
+                  {/* DIVIDER */}
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-slate-200" />
+                    <span className="text-xs font-bold text-slate-400">OR</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+
+                  {/* GOOGLE SIGN UP BUTTON */}
+                  <div>
+                    <GoogleAuthButton 
+                      text="Continue with Google"
+                      onSuccess={handleAuthSuccess}
+                      onNewUser={(data) => {
+                        if (data?.token) {
+                          handleAuthSuccess(data);
+                        } else {
+                          const cleanProfile = unwrapGoogleProfile(data) || data;
+                          setGoogleOnboardingProfile(cleanProfile);
+                          setShowGoogleOnboarding(true);
+                        }
+                      }}
+                      onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
+                    />
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <p className="text-xs text-slate-600 font-medium">
+                      Already have an account?{' '}
+                      <Link to="/login" className="font-bold text-[#801820] hover:underline">
+                        Log in here
+                      </Link>
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {step === 2 && (
+                <form onSubmit={handleVerifyOTP} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 text-center">
+                      Enter 6-Digit Code
+                    </label>
+                    <input 
+                      type="text" 
+                      maxLength="6" 
+                      value={otpCode} 
+                      onChange={(e) => setOtpCode(e.target.value)} 
+                      required 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-2xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 shadow-inner" 
+                      placeholder="000000" 
+                    />
+                  </div>
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2 rounded-xl text-xs font-black shadow-md transition-all uppercase tracking-wider cursor-pointer ${
-                      isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] shadow-[#9E2A2B]/25 hover:shadow-[#9E2A2B]/50 hover:brightness-110 active:scale-[0.98]'
-                    }`}
+                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
                   >
-                    <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000 ease-out pointer-events-none" />
-                    {isLoading ? (
-                      <>
-                        <Loader2 size={15} className="animate-spin" />
-                        SENDING CODE...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus size={15} /> CONTINUE TO VERIFICATION
-                      </>
-                    )}
+                    {isLoading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                    {isLoading ? 'Verifying...' : 'Verify and Register'}
                   </button>
-                </div>
-              </form>
-            )}
+                  <div className="flex items-center justify-between pt-2">
+                    <button 
+                      type="button" 
+                      onClick={handleResendOTP} 
+                      disabled={resendCooldown > 0 || isLoading}
+                      className="text-xs font-bold text-[#801820] hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
+                    >
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setStep(1)} 
+                      className="text-xs font-bold text-slate-500 hover:text-[#801820] transition-colors cursor-pointer"
+                    >
+                      ← Change Info
+                    </button>
+                  </div>
+                </form>
+              )}
 
-            {step === 1 && (
-              <>
-                {/* DIVIDER */}
-                <div className="flex items-center gap-3 my-2 animate-item-4">
-                  <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-xs font-black text-slate-600 dark:text-slate-400 tracking-wider">OR</span>
-                  <div className="flex-1 h-px bg-slate-200" />
-                </div>
-
-                {/* GOOGLE SIGN UP BUTTON */}
-                <div className="animate-item-4">
-                  <GoogleAuthButton 
-                    text="CONTINUE WITH GOOGLE"
-                    onSuccess={handleAuthSuccess}
-                    onNewUser={(data) => {
-                      if (data?.token) {
-                        handleAuthSuccess(data);
-                      } else {
-                        const cleanProfile = unwrapGoogleProfile(data) || data;
-                        setGoogleOnboardingProfile(cleanProfile);
-                        setShowGoogleOnboarding(true);
-                      }
-                    }}
-                    onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
-                  />
-                </div>
-              </>
-            )}
-
-            {step === 2 && (
-              <form onSubmit={handleVerifyOTP} className="space-y-2.5 animate-item-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 text-center">
-                    ENTER 6-DIGIT CODE
-                  </label>
-                  <input 
-                    type="text" 
-                    maxLength="6" 
-                    value={otpCode} 
-                    onChange={(e) => setOtpCode(e.target.value)} 
-                    required 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center text-xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 shadow-inner" 
-                    placeholder="000000" 
-                  />
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B89628] text-[#3D0A0E] py-2 rounded-xl text-xs font-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {isLoading ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                  {isLoading ? 'VERIFYING...' : 'VERIFY AND REGISTER'}
-                </button>
-                <div className="flex items-center justify-between pt-1">
-                  <button 
-                    type="button" 
-                    onClick={handleResendOTP} 
-                    disabled={resendCooldown > 0 || isLoading}
-                    className="text-xs font-bold text-[#9E2A2B] hover:underline disabled:opacity-50 disabled:no-underline uppercase tracking-wider cursor-pointer"
-                  >
-                    {resendCooldown > 0 ? `RESEND IN ${resendCooldown}S` : 'RESEND CODE'}
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setStep(1)} 
-                    className="text-xs font-bold text-slate-500 hover:text-[#9E2A2B] transition-colors uppercase tracking-wider cursor-pointer"
-                  >
-                    ← CHANGE INFO
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {step === 1 && (
-              <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-                  ALREADY HAVE AN ACCOUNT? <Link to="/login" className="font-black text-[#9E2A2B] hover:underline">LOG IN HERE &gt;</Link>
-                </p>
-              </div>
-            )}
             </div>
           </div>
         </main>
