@@ -206,7 +206,7 @@ const Login = () => {
             {/* Bottom: Brand Title & Subtitle */}
             <div className="relative z-10">
               <h1 className="text-xl sm:text-2xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-0.5 md:mb-2 uppercase">
-                LOGIN TO GTRAMS
+                LOGIN TO G-TRAMS
               </h1>
               <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-tight max-w-sm line-clamp-1 md:line-clamp-none">
                 Gasan Tricycle Records &amp; Application Management System

@@ -68,36 +68,18 @@ const Home = () => {
   return (
     <div className="relative w-full bg-slate-50 text-slate-900 flex flex-col overflow-x-hidden select-none min-h-screen">
       
-      {/* Lightweight, zero-lag subtle watermark */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.03] pointer-events-none select-none">
-          <img src="/gasan-logo.png" alt="" className="w-full h-full object-contain filter grayscale" />
-        </div>
-      </div>
-
-      {/* Hero Section Container with Dual Tricycle Background */}
+      {/* Hero Section Container with Single Tricycle Background */}
       <div className="relative min-h-[100dvh] flex flex-col justify-between overflow-hidden">
         
-        {/* DUAL TRICYCLE BACKGROUND WITH VELVET MAROON OVERLAY */}
+        {/* SINGLE TRICYCLE BACKGROUND WITH VELVET MAROON OVERLAY (MATCHING LOGIN & REGISTER) */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 grid grid-cols-2">
-            <div className="relative h-full w-full overflow-hidden">
-              <img 
-                src="/tricycle-login.jpg" 
-                alt="Gasan Tricycle" 
-                className="w-full h-full object-cover object-center scale-105" 
-              />
-            </div>
-            <div className="relative h-full w-full overflow-hidden border-l border-white/10">
-              <img 
-                src="/tricycle-register.jpg" 
-                alt="Gasan Tricycle" 
-                className="w-full h-full object-cover object-center scale-105" 
-              />
-            </div>
-          </div>
-          {/* Velvet Maroon Overlay Tint */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#4A0A10]/92 via-[#801820]/88 to-[#3D0A0E]/95" />
+          <img 
+            src="/tricycle-home.jpg" 
+            alt="Gasan Tricycle" 
+            className="absolute inset-0 w-full h-full object-cover object-center scale-105" 
+          />
+          {/* Velvet Maroon Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
           <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
         </div>
 
@@ -202,11 +184,21 @@ const Home = () => {
         </main>
       </div>
 
-      {/* 3D Citizen's Charter Carousel */}
-      <LandingGuideCarousel />
+      {/* LOWER WHITE SECTION WITH VISIBLE SEAL WATERMARK */}
+      <div className="relative w-full bg-slate-50 overflow-hidden">
+        {/* Visible Seal Watermark on White Background */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none">
+          <div className="w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.055] pointer-events-none">
+            <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain filter grayscale" />
+          </div>
+        </div>
 
-      {/* Municipal Bulletin Board */}
-      <LandingAnnouncements />
+        {/* 3D Citizen's Charter Carousel */}
+        <LandingGuideCarousel />
+
+        {/* Municipal Bulletin Board */}
+        <LandingAnnouncements />
+      </div>
 
       {/* Public Stats Section (100% Maroon & Gold) */}
       <PublicStats />
