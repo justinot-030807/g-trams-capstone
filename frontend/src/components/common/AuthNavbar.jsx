@@ -49,14 +49,10 @@ const AuthNavbar = () => {
             <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none group-hover:text-[#D4AF37] transition-colors">
               G-TRAMS
             </span>
-            <span className="text-[9px] sm:text-[10px] text-[#D4AF37] font-bold tracking-wider uppercase mt-0.5">
+            <span className="text-[9px] sm:text-[10px] text-[#F3CD65] font-bold tracking-wider uppercase mt-0.5">
               Municipality of Gasan
             </span>
           </Link>
-          <span className="hidden xl:inline-flex items-center gap-1.5 text-[9px] font-semibold text-[#f8fafc]/80 bg-black/25 border border-white/10 px-2 py-0.5 rounded-full ml-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse"></span>
-            Hover logo for SB Seal
-          </span>
         </div>
 
         {/* FAR RIGHT: Quick Links, Home Icon & Hamburger Menu */}

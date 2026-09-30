@@ -81,7 +81,7 @@ const InteractiveLogo = ({
       >
         {/* FRONT: G-TRAMS OFFICIAL LOGO */}
         <div 
-          className="absolute inset-0 w-full h-full rounded-full bg-white p-0.5 border-2 border-[#D4AF37] shadow-[0_4px_16px_rgba(212,175,55,0.4)] flex items-center justify-center overflow-hidden ring-2 ring-[#D4AF37]/35 group-hover:ring-[#D4AF37] group-hover:scale-105 transition-all duration-300"
+          className="absolute inset-0 w-full h-full rounded-full bg-[#7B1824] border-2 border-[#D4AF37] shadow-[0_4px_16px_rgba(212,175,55,0.4)] flex items-center justify-center overflow-hidden ring-2 ring-[#D4AF37]/35 group-hover:ring-[#D4AF37] group-hover:scale-105 transition-all duration-300"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -90,14 +90,14 @@ const InteractiveLogo = ({
           <img 
             src="/gtrams-logo.png" 
             alt="G-TRAMS Official Logo" 
-            className="w-full h-full object-cover scale-105"
+            className="w-full h-full object-cover scale-[1.04]"
             draggable="false"
           />
         </div>
 
         {/* BACK: SANGGUNIANG BAYAN GASAN SEAL */}
         <div 
-          className="absolute inset-0 w-full h-full rounded-full bg-white p-0.5 border-2 border-[#D4AF37] shadow-[0_4px_16px_rgba(212,175,55,0.5)] flex items-center justify-center overflow-hidden ring-2 ring-[#9E2A2B]/40 group-hover:ring-[#9E2A2B] group-hover:scale-105 transition-all duration-300"
+          className="absolute inset-0 w-full h-full rounded-full bg-[#180407] border-2 border-[#D4AF37] shadow-[0_4px_16px_rgba(212,175,55,0.5)] flex items-center justify-center overflow-hidden ring-2 ring-[#9E2A2B]/40 group-hover:ring-[#9E2A2B] group-hover:scale-105 transition-all duration-300"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -107,18 +107,11 @@ const InteractiveLogo = ({
           <img 
             src="/gasan-logo.png" 
             alt="Sangguniang Bayan Gasan Official Seal" 
-            className="w-full h-full object-cover scale-105"
+            className="w-full h-full object-cover scale-[1.04]"
             draggable="false"
           />
         </div>
       </div>
-
-      {/* Optional micro hint badge */}
-      {showBadgeHint && (
-        <span className="hidden sm:inline-block absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] font-black uppercase tracking-widest text-[#D4AF37] opacity-80 group-hover:opacity-100 transition-opacity">
-          {active ? 'SB SEAL' : 'G-TRAMS'}
-        </span>
-      )}
     </div>
   );
 };

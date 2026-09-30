@@ -172,7 +172,7 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all shadow-xs font-medium min-h-[46px] sm:min-h-[48px]";
+  const inputClasses = "w-full bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-500 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all shadow-xs font-medium min-h-[46px] sm:min-h-[48px]";
 
   return (
     <div className="relative w-full bg-slate-50 flex flex-col overflow-x-hidden select-none min-h-screen">
