@@ -302,7 +302,7 @@ const Register = () => {
         <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
           {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
-          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-8 sm:p-12 md:p-14 min-h-[260px] md:min-h-[640px]">
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-12 lg:p-14 h-28 sm:h-36 md:h-auto md:min-h-[640px]">
             {/* Background Photo (Tricycle 2 for Register) */}
             <img 
               src="/tricycle-register.jpg" 
@@ -315,10 +315,10 @@ const Register = () => {
 
             {/* Bottom: Brand Title & Subtitle */}
             <div className="relative z-10">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none mb-2">
-                G-TRAMS
+              <h1 className="text-xl sm:text-2xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-0.5 md:mb-2 uppercase">
+                REGISTER TO GTRAMS
               </h1>
-              <p className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-sm">
+              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-tight max-w-sm line-clamp-1 md:line-clamp-none">
                 Gasan Tricycle Records &amp; Application Management System
               </p>
             </div>

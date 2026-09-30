@@ -128,196 +128,172 @@ const ForgotPassword = () => {
         </div>
       </div>
 
-      <div className="relative flex flex-col flex-1 min-h-screen">
+      <div className="relative min-h-[100dvh] flex flex-col justify-between">
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* MAIN FULL-WIDTH SPLIT LAYOUT (GYMSTAT STYLE) */}
-        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
-          
-          {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
-          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-8 sm:p-12 md:p-14 min-h-[260px] md:min-h-[640px]">
-            {/* Background Photo */}
-            <img 
-              src="/tricycle-login.jpg" 
-              alt="Gasan Tricycle" 
-              className="absolute inset-0 w-full h-full object-cover object-center" 
-            />
-            {/* Velvet Maroon Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
-            <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
-
-            {/* Bottom: Brand Title & Subtitle */}
-            <div className="relative z-10">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none mb-2">
-                G-TRAMS
-              </h1>
-              <p className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-sm">
-                Account Recovery &amp; Password Reset Gateway
+        {/* CENTERED CLEAN AUTH CARD (NO HERO PICTURE BOX) */}
+        <main className="relative z-10 w-full max-w-md mx-auto px-4 my-auto py-8 sm:py-12 flex flex-col items-center justify-center animate-card-entrance">
+          <div className="w-full bg-white rounded-3xl shadow-xl border border-slate-200/90 p-6 sm:p-8">
+            <div className="mb-6 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-[#801820]/10 flex items-center justify-center text-[#801820]">
+                {step === 1 ? <ShieldAlert size={24} /> : <KeyRound size={24} />}
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
+                {step === 1 ? 'Forgot Password?' : 'Reset Password'}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1.5 leading-relaxed">
+                {step === 1 
+                  ? 'Enter your registered email or phone number to receive a 6-digit recovery code.' 
+                  : `Enter the 6-digit code sent to ${contact} and create your new password.`}
               </p>
             </div>
-          </div>
 
-          {/* RIGHT COLUMN: CLEAN FORM PANEL */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-center items-center px-6 sm:px-10 md:px-14 lg:px-20 py-8 sm:py-12 bg-white">
-            <div className="w-full max-w-md">
-              <div className="mb-6">
-                <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
-                  {step === 1 ? 'Forgot Password?' : 'Reset Password'}
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                  {step === 1 
-                    ? 'Enter your registered email or phone number to receive a 6-digit recovery code.' 
-                    : `Enter the 6-digit code sent to ${contact} and create your new password.`}
-                </p>
+            {error && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                {error}
               </div>
+            )}
+            {success && (
+              <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                {success}
+              </div>
+            )}
 
-              {error && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
-                  {success}
-                </div>
-              )}
-
-              {step === 1 && (
-                <form onSubmit={handleRequestOTP} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Email or Phone Number
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <User size={18} />
-                      </div>
-                      <input 
-                        type="text" 
-                        value={contact}
-                        onChange={(e) => setContact(e.target.value)}
-                        required 
-                        className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium" 
-                        placeholder="juan@gmail.com or 09123456789" 
-                      />
+            {step === 1 && (
+              <form onSubmit={handleRequestOTP} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Email or Phone Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <User size={18} />
                     </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <button 
-                      type="submit" 
-                      disabled={isLoading}
-                      className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="animate-spin" size={16} /> Sending Code...
-                        </>
-                      ) : (
-                        'Send Reset Code'
-                      )}
-                    </button>
-
-                    {isLoading && (
-                      <p className="text-xs text-slate-500 text-center mt-2 animate-pulse font-medium">
-                        Connecting to secure gateway, please wait...
-                      </p>
-                    )}
-
-                    <div className="text-center mt-4">
-                      <Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#801820] hover:underline transition-colors">
-                        <ArrowLeft size={13} /> Back to Login
-                      </Link>
-                    </div>
-                  </div>
-                </form>
-              )}
-
-              {step === 2 && (
-                <form onSubmit={handleResetPassword} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 text-center">
-                      6-Digit Verification Code
-                    </label>
                     <input 
                       type="text" 
-                      maxLength="6" 
-                      value={otpCode} 
-                      onChange={(e) => setOtpCode(e.target.value)} 
+                      value={contact}
+                      onChange={(e) => setContact(e.target.value)}
                       required 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-2xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 shadow-inner" 
-                      placeholder="000000" 
+                      className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium" 
+                      placeholder="juan@gmail.com or 09123456789" 
                     />
                   </div>
+                </div>
+                
+                <div className="pt-2">
+                  <button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={16} /> Sending Code...
+                      </>
+                    ) : (
+                      'Send Reset Code'
+                    )}
+                  </button>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Lock size={18} />
-                      </div>
-                      <input 
-                        type="password" 
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        required 
-                        className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium" 
-                        placeholder="••••••••" 
-                      />
-                    </div>
-                  </div>
+                  {isLoading && (
+                    <p className="text-xs text-slate-500 text-center mt-2 animate-pulse font-medium">
+                      Connecting to secure gateway, please wait...
+                    </p>
+                  )}
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Lock size={18} />
-                      </div>
-                      <input 
-                        type="password" 
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required 
-                        className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium" 
-                        placeholder="••••••••" 
-                      />
-                    </div>
+                  <div className="text-center mt-4">
+                    <Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#801820] hover:underline transition-colors">
+                      <ArrowLeft size={13} /> Back to Login
+                    </Link>
                   </div>
+                </div>
+              </form>
+            )}
+
+            {step === 2 && (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 text-center">
+                    6-Digit Verification Code
+                  </label>
+                  <input 
+                    type="text" 
+                    maxLength="6" 
+                    value={otpCode} 
+                    onChange={(e) => setOtpCode(e.target.value)} 
+                    required 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-2xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 shadow-inner" 
+                    placeholder="000000" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock size={18} />
+                    </div>
+                    <input 
+                      type="password" 
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required 
+                      className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium" 
+                      placeholder="••••••••" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock size={18} />
+                    </div>
+                    <input 
+                      type="password" 
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required 
+                      className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium" 
+                      placeholder="••••••••" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="pt-2 space-y-2">
+                  <button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={16} /> Processing...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={16} /> Reset Password
+                      </>
+                    )}
+                  </button>
                   
-                  <div className="pt-2 space-y-2">
-                    <button 
-                      type="submit" 
-                      disabled={isLoading}
-                      className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="animate-spin" size={16} /> Processing...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw size={16} /> Reset Password
-                        </>
-                      )}
-                    </button>
-                    
-                    <button 
-                      type="button" 
-                      onClick={() => setStep(1)} 
-                      className="w-full text-center text-xs font-bold text-slate-500 hover:text-[#801820] py-1 transition-colors cursor-pointer"
-                    >
-                      ← Change Contact Info
-                    </button>
-                  </div>
-                </form>
-              )}
+                  <button 
+                    type="button" 
+                    onClick={() => setStep(1)} 
+                    className="w-full text-center text-xs font-bold text-slate-500 hover:text-[#801820] py-1 transition-colors cursor-pointer"
+                  >
+                    ← Change Contact Info
+                  </button>
+                </div>
+              </form>
+            )}
 
-            </div>
           </div>
         </main>
       </div>

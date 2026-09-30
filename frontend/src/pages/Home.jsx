@@ -75,13 +75,37 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Hero Section Container */}
-      <div className="relative min-h-[100dvh] flex flex-col justify-between">
+      {/* Hero Section Container with Dual Tricycle Background */}
+      <div className="relative min-h-[100dvh] flex flex-col justify-between overflow-hidden">
+        
+        {/* DUAL TRICYCLE BACKGROUND WITH VELVET MAROON OVERLAY */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 grid grid-cols-2">
+            <div className="relative h-full w-full overflow-hidden">
+              <img 
+                src="/tricycle-login.jpg" 
+                alt="Gasan Tricycle" 
+                className="w-full h-full object-cover object-center scale-105" 
+              />
+            </div>
+            <div className="relative h-full w-full overflow-hidden border-l border-white/10">
+              <img 
+                src="/tricycle-register.jpg" 
+                alt="Gasan Tricycle" 
+                className="w-full h-full object-cover object-center scale-105" 
+              />
+            </div>
+          </div>
+          {/* Velvet Maroon Overlay Tint */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#4A0A10]/92 via-[#801820]/88 to-[#3D0A0E]/95" />
+          <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
+        </div>
+
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
         {/* MAIN HERO SECTION */}
-        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20 sm:pt-16 sm:pb-28 flex-grow flex flex-col items-center justify-center text-center">
+        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 sm:pt-16 sm:pb-24 flex-grow flex flex-col items-center justify-center text-center">
           
           <motion.div 
             initial="hidden" 
@@ -90,16 +114,16 @@ const Home = () => {
             variants={staggerContainer}
             className="flex flex-col items-center w-full"
           >
-            {/* Primary Headline - Responsive font scaling & safe mobile wrapping */}
-            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-tight max-w-5xl px-1 sm:px-0">
+            {/* Primary Headline - Crisp White with Gold Accent */}
+            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-5xl px-1 sm:px-0 drop-shadow-md">
               <span className="block sm:inline">Gasan Tricycle Records &amp; </span>
-              <span className="inline sm:inline-block sm:whitespace-nowrap text-[#9E2A2B]">
+              <span className="inline sm:inline-block sm:whitespace-nowrap text-[#F3CD65]">
                 Application Management System
               </span>
             </motion.h1>
 
             {/* Subtitle / Portal Overview */}
-            <motion.p variants={springFade} className="text-slate-600 text-sm sm:text-base max-w-2xl mt-4 sm:mt-5 leading-relaxed font-normal px-2">
+            <motion.p variants={springFade} className="text-white/90 text-sm sm:text-base max-w-2xl mt-4 sm:mt-5 leading-relaxed font-medium px-2 drop-shadow-sm">
               The official motorized tricycle regulatory and franchise licensing portal of the Local Government Unit of Gasan, providing streamlined, transparent, and digital municipal services for operators and TODA associations.
             </motion.p>
 
@@ -133,8 +157,8 @@ const Home = () => {
             {/* 4 CORE SERVICE CARDS */}
             <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-12 sm:mt-16 w-full text-left">
               
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
                   <FileText size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900">Online Application</h3>
@@ -143,8 +167,8 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
                   <ShieldCheck size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900">TODA Masterlist</h3>
@@ -153,8 +177,8 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
                   <Clock size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900">Claim Stub &amp; Tracking</h3>
@@ -163,8 +187,8 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-white/40 shadow-lg hover:shadow-xl hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#801820]/10 text-[#801820] border border-[#801820]/20 mb-3 shadow-xs">
                   <Award size={18} />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900">Official Compliance</h3>
