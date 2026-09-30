@@ -24,7 +24,6 @@ import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
 import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
-import { HELP_DESK_EMAIL } from '../utils/contactConfig';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -321,7 +320,7 @@ const Register = () => {
         <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
           {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY (R27, R28, Task 5, 6, 8) */}
-          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-12 lg:p-14 h-28 sm:h-32 md:sticky md:top-[61px] md:h-[calc(100dvh-61px)] min-h-[110px] md:min-h-0">
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-28 sm:h-32 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
             {/* Background Photo (Tricycle 2 for Register) */}
             <img 
               src="/tricycle-register.jpg" 
@@ -329,34 +328,37 @@ const Register = () => {
               className="absolute inset-0 w-full h-full object-cover object-center" 
             />
             {/* Lightened Velvet Maroon Overlay - clearly shows tricycle photo with >=4.5:1 text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/90 via-[#5E0D14]/70 to-[#3D080D]/75" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/95 via-[#5E0D14]/75 to-[#3D080D]/80" />
             <div className="absolute inset-0 bg-black/20" />
 
-            {/* Bottom: Brand Title & Subtitle (R27, Task 6: Slim hero with nowrap and balanced tagline) */}
-            <div className="relative z-10">
-              <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-0.5 md:mb-1.5 uppercase">
+            {/* Bottom: Brand Title & Subtitle */}
+            <div className="relative z-10 md:sticky md:top-28 md:my-auto">
+              <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-2 mb-3 hidden md:flex items-center justify-center shadow-lg">
+                <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-contain" />
+              </div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-1 uppercase">
                 <span className="whitespace-nowrap">G-TRAMS</span>
               </h1>
-              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-tight max-w-sm [text-wrap:balance] line-clamp-2 md:line-clamp-none">
+              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
                 Gasan Tricycle Records &amp; Application Management System
               </p>
             </div>
           </div>
 
           {/* RIGHT COLUMN: CLEAN FORM PANEL (Task 7: Reduced top gap, R29: 16px inputs) */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-center items-center px-4 sm:px-8 md:px-14 lg:px-20 py-4 sm:py-6 md:py-10 bg-white">
-            <div className="w-full max-w-lg">
-              <div className="mb-4 sm:mb-5">
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8 md:py-10 bg-white min-h-full">
+            <div className="w-full max-w-lg my-auto">
+              <div className="mb-3 sm:mb-4">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
                   {step === 1 ? 'Register' : 'Verify Contact'}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
                   {step === 1 ? 'Fill in your details below to register your operator account.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
                 </p>
               </div>
 
               {error && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
                   <p>{error}</p>
                   {error.includes('ALREADY EXISTS') && (
                     <Link to="/login" className="inline-block mt-1 font-black text-[#801820] underline tracking-wider">
@@ -366,7 +368,7 @@ const Register = () => {
                 </div>
               )}
               {success && (
-                <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
                   {success}
                 </div>
               )}
@@ -375,7 +377,7 @@ const Register = () => {
               {step === 1 && (
                 <>
                   {/* GOOGLE SIGN UP AT TOP (Task 16) */}
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <GoogleAuthButton 
                       text="Continue with Google"
                       onSuccess={handleAuthSuccess}
@@ -390,14 +392,14 @@ const Register = () => {
                       }}
                       onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
                     />
-                    <div className="flex items-center gap-3 my-4">
+                    <div className="flex items-center gap-3 my-2.5 sm:my-3">
                       <div className="flex-1 h-px bg-slate-200" />
                       <span className="text-xs font-semibold text-slate-400">Or register with email/phone</span>
                       <div className="flex-1 h-px bg-slate-200" />
                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmitRegisterForm} className="space-y-3.5">
+                  <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5 sm:space-y-3">
                     {/* Full Name */}
                     <div>
                       <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
@@ -677,19 +679,13 @@ const Register = () => {
                     </div>
                   </form>
 
-                  {/* BOTTOM LINKS (R30, R38) */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 text-center space-y-2">
+                  {/* BOTTOM LINKS */}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
                     <p className="text-sm text-slate-600 font-medium">
                       Already have an account?{' '}
                       <Link to="/login" className="font-bold text-[#801820] hover:underline">
                         Log In
                       </Link>
-                    </p>
-                    <p className="text-xs text-slate-500 font-medium">
-                      Kailangan ng tulong?{' '}
-                      <a href={`mailto:${HELP_DESK_EMAIL}`} className="font-bold text-[#801820] hover:underline">
-                        Makipag-ugnayan sa Helpdesk
-                      </a>
                     </p>
                   </div>
                 </>

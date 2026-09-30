@@ -7,7 +7,6 @@ import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
 import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
-import { HELP_DESK_EMAIL } from '../utils/contactConfig';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -193,7 +192,7 @@ const Login = () => {
         <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
           {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY (R27, R28, Task 5, 6, 8) */}
-          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-12 lg:p-14 h-28 sm:h-32 md:sticky md:top-[61px] md:h-[calc(100dvh-61px)] min-h-[110px] md:min-h-0">
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-28 sm:h-32 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
             {/* Background Photo (Tricycle 1 for Login) */}
             <img 
               src="/tricycle-login.jpg" 
@@ -201,23 +200,26 @@ const Login = () => {
               className="absolute inset-0 w-full h-full object-cover object-center" 
             />
             {/* Lightened Velvet Maroon Overlay - clearly shows tricycle photo with >=4.5:1 text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/90 via-[#5E0D14]/70 to-[#3D080D]/75" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/95 via-[#5E0D14]/75 to-[#3D080D]/80" />
             <div className="absolute inset-0 bg-black/20" />
 
-            {/* Bottom: Brand Title & Subtitle (R27, Task 6: Slim hero with nowrap and balanced tagline) */}
-            <div className="relative z-10">
-              <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-0.5 md:mb-1.5 uppercase">
+            {/* Bottom: Brand Title & Subtitle */}
+            <div className="relative z-10 md:sticky md:top-28 md:my-auto">
+              <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-2 mb-3 hidden md:flex items-center justify-center shadow-lg">
+                <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-contain" />
+              </div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-1 uppercase">
                 <span className="whitespace-nowrap">G-TRAMS</span>
               </h1>
-              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-tight max-w-sm [text-wrap:balance] line-clamp-2 md:line-clamp-none">
+              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
                 Gasan Tricycle Records &amp; Application Management System
               </p>
             </div>
           </div>
 
           {/* RIGHT COLUMN: CLEAN FORM PANEL (Task 7: Reduced top gap, R29: 16px inputs) */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-center items-center px-4 sm:px-8 md:px-14 lg:px-20 py-4 sm:py-6 md:py-10 bg-white">
-            <div className="w-full max-w-md">
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 py-6 sm:py-8 md:py-10 bg-white min-h-full">
+            <div className="w-full max-w-md my-auto">
               <div className="mb-4 sm:mb-5">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
                   Log In
@@ -364,18 +366,12 @@ const Login = () => {
                 />
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 text-center space-y-2">
+              <div className="mt-4 pt-3 border-t border-slate-100 text-center">
                 <p className="text-sm text-slate-600 font-medium">
                   Don't have an account?{' '}
                   <Link to="/register" className="font-bold text-[#801820] hover:underline">
                     Register
                   </Link>
-                </p>
-                <p className="text-xs text-slate-500 font-medium">
-                  Kailangan ng tulong?{' '}
-                  <a href={`mailto:${HELP_DESK_EMAIL}`} className="font-bold text-[#801820] hover:underline">
-                    Makipag-ugnayan sa Helpdesk
-                  </a>
                 </p>
               </div>
 
