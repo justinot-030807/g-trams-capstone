@@ -16,6 +16,7 @@ import {
   Home
 } from 'lucide-react';
 import TermsPolicyModal from './TermsPolicyModal';
+import InteractiveLogo from './InteractiveLogo';
 
 const FacebookIcon = ({ size = 14, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -34,28 +35,29 @@ const AuthNavbar = () => {
       {/* FULL-WIDTH TOP NAVBAR (Municipal Velvet Maroon Header) */}
       <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-[#801820] via-[#9E2A2B] to-[#801820] text-white shadow-md border-b border-[#D4AF37]/35 flex items-center justify-between select-none shrink-0">
         
-        {/* FAR LEFT: Gasan Seal + G-TRAMS (Clickable Link to Home) */}
-        <a 
-          href="/" 
-          className="flex items-center gap-2 sm:gap-2.5 group cursor-pointer"
-          title="Go to G-TRAMS Home (Refresh)"
-        >
-          <div className="relative shrink-0">
-            <img 
-              src="/gasan-logo.png" 
-              alt="Gasan Official Seal" 
-              className="w-9 h-9 sm:w-11 sm:h-11 object-contain filter drop-shadow-[0_4px_16px_rgba(212,175,55,0.45)] group-hover:scale-105 transition-transform" 
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none">
+        {/* FAR LEFT: Interactive Flip Medallion (G-TRAMS <-> Sangguniang Bayan Seal) */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <InteractiveLogo 
+            size="w-9 h-9 sm:w-11 sm:h-11"
+            showBadgeHint={false}
+          />
+          <Link 
+            to="/" 
+            className="flex flex-col group cursor-pointer"
+            title="Go to G-TRAMS Home"
+          >
+            <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none group-hover:text-[#D4AF37] transition-colors">
               G-TRAMS
             </span>
-            <span className="text-[9px] sm:text-[10px] text-[#D4AF37] font-semibold tracking-wider uppercase mt-0.5">
-              Portal
+            <span className="text-[9px] sm:text-[10px] text-[#D4AF37] font-bold tracking-wider uppercase mt-0.5">
+              Municipality of Gasan
             </span>
-          </div>
-        </a>
+          </Link>
+          <span className="hidden xl:inline-flex items-center gap-1.5 text-[9px] font-semibold text-[#f8fafc]/80 bg-black/25 border border-white/10 px-2 py-0.5 rounded-full ml-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse"></span>
+            Hover logo for SB Seal
+          </span>
+        </div>
 
         {/* FAR RIGHT: Quick Links, Home Icon & Hamburger Menu */}
         <div className="flex items-center gap-2 sm:gap-2.5">
@@ -126,18 +128,18 @@ const AuthNavbar = () => {
               
               {/* Drawer Header */}
               <div>
-                <div className="flex items-center justify-between pb-4 border-b border-white/5">
-                  <Link 
-                    to="/" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-2.5 cursor-pointer"
-                  >
-                    <img src="/gasan-logo.png" alt="Gasan Seal" className="w-9 h-9 object-contain" />
-                    <div>
+                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <InteractiveLogo size="w-9 h-9" />
+                    <Link 
+                      to="/" 
+                      onClick={() => setIsMenuOpen(false)}
+                      className="cursor-pointer"
+                    >
                       <h3 className="font-black text-sm text-white tracking-wide">G-TRAMS PORTAL</h3>
                       <p className="text-xs text-[#D4AF37] font-semibold">Municipality of Gasan</p>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setIsMenuOpen(false)}

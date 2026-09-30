@@ -70,7 +70,7 @@ const Home = () => {
       
       {/* Lightweight, zero-lag subtle watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[12%] left-1/2 -translate-x-1/2 w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.035] pointer-events-none select-none">
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.03] pointer-events-none select-none">
           <img src="/gasan-logo.png" alt="" className="w-full h-full object-contain filter grayscale" />
         </div>
       </div>
@@ -81,7 +81,7 @@ const Home = () => {
         <AuthNavbar />
 
         {/* MAIN HERO SECTION */}
-        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 sm:pt-20 sm:pb-32 flex-grow flex flex-col items-center justify-center text-center">
+        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20 sm:pt-16 sm:pb-28 flex-grow flex flex-col items-center justify-center text-center">
           
           <motion.div 
             initial="hidden" 
@@ -90,10 +90,21 @@ const Home = () => {
             variants={staggerContainer}
             className="flex flex-col items-center w-full"
           >
+            {/* Official Institutional Pill Badge */}
+            <motion.div 
+              variants={springFade} 
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#9E2A2B]/20 text-[#801820] text-xs font-bold uppercase tracking-wider mb-5 shadow-xs hover:border-[#D4AF37] transition-colors"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>LGU Gasan • Sangguniang Bayan MTFRB Portal</span>
+            </motion.div>
+
             {/* Primary Headline - Responsive font scaling & safe mobile wrapping */}
             <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-tight max-w-5xl px-1 sm:px-0">
               <span className="block sm:inline">Gasan Tricycle Records &amp; </span>
-              <span className="inline sm:inline-block sm:whitespace-nowrap text-[#9E2A2B]">Application Management System</span>
+              <span className="inline sm:inline-block sm:whitespace-nowrap bg-gradient-to-r from-[#801820] via-[#9E2A2B] to-[#70141b] bg-clip-text text-transparent">
+                Application Management System
+              </span>
             </motion.h1>
 
             {/* Subtitle / Portal Overview */}
@@ -104,21 +115,21 @@ const Home = () => {
             {/* TWO PRIMARY ACTION BUTTONS */}
             <motion.div variants={springFade} className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 mt-8 sm:mt-10 w-full max-w-md">
               
-              {/* Sign In Button (Maroon) */}
+              {/* Sign In Button (Velvet Maroon) */}
               <Link
                 to="/login"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#801820] via-[#9E2A2B] to-[#801820] hover:from-[#9E2A2B] hover:to-[#70141b] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-white/20 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#801820] via-[#9E2A2B] to-[#801820] hover:from-[#9E2A2B] hover:to-[#70141b] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:shadow-xl hover:shadow-[#9E2A2B]/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 ring-2 ring-[#D4AF37]/40 cursor-pointer"
               >
-                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center group-hover:rotate-12 transition-transform">
                   <LogIn size={14} className="text-[#D4AF37]" />
                 </div>
                 <span>Sign In</span>
               </Link>
 
-              {/* Create Account Button (Solid Yellow/Gold) */}
+              {/* Create Account Button (Warm Gold) */}
               <Link
                 to="/register"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#1A0B0E] font-black text-sm uppercase tracking-wider shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#1A0B0E] font-black text-sm uppercase tracking-wider shadow-md hover:shadow-xl hover:shadow-[#D4AF37]/30 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
               >
                 <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <UserPlus size={14} className="text-[#1A0B0E]" />
@@ -128,47 +139,102 @@ const Home = () => {
 
             </motion.div>
 
+            {/* Official Trust Strip */}
+            <motion.div variants={springFade} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-5 text-xs text-slate-500 font-semibold">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 size={13} className="text-emerald-600" /> 100% Online Processing
+              </span>
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 size={13} className="text-emerald-600" /> Accredited TODA Registry
+              </span>
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 size={13} className="text-emerald-600" /> Live MTOP Status Tracking
+              </span>
+            </motion.div>
+
             {/* 4 CORE SERVICE CARDS */}
             <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-12 sm:mt-16 w-full text-left">
               
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
-                  <FileText size={18} />
+              <motion.div variants={springFade} className="group p-5 rounded-2xl bg-white border border-slate-200 border-t-4 border-t-[#9E2A2B] hover:border-t-[#D4AF37] shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 flex items-center justify-center group-hover:bg-[#9E2A2B] group-hover:text-white transition-colors shadow-xs">
+                      <FileText size={18} />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-[#9E2A2B]/10 group-hover:text-[#9E2A2B] transition-colors">
+                      ONLINE FILING
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#9E2A2B] transition-colors">Online Application</h3>
+                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Submit new MTOP applications, renewal requests, and digital requirements without queuing.
+                  </p>
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Online Application</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  Submit new MTOP applications, renewal requests, and digital requirements without queuing.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center text-xs font-bold text-[#9E2A2B] group-hover:translate-x-1 transition-transform">
+                  <span>File Application &rarr;</span>
+                </div>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
-                  <ShieldCheck size={18} />
+              <motion.div variants={springFade} className="group p-5 rounded-2xl bg-white border border-slate-200 border-t-4 border-t-[#9E2A2B] hover:border-t-[#D4AF37] shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 flex items-center justify-center group-hover:bg-[#9E2A2B] group-hover:text-white transition-colors shadow-xs">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-[#9E2A2B]/10 group-hover:text-[#9E2A2B] transition-colors">
+                      ACCREDITED
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#9E2A2B] transition-colors">TODA Masterlist</h3>
+                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Verified registry of accredited TODA associations, designated zones, and authorized units.
+                  </p>
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">TODA Masterlist</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  Verified registry of accredited TODA associations, designated zones, and authorized units.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center text-xs font-bold text-[#9E2A2B] group-hover:translate-x-1 transition-transform">
+                  <span>View Registry &rarr;</span>
+                </div>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
-                  <Clock size={18} />
+              <motion.div variants={springFade} className="group p-5 rounded-2xl bg-white border border-slate-200 border-t-4 border-t-[#9E2A2B] hover:border-t-[#D4AF37] shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 flex items-center justify-center group-hover:bg-[#9E2A2B] group-hover:text-white transition-colors shadow-xs">
+                      <Clock size={18} />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-[#9E2A2B]/10 group-hover:text-[#9E2A2B] transition-colors">
+                      REAL-TIME
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#9E2A2B] transition-colors">Claim Stub &amp; Tracking</h3>
+                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Track approval milestones live and generate official printable payment claim stubs.
+                  </p>
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Claim Stub &amp; Tracking</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  Track approval milestones live and generate official printable payment claim stubs.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center text-xs font-bold text-[#9E2A2B] group-hover:translate-x-1 transition-transform">
+                  <span>Track Stub &rarr;</span>
+                </div>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
-                  <Award size={18} />
+              <motion.div variants={springFade} className="group p-5 rounded-2xl bg-white border border-slate-200 border-t-4 border-t-[#9E2A2B] hover:border-t-[#D4AF37] shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 flex items-center justify-center group-hover:bg-[#9E2A2B] group-hover:text-white transition-colors shadow-xs">
+                      <Award size={18} />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-[#9E2A2B]/10 group-hover:text-[#9E2A2B] transition-colors">
+                      ORDINANCES
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#9E2A2B] transition-colors">Official Compliance</h3>
+                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Full compliance with Gasan Municipal Ordinances, fare matrices, and MTFRB standards.
+                  </p>
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Official Compliance</h3>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  Full compliance with Gasan Municipal Ordinances, fare matrices, and MTFRB standards.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center text-xs font-bold text-[#9E2A2B] group-hover:translate-x-1 transition-transform">
+                  <span>View Guidelines &rarr;</span>
+                </div>
               </motion.div>
 
             </motion.div>
