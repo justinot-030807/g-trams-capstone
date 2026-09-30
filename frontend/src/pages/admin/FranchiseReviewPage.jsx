@@ -43,12 +43,7 @@ const FranchiseReviewPage = () => {
   const dragStartRef = useRef({ x: 0, y: 0 });
   const canvasRef = useRef(null);
 
-  // Inspector Tabs State ('match' | 'applicant' | 'cedula' | 'ai')
-  const [inspectorTab, setInspectorTab] = useState('match');
   const [copiedField, setCopiedField] = useState(null);
-
-  // AI Verification State
-  const [isAiVerifying, setIsAiVerifying] = useState(false);
 
   // Rejection State
   const [isRejecting, setIsRejecting] = useState(false);
@@ -65,41 +60,6 @@ const FranchiseReviewPage = () => {
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
-  };
-
-  const handleRunAiVerification = async () => {
-    if (!currentApp?._id) return;
-    setIsAiVerifying(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${currentApp._id}/verify-documents`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await res.json();
-      if (res.ok && data.franchise) {
-        setCurrentApp(data.franchise);
-        setInspectorTab('ai');
-        showToast('Natapos ang AI Document Verification gamit ang Gemini!', 'success');
-      } else {
-        showToast(data.message || 'Hindi natapos ang verification.', 'error');
-      }
-    } catch (err) {
-      console.error('AI verification failed:', err);
-      showToast('Error habang sinusuri ang mga dokumento gamit ang AI.', 'error');
-    } finally {
-      setIsAiVerifying(false);
-    }
-  };
-
-  const handleApplyMismatchRejection = (comparison) => {
-    setIsRejecting(true);
-    setRejectField(comparison.field || 'chassisNo');
-    setCustomReason(`Discrepancy detected by AI: ${comparison.label} mismatch. In-enter ng operator: "${comparison.inputValue}", ngunit nakita sa opisyal na dokumento: "${comparison.extractedValue}". Mangyaring i-upload ang tamang dokumento o itama ang impormasyon.`);
-    setRejectReason('Others (Please specify)');
-    showToast(`Inilagay ang ${comparison.label} discrepancy sa rejection form.`, 'success');
   };
 
   const formatDate = (dateStr) => {
@@ -462,13 +422,13 @@ const FranchiseReviewPage = () => {
         handleSelectDoc('license');
       } else if (e.key === '3') {
         e.preventDefault();
-        handleSelectDoc('todaEndorsement');
+        handleSelectDoc('cedulaDoc');
       } else if (e.key === '4') {
         e.preventDefault();
-        handleSelectDoc('brgyClearance');
+        handleSelectDoc('todaEndorsement');
       } else if (e.key === '5') {
         e.preventDefault();
-        handleSelectDoc('cedulaDoc');
+        handleSelectDoc('brgyClearance');
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         goToNext();
@@ -615,34 +575,6 @@ const FranchiseReviewPage = () => {
             <span className="hidden md:inline">Summary</span>
           </button>
 
-          {/* AI Verify Gemini Button */}
-          <button
-            onClick={() => {
-              if (currentApp?.aiVerification?.status && currentApp?.aiVerification?.status !== 'unverified') {
-                setInspectorTab('ai');
-              } else {
-                handleRunAiVerification();
-              }
-            }}
-            disabled={isAiVerifying}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border cursor-pointer ${
-              currentApp?.aiVerification?.status === 'flagged'
-                ? 'bg-rose-600/40 hover:bg-rose-600/60 text-rose-100 border-rose-400/60 shadow-xs ring-1 ring-rose-400/40'
-                : currentApp?.aiVerification?.status === 'verified'
-                ? 'bg-emerald-600/40 hover:bg-emerald-600/60 text-emerald-100 border-emerald-400/60'
-                : 'bg-indigo-600/40 hover:bg-indigo-600/60 text-indigo-100 border-indigo-400/50'
-            }`}
-            title="Suriin ang mga dokumento gamit ang Gemini Vision AI"
-          >
-            {isAiVerifying ? (
-              <Loader2 size={14} className="animate-spin text-[#D4AF37]" />
-            ) : (
-              <Sparkles size={14} className="text-[#D4AF37]" />
-            )}
-            <span className="hidden md:inline">
-              {isAiVerifying ? 'Verifying...' : currentApp?.aiVerification?.status === 'flagged' ? 'AI Flagged' : currentApp?.aiVerification?.status === 'verified' ? 'AI Verified' : 'AI Verify'}
-            </span>
-          </button>
 
           {/* Reject Trigger */}
           <button
@@ -721,7 +653,7 @@ const FranchiseReviewPage = () => {
                   Attached Documents
                 </span>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                  Keyboard [1 - 4]
+                  Keyboard [1 - 5]
                 </span>
               </div>
 
@@ -843,603 +775,371 @@ const FranchiseReviewPage = () => {
                   className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
                 >
                   {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                  <span>Kumpirmahin ang Rejection &amp; Sunod</span>
+                  <span>Confirm Rejection &amp; Next</span>
                 </button>
               </div>
             )}
 
-            {/* 3. TABBED METADATA INSPECTOR */}
+            {/* 3. DOCUMENT SPECIFICATIONS (DYNAMIC TO ACTIVE DOCUMENT) */}
             <div className="space-y-2 flex-1">
               <div className="flex items-center justify-between px-0.5">
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Form Verification Inspector
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  Document Details
                 </span>
-                <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700/60 px-2 py-0.5 rounded-md">
-                  {currentApp.applicationType || 'New Application'}
+                <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/20 px-2 py-0.5 rounded-md">
+                  {currentDoc.short}
                 </span>
               </div>
 
-              {/* Segmented Control Tabs */}
-              <div className="flex items-center bg-slate-100 dark:bg-[#0c101c] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setInspectorTab('match')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    inspectorTab === 'match'
-                      ? 'bg-white dark:bg-[#1f293d] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Car size={13} />
-                  <span>Match</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInspectorTab('applicant')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    inspectorTab === 'applicant'
-                      ? 'bg-white dark:bg-[#1f293d] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <User size={13} />
-                  <span>Operator</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInspectorTab('cedula')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    inspectorTab === 'cedula'
-                      ? 'bg-white dark:bg-[#1f293d] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <FileCheck size={13} />
-                  <span>Cedula</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInspectorTab('ai')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
-                    inspectorTab === 'ai'
-                      ? 'bg-white dark:bg-[#1f293d] text-indigo-700 dark:text-indigo-400 shadow-xs ring-1 ring-indigo-500/30'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Sparkles size={13} className={currentApp.aiVerification?.status === 'flagged' ? 'text-rose-500' : 'text-indigo-500'} />
-                  <span>AI Verify</span>
-                  {currentApp.aiVerification?.summary?.mismatchedFields > 0 && (
-                    <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-1 right-1 animate-pulse" />
-                  )}
-                </button>
-              </div>
-
-              {/* TAB 1: VEHICLE VERIFICATION MATCH (CRITICAL FOR OR/CR INSPECTION) */}
-              {inspectorTab === 'match' && (
-                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Vehicle Specifications
-                    </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      Click serial to copy
-                    </span>
+              <div className="bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2.5">
+                {/* Notice if document not attached */}
+                {!currentDoc.url && (
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+                    <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span>No document uploaded for this requirement.</span>
                   </div>
+                )}
 
-                  <div className="space-y-1.5 text-xs">
-                    {/* Plate Number */}
-                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Plate Number:</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-900 dark:text-amber-300 font-mono tracking-wide">
-                          {currentApp.plateNo || 'Pending'}
-                        </span>
+                {/* Dynamic fields based on activeDocKey */}
+                {activeDocKey === 'orCrDocument' && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <span>LTO Registration Specifications</span>
+                      <span className="text-[10px] text-slate-400">Cross-check with OR/CR image</span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {/* Plate Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Plate Number</span>
+                          <span className="font-mono font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || 'Pending'}</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => copyToClipboard(currentApp.plateNo, 'plateNo')}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                           title="Copy Plate Number"
                         >
-                          {copiedField === 'plateNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                          {copiedField === 'plateNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
                         </button>
                       </div>
-                    </div>
 
-                    {/* Chassis Serial No */}
-                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Chassis No:</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] font-mono truncate max-w-[170px]">
-                          {currentApp.chassisNo || 'N/A'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.chassisNo, 'chassisNo')}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
-                          title="Copy Chassis Serial Number"
-                        >
-                          {copiedField === 'chassisNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Motor / Engine No */}
-                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Motor / Engine:</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-800 dark:text-slate-200 font-mono truncate max-w-[170px]">
-                          {currentApp.motorNo || 'N/A'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.motorNo, 'motorNo')}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
-                          title="Copy Motor Number"
-                        >
-                          {copiedField === 'motorNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Vehicle Make & Year Model */}
-                    <div className="grid grid-cols-2 gap-1.5 pt-0.5">
-                      <div className="p-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-medium block">Make</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{currentApp.make || 'N/A'}</span>
-                      </div>
-                      <div className="p-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-medium block">Year Model</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{currentApp.made || 'N/A'}</span>
-                      </div>
-                    </div>
-
-                    {/* LTO OR/CR No */}
-                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">LTO OR/CR No:</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-800 dark:text-slate-200 font-mono truncate max-w-[170px]">
-                          {currentApp.orCrNo || 'N/A'}
-                        </span>
+                      {/* OR / CR Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">OR / CR Number</span>
+                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.orCrNo || '—'}</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => copyToClipboard(currentApp.orCrNo, 'orCrNo')}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
-                          title="Copy LTO OR/CR Number"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Copy OR/CR Number"
                         >
-                          {copiedField === 'orCrNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                          {copiedField === 'orCrNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
                         </button>
                       </div>
-                    </div>
 
-                    {/* LTO Registration Validity / Expiry Date */}
-                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">LTO Validity:</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          {formatDate(currentApp.orCrExpiryDate)}
-                        </span>
-                        {currentApp.orCrExpiryDate && (
-                          isDateExpired(currentApp.orCrExpiryDate) ? (
-                            <span className="text-[10px] font-bold text-red-600 bg-red-100 dark:bg-red-950/60 dark:text-red-400 border border-red-300 dark:border-red-900/60 px-1.5 py-0.5 rounded">
-                              EXPIRED
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-900/60 px-1.5 py-0.5 rounded">
-                              VALID
-                            </span>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
-                    <ShieldCheck size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                    <span>Compare Chassis and Motor No. with the official OR/CR document displayed on the right before approving.</span>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: APPLICANT & OPERATOR / DRIVER INFO */}
-              {inspectorTab === 'applicant' && (
-                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-3 animate-in fade-in duration-150">
-                  {/* Operator Profile */}
-                  <div>
-                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800 mb-2">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Operator Profile
-                      </span>
-                      <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        Zone {currentApp.zone || 1}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Full Name:</span>
-                        <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[210px]">{currentApp.fullName}</span>
-                      </div>
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Contact Number:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.contact || currentApp.operator?.contact || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Barangay:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[210px]">{currentApp.address}, Gasan</span>
-                      </div>
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">TODA Association:</span>
-                        <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] text-right truncate max-w-[210px]">{currentApp.todaName || 'Non-TODA'}</span>
-                      </div>
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Application Type:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.applicationType || 'New'}</span>
-                      </div>
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Date Filed:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.dateApplied || currentApp.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Authorized Driver Designation */}
-                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center justify-between pb-1.5 mb-2">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <User size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                        Authorized Driver
-                      </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        currentApp.isOperatorDriver !== false
-                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
-                          : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800'
-                      }`}>
-                        {currentApp.isOperatorDriver !== false ? 'Self-Operated (Owner-Driver)' : 'Designated Driver'}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                      {currentApp.isOperatorDriver === false && (
-                        <>
-                          <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                            <span className="text-slate-500 dark:text-slate-400 font-medium">Driver's Name:</span>
-                            <span className="font-bold text-slate-900 dark:text-white text-right truncate max-w-[200px]">{currentApp.driverName || 'N/A'}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                            <span className="text-slate-500 dark:text-slate-400 font-medium">Driver Contact:</span>
-                            <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{currentApp.driverContact || 'N/A'}</span>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Driver's License No with copy */}
-                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">License No:</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-slate-900 dark:text-white font-mono">
-                            {currentApp.driverLicenseNo || 'N/A'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(currentApp.driverLicenseNo, 'driverLicenseNo')}
-                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
-                            title="Copy Driver's License Number"
-                          >
-                            {copiedField === 'driverLicenseNo' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                          </button>
+                      {/* Motor Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div className="min-w-0 pr-2">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Motor / Engine No.</span>
+                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.motorNo || '—'}</span>
                         </div>
-                      </div>
-
-                      {/* License Expiry Date */}
-                      <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">License Expiry:</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {formatDate(currentApp.driverLicenseExpiryDate)}
-                          </span>
-                          {currentApp.driverLicenseExpiryDate && (
-                            isDateExpired(currentApp.driverLicenseExpiryDate) ? (
-                              <span className="text-[10px] font-bold text-red-600 bg-red-100 dark:bg-red-950/60 dark:text-red-400 border border-red-300 dark:border-red-900/60 px-1.5 py-0.5 rounded">
-                                EXPIRED
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-900/60 px-1.5 py-0.5 rounded">
-                                VALID
-                              </span>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* TODA & Barangay Statutory Verification */}
-                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                      <ShieldCheck size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      Clearances &amp; Statutory Records
-                    </span>
-
-                    {/* TODA Certificate Card */}
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase">TODA Certificate</span>
-                        {currentApp.todaCertNo && (
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(currentApp.todaCertNo, 'todaCertNo')}
-                            className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                            title="Copy TODA Cert No"
-                          >
-                            {copiedField === 'todaCertNo' ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-1 text-[11px]">
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Cert No:</span>
-                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.todaCertNo || '—'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Date Issued:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 block">{formatDate(currentApp.todaCertDate)}</span>
-                        </div>
-                        <div className="col-span-2">
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Signatory:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.todaSignatory || 'TODA President'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Barangay Clearance Card */}
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase">Barangay Clearance</span>
-                        {currentApp.brgyClearanceNo && (
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(currentApp.brgyClearanceNo, 'brgyClearanceNo')}
-                            className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                            title="Copy Barangay Clearance No"
-                          >
-                            {copiedField === 'brgyClearanceNo' ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-1 text-[11px]">
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Clearance No:</span>
-                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.brgyClearanceNo || '—'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Date Issued:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 block">{formatDate(currentApp.brgyClearanceDate)}</span>
-                        </div>
-                        <div className="col-span-2">
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Issuer:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{currentApp.brgyIssuer || 'Punong Barangay'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: CEDULA / COMMUNITY TAX CERTIFICATE */}
-              {inspectorTab === 'cedula' && (
-                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Cedula Record
-                    </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      Official CTC
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                    <div className="flex items-center justify-between py-1 px-2 rounded-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Serial No:</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-900 dark:text-white font-mono">
-                          {currentApp.cedulaSerialNo || 'N/A'}
-                        </span>
                         <button
                           type="button"
-                          onClick={() => copyToClipboard(currentApp.cedulaSerialNo, 'cedulaSerial')}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors cursor-pointer"
-                          title="Copy Cedula Serial"
+                          onClick={() => copyToClipboard(currentApp.motorNo, 'motorNo')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                          title="Copy Motor Number"
                         >
-                          {copiedField === 'cedulaSerial' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                          {copiedField === 'motorNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+
+                      {/* Chassis Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div className="min-w-0 pr-2">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Chassis Number</span>
+                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.chassisNo || '—'}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.chassisNo, 'chassisNo')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                          title="Copy Chassis Number"
+                        >
+                          {copiedField === 'chassisNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+
+                      {/* Vehicle Make & Model */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Make / Brand</span>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.make || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Model Year</span>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.made || '—'}</span>
+                        </div>
+                      </div>
+
+                      {/* Registration Expiry Date */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Registration Expiry</span>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.orCrExpiryDate)}</span>
+                        </div>
+                        {currentApp.orCrExpiryDate && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                            isDateExpired(currentApp.orCrExpiryDate)
+                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60'
+                              : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
+                          }`}>
+                            {isDateExpired(currentApp.orCrExpiryDate) ? 'Expired' : 'Valid'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeDocKey === 'license' && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <span>Driver's License Specifications</span>
+                      <span className="text-[10px] text-slate-400">Cross-check with License card</span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {/* Driver Designation */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Driver Designation</span>
+                          <span className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">
+                            {currentApp.isOperatorDriver ? 'Operator is the Driver' : 'Designated Driver'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          {currentApp.isOperatorDriver ? 'Self-Drive' : 'Employed'}
+                        </span>
+                      </div>
+
+                      {/* Driver Name */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div className="min-w-0 pr-2">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Driver Full Name</span>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">
+                            {currentApp.isOperatorDriver ? currentApp.fullName : (currentApp.driverName || '—')}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.isOperatorDriver ? currentApp.fullName : currentApp.driverName, 'driverName')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                          title="Copy Driver Name"
+                        >
+                          {copiedField === 'driverName' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+
+                      {/* License Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">License Number</span>
+                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.driverLicenseNo || '—'}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.driverLicenseNo, 'driverLicenseNo')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Copy License Number"
+                        >
+                          {copiedField === 'driverLicenseNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+
+                      {/* License Expiry */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">License Expiration</span>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.driverLicenseExpiryDate)}</span>
+                        </div>
+                        {currentApp.driverLicenseExpiryDate && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                            isDateExpired(currentApp.driverLicenseExpiryDate)
+                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60'
+                              : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
+                          }`}>
+                            {isDateExpired(currentApp.driverLicenseExpiryDate) ? 'Expired' : 'Valid'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Contact Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Driver Contact</span>
+                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">
+                            {currentApp.isOperatorDriver ? (currentApp.contact || '—') : (currentApp.driverContact || '—')}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.isOperatorDriver ? currentApp.contact : currentApp.driverContact, 'driverContact')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Copy Driver Contact"
+                        >
+                          {copiedField === 'driverContact' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Date of Issue:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right">{formatDate(currentApp.cedulaDate)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Place of Issue:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right truncate max-w-[200px]">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
-                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* TAB 4: GEMINI VISION AI DOCUMENT VERIFICATION */}
-              {inspectorTab === 'ai' && (
-                <div className="bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-3 animate-in fade-in duration-150">
-                  {/* Header */}
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center gap-1.5">
-                      <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400" />
-                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                        Gemini Vision Verification
-                      </span>
+                {activeDocKey === 'cedulaDoc' && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <span>Cedula / CTC Specifications</span>
+                      <span className="text-[10px] text-slate-400">Cross-check with Cedula</span>
                     </div>
-                    {currentApp.aiVerification?.status && currentApp.aiVerification?.status !== 'unverified' && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        currentApp.aiVerification.status === 'flagged'
-                          ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-900/60'
-                          : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-900/60'
-                      }`}>
-                        {currentApp.aiVerification.status === 'flagged' ? 'DISCREPANCY DETECTED' : 'VERIFIED TUGMA'}
-                      </span>
-                    )}
-                  </div>
 
-                  {/* If never verified or to re-run */}
-                  {(!currentApp.aiVerification || currentApp.aiVerification.status === 'unverified') ? (
-                    <div className="p-3 text-center space-y-2.5 bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800">
-                      <div className="w-10 h-10 mx-auto rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <Sparkles size={20} />
-                      </div>
-                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                        Awtomatikong Basahin at I-crosscheck ang mga Dokumento
-                      </p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Gagamitin ang Google Gemini Multimodal Vision upang basahin ang litrato ng OR/CR, Lisensya, atbp. at suriin kung tugma sa in-enter ng operator.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleRunAiVerification}
-                        disabled={isAiVerifying}
-                        className="w-full py-2 px-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
-                      >
-                        {isAiVerifying ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                        <span>{isAiVerifying ? 'Sinisuri ang mga Dokumento...' : 'Simulan ang AI Verification'}</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {/* Summary stats pill */}
-                      <div className="grid grid-cols-3 gap-1.5 text-center">
-                        <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60">
-                          <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400 block">Tugma</span>
-                          <span className="text-sm font-extrabold text-emerald-800 dark:text-emerald-300">
-                            {currentApp.aiVerification.summary?.matchedFields || 0}
-                          </span>
+                    <div className="space-y-1.5">
+                      {/* Cedula Serial No */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">CTC Serial Number</span>
+                          <span className="font-mono font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.cedulaSerialNo || '—'}</span>
                         </div>
-                        <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60">
-                          <span className="text-[10px] uppercase font-bold text-rose-700 dark:text-rose-400 block">Hindi Tugma</span>
-                          <span className="text-sm font-extrabold text-rose-800 dark:text-rose-300">
-                            {currentApp.aiVerification.summary?.mismatchedFields || 0}
-                          </span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                          <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 block">Malabo/Di Basa</span>
-                          <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
-                            {currentApp.aiVerification.summary?.unclearFields || 0}
-                          </span>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.cedulaSerialNo, 'cedulaSerialNo')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Copy Cedula Serial"
+                        >
+                          {copiedField === 'cedulaSerialNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        </button>
                       </div>
 
-                      {/* Notes / Assessment */}
-                      {currentApp.aiVerification.overallNotes && (
-                        <div className={`p-2.5 rounded-xl border text-xs leading-relaxed ${
-                          currentApp.aiVerification.status === 'flagged'
-                            ? 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
-                            : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
-                        }`}>
-                          <p className="font-semibold">{currentApp.aiVerification.overallNotes}</p>
+                      {/* Date Issued */}
+                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Date Issued</span>
+                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.cedulaDate)}</span>
+                      </div>
+
+                      {/* Place of Issue */}
+                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Place Issued</span>
+                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
+                      </div>
+
+                      {/* Taxpayer Name */}
+                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Taxpayer Name</span>
+                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeDocKey === 'todaEndorsement' && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <span>TODA Endorsement Specifications</span>
+                      <span className="text-[10px] text-slate-400">Cross-check with Certificate</span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {/* TODA Association */}
+                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">TODA Association</span>
+                        <span className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.todaName || currentApp.toda || '—'}</span>
+                      </div>
+
+                      {/* Route Zone */}
+                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Assigned Route / Zone</span>
+                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">
+                          {currentApp.zone ? (currentApp.zone.toString().toLowerCase().includes('zone') ? currentApp.zone : `Zone ${currentApp.zone}`) : '—'}
+                        </span>
+                      </div>
+
+                      {/* Certificate Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Certificate / Endorsement No.</span>
+                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.todaCertNo || '—'}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.todaCertNo, 'todaCertNo')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Copy TODA Cert No."
+                        >
+                          {copiedField === 'todaCertNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+
+                      {/* Date Issued */}
+                      {currentApp.todaCertDate && (
+                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Date Issued</span>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.todaCertDate)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeDocKey === 'brgyClearance' && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <span>Barangay Clearance Specifications</span>
+                      <span className="text-[10px] text-slate-400">Cross-check with Clearance</span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {/* Barangay */}
+                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Barangay of Residence</span>
+                        <span className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || '—'}</span>
+                      </div>
+
+                      {/* Clearance Number */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Clearance Number</span>
+                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.brgyClearanceNo || '—'}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentApp.brgyClearanceNo, 'brgyClearanceNo')}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Copy Clearance No."
+                        >
+                          {copiedField === 'brgyClearanceNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        </button>
+                      </div>
+
+                      {/* Date Issued */}
+                      {currentApp.brgyClearanceDate && (
+                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Date Issued</span>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.brgyClearanceDate)}</span>
                         </div>
                       )}
 
-                      {/* Document Details List */}
-                      {Object.entries(currentApp.aiVerification.documents || {}).map(([docKey, docData]) => {
-                        if (!docData || !docData.hasDocument || !Array.isArray(docData.comparisons) || docData.comparisons.length === 0) return null;
-                        
-                        const docLabels = {
-                          orCr: 'LTO OR/CR Document',
-                          license: "Driver's License Card",
-                          cedula: 'Community Tax Certificate (Cedula)',
-                          todaEndorsement: 'TODA Endorsement Certificate',
-                          brgyClearance: 'Barangay Clearance'
-                        };
-
-                        return (
-                          <div key={docKey} className="p-2.5 bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                            <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800/80">
-                              <span className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                                {docLabels[docKey] || docKey}
-                              </span>
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                docData.status === 'mismatch'
-                                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
-                                  : docData.status === 'match'
-                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                              }`}>
-                                {docData.status === 'mismatch' ? 'Mismatch' : docData.status === 'match' ? 'Match' : 'Inspect'}
-                              </span>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              {docData.comparisons.map((comp, cIdx) => (
-                                <div key={cIdx} className={`p-1.5 rounded-lg border text-[11px] ${
-                                  comp.status === 'mismatch'
-                                    ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60'
-                                    : comp.status === 'match'
-                                    ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/40'
-                                    : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
-                                }`}>
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                      {comp.label}
-                                    </span>
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                                      comp.status === 'match' ? 'text-emerald-600 dark:text-emerald-400' : comp.status === 'mismatch' ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-slate-500'
-                                    }`}>
-                                      {comp.status === 'match' ? '✓ Tugma' : comp.status === 'mismatch' ? '✗ Hindi Tugma' : '? Malabo'}
-                                    </span>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-1 mt-1 text-[10px]">
-                                    <div>
-                                      <span className="text-slate-400 dark:text-slate-500 block">In-enter:</span>
-                                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{comp.inputValue}</span>
-                                    </div>
-                                    <div>
-                                      <span className="text-slate-400 dark:text-slate-500 block">Nasa Dokumento:</span>
-                                      <span className={`font-mono font-bold truncate block ${
-                                        comp.status === 'mismatch' ? 'text-rose-600 dark:text-rose-400 underline' : 'text-slate-800 dark:text-slate-200'
-                                      }`}>{comp.extractedValue}</span>
-                                    </div>
-                                  </div>
-
-                                  {/* Quick Auto-Fill Rejection if Mismatch */}
-                                  {comp.status === 'mismatch' && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleApplyMismatchRejection(comp)}
-                                      className="mt-1.5 w-full py-1 px-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-md flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                                      title="Auto-fill this mismatch reason in rejection form"
-                                    >
-                                      <XCircle size={11} />
-                                      <span>I-reject Dahil sa Discrepancy na Ito</span>
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* Re-analyze Button */}
-                      <button
-                        type="button"
-                        onClick={handleRunAiVerification}
-                        disabled={isAiVerifying}
-                        className="w-full py-1.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        {isAiVerifying ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-                        <span>{isAiVerifying ? 'Muling sinusuri...' : 'Muling Suriin Gamit ang AI'}</span>
-                      </button>
+                      {/* Resident Full Name */}
+                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Resident Name</span>
+                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 4. KEYBOARD SHORTCUT HELPER */}
@@ -1454,7 +1154,7 @@ const FranchiseReviewPage = () => {
                   <span>Reject</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300">1-4</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300">1-5</kbd>
                   <span>Docs</span>
                 </span>
                 <span className="flex items-center gap-1">
