@@ -58,7 +58,8 @@ const ApplyFranchise = () => {
   const [formMode, setFormMode] = useState(() => {
     if (modeParam === 'reapply') return 'Re-apply';
     if (modeParam === 'renewal') return 'Renewal';
-    return 'New';
+    if (modeParam === 'new') return 'New';
+    return null;
   }); 
   const [selectedId, setSelectedId] = useState(null); 
   const [reapplyTarget, setReapplyTarget] = useState(null);
@@ -205,7 +206,7 @@ const ApplyFranchise = () => {
         handleReapplyClick(parsed);
         localStorage.removeItem('reapply_target');
       } catch (e) { console.error(e); }
-    } else {
+    } else if (modeParam === 'new') {
       handleStartNewApplication();
     }
   }, []);
@@ -233,6 +234,8 @@ const ApplyFranchise = () => {
       setFormMode('Renewal');
     } else if (m === 'new' && formMode !== 'New') {
       setFormMode('New');
+    } else if (!m && formMode !== null) {
+      setFormMode(null);
     }
     const f = searchParams.get('focus');
     if (f && f !== focusField) {
@@ -419,6 +422,7 @@ const ApplyFranchise = () => {
         });
         const urlStep = parseInt(searchParams.get('step') || '0', 10);
         const targetStep = (urlStep >= 1 && urlStep <= 4) ? urlStep : (savedDraft.currentStep || 1);
+        navigate(`/apply-franchise?mode=new&step=${targetStep}`);
         setCurrentStep(targetStep);
         setHasDraftRestored(true);
         setLastSavedTime(savedDraft.timeFormatted || null);
@@ -428,6 +432,8 @@ const ApplyFranchise = () => {
     } catch (e) {
       console.error('Error loading draft from IndexedDB', e);
     }
+
+    navigate('/apply-franchise?mode=new&step=1');
 
     setHasDraftRestored(false);
     setLastSavedTime(null);
@@ -593,6 +599,7 @@ const ApplyFranchise = () => {
     setFormMode('Re-apply');
     setSelectedId(franchise._id);
     setReapplyTarget(franchise);
+    navigate(`/apply-franchise?mode=reapply&step=1${franchise.rejectedField ? `&focus=${franchise.rejectedField}` : ''}`);
     
     const s = parseInt(searchParams.get('step') || '1', 10);
     const validStep = (s >= 1 && s <= 4) ? s : 1;
@@ -1041,8 +1048,8 @@ const ApplyFranchise = () => {
     }
   };
 
-  const inputClasses = "w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-2 focus:ring-[#9E2A2B] focus:ring-offset-2 transition-all shadow-xs min-h-[46px]";
-  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-300/80 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-600 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[46px]";
+  const inputClasses = "w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[46px]";
+  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-300/80 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[46px]";
 
   const todayDateStr = new Date().toISOString().split('T')[0];
 
@@ -1068,6 +1075,7 @@ const ApplyFranchise = () => {
                 name="orCrNo"
                 value={formData.orCrNo}
                 onChange={handleInputChange}
+                maxLength={30}
                 placeholder="e.g. OR-12345678 / CR-87654321"
                 className={inputClasses}
                 required={formMode === 'New'}
@@ -1113,7 +1121,7 @@ const ApplyFranchise = () => {
 
           <div>
             <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Sino ang magpapatakbo ng traysikel? <span className="text-red-500">*</span>
+              Who will operate this tricycle? <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
@@ -1167,6 +1175,7 @@ const ApplyFranchise = () => {
                   name="driverName"
                   value={formData.driverName}
                   onChange={handleInputChange}
+                  maxLength={60}
                   placeholder="e.g. Pedro Santos"
                   className={inputClasses}
                   required={!formData.isOperatorDriver}
@@ -1181,6 +1190,7 @@ const ApplyFranchise = () => {
                   name="driverContact"
                   value={formData.driverContact}
                   onChange={handleInputChange}
+                  maxLength={15}
                   placeholder="e.g. 09123456789"
                   className={inputClasses}
                   required={!formData.isOperatorDriver}
@@ -1199,6 +1209,7 @@ const ApplyFranchise = () => {
                 name="driverLicenseNo"
                 value={formData.driverLicenseNo}
                 onChange={handleInputChange}
+                maxLength={25}
                 placeholder="e.g. D01-23-456789"
                 className={inputClasses}
                 required={formMode === 'New'}
@@ -1251,6 +1262,7 @@ const ApplyFranchise = () => {
                 name="todaCertNo"
                 value={formData.todaCertNo}
                 onChange={handleInputChange}
+                maxLength={25}
                 placeholder="e.g. TODA-2026-001"
                 className={inputClasses}
               />
@@ -1278,6 +1290,7 @@ const ApplyFranchise = () => {
                 name="todaSignatory"
                 value={formData.todaSignatory}
                 onChange={handleInputChange}
+                maxLength={60}
                 placeholder="e.g. Juan Perez (President)"
                 className={inputClasses}
               />
@@ -1305,6 +1318,7 @@ const ApplyFranchise = () => {
                 name="brgyClearanceNo"
                 value={formData.brgyClearanceNo}
                 onChange={handleInputChange}
+                maxLength={25}
                 placeholder="e.g. BC-2026-089"
                 className={inputClasses}
               />
@@ -1332,6 +1346,7 @@ const ApplyFranchise = () => {
                 name="brgyIssuer"
                 value={formData.brgyIssuer}
                 onChange={handleInputChange}
+                maxLength={60}
                 placeholder="e.g. Hon. Maria Reyes"
                 className={inputClasses}
               />
@@ -1343,6 +1358,210 @@ const ApplyFranchise = () => {
 
     return null;
   };
+
+  if (formMode === null) {
+    return (
+      <MainLayout>
+        {/* Minimalist Floating Toast Notification */}
+        {toast.show && (
+          <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
+            <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
+              <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+                toast.type === 'error'
+                  ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                  : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+              }`}>
+                {toast.type === 'error' ? (
+                  <AlertCircle size={15} />
+                ) : (
+                  <CheckCircle2 size={15} />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                  {toast.message}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <header className="mb-6 flex items-center gap-3">
+          <div className="w-1.5 h-6 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full" />
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">My Franchises</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Manage your active tricycle units and pending applications.</p>
+          </div>
+        </header>
+
+        {/* Draft Resume Alert Banner */}
+        {localStorage.getItem(DRAFT_STORAGE_KEY) && myFranchises.length < maxAllowedUnits && (
+          <div className="mb-6 w-full bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <FileText size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Unfinished Application Draft Detected</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">You have a saved draft. You can resume editing where you left off or discard it.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem(DRAFT_STORAGE_KEY);
+                  showToast("Draft discarded successfully.", "success");
+                }}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Discard Draft
+              </button>
+              <button
+                type="button"
+                onClick={handleStartNewApplication}
+                className="bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                Resume Draft <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="w-full">
+            <GarageGridSkeleton count={2} baseDelay={50} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+            {myFranchises.map((unit, index) => {
+              const hasRenewalDraft = localStorage.getItem(`gtrams_renewal_draft_${unit._id}`);
+
+              return (
+              <div 
+                key={unit._id} 
+                className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div>
+                  <div className="absolute top-0 right-0 w-2 h-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
+                  <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Unit {index + 1}</h3>
+                  <div className="text-lg sm:text-xl font-mono font-bold text-slate-900 dark:text-white mb-1">{unit.plateNo || 'PENDING PLATE'}</div>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
+                </div>
+                
+                <div>
+                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2 gap-2 flex-wrap">
+                    <span className={`px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
+                      unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
+                      unit.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
+                      unit.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
+                      unit.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
+                      unit.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
+                      'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
+                    }`}>
+                      {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={13}/>}
+                      {unit.status === 'Active' && <CheckCircle size={13}/>}
+                      {unit.status === 'For Signing' ? 'For Signing' : unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
+                    </span>
+                    
+                    <div className="flex items-center gap-2">
+                      {unit.status === 'Expired' && (
+                        <button 
+                          onClick={() => handleRenewClick(unit)}
+                          className="text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
+                        >
+                          <RefreshCw size={13} /> {hasRenewalDraft ? 'Continue Renewal' : 'Renew Now'}
+                        </button>
+                      )}
+
+                      {unit.status === 'Cancelled' && (
+                        <button 
+                          onClick={() => handleReapplyClick(unit)}
+                          className="text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white px-3.5 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
+                        >
+                          <RefreshCw size={13} /> Fix Issues
+                        </button>
+                      )}
+
+                      {(unit.status === 'Pending' || unit.status === 'For Signing' || unit.status === 'Ready for Pickup') && (
+                        <button 
+                          onClick={() => setCancelModal({
+                            isOpen: true,
+                            unit,
+                            reason: CANCEL_REASONS[0],
+                            customReason: '',
+                            isSubmitting: false
+                          })}
+                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900/60 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                        >
+                          <XCircle size={13} /> Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {unit.status === 'Active' && (
+                    <div className="mt-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-3 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays size={15} className="text-emerald-600 dark:text-emerald-400" />
+                        <div>
+                          <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Validity</p>
+                          <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">1 Year</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Expires On</p>
+                        <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">{getExpirationDate(unit.dateApplied)}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {unit.status === 'Cancelled' && (
+                    <div className="mt-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 p-3.5 rounded-2xl">
+                      <h4 className="text-red-900 dark:text-red-300 font-bold text-xs uppercase mb-1 flex items-center gap-1.5">
+                        <AlertCircle size={13} className="text-red-600 dark:text-red-400" /> Reason for Rejection
+                      </h4>
+                      <p className="text-xs font-medium text-red-700 dark:text-red-300 leading-snug">
+                        {unit.cancelReason || 'LGU did not provide a specific reason. Please visit the office.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              );
+            })}
+
+            {myFranchises.length < maxAllowedUnits ? (
+              <button 
+                onClick={handleStartNewApplication}
+                className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[190px] group active:scale-98 cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:border-[#9E2A2B]/30 dark:group-hover:border-[#D4AF37]/30 transition-all">
+                  <PlusCircle size={26} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                </div>
+                <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
+                <span className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
+              </button>
+            ) : (
+              <div className="bg-red-50/60 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-3xl p-6 flex flex-col items-center justify-center text-red-700 dark:text-red-300 min-h-[190px] text-center">
+                <AlertCircle size={28} className="mb-2 opacity-60 text-red-600 dark:text-red-400" />
+                <span className="font-bold text-xs sm:text-sm text-red-900 dark:text-red-200">Maximum Limit Reached</span>
+                <span className="text-xs font-medium mt-1 px-4 text-red-600 dark:text-red-400 leading-snug">You have reached the maximum allowed limit of {maxAllowedUnits} registered tricycle units per operator.</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Cancel Confirmation Modal */}
+        <CancelApplicationModal 
+          cancelModal={cancelModal} 
+          setCancelModal={setCancelModal} 
+          handleConfirmCancel={handleConfirmCancel} 
+        />
+      </MainLayout>
+    );
+  }
 
   if (!isLoading && myFranchises.length >= maxAllowedUnits && formMode === 'New') {
     return (
@@ -1539,46 +1758,6 @@ const ApplyFranchise = () => {
         
         {currentStep === 1 && (
           <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-            {/* Compact Pre-Flight Checklist Banner */}
-            <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl p-3 sm:p-3.5 transition-all">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <ShieldCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                    <span>Requirements Checklist: </span>
-                    <span className="font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400">4 items needed</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowChecklist(prev => !prev)}
-                  className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline shrink-0 cursor-pointer"
-                >
-                  {showChecklist ? 'Hide List' : 'View Checklist'}
-                </button>
-              </div>
-              {showChecklist && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-2.5 mt-2 border-t border-amber-200/60 dark:border-amber-900/40 animate-slide-right">
-                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
-                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">1</span>
-                    <span className="truncate">LTO OR / CR</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
-                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">2</span>
-                    <span className="truncate">Driver's License</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
-                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">3</span>
-                    <span className="truncate">Brgy Clearance</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 p-2 rounded-xl text-[11px] border border-slate-100 dark:border-slate-800">
-                    <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[9px] font-black shrink-0">4</span>
-                    <span className="truncate">TODA Endorsement</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Section 1: Operator Information */}
             <div className="space-y-3.5">
               <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
@@ -1593,26 +1772,27 @@ const ApplyFranchise = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Operator Full Name
+                    Operator Full Name <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
                     name="fullName" 
                     value={formData.fullName} 
-                    className={disabledClasses} 
+                    onChange={handleInputChange}
+                    className={inputClasses} 
                     required 
-                    readOnly
-                    title="Assigned automatically based on your account."
+                    maxLength={60}
+                    autoComplete="name"
                     placeholder="e.g. Juan Dela Cruz"
                   />
                 </div>
                 
                 <div>
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Barangay in Gasan
+                    Barangay in Gasan <span className="text-red-500">*</span>
                   </label>
                   {formMode === 'Renewal' || formMode === 'Re-apply' ? (
-                    <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly />
+                    <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly maxLength={100} />
                   ) : (
                     <select name="address" value={formData.address} onChange={handleInputChange} className={inputClasses} required>
                       <option value="">Select Barangay...</option>
@@ -1626,20 +1806,29 @@ const ApplyFranchise = () => {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                      TODA Association
+                      TODA Association <span className="text-red-500">*</span>
                     </label>
                     <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                      Registered
+                      Accredited
                     </span>
                   </div>
                   <input 
                     type="text" 
                     name="todaName" 
-                    value={formData.todaName || loggedInToda || 'NON-TODA'} 
-                    readOnly 
-                    className={disabledClasses} 
-                    title="Assigned automatically based on your account."
+                    list="toda-autocomplete-list"
+                    value={formData.todaName} 
+                    onChange={handleInputChange}
+                    className={inputClasses} 
+                    placeholder="Type or select TODA Association..."
+                    maxLength={60}
+                    autoComplete="off"
+                    required
                   />
+                  <datalist id="toda-autocomplete-list">
+                    {TODA_LIST.filter(t => t !== 'NON-TODA').map((t, idx) => (
+                      <option key={idx} value={t} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
@@ -1713,6 +1902,7 @@ const ApplyFranchise = () => {
                     name="make" 
                     value={formData.make} 
                     onChange={handleInputChange} 
+                    maxLength={40}
                     className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('make') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
                     required 
                     readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
@@ -1815,7 +2005,7 @@ const ApplyFranchise = () => {
                           <span>{zInfo.name}</span>
                         </div>
                         <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                          <strong className="text-slate-700 dark:text-slate-200">Ruta at Sakop:</strong> {zInfo.coverage}
+                          <strong className="text-slate-700 dark:text-slate-200">Route Coverage:</strong> {zInfo.coverage}
                         </p>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
                           <strong className="text-slate-700 dark:text-slate-200">Terminal:</strong> {zInfo.terminal}
@@ -1823,7 +2013,7 @@ const ApplyFranchise = () => {
                         {matchingToda && (
                           <div className="pt-1 mt-1 border-t border-slate-200/80 dark:border-slate-700/60 flex items-center gap-1 text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400">
                             <MapPin size={12} className="shrink-0" />
-                            <span>Kaugnay na TODA: {matchingToda.name}</span>
+                            <span>Associated TODA: {matchingToda.name}</span>
                           </div>
                         )}
                       </div>
@@ -2021,7 +2211,7 @@ const ApplyFranchise = () => {
                 </label>
                 <input 
                   type="text" 
-                  maxLength={16}
+                  maxLength={20}
                   name="cedulaSerialNo" 
                   value={formData.cedulaSerialNo} 
                   onChange={handleInputChange} 
@@ -2029,9 +2219,6 @@ const ApplyFranchise = () => {
                   placeholder="e.g. 08123456" 
                   required 
                 />
-                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
-                  8–16 characters (letters &amp; numbers)
-                </p>
                 {isFieldFocused('cedulaSerialNo') && (
                   <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
                     <AlertCircle size={14} className="shrink-0" />
@@ -2052,12 +2239,9 @@ const ApplyFranchise = () => {
                   value={formData.cedulaDate} 
                   onChange={handleInputChange} 
                   className={`${inputClasses} ${isFieldFocused('cedulaDate') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
-                  placeholder="Piliin ang Araw ng Pagkuha ng Cedula"
+                  placeholder="YYYY-MM-DD"
                   required 
                 />
-                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
-                  Piliin ang Araw ng Pagkuha ng Cedula
-                </p>
                 {isFieldFocused('cedulaDate') && (
                   <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
                     <AlertCircle size={14} className="shrink-0" />
@@ -2073,6 +2257,7 @@ const ApplyFranchise = () => {
                 <input 
                   type="text" 
                   name="cedulaAddress" 
+                  maxLength={100}
                   value={formData.cedulaAddress} 
                   onChange={handleInputChange} 
                   className={`${inputClasses} ${isFieldFocused('cedulaAddress') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
@@ -2117,7 +2302,7 @@ const ApplyFranchise = () => {
                     Cedula / CTC Photo Document
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Kumuha ng litrato o mag-upload ng opisyal na Cedula mula sa Munisipyo (Max 10MB)
+                    Upload clear photo or PDF copy of Community Tax Certificate issued by Municipal Treasury (Max 10MB)
                   </p>
                 </div>
               </div>

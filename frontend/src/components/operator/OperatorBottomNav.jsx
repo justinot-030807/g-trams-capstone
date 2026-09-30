@@ -28,7 +28,7 @@ const OperatorBottomNav = ({ role }) => {
       id: 'apply',
       label: 'Apply',
       icon: PlusCircle,
-      path: '/apply-franchise?mode=new&step=1',
+      path: '/apply-franchise',
       active: location.pathname === '/apply-franchise' || location.pathname.startsWith('/renew-franchise')
     },
     {
@@ -50,7 +50,7 @@ const OperatorBottomNav = ({ role }) => {
       id: 'apply',
       label: 'Apply',
       icon: PlusCircle,
-      path: '/apply-franchise?mode=new&step=1',
+      path: '/apply-franchise',
       active: location.pathname === '/apply-franchise' || location.pathname.startsWith('/renew-franchise')
     },
     {

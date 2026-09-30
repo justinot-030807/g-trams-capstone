@@ -7,7 +7,7 @@ import {
   Copy, ShieldCheck, User, Car, FileCheck, Layers, FileSpreadsheet, Sparkles
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
-import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
+import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
 
 const REJECT_REASONS = [
   'Missing or Expired LTO Official Receipt / Certificate of Registration (OR/CR)',
@@ -605,14 +605,14 @@ const FranchiseReviewPage = () => {
             </button>
           )}
 
-          {/* Application Dossier */}
+          {/* Application Summary */}
           <button
             onClick={() => setIsDossierOpen(true)}
             className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/20 cursor-pointer"
-            title="Open Application Dossier & Evaluation Sheet"
+            title="Open Application Summary"
           >
-            <FileSpreadsheet size={14} className="text-[#D4AF37]" />
-            <span className="hidden md:inline">Application Dossier</span>
+            <FileText size={14} className="text-[#D4AF37]" />
+            <span className="hidden md:inline">Summary</span>
           </button>
 
           {/* AI Verify Gemini Button */}
@@ -1663,8 +1663,8 @@ const FranchiseReviewPage = () => {
         />
       )}
 
-      {/* Application Dossier Modal */}
-      <ApplicationDossierModal 
+      {/* Application Summary Modal (Slide 1 Design) */}
+      <AdminApplicationSummaryModal 
         isOpen={isDossierOpen} 
         onClose={() => setIsDossierOpen(false)} 
         franchise={currentApp} 
