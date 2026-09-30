@@ -184,47 +184,22 @@ const Home = () => {
         </main>
       </div>
 
-      {/* LOWER WHITE SECTION WITH VISIBLE SEAL WATERMARK */}
+      {/* LOWER WHITE SECTION */}
       <div className="relative w-full bg-slate-50 overflow-hidden">
-        {/* Visible Seal Watermark on White Background */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none">
-          <div className="w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.055] pointer-events-none">
-            <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain filter grayscale" />
-          </div>
-        </div>
-
         {/* 3D Citizen's Charter Carousel */}
         <LandingGuideCarousel />
 
         {/* Municipal Bulletin Board */}
         <LandingAnnouncements />
 
-        {/* OFFICIAL SEAL OF GASAN - Placed right between Announcements and Public Stats on white background */}
-        <div className="relative w-full py-10 sm:py-14 flex flex-col items-center justify-center overflow-hidden select-none border-t border-slate-200/60">
-          {/* Soft Watermark in background */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08]">
-            <img src="/gasan-logo.png" alt="" className="w-80 h-80 sm:w-96 sm:h-96 object-contain filter grayscale" />
-          </div>
-
-          {/* Centered High-Definition Seal Emblem */}
-          <div className="relative z-10 flex items-center justify-center w-full max-w-4xl px-4 sm:px-8">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-slate-400" />
-            <div className="mx-4 sm:mx-8 flex flex-col items-center group">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-2 bg-white shadow-xl border-2 border-[#801820]/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                <img 
-                  src="/gasan-logo.png" 
-                  alt="Official Seal of the Municipality of Gasan" 
-                  className="w-full h-full object-contain filter drop-shadow-xs" 
-                />
-              </div>
-              <p className="mt-3 text-xs sm:text-sm font-black text-[#801820] tracking-wider uppercase text-center">
-                Bayan ng Gasan
-              </p>
-              <p className="text-[11px] text-slate-500 font-semibold tracking-widest uppercase text-center">
-                Lalawigan ng Marinduque
-              </p>
-            </div>
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-slate-300 to-slate-400" />
+        {/* BACKGROUND SEAL WATERMARK - Pure watermark placed between Announcements and Public Stats */}
+        <div className="relative w-full py-10 sm:py-16 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+          <div className="w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] opacity-[0.075] pointer-events-none">
+            <img 
+              src="/gasan-logo.png" 
+              alt="Seal of Gasan Watermark" 
+              className="w-full h-full object-contain filter grayscale" 
+            />
           </div>
         </div>
       </div>
