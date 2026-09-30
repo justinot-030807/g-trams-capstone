@@ -332,10 +332,7 @@ const Register = () => {
             <div className="absolute inset-0 bg-black/20" />
 
             {/* Bottom: Brand Title & Subtitle */}
-            <div className="relative z-10 md:sticky md:top-28 md:my-auto">
-              <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-2 mb-3 hidden md:flex items-center justify-center shadow-lg">
-                <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-contain" />
-              </div>
+            <div className="relative z-10 pb-2 sm:pb-3 md:pb-5">
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-1 uppercase">
                 <span className="whitespace-nowrap">G-TRAMS</span>
               </h1>
@@ -347,7 +344,7 @@ const Register = () => {
 
           {/* RIGHT COLUMN: CLEAN FORM PANEL (Task 7: Reduced top gap, R29: 16px inputs) */}
           <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8 md:py-10 bg-white min-h-full">
-            <div className="w-full max-w-lg my-auto">
+            <div className="w-full max-w-lg">
               <div className="mb-3 sm:mb-4">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
                   {step === 1 ? 'Register' : 'Verify Contact'}
