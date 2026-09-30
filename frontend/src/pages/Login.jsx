@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { LogIn, Eye, EyeOff, Loader2, ArrowLeft, User, Lock } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import AuthNavbar from '../components/common/AuthNavbar';
@@ -188,162 +188,200 @@ const Login = () => {
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* CENTERED AUTH CARD */}
-        <main className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] mx-auto px-4 my-auto py-6 sm:py-8 flex flex-col items-center justify-center min-h-fit animate-card-entrance">
-          <div className="w-full bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200/90 p-5 sm:p-7 min-h-fit">
+        {/* MAIN SPLIT AUTH CONTAINER */}
+        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 my-auto py-6 sm:py-10 flex flex-col items-center justify-center animate-card-entrance">
+          <div className="w-full bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-fit">
             
-            <div className="flex flex-col items-center mb-3 text-center">
-              <div className="relative mb-2 animate-logo-entrance">
-                <InteractiveLogo size="w-12 h-12" />
+            {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
+            <div className="md:col-span-5 lg:col-span-6 relative overflow-hidden flex flex-col justify-between p-6 sm:p-8 min-h-[220px] md:min-h-[560px]">
+              {/* Background Photo */}
+              <img 
+                src="/tricycle-bg.jpg" 
+                alt="Gasan Tricycle" 
+                className="absolute inset-0 w-full h-full object-cover object-center" 
+              />
+              {/* Velvet Maroon Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
+              <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
+
+              {/* Top: Back Button */}
+              <div className="relative z-10">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#801820]/90 hover:bg-[#9E2A2B] text-white border border-[#D4AF37] text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all w-fit cursor-pointer"
+                >
+                  <ArrowLeft size={14} className="text-[#D4AF37]" />
+                  <span>Back</span>
+                </Link>
               </div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">G-TRAMS PORTAL</h2>
-              <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
-                <span>MUNICIPALITY OF GASAN</span>
-                <span>•</span>
-                <span className="text-[#9E2A2B]">OFFICIAL SYSTEM</span>
+
+              {/* Bottom: Municipal Badge + Brand Title & Subtitle */}
+              <div className="relative z-10 mt-auto pt-8">
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-[#D4AF37] text-[#D4AF37] bg-black/25 text-[10px] font-black uppercase tracking-widest mb-3 backdrop-blur-xs">
+                  <span>MUNICIPALITY OF GASAN</span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-none mb-2">
+                  G-TRAMS
+                </h1>
+                <p className="text-xs sm:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
+                  Gasan Tricycle Records &amp; Application Management System
+                </p>
               </div>
             </div>
 
-            {error && (
-              <div className={`mb-3 text-xs sm:text-xs font-bold rounded-xl p-2.5 text-center shadow-sm animate-shake tracking-wide ${
-                error.toLowerCase().includes('google')
-                  ? 'bg-amber-50 border border-amber-300 text-amber-900 leading-relaxed'
-                  : 'bg-red-50 border border-red-200 text-red-600 uppercase'
-              }`}>
-                <p>{error}</p>
-                {error.toLowerCase().includes('maintenance') && (
-                  <Link to="/maintenance" className="inline-block mt-1 font-black text-[#9E2A2B] underline tracking-wider">
-                    VIEW SYSTEM STATUS PAGE →
-                  </Link>
-                )}
+            {/* RIGHT COLUMN: CLEAN FORM PANEL */}
+            <div className="md:col-span-7 lg:col-span-6 p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
+              
+              <div className="mb-6">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
+                  Log In
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  Enter your credentials to access your operator portal.
+                </p>
               </div>
-            )}
 
-            <form onSubmit={handleLogin} className="space-y-2.5">
-              <div className="animate-item-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">
-                  EMAIL OR PHONE NUMBER
-                </label>
-                <input
-                  type="text"
-                  name="contact"
-                  value={formData.contact}
-                  onChange={handleChange}
-                  required
-                  className={inputClasses}
-                  placeholder="juan@gmail.com or 09123456789"
+              {error && (
+                <div className={`mb-4 text-xs font-bold rounded-xl p-3 text-center shadow-xs animate-shake tracking-wide ${
+                  error.toLowerCase().includes('google')
+                    ? 'bg-amber-50 border border-amber-300 text-amber-900 leading-relaxed'
+                    : 'bg-red-50 border border-red-200 text-red-600'
+                }`}>
+                  <p>{error}</p>
+                  {error.toLowerCase().includes('maintenance') && (
+                    <Link to="/maintenance" className="inline-block mt-1 font-black text-[#801820] underline tracking-wider">
+                      VIEW SYSTEM STATUS PAGE →
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Email or Phone Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <User size={18} />
+                    </div>
+                    <input
+                      type="text"
+                      name="contact"
+                      value={formData.contact}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-500 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium"
+                      placeholder="Enter your email or phone number"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Password
+                    </label>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock size={18} />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-500 outline-none focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 transition-all shadow-xs font-medium"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#801820] transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  <div className="text-right mt-1.5">
+                    <Link 
+                      to="/forgot-password" 
+                      className="text-xs font-bold text-[#801820] hover:underline transition-colors"
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isLoading || lockoutSeconds > 0}
+                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-black shadow-md hover:shadow-lg active:scale-[0.99] transition-all uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        SIGNING IN...
+                      </>
+                    ) : lockoutSeconds > 0 ? (
+                      `LOCKED (${lockoutSeconds}s)`
+                    ) : (
+                      'Log In'
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {/* DIVIDER */}
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-xs font-bold text-slate-400">OR</span>
+                <div className="flex-1 h-px bg-slate-200" />
+              </div>
+
+              {/* GOOGLE SIGN IN BUTTON */}
+              <div>
+                <GoogleAuthButton 
+                  text="CONTINUE WITH GOOGLE"
+                  onSuccess={handleAuthSuccess}
+                  onNewUser={(data) => {
+                    if (data?.token) {
+                      handleAuthSuccess(data);
+                    } else {
+                      const cleanProfile = unwrapGoogleProfile(data) || data;
+                      setGoogleOnboardingProfile(cleanProfile);
+                      setShowGoogleOnboarding(true);
+                    }
+                  }}
+                  onError={(err) => {
+                    if (err && err.accountDeactivated) {
+                      navigate('/account-deactivated', {
+                        state: {
+                          contact: err.contact || formData.contact,
+                          reason: err.reason,
+                          appealStatus: err.appealStatus
+                        }
+                      });
+                    } else {
+                      setError(typeof err === 'string' ? err : err.message || 'Google Auth Error');
+                    }
+                  }}
                 />
               </div>
 
-              <div className="animate-item-3">
-                <div className="flex justify-between items-center mb-0.5">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    PASSWORD
-                  </label>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className={`${inputClasses} pr-10`}
-                    placeholder="Enter your password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-[#9E2A2B] transition-colors p-1"
-                  >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-                <div className="text-right mt-0.5">
-                  <Link 
-                    to="/forgot-password" 
-                    className="text-[9px] font-bold text-slate-500 hover:text-[#9E2A2B] transition-colors uppercase tracking-wider"
-                  >
-                    FORGOT PASSWORD?
+              <div className="mt-5 pt-3 border-t border-slate-100 text-center">
+                <p className="text-xs text-slate-600 font-medium">
+                  Don't have an account?{' '}
+                  <Link to="/register" className="font-bold text-[#801820] hover:underline">
+                    Sign up
                   </Link>
-                </div>
+                </p>
               </div>
 
-              <div className="animate-item-4 pt-0.5">
-                <button
-                  type="submit"
-                  disabled={isLoading || lockoutSeconds > 0}
-                  className={`relative overflow-hidden group w-full flex items-center justify-center gap-2 text-white py-2 rounded-xl text-xs font-black shadow-md transition-all duration-300 uppercase tracking-wider cursor-pointer ${
-                    isLoading || lockoutSeconds > 0
-                      ? 'bg-slate-400 cursor-not-allowed' 
-                      : 'bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] shadow-[#9E2A2B]/30 hover:shadow-[#9E2A2B]/60 hover:brightness-110 active:scale-[0.98]'
-                  }`}
-                >
-                  <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000 ease-out pointer-events-none" />
-                  {isLoading ? (
-                    <>
-                      <Loader2 size={15} className="animate-spin" />
-                      SIGNING IN...
-                    </>
-                  ) : lockoutSeconds > 0 ? (
-                    <>
-                      LOCKED ({lockoutSeconds}s)
-                    </>
-                  ) : (
-                    <>
-                      <LogIn size={15} />
-                      SIGN IN
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* DIVIDER */}
-            <div className="flex items-center gap-3 my-2 animate-item-4">
-              <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs font-black text-slate-600 dark:text-slate-400 tracking-wider">OR</span>
-              <div className="flex-1 h-px bg-slate-200" />
             </div>
 
-            {/* GOOGLE SIGN IN BUTTON */}
-            <div className="animate-item-4">
-              <GoogleAuthButton 
-                text="CONTINUE WITH GOOGLE"
-                onSuccess={handleAuthSuccess}
-                onNewUser={(data) => {
-                  if (data?.token) {
-                    handleAuthSuccess(data);
-                  } else {
-                    const cleanProfile = unwrapGoogleProfile(data) || data;
-                    setGoogleOnboardingProfile(cleanProfile);
-                    setShowGoogleOnboarding(true);
-                  }
-                }}
-                onError={(err) => {
-                  if (err && err.accountDeactivated) {
-                    navigate('/account-deactivated', {
-                      state: {
-                        contact: err.contact || formData.contact,
-                        reason: err.reason,
-                        appealStatus: err.appealStatus
-                      }
-                    });
-                  } else {
-                    setError(typeof err === 'string' ? err : err.message || 'Google Auth Error');
-                  }
-                }}
-              />
-            </div>
-
-            <div className="mt-2.5 pt-2 border-t border-slate-100 text-center animate-item-4">
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-                UNREGISTERED OPERATOR?{' '}
-                <Link to="/register" className="font-black text-[#9E2A2B] hover:underline">
-                  CREATE AN ACCOUNT &gt;
-                </Link>
-              </p>
-            </div>
           </div>
         </main>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2, Check, X } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Loader2, CheckCircle2, Check, X, ArrowLeft, User, Lock } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
@@ -297,22 +297,57 @@ const Register = () => {
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* CENTERED AUTH CARD */}
-        <main className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] mx-auto px-4 my-auto py-6 sm:py-8 flex flex-col items-center justify-center min-h-fit animate-card-entrance">
-          <div className="w-full bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200/90 p-5 sm:p-7 min-h-fit">
-            <div className="flex flex-col items-center mb-3 text-center">
-              <div className="relative mb-2 animate-logo-entrance">
-                <InteractiveLogo size="w-12 h-12" />
+        {/* MAIN SPLIT AUTH CONTAINER */}
+        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 my-auto py-6 sm:py-10 flex flex-col items-center justify-center animate-card-entrance">
+          <div className="w-full bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-fit">
+            
+            {/* LEFT COLUMN: HERO PHOTO BANNER WITH MAROON OVERLAY */}
+            <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-between p-6 sm:p-8 min-h-[220px] md:min-h-[580px]">
+              {/* Background Photo */}
+              <img 
+                src="/tricycle-bg.jpg" 
+                alt="Gasan Tricycle" 
+                className="absolute inset-0 w-full h-full object-cover object-center" 
+              />
+              {/* Velvet Maroon Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#4A0A10]/95 via-[#801820]/80 to-[#70141B]/85" />
+              <div className="absolute inset-0 bg-[#801820]/40 mix-blend-multiply" />
+
+              {/* Top: Back Button */}
+              <div className="relative z-10">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#801820]/90 hover:bg-[#9E2A2B] text-white border border-[#D4AF37] text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all w-fit cursor-pointer"
+                >
+                  <ArrowLeft size={14} className="text-[#D4AF37]" />
+                  <span>Back</span>
+                </Link>
               </div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase animate-item-1">
-                {step === 1 ? 'REGISTER ACCOUNT' : 'VERIFY CONTACT'}
-              </h2>
-              <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest animate-item-1">
-                <span>{step === 1 ? 'CREATE AN OPERATOR ACCOUNT' : `CODE SENT TO ${formData.contact}`}</span>
-                <span>•</span>
-                <span className="text-[#9E2A2B]">OFFICIAL SYSTEM</span>
+
+              {/* Bottom: Municipal Badge + Brand Title & Subtitle */}
+              <div className="relative z-10 mt-auto pt-8">
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-[#D4AF37] text-[#D4AF37] bg-black/25 text-[10px] font-black uppercase tracking-widest mb-3 backdrop-blur-xs">
+                  <span>MUNICIPALITY OF GASAN</span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-none mb-2">
+                  G-TRAMS
+                </h1>
+                <p className="text-xs sm:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
+                  Gasan Tricycle Records &amp; Application Management System
+                </p>
               </div>
             </div>
+
+            {/* RIGHT COLUMN: CLEAN FORM PANEL */}
+            <div className="md:col-span-7 lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-center bg-white">
+              <div className="mb-4">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
+                  {step === 1 ? 'Create Account' : 'Verify Contact'}
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  {step === 1 ? 'Fill in your details below to register your operator account.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
+                </p>
+              </div>
 
             {error && (
               <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2.5 text-center shadow-sm uppercase tracking-wide">
@@ -529,6 +564,7 @@ const Register = () => {
                 </p>
               </div>
             )}
+            </div>
           </div>
         </main>
       </div>
