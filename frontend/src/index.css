@@ -92,10 +92,10 @@
     }
   }
 
-  /* Dark canvas consistency for auth pages */
+  /* Clean light canvas consistency for auth and public pages */
   html.auth-view,
   body.auth-view {
-    background-color: #1A0B0E !important;
+    background-color: #f8fafc !important;
     min-height: 100% !important;
     overflow-x: hidden !important;
   }

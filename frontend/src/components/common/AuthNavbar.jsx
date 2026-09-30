@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -31,8 +31,8 @@ const AuthNavbar = () => {
 
   return (
     <>
-      {/* FULL-WIDTH TOP NAVBAR (Edge-to-Edge) */}
-      <header className="relative z-30 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between border-b border-white/5 select-none shrink-0">
+      {/* FULL-WIDTH TOP NAVBAR (Municipal Velvet Maroon Header) */}
+      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-[#801820] via-[#9E2A2B] to-[#801820] text-white shadow-md border-b border-[#D4AF37]/35 flex items-center justify-between select-none shrink-0">
         
         {/* FAR LEFT: Gasan Seal + G-TRAMS (Clickable Link to Home) */}
         <a 
@@ -63,20 +63,20 @@ const AuthNavbar = () => {
           {/* Back to Home Icon Button */}
           <Link
             to="/"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-[#D4AF37] transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5"
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white hover:text-[#D4AF37] transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5"
             title="Back to Home"
           >
             <Home size={17} />
-            <span className="hidden md:inline text-xs font-bold text-white/90">Home</span>
+            <span className="hidden md:inline text-xs font-bold text-white">Home</span>
           </Link>
 
           {/* Contextual Nav Buttons */}
           {currentPath !== '/login' && (
             <Link
               to="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#9E2A2B] via-[#9B222B] to-[#7A1B22] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer border border-white/10"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#9E2A2B] bg-white hover:bg-amber-50 shadow-sm hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer border border-white/40"
             >
-              <LogIn size={13} className="text-[#D4AF37]" />
+              <LogIn size={13} className="text-[#9E2A2B]" />
               <span>Sign In</span>
             </Link>
           )}
@@ -84,7 +84,7 @@ const AuthNavbar = () => {
           {currentPath !== '/register' && (
             <Link
               to="/register"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-[#1A0B0E] bg-[#D4AF37] hover:bg-[#E5C158] shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-[#1A0B0E] bg-[#D4AF37] hover:bg-[#E5C158] shadow-sm hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer"
             >
               <UserPlus size={13} className="text-[#1A0B0E]" />
               <span>Register</span>
@@ -96,7 +96,7 @@ const AuthNavbar = () => {
             type="button"
             onClick={() => setIsMenuOpen(true)}
             aria-label="Open Navigation Menu"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
             title="Menu & Guidelines"
           >
             <Menu size={19} />

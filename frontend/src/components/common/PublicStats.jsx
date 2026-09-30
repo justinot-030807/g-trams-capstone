@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Users, Building2, FileCheck2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -83,12 +83,7 @@ const PublicStats = () => {
   };
 
   return (
-    <div className="w-full relative z-10 py-16 sm:py-24 border-t border-white/5 bg-gradient-to-b from-[#1A0B0E] to-[#1a0508] overflow-hidden select-none">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-        <div className="absolute top-1/2 left-1/4 w-[400px] h-[400px] bg-gradient-to-br from-[#9E2A2B] to-transparent rounded-full blur-[80px] -translate-y-1/2" />
-        <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-bl from-[#D4AF37] to-transparent rounded-full blur-[80px] -translate-y-1/2" />
-      </div>
-
+    <div className="w-full relative z-10 py-16 sm:py-24 border-t border-slate-200 bg-slate-50 overflow-hidden select-none">
       <motion.div 
         initial="hidden"
         whileInView="visible"
@@ -97,52 +92,52 @@ const PublicStats = () => {
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
       >
         <motion.div variants={fadeIn} className="max-w-7xl mx-auto flex flex-col items-center mb-12 sm:mb-16">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white text-center tracking-tight uppercase mb-4">
-            Public <span className="text-[#D4AF37]">Stats</span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 text-center tracking-tight uppercase mb-4">
+            Public <span className="text-[#9E2A2B]">Stats</span>
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base font-medium max-w-2xl mx-auto text-center">
+          <p className="text-slate-600 text-sm sm:text-base font-medium max-w-2xl mx-auto text-center">
             A unified ecosystem for a more organized, safe, and efficient transportation system in Gasan.
           </p>
         </motion.div>
 
         <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
           {/* Stat 1 */}
-          <motion.div variants={fadeIn} className="relative group bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 text-center transition-all duration-300 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/30">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#9E2A2B] to-[#4A1015] rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <motion.div variants={fadeIn} className="relative group bg-white border border-slate-200/90 rounded-3xl p-8 text-center transition-all duration-300 hover:-translate-y-2 shadow-xs hover:shadow-md hover:border-[#D4AF37]">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#801820] to-[#9E2A2B] rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
               <Users className="text-white w-8 h-8" />
             </div>
-            <div className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-2">
+            <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-2">
               <CountUp end={stats.operators} />
-              <span className="text-[#D4AF37]">+</span>
+              <span className="text-[#9E2A2B]">+</span>
             </div>
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
+            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest">
               Registered Operators
             </h3>
           </motion.div>
 
           {/* Stat 2 */}
-          <motion.div variants={fadeIn} className="relative group bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 text-center transition-all duration-300 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(122,27,34,0.2)] hover:border-[#9E2A2B]/30">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#D4AF37] to-[#8C7323] rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <motion.div variants={fadeIn} className="relative group bg-white border border-slate-200/90 rounded-3xl p-8 text-center transition-all duration-300 hover:-translate-y-2 shadow-xs hover:shadow-md hover:border-[#D4AF37]">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#D4AF37] to-[#B8972E] rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
               <Building2 className="text-[#1A0B0E] w-8 h-8" />
             </div>
-            <div className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-2">
+            <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-2">
               <CountUp end={stats.todas} />
             </div>
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
+            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest">
               TODA Associations
             </h3>
           </motion.div>
 
           {/* Stat 3 */}
-          <motion.div variants={fadeIn} className="relative group bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 text-center transition-all duration-300 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/30">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#9E2A2B] to-[#4A1015] rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <motion.div variants={fadeIn} className="relative group bg-white border border-slate-200/90 rounded-3xl p-8 text-center transition-all duration-300 hover:-translate-y-2 shadow-xs hover:shadow-md hover:border-[#D4AF37]">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#801820] to-[#9E2A2B] rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
               <FileCheck2 className="text-white w-8 h-8" />
             </div>
-            <div className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-2">
+            <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-2">
               <CountUp end={stats.franchises} />
-              <span className="text-[#D4AF37]">+</span>
+              <span className="text-[#9E2A2B]">+</span>
             </div>
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
+            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest">
               Active Franchises
             </h3>
           </motion.div>

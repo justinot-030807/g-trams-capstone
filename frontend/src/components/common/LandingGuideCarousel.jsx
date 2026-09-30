@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, ShieldCheck, FileCheck, CreditCard, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -157,13 +157,13 @@ const LandingGuideCarousel = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-white/10 relative z-10 overflow-hidden"
+      className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-slate-200 relative z-10 overflow-hidden"
     >
       <div className="text-center mb-10 sm:mb-16 px-4">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight uppercase mb-3 drop-shadow-md">
-          Citizen's <span className="text-[#D4AF37]">Charter</span>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight uppercase mb-3">
+          Citizen's <span className="text-[#9E2A2B]">Charter</span>
         </h2>
-        <p className="text-white/60 text-xs sm:text-base max-w-2xl mx-auto font-medium">
+        <p className="text-slate-600 text-xs sm:text-base max-w-2xl mx-auto font-medium">
           Simplifying the motorized tricycle franchise application process in Gasan. Follow this 5-step digital flow.
         </p>
       </div>
@@ -192,7 +192,7 @@ const LandingGuideCarousel = () => {
                   filter: styles.filter,
                 }}
                 transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-3xl bg-gradient-to-b from-[#9E2A2B]/95 via-[#7A1B22]/95 to-[#1A0B0E]/95 backdrop-blur-xl border border-[#D4AF37]/30 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] text-center cursor-pointer select-none shrink-0"
+                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-3xl bg-gradient-to-b from-[#801820] via-[#9E2A2B] to-[#70141b] text-white border border-[#D4AF37]/40 shadow-xl text-center cursor-pointer select-none shrink-0"
                 onClick={() => {
                   pauseInteraction();
                   setCurrentIndex(index);
@@ -200,11 +200,11 @@ const LandingGuideCarousel = () => {
                 }}
               >
                 {/* Step Badge */}
-                <div className="absolute -top-5 w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8972E] text-[#1A0B0E] rounded-full flex items-center justify-center font-black text-lg sm:text-xl border-4 border-[#1A0B0E] shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                <div className="absolute -top-5 w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8972E] text-[#1A0B0E] rounded-full flex items-center justify-center font-black text-lg sm:text-xl border-4 border-white shadow-md">
                   {step.id}
                 </div>
 
-                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 shadow-inner backdrop-blur-sm border border-white/10">
+                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 shadow-inner border border-white/10">
                   {step.icon}
                 </div>
                 
@@ -224,7 +224,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handlePrev}
           aria-label="Previous Slide"
-          className="absolute left-1 sm:left-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[#1A0B0E]/85 hover:bg-[#9E2A2B] text-white hover:text-[#D4AF37] backdrop-blur-md transition-all duration-300 border border-[#D4AF37]/40 hover:border-[#D4AF37] shadow-lg cursor-pointer active:scale-90"
+          className="absolute left-1 sm:left-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white hover:bg-[#9E2A2B] text-slate-800 hover:text-white transition-all duration-300 border border-slate-200 hover:border-[#9E2A2B] shadow-md cursor-pointer active:scale-90"
         >
           <ChevronLeft size={20} />
         </button>
@@ -232,7 +232,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handleNext}
           aria-label="Next Slide"
-          className="absolute right-1 sm:right-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-[#1A0B0E]/85 hover:bg-[#9E2A2B] text-white hover:text-[#D4AF37] backdrop-blur-md transition-all duration-300 border border-[#D4AF37]/40 hover:border-[#D4AF37] shadow-lg cursor-pointer active:scale-90"
+          className="absolute right-1 sm:right-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white hover:bg-[#9E2A2B] text-slate-800 hover:text-white transition-all duration-300 border border-slate-200 hover:border-[#9E2A2B] shadow-md cursor-pointer active:scale-90"
         >
           <ChevronRight size={20} />
         </button>
@@ -252,8 +252,8 @@ const LandingGuideCarousel = () => {
             }}
             className={`transition-all duration-300 rounded-full cursor-pointer ${
               currentIndex === idx 
-                ? 'w-8 h-2.5 bg-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.6)]' 
-                : 'w-2.5 h-2.5 bg-white/20 hover:bg-white/40'
+                ? 'w-8 h-2.5 bg-[#9E2A2B] shadow-sm' 
+                : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
             }`}
           />
         ))}
@@ -261,7 +261,7 @@ const LandingGuideCarousel = () => {
 
       {/* Swipe Indicator on Mobile */}
       <div className="text-center mt-3 sm:hidden">
-        <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">
+        <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">
           ← Swipe to navigate →
         </span>
       </div>

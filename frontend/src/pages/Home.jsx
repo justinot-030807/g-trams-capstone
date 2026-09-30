@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -33,12 +33,12 @@ const Home = () => {
     }
   }, [navigate]);
 
-  // Ensure dark canvas consistency for auth view
+  // Ensure light canvas consistency for auth and public pages
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#1A0B0E';
-    document.body.style.backgroundColor = '#1A0B0E';
+    document.documentElement.style.backgroundColor = '#f8fafc';
+    document.body.style.backgroundColor = '#f8fafc';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -66,17 +66,11 @@ const Home = () => {
   };
 
   return (
-    <div className="relative w-full bg-[#1A0B0E] text-white flex flex-col overflow-x-hidden select-none">
+    <div className="relative w-full bg-slate-50 text-slate-900 flex flex-col overflow-x-hidden select-none min-h-screen">
       
-      {/* Dynamic Animated Ambient Background with Official Gasan Seal */}
+      {/* Lightweight, zero-lag subtle watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Animated ambient gradient blobs */}
-        <div className="absolute top-[-10%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[90px] opacity-70 animate-liquid-1" />
-        <div className="absolute top-[45%] right-[-15%] w-[620px] h-[620px] bg-gradient-to-tl from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[100px] opacity-75 animate-liquid-2" />
-        <div className="absolute top-[30%] right-[10%] w-[420px] h-[420px] bg-gradient-to-bl from-[#E03144]/40 via-[#8A141E] to-transparent rounded-full blur-[80px] animate-liquid-3" />
-
-        {/* Subtle official Gasan seal watermark centered */}
-        <div className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.045] pointer-events-none select-none">
+        <div className="absolute top-[12%] left-1/2 -translate-x-1/2 w-[480px] h-[480px] sm:w-[620px] sm:h-[620px] opacity-[0.035] pointer-events-none select-none">
           <img src="/gasan-logo.png" alt="" className="w-full h-full object-contain filter grayscale" />
         </div>
       </div>
@@ -97,35 +91,34 @@ const Home = () => {
             className="flex flex-col items-center w-full"
           >
             {/* Primary Headline - Responsive font scaling & safe mobile wrapping */}
-            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-5xl drop-shadow-md px-1 sm:px-0">
+            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-tight max-w-5xl px-1 sm:px-0">
               <span className="block sm:inline">Gasan Tricycle Records &amp; </span>
-              <span className="inline sm:inline-block sm:whitespace-nowrap">Application Management System</span>
+              <span className="inline sm:inline-block sm:whitespace-nowrap text-[#9E2A2B]">Application Management System</span>
             </motion.h1>
 
             {/* Subtitle / Portal Overview */}
-            <motion.p variants={springFade} className="text-white/75 text-sm sm:text-base max-w-2xl mt-4 sm:mt-5 leading-relaxed font-normal px-2">
+            <motion.p variants={springFade} className="text-slate-600 text-sm sm:text-base max-w-2xl mt-4 sm:mt-5 leading-relaxed font-normal px-2">
               The official motorized tricycle regulatory and franchise licensing portal of the Local Government Unit of Gasan, providing streamlined, transparent, and digital municipal services for operators and TODA associations.
             </motion.p>
 
             {/* TWO PRIMARY ACTION BUTTONS */}
             <motion.div variants={springFade} className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 mt-8 sm:mt-10 w-full max-w-md">
               
-              {/* Sign In Button */}
+              {/* Sign In Button (Maroon) */}
               <Link
                 to="/login"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#9E2A2B] via-[#9B222B] to-[#7A1B22] text-white font-bold text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(155,34,43,0.65)] hover:shadow-[0_15px_30px_-5px_rgba(155,34,43,0.85)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-white/10 hover:border-white/20 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#801820] via-[#9E2A2B] to-[#801820] hover:from-[#9E2A2B] hover:to-[#70141b] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 border border-white/20 cursor-pointer"
               >
-                <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[260%] transition-transform duration-1000 ease-out pointer-events-none" />
                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
                   <LogIn size={14} className="text-[#D4AF37]" />
                 </div>
-                <span className="drop-shadow-xs">Sign In</span>
+                <span>Sign In</span>
               </Link>
 
-              {/* Create Account Button (Solid Yellow) */}
+              {/* Create Account Button (Solid Yellow/Gold) */}
               <Link
                 to="/register"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#1A0B0E] font-black text-sm uppercase tracking-wider shadow-[0_10px_25px_-5px_rgba(212,175,55,0.45)] hover:shadow-[0_15px_30px_-5px_rgba(212,175,55,0.65)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#1A0B0E] font-black text-sm uppercase tracking-wider shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
               >
                 <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <UserPlus size={14} className="text-[#1A0B0E]" />
@@ -138,42 +131,42 @@ const Home = () => {
             {/* 4 CORE SERVICE CARDS */}
             <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-12 sm:mt-16 w-full text-left">
               
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
                   <FileText size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-white">Online Application</h3>
-                <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm text-slate-900">Online Application</h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
                   Submit new MTOP applications, renewal requests, and digital requirements without queuing.
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
                   <ShieldCheck size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-white">TODA Masterlist</h3>
-                <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm text-slate-900">TODA Masterlist</h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
                   Verified registry of accredited TODA associations, designated zones, and authorized units.
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
                   <Clock size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-white">Claim Stub &amp; Tracking</h3>
-                <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm text-slate-900">Claim Stub &amp; Tracking</h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
                   Track approval milestones live and generate official printable payment claim stubs.
                 </p>
               </motion.div>
 
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-sm hover:bg-white/10 hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/80 text-[#D4AF37] border border-[#D4AF37]/30 mb-3 shadow-xs">
+              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-[#D4AF37] hover:-translate-y-1 transition-all duration-300">
+                <div className="p-2.5 w-fit rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] border border-[#9E2A2B]/20 mb-3 shadow-xs">
                   <Award size={18} />
                 </div>
-                <h3 className="font-bold text-sm text-white">Official Compliance</h3>
-                <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
+                <h3 className="font-bold text-sm text-slate-900">Official Compliance</h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
                   Full compliance with Gasan Municipal Ordinances, fare matrices, and MTFRB standards.
                 </p>
               </motion.div>

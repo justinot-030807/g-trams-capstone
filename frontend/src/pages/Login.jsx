@@ -34,12 +34,12 @@ const Login = () => {
     };
   }, [lockoutSeconds]);
 
-  // Ensure full-screen coverage without zoom gaps on laptops
+  // Ensure light canvas consistency for auth view
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#1A0B0E';
-    document.body.style.backgroundColor = '#1A0B0E';
+    document.documentElement.style.backgroundColor = '#f8fafc';
+    document.body.style.backgroundColor = '#f8fafc';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -171,33 +171,25 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full bg-slate-50/90 border border-slate-200/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all duration-200 shadow-sm font-medium min-h-[46px] sm:min-h-[48px]";
+  const inputClasses = "w-full bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-[#9E2A2B] focus:ring-4 focus:ring-[#9E2A2B]/15 transition-all shadow-xs font-medium min-h-[46px] sm:min-h-[48px]";
 
   return (
-    <div className="relative w-full bg-[#1A0B0E] flex flex-col overflow-x-hidden select-none">
+    <div className="relative w-full bg-slate-50 flex flex-col overflow-x-hidden select-none min-h-screen">
       
-      {/* Dynamic Background Mesh */}
+      {/* Zero-Lag Lightweight Watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-15%] left-[-15%] w-[580px] h-[580px] bg-gradient-to-br from-[#9E1B27] via-[#C92A36] to-transparent rounded-full blur-[85px] opacity-80 animate-liquid-1" />
-        <div className="absolute bottom-[-15%] right-[-15%] w-[620px] h-[620px] bg-gradient-to-tl from-[#5A0E15] via-[#851821] to-[#360408] rounded-full blur-[95px] opacity-85 animate-liquid-2" />
-        <div className="absolute top-[25%] right-[10%] w-[420px] h-[420px] bg-gradient-to-bl from-[#E03144]/60 via-[#8A141E] to-transparent rounded-full blur-[75px] animate-liquid-3" />
-
-        <div 
-          className="absolute inset-0 opacity-[0.08]"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.9) 1px, transparent 0)',
-            backgroundSize: '24px 24px'
-          }}
-        />
+        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[420px] h-[420px] opacity-[0.035] pointer-events-none select-none">
+          <img src="/gasan-logo.png" alt="" className="w-full h-full object-contain filter grayscale" />
+        </div>
       </div>
 
-      <div className="relative min-h-[100dvh] md:min-h-[112vh] flex flex-col justify-between">
+      <div className="relative min-h-[100dvh] flex flex-col justify-between">
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
         {/* CENTERED AUTH CARD */}
-        <main className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] mx-auto px-4 my-auto py-4 sm:py-6 flex flex-col items-center justify-center min-h-fit animate-card-entrance">
-          <div className="w-full bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.6)] border border-white/50 p-4 sm:p-6 min-h-fit">
+        <main className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] mx-auto px-4 my-auto py-6 sm:py-8 flex flex-col items-center justify-center min-h-fit animate-card-entrance">
+          <div className="w-full bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200/90 p-5 sm:p-7 min-h-fit">
             
             <div className="flex flex-col items-center mb-2.5 text-center">
               <div className="relative mb-1.5 animate-logo-entrance">
