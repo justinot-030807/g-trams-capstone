@@ -71,7 +71,6 @@ const ApplyFranchise = () => {
   const [slideDirection, setSlideDirection] = useState('forward');
   const [showChecklist, setShowChecklist] = useState(false);
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
-  const [lastSavedTime, setLastSavedTime] = useState(null);
 
   // Cancellation modal state
   const [cancelModal, setCancelModal] = useState({
@@ -339,10 +338,9 @@ const ApplyFranchise = () => {
         formMode,
         selectedId
       }).catch(err => console.error('LocalForage save error:', err));
-
-      setLastSavedTime(timeStr);
-      setHasDraftRestored(true);
+ 
       if (isManual) {
+        setHasDraftRestored(true);
         setFeedbackModal({
           isOpen: true,
           type: 'success',
@@ -425,7 +423,6 @@ const ApplyFranchise = () => {
         navigate(`/apply-franchise?mode=new&step=${targetStep}`);
         setCurrentStep(targetStep);
         setHasDraftRestored(true);
-        setLastSavedTime(savedDraft.timeFormatted || null);
         showToast("Your saved draft has been restored.", "success");
         return;
       }
@@ -490,7 +487,6 @@ const ApplyFranchise = () => {
     localStorage.removeItem('apply_form_draft');
     localStorage.removeItem('reapply_target');
     setHasDraftRestored(false);
-    setLastSavedTime(null);
     setCurrentStep(1);
     
     if (formMode === 'New') {
@@ -697,8 +693,9 @@ const ApplyFranchise = () => {
     });
   };
 
-  // Real-time debounced checker for plateNo, motorNo, chassisNo uniqueness
+  // Real-time debounced checker for plateNo, motorNo, chassisNo uniqueness (only active on Step 2)
   useEffect(() => {
+    if (currentStep !== 2) return;
     if (formMode !== 'New' && formMode !== 'Re-apply') return;
 
     const fieldsToCheck = [
@@ -710,19 +707,22 @@ const ApplyFranchise = () => {
     const timers = fieldsToCheck.map(({ name, value, label }) => {
       const trimmed = (value || '').trim();
       if (!trimmed || trimmed.length < 3) {
-        setDuplicateStatus(prev => ({
-          ...prev,
-          [name]: { checking: false, duplicate: false, message: '' }
-        }));
+        setDuplicateStatus(prev => {
+          if (!prev[name].checking && !prev[name].duplicate && !prev[name].message) return prev;
+          return {
+            ...prev,
+            [name]: { checking: false, duplicate: false, message: '' }
+          };
+        });
         return null;
       }
 
-      setDuplicateStatus(prev => ({
-        ...prev,
-        [name]: { ...prev[name], checking: true }
-      }));
-
       return setTimeout(async () => {
+        setDuplicateStatus(prev => ({
+          ...prev,
+          [name]: { ...prev[name], checking: true }
+        }));
+
         try {
           const res = await fetch(
             `${import.meta.env.VITE_API_URL}/api/v1/franchises/check-unique?field=${name}&value=${encodeURIComponent(trimmed)}&currentFranchiseId=${selectedId || ''}`,
@@ -769,7 +769,7 @@ const ApplyFranchise = () => {
     return () => {
       timers.forEach(t => t && clearTimeout(t));
     };
-  }, [formData.plateNo, formData.motorNo, formData.chassisNo, formMode, selectedId]);
+  }, [formData.plateNo, formData.motorNo, formData.chassisNo, formMode, selectedId, currentStep]);
 
   const validateAndNext = () => {
     if (currentStep === 1) {

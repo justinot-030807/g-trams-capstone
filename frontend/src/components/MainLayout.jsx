@@ -49,6 +49,9 @@ const MainLayout = ({ children, hideNav = false }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
+      // Skip heartbeat if document is hidden to conserve mobile battery & bandwidth
+      if (document.hidden) return;
+
       const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
       if (!baseUrl) return;
 
@@ -75,21 +78,11 @@ const MainLayout = ({ children, hideNav = false }) => {
           }).catch(() => {});
         }
       })
-      .catch(() => {
-        fetch(`${baseUrl}/api/v1/auth/profile`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ language: localStorage.getItem('gtrams_lang') || 'en' }),
-          cache: 'no-store'
-        }).catch(() => {});
-      });
+      .catch(() => {});
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 15000);
+    const interval = setInterval(sendHeartbeat, 60000);
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') sendHeartbeat();

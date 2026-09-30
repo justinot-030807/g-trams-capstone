@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -46,25 +46,30 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     }
   });
 
-  // Map context notifications to the shape TopNavbar expects
-  const safeCtxNotifs = Array.isArray(ctxNotifs) ? ctxNotifs : [];
-  const activeCtxNotifs = safeCtxNotifs.map(n => ({
-    id: n?._id || Math.random().toString(),
-    isCtx: true,
-    isRead: Boolean(n?.isRead),
-    title: n?.title || 'Notification',
-    desc: n?.message || '',
-    rawTime: n?.createdAt,
-    time: n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
-    type: n?.type === 'status_change' ? 'pending' : n?.type === 'approval' ? 'success' : 'info',
-    link: String(role || '').includes('admin') ? '/franchise-masterlist' : '/operator-dashboard'
-  }));
+  // Map context notifications to the shape TopNavbar expects (memoized to prevent re-mapping on every render)
+  const safeCtxNotifs = useMemo(() => Array.isArray(ctxNotifs) ? ctxNotifs : [], [ctxNotifs]);
+  const activeCtxNotifs = useMemo(() => {
+    const isRoleAdmin = String(role || '').includes('admin');
+    return safeCtxNotifs.map((n, idx) => ({
+      id: n?._id || `ctx_notif_${idx}`,
+      isCtx: true,
+      isRead: Boolean(n?.isRead),
+      title: n?.title || 'Notification',
+      desc: n?.message || '',
+      rawTime: n?.createdAt,
+      time: n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
+      type: n?.type === 'status_change' ? 'pending' : n?.type === 'approval' ? 'success' : 'info',
+      link: isRoleAdmin ? '/franchise-masterlist' : '/operator-dashboard'
+    }));
+  }, [safeCtxNotifs, role]);
 
-  const activeLocalNotifs = Array.isArray(localNotifications) ? localNotifications : [];
-  const allNotifs = [...activeCtxNotifs, ...activeLocalNotifs];
+  const activeLocalNotifs = useMemo(() => Array.isArray(localNotifications) ? localNotifications : [], [localNotifications]);
+  const allNotifs = useMemo(() => [...activeCtxNotifs, ...activeLocalNotifs], [activeCtxNotifs, activeLocalNotifs]);
   
   // Count unread:
-  const unreadCount = allNotifs.filter(n => n.isCtx ? !n.isRead : !readIds.includes(n.id)).length;
+  const unreadCount = useMemo(() => {
+    return allNotifs.filter(n => n.isCtx ? !n.isRead : !readIds.includes(n.id)).length;
+  }, [allNotifs, readIds]);
 
   const [isMaintenanceActive, setIsMaintenanceActive] = useState(() => localStorage.getItem('maintenance_mode') === 'true');
 

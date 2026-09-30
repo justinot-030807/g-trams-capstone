@@ -1,7 +1,6 @@
-﻿import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, Award, Download, Loader2, CheckCircle2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
 
 const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
@@ -37,6 +36,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
 
     try {
       await new Promise(r => setTimeout(r, 120));
+      const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(certRef.current, {
         scale: 2,
         useCORS: true,

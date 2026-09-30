@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /* Advanced Liquid Aurora & Form Animations — Smooth, Cinematic & Fluid */
 @keyframes liquidOrbit1 {
@@ -175,9 +175,11 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Rule 10: Global Base Transitions for Interactives */
+  /* Hardware-accelerated base transitions for interactives (avoids layout recalculation on typing) */
   button, a, [role="button"], input, select {
-    transition: all var(--transition-base);
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 

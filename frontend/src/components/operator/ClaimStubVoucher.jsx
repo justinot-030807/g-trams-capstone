@@ -1,9 +1,8 @@
-﻿import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   FileText, Download, X, Printer, CheckCircle2, ShieldCheck, 
   User, AlertCircle, Loader2, Scissors 
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
 
 const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' }) => {
   const voucherRef = useRef(null);
@@ -43,6 +42,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
     try {
       await new Promise(r => setTimeout(r, 120));
 
+      const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(voucherRef.current, {
         scale: 2, // 2x high-resolution crisp image
         useCORS: true,

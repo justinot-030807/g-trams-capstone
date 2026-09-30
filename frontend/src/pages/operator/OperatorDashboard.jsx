@@ -43,7 +43,6 @@ const OperatorDashboard = () => {
     }
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
 
   const loggedInUserName = localStorage.getItem('name') || 'Operator';
@@ -136,8 +135,6 @@ const OperatorDashboard = () => {
   useEffect(() => {
     fetchMyFranchises();
     fetchSystemSettings();
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
   }, []);
 
   const fetchSystemSettings = async () => {
@@ -584,7 +581,7 @@ const OperatorDashboard = () => {
               type="button"
               onClick={() => setIsTourOpen(true)}
               title="Operator Quick Guide & FAQs"
-              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-[#D4AF37] flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-[#D4AF37] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
             >
               <HelpCircle size={17} />
             </button>
@@ -594,7 +591,7 @@ const OperatorDashboard = () => {
               type="button"
               onClick={toggleTheme}
               title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
-              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xs cursor-pointer"
             >
               {theme === 'system' ? (
                 <Laptop size={17} className="text-blue-300" />
@@ -610,7 +607,7 @@ const OperatorDashboard = () => {
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="relative w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer"
+                className="relative w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xs cursor-pointer"
               >
                 <Bell size={17} />
                 {unreadNotifCount > 0 && (
@@ -636,7 +633,7 @@ const OperatorDashboard = () => {
         {/* Action Status Banner */}
         <div id="tour-hero-action" className="relative z-10 mt-3 pt-3 border-t border-white/10">
           {isLoading ? (
-            <div className="bg-white/10 dark:bg-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md border border-white/15 animate-pulse">
+            <div className="bg-white/15 dark:bg-slate-900/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-white/20 animate-pulse">
               <div className="space-y-1.5 flex-1 pr-4">
                 <div className="h-3.5 w-44 bg-white/20 rounded-md" />
                 <div className="h-2.5 w-64 bg-white/15 rounded-sm" />
@@ -644,7 +641,7 @@ const OperatorDashboard = () => {
               <div className="h-8 w-24 bg-white/20 rounded-xl shrink-0" />
             </div>
           ) : franchises.some(f => f.status === 'Ready for Pickup') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-white/20">
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-white/20">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                   <Receipt size={18} />
@@ -673,7 +670,7 @@ const OperatorDashboard = () => {
               </button>
             </div>
           ) : franchises.some(f => f.status === 'For Signing') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-purple-200 dark:border-purple-900/60">
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-purple-200 dark:border-purple-900/60">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                   <FileText size={18} />
@@ -692,7 +689,7 @@ const OperatorDashboard = () => {
               </span>
             </div>
           ) : franchises.some(f => f.status === 'Cancelled') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md border border-red-300 dark:border-red-900/60">
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-red-300 dark:border-red-900/60">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
                   <AlertCircle size={18} />
@@ -718,7 +715,7 @@ const OperatorDashboard = () => {
               </button>
             </div>
           ) : (
-            <div className="bg-white/10 dark:bg-white/5 text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md border border-white/15">
+            <div className="bg-white/15 dark:bg-slate-900/60 text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-white/20">
               <div className="min-w-0">
                 <h4 className="text-xs sm:text-sm font-bold truncate">
                   {franchises.length >= maxUnits 
@@ -1267,12 +1264,14 @@ const OperatorDashboard = () => {
       )}
 
       {/* Official Voucher Claim Stub (NO QR or Barcode) */}
-      <ClaimStubVoucher 
-        isOpen={isPrintOpen} 
-        onClose={() => setIsPrintOpen(false)} 
-        unit={selectedUnit} 
-        systemFranchiseFee={systemFranchiseFee} 
-      />
+      {isPrintOpen && (
+        <ClaimStubVoucher 
+          isOpen={isPrintOpen} 
+          onClose={() => setIsPrintOpen(false)} 
+          unit={selectedUnit} 
+          systemFranchiseFee={systemFranchiseFee} 
+        />
+      )}
 
       {/* Operator Application Cancellation Modal */}
       {cancelModal.isOpen && (
@@ -1376,16 +1375,20 @@ const OperatorDashboard = () => {
       )}
 
       {/* First-Time Login Language Preference Modal */}
-      <LanguagePreferenceModal 
-        isOpen={isLangModalOpen} 
-        onConfirm={handleLanguageConfirmed} 
-      />
+      {isLangModalOpen && (
+        <LanguagePreferenceModal 
+          isOpen={isLangModalOpen} 
+          onConfirm={handleLanguageConfirmed} 
+        />
+      )}
 
       {/* Operator Quick Guide & FAQs Modal */}
-      <OperatorGuideModal 
-        isOpen={isTourOpen} 
-        onClose={handleCloseTour} 
-      />
+      {isTourOpen && (
+        <OperatorGuideModal 
+          isOpen={isTourOpen} 
+          onClose={handleCloseTour} 
+        />
+      )}
 
       <FeedbackModal
         isOpen={feedbackModal.isOpen}
