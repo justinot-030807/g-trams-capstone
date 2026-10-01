@@ -474,11 +474,11 @@ const AdminApplicationSummaryModal = ({
               </div>
             </div>
             <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950/80 min-h-[300px]">
-              {previewDoc.url?.toLowerCase().endsWith('.pdf') ? (
+              {(previewDoc.url?.toLowerCase().includes('.pdf') || previewDoc.url?.toLowerCase().includes('/raw/upload') || previewDoc.type === 'application/pdf') ? (
                 <iframe
                   src={previewDoc.url}
                   title={previewDoc.label}
-                  className="w-full h-[70vh] rounded-xl border border-slate-800"
+                  className="w-full h-[70vh] rounded-xl border border-slate-800 bg-white"
                 />
               ) : (
                 <img

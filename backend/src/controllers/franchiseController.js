@@ -504,13 +504,13 @@ const getFranchiseReports = async (req, res) => {
 
 const checkUniqueFranchiseField = async (req, res) => {
     try {
-        const { field, value, currentFranchiseId } = req.query;
+        const { field, value, currentFranchiseId, excludeId } = req.query;
         const allowedFields = ['plateNo', 'motorNo', 'chassisNo'];
         if (!field || !allowedFields.includes(field)) {
             return res.status(400).json({ message: 'Invalid field specified for uniqueness check.' });
         }
         if (!value || !value.trim()) {
-            return res.status(200).json({ isUnique: true, exists: false, field, value: '' });
+            return res.status(200).json({ isUnique: true, unique: true, exists: false, field, value: '' });
         }
 
         const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -520,17 +520,20 @@ const checkUniqueFranchiseField = async (req, res) => {
             status: { $nin: ['Cancelled'] }
         };
 
-        if (currentFranchiseId) {
-            query._id = { $ne: currentFranchiseId };
+        const targetExclude = currentFranchiseId || excludeId;
+        if (targetExclude) {
+            query._id = { $ne: targetExclude };
         }
 
-        const existing = await Franchise.findOne(query).select('plateNo status');
+        const existing = await Franchise.findOne(query).select('plateNo motorNo chassisNo status');
         res.status(200).json({
             isUnique: !existing,
+            unique: !existing,
             exists: !!existing,
             field,
             value: value.trim(),
-            existingStatus: existing ? existing.status : null
+            existingStatus: existing ? existing.status : null,
+            message: existing ? `Ang ${field === 'plateNo' ? 'Plate Number' : field === 'motorNo' ? 'Motor Number' : 'Chassis Number'} na ito ay nakarehistro na sa ibang unit.` : 'Available'
         });
     } catch (error) {
         console.error('Error checking unique franchise field:', error);
@@ -666,12 +669,28 @@ const scanDocument = async (req, res) => {
         const file = req.file;
 
         if (!file && !req.body.fileUrl && !req.body.base64) {
-            return res.status(400).json({ success: false, message: 'No file provided for scanning.' });
+            return res.status(400).json({ success: false, message: 'Walang file na naipadala para sa pag-scan.' });
         }
 
         const fileUrl = file ? (file.path || file.secure_url || file.url) : req.body.fileUrl;
         let base64Data = req.body.base64 || null;
         let mimeType = (file && file.mimetype) || req.body.mimeType || 'image/jpeg';
+
+        if (base64Data && typeof base64Data === 'string' && base64Data.includes(',')) {
+            const parts = base64Data.split(',');
+            const match = parts[0].match(/:(.*?);/);
+            if (match) mimeType = match[1];
+            base64Data = parts[1];
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(200).json({
+                success: false,
+                noKey: true,
+                fileUrl,
+                message: 'Naka-attach ang dokumento! (Paalala: Kailangang i-set ang GEMINI_API_KEY sa Render environment variables para gumana ang AI auto-fill.)'
+            });
+        }
 
         const { fetchImageAsBase64, extractWithGemini } = require('../services/documentVerificationService');
 
@@ -687,7 +706,7 @@ const scanDocument = async (req, res) => {
             return res.status(200).json({
                 success: false,
                 fileUrl,
-                message: 'Document uploaded, but OCR image read was unsuccessful.'
+                message: 'Naka-upload ang dokumento, ngunit hindi mabasa ang imahe.'
             });
         }
 
@@ -697,7 +716,7 @@ const scanDocument = async (req, res) => {
             return res.status(200).json({
                 success: false,
                 fileUrl,
-                message: 'AI scanning could not read details from this document.'
+                message: 'Hindi mabasa o walang nakitang impormasyon sa dokumento. Maaari mo itong i-type nang manu-mano.'
             });
         }
 
@@ -711,7 +730,7 @@ const scanDocument = async (req, res) => {
         console.error('Error in scanDocument:', error);
         return res.status(200).json({
             success: false,
-            message: 'AI document scanning service is currently unavailable.'
+            message: 'Kasalukuyang hindi maabot ang AI scanning service.'
         });
     }
 };

@@ -18,6 +18,7 @@ import TodaZoneGuideModal, { TODA_DIRECTORY, GASAN_ZONES } from '../../component
 import CancelApplicationModal from '../../components/operator/CancelApplicationModal';
 import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
+import SimpleDatePicker from '../../components/common/SimpleDatePicker';
 
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
@@ -555,6 +556,21 @@ const ApplyFranchise = () => {
       scanFormData.append('file', file);
       scanFormData.append('docType', docType);
 
+      // Pre-read base64 client-side to eliminate extra remote Cloudinary re-fetch
+      try {
+        const base64Data = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        });
+        if (base64Data) {
+          scanFormData.append('base64', base64Data);
+        }
+      } catch (err) {
+        console.warn('Local base64 conversion skipped:', err);
+      }
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
         method: 'POST',
         headers: {
@@ -589,7 +605,7 @@ const ApplyFranchise = () => {
               driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : prev.driverName
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Auto-filled: Driver's License details detected!", 'success');
+            showToast("✨ Na-scan ng AI: Driver's License details detected!", 'success');
           } else if (docType === 'orCr') {
             setFormData(prev => ({
               ...prev,
@@ -602,7 +618,7 @@ const ApplyFranchise = () => {
               orCrExpiryDate: d.expiryDate || prev.orCrExpiryDate
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Auto-filled: Plate, Motor, and Chassis extracted from OR/CR!", 'success');
+            showToast("✨ Na-scan ng AI: Plate, Motor, at Chassis kusang nailagay!", 'success');
           } else if (docType === 'todaEndorsement') {
             setFormData(prev => ({
               ...prev,
@@ -611,7 +627,7 @@ const ApplyFranchise = () => {
               todaCertDate: d.dateIssued || prev.todaCertDate
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Auto-filled: TODA Certificate details detected!", 'success');
+            showToast("✨ Na-scan ng AI: TODA Certificate details detected!", 'success');
           } else if (docType === 'brgyClearance') {
             setFormData(prev => ({
               ...prev,
@@ -620,7 +636,7 @@ const ApplyFranchise = () => {
               brgyIssuer: d.issuer || prev.brgyIssuer
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Auto-filled: Barangay Clearance details detected!", 'success');
+            showToast("✨ Na-scan ng AI: Barangay Clearance details detected!", 'success');
           } else if (docType === 'cedula') {
             setFormData(prev => ({
               ...prev,
@@ -629,8 +645,12 @@ const ApplyFranchise = () => {
               cedulaAddress: d.placeIssued || prev.cedulaAddress
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Auto-filled: Cedula details detected!", 'success');
+            showToast("✨ Na-scan ng AI: Cedula details detected!", 'success');
           }
+        } else if (json.noKey) {
+          showToast(json.message, 'warning');
+        } else if (json.message) {
+          showToast(json.message, 'info');
         }
       }
     } catch (err) {
@@ -714,12 +734,14 @@ const ApplyFranchise = () => {
           );
           if (res.ok) {
             const data = await res.json();
+            const isUnique = data.unique !== undefined ? Boolean(data.unique) : Boolean(data.isUnique);
+            const isDuplicate = !isUnique;
             setDuplicateStatus(prev => ({
               ...prev,
               [name]: {
                 checking: false,
-                duplicate: !data.unique,
-                message: data.unique 
+                duplicate: isDuplicate,
+                message: isUnique 
                   ? `${label} is available.` 
                   : (data.message || `This ${label.toLowerCase()} is already registered to another unit.`)
               }
@@ -1375,15 +1397,13 @@ const ApplyFranchise = () => {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          License Expiry Date
-                        </label>
-                        <input 
-                          type="date" 
-                          name="driverLicenseExpiryDate" 
-                          value={formData.driverLicenseExpiryDate} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
+                        <SimpleDatePicker
+                          name="driverLicenseExpiryDate"
+                          value={formData.driverLicenseExpiryDate}
+                          onChange={handleInputChange}
+                          label="License Expiry Date"
+                          mode="expiry"
+                          helperText="Petsa ng pagkapaso ng lisensya (Pumili o gamitin ang +5 Taon preset)."
                         />
                       </div>
                     </div>
@@ -1668,15 +1688,13 @@ const ApplyFranchise = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          LTO Expiry / Registration Date
-                        </label>
-                        <input 
-                          type="date" 
-                          name="orCrExpiryDate" 
-                          value={formData.orCrExpiryDate} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
+                        <SimpleDatePicker
+                          name="orCrExpiryDate"
+                          value={formData.orCrExpiryDate}
+                          onChange={handleInputChange}
+                          label="LTO Expiry / Registration Date"
+                          mode="expiry"
+                          helperText="Petsa ng pagkapaso ng LTO rehistro."
                         />
                       </div>
                     </div>
@@ -1765,15 +1783,13 @@ const ApplyFranchise = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Date Issued
-                      </label>
-                      <input 
-                        type="date" 
-                        name="todaCertDate" 
-                        value={formData.todaCertDate} 
-                        onChange={handleInputChange} 
-                        className={inputClasses} 
+                      <SimpleDatePicker
+                        name="todaCertDate"
+                        value={formData.todaCertDate}
+                        onChange={handleInputChange}
+                        label="Date Issued"
+                        mode="issuance"
+                        helperText="Petsa ng pagka-isyu ng TODA certification."
                       />
                     </div>
                   </div>
@@ -1818,15 +1834,13 @@ const ApplyFranchise = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Date Issued
-                      </label>
-                      <input 
-                        type="date" 
-                        name="brgyClearanceDate" 
-                        value={formData.brgyClearanceDate} 
-                        onChange={handleInputChange} 
-                        className={inputClasses} 
+                      <SimpleDatePicker
+                        name="brgyClearanceDate"
+                        value={formData.brgyClearanceDate}
+                        onChange={handleInputChange}
+                        label="Date Issued"
+                        mode="issuance"
+                        helperText="Petsa ng pagka-isyu ng Barangay Clearance."
                       />
                     </div>
                   </div>
@@ -1914,17 +1928,14 @@ const ApplyFranchise = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Date Issued <span className="text-red-500">*</span>
-                      </label>
-                      <input 
-                        type="date" 
-                        name="cedulaDate" 
-                        max={new Date().toISOString().split('T')[0]}
-                        value={formData.cedulaDate} 
-                        onChange={handleInputChange} 
-                        className={inputClasses} 
-                        required 
+                      <SimpleDatePicker
+                        name="cedulaDate"
+                        value={formData.cedulaDate}
+                        onChange={handleInputChange}
+                        label="Date Issued"
+                        required
+                        mode="issuance"
+                        helperText="Petsa ng pagka-isyu ng Cedula para sa kasalukuyang taon."
                       />
                     </div>
                   </div>
@@ -1971,17 +1982,21 @@ const ApplyFranchise = () => {
                     <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2">Attached Documents (Click to preview):</p>
                     <div className="flex flex-wrap gap-2">
                       {[
-                        { label: 'License', url: filePreviews.license || formData.licenseUrl },
-                        { label: 'OR/CR', url: filePreviews.orCrDocument || formData.orCrUrl },
-                        { label: 'TODA', url: filePreviews.todaEndorsement || formData.todaEndorsementUrl },
-                        { label: 'Barangay', url: filePreviews.brgyClearance || formData.brgyClearanceUrl },
-                        { label: 'Cedula', url: filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl }
+                        { id: 'license', label: "Driver's License", url: filePreviews.license || formData.licenseUrl },
+                        { id: 'orCrDocument', label: 'LTO OR / CR', url: filePreviews.orCrDocument || formData.orCrUrl },
+                        { id: 'todaEndorsement', label: 'TODA Endorsement', url: filePreviews.todaEndorsement || formData.todaEndorsementUrl },
+                        { id: 'brgyClearance', label: 'Barangay Clearance', url: filePreviews.brgyClearance || formData.brgyClearanceUrl },
+                        { id: 'cedula', label: 'Cedula (CTC)', url: filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl }
                       ].map((item, idx) => (
                         item.url ? (
                           <button
                             key={idx}
                             type="button"
-                            onClick={() => setFullPreview(item.url)}
+                            onClick={() => setFullPreview({
+                              url: item.url,
+                              title: `${item.label} Document`,
+                              isPdf: item.url?.toLowerCase().includes('.pdf') || (uploadedDocs[item.id] && uploadedDocs[item.id].type === 'application/pdf')
+                            })}
                             className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 hover:border-slate-400 cursor-pointer shadow-2xs active:scale-95"
                           >
                             <CheckCircle2 size={12} className="text-emerald-600" />
@@ -2069,8 +2084,10 @@ const ApplyFranchise = () => {
 
       {fullPreview && (
         <DocumentPreviewModal 
+          fullPreview={fullPreview}
           fileUrl={fullPreview} 
           isOpen={!!fullPreview} 
+          setFullPreview={setFullPreview}
           onClose={() => setFullPreview(null)} 
         />
       )}

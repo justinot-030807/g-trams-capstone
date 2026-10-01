@@ -148,12 +148,20 @@ const DocumentUploadCard = ({
             </div>
           </div>
         ) : (
-          <div className="my-1.5 relative rounded-2xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[120px]">
+          <div className="my-1.5 relative rounded-2xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[130px]">
             {isPdf ? (
-              <div className="p-4 text-center flex flex-col items-center">
-                <FileCheck size={32} className="text-emerald-600 dark:text-emerald-400 mb-1" />
-                <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">PDF Document</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Verified &amp; Ready</span>
+              <div className="p-4 text-center flex flex-col items-center justify-center w-full">
+                <FileCheck size={36} className="text-emerald-600 dark:text-emerald-400 mb-1.5" />
+                <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Naka-attach ang PDF</span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-2.5">Handa nang i-review</span>
+                <button
+                  type="button"
+                  onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: true })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer active:scale-95"
+                >
+                  <ZoomIn size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  <span>I-preview ang PDF</span>
+                </button>
               </div>
             ) : (
               <div className="w-full h-32 relative overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800">
@@ -164,16 +172,18 @@ const DocumentUploadCard = ({
                 />
                 <button
                   type="button"
-                  onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label })}
-                  className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs font-bold cursor-pointer"
+                  onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: false })}
+                  className="absolute inset-0 bg-black/40 sm:bg-black/30 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs font-bold cursor-pointer"
                 >
-                  <ZoomIn size={16} />
-                  <span>Preview Fullscreen</span>
+                  <span className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                    <ZoomIn size={15} />
+                    <span>I-preview</span>
+                  </span>
                 </button>
               </div>
             )}
 
-            {/* Retake Bar */}
+            {/* Retake & Preview Bar */}
             <div className="w-full bg-emerald-50 dark:bg-emerald-950/70 py-2 px-3 flex items-center justify-between text-xs border-t border-emerald-200 dark:border-emerald-900/60">
               <span className="flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-300 text-xs">
                 <CheckCircle2 size={13} /> Attached
@@ -181,10 +191,17 @@ const DocumentUploadCard = ({
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-2 -mx-2 text-xs"
+                  onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf })}
+                  className="text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
                 >
-                  <RotateCcw size={12} /> Retake Photo
+                  <ZoomIn size={12} /> Tingnan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
+                >
+                  <RotateCcw size={12} /> Palitan
                 </button>
               </div>
             </div>

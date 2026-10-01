@@ -83,6 +83,7 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
  */
 async function fetchImageAsBase64(url) {
     try {
+        if (!url || typeof url !== 'string') return null;
         const response = await axios.get(url, {
             responseType: 'arraybuffer',
             timeout: 10000,
@@ -91,7 +92,8 @@ async function fetchImageAsBase64(url) {
             }
         });
 
-        const contentType = response.headers['content-type'] || 'image/jpeg';
+        if (!response || !response.data) return null;
+        const contentType = (response.headers && response.headers['content-type']) || 'image/jpeg';
         const base64Data = Buffer.from(response.data).toString('base64');
         return { base64Data, mimeType: contentType.split(';')[0] };
     } catch (err) {
@@ -186,53 +188,45 @@ Extract the following details and return ONLY a valid JSON object with these key
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Try primary model gemini-3.8-flash (or gemini-2.5-flash fallback)
+        // Try models in order: gemini-2.5-flash -> gemini-2.0-flash -> gemini-1.5-flash
+        const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
         let responseText = null;
-        try {
-            const interaction = await ai.models.generateContent({
-                model: 'gemini-3.8-flash',
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [
-                            { text: prompt },
-                            {
-                                inlineData: {
-                                    mimeType: mimeType || 'image/jpeg',
-                                    data: base64Data
+
+        for (const modelName of modelsToTry) {
+            try {
+                const interaction = await ai.models.generateContent({
+                    model: modelName,
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inlineData: {
+                                        mimeType: mimeType || 'image/jpeg',
+                                        data: base64Data
+                                    }
                                 }
-                            }
-                        ]
-                    }
-                ]
-            });
-            responseText = interaction.text || (interaction.candidates?.[0]?.content?.parts?.[0]?.text);
-        } catch (callErr) {
-            console.warn('[DocVerify] gemini-3.8-flash call failed, trying gemini-2.5-flash:', callErr.message);
-            const fallbackInteraction = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [
-                            { text: prompt },
-                            {
-                                inlineData: {
-                                    mimeType: mimeType || 'image/jpeg',
-                                    data: base64Data
-                                }
-                            }
-                        ]
-                    }
-                ]
-            });
-            responseText = fallbackInteraction.text || (fallbackInteraction.candidates?.[0]?.content?.parts?.[0]?.text);
+                            ]
+                        }
+                    ]
+                });
+                responseText = interaction.text || (interaction.candidates?.[0]?.content?.parts?.[0]?.text);
+                if (responseText) break;
+            } catch (callErr) {
+                console.warn(`[DocVerify] Model ${modelName} call failed:`, callErr.message);
+            }
         }
 
         if (!responseText) return null;
 
-        // Clean any code fences
-        const cleaned = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        // Clean any code fences or extra wrapping
+        let cleaned = responseText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+            cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
         return JSON.parse(cleaned);
     } catch (err) {
         console.error(`[DocVerify] Gemini OCR error for ${docType}:`, err.message);
