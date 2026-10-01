@@ -337,9 +337,6 @@ const Register = () => {
               <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-xs">
                 Gasan Tricycle Records &amp; Application Management System
               </p>
-              <p className="hidden md:block text-xs text-amber-200/90 font-medium mt-1">
-                Official Tricycle Franchising &amp; Regulatory Portal
-              </p>
             </div>
           </div>
 
