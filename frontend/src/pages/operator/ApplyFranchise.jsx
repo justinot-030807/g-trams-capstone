@@ -1,5 +1,7 @@
 import localforage from 'localforage';
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 import { GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -7,7 +9,7 @@ import {
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw,
   Save, XCircle, CheckCircle2, Clock, Sparkles, User, Eye, Receipt,
-  Compass, MapPin
+  Compass, MapPin, ExternalLink
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -17,11 +19,7 @@ import CancelApplicationModal from '../../components/operator/CancelApplicationM
 import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
 
-
-
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
-
-
 
 const STANDARD_DOC_IDS = ['orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
 
@@ -38,9 +36,6 @@ const POPULAR_MAKES = [
   'Bajaj CT 150',
   'Yamaha YTX 125'
 ];
-
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
 
 const ApplyFranchise = () => {
   const navigate = useNavigate();
@@ -69,7 +64,6 @@ const ApplyFranchise = () => {
   
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [slideDirection, setSlideDirection] = useState('forward');
-  const [showChecklist, setShowChecklist] = useState(false);
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
 
   // Cancellation modal state
@@ -94,6 +88,24 @@ const ApplyFranchise = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [fullPreview, setFullPreview] = useState(null);
   const [showTodaGuide, setShowTodaGuide] = useState(false);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+
+  // AI Scanning state per document
+  const [aiScanning, setAiScanning] = useState({
+    license: false,
+    orCrDocument: false,
+    todaEndorsement: false,
+    brgyClearance: false,
+    cedulaDoc: false
+  });
+
+  const [aiSuccess, setAiSuccess] = useState({
+    license: false,
+    orCrDocument: false,
+    todaEndorsement: false,
+    brgyClearance: false,
+    cedulaDoc: false
+  });
 
   // Real-time uniqueness checker state
   const [duplicateStatus, setDuplicateStatus] = useState({
@@ -101,28 +113,10 @@ const ApplyFranchise = () => {
     motorNo: { checking: false, duplicate: false, message: '' },
     chassisNo: { checking: false, duplicate: false, message: '' }
   });
-  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
 
-  // Dynamic settings: max units and requirements list
+  // Dynamic settings: max units
   const [maxAllowedUnits, setMaxAllowedUnits] = useState(() => {
     return Number(localStorage.getItem('max_units_per_operator')) || 2;
-  });
-
-  const [requirementsList, setRequirementsList] = useState(() => {
-    try {
-      const saved = localStorage.getItem('required_docs');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((doc, idx) => ({
-            id: STANDARD_DOC_IDS[idx] || `doc_${idx}`,
-            label: doc,
-            fieldUrl: STANDARD_DOC_IDS[idx] ? `${STANDARD_DOC_IDS[idx]}Url` : `doc_${idx}Url`
-          }));
-        }
-      }
-    } catch {}
-    return DEFAULT_REQUIREMENTS;
   });
 
   let loggedInUserName = localStorage.getItem('name') || '';
@@ -145,9 +139,9 @@ const ApplyFranchise = () => {
     zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
     todaName: loggedInToda,
     dateApplied: new Date().toISOString().split('T')[0], 
-    cedulaDate: '', cedulaAddress: 'Gasan, Marinduque', 
+    cedulaDate: '', 
+    cedulaAddress: 'Gasan, Marinduque', 
     cedulaSerialNo: '',
-    // Structured document metadata fields
     orCrNo: '',
     orCrExpiryDate: '',
     isOperatorDriver: true,
@@ -160,7 +154,12 @@ const ApplyFranchise = () => {
     todaSignatory: '',
     brgyClearanceNo: '',
     brgyClearanceDate: '',
-    brgyIssuer: ''
+    brgyIssuer: '',
+    orCrUrl: '',
+    licenseUrl: '',
+    todaEndorsementUrl: '',
+    brgyClearanceUrl: '',
+    cedulaUrl: ''
   });
   
   const [uploadedDocs, setUploadedDocs] = useState({});
@@ -169,31 +168,19 @@ const ApplyFranchise = () => {
   useEffect(() => {
     fetchMyFranchises();
 
-    // Fetch system settings for unit limits and document requirements
     const fetchSettings = async () => {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
         if (res.ok) {
           const json = await res.json();
-          if (json && json.data) {
-            if (json.data.maxUnitsPerOperator !== undefined && json.data.maxUnitsPerOperator !== null) {
-              const numUnits = Number(json.data.maxUnitsPerOperator) || 2;
-              setMaxAllowedUnits(numUnits);
-              localStorage.setItem('max_units_per_operator', numUnits);
-            }
-            if (Array.isArray(json.data.requiredDocs) && json.data.requiredDocs.length > 0) {
-              const mapped = json.data.requiredDocs.map((doc, idx) => ({
-                id: STANDARD_DOC_IDS[idx] || `doc_${idx}`,
-                label: doc,
-                fieldUrl: STANDARD_DOC_IDS[idx] ? `${STANDARD_DOC_IDS[idx]}Url` : `doc_${idx}Url`
-              }));
-              setRequirementsList(mapped);
-              localStorage.setItem('required_docs', JSON.stringify(json.data.requiredDocs));
-            }
+          if (json?.data?.maxUnitsPerOperator !== undefined && json?.data?.maxUnitsPerOperator !== null) {
+            const numUnits = Number(json.data.maxUnitsPerOperator) || 2;
+            setMaxAllowedUnits(numUnits);
+            localStorage.setItem('max_units_per_operator', numUnits);
           }
         }
       } catch (e) {
-        console.error('Error fetching dynamic settings:', e);
+        console.error('Error fetching settings:', e);
       }
     };
     fetchSettings();
@@ -210,21 +197,14 @@ const ApplyFranchise = () => {
     }
   }, []);
 
-  // Sync step and formMode from searchParams (handles browser / gesture back & forward)
+  // Sync step and formMode from searchParams
   useEffect(() => {
     const s = parseInt(searchParams.get('step') || '1', 10);
     const validS = (s >= 1 && s <= 4) ? s : 1;
     if (validS !== currentStep) {
       setSlideDirection(validS < currentStep ? 'backward' : 'forward');
-      if (!document.startViewTransition) {
-        setCurrentStep(validS);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        document.startViewTransition(() => {
-          setCurrentStep(validS);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-      }
+      setCurrentStep(validS);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     const m = searchParams.get('mode');
     if (m === 'reapply' && formMode !== 'Re-apply') {
@@ -233,16 +213,10 @@ const ApplyFranchise = () => {
       setFormMode('Renewal');
     } else if (m === 'new' && formMode !== 'New') {
       setFormMode('New');
-    } else if (!m && formMode !== null) {
-      setFormMode(null);
-    }
-    const f = searchParams.get('focus');
-    if (f && f !== focusField) {
-      setFocusField(f);
     }
   }, [searchParams]);
 
-  // Auto-scroll and focus to rejected/highlighted field if focusField is present
+  // Focus flagged field if present
   useEffect(() => {
     if (focusField) {
       const timer = setTimeout(() => {
@@ -279,48 +253,35 @@ const ApplyFranchise = () => {
     return DRAFT_STORAGE_KEY;
   };
 
+  // Accurate 4-Step Progress Calculation
   const calculateProgress = () => {
-    if (formMode === 'Renewal') {
-      const vehicleFields = 8;
-      const cedulaFields = [
-        formData.dateApplied,
-        formData.cedulaDate,
-        formData.cedulaAddress,
-        formData.cedulaSerialNo
-      ].filter(Boolean).length;
-      const total = 12;
-      const done = vehicleFields + cedulaFields;
-      const pct = Math.round((done / total) * 100);
-      return { percentage: Math.min(pct, 100), completed: done, total, remaining: total - done };
-    }
+    let completed = 0;
+    const total = 14;
 
-    const step1Fields = [
-      formData.fullName,
-      formData.address
-    ].filter(Boolean).length;
+    // Step 1 items (4)
+    if (formData.fullName?.trim()) completed++;
+    if (formData.address?.trim()) completed++;
+    if (uploadedDocs.license || filePreviews.license || formData.licenseUrl) completed++;
+    if (formData.driverLicenseNo?.trim()) completed++;
 
-    const step2Fields = [
-      formData.zone,
-      formData.made,
-      formData.make,
-      formData.motorNo,
-      formData.chassisNo,
-      formData.plateNo
-    ].filter(Boolean).length;
+    // Step 2 items (6)
+    if (uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl) completed++;
+    if (formData.make?.trim()) completed++;
+    if (formData.made?.trim()) completed++;
+    if (formData.zone?.trim()) completed++;
+    if (formData.plateNo?.trim()) completed++;
+    if (formData.motorNo?.trim() && formData.chassisNo?.trim()) completed++;
 
-    const step3Fields = [
-      formData.dateApplied,
-      formData.cedulaDate,
-      formData.cedulaAddress,
-      formData.cedulaSerialNo
-    ].filter(Boolean).length;
+    // Step 3 items (2)
+    if (uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl) completed++;
+    if (uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl) completed++;
 
-    const step4Files = requirementsList.filter(req => uploadedDocs[req.id] || filePreviews[req.id]).length;
+    // Step 4 items (2)
+    if (uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl) completed++;
+    if (formData.cedulaSerialNo?.trim() && formData.cedulaDate) completed++;
 
-    const total = 2 + 6 + 4 + (requirementsList?.length || 4);
-    const done = step1Fields + step2Fields + step3Fields + step4Files;
-    const pct = Math.round((done / total) * 100);
-    return { percentage: Math.min(pct, 100), completed: done, total, remaining: total - done };
+    const pct = Math.round((completed / total) * 100);
+    return { percentage: Math.min(pct, 100), completed, total };
   };
 
   const handleSaveProgress = (isManual = true) => {
@@ -337,15 +298,15 @@ const ApplyFranchise = () => {
         timeFormatted: timeStr,
         formMode,
         selectedId
-      }).catch(err => console.error('LocalForage save error:', err));
+      }).catch(err => console.error('Draft save error:', err));
  
       if (isManual) {
         setHasDraftRestored(true);
         setFeedbackModal({
           isOpen: true,
           type: 'success',
-          title: 'Progress Saved',
-          message: `Your application draft has been saved (${timeStr}). You can safely return and continue anytime.`,
+          title: 'Draft Saved',
+          message: `Application draft saved at ${timeStr}. You can safely return and finish anytime.`,
           confirmText: 'OK',
           onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
         });
@@ -360,12 +321,12 @@ const ApplyFranchise = () => {
     if (formMode === 'New' || formMode === 'Renewal') {
       const timer = setTimeout(() => {
         handleSaveProgress(false);
-      }, 700);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [formData, currentStep, formMode, selectedId]);
 
-  // Cleanup object URLs on unmount to prevent memory leaks
+  // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
       Object.values(filePreviews).forEach(url => {
@@ -378,7 +339,7 @@ const ApplyFranchise = () => {
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
 
   const fetchMyFranchises = async () => {
@@ -396,13 +357,6 @@ const ApplyFranchise = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getExpirationDate = (dateApplied) => {
-    if (!dateApplied) return 'N/A';
-    const date = new Date(dateApplied);
-    date.setFullYear(date.getFullYear() + 1); 
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   const handleStartNewApplication = async () => {
@@ -431,16 +385,13 @@ const ApplyFranchise = () => {
     }
 
     navigate('/apply-franchise?mode=new&step=1');
-
     setHasDraftRestored(false);
-    setLastSavedTime(null);
-    // Smart Defaults (Tesler's Law): Auto-fill recent CTC/Cedula if available
+
     let smartCedulaDate = '';
     let smartCedulaAddress = 'Gasan, Marinduque';
     let smartCedulaSerialNo = '';
 
     if (myFranchises && myFranchises.length > 0) {
-      // Find the most recent franchise
       const recent = [...myFranchises].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
       if (recent) {
         smartCedulaDate = recent.cedulaDate ? recent.cedulaDate.substring(0, 10) : '';
@@ -470,7 +421,12 @@ const ApplyFranchise = () => {
       todaSignatory: '',
       brgyClearanceNo: '',
       brgyClearanceDate: '',
-      brgyIssuer: ''
+      brgyIssuer: '',
+      orCrUrl: '',
+      licenseUrl: '',
+      todaEndorsementUrl: '',
+      brgyClearanceUrl: '',
+      cedulaUrl: ''
     });
   };
 
@@ -479,64 +435,13 @@ const ApplyFranchise = () => {
     try {
       await localforage.removeItem(key);
       await localforage.removeItem(DRAFT_STORAGE_KEY);
-      await localforage.removeItem('gtrams_apply_draft');
-      await localforage.removeItem('apply_form_draft');
-    } catch(e) { console.error('Error removing draft', e); }
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    localStorage.removeItem('gtrams_apply_draft');
-    localStorage.removeItem('apply_form_draft');
-    localStorage.removeItem('reapply_target');
-    setHasDraftRestored(false);
-    setCurrentStep(1);
-    
-    if (formMode === 'New') {
-      let smartCedulaDate = '';
-      let smartCedulaAddress = 'Gasan, Marinduque';
-      let smartCedulaSerialNo = '';
-
-      if (myFranchises && myFranchises.length > 0) {
-        const recent = [...myFranchises].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-        if (recent) {
-          smartCedulaDate = recent.cedulaDate ? recent.cedulaDate.substring(0, 10) : '';
-          smartCedulaAddress = recent.cedulaAddress || 'Gasan, Marinduque';
-          smartCedulaSerialNo = recent.cedulaSerialNo || '';
-        }
-      }
-
-      setFormData({ 
-        fullName: loggedInUserName, 
-        address: loggedInAddress, 
-        zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
-        todaName: loggedInToda, 
-        dateApplied: new Date().toISOString().split('T')[0], 
-        cedulaDate: smartCedulaDate, 
-        cedulaAddress: smartCedulaAddress, 
-        cedulaSerialNo: smartCedulaSerialNo,
-        orCrNo: '',
-        orCrExpiryDate: '',
-        isOperatorDriver: true,
-        driverName: '',
-        driverContact: '',
-        driverLicenseNo: '',
-        driverLicenseExpiryDate: '',
-        todaCertNo: '',
-        todaCertDate: '',
-        todaSignatory: '',
-        brgyClearanceNo: '',
-        brgyClearanceDate: '',
-        brgyIssuer: ''
-      });
-      setUploadedDocs({});
-      setFilePreviews({});
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      setHasDraftRestored(false);
+      handleStartNewApplication();
+      showToast('Draft has been reset.', 'info');
+    } catch (err) {
+      console.error('Error resetting draft:', err);
     }
-    setFeedbackModal({
-      isOpen: true,
-      type: 'info',
-      title: 'Draft Cleared',
-      message: 'Your application draft has been cleared and the form has been reset.',
-      confirmText: 'OK',
-      onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
-    });
   };
 
   const handleBackToDashboard = () => {
@@ -552,42 +457,6 @@ const ApplyFranchise = () => {
       prevStep();
     } else {
       handleBackToDashboard();
-    }
-  };
-
-  const handleRenewClick = (franchise) => {
-    navigate('/renew-franchise/' + franchise._id);
-  };
-
-  const handleConfirmCancel = async () => {
-    if (!cancelModal.unit) return;
-    setCancelModal(prev => ({ ...prev, isSubmitting: true }));
-    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)')
-      ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
-      : cancelModal.reason;
-
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${cancelModal.unit._id}/cancel`, {
-        method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ cancelReason: finalReason })
-      });
-
-      if (res.ok) {
-        showToast("Application successfully cancelled.", "success");
-        setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false });
-        fetchMyFranchises();
-      } else {
-        const d = await res.json();
-        showToast(d.message || "Unable to cancel application.", "error");
-        setCancelModal(prev => ({ ...prev, isSubmitting: false }));
-      }
-    } catch (err) {
-      showToast("Network error. Cannot connect to server.", "error");
-      setCancelModal(prev => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -633,7 +502,12 @@ const ApplyFranchise = () => {
       todaSignatory: franchise.todaSignatory || '',
       brgyClearanceNo: franchise.brgyClearanceNo || '',
       brgyClearanceDate: franchise.brgyClearanceDate ? franchise.brgyClearanceDate.substring(0, 10) : '',
-      brgyIssuer: franchise.brgyIssuer || ''
+      brgyIssuer: franchise.brgyIssuer || '',
+      orCrUrl: franchise.orCrUrl || '',
+      licenseUrl: franchise.licenseUrl || '',
+      todaEndorsementUrl: franchise.todaEndorsementUrl || '',
+      brgyClearanceUrl: franchise.brgyClearanceUrl || '',
+      cedulaUrl: franchise.cedulaUrl || ''
     });
 
     const previews = {};
@@ -661,17 +535,127 @@ const ApplyFranchise = () => {
     setFormData(prev => ({ ...prev, [name]: sanitized }));
   };
 
+  // AI OCR Scanner Engine for Operator Form
+  const triggerAiScan = async (reqId, file) => {
+    let docType = '';
+    const lower = (reqId || '').toLowerCase();
+    if (lower === 'license' || lower.includes('license')) docType = 'license';
+    else if (lower === 'orcrdocument' || lower.includes('orcr')) docType = 'orCr';
+    else if (lower === 'todaendorsement' || lower.includes('toda')) docType = 'todaEndorsement';
+    else if (lower === 'brgyclearance' || lower.includes('brgy')) docType = 'brgyClearance';
+    else if (lower === 'ceduladoc' || lower.includes('cedula') || lower === 'cedula') docType = 'cedula';
+
+    if (!docType) return;
+
+    setAiScanning(prev => ({ ...prev, [reqId]: true }));
+    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
+
+    try {
+      const scanFormData = new FormData();
+      scanFormData.append('file', file);
+      scanFormData.append('docType', docType);
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: scanFormData
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const d = json.data;
+
+          if (json.fileUrl) {
+            const urlKeyMap = {
+              orCr: 'orCrUrl',
+              license: 'licenseUrl',
+              todaEndorsement: 'todaEndorsementUrl',
+              brgyClearance: 'brgyClearanceUrl',
+              cedula: 'cedulaUrl'
+            };
+            if (urlKeyMap[docType]) {
+              setFormData(prev => ({ ...prev, [urlKeyMap[docType]]: json.fileUrl }));
+            }
+          }
+
+          if (docType === 'license') {
+            setFormData(prev => ({
+              ...prev,
+              driverLicenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : prev.driverLicenseNo,
+              driverLicenseExpiryDate: d.expiryDate || prev.driverLicenseExpiryDate,
+              driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : prev.driverName
+            }));
+            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+            showToast("✨ Auto-filled: Driver's License details detected!", 'success');
+          } else if (docType === 'orCr') {
+            setFormData(prev => ({
+              ...prev,
+              plateNo: d.plateNo ? d.plateNo.toUpperCase() : prev.plateNo,
+              motorNo: d.motorNo ? d.motorNo.toUpperCase() : prev.motorNo,
+              chassisNo: d.chassisNo ? d.chassisNo.toUpperCase() : prev.chassisNo,
+              make: d.make || prev.make,
+              made: d.year ? String(d.year) : prev.made,
+              orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : prev.orCrNo,
+              orCrExpiryDate: d.expiryDate || prev.orCrExpiryDate
+            }));
+            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+            showToast("✨ Auto-filled: Plate, Motor, and Chassis extracted from OR/CR!", 'success');
+          } else if (docType === 'todaEndorsement') {
+            setFormData(prev => ({
+              ...prev,
+              todaCertNo: d.certNo ? d.certNo.toUpperCase() : prev.todaCertNo,
+              todaSignatory: d.signatory || prev.todaSignatory,
+              todaCertDate: d.dateIssued || prev.todaCertDate
+            }));
+            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+            showToast("✨ Auto-filled: TODA Certificate details detected!", 'success');
+          } else if (docType === 'brgyClearance') {
+            setFormData(prev => ({
+              ...prev,
+              brgyClearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : prev.brgyClearanceNo,
+              brgyClearanceDate: d.dateIssued || prev.brgyClearanceDate,
+              brgyIssuer: d.issuer || prev.brgyIssuer
+            }));
+            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+            showToast("✨ Auto-filled: Barangay Clearance details detected!", 'success');
+          } else if (docType === 'cedula') {
+            setFormData(prev => ({
+              ...prev,
+              cedulaSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.cedulaSerialNo,
+              cedulaDate: d.dateIssued || prev.cedulaDate,
+              cedulaAddress: d.placeIssued || prev.cedulaAddress
+            }));
+            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+            showToast("✨ Auto-filled: Cedula details detected!", 'success');
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('AI Scan non-fatal notice:', err);
+    } finally {
+      setAiScanning(prev => ({ ...prev, [reqId]: false }));
+    }
+  };
+
   const handleFileChange = (reqId, file) => {
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 10MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 10MB.', 'error');
+        showToast('Masyadong malaki ang dokumento. Hanggang 10MB lamang ang pinapayagan.', 'error');
         return;
       }
       setFilePreviews(prev => {
-        if (prev[reqId]) URL.revokeObjectURL(prev[reqId]);
+        if (prev[reqId] && typeof prev[reqId] === 'string' && prev[reqId].startsWith('blob:')) {
+          URL.revokeObjectURL(prev[reqId]);
+        }
         return { ...prev, [reqId]: URL.createObjectURL(file) };
       });
       setUploadedDocs(prev => ({ ...prev, [reqId]: file }));
+
+      // Trigger automatic smart AI scanning
+      triggerAiScan(reqId, file);
     }
   };
 
@@ -686,14 +670,18 @@ const ApplyFranchise = () => {
     });
     
     setFilePreviews(prev => {
-      if (prev[reqId]) URL.revokeObjectURL(prev[reqId]);
+      if (prev[reqId] && typeof prev[reqId] === 'string' && prev[reqId].startsWith('blob:')) {
+        URL.revokeObjectURL(prev[reqId]);
+      }
       const copy = { ...prev };
       delete copy[reqId];
       return copy;
     });
+
+    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
   };
 
-  // Real-time debounced checker for plateNo, motorNo, chassisNo uniqueness (only active on Step 2)
+  // Real-time debounced duplicate checker (Step 2)
   useEffect(() => {
     if (currentStep !== 2) return;
     if (formMode !== 'New' && formMode !== 'Re-apply') return;
@@ -707,13 +695,10 @@ const ApplyFranchise = () => {
     const timers = fieldsToCheck.map(({ name, value, label }) => {
       const trimmed = (value || '').trim();
       if (!trimmed || trimmed.length < 3) {
-        setDuplicateStatus(prev => {
-          if (!prev[name].checking && !prev[name].duplicate && !prev[name].message) return prev;
-          return {
-            ...prev,
-            [name]: { checking: false, duplicate: false, message: '' }
-          };
-        });
+        setDuplicateStatus(prev => ({
+          ...prev,
+          [name]: { checking: false, duplicate: false, message: '' }
+        }));
         return null;
       }
 
@@ -722,35 +707,23 @@ const ApplyFranchise = () => {
           ...prev,
           [name]: { ...prev[name], checking: true }
         }));
-
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/v1/franchises/check-unique?field=${name}&value=${encodeURIComponent(trimmed)}&currentFranchiseId=${selectedId || ''}`,
-            {
-              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            }
+            `${import.meta.env.VITE_API_URL}/api/v1/franchises/check-unique?field=${name}&value=${encodeURIComponent(trimmed)}${selectedId ? `&excludeId=${selectedId}` : ''}`,
+            { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
           );
           if (res.ok) {
             const data = await res.json();
-            if (data.exists) {
-              setDuplicateStatus(prev => ({
-                ...prev,
-                [name]: {
-                  checking: false,
-                  duplicate: true,
-                  message: `⚠️ This ${label} is already registered in the system.`
-                }
-              }));
-            } else {
-              setDuplicateStatus(prev => ({
-                ...prev,
-                [name]: {
-                  checking: false,
-                  duplicate: false,
-                  message: 'Available'
-                }
-              }));
-            }
+            setDuplicateStatus(prev => ({
+              ...prev,
+              [name]: {
+                checking: false,
+                duplicate: !data.unique,
+                message: data.unique 
+                  ? `${label} is available.` 
+                  : (data.message || `This ${label.toLowerCase()} is already registered to another unit.`)
+              }
+            }));
           } else {
             setDuplicateStatus(prev => ({
               ...prev,
@@ -763,266 +736,226 @@ const ApplyFranchise = () => {
             [name]: { checking: false, duplicate: false, message: '' }
           }));
         }
-      }, 400);
+      }, 500);
     });
 
     return () => {
       timers.forEach(t => t && clearTimeout(t));
     };
-  }, [formData.plateNo, formData.motorNo, formData.chassisNo, formMode, selectedId, currentStep]);
+  }, [formData.plateNo, formData.motorNo, formData.chassisNo, currentStep, formMode, selectedId]);
 
-  const validateAndNext = () => {
+  // Validation before proceeding to next step
+  const validateCurrentStep = () => {
+    const today = new Date().toISOString().split('T')[0];
+
     if (currentStep === 1) {
-      if (!formData.fullName || !formData.address) {
-        showToast("Please fill out all required operator details.", "error");
-        return;
+      if (!formData.fullName?.trim()) {
+        showToast('Pakilagay ang buong pangalan ng operator.', 'error');
+        return false;
       }
-    } else if (currentStep === 2) {
-      if (!formData.zone || !formData.make || !formData.made || !formData.motorNo || !formData.chassisNo || !formData.plateNo) {
-        showToast("Please fill out all required vehicle details.", "error");
-        return;
+      if (!formData.address?.trim()) {
+        showToast('Pakilagay ang tirahan o barangay ng operator.', 'error');
+        return false;
       }
-      if (duplicateStatus.plateNo?.duplicate || duplicateStatus.motorNo?.duplicate || duplicateStatus.chassisNo?.duplicate) {
-        showToast("Please resolve duplicate vehicle numbers before continuing.", "error");
-        return;
+      if (!formData.isOperatorDriver) {
+        if (!formData.driverName?.trim()) {
+          showToast('Pakilagay ang buong pangalan ng itinalagang drayber.', 'error');
+          return false;
+        }
+        if (!formData.driverContact?.trim()) {
+          showToast('Pakilagay ang contact number ng itinalagang drayber.', 'error');
+          return false;
+        }
       }
-    } else if (currentStep === 3) {
-      const today = new Date().toISOString().split('T')[0];
-      if (!formData.dateApplied) {
-        setFormData(prev => ({ ...prev, dateApplied: today }));
+      if (formMode === 'New') {
+        const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
+        if (!hasLicense) {
+          showToast("Kinakailangang i-upload ang Driver's License.", 'error');
+          return false;
+        }
+        if (!formData.driverLicenseNo?.trim()) {
+          showToast("Pakilagay o i-scan ang Driver's License Number.", 'error');
+          return false;
+        }
+        if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
+          showToast("Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO.", 'error');
+          return false;
+        }
       }
-      if (!formData.cedulaSerialNo || !formData.cedulaSerialNo.trim()) {
-        showToast(language === 'fil' ? 'Pakilagay ang CTC / Cedula Serial No.' : 'Please enter your CTC / Cedula Serial No.', 'error');
-        return;
-      }
-      if (!formData.cedulaDate) {
-        showToast(language === 'fil' ? 'Piliin ang Araw ng Pagkuha ng Cedula (Date Issued).' : 'Please select the Date Issued of your Cedula.', 'error');
-        return;
-      }
-      const currentYear = new Date().getFullYear();
-      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
-      if (cedulaYear < currentYear) {
-        showToast(
-          language === 'fil'
-            ? `Paso na ang Cedula (CTC). Ang Cedula para sa taong ${cedulaYear} ay hindi na tanggap; kinakailangan ang Cedula para sa kasalukuyang taon (${currentYear}).`
-            : `Expired Community Tax Certificate (Cedula). A Cedula issued in ${cedulaYear} is not valid for this fiscal year (${currentYear}).`,
-          'error'
-        );
-        return;
-      }
-      if (formData.cedulaDate > today) {
-        showToast(
-          language === 'fil'
-            ? 'Hindi maaaring sa hinaharap ang petsa ng pagkuha ng Cedula.'
-            : 'Date issued for Cedula cannot be in the future.',
-          'error'
-        );
-        return;
-      }
-      if (!formData.cedulaAddress || !formData.cedulaAddress.trim()) {
-        showToast(language === 'fil' ? 'Pakilagay ang Lugar ng Pagkuha ng Cedula (Place Issued).' : 'Please enter the Place Issued of your Cedula.', 'error');
-        return;
-      }
+      return true;
     }
-    const nextStep = currentStep + 1;
-    setSlideDirection('forward');
-    if (!document.startViewTransition) {
-      setCurrentStep(nextStep);
+
+    if (currentStep === 2) {
+      if (formMode === 'New') {
+        const hasOrCr = uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
+        if (!hasOrCr) {
+          showToast('Kinakailangang i-upload ang LTO OR/CR ng sasakyan.', 'error');
+          return false;
+        }
+        if (!formData.make?.trim()) {
+          showToast('Pakilagay ang Make / Brand ng motor.', 'error');
+          return false;
+        }
+        if (!formData.made?.trim()) {
+          showToast('Pakilagay ang Model Year.', 'error');
+          return false;
+        }
+        if (!formData.zone?.trim()) {
+          showToast('Pakipili ang Route / Zone ng prangkisa.', 'error');
+          return false;
+        }
+        if (!formData.plateNo?.trim()) {
+          showToast('Pakilagay ang Plate Number.', 'error');
+          return false;
+        }
+        if (!formData.motorNo?.trim()) {
+          showToast('Pakilagay ang Engine / Motor Number.', 'error');
+          return false;
+        }
+        if (!formData.chassisNo?.trim()) {
+          showToast('Pakilagay ang Chassis Serial Number.', 'error');
+          return false;
+        }
+        if (duplicateStatus.plateNo.duplicate || duplicateStatus.motorNo.duplicate || duplicateStatus.chassisNo.duplicate) {
+          showToast('May duplicate na Plate/Motor/Chassis number. Pakitama muna.', 'error');
+          return false;
+        }
+        if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
+          showToast('Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO.', 'error');
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (currentStep === 3) {
+      if (formMode === 'New') {
+        const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
+        const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
+        if (!hasToda) {
+          showToast('Kinakailangang i-upload ang TODA Endorsement Certificate.', 'error');
+          return false;
+        }
+        if (!hasBrgy) {
+          showToast('Kinakailangang i-upload ang Barangay Clearance.', 'error');
+          return false;
+        }
+      }
+      return true;
+    }
+
+    return true;
+  };
+
+  const nextStep = () => {
+    if (!validateCurrentStep()) return;
+    if (currentStep < 4) {
+      setSlideDirection('forward');
+      const nextS = currentStep + 1;
+      setCurrentStep(nextS);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      document.startViewTransition(() => {
-        setCurrentStep(nextStep);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+      const currentMode = (formMode || 'New').toLowerCase();
+      navigate(`?mode=${currentMode}&step=${nextS}`);
     }
-    const currentMode = (formMode || 'New').toLowerCase();
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('mode', currentMode);
-    newParams.set('step', String(nextStep));
-    navigate(`?${newParams.toString()}`);
   };
 
   const prevStep = () => {
-    setSlideDirection('backward');
-    if (window.history.state && window.history.state.idx > 0) {
-      navigate(-1);
-    } else {
-      const prev = Math.max(currentStep - 1, 1);
-      if (!document.startViewTransition) {
-        setCurrentStep(prev);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        document.startViewTransition(() => {
-          setCurrentStep(prev);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-      }
+    if (currentStep > 1) {
+      setSlideDirection('backward');
+      const prevS = currentStep - 1;
+      setCurrentStep(prevS);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       const currentMode = (formMode || 'New').toLowerCase();
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set('mode', currentMode);
-      newParams.set('step', String(prev));
-      navigate(`?${newParams.toString()}`);
+      navigate(`?mode=${currentMode}&step=${prevS}`);
     }
   };
 
+  // Submit Handler
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     if (isSubmitting) return;
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Cedula Current Fiscal Year Check
-    if (formData.cedulaDate) {
-      const currentYear = new Date().getFullYear();
-      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
-      if (cedulaYear < currentYear) {
-        showToast(
-          language === 'fil'
-            ? `Paso na ang Cedula (CTC). Ang Cedula para sa taong ${cedulaYear} ay hindi na tanggap; kinakailangan ang Cedula na kinuha para sa kasalukuyang taon (${currentYear}).`
-            : `Expired Community Tax Certificate (Cedula). A Cedula issued in ${cedulaYear} is not valid for this fiscal year (${currentYear}).`,
-          'error'
-        );
-        return;
-      }
+    // Cedula validation
+    const currentYear = new Date().getFullYear();
+    if (!formData.cedulaSerialNo?.trim()) {
+      showToast('Pakilagay ang CTC / Cedula Serial Number.', 'error');
+      return;
     }
-
-    // Expiry check: If orCrExpiryDate < today, show toast error and abort submit
-    if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
-      showToast(
-        language === 'fil'
-          ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa.'
-          : 'Expired LTO OR/CR: Renewal with LTO is required before franchise application.',
-        'error'
-      );
+    if (!formData.cedulaDate) {
+      showToast('Pakilagay ang Date Issued ng Cedula.', 'error');
+      return;
+    }
+    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+    if (cedulaYear < currentYear) {
+      showToast(`Paso na ang Cedula para sa taong ${cedulaYear}. Kinakailangan ang Cedula para sa taong ${currentYear}.`, 'error');
       return;
     }
 
-    // Expiry check: If driverLicenseExpiryDate < today, show toast error and abort submit
-    if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
-      showToast(
-        language === 'fil'
-          ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-apply ng prangkisa."
-          : "Expired Driver's License: Renewal with LTO is required before franchise application.",
-        'error'
-      );
-      return;
-    }
-
-    // If isOperatorDriver is false, ensure driverName and driverContact are provided
-    if (!formData.isOperatorDriver) {
-      if (!formData.driverName?.trim() || !formData.driverContact?.trim()) {
-        showToast(
-          language === 'fil'
-            ? 'Pakilagay ang pangalan at numero ng itinalagang drayber.'
-            : "Please provide designated driver's name and contact number.",
-          'error'
-        );
-        return;
-      }
-    }
-
-    // If formMode === 'New', ensure orCrNo and driverLicenseNo are provided
     if (formMode === 'New') {
-      if (!formData.orCrNo?.trim() || !formData.driverLicenseNo?.trim()) {
-        showToast(
-          language === 'fil'
-            ? "Pakilagay ang OR/CR Number at Driver's License Number."
-            : "Please provide OR/CR Number and Driver's License Number.",
-          'error'
-        );
-        return;
-      }
-
-      const missing = requirementsList.filter(req => !uploadedDocs[req.id]);
-      if (missing.length > 0) {
-        showToast(`Please ensure all ${requirementsList.length} required documents are uploaded.`, "error");
+      const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
+      if (!hasCedula) {
+        showToast('Kinakailangang i-upload ang kopya ng Cedula (CTC).', 'error');
         return;
       }
     }
 
     setIsSubmitting(true);
-    setUploadPhase('Preparing application & files...');
-    const slowNetTimer = setTimeout(() => {
-      showToast("Network seems slow. Please wait while uploading...", "warning");
-    }, 7000);
+    setUploadPhase('Preparing application submission...');
 
     try {
-      let response;
+      const submitData = new FormData();
+      submitData.append('applicationType', formMode === 'Renewal' ? 'Renewal' : 'New');
+      if (formMode === 'Re-apply') submitData.append('status', 'Pending');
 
-      if (formMode === 'New' || formMode === 'Re-apply') {
-        const submitData = new FormData();
-        submitData.append('applicationType', 'New');
-        if (formMode === 'Re-apply') submitData.append('status', 'Pending');
-
-        Object.keys(formData).forEach(key => {
-          if (formData[key] !== undefined && formData[key] !== null) {
-            submitData.append(key, formData[key]);
-          }
-        });
-        
-        // Ensure dates are not empty
-        if (!formData.dateApplied) {
-          submitData.append('dateApplied', new Date().toISOString().substring(0, 10));
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== undefined && formData[key] !== null) {
+          submitData.append(key, formData[key]);
         }
-        if (!formData.cedulaDate) {
-          submitData.append('cedulaDate', new Date().toISOString().substring(0, 10));
-        }
-        
-        const docCount = Object.keys(uploadedDocs).length;
-        setUploadPhase(`Uploading ${docCount || 7} requirements to secure cloud...`);
+      });
 
-        requirementsList.forEach((req, idx) => {
-          const file = uploadedDocs[req.id];
-          if (file) {
-            submitData.append(req.id, file);
-            if (STANDARD_DOC_IDS[idx] && STANDARD_DOC_IDS[idx] !== req.id) {
-              submitData.append(STANDARD_DOC_IDS[idx], file);
-            }
-          }
-        });
-
-        if (uploadedDocs['cedulaDoc']) {
-          submitData.append('cedulaDoc', uploadedDocs['cedulaDoc']);
-        }
-
-        const url = formMode === 'Re-apply' ? `${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}` : `${import.meta.env.VITE_API_URL}/api/v1/franchises`;
-        response = await fetch(url, {
-          method: formMode === 'Re-apply' ? 'PUT' : 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-          body: submitData
-        });
+      if (!formData.dateApplied) {
+        submitData.append('dateApplied', new Date().toISOString().substring(0, 10));
       }
 
-      setUploadPhase('Registering franchise record...');
+      setUploadPhase('Uploading documents and attachments...');
+
+      // Append documents
+      if (uploadedDocs.orCrDocument) submitData.append('orCrDocument', uploadedDocs.orCrDocument);
+      if (uploadedDocs.license) submitData.append('license', uploadedDocs.license);
+      if (uploadedDocs.todaEndorsement) submitData.append('todaEndorsement', uploadedDocs.todaEndorsement);
+      if (uploadedDocs.brgyClearance) submitData.append('brgyClearance', uploadedDocs.brgyClearance);
+      if (uploadedDocs.cedulaDoc) submitData.append('cedulaDoc', uploadedDocs.cedulaDoc);
+      else if (uploadedDocs.cedula) submitData.append('cedulaDoc', uploadedDocs.cedula);
+
+      const url = formMode === 'Re-apply' 
+        ? `${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}` 
+        : `${import.meta.env.VITE_API_URL}/api/v1/franchises`;
+
+      const response = await fetch(url, {
+        method: formMode === 'Re-apply' ? 'PUT' : 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: submitData
+      });
+
       const data = await response.json();
 
       if (response.ok) {
-        // Clear localforage drafts and local storage keys
         try {
           await localforage.removeItem(getDraftKey());
           await localforage.removeItem(DRAFT_STORAGE_KEY);
-          await localforage.removeItem('gtrams_apply_draft');
-          await localforage.removeItem('apply_form_draft');
-          if (selectedId) {
-            await localforage.removeItem(`gtrams_renewal_draft_${selectedId}`);
-          }
-        } catch (storageErr) {
-          console.error('Error clearing localforage draft on submit:', storageErr);
-        }
+        } catch {}
 
         localStorage.removeItem(DRAFT_STORAGE_KEY);
-        localStorage.removeItem('gtrams_apply_draft');
-        localStorage.removeItem('apply_form_draft');
         localStorage.removeItem('reapply_target');
-        if (selectedId) {
-          localStorage.removeItem(`gtrams_renewal_draft_${selectedId}`);
-        }
+
         setFeedbackModal({
           isOpen: true,
           type: 'success',
-          title: formMode === 'Re-apply' ? 'Revision Submitted!' : formMode === 'Renewal' ? 'Renewal Submitted!' : 'Application Submitted!',
-          message: 'Your application has been received by the Office of the Vice Mayor Extension office for evaluation. You can track the status directly on your dashboard.',
-          confirmText: 'OK',
+          title: formMode === 'Re-apply' ? 'Revision Submitted!' : 'Application Submitted!',
+          message: 'Your franchise application has been successfully submitted to the Sangguniang Bayan Office for evaluation.',
+          confirmText: 'Go to Dashboard',
           onConfirm: () => {
             setFeedbackModal(prev => ({ ...prev, isOpen: false }));
             navigate('/operator-dashboard');
@@ -1033,495 +966,33 @@ const ApplyFranchise = () => {
           isOpen: true,
           type: 'error',
           title: 'Submission Failed',
-          message: data.message || data.error || 'Failed to submit application. Please check your inputs and requirements.',
+          message: data.message || 'Server error while submitting application. Please try again.',
           confirmText: 'OK',
           onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
         });
       }
-    } catch (error) {
-      console.error('Submission error:', error);
-      showToast(error.message ? `Submission error: ${error.message}` : 'Network error. Cannot connect to server.', 'error');
+    } catch (err) {
+      console.error('Submit error:', err);
+      showToast('Network error while connecting to server.', 'error');
     } finally {
-      clearTimeout(slowNetTimer);
       setIsSubmitting(false);
       setUploadPhase('');
     }
   };
 
-  const inputClasses = "w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[46px]";
-  const disabledClasses = "w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-300/80 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 outline-none cursor-not-allowed select-none min-h-[46px]";
+  const inputClasses = "w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-2xs font-medium";
+  const disabledClasses = "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 text-xs sm:text-sm cursor-not-allowed font-medium";
 
-  const todayDateStr = new Date().toISOString().split('T')[0];
-
-  const renderDocMetadata = (reqId) => {
-    const lowerId = (reqId || '').toLowerCase();
-
-    // 1. OR/CR Card Metadata
-    if (lowerId === 'orcrdocument' || lowerId.includes('orcr') || lowerId === 'doc_0') {
-      const isExpired = Boolean(formData.orCrExpiryDate && formData.orCrExpiryDate < todayDateStr);
-      return (
-        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2.5 shadow-2xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                OR / CR Number {formMode === 'New' && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type="text"
-                name="orCrNo"
-                value={formData.orCrNo}
-                onChange={handleInputChange}
-                maxLength={30}
-                placeholder="e.g. OR-12345678"
-                className={inputClasses}
-                required={formMode === 'New'}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
-                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <span>Registration Expiry Date</span>
-              </label>
-              <input
-                type="date"
-                name="orCrExpiryDate"
-                value={formData.orCrExpiryDate}
-                onChange={handleInputChange}
-                className={inputClasses}
-              />
-            </div>
-          </div>
-          {isExpired && (
-            <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
-              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
-              <p className="leading-snug">
-                Expired LTO OR/CR: Please ensure registration is renewed with LTO.
-              </p>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 2. Driver's License Card Metadata
-    if (lowerId === 'license' || lowerId.includes('license') || lowerId === 'doc_1') {
-      const isExpired = Boolean(formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < todayDateStr);
-      return (
-        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2.5 shadow-2xs">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-              Who is driving? <span className="text-red-500">*</span>
-            </label>
-            <div className="inline-flex p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl text-xs">
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: true }))}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  formData.isOperatorDriver 
-                    ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                Self (Operator)
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: false }))}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  !formData.isOperatorDriver 
-                    ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 shadow-xs' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                Designated Driver
-              </button>
-            </div>
-          </div>
-
-          {!formData.isOperatorDriver && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1.5 border-t border-slate-200/80 dark:border-slate-700/60 animate-in fade-in duration-200">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Driver's Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="driverName"
-                  value={formData.driverName}
-                  onChange={handleInputChange}
-                  maxLength={60}
-                  placeholder="e.g. Pedro Santos"
-                  className={inputClasses}
-                  required={!formData.isOperatorDriver}
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Driver's Contact <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="driverContact"
-                  value={formData.driverContact}
-                  onChange={handleInputChange}
-                  maxLength={15}
-                  placeholder="e.g. 09123456789"
-                  className={inputClasses}
-                  required={!formData.isOperatorDriver}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                License Number {formMode === 'New' && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type="text"
-                name="driverLicenseNo"
-                value={formData.driverLicenseNo}
-                onChange={handleInputChange}
-                maxLength={25}
-                placeholder="e.g. D01-23-456789"
-                className={inputClasses}
-                required={formMode === 'New'}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
-                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <span>License Expiry Date</span>
-              </label>
-              <input
-                type="date"
-                name="driverLicenseExpiryDate"
-                value={formData.driverLicenseExpiryDate}
-                onChange={handleInputChange}
-                className={inputClasses}
-              />
-            </div>
-          </div>
-
-          {isExpired && (
-            <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-xs font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
-              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
-              <p className="leading-snug">
-                Expired Driver's License: Please ensure the license is renewed with LTO.
-              </p>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 3. TODA Endorsement Card Metadata
-    if (lowerId === 'todaendorsement' || lowerId.includes('toda') || lowerId === 'doc_2') {
-      return (
-        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Certificate No. (Optional)
-              </label>
-              <input
-                type="text"
-                name="todaCertNo"
-                value={formData.todaCertNo}
-                onChange={handleInputChange}
-                maxLength={25}
-                placeholder="e.g. TODA-2026-001"
-                className={inputClasses}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
-                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <span>Date Issued</span>
-              </label>
-              <input
-                type="date"
-                name="todaCertDate"
-                max={todayDateStr}
-                value={formData.todaCertDate}
-                onChange={handleInputChange}
-                className={inputClasses}
-              />
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // 4. Barangay Clearance Card Metadata
-    if (lowerId === 'brgyclearance' || lowerId.includes('brgy') || lowerId.includes('clearance') || lowerId === 'doc_3') {
-      return (
-        <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Clearance No. (Optional)
-              </label>
-              <input
-                type="text"
-                name="brgyClearanceNo"
-                value={formData.brgyClearanceNo}
-                onChange={handleInputChange}
-                maxLength={25}
-                placeholder="e.g. BC-2026-089"
-                className={inputClasses}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
-                <CalendarDays size={12} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <span>Date Issued</span>
-              </label>
-              <input
-                type="date"
-                name="brgyClearanceDate"
-                max={todayDateStr}
-                value={formData.brgyClearanceDate}
-                onChange={handleInputChange}
-                className={inputClasses}
-              />
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  if (formMode === null) {
-    return (
-      <MainLayout>
-        {/* Minimalist Floating Toast Notification */}
-        {toast.show && (
-          <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-            <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
-              <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
-                toast.type === 'error'
-                  ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
-                  : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
-              }`}>
-                {toast.type === 'error' ? (
-                  <AlertCircle size={15} />
-                ) : (
-                  <CheckCircle2 size={15} />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
-                  {toast.message}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <header className="mb-6 flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full" />
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">My Franchises</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Manage your active tricycle units and pending applications.</p>
-          </div>
-        </header>
-
-        {/* Draft Resume Alert Banner */}
-        {localStorage.getItem(DRAFT_STORAGE_KEY) && myFranchises.length < maxAllowedUnits && (
-          <div className="mb-6 w-full bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <FileText size={20} />
-              </div>
-              <div>
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Unfinished Application Draft Detected</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">You have a saved draft. You can resume editing where you left off or discard it.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem(DRAFT_STORAGE_KEY);
-                  showToast("Draft discarded successfully.", "success");
-                }}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Discard Draft
-              </button>
-              <button
-                type="button"
-                onClick={handleStartNewApplication}
-                className="bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                Resume Draft <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="w-full">
-            <GarageGridSkeleton count={2} baseDelay={50} />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-            {myFranchises.map((unit, index) => {
-              const hasRenewalDraft = localStorage.getItem(`gtrams_renewal_draft_${unit._id}`);
-
-              return (
-              <div 
-                key={unit._id} 
-                className="stagger-reveal bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between transition-colors"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div>
-                  <div className="absolute top-0 right-0 w-2 h-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
-                  <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Unit {index + 1}</h3>
-                  <div className="text-lg sm:text-xl font-mono font-bold text-slate-900 dark:text-white mb-1">{unit.plateNo || 'PENDING PLATE'}</div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">{unit.todaName} &bull; {unit.make} ({unit.made})</p>
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2 gap-2 flex-wrap">
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider flex items-center gap-1.5 border shadow-xs ${
-                      unit.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
-                      unit.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
-                      unit.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
-                      unit.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
-                      unit.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
-                      'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
-                    }`}>
-                      {(unit.status === 'Cancelled' || unit.status === 'Expired') && <AlertCircle size={13}/>}
-                      {unit.status === 'Active' && <CheckCircle size={13}/>}
-                      {unit.status === 'For Signing' ? 'For Signing' : unit.status === 'Ready for Pickup' ? 'Awaiting Payment' : unit.status}
-                    </span>
-                    
-                    <div className="flex items-center gap-2">
-                      {unit.status === 'Expired' && (
-                        <button 
-                          onClick={() => handleRenewClick(unit)}
-                          className="text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-                        >
-                          <RefreshCw size={13} /> {hasRenewalDraft ? 'Continue Renewal' : 'Renew Now'}
-                        </button>
-                      )}
-
-                      {unit.status === 'Cancelled' && (
-                        <button 
-                          onClick={() => handleReapplyClick(unit)}
-                          className="text-xs font-bold bg-slate-900 dark:bg-slate-800 text-white px-3.5 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-                        >
-                          <RefreshCw size={13} /> Fix Issues
-                        </button>
-                      )}
-
-                      {(unit.status === 'Pending' || unit.status === 'For Signing' || unit.status === 'Ready for Pickup') && (
-                        <button 
-                          onClick={() => setCancelModal({
-                            isOpen: true,
-                            unit,
-                            reason: CANCEL_REASONS[0],
-                            customReason: '',
-                            isSubmitting: false
-                          })}
-                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900/60 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer"
-                        >
-                          <XCircle size={13} /> Cancel
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {unit.status === 'Active' && (
-                    <div className="mt-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-3 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CalendarDays size={15} className="text-emerald-600 dark:text-emerald-400" />
-                        <div>
-                          <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Validity</p>
-                          <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">1 Year</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Expires On</p>
-                        <p className="text-xs font-bold text-emerald-900 dark:text-emerald-300">{getExpirationDate(unit.dateApplied)}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {unit.status === 'Cancelled' && (
-                    <div className="mt-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 p-3.5 rounded-2xl">
-                      <h4 className="text-red-900 dark:text-red-300 font-bold text-xs uppercase mb-1 flex items-center gap-1.5">
-                        <AlertCircle size={13} className="text-red-600 dark:text-red-400" /> Reason for Rejection
-                      </h4>
-                      <p className="text-xs font-medium text-red-700 dark:text-red-300 leading-snug">
-                        {unit.cancelReason || 'LGU did not provide a specific reason. Please visit the office.'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              );
-            })}
-
-            {myFranchises.length < maxAllowedUnits ? (
-              <button 
-                onClick={handleStartNewApplication}
-                className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 transition-all min-h-[190px] group active:scale-98 cursor-pointer"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-2.5 group-hover:scale-110 group-hover:border-[#9E2A2B]/30 dark:group-hover:border-[#D4AF37]/30 transition-all">
-                  <PlusCircle size={26} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                </div>
-                <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">Apply New Franchise</span>
-                <span className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">Capacity Available ({maxAllowedUnits - myFranchises.length} slot{maxAllowedUnits - myFranchises.length > 1 ? 's' : ''} left)</span>
-              </button>
-            ) : (
-              <div className="bg-red-50/60 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-3xl p-6 flex flex-col items-center justify-center text-red-700 dark:text-red-300 min-h-[190px] text-center">
-                <AlertCircle size={28} className="mb-2 opacity-60 text-red-600 dark:text-red-400" />
-                <span className="font-bold text-xs sm:text-sm text-red-900 dark:text-red-200">Maximum Limit Reached</span>
-                <span className="text-xs font-medium mt-1 px-4 text-red-600 dark:text-red-400 leading-snug">You have reached the maximum allowed limit of {maxAllowedUnits} registered tricycle units per operator.</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Cancel Confirmation Modal */}
-        <CancelApplicationModal 
-          cancelModal={cancelModal} 
-          setCancelModal={setCancelModal} 
-          handleConfirmCancel={handleConfirmCancel} 
-        />
-      </MainLayout>
-    );
-  }
+  const steps = [
+    { num: 1, title: 'Operator & Driver' },
+    { num: 2, title: 'Vehicle (OR/CR)' },
+    { num: 3, title: 'Clearances' },
+    { num: 4, title: 'Cedula & Review' }
+  ];
 
   if (!isLoading && myFranchises.length >= maxAllowedUnits && formMode === 'New') {
     return (
       <MainLayout hideNav={true}>
-        {/* Minimalist Floating Toast Notification */}
-        {toast.show && (
-          <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-            <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
-              <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
-                toast.type === 'error'
-                  ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
-                  : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
-              }`}>
-                {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
-                  {toast.message}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col items-center justify-center p-4 sm:p-6 transition-colors">
           <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
             <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4">
@@ -1547,29 +1018,20 @@ const ApplyFranchise = () => {
     );
   }
 
-  const steps = [
-    { num: 1, title: 'Operator Info' },
-    { num: 2, title: 'Vehicle Details' },
-    { num: 3, title: 'Cedula & Tax' },
-    { num: 4, title: 'Requirements' }
-  ];
-
   return (
     <MainLayout hideNav={true}>
-      {/* Minimalist Floating Toast Notification */}
+      {/* Toast Notification */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
             <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
               toast.type === 'error'
                 ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                : toast.type === 'info'
+                ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-900/60 text-blue-600 dark:text-blue-400'
                 : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
             }`}>
-              {toast.type === 'error' ? (
-                <AlertCircle size={15} />
-              ) : (
-                <CheckCircle2 size={15} />
-              )}
+              {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
@@ -1580,10 +1042,11 @@ const ApplyFranchise = () => {
         </div>
       )}
 
-      {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
+      {/* Full-Screen Immersive Form Layout */}
       <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
+        
         {/* Top Hero Banner */}
-        <div className="w-full bg-gradient-to-br from-[#541116] via-[#9E2A2B] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-7 px-4 sm:px-6 relative overflow-hidden shadow-md">
+        <div className="w-full bg-gradient-to-br from-[#541116] via-[#9E2A2B] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden shadow-md">
           {/* Official Gasan Seal Watermark in Full Color */}
           <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
             <img 
@@ -1606,17 +1069,32 @@ const ApplyFranchise = () => {
                 <ArrowLeft size={16} />
                 <span>Back</span>
               </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveProgress(true)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 text-[11px] font-semibold transition-all border border-white/15 cursor-pointer"
+                  title="Save draft"
+                >
+                  <Save size={13} />
+                  <span>Save Draft</span>
+                </button>
+              </div>
             </div>
 
             {/* Form Title in Banner */}
-            <div className="text-center pt-1 pb-4 flex flex-col items-center">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-sm">
+            <div className="text-center pt-1 pb-3 flex flex-col items-center">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-sm">
                 {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
               </h1>
+              <p className="text-[11px] sm:text-xs text-white/80 font-medium mt-0.5">
+                Bayan ng Gasan • Sangguniang Bayan Franchising Office
+              </p>
             </div>
 
-            {/* Stepper Navigation - Seamlessly embedded directly inside Hero Banner */}
-            <div className="flex items-start w-full px-2 sm:px-8 pt-1 select-none">
+            {/* Stepper Navigation */}
+            <div className="flex items-start w-full px-1 sm:px-6 pt-1 select-none">
               {steps.map((step, idx) => {
                 const isCompleted = currentStep > step.num;
                 const isCurrent = currentStep === step.num;
@@ -1627,36 +1105,23 @@ const ApplyFranchise = () => {
                     onClick={() => {
                       if (step.num < currentStep) {
                         setSlideDirection('backward');
-                        if (!document.startViewTransition) {
-                          setCurrentStep(step.num);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        } else {
-                          document.startViewTransition(() => {
-                            setCurrentStep(step.num);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          });
-                        }
+                        setCurrentStep(step.num);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                         const currentMode = (formMode || 'New').toLowerCase();
-                        const newParams = new URLSearchParams(searchParams);
-                        newParams.set('mode', currentMode);
-                        newParams.set('step', String(step.num));
-                        navigate(`?${newParams.toString()}`);
+                        navigate(`?mode=${currentMode}&step=${step.num}`);
                       }
                     }}
                     className={`relative flex-1 flex flex-col items-center select-none ${
                       step.num < currentStep ? 'cursor-pointer group' : ''
                     }`}
                   >
-                    {/* Seamless Connector Line to Next Step */}
+                    {/* Seamless Connector Line */}
                     {idx < steps.length - 1 && (
-                      <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2px] -translate-y-1/2 z-0 pointer-events-none">
-                        <div className="w-full h-full bg-white/20 rounded-full" />
-                        <div 
-                          className={`absolute top-0 left-0 h-full bg-[#D4AF37] rounded-full transition-all duration-300 ease-out ${
-                            currentStep > step.num ? 'w-full' : 'w-0'
-                          }`} 
-                        />
-                      </div>
+                      <div 
+                        className={`absolute top-3.5 sm:top-4 left-1/2 w-full h-[2px] z-0 transition-colors duration-300 ${
+                          currentStep > step.num ? 'bg-[#D4AF37]' : 'bg-white/20'
+                        }`}
+                      />
                     )}
 
                     {/* Step Circle */}
@@ -1676,7 +1141,7 @@ const ApplyFranchise = () => {
                       )}
                     </div>
                     
-                    <span className={`text-[11px] sm:text-xs font-bold mt-2 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                    <span className={`text-[10px] sm:text-xs font-bold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
                       isCurrent ? 'text-white' : isCompleted ? 'text-[#D4AF37]' : 'text-white/50'
                     }`}>
                       {step.title}
@@ -1685,783 +1150,971 @@ const ApplyFranchise = () => {
                 );
               })}
             </div>
+
+            {/* Gold Progress Bar */}
+            <div className="w-full bg-black/25 h-1.5 rounded-full overflow-hidden mt-4">
+              <div 
+                className="bg-[#D4AF37] h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${calculateProgress().percentage}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-[10.5px] text-white/70 mt-1 font-medium px-1">
+              <span>Progress: {calculateProgress().percentage}% Completed</span>
+              <span>Step {currentStep} of 4</span>
+            </div>
           </div>
         </div>
 
-        {/* Form Container - Unboxed Full-Width Edge-to-Edge */}
-        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-6 pb-16 flex-1 flex flex-col relative z-10">
-          <form onSubmit={handleSubmit} className="space-y-6 w-full">
-        
-        {currentStep === 1 && (
-          <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-            {/* Section 1: Operator Information */}
-            <div className="space-y-3.5">
-              <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                <div className="w-7 h-7 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                  <User size={16} />
-                </div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Operator Information (Owner)
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Operator Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    name="fullName" 
-                    value={formData.fullName} 
-                    onChange={handleInputChange}
-                    className={inputClasses} 
-                    required 
-                    maxLength={60}
-                    autoComplete="name"
-                    placeholder="e.g. Juan Dela Cruz"
-                  />
-                </div>
+        {/* Form Container */}
+        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-5 pb-16 flex-1 flex flex-col relative z-10">
+          <form onSubmit={currentStep === 4 ? handleSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
+            
+            {/* STEP 1: OPERATOR & DRIVER INFO */}
+            {currentStep === 1 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
                 
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Barangay in Gasan <span className="text-red-500">*</span>
-                  </label>
-                  {formMode === 'Renewal' || formMode === 'Re-apply' ? (
-                    <input type="text" name="address" value={formData.address} className={disabledClasses} readOnly maxLength={100} />
-                  ) : (
-                    <select name="address" value={formData.address} onChange={handleInputChange} className={inputClasses} required>
-                      <option value="">Select Barangay...</option>
-                      {GASAN_BARANGAYS.map((brgy, i) => (
-                        <option key={i} value={brgy}>{brgy}, Gasan</option>
-                      ))}
-                    </select>
-                  )}
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <User size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      Operator & Driver Information
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Enter personal identity and driver credentials
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                      TODA Association <span className="text-red-500">*</span>
-                    </label>
-                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                      Accredited
+                {/* Operator Details Card */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Operator Identity
+                    </span>
+                    <span className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                      Verified Account
                     </span>
                   </div>
-                  <input 
-                    type="text" 
-                    name="todaName" 
-                    list="toda-autocomplete-list"
-                    value={formData.todaName} 
-                    onChange={handleInputChange}
-                    className={inputClasses} 
-                    placeholder="Type or select TODA Association..."
-                    maxLength={60}
-                    autoComplete="off"
-                    required
-                  />
-                  <datalist id="toda-autocomplete-list">
-                    {TODA_LIST.filter(t => t !== 'NON-TODA').map((t, idx) => (
-                      <option key={idx} value={t} />
-                    ))}
-                  </datalist>
-                </div>
-              </div>
 
-              {/* Step Navigation & Action Buttons */}
-              <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
-                <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
-                  <button 
-                    type="button" 
-                    onClick={handleBackToDashboard}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
-                  >
-                    <ArrowLeft size={15} />
-                    <span>Back</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={validateAndNext}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
-                  >
-                    <span>Continue to Step 2</span>
-                  </button>
-                </div>
-
-                {/* Secondary buttons below continue */}
-                <div className="flex items-center justify-center gap-3 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleSaveProgress(true)}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    <Save size={13} />
-                    <span>Save Draft</span>
-                  </button>
-                  {hasDraftRestored && (
-                    <button
-                      type="button"
-                      onClick={handleClearDraft}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-                    >
-                      <RotateCcw size={13} />
-                      <span>Reset Draft</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 2 && (
-          <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-            {/* Section 2: Vehicle Details */}
-            <div className="space-y-3.5">
-              <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                <div className="w-7 h-7 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                  <Car size={16} />
-                </div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Vehicle Details (Tricycle / Motorcycle)
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                <div id="field-make" className="sm:col-span-2 lg:col-span-1">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Make / Brand <span className="text-red-500">*</span>
-                  </label>
-
-                  <input 
-                    type="text" 
-                    name="make" 
-                    value={formData.make} 
-                    onChange={handleInputChange} 
-                    maxLength={40}
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('make') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
-                    required 
-                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="e.g. Honda TMX 125 or enter brand" 
-                  />
-
-                  {isFieldFocused('make') && (
-                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                      <AlertCircle size={14} className="shrink-0" />
-                      <span>Correction Required: Please correct the Make / Brand ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                    </div>
-                  )}
-
-                  {/* Quick Select Brand Chips placed cleanly BELOW input box */}
-                  {formMode === 'New' && (
-                    <div className="mt-2 space-y-1">
-                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-600 dark:text-slate-400 block">
-                        Quick Select Brand:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {POPULAR_MAKES.map((brand) => (
-                          <button
-                            key={brand}
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, make: brand }))}
-                            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border-2 transition-all cursor-pointer shadow-2xs active:scale-95 ${
-                              formData.make === brand
-                                ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950 dark:border-[#b89428]'
-                                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50'
-                            }`}
-                          >
-                            {brand}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div id="field-made">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Model Year <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={4}
-                    name="made" 
-                    value={formData.made} 
-                    onChange={handleInputChange} 
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('made') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
-                    required 
-                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="e.g. 2024" 
-                  />
-                  {isFieldFocused('made') && (
-                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                      <AlertCircle size={14} className="shrink-0" />
-                      <span>Correction Required: Please update the Model Year ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Route / Zone Selection Dropdown & Inline Guide (No tooltip needed) */}
-                <div id="field-zone" className="space-y-1">
-                  <label htmlFor="zone-select" className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Route / Zone Selection <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="zone-select"
-                    name="zone"
-                    value={formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setFormData(prev => ({ ...prev, zone: val }));
-                    }}
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('zone') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} cursor-pointer font-medium`}
-                    required
-                    disabled={formMode === 'Renewal' || formMode === 'Re-apply'}
-                  >
-                    <option value="" disabled>-- Select Municipal Route &amp; Zone --</option>
-                    {GASAN_ZONES.map(z => (
-                      <option key={z.id} value={z.id}>
-                        {z.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Inline Route Guide Card */}
-                  {(() => {
-                    const currentZ = formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : '';
-                    const zInfo = GASAN_ZONES.find(z => z.id === currentZ);
-                    const matchingToda = TODA_DIRECTORY.find(t => t.id === formData.todaName || t.name.startsWith(formData.todaName));
-                    if (!zInfo) return null;
-                    return (
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-left space-y-1 mt-1.5 shadow-2xs">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
-                          <Compass size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-                          <span>{zInfo.name}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                          <strong className="text-slate-700 dark:text-slate-200">Route Coverage:</strong> {zInfo.coverage}
-                        </p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          <strong className="text-slate-700 dark:text-slate-200">Terminal:</strong> {zInfo.terminal}
-                        </p>
-                        {matchingToda && (
-                          <div className="pt-1 mt-1 border-t border-slate-200/80 dark:border-slate-700/60 flex items-center gap-1 text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400">
-                            <MapPin size={12} className="shrink-0" />
-                            <span>Associated TODA: {matchingToda.name}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {isFieldFocused('zone') && (
-                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                      <AlertCircle size={14} className="shrink-0" />
-                      <span>Correction Required: Please choose the valid Route &amp; Zone ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                    </div>
-                  )}
-                </div>
-
-                <div id="field-plateNo">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Plate Number <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    name="plateNo" 
-                    maxLength="8"
-                    value={formData.plateNo} 
-                    onChange={handleInputChange} 
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('plateNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
-                    required 
-                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="e.g. 123-ABC" 
-                  />
-                  {isFieldFocused('plateNo') && (
-                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                      <AlertCircle size={14} className="shrink-0" />
-                      <span>Correction Required: Plate number needs verification ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                    </div>
-                  )}
-                  {duplicateStatus.plateNo.checking && (
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
-                      <Loader2 size={11} className="animate-spin" /> Checking plate number...
-                    </p>
-                  )}
-                  {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && (
-                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
-                      <AlertCircle size={12} className="shrink-0" /> {duplicateStatus.plateNo.message}
-                    </p>
-                  )}
-                  {!duplicateStatus.plateNo.checking && !duplicateStatus.plateNo.duplicate && duplicateStatus.plateNo.message && (
-                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
-                      <CheckCircle size={12} className="shrink-0" /> {duplicateStatus.plateNo.message}
-                    </p>
-                  )}
-                </div>
-
-                <div id="field-motorNo">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Engine / Motor No. <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    name="motorNo" 
-                    maxLength="25"
-                    value={formData.motorNo} 
-                    onChange={handleInputChange} 
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('motorNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
-                    required 
-                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Motor Serial Number" 
-                  />
-                  {isFieldFocused('motorNo') && (
-                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                      <AlertCircle size={14} className="shrink-0" />
-                      <span>Correction Required: Motor Number mismatch ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                    </div>
-                  )}
-                  {duplicateStatus.motorNo.checking && (
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
-                      <Loader2 size={11} className="animate-spin" /> Checking motor number...
-                    </p>
-                  )}
-                  {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && (
-                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
-                      <AlertCircle size={12} className="shrink-0" /> {duplicateStatus.motorNo.message}
-                    </p>
-                  )}
-                  {!duplicateStatus.motorNo.checking && !duplicateStatus.motorNo.duplicate && duplicateStatus.motorNo.message && (
-                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
-                      <CheckCircle size={12} className="shrink-0" /> {duplicateStatus.motorNo.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div id="field-chassisNo">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Chassis Serial No. <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    name="chassisNo" 
-                    maxLength="25"
-                    value={formData.chassisNo} 
-                    onChange={handleInputChange} 
-                    className={`${formMode === 'Renewal' || formMode === 'Re-apply' ? disabledClasses : inputClasses} ${isFieldFocused('chassisNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 dark:border-red-500 focus:border-red-600 focus:ring-red-500/20' : ''}`} 
-                    required 
-                    readOnly={formMode === 'Renewal' || formMode === 'Re-apply'} 
-                    placeholder="Chassis Serial Number" 
-                  />
-                  {isFieldFocused('chassisNo') && (
-                    <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                      <AlertCircle size={14} className="shrink-0" />
-                      <span>Correction Required: Chassis Number mismatch ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                    </div>
-                  )}
-                  {duplicateStatus.chassisNo.checking && (
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
-                      <Loader2 size={11} className="animate-spin" /> Checking chassis number...
-                    </p>
-                  )}
-                  {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && (
-                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
-                      <AlertCircle size={12} className="shrink-0" /> {duplicateStatus.chassisNo.message}
-                    </p>
-                  )}
-                  {!duplicateStatus.chassisNo.checking && !duplicateStatus.chassisNo.duplicate && duplicateStatus.chassisNo.message && (
-                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
-                      <CheckCircle size={12} className="shrink-0" /> {duplicateStatus.chassisNo.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Step Navigation & Action Buttons */}
-              <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
-                <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
-                  <button 
-                    type="button" 
-                    onClick={prevStep}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
-                  >
-                    <span>Back</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={validateAndNext}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
-                  >
-                    <span>Continue to Step 3</span>
-                  </button>
-                </div>
-
-                {/* Secondary buttons below continue */}
-                <div className="flex items-center justify-center gap-3 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleSaveProgress(true)}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    <Save size={13} />
-                    <span>Save Draft</span>
-                  </button>
-                  {hasDraftRestored && (
-                    <button
-                      type="button"
-                      onClick={handleClearDraft}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-                    >
-                      <RotateCcw size={13} />
-                      <span>Reset Draft</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-            <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                <FileText size={18} />
-              </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Community Tax Certificate (CTC / Cedula)
-                </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
-                  Enter CTC details issued by the Municipal Treasurer
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div id="field-cedulaSerialNo">
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  CTC / Cedula Serial No. <span className="text-red-500">*</span>
-                </label>
-                <input 
-                  type="text" 
-                  maxLength={20}
-                  name="cedulaSerialNo" 
-                  value={formData.cedulaSerialNo} 
-                  onChange={handleInputChange} 
-                  className={`${inputClasses} ${isFieldFocused('cedulaSerialNo') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
-                  placeholder="e.g. 08123456" 
-                  required 
-                />
-                {isFieldFocused('cedulaSerialNo') && (
-                  <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                    <AlertCircle size={14} className="shrink-0" />
-                    <span>Correction Required: Please correct the Cedula Serial No. ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                  </div>
-                )}
-              </div>
-
-              <div id="field-cedulaDate">
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
-                  <CalendarDays size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                  <span>Date Issued</span> <span className="text-red-500">*</span>
-                </label>
-                <input 
-                  type="date" 
-                  name="cedulaDate" 
-                  max={new Date().toISOString().split('T')[0]}
-                  value={formData.cedulaDate} 
-                  onChange={handleInputChange} 
-                  className={`${inputClasses} ${isFieldFocused('cedulaDate') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
-                  placeholder="YYYY-MM-DD"
-                  required 
-                />
-                {isFieldFocused('cedulaDate') && (
-                  <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                    <AlertCircle size={14} className="shrink-0" />
-                    <span>Correction Required: Please update the Date Issued ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                  </div>
-                )}
-              </div>
-
-              <div id="field-cedulaAddress">
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  Place Issued <span className="text-red-500">*</span>
-                </label>
-                <input 
-                  type="text" 
-                  name="cedulaAddress" 
-                  maxLength={100}
-                  value={formData.cedulaAddress} 
-                  onChange={handleInputChange} 
-                  className={`${inputClasses} ${isFieldFocused('cedulaAddress') ? 'ring-4 ring-red-500/70 border-red-500 animate-pulse' : ''}`} 
-                  placeholder="Gasan, Marinduque"
-                  required 
-                />
-                {isFieldFocused('cedulaAddress') && (
-                  <div className="mt-1.5 p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                    <AlertCircle size={14} className="shrink-0" />
-                    <span>Correction Required: Place Issued ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col justify-end">
-                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-3 flex items-center justify-between min-h-[46px]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0">
-                      <CalendarDays size={16} />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                        Application Date
-                      </span>
-                      <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                        {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                    Automatic
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Cedula Photo Upload Card (Item 3) */}
-            <div id="field-cedulaDoc" className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                    Cedula / CTC Photo Document
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Upload clear photo or PDF copy of Community Tax Certificate issued by Municipal Treasury (Max 10MB)
-                  </p>
-                </div>
-              </div>
-
-              {isFieldFocused('cedulaDoc') && (
-                <div className="p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                  <AlertCircle size={14} className="shrink-0" />
-                  <span>Correction Required: Please upload a clear photo of your Cedula ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                </div>
-              )}
-
-              <div className="max-w-xl">
-                <DocumentUploadCard
-                  id="cedulaDoc"
-                  label="Community Tax Certificate (Cedula) Document"
-                  file={uploadedDocs['cedulaDoc'] || null}
-                  previewUrl={filePreviews['cedulaDoc'] || ''}
-                  onFileSelect={(id, file) => handleFileChange(id, file)}
-                  onFileRemove={(id) => handleRemoveFile(id)}
-                  onPreviewZoom={(prev) => setFullPreview(prev)}
-                />
-              </div>
-            </div>
-
-            {/* Step Navigation & Action Buttons */}
-            <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
-              <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
-                <button 
-                  type="button" 
-                  onClick={prevStep}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
-                >
-                  <span>Back</span>
-                </button>
-
-                <button 
-                  type="button" 
-                  onClick={validateAndNext}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 border-2 border-[#541116] dark:border-[#b89428] px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
-                >
-                  <span>Continue to Step 4</span>
-                </button>
-              </div>
-
-              {/* Secondary buttons below continue */}
-              <div className="flex items-center justify-center gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleSaveProgress(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <Save size={13} />
-                  <span>Save Draft</span>
-                </button>
-                {hasDraftRestored && (
-                  <button
-                    type="button"
-                    onClick={handleClearDraft}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-                  >
-                    <RotateCcw size={13} />
-                    <span>Reset Draft</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 4 && (
-          <div className={`space-y-6 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-            <div className="flex items-center gap-2.5 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                <UploadCloud size={18} />
-              </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Required Documents
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Attach photos or PDF copies of required documents.
-                </p>
-              </div>
-            </div>
-
-            {formMode === 'Renewal' ? (
-              <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 rounded-2xl text-xs sm:text-sm font-semibold mb-5 flex items-start gap-3">
-                <Info size={18} className="shrink-0 mt-0.5" />
-                <p className="leading-relaxed">No new document uploads required for renewal. Please review the summary below before submitting.</p>
-              </div>
-            ) : (
-              <div className="space-y-4 mb-4">
-                {requirementsList.map((req) => (
-                  <div key={req.id} id={`field-${req.id}`} className="space-y-1">
-                    {isFieldFocused(req.id) && (
-                      <div className="p-2 bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                        <AlertCircle size={14} className="shrink-0" />
-                        <span>Correction Required: Please update this document ({reapplyTarget?.cancelReason || 'Flagged by LGU review'})</span>
-                      </div>
-                    )}
-                    <div className={isFieldFocused(req.id) ? 'ring-4 ring-red-500/70 rounded-3xl animate-pulse' : ''}>
-                      <DocumentUploadCard
-                        id={req.id}
-                        label={req.label}
-                        file={uploadedDocs[req.id]}
-                        previewUrl={filePreviews[req.id]}
-                        onFileSelect={handleFileChange}
-                        onFileRemove={handleRemoveFile}
-                        onPreviewZoom={setFullPreview}
-                        required={formMode === 'New'}
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        Operator Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        name="fullName" 
+                        value={formData.fullName} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        required 
+                        placeholder="Juan Dela Cruz" 
                       />
-                      {renderDocMetadata(req.id)}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        Barangay / Address <span className="text-red-500">*</span>
+                      </label>
+                      <select 
+                        name="address" 
+                        value={formData.address} 
+                        onChange={handleInputChange} 
+                        className={`${inputClasses} cursor-pointer`} 
+                        required
+                      >
+                        <option value="" disabled>-- Select Barangay --</option>
+                        {GASAN_BARANGAYS.map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                ))}
+
+                  {/* Driver Designation Choice */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
+                      Sino po ang magmamaneho ng tricycle? <span className="text-red-500">*</span>
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: true }))}
+                        className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                          formData.isOperatorDriver 
+                            ? 'bg-amber-50/60 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
+                            : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                          formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-slate-400'
+                        }`}>
+                          {formData.isOperatorDriver && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                            Ako mismo (Operator-Driver)
+                          </p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            Ikaw mismo ang may hawak ng lisensya
+                          </p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: false }))}
+                        className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                          !formData.isOperatorDriver 
+                            ? 'bg-amber-50/60 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
+                            : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                          !formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-slate-400'
+                        }`}>
+                          {!formData.isOperatorDriver && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                            May Itinalagang Drayber (Hired Driver)
+                          </p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            Ibang tao ang magpapasada ng tricycle
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* If Hired Driver: Inputs */}
+                  {!formData.isOperatorDriver && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                          Pangalan ng Drayber <span className="text-red-500">*</span>
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverName" 
+                          value={formData.driverName} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          required 
+                          placeholder="Buong pangalan ng driver" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                          Contact No. ng Drayber <span className="text-red-500">*</span>
+                        </label>
+                        <input 
+                          type="tel" 
+                          name="driverContact" 
+                          value={formData.driverContact} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          required 
+                          placeholder="09123456789" 
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Driver's License Document & Smart AI Scan Card */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Driver's License Photo <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={12} /> Real-time AI OCR
+                    </span>
+                  </div>
+
+                  <DocumentUploadCard
+                    id="license"
+                    label="Driver's License"
+                    file={uploadedDocs.license}
+                    previewUrl={filePreviews.license || formData.licenseUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    required={true}
+                    isScanning={aiScanning.license}
+                    scanSuccess={aiSuccess.license}
+                  />
+
+                  {/* Auto-filled License Details Grid */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                        License Details {aiSuccess.license && <span className="text-emerald-600 font-semibold">(Verified via AI)</span>}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Driver's License Number <span className="text-red-500">*</span>
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverLicenseNo" 
+                          value={formData.driverLicenseNo} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          required 
+                          placeholder="e.g. D01-12-345678" 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          License Expiry Date
+                        </label>
+                        <input 
+                          type="date" 
+                          name="driverLicenseExpiryDate" 
+                          value={formData.driverLicenseExpiryDate} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 1 Actions */}
+                <div className="pt-3 flex justify-end">
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Vehicle Details</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* Application Summary Preview Strip */}
-            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 flex items-center justify-between gap-3 mb-4 shadow-2xs">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Application Summary</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSummaryModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
-              >
-                <Eye size={13} />
-                <span>View Summary</span>
-              </button>
-            </div>
+            {/* STEP 2: VEHICLE DETAILS & LTO OR/CR */}
+            {currentStep === 2 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <Car size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      Vehicle Details & LTO OR/CR
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Upload LTO document for instant automated vehicle pre-fill
+                    </p>
+                  </div>
+                </div>
 
-            <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
-              <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-2.5">
-                <button 
-                  type="button" 
-                  onClick={prevStep}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[44px] shadow-xs active:scale-95"
-                >
-                  <span>Back</span>
-                </button>
+                {/* Document Upload for OR/CR */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      LTO Official Receipt / Certificate of Registration (OR / CR) <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={12} /> Auto-reads Plate & Chassis
+                    </span>
+                  </div>
 
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] border-2 border-[#541116] dark:border-[#b89428] ${
-                    isSubmitting 
-                      ? 'bg-slate-500 dark:bg-slate-700 cursor-not-allowed border-transparent' 
-                      : 'bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
-                  }`}
-                >
-                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                  <span>{isSubmitting ? (uploadPhase || 'Submitting...') : formMode === 'Re-apply' ? 'Submit Revision' : 'Submit Application'}</span>
-                </button>
-              </div>
+                  <DocumentUploadCard
+                    id="orCrDocument"
+                    label="LTO OR / CR Document"
+                    file={uploadedDocs.orCrDocument}
+                    previewUrl={filePreviews.orCrDocument || formData.orCrUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    required={formMode === 'New'}
+                    isScanning={aiScanning.orCrDocument}
+                    scanSuccess={aiSuccess.orCrDocument}
+                  />
+                </div>
 
-              {/* Secondary buttons below submit */}
-              <div className="flex items-center justify-center gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleSaveProgress(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <Save size={13} />
-                  <span>Save Draft</span>
-                </button>
-                {hasDraftRestored && (
-                  <button
-                    type="button"
-                    onClick={handleClearDraft}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-                  >
-                    <RotateCcw size={13} />
-                    <span>Reset Draft</span>
-                  </button>
+                {/* AI Detection Banner */}
+                {aiSuccess.orCrDocument && (
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                    <Sparkles size={15} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>Na-scan ng AI ang OR/CR! Kusang nailagay ang Plate, Motor, at Chassis. Pakitingnan kung tama ang mga detalye.</span>
+                  </div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
 
-      </form>
+                {/* Vehicle Details Form Fields */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3.5 shadow-2xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block pb-1 border-b border-slate-100 dark:border-slate-800">
+                    Tricycle Specifications
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    
+                    {/* Make / Brand */}
+                    <div id="field-make">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        Make / Brand <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        name="make" 
+                        value={formData.make} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        required 
+                        placeholder="e.g. Honda TMX 125" 
+                      />
+
+                      {/* Quick Select Brand Chips */}
+                      {formMode === 'New' && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {POPULAR_MAKES.map((brand) => (
+                            <button
+                              key={brand}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, make: brand }))}
+                              className={`px-2 py-0.5 text-[10.5px] font-bold rounded-lg border transition-all cursor-pointer ${
+                                formData.make === brand
+                                  ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950'
+                                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              {brand}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Model Year */}
+                    <div id="field-made">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        Model Year <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        inputMode="numeric"
+                        maxLength={4}
+                        name="made" 
+                        value={formData.made} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        required 
+                        placeholder="e.g. 2024" 
+                      />
+                    </div>
+
+                    {/* Route / Zone Selection */}
+                    <div id="field-zone" className="sm:col-span-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                          Route / Zone Selection <span className="text-red-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowTodaGuide(true)}
+                          className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Compass size={12} />
+                          <span>View Route Guide</span>
+                        </button>
+                      </div>
+
+                      <select
+                        name="zone"
+                        value={formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, zone: e.target.value }))}
+                        className={`${inputClasses} cursor-pointer font-medium`}
+                        required
+                      >
+                        <option value="" disabled>-- Select Municipal Route &amp; Zone --</option>
+                        {GASAN_ZONES.map(z => (
+                          <option key={z.id} value={z.id}>{z.name}</option>
+                        ))}
+                      </select>
+
+                      {/* Route Coverage Preview Card */}
+                      {(() => {
+                        const currentZ = formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : '';
+                        const zInfo = GASAN_ZONES.find(z => z.id === currentZ);
+                        if (!zInfo) return null;
+                        return (
+                          <div className="p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-left space-y-1 mt-2 shadow-2xs">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                              <Compass size={13} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                              <span>{zInfo.name}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                              <strong>Route:</strong> {zInfo.coverage}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Plate Number */}
+                    <div id="field-plateNo">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        Plate Number <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        name="plateNo" 
+                        maxLength={8}
+                        value={formData.plateNo} 
+                        onChange={handleInputChange} 
+                        className={`${inputClasses} ${duplicateStatus.plateNo.duplicate ? 'border-red-500' : ''}`} 
+                        required 
+                        placeholder="e.g. 123-ABC" 
+                      />
+                      {duplicateStatus.plateNo.checking && (
+                        <p className="text-[10.5px] text-slate-500 flex items-center gap-1 mt-1">
+                          <Loader2 size={11} className="animate-spin" /> Checking plate number...
+                        </p>
+                      )}
+                      {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && (
+                        <p className="text-[10.5px] font-bold text-red-600 flex items-center gap-1 mt-1">
+                          <AlertCircle size={11} /> {duplicateStatus.plateNo.message}
+                        </p>
+                      )}
+                      {!duplicateStatus.plateNo.checking && !duplicateStatus.plateNo.duplicate && duplicateStatus.plateNo.message && (
+                        <p className="text-[10.5px] font-bold text-emerald-600 flex items-center gap-1 mt-1">
+                          <CheckCircle2 size={11} /> {duplicateStatus.plateNo.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Engine / Motor Number */}
+                    <div id="field-motorNo">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        Engine / Motor No. <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        name="motorNo" 
+                        maxLength={25}
+                        value={formData.motorNo} 
+                        onChange={handleInputChange} 
+                        className={`${inputClasses} ${duplicateStatus.motorNo.duplicate ? 'border-red-500' : ''}`} 
+                        required 
+                        placeholder="Motor Serial Number" 
+                      />
+                      {duplicateStatus.motorNo.checking && (
+                        <p className="text-[10.5px] text-slate-500 flex items-center gap-1 mt-1">
+                          <Loader2 size={11} className="animate-spin" /> Checking motor number...
+                        </p>
+                      )}
+                      {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && (
+                        <p className="text-[10.5px] font-bold text-red-600 flex items-center gap-1 mt-1">
+                          <AlertCircle size={11} /> {duplicateStatus.motorNo.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Chassis Serial Number */}
+                    <div id="field-chassisNo" className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        Chassis Serial No. <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        name="chassisNo" 
+                        maxLength={25}
+                        value={formData.chassisNo} 
+                        onChange={handleInputChange} 
+                        className={`${inputClasses} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500' : ''}`} 
+                        required 
+                        placeholder="17-Digit Vehicle Identification Number (VIN)" 
+                      />
+                      {duplicateStatus.chassisNo.checking && (
+                        <p className="text-[10.5px] text-slate-500 flex items-center gap-1 mt-1">
+                          <Loader2 size={11} className="animate-spin" /> Checking chassis number...
+                        </p>
+                      )}
+                      {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && (
+                        <p className="text-[10.5px] font-bold text-red-600 flex items-center gap-1 mt-1">
+                          <AlertCircle size={11} /> {duplicateStatus.chassisNo.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* LTO Document Metadata */}
+                    <div className="sm:col-span-2 pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          LTO OR / CR Number
+                        </label>
+                        <input 
+                          type="text" 
+                          name="orCrNo" 
+                          value={formData.orCrNo} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          placeholder="e.g. OR-98765432" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          LTO Expiry / Registration Date
+                        </label>
+                        <input 
+                          type="date" 
+                          name="orCrExpiryDate" 
+                          value={formData.orCrExpiryDate} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                        />
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Step 2 Actions */}
+                <div className="pt-3 flex justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={prevStep}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[44px] cursor-pointer"
+                  >
+                    <ChevronLeft size={16} />
+                    <span>Back</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Clearances</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: CLEARANCES (TODA & BARANGAY) */}
+            {currentStep === 3 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      Barangay & TODA Clearances
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Attach membership endorsement and residency clearances
+                    </p>
+                  </div>
+                </div>
+
+                {/* TODA Endorsement Card */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      TODA Endorsement Certificate <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={12} /> AI Scanner
+                    </span>
+                  </div>
+
+                  <DocumentUploadCard
+                    id="todaEndorsement"
+                    label="TODA Endorsement Certificate"
+                    file={uploadedDocs.todaEndorsement}
+                    previewUrl={filePreviews.todaEndorsement || formData.todaEndorsementUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    required={formMode === 'New'}
+                    isScanning={aiScanning.todaEndorsement}
+                    scanSuccess={aiSuccess.todaEndorsement}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Certificate / Control No.
+                      </label>
+                      <input 
+                        type="text" 
+                        name="todaCertNo" 
+                        value={formData.todaCertNo} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        placeholder="e.g. TODA-2026-089" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Date Issued
+                      </label>
+                      <input 
+                        type="date" 
+                        name="todaCertDate" 
+                        value={formData.todaCertDate} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Barangay Clearance Card */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Barangay Clearance <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={12} /> AI Scanner
+                    </span>
+                  </div>
+
+                  <DocumentUploadCard
+                    id="brgyClearance"
+                    label="Barangay Clearance"
+                    file={uploadedDocs.brgyClearance}
+                    previewUrl={filePreviews.brgyClearance || formData.brgyClearanceUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    required={formMode === 'New'}
+                    isScanning={aiScanning.brgyClearance}
+                    scanSuccess={aiSuccess.brgyClearance}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Barangay Clearance No.
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brgyClearanceNo" 
+                        value={formData.brgyClearanceNo} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        placeholder="e.g. BC-2026-104" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Date Issued
+                      </label>
+                      <input 
+                        type="date" 
+                        name="brgyClearanceDate" 
+                        value={formData.brgyClearanceDate} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 Actions */}
+                <div className="pt-3 flex justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={prevStep}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[44px] cursor-pointer"
+                  >
+                    <ChevronLeft size={16} />
+                    <span>Back</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Cedula &amp; Review</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: CEDULA & FINAL REVIEW */}
+            {currentStep === 4 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
+                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <FileCheck size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      Community Tax Certificate (Cedula) &amp; Review
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Upload your current-year CTC and verify application summary
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cedula Upload & Input Card */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Community Tax Certificate (Cedula / CTC) <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={12} /> AI Scanner
+                    </span>
+                  </div>
+
+                  <DocumentUploadCard
+                    id="cedulaDoc"
+                    label="Cedula (CTC) Document"
+                    file={uploadedDocs.cedulaDoc || uploadedDocs.cedula}
+                    previewUrl={filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    required={formMode === 'New'}
+                    isScanning={aiScanning.cedulaDoc}
+                    scanSuccess={aiSuccess.cedulaDoc}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Cedula Serial Number <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        name="cedulaSerialNo" 
+                        value={formData.cedulaSerialNo} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        required 
+                        placeholder="e.g. 08123456" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Date Issued <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        name="cedulaDate" 
+                        max={new Date().toISOString().split('T')[0]}
+                        value={formData.cedulaDate} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        required 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Application Review & Verification Card */}
+                <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3.5 shadow-2xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <span>Application Summary Verification</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsSummaryModalOpen(true)}
+                      className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Full Details
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1">
+                      <p className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase">Operator &amp; Driver</p>
+                      <p className="font-bold text-slate-900 dark:text-white">{formData.fullName || 'N/A'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">{formData.address || 'N/A'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                        License: <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.driverLicenseNo || 'N/A'}</span>
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1">
+                      <p className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase">Vehicle &amp; Route</p>
+                      <p className="font-bold text-slate-900 dark:text-white">{formData.plateNo || 'No Plate'} • {formData.make || 'Tricycle'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">Route: Zone {formData.zone || 'N/A'} • {formData.todaName || 'NON-TODA'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                        Chassis: <span className="font-mono text-[10.5px]">{formData.chassisNo || 'N/A'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Document Thumbnails Preview Strip */}
+                  <div className="pt-2">
+                    <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2">Attached Documents (Click to preview):</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: 'License', url: filePreviews.license || formData.licenseUrl },
+                        { label: 'OR/CR', url: filePreviews.orCrDocument || formData.orCrUrl },
+                        { label: 'TODA', url: filePreviews.todaEndorsement || formData.todaEndorsementUrl },
+                        { label: 'Barangay', url: filePreviews.brgyClearance || formData.brgyClearanceUrl },
+                        { label: 'Cedula', url: filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl }
+                      ].map((item, idx) => (
+                        item.url ? (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setFullPreview(item.url)}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 hover:border-slate-400 cursor-pointer shadow-2xs active:scale-95"
+                          >
+                            <CheckCircle2 size={12} className="text-emerald-600" />
+                            <span>{item.label}</span>
+                            <ZoomIn size={11} className="text-slate-400" />
+                          </button>
+                        ) : null
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* LGU Treasury Fee Notice */}
+                  <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                    <Receipt size={16} className="shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
+                    <div className="leading-snug">
+                      <strong className="font-bold">Municipal Treasury Notice:</strong> Standard MTOP Franchise Fee of <strong className="font-bold underline">₱500.00</strong> will be paid directly at the Municipal Cashier upon LGU evaluation approval.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 4 Submission Actions */}
+                <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 space-y-3">
+                  <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                    <button 
+                      type="button" 
+                      onClick={prevStep}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[44px] cursor-pointer"
+                    >
+                      <ChevronLeft size={16} />
+                      <span>Back to Clearances</span>
+                    </button>
+
+                    <button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px] ${
+                        isSubmitting 
+                          ? 'bg-slate-500 cursor-not-allowed' 
+                          : 'bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
+                      }`}
+                    >
+                      {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                      <span>{isSubmitting ? (uploadPhase || 'Submitting...') : 'Submit Application'}</span>
+                    </button>
+                  </div>
+
+                  {/* Secondary draft actions */}
+                  <div className="flex items-center justify-center gap-4 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveProgress(true)}
+                      className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Save size={13} />
+                      <span>Save Draft</span>
+                    </button>
+                    {hasDraftRestored && (
+                      <button
+                        type="button"
+                        onClick={handleClearDraft}
+                        className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <RotateCcw size={13} />
+                        <span>Reset Draft</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </form>
         </div>
+
       </div>
 
-      <DocumentPreviewModal 
-        fullPreview={fullPreview} 
-        setFullPreview={setFullPreview} 
-      />
+      {/* Modals */}
+      {showTodaGuide && (
+        <TodaZoneGuideModal 
+          isOpen={showTodaGuide} 
+          onClose={() => setShowTodaGuide(false)} 
+        />
+      )}
 
-      <ApplicationSummaryModal 
-        isSummaryModalOpen={isSummaryModalOpen} 
-        setIsSummaryModalOpen={setIsSummaryModalOpen} 
-        formData={formData} 
-        loggedInToda={loggedInToda} 
-        requirementsList={requirementsList} 
-        uploadedDocs={uploadedDocs} 
-        filePreviews={filePreviews} 
-      />
+      {fullPreview && (
+        <DocumentPreviewModal 
+          fileUrl={fullPreview} 
+          isOpen={!!fullPreview} 
+          onClose={() => setFullPreview(null)} 
+        />
+      )}
 
-      <CancelApplicationModal 
-        cancelModal={cancelModal} 
-        setCancelModal={setCancelModal} 
-        handleConfirmCancel={handleConfirmCancel} 
-      />
+      {isSummaryModalOpen && (
+        <ApplicationSummaryModal
+          isOpen={isSummaryModalOpen}
+          onClose={() => setIsSummaryModalOpen(false)}
+          application={{
+            ...formData,
+            status: 'Draft',
+            applicationType: formMode === 'Renewal' ? 'Renewal' : 'New',
+            createdAt: formData.dateApplied
+          }}
+        />
+      )}
 
-      {/* Centered Feedback Modal */}
-      <FeedbackModal
-        isOpen={feedbackModal.isOpen}
-        type={feedbackModal.type}
-        title={feedbackModal.title}
-        message={feedbackModal.message}
-        confirmText={feedbackModal.confirmText || 'OK'}
-        onConfirm={feedbackModal.onConfirm || (() => setFeedbackModal(prev => ({ ...prev, isOpen: false })))}
-        onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
-      />
+      {feedbackModal.isOpen && (
+        <FeedbackModal
+          isOpen={feedbackModal.isOpen}
+          type={feedbackModal.type}
+          title={feedbackModal.title}
+          message={feedbackModal.message}
+          confirmText={feedbackModal.confirmText}
+          onConfirm={feedbackModal.onConfirm}
+        />
+      )}
 
-      <TodaZoneGuideModal isOpen={showTodaGuide} onClose={() => setShowTodaGuide(false)} />
+      {cancelModal.isOpen && (
+        <CancelApplicationModal
+          isOpen={cancelModal.isOpen}
+          onClose={() => setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false })}
+          unit={cancelModal.unit}
+          reason={cancelModal.reason}
+          setReason={(r) => setCancelModal(prev => ({ ...prev, reason: r }))}
+          customReason={cancelModal.customReason}
+          setCustomReason={(c) => setCancelModal(prev => ({ ...prev, customReason: c }))}
+          onConfirm={handleConfirmCancel}
+          isSubmitting={cancelModal.isSubmitting}
+        />
+      )}
+
     </MainLayout>
   );
 };
 
 export default ApplyFranchise;
-

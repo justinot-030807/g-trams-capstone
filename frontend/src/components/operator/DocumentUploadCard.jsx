@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Loader2 } from 'lucide-react';
+import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Loader2, Sparkles } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
 
 const DocumentUploadCard = ({ 
@@ -10,7 +10,9 @@ const DocumentUploadCard = ({
   onFileSelect, 
   onFileRemove, 
   onPreviewZoom,
-  required = false 
+  required = false,
+  isScanning = false,
+  scanSuccess = false
 }) => {
   const galleryInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -85,6 +87,14 @@ const DocumentUploadCard = ({
               {isCompressing ? (
                 <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
                   <Loader2 size={12} className="animate-spin" /> Optimizing photo...
+                </span>
+              ) : isScanning ? (
+                <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold flex items-center gap-1 animate-pulse">
+                  <Sparkles size={12} className="animate-spin" /> AI scanning details...
+                </span>
+              ) : scanSuccess ? (
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <Sparkles size={12} /> Auto-filled by AI
                 </span>
               ) : hasFile ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">

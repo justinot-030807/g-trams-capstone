@@ -124,6 +124,8 @@ Extract the following vehicle details and return ONLY a valid JSON object with t
   "chassisNo": "extracted chassis or frame number, or null if unreadable",
   "motorNo": "extracted engine or motor number, or null if unreadable",
   "orCrNo": "extracted OR number or CR number, or null if unreadable",
+  "make": "extracted vehicle make / brand (e.g. Honda, Kawasaki, Yamaha, Bajaj), or null",
+  "year": "extracted model year or year of manufacture (e.g. 2024), or null",
   "ownerName": "extracted registered owner full name, or null if unreadable",
   "expiryDate": "extracted expiration or registration date (YYYY-MM-DD), or null"
 }
@@ -150,7 +152,8 @@ Extract the following details and return ONLY a valid JSON object with these key
   "serialNo": "extracted CTC / Cedula serial or receipt number, or null if unreadable",
   "fullName": "extracted taxpayer full name, or null if unreadable",
   "year": "extracted tax year (e.g. 2026), or null if unreadable",
-  "dateIssued": "extracted date issued (YYYY-MM-DD), or null if unreadable"
+  "dateIssued": "extracted date issued (YYYY-MM-DD), or null if unreadable",
+  "placeIssued": "extracted place issued (e.g. Gasan, Marinduque), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'todaEndorsement') {
@@ -162,7 +165,9 @@ Extract the following details and return ONLY a valid JSON object with these key
   "detectedDocumentType": "TODA Endorsement Certificate" or description of what the image actually is,
   "certNo": "extracted certificate or clearance number, or null",
   "memberName": "extracted member/driver/operator name, or null",
-  "todaName": "extracted TODA association name (e.g. BATODA, GT TODA), or null"
+  "todaName": "extracted TODA association name (e.g. BATODA, GT TODA), or null",
+  "dateIssued": "extracted issuance date (YYYY-MM-DD), or null",
+  "signatory": "extracted president or signatory name, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'brgyClearance') {
@@ -174,7 +179,9 @@ Extract the following details and return ONLY a valid JSON object with these key
   "detectedDocumentType": "Barangay Clearance" or description of what the image actually is,
   "clearanceNo": "extracted clearance or control number, or null",
   "residentName": "extracted resident/applicant name, or null",
-  "barangay": "extracted barangay name, or null"
+  "barangay": "extracted barangay name, or null",
+  "dateIssued": "extracted date issued (YYYY-MM-DD), or null",
+  "issuer": "extracted punong barangay / secretary name, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
@@ -558,5 +565,6 @@ module.exports = {
     normalizeString,
     compareField,
     extractWithGemini,
-    verifyFranchiseDocuments
+    verifyFranchiseDocuments,
+    fetchImageAsBase64
 };

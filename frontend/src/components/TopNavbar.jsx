@@ -365,6 +365,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
   const normalizedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
   const isOperatorOrToda = normalizedRole === 'operator' || normalizedRole === 'toda president' || normalizedRole === 'toda_president';
+  const isCashier = normalizedRole === 'cashier';
   const isDashboard = location.pathname === '/operator-dashboard';
 
   return (
@@ -525,7 +526,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             onClick={onToggleSidebar}
             title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
             className={`p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl transition-colors focus:outline-none shrink-0 ${
-              isOperatorOrToda ? 'hidden md:flex' : 'flex'
+              isOperatorOrToda || isCashier ? 'hidden md:flex' : 'flex'
             }`}
             aria-label="Toggle Sidebar"
           >

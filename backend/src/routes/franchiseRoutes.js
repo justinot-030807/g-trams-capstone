@@ -20,8 +20,11 @@ const {
     checkUniqueFranchiseField,
     getCashierQueue,
     processCashierPayment,
-    verifyDocuments
+    scanDocument
 } = require('../controllers/franchiseController');
+
+// AI document scanning for operator form auto-fill
+router.post('/scan-document', protect, upload.single('file'), scanDocument);
 
 // Check unique plateNo / motorNo / chassisNo in real-time
 router.get('/check-unique', protect, checkUniqueFranchiseField);
@@ -73,7 +76,6 @@ router.get('/reports', protect, authorize('admin'), getFranchiseReports);
 router.put('/:id/archive', protect, authorize('admin'), toggleArchiveFranchise);
 router.put('/:id/revoke', protect, authorize('admin'), upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
 router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
-router.post('/:id/verify-documents', protect, authorize('admin'), verifyDocuments);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);

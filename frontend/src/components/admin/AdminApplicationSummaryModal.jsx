@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   X, FileText, User, Car, Receipt, ShieldCheck, FileCheck, 
-  CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles, AlertTriangle, Check,
+  CheckCircle2, XCircle, ExternalLink, Loader2, AlertTriangle, Check,
   ChevronLeft, ChevronRight, Eye
 } from 'lucide-react';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
@@ -124,32 +124,6 @@ const AdminApplicationSummaryModal = ({
 
         {/* Modal Scrollable Body */}
         <div className="overflow-y-auto py-4 space-y-4 flex-1 pr-1">
-          {/* Trustworthy AI OCR Verification Banner */}
-          {franchise.aiVerification && franchise.aiVerification.status !== 'unverified' ? (
-            <div className={`p-3 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
-              franchise.aiVerification.status === 'flagged' || (franchise.aiVerification.summary?.mismatchedFields || 0) > 0
-                ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
-                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
-            }`}>
-              <div className="flex items-center gap-2 font-bold min-w-0">
-                <Sparkles size={15} className={franchise.aiVerification.status === 'flagged' ? 'text-rose-600 shrink-0' : 'text-emerald-600 shrink-0'} />
-                <span className="truncate">
-                  {franchise.aiVerification.status === 'flagged'
-                    ? 'Gemini OCR: Discrepancy or Document Type Issue'
-                    : 'Gemini OCR: All Scanned Fields Matched'}
-                </span>
-              </div>
-              <span className="text-xs font-mono font-bold shrink-0 self-end sm:self-auto px-2 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/60">
-                {franchise.aiVerification.summary?.matchedFields || 0} matched &bull; {franchise.aiVerification.summary?.mismatchedFields || 0} mismatch
-              </span>
-            </div>
-          ) : (
-            <div className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
-              <span className="font-semibold">OCR Verification: Manual inspection active</span>
-              <span className="text-[11px] text-slate-500">Unverified by AI</span>
-            </div>
-          )}
-
           {/* 1. Operator Information */}
           <div>
             <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">

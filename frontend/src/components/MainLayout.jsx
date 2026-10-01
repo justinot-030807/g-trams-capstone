@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
@@ -23,6 +23,7 @@ const MainLayout = ({ children, hideNav = false }) => {
   const isAdmin = role === 'admin' || role === 'administrator';
   const isOperator = role === 'operator';
   const isTodaPresident = role === 'toda president' || role === 'toda_president';
+  const isCashier = role === 'cashier';
   const showBottomNav = isOperator || isTodaPresident;
 
   // Reset body classes when entering main layout
@@ -104,7 +105,7 @@ const MainLayout = ({ children, hideNav = false }) => {
 
   // Native scrolling enabled without jittery touch event listeners
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => {
       const nextState = !prev;
       if (window.innerWidth >= 768) {
@@ -112,14 +113,14 @@ const MainLayout = ({ children, hideNav = false }) => {
       }
       return nextState;
     });
-  };
+  }, []);
 
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     setIsSidebarOpen(false);
     if (window.innerWidth >= 768) {
       localStorage.setItem('gtrams_sidebar_open', JSON.stringify(false));
     }
-  };
+  }, []);
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 

@@ -48,11 +48,11 @@ const createFranchise = async (req, res) => {
 
         const data = {
             ...req.body,
-            orCrUrl: findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']),
-            licenseUrl: findFilePath(['license', 'licenseUrl', 'doc_1']),
-            todaEndorsementUrl: findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']),
-            brgyClearanceUrl: findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']),
-            cedulaUrl: findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc'])
+            orCrUrl: findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']) || req.body.orCrUrl || '',
+            licenseUrl: findFilePath(['license', 'licenseUrl', 'doc_1']) || req.body.licenseUrl || '',
+            todaEndorsementUrl: findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']) || req.body.todaEndorsementUrl || '',
+            brgyClearanceUrl: findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']) || req.body.brgyClearanceUrl || '',
+            cedulaUrl: findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']) || req.body.cedulaUrl || ''
         };
         
         const franchiseOwner = req.body.operator || req.user._id;
@@ -660,40 +660,59 @@ const processCashierPayment = async (req, res) => {
     }
 };
 
-const verifyDocuments = async (req, res) => {
+const scanDocument = async (req, res) => {
     try {
-        const { id } = req.params;
-        const franchise = await Franchise.findById(id).populate('operator', 'name address contact');
-        if (!franchise) {
-            return res.status(404).json({ message: 'Franchise not found' });
+        const { docType } = req.body;
+        const file = req.file;
+
+        if (!file && !req.body.fileUrl && !req.body.base64) {
+            return res.status(400).json({ success: false, message: 'No file provided for scanning.' });
         }
 
-        const { verifyFranchiseDocuments } = require('../services/documentVerificationService');
-        const verificationResult = await verifyFranchiseDocuments(franchise);
+        const fileUrl = file ? (file.path || file.secure_url || file.url) : req.body.fileUrl;
+        let base64Data = req.body.base64 || null;
+        let mimeType = (file && file.mimetype) || req.body.mimeType || 'image/jpeg';
 
-        franchise.aiVerification = verificationResult;
-        await franchise.save();
+        const { fetchImageAsBase64, extractWithGemini } = require('../services/documentVerificationService');
 
-        logAudit(req, {
-            action: 'AI_DOCUMENT_VERIFICATION',
-            targetType: 'Franchise',
-            targetId: franchise._id,
-            details: {
-                plateNo: franchise.plateNo,
-                status: verificationResult.status,
-                matched: verificationResult.summary.matchedFields,
-                mismatched: verificationResult.summary.mismatchedFields
+        if (!base64Data && fileUrl) {
+            const fetched = await fetchImageAsBase64(fileUrl);
+            if (fetched) {
+                base64Data = fetched.base64Data;
+                mimeType = fetched.mimeType;
             }
-        });
+        }
 
-        res.status(200).json({
-            message: 'Document verification completed successfully',
-            aiVerification: verificationResult,
-            franchise
+        if (!base64Data) {
+            return res.status(200).json({
+                success: false,
+                fileUrl,
+                message: 'Document uploaded, but OCR image read was unsuccessful.'
+            });
+        }
+
+        const extracted = await extractWithGemini(base64Data, mimeType, docType);
+
+        if (!extracted) {
+            return res.status(200).json({
+                success: false,
+                fileUrl,
+                message: 'AI scanning could not read details from this document.'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            fileUrl,
+            docType,
+            data: extracted
         });
     } catch (error) {
-        console.error('Error verifying documents:', error);
-        res.status(500).json({ message: 'Failed to verify documents.' });
+        console.error('Error in scanDocument:', error);
+        return res.status(200).json({
+            success: false,
+            message: 'AI document scanning service is currently unavailable.'
+        });
     }
 };
 
@@ -714,6 +733,6 @@ module.exports = {
     checkUniqueFranchiseField,
     getCashierQueue,
     processCashierPayment,
-    verifyDocuments
+    scanDocument
 };
 

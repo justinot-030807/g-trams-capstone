@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
@@ -58,6 +58,8 @@ const Sidebar = ({ isOpen, onClose }) => {
   }
 
   const isOperatorOrToda = role === 'operator' || role === 'toda president' || role === 'toda_president';
+  const isCashier = role === 'cashier';
+  const hideMobileSidebar = isOperatorOrToda || isCashier;
 
   const fetchChatUnreadCount = useCallback(async () => {
     try {
@@ -126,12 +128,17 @@ const Sidebar = ({ isOpen, onClose }) => {
     };
   }, [socket, role, fetchChatUnreadCount]);
 
-  // Automatically close sidebar on mobile route navigation
+  const prevPathnameRef = useRef(location.pathname);
+
+  // Automatically close sidebar strictly on mobile route navigation
   useEffect(() => {
-    if (window.innerWidth < 768 && onClose) {
-      onClose();
+    if (prevPathnameRef.current !== location.pathname) {
+      prevPathnameRef.current = location.pathname;
+      if (window.innerWidth < 768 && onClose) {
+        onClose();
+      }
     }
-  }, [location.pathname, onClose]);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (role === 'admin' || role === 'administrator') {
@@ -222,12 +229,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         path: '/admin/tickets', 
         icon: <HelpCircle size={18} />,
         badge: chatUnreadCount > 0 ? chatUnreadCount : null
-      },
-      { 
-        type: 'link', 
-        name: 'Municipal Cashier', 
-        path: '/cashier-dashboard', 
-        icon: <Receipt size={18} /> 
       },
       { 
         type: 'link', 
@@ -331,7 +332,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
       `}</style>
 
-      {isOpen && !isOperatorOrToda && (
+      {isOpen && !hideMobileSidebar && (
         <div 
           className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-300 print:hidden print-hide"
           onClick={onClose}
@@ -340,7 +341,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       <aside 
         className={`bg-[#9E2A2B] dark:bg-[#0c101c] fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 dark:border-slate-800 print:hidden print-hide ${
-          isOperatorOrToda ? 'hidden md:flex' : 'flex'
+          hideMobileSidebar ? 'hidden md:flex' : 'flex'
         } ${
           isOpen 
             ? 'w-64 translate-x-0' 
