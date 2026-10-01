@@ -217,12 +217,13 @@ const Login = () => {
           {/* RIGHT COLUMN: CLEAN FORM PANEL */}
           <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white min-h-full">
             <div className="w-full max-w-md">
-              <div className="mb-2.5 sm:mb-4">
-                <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
-                  Log In
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-                  Enter your credentials to access your operator portal.
+              <div className="mb-4 sm:mb-5">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight leading-tight">
+                  Welcome back
+                </h1>
+                <div className="w-10 h-1 bg-[#F0B429] rounded-full mt-2" />
+                <p className="text-xs sm:text-sm text-slate-600 font-medium mt-2 leading-relaxed">
+                  Log in to track your application and claim stub.
                 </p>
               </div>
 
