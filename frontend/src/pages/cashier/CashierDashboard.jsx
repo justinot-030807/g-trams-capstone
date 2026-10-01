@@ -79,6 +79,28 @@ const CashierDashboard = () => {
     return `OR-${year}-${rand}`;
   };
 
+  // Format exact date and exact time (HH:MM:SS AM/PM)
+  const formatExactDateTime = (dateStr) => {
+    if (!dateStr) return { dateFormatted: '—', timeFormatted: '—', full: '—' };
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return { dateFormatted: dateStr, timeFormatted: '', full: dateStr };
+    
+    const dateFormatted = d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+    
+    const timeFormatted = d.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    
+    return { dateFormatted, timeFormatted, full: `${dateFormatted} • ${timeFormatted}` };
+  };
+
   const handleOpenPayment = (franchise) => {
     setSelectedFranchise(franchise);
     setPayFormData({
@@ -198,13 +220,13 @@ const CashierDashboard = () => {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">
                 <Receipt size={14} />
-                <span>Municipal Treasury &bull; Office of the Vice Mayor Extension</span>
+                <span>Municipal Treasury &bull; Cashier Collection Terminal</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-                Cashier & Official Receipt Terminal
+                Cashier &amp; Payment Terminal
               </h1>
               <p className="text-xs sm:text-sm text-white/80 max-w-2xl leading-relaxed">
-                Verify operator claim stub vouchers, receive municipal franchise fees, encode official government receipt numbers, and release active tricycle permits.
+                Accept and process MTOP franchise fee payments, issue Official Receipts (OR), and view exact transaction payment logs with precise date and time.
               </p>
             </div>
 
@@ -278,7 +300,7 @@ const CashierDashboard = () => {
                 }`}
               >
                 <Clock size={15} />
-                <span>Pending Collection ({queue.length})</span>
+                <span>Payment Queue ({queue.length})</span>
               </button>
               <button
                 type="button"
@@ -289,8 +311,8 @@ const CashierDashboard = () => {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <CheckCircle2 size={15} />
-                <span>Issued Receipts ({paidList.length})</span>
+                <Receipt size={15} />
+                <span>Payment History ({paidList.length})</span>
               </button>
             </div>
 
@@ -301,7 +323,7 @@ const CashierDashboard = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search Claim Stub Ref, MTOP, Plate, Operator..."
+                placeholder="Search Plate No., Operator, OR No., MTOP..."
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-[#7A1B22] focus:ring-2 focus:ring-[#7A1B22]/20 transition-all font-medium"
               />
               {searchQuery && (
@@ -335,80 +357,74 @@ const CashierDashboard = () => {
               <div className="py-16 text-center space-y-2">
                 <Receipt size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
                 <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                  {searchQuery ? 'No matching records found' : activeTab === 'pending' ? 'No pending collection items' : 'No receipts issued yet'}
+                  {searchQuery ? 'No matching records found' : activeTab === 'pending' ? 'No applications awaiting payment' : 'No payment history records found'}
                 </h4>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  {searchQuery ? 'Try clearing your search query' : 'Applications will appear here once approved by LGU for payment.'}
+                  {searchQuery ? 'Try clearing your search query' : 'Applications ready for fee collection will appear in this queue.'}
                 </p>
               </div>
             ) : (
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 uppercase text-[10px] sm:text-xs font-bold tracking-wider">
-                  <tr>
-                    <th className="py-3.5 px-4">Claim Stub / MTOP</th>
-                    <th className="py-3.5 px-4">Operator Details</th>
-                    <th className="py-3.5 px-4">Unit &amp; Toda</th>
-                    <th className="py-3.5 px-4">{activeTab === 'pending' ? 'Amount Due' : 'Payment Record'}</th>
-                    <th className="py-3.5 px-4 text-right">Action</th>
-                  </tr>
+                  {activeTab === 'pending' ? (
+                    <tr>
+                      <th className="py-3.5 px-4">Plate No. &amp; MTOP</th>
+                      <th className="py-3.5 px-4">Operator Details</th>
+                      <th className="py-3.5 px-4">TODA &amp; Zone</th>
+                      <th className="py-3.5 px-4">Amount Due</th>
+                      <th className="py-3.5 px-4 text-right">Action</th>
+                    </tr>
+                  ) : (
+                    <tr>
+                      <th className="py-3.5 px-4">Official Receipt (OR#)</th>
+                      <th className="py-3.5 px-4">Operator &amp; Plate</th>
+                      <th className="py-3.5 px-4">TODA &amp; Zone</th>
+                      <th className="py-3.5 px-4">Amount Paid</th>
+                      <th className="py-3.5 px-4">Exact Date &amp; Time Paid</th>
+                      <th className="py-3.5 px-4 text-right">Receipt</th>
+                    </tr>
+                  )}
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200 font-medium">
                   {filteredQueue.map((item) => {
-                    const stubCode = `STUB-${(item._id || '').slice(-6).toUpperCase()}`;
-                    return (
-                      <tr key={item._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="space-y-0.5">
-                            <span className="font-mono font-black text-xs px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/80">
-                              {stubCode}
-                            </span>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-1">
-                              MTOP: <strong className="text-slate-800 dark:text-slate-200">{item.mtopNo || 'Pending'}</strong>
+                    if (activeTab === 'pending') {
+                      return (
+                        <tr key={item._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="space-y-0.5">
+                              <span className="font-mono font-black text-sm px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/80 inline-block">
+                                {item.plateNo || 'PENDING'}
+                              </span>
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-1">
+                                MTOP: <strong className="text-slate-800 dark:text-slate-200">{item.mtopNo || 'Pending'}</strong>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="py-3.5 px-4">
-                          <div>
-                            <p className="font-bold text-slate-900 dark:text-white">{item.fullName || item.operator?.name}</p>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.contact || item.operator?.contact || 'No Contact'}</p>
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <div>
-                            <span className="font-mono font-bold text-xs">{item.plateNo || 'PENDING'}</span>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.todaName || 'Non-TODA'} &bull; Zone {item.zone || 'N/A'}</p>
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          {activeTab === 'pending' ? (
+                          <td className="py-3.5 px-4">
                             <div>
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                              <p className="font-bold text-slate-900 dark:text-white">{item.fullName || item.operator?.name}</p>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.contact || item.operator?.contact || item.address || 'Gasan, Marinduque'}</p>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div>
+                              <p className="font-semibold text-slate-800 dark:text-slate-200">{item.todaName || 'Non-TODA'}</p>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Zone {item.zone || 'N/A'}</p>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div>
+                              <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
                                 ₱{(item.amountPaid || 500).toFixed(2)}
                               </span>
                               <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-tight">Standard LGU Fee</span>
                             </div>
-                          ) : (
-                            <div className="space-y-0.5">
-                              <span className="font-mono font-bold text-xs text-blue-700 dark:text-blue-300">
-                                {item.officialReceiptNo || 'OR-PAID'}
-                              </span>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                ₱{(item.amountPaid || 500).toFixed(2)} via {item.paymentMethod || 'Cash'}
-                              </p>
-                              {item.paymentDate && (
-                                <p className="text-[10px] text-slate-400">
-                                  {new Date(item.paymentDate).toLocaleDateString()}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </td>
+                          </td>
 
-                        <td className="py-3.5 px-4 text-right">
-                          {activeTab === 'pending' ? (
+                          <td className="py-3.5 px-4 text-right">
                             <button
                               onClick={() => handleOpenPayment(item)}
                               className="px-4 py-2 bg-[#7A1B22] hover:bg-[#681419] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
@@ -416,18 +432,77 @@ const CashierDashboard = () => {
                               <Receipt size={14} />
                               <span>Process Payment</span>
                             </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setReceiptData(item);
-                                setIsReceiptOpen(true);
-                              }}
-                              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
-                            >
-                              <Printer size={13} />
-                              <span>View Receipt</span>
-                            </button>
-                          )}
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    // Completed Tab: Payment History with EXACT Date and EXACT Time
+                    const dt = formatExactDateTime(item.paymentDate);
+                    return (
+                      <tr key={item._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="space-y-0.5">
+                            <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 inline-block">
+                              {item.officialReceiptNo || 'OR-PAID'}
+                            </span>
+                            <div className="text-[10px] text-slate-400 uppercase font-semibold">
+                              Cashier: {item.cashierName || 'Municipal Treasury'}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <div>
+                            <p className="font-bold text-slate-900 dark:text-white">{item.fullName || item.operator?.name}</p>
+                            <p className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
+                              Plate: <span className="font-bold text-amber-600 dark:text-amber-400">{item.plateNo || 'PENDING'}</span>
+                            </p>
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <div>
+                            <p className="font-semibold text-slate-800 dark:text-slate-200">{item.todaName || 'Non-TODA'}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Zone {item.zone || 'N/A'}</p>
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white text-sm">
+                              ₱{(item.amountPaid || 500).toFixed(2)}
+                            </span>
+                            <span className="block text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-tight">
+                              Paid via {item.paymentMethod || 'Cash'}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-xs">
+                              <Calendar size={13} className="text-slate-400 shrink-0" />
+                              <span>{dt.dateFormatted}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                              <Clock size={12} className="shrink-0" />
+                              <span>{dt.timeFormatted}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => {
+                              setReceiptData(item);
+                              setIsReceiptOpen(true);
+                            }}
+                            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <Printer size={13} />
+                            <span>Print Receipt</span>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -469,23 +544,23 @@ const CashierDashboard = () => {
             {/* Assessment Summary Box */}
             <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-2 text-xs">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-medium">Claim Stub Ref:</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">
-                  STUB-{(selectedFranchise._id || '').slice(-6).toUpperCase()}
+                <span className="text-slate-500 font-medium">Tricycle Plate:</span>
+                <span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">
+                  {selectedFranchise.plateNo}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-medium">Operator:</span>
+                <span className="text-slate-500 font-medium">Operator Name:</span>
                 <span className="font-bold text-slate-900 dark:text-white">{selectedFranchise.fullName}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-medium">Tricycle Plate / MTOP:</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">
-                  {selectedFranchise.plateNo} &bull; {selectedFranchise.mtopNo || 'MTOP Pending'}
+                <span className="text-slate-500 font-medium">MTOP / TODA:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {selectedFranchise.mtopNo || 'Pending'} &bull; {selectedFranchise.todaName || 'Non-TODA'}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-700">
-                <span className="font-bold text-slate-700 dark:text-slate-300">Total Assessment Due:</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300">Total Amount Payable:</span>
                 <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">₱500.00</span>
               </div>
             </div>
@@ -603,9 +678,9 @@ const CashierDashboard = () => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-slate-500 font-semibold uppercase text-[10px]">Transaction Date</p>
-                <p className="font-bold text-xs">
-                  {new Date(receiptData.paymentDate || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                <p className="text-slate-500 font-semibold uppercase text-[10px]">Date &amp; Exact Time Paid</p>
+                <p className="font-bold text-xs font-mono">
+                  {formatExactDateTime(receiptData.paymentDate || Date.now()).full}
                 </p>
               </div>
             </div>
