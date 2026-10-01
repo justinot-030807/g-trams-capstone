@@ -16,10 +16,7 @@ import {
   Building2, 
   Mail, 
   AlertCircle,
-  ChevronDown,
-  FileText,
-  Clock,
-  Ticket 
+  ChevronDown
 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
@@ -63,12 +60,12 @@ const Register = () => {
   const [googleOnboardingProfile, setGoogleOnboardingProfile] = useState(incomingGoogle || null);
   const [showGoogleOnboarding, setShowGoogleOnboarding] = useState(Boolean(incomingGoogle));
 
-  // Ensure warm off-white canvas consistency for auth view
+  // Ensure light canvas consistency for auth view
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#F8F5F3';
-    document.body.style.backgroundColor = '#F8F5F3';
+    document.documentElement.style.backgroundColor = '#f8fafc';
+    document.body.style.backgroundColor = '#f8fafc';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -304,10 +301,10 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 focus:ring-offset-white transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
 
   return (
-    <div className="relative w-full bg-[#F8F5F3] flex flex-col overflow-x-hidden min-h-screen">
+    <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
       
       {/* Zero-Lag Lightweight Watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -320,47 +317,46 @@ const Register = () => {
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* MAIN CONTENT AREA */}
-        <main className="flex-1 w-full flex flex-col bg-[#F8F5F3]">
+        {/* MAIN FULL-WIDTH SPLIT LAYOUT */}
+        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
-          {/* TOP HERO BANNER (SLIM) */}
-          <div className="relative w-full h-24 sm:h-28 md:h-32 overflow-hidden flex flex-col justify-end p-4 sm:p-5 bg-[#3D080D] shrink-0">
+          {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY */}
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-24 sm:h-28 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
             {/* Background Photo (Tricycle 2 for Register) */}
             <img 
               src="/tricycle-register.jpg" 
               alt="Gasan Tricycle" 
               className="absolute inset-0 w-full h-full object-cover object-center" 
             />
-            {/* Equal Velvet Maroon Overlay - identical brightness & >=4.5:1 text contrast */}
+            {/* Velvet Maroon Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/90 via-[#5E0D14]/70 to-[#3D080D]/75" />
             <div className="absolute inset-0 bg-black/20" />
 
-            {/* Bottom: Tagline with text-wrap: balance (Item 7) */}
-            <div className="relative z-10 max-w-lg mx-auto w-full pb-2 text-center sm:text-left">
-              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug drop-shadow-xs [text-wrap:balance]">
+            {/* Bottom: Tagline */}
+            <div className="relative z-10 pb-1 sm:pb-2 md:pb-4">
+              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-xs">
                 Gasan Tricycle Records &amp; Application Management System
+              </p>
+              <p className="hidden md:block text-xs text-amber-200/90 font-medium mt-1">
+                Official Tricycle Franchising &amp; Regulatory Portal
               </p>
             </div>
           </div>
 
-          {/* FLOATING WHITE CARD OVERLAPPING HERO BY 20px (Items 1, 2) */}
-          <div className="relative z-10 w-full max-w-lg mx-auto px-4 -mt-5 flex-1 flex flex-col justify-between pb-8">
-            <div className="bg-white rounded-[20px] p-5 sm:p-7 shadow-[0_4px_16px_rgba(116,26,44,0.08)] border border-slate-100">
-              
-              {/* HEADING, GOLD ACCENT BAR & SUBTITLE (Items 4, 6) */}
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight leading-tight">
-                  {step === 1 ? 'Register' : 'Verify contact'}
-                </h1>
-                {/* 40x4px gold bar under heading */}
-                <div className="w-10 h-1 bg-[#F0B429] rounded-full mt-2" />
-                <p className="text-xs sm:text-sm text-slate-600 font-medium mt-2 leading-relaxed">
-                  {step === 1 ? 'Create your operator account to apply online.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
+          {/* RIGHT COLUMN: CLEAN FORM PANEL (No card) */}
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white min-h-full">
+            <div className="w-full max-w-xl">
+              <div className="mb-2 sm:mb-4">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
+                  {step === 1 ? 'Register' : 'Verify Contact'}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                  {step === 1 ? 'Create your operator account to apply for or renew your tricycle franchise.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
                 </p>
               </div>
 
               {error && (
-                <div className="mt-4 mb-2 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
                   <p>{error}</p>
                   {error.includes('ALREADY EXISTS') && (
                     <Link to="/login" className="inline-block mt-1 font-black text-[#801820] underline tracking-wider">
@@ -370,7 +366,7 @@ const Register = () => {
                 </div>
               )}
               {success && (
-                <div className="mt-4 mb-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
                   {success}
                 </div>
               )}
@@ -378,8 +374,8 @@ const Register = () => {
               {/* STEP 1: REGISTRATION FORM */}
               {step === 1 && (
                 <>
-                  {/* GOOGLE SIGN UP AT TOP (Task 16) */}
-                  <div className="mt-6 mb-3">
+                  {/* GOOGLE SIGN UP AT TOP */}
+                  <div className="mb-3">
                     <GoogleAuthButton 
                       text="Continue with Google"
                       onSuccess={handleAuthSuccess}
@@ -394,17 +390,17 @@ const Register = () => {
                       }}
                       onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
                     />
-                    <div className="flex items-center gap-3 my-5">
+                    <div className="flex items-center gap-3 my-2.5 sm:my-3">
                       <div className="flex-1 h-px bg-slate-300" />
                       <span className="text-xs font-semibold text-slate-600">Or register with email/phone</span>
                       <div className="flex-1 h-px bg-slate-300" />
                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmitRegisterForm} className="space-y-5">
+                  <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5 sm:space-y-3">
                     {/* Full Name */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">Full name</label>
+                      <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                           <User size={18} />
@@ -423,10 +419,10 @@ const Register = () => {
                       </div>
                     </div>
                     
-                    {/* Barangay & TODA (Item 1: Consistent styling, gray placeholder, custom chevron) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Barangay & TODA */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">Barangay</label>
+                        <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
                             <MapPin size={18} />
@@ -436,7 +432,7 @@ const Register = () => {
                             value={formData.address} 
                             onChange={handleChange} 
                             required 
-                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 focus:ring-offset-white transition-all font-medium appearance-none cursor-pointer ${
+                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
                               !formData.address ? 'text-slate-500' : 'text-slate-900'
                             }`}
                           >
@@ -453,7 +449,7 @@ const Register = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">TODA</label>
+                        <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">TODA</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
                             <Building2 size={18} />
@@ -463,7 +459,7 @@ const Register = () => {
                             value={formData.todaAssociation} 
                             onChange={handleChange} 
                             required 
-                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 focus:ring-offset-white transition-all font-medium appearance-none cursor-pointer ${
+                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
                               !formData.todaAssociation ? 'text-slate-500' : 'text-slate-900'
                             }`}
                           >
@@ -700,30 +696,14 @@ const Register = () => {
                     </div>
                   </form>
 
-                  {/* BOTTOM LINKS (Item 3: 20px below button/google, mt-5) */}
-                  <div className="mt-5 pt-3 border-t border-slate-100 text-center">
+                  {/* BOTTOM LINKS */}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
                     <p className="text-sm text-slate-600 font-medium">
                       Already have an account?{' '}
                       <Link to="/login" className="font-bold text-[#801820] hover:underline">
                         Log In
                       </Link>
                     </p>
-                  </div>
-
-                  {/* TRUST STRIP (Item 8: Exactly 3 items, 13-14px) */}
-                  <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs sm:text-[13px] text-slate-600 font-medium">
-                    <div className="flex items-center gap-1.5">
-                      <FileText size={15} className="text-[#801820] shrink-0" />
-                      <span>Apply online</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={15} className="text-[#801820] shrink-0" />
-                      <span>Track your status</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Ticket size={15} className="text-[#801820] shrink-0" />
-                      <span>Get your claim stub</span>
-                    </div>
                   </div>
                 </>
               )}
@@ -740,7 +720,7 @@ const Register = () => {
                       value={otpCode} 
                       onChange={(e) => setOtpCode(e.target.value)} 
                       required 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-2xl font-black text-slate-900 tracking-[0.3em] outline-none focus:bg-white focus:border-[#801820] focus:ring-4 focus:ring-[#801820]/15 shadow-inner" 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-2xl font-black text-slate-900 tracking-[0.3em] outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 shadow-inner" 
                       placeholder="000000" 
                     />
                   </div>
@@ -805,8 +785,8 @@ const Register = () => {
         defaultLang="en"
       />
 
-      {/* SHARED FULL-WIDTH COMPACT FOOTER (Item 9) */}
-      <AuthFooter compact={true} />
+      {/* SHARED FULL-WIDTH FOOTER */}
+      <AuthFooter />
 
     </div>
   );

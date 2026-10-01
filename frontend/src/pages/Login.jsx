@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, Eye, EyeOff, Loader2, ArrowLeft, User, Lock, FileText, Clock, Ticket } from 'lucide-react';
+import { LogIn, Eye, EyeOff, Loader2, ArrowLeft, User, Lock } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import AuthNavbar from '../components/common/AuthNavbar';
@@ -35,12 +35,12 @@ const Login = () => {
     };
   }, [lockoutSeconds]);
 
-  // Ensure warm off-white canvas consistency for auth view
+  // Ensure light canvas consistency for auth view
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#F8F5F3';
-    document.body.style.backgroundColor = '#F8F5F3';
+    document.documentElement.style.backgroundColor = '#f8fafc';
+    document.body.style.backgroundColor = '#f8fafc';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -172,10 +172,10 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-2 focus:ring-[#801820] focus:ring-offset-2 focus:ring-offset-white transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
 
   return (
-    <div className="relative w-full bg-[#F8F5F3] flex flex-col overflow-x-hidden min-h-screen">
+    <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
       
       {/* Zero-Lag Lightweight Watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -188,47 +188,46 @@ const Login = () => {
         {/* TOP FLUSH NAVBAR */}
         <AuthNavbar />
 
-        {/* MAIN CONTENT AREA */}
-        <main className="flex-1 w-full flex flex-col bg-[#F8F5F3]">
+        {/* MAIN FULL-WIDTH SPLIT LAYOUT */}
+        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
-          {/* TOP HERO BANNER (SLIM) */}
-          <div className="relative w-full h-24 sm:h-28 md:h-32 overflow-hidden flex flex-col justify-end p-4 sm:p-5 bg-[#3D080D] shrink-0">
+          {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY */}
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-24 sm:h-28 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
             {/* Background Photo (Tricycle 1 for Login) */}
             <img 
               src="/tricycle-login.jpg" 
               alt="Gasan Tricycle" 
               className="absolute inset-0 w-full h-full object-cover object-center" 
             />
-            {/* Equal Velvet Maroon Overlay - identical brightness & >=4.5:1 text contrast */}
+            {/* Velvet Maroon Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/90 via-[#5E0D14]/70 to-[#3D080D]/75" />
             <div className="absolute inset-0 bg-black/20" />
 
-            {/* Bottom: Tagline with text-wrap: balance (Item 7) */}
-            <div className="relative z-10 max-w-md mx-auto w-full pb-2 text-center sm:text-left">
-              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug drop-shadow-xs [text-wrap:balance]">
+            {/* Bottom: Tagline */}
+            <div className="relative z-10 pb-1 sm:pb-2 md:pb-4">
+              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-xs">
                 Gasan Tricycle Records &amp; Application Management System
+              </p>
+              <p className="hidden md:block text-xs text-amber-200/90 font-medium mt-1">
+                Official Tricycle Franchising &amp; Regulatory Portal
               </p>
             </div>
           </div>
 
-          {/* FLOATING WHITE CARD OVERLAPPING HERO BY 20px (Items 1, 2) */}
-          <div className="relative z-10 w-full max-w-md mx-auto px-4 -mt-5 flex-1 flex flex-col justify-between pb-8">
-            <div className="bg-white rounded-[20px] p-5 sm:p-7 shadow-[0_4px_16px_rgba(116,26,44,0.08)] border border-slate-100">
-              
-              {/* HEADING, GOLD ACCENT BAR & SUBTITLE (Items 4, 6) */}
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight leading-tight">
-                  Welcome back
-                </h1>
-                {/* 40x4px gold bar under heading */}
-                <div className="w-10 h-1 bg-[#F0B429] rounded-full mt-2" />
-                <p className="text-xs sm:text-sm text-slate-600 font-medium mt-2 leading-relaxed">
-                  Log in to track your application and claim stub.
+          {/* RIGHT COLUMN: CLEAN FORM PANEL */}
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white min-h-full">
+            <div className="w-full max-w-md">
+              <div className="mb-2.5 sm:mb-4">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
+                  Log In
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                  Enter your credentials to access your operator portal.
                 </p>
               </div>
 
               {error && (
-                <div className={`mt-4 text-xs font-bold rounded-xl p-3 text-center shadow-xs animate-shake tracking-wide ${
+                <div className={`mb-3 text-xs font-bold rounded-xl p-3 text-center shadow-xs animate-shake tracking-wide ${
                   error.toLowerCase().includes('google')
                     ? 'bg-amber-50 border border-amber-300 text-amber-900 leading-relaxed'
                     : 'bg-red-50 border border-red-200 text-red-600'
@@ -242,12 +241,10 @@ const Login = () => {
                 </div>
               )}
 
-              {/* FORM: 24px below subtitle (mt-6) */}
-              <form onSubmit={handleLogin} className="mt-6">
-                {/* Email or Phone Number: label to input is 8px (mb-2) */}
+              <form onSubmit={handleLogin} className="space-y-2.5 sm:space-y-3.5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">
-                    Email or phone number
+                  <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Email or Phone Number
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -270,11 +267,12 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* Password: 20px below input (mt-5) */}
-                <div className="mt-5">
-                  <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">
-                    Password
-                  </label>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider">
+                      Password
+                    </label>
+                  </div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                       <Lock size={18} />
@@ -298,8 +296,7 @@ const Login = () => {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  {/* Forgot Password?: 12px below its input (mt-3) */}
-                  <div className="text-right mt-3">
+                  <div className="text-right mt-1">
                     <Link 
                       to="/forgot-password" 
                       className="text-xs sm:text-sm font-bold text-[#801820] hover:underline transition-colors"
@@ -309,17 +306,16 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* Log In Button: 24px below Forgot Password (mt-6) */}
-                <div className="mt-6">
+                <div className="pt-1">
                   <button
                     type="submit"
                     disabled={isLoading || lockoutSeconds > 0}
-                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-2.5 sm:py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[48px]"
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 size={18} className="animate-spin motion-reduce:animate-none" />
-                        <span>Logging in...</span>
+                        <Loader2 size={16} className="animate-spin motion-reduce:animate-none" />
+                        Logging In...
                       </>
                     ) : lockoutSeconds > 0 ? (
                       `Locked (${lockoutSeconds}s)`
@@ -330,8 +326,8 @@ const Login = () => {
                 </div>
               </form>
 
-              {/* OR DIVIDER: 20px above and below (my-5) */}
-              <div className="flex items-center gap-3 my-5">
+              {/* DIVIDER */}
+              <div className="flex items-center gap-3 my-2 sm:my-3">
                 <div className="flex-1 h-px bg-slate-300" />
                 <span className="text-xs font-bold text-slate-600">OR</span>
                 <div className="flex-1 h-px bg-slate-300" />
@@ -367,30 +363,13 @@ const Login = () => {
                 />
               </div>
 
-              {/* REGISTER LINK: 20px below Google button (mt-5) */}
-              <div className="mt-5 text-center">
+              <div className="mt-2.5 pt-2 sm:mt-4 sm:pt-3 border-t border-slate-100 text-center">
                 <p className="text-xs sm:text-sm text-slate-600 font-medium">
                   Don't have an account?{' '}
                   <Link to="/register" className="font-bold text-[#801820] hover:underline">
                     Register
                   </Link>
                 </p>
-              </div>
-
-              {/* TRUST STRIP (Item 8: Exactly 3 items, 13-14px) */}
-              <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs sm:text-[13px] text-slate-600 font-medium">
-                <div className="flex items-center gap-1.5">
-                  <FileText size={15} className="text-[#801820] shrink-0" />
-                  <span>Apply online</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock size={15} className="text-[#801820] shrink-0" />
-                  <span>Track your status</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Ticket size={15} className="text-[#801820] shrink-0" />
-                  <span>Get your claim stub</span>
-                </div>
               </div>
 
             </div>
@@ -409,8 +388,8 @@ const Login = () => {
         onSuccess={handleAuthSuccess}
       />
 
-      {/* COMPACT FOOTER ON LOGIN (Item 9) */}
-      <AuthFooter compact={true} />
+      {/* SHARED FULL-WIDTH FOOTER */}
+      <AuthFooter />
 
     </div>
   );

@@ -29,64 +29,9 @@ const InstagramIcon = ({ size = 16, className = "" }) => (
   </svg>
 );
 
-const AuthFooter = ({ compact = false }) => {
+const AuthFooter = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [legalTab, setLegalTab] = useState('privacy');
-
-  if (compact) {
-    return (
-      <footer className="relative z-20 w-full bg-[#0a0102] border-t border-white/10 py-4 px-4 sm:px-6 text-white/70 text-xs shrink-0">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          {/* Brand & Name */}
-          <div className="flex items-center gap-2">
-            <img src="/gtrams-logo.png" alt="G-TRAMS Logo" className="w-5 h-5 rounded-full object-cover" />
-            <span className="font-bold text-white tracking-wide">G-TRAMS</span>
-            <span className="text-white/40">•</span>
-            <span className="text-white/70 font-medium">Municipality of Gasan</span>
-          </div>
-
-          {/* Links: Terms, Privacy, Helpdesk */}
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
-            <button 
-              type="button" 
-              onClick={() => { setLegalTab('terms'); setShowTermsModal(true); }}
-              className="hover:text-[#D4AF37] transition-colors cursor-pointer"
-            >
-              Terms of Service
-            </button>
-            <span className="text-white/30">•</span>
-            <button 
-              type="button" 
-              onClick={() => { setLegalTab('privacy'); setShowTermsModal(true); }}
-              className="hover:text-[#D4AF37] transition-colors cursor-pointer"
-            >
-              Privacy Policy
-            </button>
-            <span className="text-white/30">•</span>
-            <a 
-              href={`mailto:${HELP_DESK_EMAIL}`} 
-              className="text-[#D4AF37] hover:underline transition-colors font-medium"
-            >
-              Helpdesk: {HELP_DESK_EMAIL}
-            </a>
-          </div>
-
-          {/* Copyright */}
-          <p className="text-white/40 text-[11px]">
-            © 2026 Municipality of Gasan. All rights reserved.
-          </p>
-        </div>
-
-        <TermsPolicyModal 
-          isOpen={showTermsModal}
-          onClose={() => setShowTermsModal(false)}
-          initialTab={legalTab}
-          defaultLang="en"
-          showAcceptButton={false}
-        />
-      </footer>
-    );
-  }
 
   return (
     <footer className="relative z-20 w-full bg-[#0a0102] border-t border-white/10 pt-12 pb-6 px-4 sm:px-6 lg:px-8 text-white/80">
