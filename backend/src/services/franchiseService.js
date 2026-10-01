@@ -32,7 +32,7 @@ class FranchiseService {
         const summary = {
             total: reports.length,
             active: reports.filter(r => r.status === 'Active').length,
-            pending: reports.filter(r => r.status === 'Pending').length,
+            pending: reports.filter(r => r.status === 'Pending' || r.status === 'Pending for Approval').length,
             forSigning: reports.filter(r => r.status === 'For Signing').length,
             readyForPickup: reports.filter(r => r.status === 'Ready for Pickup').length,
             revoked: reports.filter(r => r.status === 'Revoked').length,
@@ -40,6 +40,69 @@ class FranchiseService {
             expired: reports.filter(r => r.status === 'Expired').length,
             newApps: reports.filter(r => r.applicationType === 'New').length,
             
+            // Peak readiness metrics for January renewal surge
+            renewalsDue30: reports.filter(r => {
+                if (r.status !== 'Active') return false;
+                const base = r.approvalDate ? new Date(r.approvalDate) : (r.dateApplied ? new Date(r.dateApplied) : null);
+                const exp = r.orCrExpiryDate ? new Date(r.orCrExpiryDate) : (base ? new Date(base.setFullYear(base.getFullYear() + 1)) : null);
+                if (!exp || isNaN(exp.getTime())) return false;
+                const diffDays = Math.ceil((exp - new Date()) / 86400000);
+                return diffDays >= 0 && diffDays <= 30;
+            }).length,
+
+            renewalsDue60: reports.filter(r => {
+                if (r.status !== 'Active') return false;
+                const base = r.approvalDate ? new Date(r.approvalDate) : (r.dateApplied ? new Date(r.dateApplied) : null);
+                const exp = r.orCrExpiryDate ? new Date(r.orCrExpiryDate) : (base ? new Date(base.setFullYear(base.getFullYear() + 1)) : null);
+                if (!exp || isNaN(exp.getTime())) return false;
+                const diffDays = Math.ceil((exp - new Date()) / 86400000);
+                return diffDays >= 0 && diffDays <= 60;
+            }).length,
+
+            renewalsDue90: reports.filter(r => {
+                if (r.status !== 'Active') return false;
+                const base = r.approvalDate ? new Date(r.approvalDate) : (r.dateApplied ? new Date(r.dateApplied) : null);
+                const exp = r.orCrExpiryDate ? new Date(r.orCrExpiryDate) : (base ? new Date(base.setFullYear(base.getFullYear() + 1)) : null);
+                if (!exp || isNaN(exp.getTime())) return false;
+                const diffDays = Math.ceil((exp - new Date()) / 86400000);
+                return diffDays >= 0 && diffDays <= 90;
+            }).length,
+
+            receivedToday: (() => {
+                const startOfToday = new Date();
+                startOfToday.setHours(0, 0, 0, 0);
+                return reports.filter(r => new Date(r.createdAt || r.dateApplied || 0) >= startOfToday).length;
+            })(),
+
+            processedToday: (() => {
+                const startOfToday = new Date();
+                startOfToday.setHours(0, 0, 0, 0);
+                return reports.filter(r => 
+                    new Date(r.updatedAt || 0) >= startOfToday && 
+                    ['For Signing', 'Ready for Pickup', 'Active', 'Cancelled', 'Revoked'].includes(r.status)
+                ).length;
+            })(),
+
+            oldestWaiting: (() => {
+                const pendingList = reports
+                    .filter(r => ['Pending', 'Pending for Approval'].includes(r.status))
+                    .sort((a, b) => new Date(a.dateApplied || a.createdAt || 0) - new Date(b.dateApplied || b.createdAt || 0));
+                if (pendingList.length === 0) return null;
+                const oldest = pendingList[0];
+                const appliedDate = new Date(oldest.dateApplied || oldest.createdAt || Date.now());
+                const diffMs = Date.now() - appliedDate.getTime();
+                const days = Math.floor(diffMs / 86400000);
+                const hours = Math.floor((diffMs % 86400000) / 3600000);
+                return {
+                    _id: oldest._id,
+                    fullName: oldest.fullName,
+                    plateNo: oldest.plateNo,
+                    todaName: oldest.todaName,
+                    timeWaiting: days > 0 ? `${days}d ${hours}h` : `${hours}h`,
+                    daysWaiting: days
+                };
+            })(),
+
             // Computations directly handled by the server to prevent OOM errors on frontend
             todaMap: reports.reduce((acc, curr) => {
                 const name = curr.todaName ? curr.todaName.trim() : 'NON-TODA';
@@ -48,7 +111,7 @@ class FranchiseService {
             }, {}),
             
             recentApps: reports
-                .filter(r => ['Pending', 'For Signing', 'Ready for Pickup'].includes(r.status))
+                .filter(r => ['Pending', 'Pending for Approval', 'For Signing', 'Ready for Pickup'].includes(r.status))
                 .slice(0, 5),
                 
             historyLogs: [...reports]
@@ -144,7 +207,19 @@ class FranchiseService {
      * Get paginated franchises
      */
     static async getPaginatedFranchises(params) {
-        const { archived, page = 1, limit = 10, search = '', status = 'All' } = params;
+        const { 
+            archived, 
+            page = 1, 
+            limit = 10, 
+            search = '', 
+            status = 'All', 
+            applicationType, 
+            todaName, 
+            barangay, 
+            startDate, 
+            endDate, 
+            sort = 'oldest' 
+        } = params;
 
         const pageNum = Math.max(1, parseInt(page, 10) || 1);
         const limitNum = Math.max(1, parseInt(limit, 10) || 10);
@@ -153,7 +228,15 @@ class FranchiseService {
         let queryCondition = archived === 'true' ? { isArchived: true } : { isArchived: { $ne: true } };
 
         if (status && status !== 'All') {
-            const statusList = status.split(',').filter(s => s && s.trim() !== 'All');
+            const rawList = status.split(',').map(s => s.trim()).filter(Boolean);
+            const statusList = [];
+            rawList.forEach(s => {
+                statusList.push(s);
+                if (s === 'Pending' && !statusList.includes('Pending for Approval')) {
+                    statusList.push('Pending for Approval');
+                }
+            });
+
             if (statusList.length === 1) {
                 queryCondition.status = statusList[0];
             } else if (statusList.length > 1) {
@@ -161,14 +244,40 @@ class FranchiseService {
             }
         }
 
+        if (applicationType && applicationType !== 'all') {
+            queryCondition.applicationType = applicationType;
+        }
+
+        if (todaName && todaName !== 'all') {
+            queryCondition.todaName = todaName;
+        }
+
+        if (barangay && barangay !== 'all') {
+            const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            queryCondition.address = { $regex: escapeRegex(barangay), $options: 'i' };
+        }
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            queryCondition.dateApplied = { $gte: start, $lte: end };
+        }
+
         if (search && search.trim() !== '') {
             queryCondition.$text = { $search: search.trim() };
         }
 
+        // Default sort: oldest first (FIFO queue for peak processing)
+        const sortOrder = sort === 'newest' 
+            ? { dateApplied: -1, createdAt: -1 } 
+            : { dateApplied: 1, createdAt: 1 };
+
         const totalRecords = await Franchise.countDocuments(queryCondition);
         const franchises = await Franchise.find(queryCondition)
             .populate('operator', 'name address contact')
-            .sort({ createdAt: -1 })
+            .sort(sortOrder)
             .skip(skip)
             .limit(limitNum);
 

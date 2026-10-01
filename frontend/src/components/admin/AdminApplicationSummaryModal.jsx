@@ -1,8 +1,9 @@
 import React from 'react';
 import { 
   X, FileText, User, Car, Receipt, ShieldCheck, FileCheck, 
-  CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles
+  CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles, AlertTriangle, Check
 } from 'lucide-react';
+import { evaluateDocumentValidity } from '../../utils/dateValidity';
 
 const AdminApplicationSummaryModal = ({
   isOpen,
@@ -26,7 +27,14 @@ const AdminApplicationSummaryModal = ({
     });
   };
 
-  const isPending = franchise.status === 'Pending';
+  const isPending = franchise.status === 'Pending' || franchise.status === 'Pending for Approval';
+  const orCrValidity = evaluateDocumentValidity(franchise.orCrExpiryDate);
+  const licenseValidity = evaluateDocumentValidity(franchise.driverLicenseExpiryDate);
+
+  const getStatusDisplay = (status) => {
+    if (status === 'Pending' || status === 'Pending for Approval') return 'Pending for Approval';
+    return status;
+  };
 
   return (
     <div 
@@ -44,12 +52,12 @@ const AdminApplicationSummaryModal = ({
               <FileText size={18} />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-bold text-base text-slate-900 dark:text-white truncate">
                   Application Summary
                 </h3>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
-                  franchise.status === 'Pending' 
+                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
+                  isPending 
                     ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
                     : franchise.status === 'Active'
                     ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
@@ -57,10 +65,15 @@ const AdminApplicationSummaryModal = ({
                     ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700'
                     : 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
                 }`}>
-                  {franchise.status}
+                  {getStatusDisplay(franchise.status)}
                 </span>
+                {franchise.isResubmitted && (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    Corrected &amp; Re-submitted
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 Review complete details before final decision
               </p>
             </div>
@@ -76,20 +89,29 @@ const AdminApplicationSummaryModal = ({
 
         {/* Modal Scrollable Body */}
         <div className="overflow-y-auto py-4 space-y-4 flex-1 pr-1">
-          {/* AI Verification Pill (if available) */}
-          {franchise.aiVerification?.status && franchise.aiVerification?.status !== 'unverified' && (
-            <div className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2 ${
-              franchise.aiVerification.status === 'flagged'
+          {/* Trustworthy AI OCR Verification Banner */}
+          {franchise.aiVerification && franchise.aiVerification.status !== 'unverified' ? (
+            <div className={`p-3 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+              franchise.aiVerification.status === 'flagged' || (franchise.aiVerification.summary?.mismatchedFields || 0) > 0
                 ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
                 : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300'
             }`}>
-              <div className="flex items-center gap-1.5 font-bold truncate">
-                <Sparkles size={14} className={franchise.aiVerification.status === 'flagged' ? 'text-rose-600' : 'text-emerald-600'} />
-                <span>Gemini OCR: {franchise.aiVerification.status === 'flagged' ? 'Discrepancy Detected' : 'All Fields Matched'}</span>
+              <div className="flex items-center gap-2 font-bold min-w-0">
+                <Sparkles size={15} className={franchise.aiVerification.status === 'flagged' ? 'text-rose-600 shrink-0' : 'text-emerald-600 shrink-0'} />
+                <span className="truncate">
+                  {franchise.aiVerification.status === 'flagged'
+                    ? 'Gemini OCR: Discrepancy or Document Type Issue'
+                    : 'Gemini OCR: All Scanned Fields Matched'}
+                </span>
               </div>
-              <span className="text-[10px] font-mono font-bold shrink-0">
-                {franchise.aiVerification.summary?.matchedFields || 0} matched / {franchise.aiVerification.summary?.mismatchedFields || 0} mismatch
+              <span className="text-xs font-mono font-bold shrink-0 self-end sm:self-auto px-2 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/60">
+                {franchise.aiVerification.summary?.matchedFields || 0} matched &bull; {franchise.aiVerification.summary?.mismatchedFields || 0} mismatch
               </span>
+            </div>
+          ) : (
+            <div className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
+              <span className="font-semibold">OCR Verification: Manual inspection active</span>
+              <span className="text-[11px] text-slate-500">Unverified by AI</span>
             </div>
           )}
 
@@ -181,16 +203,23 @@ const AdminApplicationSummaryModal = ({
             <div className="space-y-2 text-xs">
               {/* LTO OR/CR */}
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block mb-1">
-                  LTO OR / CR
-                </span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
+                    LTO OR / CR
+                  </span>
+                  {franchise.orCrExpiryDate && (
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${orCrValidity.badgeColor}`}>
+                      {orCrValidity.label}
+                    </span>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">OR / CR No.</span>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">OR / CR No.</span>
                     <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.orCrNo || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Registration Expiry</span>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Registration Expiry</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.orCrExpiryDate)}</span>
                   </div>
                 </div>
@@ -198,23 +227,34 @@ const AdminApplicationSummaryModal = ({
 
               {/* Driver & License */}
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block mb-1">
-                  Driver &amp; License
-                </span>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
+                    Driver &amp; License
+                  </span>
+                  {franchise.driverLicenseExpiryDate && (
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${licenseValidity.badgeColor}`}>
+                      {licenseValidity.label}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Designation</span>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Designation</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">
                       {franchise.isOperatorDriver ? 'Operator (Self)' : 'Designated Driver'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">License No.</span>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">License No.</span>
                     <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.driverLicenseNo || '—'}</span>
                   </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">License Expiry</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.driverLicenseExpiryDate)}</span>
+                  </div>
                   {!franchise.isOperatorDriver && franchise.driverName && (
-                    <div className="col-span-2">
-                      <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Driver Name &amp; Contact</span>
+                    <div className="col-span-2 sm:col-span-3">
+                      <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Driver Name &amp; Contact</span>
                       <span className="font-bold text-slate-800 dark:text-slate-200">
                         {franchise.driverName} {franchise.driverContact ? `(${franchise.driverContact})` : ''}
                       </span>

@@ -125,15 +125,21 @@ const updateFranchise = async (req, res) => {
             delete updateData.deficiencies;
 
             // When an operator re-submits a cancelled/rejected application to fix issues,
-            // transition it back to Pending and clear previous rejection remarks.
+            // transition it back to Pending (Pending for Approval) and clear previous rejection remarks.
             if (wasCancelled) {
                 updateData.status = 'Pending';
+                updateData.isResubmitted = true;
+                updateData.resubmittedAt = new Date();
                 updateData.cancelReason = '';
                 updateData.rejectedField = '';
                 updateData.isArchived = false;
             } else {
                 delete updateData.status;
             }
+        }
+
+        if (updateData.status === 'Pending for Approval') {
+            updateData.status = 'Pending';
         }
 
         // Parse structured metadata date fields if provided

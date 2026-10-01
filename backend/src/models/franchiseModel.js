@@ -46,9 +46,13 @@ const franchiseSchema = new mongoose.Schema({
     cedulaAddress: { type: String, required: true },
     cedulaSerialNo: { type: String, required: true },
     
-    status: { type: String, enum: ['Pending', 'For Signing', 'Ready for Pickup', 'Active', 'Expired', 'Cancelled', 'Revoked'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Pending for Approval', 'For Signing', 'Ready for Pickup', 'Active', 'Expired', 'Cancelled', 'Revoked'], default: 'Pending' },
     applicationType: { type: String, default: 'New' },
     
+    // Resubmitted / Corrected tracking
+    isResubmitted: { type: Boolean, default: false },
+    resubmittedAt: { type: Date },
+
     // Cancellation or rejection field tracking and evidence
     cancelReason: { type: String, default: '' },
     rejectedField: { type: String, default: '' },

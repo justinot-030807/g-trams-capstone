@@ -34,6 +34,10 @@ const initSocket = (server) => {
     }
   });
 
+  // In-memory active review locks to prevent concurrent staff decisions
+  const activeReviewLocks = new Map();
+  const LOCK_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
   io.on('connection', (socket) => {
     // Join personal room
     socket.join(`user_${socket.userId}`);
@@ -54,8 +58,63 @@ const initSocket = (server) => {
       }
     });
 
+    // Concurrency: Review Locking
+    socket.on('review:join', ({ franchiseId, userName }, callback) => {
+      if (!franchiseId) return;
+      const now = Date.now();
+      const existing = activeReviewLocks.get(franchiseId);
+
+      // Check if another staff holds an active non-expired lock
+      if (existing && (now - existing.lockedAt < LOCK_TTL_MS) && existing.userId !== socket.userId) {
+        if (typeof callback === 'function') {
+          callback({
+            isLocked: true,
+            reviewerName: existing.userName,
+            reviewerId: existing.userId,
+            lockedAt: existing.lockedAt
+          });
+        }
+        return;
+      }
+
+      // Claim or refresh lock
+      const lockData = {
+        socketId: socket.id,
+        userId: socket.userId,
+        userName: userName || 'Another Administrator',
+        lockedAt: now
+      };
+      activeReviewLocks.set(franchiseId, lockData);
+
+      if (typeof callback === 'function') {
+        callback({ isLocked: false });
+      }
+
+      // Notify other admins that this franchise is now being reviewed
+      socket.to('admin').emit('review:locked', {
+        franchiseId,
+        reviewerName: lockData.userName,
+        reviewerId: lockData.userId
+      });
+    });
+
+    socket.on('review:leave', ({ franchiseId }) => {
+      if (!franchiseId) return;
+      const existing = activeReviewLocks.get(franchiseId);
+      if (existing && (existing.socketId === socket.id || existing.userId === socket.userId)) {
+        activeReviewLocks.delete(franchiseId);
+        io.to('admin').emit('review:unlocked', { franchiseId });
+      }
+    });
+
     socket.on('disconnect', () => {
-      // Cleanup if needed
+      // Release any review locks held by this disconnected socket
+      for (const [franchiseId, lock] of activeReviewLocks.entries()) {
+        if (lock.socketId === socket.id) {
+          activeReviewLocks.delete(franchiseId);
+          io.to('admin').emit('review:unlocked', { franchiseId });
+        }
+      }
     });
   });
 

@@ -1,9 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
   BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles,
-  PieChart as PieChartIcon, Sun, Moon, SunMedium, FileCheck
+  PieChart as PieChartIcon, Sun, Moon, SunMedium, FileCheck,
+  CalendarDays, Inbox, CheckCircle2
 } from 'lucide-react';
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip 
@@ -47,7 +48,21 @@ const CustomTodaTooltip = ({ active, payload }) => {
 const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ 
-    total: 0, active: 0, pending: 0, expired: 0, cancelled: 0, newApps: 0 
+    total: 0, 
+    active: 0, 
+    pending: 0, // Strictly Needs Review (awaiting decision: Pending & Pending for Approval)
+    forSigning: 0,
+    readyForPickup: 0,
+    pipeline: 0,
+    expired: 0, 
+    cancelled: 0, 
+    newApps: 0,
+    renewalsDue30: 0,
+    renewalsDue60: 0,
+    renewalsDue90: 0,
+    receivedToday: 0,
+    processedToday: 0,
+    oldestWaiting: null
   });
   const [todaStats, setTodaStats] = useState([]);
   const [hoveredTodaIndex, setHoveredTodaIndex] = useState(null);
@@ -89,10 +104,19 @@ const AdminDashboard = () => {
         setStats({ 
           total: sum.total || 0,
           active: sum.active || 0, 
-          pending: (sum.pending || 0) + (sum.forSigning || 0) + (sum.readyForPickup || 0), 
+          pending: sum.pending || 0, // Unified: strictly awaiting decision (Needs Review tab)
+          forSigning: sum.forSigning || 0,
+          readyForPickup: sum.readyForPickup || 0,
+          pipeline: (sum.pending || 0) + (sum.forSigning || 0) + (sum.readyForPickup || 0),
           expired: sum.expired || 0,
           cancelled: (sum.cancelled || 0) + (sum.revoked || 0),
-          newApps: sum.newApps || 0 
+          newApps: sum.newApps || 0,
+          renewalsDue30: sum.renewalsDue30 || 0,
+          renewalsDue60: sum.renewalsDue60 || 0,
+          renewalsDue90: sum.renewalsDue90 || 0,
+          receivedToday: sum.receivedToday || 0,
+          processedToday: sum.processedToday || 0,
+          oldestWaiting: sum.oldestWaiting || null
         });
 
         // Compute TODA distribution directly from server's map
@@ -195,9 +219,9 @@ const AdminDashboard = () => {
       return 'Loading system overview and franchise status...';
     }
     if (stats.pending > 0) {
-      return `Welcome back! You have ${stats.pending} application${stats.pending > 1 ? 's' : ''} awaiting review in the approval queue.`;
+      return `Welcome back! You have ${stats.pending} application${stats.pending > 1 ? 's' : ''} awaiting review in the approval queue (${stats.pipeline} in active municipal pipeline).`;
     }
-    return `Welcome back! All franchise queues and operations are up-to-date.`;
+    return `Welcome back! All review queues are up-to-date (${stats.pipeline} total units in active municipal pipeline).`;
   };
 
   const greeting = getGreeting();
@@ -229,7 +253,7 @@ const AdminDashboard = () => {
         }
       `}</style>
 
-      {/* 1. HERO BANNER */}
+      {/* 1. HERO BANNER WITH CLICKABLE PIPELINE COUNTS */}
       <div 
         className="animate-smooth-card bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all duration-300"
         style={{ animationDelay: '0.05s' }}
@@ -239,12 +263,45 @@ const AdminDashboard = () => {
             <GreetingIcon size={13} className={greeting.badgeColor} />
             <span>{greeting.tag}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1 text-white">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2 text-white">
             {greeting.text}, {loggedInAdminName}!
           </h1>
-          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
+          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed mb-3">
             {getGreetingSubtext()}
           </p>
+
+          {/* Clickable Pipeline Counts Matching Queue Tabs */}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+            <button
+              onClick={() => navigate('/franchise-approval?tab=pending')}
+              className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all text-xs font-semibold cursor-pointer active:scale-95 shadow-2xs"
+              title="Click to view applications awaiting review"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-400 group-hover:scale-125 transition-transform" />
+              <span className="text-white/90">Needs Review:</span>
+              <span className="text-amber-300 font-bold px-1.5 py-0.5 rounded bg-black/30 font-mono">{stats.pending}</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/franchise-approval?tab=signing')}
+              className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all text-xs font-semibold cursor-pointer active:scale-95 shadow-2xs"
+              title="Click to view applications queued for signing"
+            >
+              <span className="w-2 h-2 rounded-full bg-purple-400 group-hover:scale-125 transition-transform" />
+              <span className="text-white/90">For Signing:</span>
+              <span className="text-purple-300 font-bold px-1.5 py-0.5 rounded bg-black/30 font-mono">{stats.forSigning}</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/franchise-approval?tab=ready')}
+              className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all text-xs font-semibold cursor-pointer active:scale-95 shadow-2xs"
+              title="Click to view signed franchises ready for pickup"
+            >
+              <span className="w-2 h-2 rounded-full bg-blue-400 group-hover:scale-125 transition-transform" />
+              <span className="text-white/90">Ready for Pickup:</span>
+              <span className="text-blue-300 font-bold px-1.5 py-0.5 rounded bg-black/30 font-mono">{stats.readyForPickup}</span>
+            </button>
+          </div>
         </div>
 
         {/* Right Side: Interactive Action Badge & Compact Date */}
@@ -253,7 +310,7 @@ const AdminDashboard = () => {
             <div className="h-10 w-36 rounded-2xl bg-white/10 dark:bg-white/5 animate-pulse border border-white/10" />
           ) : stats.pending > 0 ? (
             <button
-              onClick={() => navigate('/franchise-approval')}
+              onClick={() => navigate('/franchise-approval?tab=pending')}
               className="group flex items-center gap-3 bg-white/15 hover:bg-white/25 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 border border-white/20 dark:border-[#D4AF37]/40 px-4 py-2.5 rounded-2xl transition-all shadow-sm cursor-pointer active:scale-95 text-left"
               title="Open Approvals Queue"
             >
@@ -261,7 +318,7 @@ const AdminDashboard = () => {
                 <Clock size={16} />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
+                <p className="text-xs font-black uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
                 <p className="text-xs font-black text-white">{stats.pending} Pending Review</p>
               </div>
               <ArrowRight size={15} className="text-[#D4AF37] group-hover:translate-x-1 transition-transform ml-0.5" />
@@ -280,17 +337,17 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* 2. STATS CARDS */}
+      {/* 2. PRIMARY STATS CARDS */}
       {isLoading ? (
         <div className="mb-8">
           <StatsCardsSkeleton count={4} baseDelay={60} stepDelay={70} />
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
           {[
             { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, iconBg: 'bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37]' },
             { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 dark:border dark:border-emerald-800/40' },
-            { label: 'Pending Approval', count: stats.pending, sub: 'Requires action', icon: <Clock size={22} />, iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-[#D4AF37] dark:border dark:border-amber-800/40' },
+            { label: 'Pending Review', count: stats.pending, sub: 'Awaiting decision', icon: <Clock size={22} />, iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-[#D4AF37] dark:border dark:border-amber-800/40' },
             { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-500 dark:text-red-400 dark:border dark:border-red-800/40' }
           ].map((stat, index) => (
             <div 
@@ -310,6 +367,90 @@ const AdminDashboard = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 2.5 PEAK READINESS & THROUGHPUT METRICS (JANUARY RENEWAL SURGE) */}
+      {!isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Renewals Due Card */}
+          <div 
+            onClick={() => navigate('/franchise-masterlist?status=Active')}
+            className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-[#D4AF37]/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Renewals Due</span>
+              <CalendarDays size={16} className="text-[#D4AF37] group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-black text-slate-900 dark:text-white">{stats.renewalsDue30}</span>
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-400">within 30 days</span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+              60d: <strong className="text-slate-700 dark:text-slate-300">{stats.renewalsDue60}</strong> &bull; 90d: <strong className="text-slate-700 dark:text-slate-300">{stats.renewalsDue90}</strong>
+            </p>
+          </div>
+
+          {/* Received Today Card */}
+          <div className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Received Today</span>
+              <Inbox size={16} className="text-blue-500" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-black text-slate-900 dark:text-white">{stats.receivedToday}</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">new submissions</span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+              Applications filed since 12:00 AM
+            </p>
+          </div>
+
+          {/* Processed Today Card */}
+          <div className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Processed Today</span>
+              <CheckCircle2 size={16} className="text-emerald-500" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-black text-slate-900 dark:text-white">{stats.processedToday}</span>
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">adjudicated</span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+              Approved, signed, or resolved
+            </p>
+          </div>
+
+          {/* Oldest Waiting Application Card */}
+          <div className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Oldest Waiting</span>
+              <Clock size={16} className="text-rose-500" />
+            </div>
+            {stats.oldestWaiting ? (
+              <div className="flex items-center justify-between gap-2 mt-1">
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                    {stats.oldestWaiting.fullName}
+                  </p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-bold">
+                    Waiting {stats.oldestWaiting.timeWaiting}
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate(`/franchise-approval/review/${stats.oldestWaiting._id}?tab=pending`)}
+                  className="px-2.5 py-1 bg-[#9E2A2B] hover:bg-[#801820] text-white text-xs font-bold rounded-lg transition-colors shrink-0 cursor-pointer shadow-2xs"
+                >
+                  Review
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                <CheckCircle2 size={14} />
+                <span>No queue backlog</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -471,7 +612,7 @@ const AdminDashboard = () => {
                     <span className="text-xl font-black text-slate-900 dark:text-white">{item.count}</span>
                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{item.pct}%</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{item.desc}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -502,14 +643,14 @@ const AdminDashboard = () => {
                     style={{ width: isGraphAnimated ? `${getPercentage(stats.active)}%` : '0%', transitionDelay: '200ms' }}
                   />
                 </div>
-                <p className="text-[10px] text-emerald-700/80 dark:text-emerald-400 font-medium mt-1.5">{stats.active} of {stats.total} franchises are active and compliant</p>
+                <p className="text-xs text-emerald-700/80 dark:text-emerald-400 font-medium mt-1.5">{stats.active} of {stats.total} franchises are active and compliant</p>
               </div>
 
               {/* New Applications */}
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">New Applications</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">First-time franchise filings</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">First-time franchise filings</p>
                 </div>
                 <span className="text-xl font-black text-slate-900 dark:text-white">{stats.newApps}</span>
               </div>
@@ -524,7 +665,7 @@ const AdminDashboard = () => {
                   <p className={`text-xs font-bold uppercase tracking-wider ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-300'}`}>
                     Approval Queue
                   </p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                     {stats.pending > 0 ? 'Action needed from Office of the Vice Mayor Extension' : 'All queues cleared'}
                   </p>
                 </div>
@@ -535,7 +676,7 @@ const AdminDashboard = () => {
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Last System Activity</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Most recent franchise update</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Most recent franchise update</p>
                 </div>
                 <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
                   {historyLogs.length > 0 ? getRelativeTime(historyLogs[0]?.updatedAt) : '—'}
@@ -826,7 +967,7 @@ const AdminDashboard = () => {
                       </div>
 
                       {/* Status Badge */}
-                      <span className={`px-2 py-0.5 text-[9px] uppercase font-bold rounded-md border shrink-0 mt-0.5 ${actionData.badgeColor}`}>
+                      <span className={`px-2 py-0.5 text-xs uppercase font-bold rounded-md border shrink-0 mt-0.5 ${actionData.badgeColor}`}>
                         {log.status}
                       </span>
                     </div>
@@ -869,7 +1010,7 @@ const AdminDashboard = () => {
                       {/* Urgency Indicator */}
                       <div className="flex flex-col items-center shrink-0 gap-0.5">
                         <span className={`w-2 h-2 rounded-full ${urgencyDot} shadow-xs`} />
-                        <span className={`text-[8px] font-bold ${urgencyColor}`}>
+                        <span className={`text-xs font-bold ${urgencyColor}`}>
                           {daysPending > 0 ? `${daysPending}d` : 'New'}
                         </span>
                       </div>
@@ -882,8 +1023,8 @@ const AdminDashboard = () => {
 
                       {/* Review CTA */}
                       <button 
-                        onClick={() => navigate('/franchise-approval')}
-                        className="px-4 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold rounded-xl transition-all shrink-0 active:scale-95 shadow-sm flex items-center gap-1.5"
+                        onClick={() => navigate('/franchise-approval?tab=pending')}
+                        className="px-4 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold rounded-xl transition-all shrink-0 active:scale-95 shadow-sm flex items-center gap-1.5 cursor-pointer"
                       >
                         <ArrowRight size={13} />
                         Review

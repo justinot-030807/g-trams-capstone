@@ -115,9 +115,11 @@ async function extractWithGemini(base64Data, mimeType, docType) {
         let prompt = '';
         if (docType === 'orCr') {
             prompt = `You are a Philippine Land Transportation Office (LTO) document specialist.
-Carefully inspect this Official Receipt (OR) or Certificate of Registration (CR) image.
+Carefully inspect this image. First determine if this image is genuinely an Official Receipt (OR) or Certificate of Registration (CR) from LTO.
 Extract the following vehicle details and return ONLY a valid JSON object with these keys:
 {
+  "isExpectedDocumentType": true/false (false if this is NOT an LTO OR or CR, e.g. selfie, wrong doc, receipt, blurred non-document),
+  "detectedDocumentType": "LTO Official Receipt / Certificate of Registration" or description of what the image actually is,
   "plateNo": "extracted plate number or MV file number, or null if unreadable",
   "chassisNo": "extracted chassis or frame number, or null if unreadable",
   "motorNo": "extracted engine or motor number, or null if unreadable",
@@ -128,9 +130,11 @@ Extract the following vehicle details and return ONLY a valid JSON object with t
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'license') {
             prompt = `You are a Philippine Land Transportation Office (LTO) driver's license specialist.
-Carefully inspect this Driver's License card image.
+Carefully inspect this image. First determine if this image is genuinely a Philippine Driver's License card.
 Extract the following details and return ONLY a valid JSON object with these keys:
 {
+  "isExpectedDocumentType": true/false (false if this is NOT a Driver's License),
+  "detectedDocumentType": "Driver's License" or description of what the image actually is,
   "licenseNo": "extracted driver license number, or null if unreadable",
   "driverName": "extracted full name of driver/licensee, or null if unreadable",
   "expiryDate": "extracted expiration date (YYYY-MM-DD), or null if unreadable"
@@ -138,9 +142,11 @@ Extract the following details and return ONLY a valid JSON object with these key
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'cedula') {
             prompt = `You are a Philippine Municipal Treasury specialist.
-Carefully inspect this Community Tax Certificate (Cedula / CTC) image.
+Carefully inspect this image. First determine if this image is genuinely a Community Tax Certificate (Cedula / CTC).
 Extract the following details and return ONLY a valid JSON object with these keys:
 {
+  "isExpectedDocumentType": true/false (false if this is NOT a Community Tax Certificate / Cedula),
+  "detectedDocumentType": "Community Tax Certificate (Cedula)" or description of what the image actually is,
   "serialNo": "extracted CTC / Cedula serial or receipt number, or null if unreadable",
   "fullName": "extracted taxpayer full name, or null if unreadable",
   "year": "extracted tax year (e.g. 2026), or null if unreadable",
@@ -149,9 +155,11 @@ Extract the following details and return ONLY a valid JSON object with these key
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'todaEndorsement') {
             prompt = `You are a Tricycle Operators and Drivers Association (TODA) endorsement inspector.
-Carefully inspect this TODA Endorsement / Certificate of Membership image.
+Carefully inspect this image. First determine if this image is genuinely a TODA Endorsement or Certificate of Membership.
 Extract the following details and return ONLY a valid JSON object with these keys:
 {
+  "isExpectedDocumentType": true/false (false if this is NOT a TODA Endorsement),
+  "detectedDocumentType": "TODA Endorsement Certificate" or description of what the image actually is,
   "certNo": "extracted certificate or clearance number, or null",
   "memberName": "extracted member/driver/operator name, or null",
   "todaName": "extracted TODA association name (e.g. BATODA, GT TODA), or null"
@@ -159,9 +167,11 @@ Extract the following details and return ONLY a valid JSON object with these key
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'brgyClearance') {
             prompt = `You are a Philippine Barangay clearance inspector.
-Carefully inspect this Barangay Clearance image.
+Carefully inspect this image. First determine if this image is genuinely a Barangay Clearance.
 Extract the following details and return ONLY a valid JSON object with these keys:
 {
+  "isExpectedDocumentType": true/false (false if this is NOT a Barangay Clearance),
+  "detectedDocumentType": "Barangay Clearance" or description of what the image actually is,
   "clearanceNo": "extracted clearance or control number, or null",
   "residentName": "extracted resident/applicant name, or null",
   "barangay": "extracted barangay name, or null"
@@ -250,33 +260,49 @@ async function verifyFranchiseDocuments(franchise) {
             extracted = await extractWithGemini(imageInfo.base64Data, imageInfo.mimeType, 'orCr');
         }
 
-        // If no API key or Gemini returned null, provide graceful simulated extraction based on document presence
         if (!extracted) {
-            extracted = {
-                plateNo: franchise.plateNo || null,
-                chassisNo: franchise.chassisNo || null,
-                motorNo: franchise.motorNo || null,
-                orCrNo: franchise.orCrNo || null,
-                simulated: !hasApiKey
+            results.documents.orCr = {
+                hasDocument: true,
+                extracted: null,
+                comparisons: [],
+                status: 'unverified',
+                ocrNotes: 'OCR scan unavailable or rate-limited. Manual verification required.'
+            };
+        } else {
+            const comparisons = [];
+
+            if (extracted.isExpectedDocumentType === false) {
+                comparisons.push({
+                    field: 'docType',
+                    label: 'Document Authenticity & Type',
+                    inputValue: 'LTO OR / CR',
+                    extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
+                    status: 'mismatch',
+                    confidence: 0.95,
+                    notes: 'Ang larawang na-upload ay hindi lehitimong LTO OR/CR.'
+                });
+            } else {
+                comparisons.push(
+                    compareField(franchise.chassisNo, extracted.chassisNo, 'Chassis Serial Number', 'chassisNo'),
+                    compareField(franchise.motorNo, extracted.motorNo, 'Motor / Engine Number', 'motorNo'),
+                    compareField(franchise.plateNo, extracted.plateNo, 'Plate Number', 'plateNo')
+                );
+
+                if (franchise.orCrNo) {
+                    comparisons.push(compareField(franchise.orCrNo, extracted.orCrNo, 'LTO OR/CR Number', 'orCrNo'));
+                }
+            }
+
+            const hasMismatch = comparisons.some(c => c.status === 'mismatch');
+            const allMatch = comparisons.length > 0 && comparisons.every(c => c.status === 'match');
+
+            results.documents.orCr = {
+                hasDocument: true,
+                extracted,
+                comparisons,
+                status: extracted.isExpectedDocumentType === false ? 'wrong_document_type' : (hasMismatch ? 'mismatch' : (allMatch ? 'match' : 'unclear'))
             };
         }
-
-        const comparisons = [
-            compareField(franchise.chassisNo, extracted.chassisNo, 'Chassis Serial Number', 'chassisNo'),
-            compareField(franchise.motorNo, extracted.motorNo, 'Motor / Engine Number', 'motorNo'),
-            compareField(franchise.plateNo, extracted.plateNo, 'Plate Number', 'plateNo'),
-        ];
-
-        if (franchise.orCrNo) {
-            comparisons.push(compareField(franchise.orCrNo, extracted.orCrNo, 'LTO OR/CR Number', 'orCrNo'));
-        }
-
-        results.documents.orCr = {
-            hasDocument: true,
-            extracted,
-            comparisons,
-            status: comparisons.some(c => c.status === 'mismatch') ? 'mismatch' : (comparisons.every(c => c.status === 'match') ? 'match' : 'unclear')
-        };
     } else {
         results.documents.orCr = { hasDocument: false, status: 'missing', comparisons: [] };
     }
@@ -290,25 +316,44 @@ async function verifyFranchiseDocuments(franchise) {
         }
 
         if (!extracted) {
-            extracted = {
-                licenseNo: franchise.driverLicenseNo || null,
-                driverName: (!franchise.isOperatorDriver && franchise.driverName) ? franchise.driverName : franchise.fullName,
-                simulated: !hasApiKey
+            results.documents.license = {
+                hasDocument: true,
+                extracted: null,
+                comparisons: [],
+                status: 'unverified',
+                ocrNotes: 'OCR scan unavailable or rate-limited. Manual verification required.'
+            };
+        } else {
+            const comparisons = [];
+            const targetDriverName = (!franchise.isOperatorDriver && franchise.driverName) ? franchise.driverName : franchise.fullName;
+
+            if (extracted.isExpectedDocumentType === false) {
+                comparisons.push({
+                    field: 'docType',
+                    label: 'Document Authenticity & Type',
+                    inputValue: "Driver's License",
+                    extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
+                    status: 'mismatch',
+                    confidence: 0.95,
+                    notes: "Ang larawang na-upload ay hindi lehitimong Driver's License."
+                });
+            } else {
+                comparisons.push(
+                    compareField(franchise.driverLicenseNo, extracted.licenseNo, "Driver's License Number", 'driverLicenseNo'),
+                    compareField(targetDriverName, extracted.driverName, 'Authorized Driver Name', 'driverName')
+                );
+            }
+
+            const hasMismatch = comparisons.some(c => c.status === 'mismatch');
+            const allMatch = comparisons.length > 0 && comparisons.every(c => c.status === 'match');
+
+            results.documents.license = {
+                hasDocument: true,
+                extracted,
+                comparisons,
+                status: extracted.isExpectedDocumentType === false ? 'wrong_document_type' : (hasMismatch ? 'mismatch' : (allMatch ? 'match' : 'unclear'))
             };
         }
-
-        const targetDriverName = (!franchise.isOperatorDriver && franchise.driverName) ? franchise.driverName : franchise.fullName;
-        const comparisons = [
-            compareField(franchise.driverLicenseNo, extracted.licenseNo, "Driver's License Number", 'driverLicenseNo'),
-            compareField(targetDriverName, extracted.driverName, 'Authorized Driver Name', 'driverName')
-        ];
-
-        results.documents.license = {
-            hasDocument: true,
-            extracted,
-            comparisons,
-            status: comparisons.some(c => c.status === 'mismatch') ? 'mismatch' : (comparisons.every(c => c.status === 'match') ? 'match' : 'unclear')
-        };
     } else {
         results.documents.license = { hasDocument: false, status: 'missing', comparisons: [] };
     }
@@ -322,24 +367,40 @@ async function verifyFranchiseDocuments(franchise) {
         }
 
         if (!extracted) {
-            extracted = {
-                serialNo: franchise.cedulaSerialNo || null,
-                fullName: franchise.fullName || null,
-                year: franchise.cedulaDate ? new Date(franchise.cedulaDate).getFullYear() : new Date().getFullYear(),
-                simulated: !hasApiKey
+            results.documents.cedula = {
+                hasDocument: true,
+                extracted: null,
+                comparisons: [],
+                status: 'unverified',
+                ocrNotes: 'OCR scan unavailable or rate-limited. Manual verification required.'
+            };
+        } else {
+            const comparisons = [];
+
+            if (extracted.isExpectedDocumentType === false) {
+                comparisons.push({
+                    field: 'docType',
+                    label: 'Document Authenticity & Type',
+                    inputValue: 'Community Tax Certificate (Cedula)',
+                    extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
+                    status: 'mismatch',
+                    confidence: 0.95,
+                    notes: 'Ang larawang na-upload ay hindi lehitimong Cedula (CTC).'
+                });
+            } else {
+                comparisons.push(compareField(franchise.cedulaSerialNo, extracted.serialNo, 'Cedula / CTC Serial No', 'cedulaSerialNo'));
+            }
+
+            const hasMismatch = comparisons.some(c => c.status === 'mismatch');
+            const allMatch = comparisons.length > 0 && comparisons.every(c => c.status === 'match');
+
+            results.documents.cedula = {
+                hasDocument: true,
+                extracted,
+                comparisons,
+                status: extracted.isExpectedDocumentType === false ? 'wrong_document_type' : (hasMismatch ? 'mismatch' : (allMatch ? 'match' : 'unclear'))
             };
         }
-
-        const comparisons = [
-            compareField(franchise.cedulaSerialNo, extracted.serialNo, 'Cedula / CTC Serial No', 'cedulaSerialNo')
-        ];
-
-        results.documents.cedula = {
-            hasDocument: true,
-            extracted,
-            comparisons,
-            status: comparisons.some(c => c.status === 'mismatch') ? 'mismatch' : 'match'
-        };
     } else {
         results.documents.cedula = { hasDocument: false, status: 'missing', comparisons: [] };
     }
@@ -353,27 +414,43 @@ async function verifyFranchiseDocuments(franchise) {
         }
 
         if (!extracted) {
-            extracted = {
-                todaName: franchise.todaName || null,
-                certNo: franchise.todaCertNo || null,
-                simulated: !hasApiKey
+            results.documents.todaEndorsement = {
+                hasDocument: true,
+                extracted: null,
+                comparisons: [],
+                status: 'unverified',
+                ocrNotes: 'OCR scan unavailable or rate-limited. Manual verification required.'
+            };
+        } else {
+            const comparisons = [];
+
+            if (extracted.isExpectedDocumentType === false) {
+                comparisons.push({
+                    field: 'docType',
+                    label: 'Document Authenticity & Type',
+                    inputValue: 'TODA Endorsement Certificate',
+                    extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
+                    status: 'mismatch',
+                    confidence: 0.95,
+                    notes: 'Ang larawang na-upload ay hindi lehitimong TODA Endorsement.'
+                });
+            } else {
+                comparisons.push(compareField(franchise.todaName, extracted.todaName, 'Accredited TODA Association', 'todaName'));
+                if (franchise.todaCertNo) {
+                    comparisons.push(compareField(franchise.todaCertNo, extracted.certNo, 'TODA Certificate No', 'todaCertNo'));
+                }
+            }
+
+            const hasMismatch = comparisons.some(c => c.status === 'mismatch');
+            const allMatch = comparisons.length > 0 && comparisons.every(c => c.status === 'match');
+
+            results.documents.todaEndorsement = {
+                hasDocument: true,
+                extracted,
+                comparisons,
+                status: extracted.isExpectedDocumentType === false ? 'wrong_document_type' : (hasMismatch ? 'mismatch' : (allMatch ? 'match' : 'unclear'))
             };
         }
-
-        const comparisons = [
-            compareField(franchise.todaName, extracted.todaName, 'Accredited TODA Association', 'todaName')
-        ];
-
-        if (franchise.todaCertNo) {
-            comparisons.push(compareField(franchise.todaCertNo, extracted.certNo, 'TODA Certificate No', 'todaCertNo'));
-        }
-
-        results.documents.todaEndorsement = {
-            hasDocument: true,
-            extracted,
-            comparisons,
-            status: comparisons.some(c => c.status === 'mismatch') ? 'mismatch' : 'match'
-        };
     } else {
         results.documents.todaEndorsement = { hasDocument: false, status: 'missing', comparisons: [] };
     }
@@ -387,24 +464,40 @@ async function verifyFranchiseDocuments(franchise) {
         }
 
         if (!extracted) {
-            extracted = {
-                barangay: franchise.address || null,
-                clearanceNo: franchise.brgyClearanceNo || null,
-                simulated: !hasApiKey
+            results.documents.brgyClearance = {
+                hasDocument: true,
+                extracted: null,
+                comparisons: [],
+                status: 'unverified',
+                ocrNotes: 'OCR scan unavailable or rate-limited. Manual verification required.'
+            };
+        } else {
+            const comparisons = [];
+
+            if (extracted.isExpectedDocumentType === false) {
+                comparisons.push({
+                    field: 'docType',
+                    label: 'Document Authenticity & Type',
+                    inputValue: 'Barangay Clearance',
+                    extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
+                    status: 'mismatch',
+                    confidence: 0.95,
+                    notes: 'Ang larawang na-upload ay hindi lehitimong Barangay Clearance.'
+                });
+            } else if (franchise.brgyClearanceNo) {
+                comparisons.push(compareField(franchise.brgyClearanceNo, extracted.clearanceNo, 'Barangay Clearance No', 'brgyClearanceNo'));
+            }
+
+            const hasMismatch = comparisons.some(c => c.status === 'mismatch');
+            const allMatch = comparisons.length > 0 && comparisons.every(c => c.status === 'match');
+
+            results.documents.brgyClearance = {
+                hasDocument: true,
+                extracted,
+                comparisons,
+                status: extracted.isExpectedDocumentType === false ? 'wrong_document_type' : (hasMismatch ? 'mismatch' : (allMatch ? 'match' : 'unclear'))
             };
         }
-
-        const comparisons = [];
-        if (franchise.brgyClearanceNo) {
-            comparisons.push(compareField(franchise.brgyClearanceNo, extracted.clearanceNo, 'Barangay Clearance No', 'brgyClearanceNo'));
-        }
-
-        results.documents.brgyClearance = {
-            hasDocument: true,
-            extracted,
-            comparisons,
-            status: comparisons.some(c => c.status === 'mismatch') ? 'mismatch' : 'match'
-        };
     } else {
         results.documents.brgyClearance = { hasDocument: false, status: 'missing', comparisons: [] };
     }
@@ -414,9 +507,15 @@ async function verifyFranchiseDocuments(franchise) {
     let matched = 0;
     let mismatched = 0;
     let unclear = 0;
+    let wrongTypeCount = 0;
+    let unverifiedCount = 0;
 
     Object.values(results.documents).forEach(doc => {
-        if (doc && Array.isArray(doc.comparisons)) {
+        if (!doc) return;
+        if (doc.status === 'wrong_document_type') wrongTypeCount++;
+        if (doc.status === 'unverified') unverifiedCount++;
+
+        if (Array.isArray(doc.comparisons)) {
             doc.comparisons.forEach(c => {
                 total++;
                 if (c.status === 'match') matched++;
@@ -433,15 +532,23 @@ async function verifyFranchiseDocuments(franchise) {
         unclearFields: unclear
     };
 
-    if (mismatched > 0) {
+    if (wrongTypeCount > 0 || mismatched > 0) {
         results.status = 'flagged';
-        results.overallNotes = `Mayroong ${mismatched} field na hindi tugma sa dokumentong litrato. Kinakailangan ang masusing pagsusuri ng Municipal Admin.`;
+        results.overallNotes = wrongTypeCount > 0 
+            ? `May ${wrongTypeCount} dokumento na hindi tumutugma sa inaasahang opisyal na uri (wrong document type) o may ${mismatched} mismatch.`
+            : `Mayroong ${mismatched} field na hindi tugma sa dokumentong litrato. Kinakailangan ang masusing pagsusuri ng Municipal Admin.`;
+    } else if (total === 0 || unverifiedCount === Object.keys(results.documents).length) {
+        results.status = 'unverified';
+        results.overallNotes = 'Hindi naging available ang automated OCR scan. Maaaring manu-manong i-verify ng Admin ang mga dokumento.';
     } else if (unclear > 0) {
+        results.status = 'flagged';
+        results.overallNotes = `May ilang field (${unclear}) na malabo o hindi sigurado. Kinakailangan ang manu-manong kumpirmasyon ng Admin.`;
+    } else if (matched > 0 && mismatched === 0) {
         results.status = 'verified';
-        results.overallNotes = `Lahat ng nabasang field ay tugma (${matched}/${total}). May ilang field na malabo o nangangailangan ng manu-manong inspeksyon.`;
+        results.overallNotes = `Tugma ang lahat ng ${matched} impormasyon sa mga kalakip na opisyal na dokumento.`;
     } else {
-        results.status = 'verified';
-        results.overallNotes = `100% Tugma ang lahat ng ${matched} impormasyon sa mga kalakip na opisyal na dokumento.`;
+        results.status = 'unverified';
+        results.overallNotes = 'Manual review required.';
     }
 
     return results;
