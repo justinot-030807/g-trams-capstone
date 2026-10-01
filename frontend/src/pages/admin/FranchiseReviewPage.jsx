@@ -3,9 +3,9 @@ import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
   ZoomIn, ZoomOut, RotateCw, RotateCcw, RefreshCw, ExternalLink, 
-  FileText, AlertCircle, Loader2, Printer, Move, Check, AlertTriangle,
+  FileText, AlertCircle, Loader2, Printer, Check, AlertTriangle,
   Copy, ShieldCheck, User, Car, FileCheck, Layers, FileSpreadsheet, Sparkles,
-  Maximize2, SunMedium, Keyboard, Undo2, Lock
+  Maximize2, SunMedium, Undo2, Lock
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
@@ -80,7 +80,6 @@ const FranchiseReviewPage = () => {
   // Modals
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -529,76 +528,6 @@ const FranchiseReviewPage = () => {
     }
   };
 
-  // Keyboard Shortcuts (Safe & Repeat-guarded)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // 1. Ignore if typing in text inputs
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName) || e.target?.isContentEditable) {
-        return;
-      }
-
-      // 2. Ignore key repeats (holding down a key)
-      if (e.repeat) return;
-
-      if (e.key === '?') {
-        e.preventDefault();
-        setIsShortcutsOpen(prev => !prev);
-      } else if (e.key === 'a' || e.key === 'A') {
-        e.preventDefault();
-        if (reviewLock.isLocked) return;
-        if (currentApp?.status === 'Pending' || currentApp?.status === 'Pending for Approval') {
-          handleUpdateStatus('For Signing', null, true);
-        } else if (currentApp?.status === 'For Signing') {
-          handleUpdateStatus('Ready for Pickup', null, true);
-        } else if (currentApp?.status === 'Ready for Pickup') {
-          handleUpdateStatus('Active', null, true);
-        }
-      } else if (e.key === 'r' || e.key === 'R') {
-        e.preventDefault();
-        if (reviewLock.isLocked) return;
-        setIsRejecting(prev => !prev);
-      } else if (e.key === 'n' || e.key === 'N' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        goToNext();
-      } else if (e.key === 'p' || e.key === 'P' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        goToPrev();
-      } else if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        setIsFitToWidth(prev => !prev);
-      } else if (e.key === '0') {
-        e.preventDefault();
-        resetCanvasView();
-      } else if (e.key === '1') {
-        e.preventDefault();
-        handleSelectDoc('orCrDocument');
-      } else if (e.key === '2') {
-        e.preventDefault();
-        handleSelectDoc('license');
-      } else if (e.key === '3') {
-        e.preventDefault();
-        handleSelectDoc('cedulaDoc');
-      } else if (e.key === '4') {
-        e.preventDefault();
-        handleSelectDoc('todaEndorsement');
-      } else if (e.key === '5') {
-        e.preventDefault();
-        handleSelectDoc('brgyClearance');
-      } else if (e.key === 'Escape') {
-        if (isShortcutsOpen) {
-          setIsShortcutsOpen(false);
-        } else if (isRejecting) {
-          setIsRejecting(false);
-        } else {
-          navigate(`/franchise-approval?tab=${currentTab}`);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentApp, hasNext, hasPrev, queue, currentIndex, activeDocKey, currentTab, reviewLock.isLocked, isShortcutsOpen, isRejecting]);
-
   // Document Validity evaluations (Asia/Manila timezone grounded)
   const orCrValidity = evaluateDocumentValidity(currentApp?.orCrExpiryDate, 'Asia/Manila');
   const licenseValidity = evaluateDocumentValidity(currentApp?.driverLicenseExpiryDate, 'Asia/Manila');
@@ -694,88 +623,52 @@ const FranchiseReviewPage = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* TOP HEADER: MUNICIPAL HERITAGE VELVET MAROON RIBBON                       */}
+      {/* TOP HEADER: CLEAN, UNIFIED MUNICIPAL WORKSTATION BAR                      */}
       {/* ========================================================================= */}
-      <header className="h-14 px-4 bg-gradient-to-r from-[#852024] via-[#9E2A2B] to-[#801820] dark:from-[#180407] dark:via-[#24060a] dark:to-[#1A0B0E] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-md border-b border-[#D4AF37]/30">
+      <header className="h-14 px-4 bg-slate-900 border-b border-slate-800 text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-xs">
         
-        {/* Left: Back & Applicant Summary */}
+        {/* Left: Back & Applicant Info */}
         <div className="flex items-center gap-3 min-w-0">
           <Link
             to={`/franchise-approval?tab=${currentTab}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-            title="Return to Table (Shortcut: Esc)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors cursor-pointer"
           >
             <ArrowLeft size={15} />
-            <span className="hidden sm:inline">Back to Queue</span>
+            <span className="hidden sm:inline">Back</span>
           </Link>
 
           <div className="h-5 w-px bg-white/20 hidden sm:block" />
 
-          <div className="min-w-0 flex items-center gap-2 flex-wrap">
+          <div className="min-w-0 flex items-center gap-2.5">
             <h1 className="text-sm font-bold text-white truncate max-w-[160px] sm:max-w-xs">
               {currentApp.fullName}
             </h1>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-black/25 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0">
-              Plate: {currentApp.plateNo || 'Pending'}
-            </span>
 
-            {/* Application Type Chip */}
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-white/15 text-white border border-white/20 shrink-0">
-              {currentApp.applicationType || 'New'}
-            </span>
-
-            {/* Resubmitted Flag */}
-            {(currentApp.isResubmitted || currentApp.status === 'Pending for Approval') && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-purple-500/30 text-purple-200 border border-purple-400/40 shrink-0 flex items-center gap-1.5">
-                <RefreshCw size={12} className="shrink-0" />
-                <span>Corrected Resubmission</span>
-              </span>
-            )}
-
-            {/* Document Expired Flag */}
-            {hasExpiredDoc ? (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-red-500/30 text-red-200 border border-red-400/40 shrink-0 flex items-center gap-1">
-                <AlertTriangle size={12} /> Document Expired
-              </span>
-            ) : hasExpiringSoonDoc ? (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-500/30 text-amber-200 border border-amber-400/40 shrink-0 flex items-center gap-1">
-                <Clock size={12} /> Expiring Soon (30d)
-              </span>
-            ) : null}
-
-            {/* Status Badge */}
-            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${
-              currentApp.status === 'Ready for Pickup' 
-                ? 'bg-blue-500/20 text-blue-100 border-blue-300/40' 
-                : currentApp.status === 'For Signing'
-                ? 'bg-purple-500/20 text-purple-100 border-purple-300/40'
-                : currentApp.status === 'Active'
-                ? 'bg-emerald-500/20 text-emerald-100 border-emerald-300/40'
-                : 'bg-amber-500/20 text-amber-100 border-amber-300/40'
-            }`}>
+            {/* Single clean status badge */}
+            <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/15 shrink-0">
               {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? 'Needs Review' : currentApp.status}
             </span>
           </div>
         </div>
 
-        {/* Center: Queue Progress Navigator (Scoped strictly to current tab) */}
-        <div className="flex items-center gap-1 bg-black/25 p-1 rounded-xl border border-white/15 text-xs font-semibold">
+        {/* Center: Queue Progress Navigator */}
+        <div className="flex items-center gap-1 bg-black/30 p-1 rounded-xl border border-white/15 text-xs font-semibold">
           <button
             onClick={goToPrev}
             disabled={!hasPrev}
             className="p-1 rounded-lg hover:bg-white/15 text-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-            title="Previous Application (Shortcut: P or ArrowLeft)"
+            title="Previous Application"
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="px-2 text-xs text-white select-none whitespace-nowrap">
-            {currentIndex >= 0 ? currentIndex + 1 : 1} / {queue.length || 1}
+          <span className="px-2 text-xs text-white/90 select-none whitespace-nowrap">
+            {currentIndex >= 0 ? currentIndex + 1 : 1} of {queue.length || 1}
           </span>
           <button
             onClick={goToNext}
             disabled={!hasNext}
             className="p-1 rounded-lg hover:bg-white/15 text-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-            title="Next Application (Shortcut: N or ArrowRight)"
+            title="Next Application"
           >
             <ChevronRight size={16} />
           </button>
@@ -783,20 +676,11 @@ const FranchiseReviewPage = () => {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          {/* Shortcuts Cheat Sheet */}
-          <button
-            onClick={() => setIsShortcutsOpen(true)}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 text-xs font-semibold transition-colors cursor-pointer"
-            title="Keyboard Shortcuts Cheat Sheet (Shortcut: ?)"
-          >
-            <Keyboard size={15} />
-          </button>
-
           {/* MTOP Print */}
           {(currentApp.status === 'For Signing' || currentApp.status === 'Ready for Pickup' || currentApp.status === 'Active') && (
             <button
               onClick={() => setIsPrintOpen(true)}
-              className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/20 cursor-pointer"
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/15 cursor-pointer"
               title="Print Official MTOP Certificate"
             >
               <Printer size={14} className="text-[#D4AF37]" />
@@ -804,14 +688,14 @@ const FranchiseReviewPage = () => {
             </button>
           )}
 
-          {/* Application Summary */}
+          {/* View Summary text button */}
           <button
             onClick={() => setIsDossierOpen(true)}
-            className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/20 cursor-pointer"
+            className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/15 cursor-pointer"
             title="Open Application Summary"
           >
-            <FileText size={14} className="text-[#D4AF37]" />
-            <span className="hidden md:inline">Summary</span>
+            <FileText size={14} />
+            <span className="hidden md:inline">View Summary</span>
           </button>
 
           {/* Reject Trigger */}
@@ -821,26 +705,24 @@ const FranchiseReviewPage = () => {
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border cursor-pointer ${
               isRejecting 
                 ? 'bg-red-600 text-white border-red-500 shadow-sm' 
-                : 'bg-red-500/20 hover:bg-red-600 text-red-100 hover:text-white border-red-400/30'
+                : 'bg-red-500/15 hover:bg-red-600 text-red-200 hover:text-white border-red-400/30'
             } disabled:opacity-40 disabled:cursor-not-allowed`}
-            title="Reject Application (Shortcut: R)"
+            title="Reject Application"
           >
             <XCircle size={14} />
             <span>Reject</span>
-            <kbd className="hidden lg:inline text-xs px-1 bg-black/25 rounded text-white/80 font-mono">R</kbd>
           </button>
 
-          {/* Primary: Approve / Sign / Release */}
+          {/* Primary Action Button */}
           {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? (
             <button
               onClick={() => handleUpdateStatus('For Signing', null, true)}
               disabled={isProcessing || reviewLock.isLocked}
               className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Approve requirements and route for municipal signature (Shortcut: A)"
+              title="Approve requirements and route for municipal signature"
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               <span>Approve for Signing</span>
-              <kbd className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-mono">A</kbd>
               <ChevronRight size={14} />
             </button>
           ) : currentApp.status === 'For Signing' ? (
@@ -848,11 +730,10 @@ const FranchiseReviewPage = () => {
               onClick={() => handleUpdateStatus('Ready for Pickup', null, true)}
               disabled={isProcessing || reviewLock.isLocked}
               className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Mark MTOP certificate as signed and ready for pickup (Shortcut: A)"
+              title="Mark MTOP certificate as signed and ready for pickup"
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               <span>Mark Signed &amp; Ready</span>
-              <kbd className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-mono">A</kbd>
               <ChevronRight size={14} />
             </button>
           ) : (
@@ -860,11 +741,10 @@ const FranchiseReviewPage = () => {
               onClick={() => handleUpdateStatus('Active', null, true)}
               disabled={isProcessing || reviewLock.isLocked}
               className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Acknowledge payment, release franchise, and advance (Shortcut: A)"
+              title="Acknowledge payment, release franchise, and advance"
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              <span>Release &amp; Next</span>
-              <kbd className="hidden lg:inline text-xs px-1 bg-white/20 rounded font-mono">A</kbd>
+              <span>Release Franchise</span>
               <ChevronRight size={14} />
             </button>
           )}
@@ -879,72 +759,38 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* LEFT REVIEW SHEET: DOCUMENT CHECKLIST & TABBED METADATA INSPECTOR       */}
         {/* ======================================================================= */}
-        <aside className="w-full md:w-[360px] lg:w-[400px] bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
+        <aside className="w-full md:w-[340px] lg:w-[380px] bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
           
-          <div className="p-3.5 space-y-3.5 flex-1 flex flex-col">
+          <div className="p-3.5 space-y-3 flex-1 flex flex-col">
             
-            {/* 1. DOCUMENT CHECKLIST CARDS */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between px-0.5">
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <Layers size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                  Attached Documents
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Keyboard [1 - 5]
-                </span>
-              </div>
+            {/* 1. APPLICANT SUMMARY */}
+            <div className="bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <User size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                Applicant Information
+              </span>
 
-              <div className="space-y-1.5">
-                {docTabs.map((tab, idx) => {
-                  const isActive = tab.key === activeDocKey;
-                  const hasFile = Boolean(tab.url);
-
-                  return (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      onClick={() => handleSelectDoc(tab.key)}
-                      className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-gradient-to-r from-red-50 to-white dark:from-[#2a0c10] dark:to-[#161f30] border-[#9E2A2B] dark:border-[#D4AF37]/60 shadow-xs ring-1 ring-[#9E2A2B]/20 dark:ring-[#D4AF37]/30'
-                          : 'bg-slate-50/80 dark:bg-[#0c101c] border-slate-200 dark:border-slate-800/80 hover:bg-slate-100/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                      }`}
-                    >
-                      <div className="min-w-0 flex items-center gap-2.5">
-                        <span className={`w-5 h-5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                          isActive 
-                            ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 shadow-xs' 
-                            : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                        }`}>
-                          {idx + 1}
-                        </span>
-                        <div className="min-w-0">
-                          <p className={`text-xs font-bold truncate ${isActive ? 'text-[#9E2A2B] dark:text-[#D4AF37]' : 'text-slate-800 dark:text-slate-200'}`}>
-                            {tab.short}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {tab.sub}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 ml-2">
-                        {hasFile ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60">
-                            <Check size={11} className="stroke-[3]" />
-                            <span className="hidden sm:inline">Attached</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
-                            <AlertCircle size={11} />
-                            <span className="hidden sm:inline">Missing</span>
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Name</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fullName}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Contact</span>
+                  <span className="font-mono text-slate-800 dark:text-slate-100 block">{currentApp.contact || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">TODA / Zone</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">
+                    {currentApp.todaName || 'NON-TODA'} {currentApp.zone ? `(Zone ${currentApp.zone})` : ''}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Barangay</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">
+                    {currentApp.barangay || currentApp.address || '—'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1040,101 +886,52 @@ const FranchiseReviewPage = () => {
 
                 {/* OR/CR Details */}
                 {activeDocKey === 'orCrDocument' && (
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                      <span>LTO Registration Specifications</span>
-                      <span className="text-xs text-slate-400">Cross-check with OR/CR</span>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Plate No.</span>
+                        <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || 'Pending'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">OR/CR No.</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">{currentApp.orCrNo || '—'}</span>
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Plate Number</span>
-                          <span className="font-mono font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || 'Pending'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.plateNo, 'plateNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Copy Plate Number"
-                        >
-                          {copiedField === 'plateNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Motor / Engine</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.motorNo || '—'}</span>
                       </div>
-
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">OR / CR Number</span>
-                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.orCrNo || '—'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.orCrNo, 'orCrNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Copy OR/CR Number"
-                        >
-                          {copiedField === 'orCrNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Chassis No.</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.chassisNo || '—'}</span>
                       </div>
+                    </div>
 
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div className="min-w-0 pr-2">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Motor / Engine No.</span>
-                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.motorNo || '—'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.motorNo, 'motorNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-                          title="Copy Motor Number"
-                        >
-                          {copiedField === 'motorNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Make &amp; Year</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.make || '—'} {currentApp.made ? `(${currentApp.made})` : ''}
+                        </span>
                       </div>
-
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div className="min-w-0 pr-2">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Chassis Number</span>
-                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.chassisNo || '—'}</span>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Registration Expiry</span>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.orCrExpiryDate)}</span>
+                          {currentApp.orCrExpiryDate && (
+                            <span className={`text-[10px] font-bold px-1 py-0.2 rounded border ${
+                              orCrValidity.isExpired
+                                ? 'bg-rose-50 text-rose-600 border-rose-200'
+                                : orCrValidity.isExpiringSoon
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                            }`}>
+                              {orCrValidity.isExpired ? 'Expired' : orCrValidity.isExpiringSoon ? `${orCrValidity.daysUntilExpiry}d` : 'Valid'}
+                            </span>
+                          )}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.chassisNo, 'chassisNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-                          title="Copy Chassis Number"
-                        >
-                          {copiedField === 'chassisNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Make / Brand</span>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.make || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Model Year</span>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">{currentApp.made || '—'}</span>
-                        </div>
-                      </div>
-
-                      {/* Registration Expiry Date + Asia/Manila 30-day Validity Flag */}
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Registration Expiry</span>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.orCrExpiryDate)}</span>
-                        </div>
-                        {currentApp.orCrExpiryDate && (
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${
-                            orCrValidity.isExpired
-                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60'
-                              : orCrValidity.isExpiringSoon
-                              ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/60'
-                              : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
-                          }`}>
-                            {orCrValidity.isExpired ? 'Expired' : orCrValidity.isExpiringSoon ? `Expiring (${orCrValidity.daysUntilExpiry}d)` : 'Valid'}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1142,250 +939,132 @@ const FranchiseReviewPage = () => {
 
                 {/* Driver's License Details */}
                 {activeDocKey === 'license' && (
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                      <span>Driver's License Specifications</span>
-                      <span className="text-xs text-slate-400">Cross-check with License</span>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Driver &amp; Designation</span>
+                      <div className="flex items-center justify-between gap-1 mt-0.5">
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate">
+                          {currentApp.isOperatorDriver ? currentApp.fullName : (currentApp.driverName || '—')}
+                        </span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                          {currentApp.isOperatorDriver ? 'Self-Drive' : 'Employed'}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Driver Designation</span>
-                          <span className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">
-                            {currentApp.isOperatorDriver ? 'Operator is Driver (Self-Drive)' : 'Designated Driver (Employed)'}
-                          </span>
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">License No.</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.driverLicenseNo || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">License Expiry</span>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.driverLicenseExpiryDate)}</span>
+                          {currentApp.driverLicenseExpiryDate && (
+                            <span className={`text-[10px] font-bold px-1 py-0.2 rounded border ${
+                              licenseValidity.isExpired
+                                ? 'bg-rose-50 text-rose-600 border-rose-200'
+                                : licenseValidity.isExpiringSoon
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                            }`}>
+                              {licenseValidity.isExpired ? 'Expired' : licenseValidity.isExpiringSoon ? `${licenseValidity.daysUntilExpiry}d` : 'Valid'}
+                            </span>
+                          )}
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div className="min-w-0 pr-2">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Driver Full Name</span>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">
-                            {currentApp.isOperatorDriver ? currentApp.fullName : (currentApp.driverName || '—')}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.isOperatorDriver ? currentApp.fullName : currentApp.driverName, 'driverName')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-                          title="Copy Driver Name"
-                        >
-                          {copiedField === 'driverName' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">License Number</span>
-                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.driverLicenseNo || '—'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.driverLicenseNo, 'driverLicenseNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Copy License Number"
-                        >
-                          {copiedField === 'driverLicenseNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
-                      </div>
-
-                      {/* License Expiry + Validity */}
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">License Expiration</span>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.driverLicenseExpiryDate)}</span>
-                        </div>
-                        {currentApp.driverLicenseExpiryDate && (
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${
-                            licenseValidity.isExpired
-                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60'
-                              : licenseValidity.isExpiringSoon
-                              ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/60'
-                              : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
-                          }`}>
-                            {licenseValidity.isExpired ? 'Expired' : licenseValidity.isExpiringSoon ? `Expiring (${licenseValidity.daysUntilExpiry}d)` : 'Valid'}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Driver Contact</span>
-                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">
-                            {currentApp.isOperatorDriver ? (currentApp.contact || '—') : (currentApp.driverContact || '—')}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.isOperatorDriver ? currentApp.contact : currentApp.driverContact, 'driverContact')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Copy Driver Contact"
-                        >
-                          {copiedField === 'driverContact' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
-                      </div>
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Driver Contact</span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                        {currentApp.isOperatorDriver ? (currentApp.contact || '—') : (currentApp.driverContact || '—')}
+                      </span>
                     </div>
                   </div>
                 )}
 
                 {/* Cedula Details */}
                 {activeDocKey === 'cedulaDoc' && (
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                      <span>Cedula / CTC Specifications</span>
-                      <span className="text-xs text-slate-400">Cross-check with Cedula</span>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">CTC Serial No.</span>
+                        <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.cedulaSerialNo || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.cedulaDate)}</span>
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">CTC Serial Number</span>
-                          <span className="font-mono font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.cedulaSerialNo || '—'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.cedulaSerialNo, 'cedulaSerialNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Copy Cedula Serial"
-                        >
-                          {copiedField === 'cedulaSerialNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
-                      </div>
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Place Issued</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
+                    </div>
 
-                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Date Issued</span>
-                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.cedulaDate)}</span>
-                      </div>
-
-                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Place Issued</span>
-                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
-                      </div>
-
-                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Taxpayer Name</span>
-                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
-                      </div>
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Taxpayer</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
                     </div>
                   </div>
                 )}
 
                 {/* TODA Endorsement Details */}
                 {activeDocKey === 'todaEndorsement' && (
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                      <span>TODA Endorsement Specifications</span>
-                      <span className="text-xs text-slate-400">Cross-check with Certificate</span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">TODA Association</span>
-                        <span className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.todaName || currentApp.toda || '—'}</span>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">TODA Association</span>
+                        <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] truncate block">{currentApp.todaName || currentApp.toda || '—'}</span>
                       </div>
-
-                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Assigned Route / Zone</span>
-                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Assigned Zone</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
                           {currentApp.zone ? (currentApp.zone.toString().toLowerCase().includes('zone') ? currentApp.zone : `Zone ${currentApp.zone}`) : '—'}
                         </span>
                       </div>
+                    </div>
 
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Certificate / Endorsement No.</span>
-                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.todaCertNo || '—'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.todaCertNo, 'todaCertNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Copy TODA Cert No."
-                        >
-                          {copiedField === 'todaCertNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Certificate No.</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.todaCertNo || '—'}</span>
                       </div>
-
-                      {currentApp.todaCertDate && (
-                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Date Issued</span>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.todaCertDate)}</span>
-                        </div>
-                      )}
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.todaCertDate)}</span>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Barangay Clearance Details */}
                 {activeDocKey === 'brgyClearance' && (
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                      <span>Barangay Clearance Specifications</span>
-                      <span className="text-xs text-slate-400">Cross-check with Clearance</span>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Barangay of Residence</span>
+                      <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || '—'}</span>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Barangay of Residence</span>
-                        <span className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || '—'}</span>
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Clearance No.</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.brgyClearanceNo || '—'}</span>
                       </div>
-
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Clearance Number</span>
-                          <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.brgyClearanceNo || '—'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(currentApp.brgyClearanceNo, 'brgyClearanceNo')}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Copy Clearance No."
-                        >
-                          {copiedField === 'brgyClearanceNo' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                        </button>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.brgyClearanceDate)}</span>
                       </div>
+                    </div>
 
-                      {currentApp.brgyClearanceDate && (
-                        <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Date Issued</span>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{formatDate(currentApp.brgyClearanceDate)}</span>
-                        </div>
-                      )}
-
-                      <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold block">Resident Name</span>
-                        <span className="font-bold text-xs text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
-                      </div>
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Resident</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* 4. KEYBOARD SHORTCUT HELPER STRIP */}
-            <div className="mt-auto pt-2">
-              <div 
-                onClick={() => setIsShortcutsOpen(true)}
-                className="p-2.5 bg-slate-50 dark:bg-[#0c101c] rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 flex flex-wrap items-center justify-between gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
-                title="Click to view all shortcuts"
-              >
-                <span className="flex items-center gap-1 font-medium">
-                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">A</kbd>
-                  <span>Approve</span>
-                </span>
-                <span className="flex items-center gap-1 font-medium">
-                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">R</kbd>
-                  <span>Reject</span>
-                </span>
-                <span className="flex items-center gap-1 font-medium">
-                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">N</kbd>
-                  <span>Next</span>
-                </span>
-                <span className="flex items-center gap-1 font-medium">
-                  <kbd className="px-1.5 py-0.5 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">?</kbd>
-                  <span>Cheatsheet</span>
-                </span>
               </div>
             </div>
 
@@ -1393,119 +1072,123 @@ const FranchiseReviewPage = () => {
         </aside>
 
         {/* ======================================================================= */}
-        {/* RIGHT DOCUMENT VIEWER CANVAS (STUDIO DESK VIEWPORT)                    */}
+        {/* RIGHT DOCUMENT VIEWER CANVAS                                           */}
         {/* ======================================================================= */}
-        <main className="flex-1 flex flex-col bg-slate-200/75 dark:bg-[#070a12] relative overflow-hidden h-full">
+        <main className="flex-1 flex flex-col bg-slate-100 dark:bg-[#070a12] min-w-0 h-full overflow-hidden">
           
-          {/* FLOATING TOP CANVAS TOOLBAR */}
-          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md text-slate-700 dark:text-slate-200">
-            {/* Zoom Out */}
-            <button
-              onClick={() => setZoomScale(prev => Math.max(0.5, Number((prev - 0.25).toFixed(2))))}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
-              title="Zoom Out"
-            >
-              <ZoomOut size={16} />
-            </button>
+          {/* HORIZONTAL DOCUMENT TAB BAR + VIEWER CONTROLS */}
+          <div className="h-12 bg-white dark:bg-[#111827] border-b border-slate-200 dark:border-slate-800 px-3 flex items-center justify-between gap-3 shrink-0">
+            {/* 5 Compact Document Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto min-w-0 py-1">
+              {docTabs.map((tab, idx) => {
+                const isActive = tab.key === activeDocKey;
+                const hasFile = Boolean(tab.url);
 
-            {/* Percentage Badge */}
-            <button
-              onClick={resetCanvasView}
-              className="text-xs font-bold px-2 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] min-w-[46px] text-center cursor-pointer"
-              title="Click to reset to 100%"
-            >
-              {Math.round(zoomScale * 100)}%
-            </button>
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => handleSelectDoc(tab.key)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                      isActive
+                        ? 'bg-[#9E2A2B] text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <span>{idx + 1}. {tab.short}</span>
+                    {hasFile ? (
+                      <Check size={12} className={isActive ? 'text-white' : 'text-emerald-600 dark:text-emerald-400 stroke-[3]'} />
+                    ) : (
+                      <AlertCircle size={12} className={isActive ? 'text-white' : 'text-rose-500'} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-            {/* Zoom In */}
-            <button
-              onClick={() => setZoomScale(prev => Math.min(4.0, Number((prev + 0.25).toFixed(2))))}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
-              title="Zoom In"
-            >
-              <ZoomIn size={16} />
-            </button>
+            {/* Viewer Zoom & Rotation Tools */}
+            <div className="flex items-center gap-1 shrink-0 text-slate-700 dark:text-slate-200">
+              <button
+                onClick={() => setZoomScale(prev => Math.max(0.5, Number((prev - 0.25).toFixed(2))))}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                title="Zoom Out"
+              >
+                <ZoomOut size={15} />
+              </button>
 
-            <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
+              <button
+                onClick={resetCanvasView}
+                className="text-xs font-bold px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] min-w-[42px] text-center cursor-pointer"
+                title="Reset to 100%"
+              >
+                {Math.round(zoomScale * 100)}%
+              </button>
 
-            {/* Fit to width */}
-            <button
-              onClick={() => setIsFitToWidth(prev => !prev)}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                isFitToWidth 
-                  ? 'bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] font-bold' 
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-              }`}
-              title="Toggle Fit to Width (Shortcut: F)"
-            >
-              <Maximize2 size={15} />
-            </button>
+              <button
+                onClick={() => setZoomScale(prev => Math.min(4.0, Number((prev + 0.25).toFixed(2))))}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                title="Zoom In"
+              >
+                <ZoomIn size={15} />
+              </button>
 
-            {/* Brightness Booster for Dark Phone Photos */}
-            <button
-              onClick={toggleBrightness}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                brightness > 100 
-                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-bold' 
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-              }`}
-              title={`Photo Lighting Preset: ${brightness}% (Click to cycle)`}
-            >
-              <SunMedium size={15} />
-              {brightness > 100 && <span className="text-xs font-bold">{brightness}%</span>}
-            </button>
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
 
-            {/* Rotate Counter-Clockwise */}
-            <button
-              onClick={() => setRotation(prev => (prev - 90 + 360) % 360)}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
-              title="Rotate 90° Counter-Clockwise"
-            >
-              <RotateCcw size={15} />
-            </button>
+              <button
+                onClick={() => setIsFitToWidth(prev => !prev)}
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                  isFitToWidth 
+                    ? 'bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] font-bold' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                }`}
+                title="Toggle Fit to Width"
+              >
+                <Maximize2 size={15} />
+              </button>
 
-            {/* Rotate Clockwise */}
-            <button
-              onClick={() => setRotation(prev => (prev + 90) % 360)}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
-              title="Rotate 90° Clockwise"
-            >
-              <RotateCw size={15} />
-            </button>
+              <button
+                onClick={toggleBrightness}
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                  brightness > 100 
+                    ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-bold' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                }`}
+                title={`Brightness: ${brightness}%`}
+              >
+                <SunMedium size={15} />
+                {brightness > 100 && <span className="text-[11px] font-bold">{brightness}%</span>}
+              </button>
 
-            {/* Reset View */}
-            <button
-              onClick={resetCanvasView}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
-              title="Reset View (Center, 100%, 0° - Shortcut: 0)"
-            >
-              <RefreshCw size={14} />
-            </button>
+              <button
+                onClick={() => setRotation(prev => (prev + 90) % 360)}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                title="Rotate 90° Clockwise"
+              >
+                <RotateCw size={15} />
+              </button>
 
-            {/* Open Original File in New Tab */}
-            {currentDoc?.url && (
-              <>
-                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
-                <a
-                  href={currentDoc.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center cursor-pointer"
-                  title="Open Raw Original in New Tab"
-                >
-                  <ExternalLink size={15} />
-                </a>
-              </>
-            )}
-          </div>
+              <button
+                onClick={resetCanvasView}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                title="Reset View"
+              >
+                <RefreshCw size={14} />
+              </button>
 
-          {/* ACTIVE DOCUMENT LABEL BADGE (TOP LEFT OF CANVAS) */}
-          <div className="absolute top-3 left-3 z-20 pointer-events-none">
-            <div className="bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-2">
-              <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                {currentDoc.label}
-              </span>
+              {currentDoc?.url && (
+                <>
+                  <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
+                  <a
+                    href={currentDoc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center cursor-pointer"
+                    title="Open Original in New Tab"
+                  >
+                    <ExternalLink size={15} />
+                  </a>
+                </>
+              )}
             </div>
           </div>
 
@@ -1595,90 +1278,8 @@ const FranchiseReviewPage = () => {
               </div>
             )}
           </div>
-
-          {/* FLOATING BOTTOM HINT */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 shadow-sm flex items-center gap-3">
-            <span className="flex items-center gap-1.5">
-              <Move size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Drag to pan
-            </span>
-            <span className="text-slate-300 dark:text-slate-600">&bull;</span>
-            <span className="flex items-center gap-1.5">
-              <ZoomIn size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Scroll to zoom
-            </span>
-            <span className="text-slate-300 dark:text-slate-600">&bull;</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Double-click to reset</span>
-          </div>
         </main>
       </div>
-
-      {/* KEYBOARD SHORTCUTS CHEAT SHEET MODAL */}
-      {isShortcutsOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-[250] animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <Keyboard size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Review Station Shortcuts</h3>
-              </div>
-              <button 
-                onClick={() => setIsShortcutsOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold"
-              >
-                Close (Esc)
-              </button>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Approve Application (Advance Stage)</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">A</kbd>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Open Rejection Dialog</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">R</kbd>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Next Application in Queue</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">N or &rarr;</kbd>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Previous Application in Queue</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">P or &larr;</kbd>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Switch Attached Documents</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">1 - 5</kbd>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Toggle Fit to Width</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">F</kbd>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Reset Zoom, Rotation &amp; Pan</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">0</kbd>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Exit to Review Queue</span>
-                <kbd className="px-2 py-0.5 bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 rounded font-mono font-bold text-slate-900 dark:text-white">Esc</kbd>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsShortcutsOpen(false)}
-              className="w-full py-2 bg-[#9E2A2B] text-white font-bold text-xs rounded-xl hover:bg-[#801820] transition-colors cursor-pointer"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* MTOP Certificate Print Modal */}
       {isPrintOpen && currentApp && (

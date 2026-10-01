@@ -81,7 +81,13 @@ const FranchiseApproval = () => {
   const updateParams = (newParams) => {
     const next = new URLSearchParams(searchParams);
     Object.entries(newParams).forEach(([k, v]) => {
-      if (v === null || v === undefined || v === '' || v === 'all' || v === false) {
+      if (k === 'tab') {
+        if (!v || v === 'pending') {
+          next.delete('tab');
+        } else {
+          next.set('tab', String(v));
+        }
+      } else if (v === null || v === undefined || v === '' || v === 'all' || v === false) {
         next.delete(k);
       } else {
         next.set(k, String(v));
@@ -402,6 +408,25 @@ const FranchiseApproval = () => {
       return true;
     });
   }, [applications, activeTab, selectedToda, selectedType, selectedBarangay, startDate, endDate, flaggedOnly, searchQuery]);
+
+  // Active filter state check & reset helper
+  const hasActiveFilters = Boolean(
+    searchQuery.trim() !== '' ||
+    selectedToda !== 'all' ||
+    selectedType !== 'all' ||
+    selectedBarangay !== 'all' ||
+    flaggedOnly ||
+    startDate ||
+    endDate
+  );
+
+  const clearAllFilters = () => {
+    const next = new URLSearchParams();
+    if (activeTab && activeTab !== 'pending') {
+      next.set('tab', activeTab);
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   // Pagination calculation
   const totalApps = filteredApps.length;
@@ -765,21 +790,18 @@ const FranchiseApproval = () => {
         </div>
       )}
 
-      {/* 1. SLIM & COMPACT HEADER RIBBON (Phase 2 Item 8) */}
+      {/* 1. SLIM & COMPACT HEADER RIBBON */}
       <header className="mb-4 bg-gradient-to-r from-[#852024] via-[#9E2A2B] to-[#70151c] dark:from-[#180407] dark:via-[#24060a] dark:to-[#120305] rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 text-white shadow-md flex items-center justify-between gap-3 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-white/10 dark:bg-white/5 border border-white/15 flex items-center justify-center shrink-0">
             <CheckCircle2 size={18} className="text-[#D4AF37]" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-black tracking-tight text-white truncate">Franchise Approval Queue</h1>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-[#D4AF37] border border-[#D4AF37]/30">
-                Peak Renewal Mode
-              </span>
-            </div>
-            <p className="text-white/80 text-xs hidden sm:block truncate">
-              {pendingCount} waiting review &bull; Oldest applications prioritized
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-white truncate">
+              Franchise Approval Queue
+            </h1>
+            <p className="text-white/80 text-xs hidden sm:block truncate mt-0.5">
+              {pendingCount} application{pendingCount !== 1 ? 's' : ''} waiting review &bull; Oldest applications prioritized
             </p>
           </div>
         </div>
@@ -888,6 +910,18 @@ const FranchiseApproval = () => {
               <SlidersHorizontal size={13} />
               <span className="hidden sm:inline">Compact</span>
             </button>
+
+            {/* Clear All Filters Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60"
+                title="Reset all active search and filter criteria"
+              >
+                <X size={13} />
+                <span>Reset Filters</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -905,7 +939,7 @@ const FranchiseApproval = () => {
             }`}
           >
             <FileText size={14} />
-            <span>Needs Review (Pending for Approval)</span>
+            <span>Needs Review</span>
             <span className={`text-xs px-1.5 py-0.2 rounded-full ${
               activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
             }`}>
@@ -922,7 +956,7 @@ const FranchiseApproval = () => {
             }`}
           >
             <ShieldCheck size={14} />
-            <span>For Signing (Routing)</span>
+            <span>For Signing</span>
             <span className={`text-xs px-1.5 py-0.2 rounded-full ${
               activeTab === 'signing' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
             }`}>
@@ -939,7 +973,7 @@ const FranchiseApproval = () => {
             }`}
           >
             <Printer size={14} />
-            <span>Ready for Pickup / Cashier</span>
+            <span>Ready for Pickup</span>
             <span className={`text-xs px-1.5 py-0.2 rounded-full ${
               activeTab === 'ready' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
             }`}>
@@ -968,7 +1002,7 @@ const FranchiseApproval = () => {
         <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
           {paginatedApps.length > 0 && (
             <>
-              {/* Select All Clean (Phase 2 Item 7) */}
+              {/* Select All Clean */}
               <button
                 onClick={selectAllClean}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
@@ -1017,28 +1051,35 @@ const FranchiseApproval = () => {
         </div>
       </div>
 
-      {/* 4. APPLICATIONS LIST (Redesigned rows with triage chips and safe actions) */}
+      {/* 4. APPLICATIONS LIST */}
       {isLoading ? (
         <QueueListSkeleton count={4} baseDelay={50} stepDelay={70} />
       ) : filteredApps.length === 0 ? (
         <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 transition-colors">
           <CheckCircle size={48} className="mx-auto mb-4 text-emerald-400 opacity-50" />
           <p className="font-bold text-base text-slate-800 dark:text-slate-200">No applications found!</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {searchQuery || selectedToda !== 'all' || selectedType !== 'all' || flaggedOnly
-              ? 'Try adjusting your search filters or clear the Flagged Only toggle.' 
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+            {hasActiveFilters
+              ? 'No applications match your active search and filter criteria. Click below to reset.' 
               : activeTab === 'pending'
               ? 'There are no pending applications awaiting review right now.'
               : 'There are no applications currently in this queue view.'}
           </p>
+          {hasActiveFilters && (
+            <button
+              onClick={clearAllFilters}
+              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 dark:bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-[#9E2A2B] transition-colors cursor-pointer"
+            >
+              <RefreshCw size={13} />
+              <span>Reset All Filters</span>
+            </button>
+          )}
         </div>
       ) : (
         <>
           <div className="space-y-2.5 pb-6">
             {paginatedApps.map((app, index) => {
               const isSelected = selectedIds.includes(app._id);
-              const triage = triageApplication(app);
-              const waitingTime = getTimeWaiting(app.dateApplied || app.createdAt);
               const isMenuOpen = activeMenuId === app._id;
 
               return (
@@ -1067,159 +1108,109 @@ const FranchiseApproval = () => {
                     </button>
 
                     {/* Queue Position */}
-                    <span className="text-xs font-black text-slate-400 font-mono w-6 shrink-0">
+                    <span className="text-xs font-semibold text-slate-400 font-mono w-5 shrink-0">
                       {startIndex + index + 1}.
                     </span>
 
-                    {/* Main Row Info Cluster */}
-                    <div className="min-w-0 flex flex-wrap items-center gap-2 sm:gap-3 flex-1">
-                      {/* Full Name */}
-                      <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base truncate">
-                        {app.fullName}
-                      </h3>
+                    {/* Applicant & Unit Details */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">
+                          {app.fullName}
+                        </h3>
+                        {app.isResubmitted && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
+                            Corrected
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                        <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{app.plateNo || 'No Plate'}</span>
+                        <span>&bull;</span>
+                        <span className="truncate">{app.todaName || 'NON-TODA'}</span>
+                        {app.applicationType && (
+                          <>
+                            <span>&bull;</span>
+                            <span>{app.applicationType}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
 
-                      {/* Plate Number */}
-                      <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0">
-                        {app.plateNo || 'PENDING PLATE'}
-                      </span>
-
-                      {/* TODA Name */}
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
-                        {app.todaName || 'NON-TODA'}
-                      </span>
-
-                      {/* Application Type Chip */}
-                      <span className="text-xs px-2 py-0.5 rounded-md font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
-                        {app.applicationType || 'New'}
-                      </span>
-
-                      {/* Time Waiting Chip */}
-                      <span className="text-xs px-2 py-0.5 rounded-md font-semibold bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 flex items-center gap-1 shrink-0" title="Time waiting in queue">
-                        <Clock size={11} />
-                        <span>{waitingTime}</span>
-                      </span>
-
-                      {/* Documents Progress Indicator */}
-                      <span className={`text-xs px-2 py-0.5 rounded-md font-mono font-bold shrink-0 border ${
-                        triage.isDocsComplete 
-                          ? 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700' 
-                          : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/60'
-                      }`}>
-                        {triage.docsSummary} Docs
-                      </span>
-
-                      {/* Resubmitted Chip */}
-                      {app.isResubmitted && (
-                        <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
-                          Corrected
+                    {/* Clean Single Status Badge */}
+                    <div className="shrink-0">
+                      {isPendingStatus(app.status) ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                          Needs Review
                         </span>
-                      )}
-
-                      {/* Triage Clean vs Flagged Chips (Phase 2 Item 6 & 7) */}
-                      {triage.isClean ? (
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shrink-0 flex items-center gap-1">
-                          <Check size={11} className="stroke-[3]" />
-                          <span>Clean</span>
+                      ) : app.status === 'For Signing' ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
+                          For Signing
+                        </span>
+                      ) : app.status === 'Ready for Pickup' ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+                          Ready for Pickup
+                        </span>
+                      ) : app.status === 'Active' ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                          Approved
                         </span>
                       ) : (
-                        triage.flags.slice(0, 2).map((flag, fi) => (
-                          <span 
-                            key={fi}
-                            className={`text-xs px-2 py-0.5 rounded-full font-bold border shrink-0 ${
-                              flag.severity === 'error'
-                                ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/60'
-                                : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/60'
-                            }`}
-                          >
-                            {flag.label}
-                          </span>
-                        ))
-                      )}
-
-                      {/* Redundant "PENDING" status is REMOVED when on Needs Review tab! Only show when on "All in Queue" tab */}
-                      {activeTab === 'all' && (
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
-                          {isPendingStatus(app.status) ? 'Pending for Approval' : app.status}
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                          {app.status || 'Pending'}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Actions Cluster (Phase 2 Item 9: Primary Review, Safe Reject) */}
+                  {/* Actions: View Summary text button + Primary Action + More Menu */}
                   <div className="flex items-center gap-2 justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
-                    {/* Primary Action: Full Review Workstation */}
-                    <button 
-                      onClick={() => handleOpenWorkstation(app)} 
-                      className="bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#9E2A2B] dark:hover:bg-[#9E2A2B] px-3.5 py-2 rounded-xl font-bold text-xs transition-colors active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer"
-                      title="Open full review workstation"
+                    {/* View Summary text button (Requested by user) */}
+                    <button
+                      onClick={() => setDossierTargetUnit(app)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-xs transition-colors cursor-pointer"
+                      title="View Application Summary"
                     >
-                      <Eye size={14} />
-                      <span>Review</span>
-                      <ChevronRight size={13} className="hidden sm:inline" />
+                      View Summary
                     </button>
 
-                    {/* Quick Approve (ONLY for Clean applications in Pending tab, safe & fast!) */}
-                    {triage.isClean && isPendingStatus(app.status) && (
+                    {/* Primary Button depending on status */}
+                    {app.status === 'Ready for Pickup' ? (
                       <button
                         onClick={() => setQuickApproveTarget(app)}
-                        className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-2xs"
-                        title="Approve clean requirements for signing"
-                      >
-                        <CheckCircle size={14} className="text-emerald-600" />
-                        <span className="hidden sm:inline">Approve</span>
-                      </button>
-                    )}
-
-                    {/* Quick Print MTOP */}
-                    {(app.status === 'For Signing' || app.status === 'Ready for Pickup') && (
-                      <button
-                        onClick={() => setPrintTargetUnit(app)}
-                        className="px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-[#9E2A2B] dark:text-[#D4AF37] border border-amber-300 dark:border-amber-700/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-2xs"
-                        title="Print Official MTOP Certificate"
-                      >
-                        <Printer size={14} />
-                        <span className="hidden sm:inline">MTOP</span>
-                      </button>
-                    )}
-
-                    {/* Quick Mark Signed */}
-                    {app.status === 'For Signing' && (
-                      <button
-                        onClick={() => setQuickApproveTarget(app)}
-                        className="px-3 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-2xs"
-                        title="Mark as Signed & Ready for Pickup"
-                      >
-                        <CheckCircle2 size={14} className="text-blue-600" />
-                        <span className="hidden sm:inline">Signed</span>
-                      </button>
-                    )}
-
-                    {/* Quick Release */}
-                    {app.status === 'Ready for Pickup' && (
-                      <button
-                        onClick={() => setQuickApproveTarget(app)}
-                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-xs cursor-pointer"
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                         title="Acknowledge payment and release franchise"
                       >
                         <CheckCircle2 size={14} />
-                        <span className="hidden sm:inline">Release</span>
+                        <span>Release</span>
+                      </button>
+                    ) : app.status === 'For Signing' ? (
+                      <button
+                        onClick={() => handleOpenWorkstation(app)}
+                        className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                        title="Open review workstation to sign and verify"
+                      >
+                        <Eye size={14} />
+                        <span>Review</span>
+                        <ChevronRight size={13} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleOpenWorkstation(app)}
+                        className="bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#9E2A2B] dark:hover:bg-[#9E2A2B] px-3.5 py-1.5 rounded-xl font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        title="Open full review workstation"
+                      >
+                        <Eye size={14} />
+                        <span>Review</span>
+                        <ChevronRight size={13} />
                       </button>
                     )}
 
-                    {/* Application Summary Quick View */}
-                    <button
-                      onClick={() => setDossierTargetUnit(app)}
-                      className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
-                      title="View Application Summary Modal"
-                    >
-                      <FileText size={15} />
-                    </button>
-
-                    {/* Safe 'More' Menu (Replaces accidental-reject risk) */}
+                    {/* Safe More Menu */}
                     <div className="relative">
                       <button
                         onClick={() => setActiveMenuId(isMenuOpen ? null : app._id)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 transition-colors cursor-pointer"
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
                         title="More options"
                       >
                         <MoreVertical size={16} />
@@ -1237,6 +1228,32 @@ const FranchiseApproval = () => {
                             <FileText size={14} />
                             <span>View Summary</span>
                           </button>
+
+                          {app.status === 'Ready for Pickup' && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                handleOpenWorkstation(app);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                            >
+                              <Eye size={14} />
+                              <span>Review Documents</span>
+                            </button>
+                          )}
+
+                          {(app.status === 'For Signing' || app.status === 'Ready for Pickup' || app.status === 'Active') && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                setPrintTargetUnit(app);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-center gap-2 cursor-pointer"
+                            >
+                              <Printer size={14} />
+                              <span>Print MTOP</span>
+                            </button>
+                          )}
 
                           {(isPendingStatus(app.status) || app.status === 'For Signing') && (
                             <button
