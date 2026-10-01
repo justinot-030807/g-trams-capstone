@@ -172,7 +172,7 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-300 text-base text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-1 focus:ring-[#801820] focus:ring-offset-0 transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
 
   return (
     <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
@@ -191,43 +191,43 @@ const Login = () => {
         {/* MAIN FULL-WIDTH SPLIT LAYOUT */}
         <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
-          {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY (R27, R28, Task 5, 6, 8) */}
-          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-28 sm:h-32 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
+          {/* LEFT COLUMN: SLIM HERO BANNER WITH EQUAL OVERLAY (Items 3, 5) */}
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-3.5 sm:p-5 md:p-10 lg:p-12 h-20 sm:h-28 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
             {/* Background Photo (Tricycle 1 for Login) */}
             <img 
               src="/tricycle-login.jpg" 
               alt="Gasan Tricycle" 
               className="absolute inset-0 w-full h-full object-cover object-center" 
             />
-            {/* Lightened Velvet Maroon Overlay - clearly shows tricycle photo with >=4.5:1 text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/95 via-[#5E0D14]/75 to-[#3D080D]/80" />
+            {/* Equal Velvet Maroon Overlay - identical brightness & >=4.5:1 text contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/90 via-[#5E0D14]/70 to-[#3D080D]/75" />
             <div className="absolute inset-0 bg-black/20" />
 
-            {/* Bottom: Brand Title & Subtitle */}
-            <div className="relative z-10 pb-2 sm:pb-3 md:pb-5">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-1 uppercase">
-                <span className="whitespace-nowrap">G-TRAMS</span>
-              </h1>
-              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
+            {/* Bottom: Tagline Only (No duplicate G-TRAMS title) */}
+            <div className="relative z-10 pb-1 sm:pb-3 md:pb-5">
+              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-xs">
                 Gasan Tricycle Records &amp; Application Management System
+              </p>
+              <p className="hidden md:block text-xs text-amber-200/90 font-medium mt-1">
+                Official Tricycle Franchising &amp; Regulatory Portal
               </p>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: CLEAN FORM PANEL (Task 7: Reduced top gap, R29: 16px inputs) */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 py-6 sm:py-8 md:py-10 bg-white min-h-full">
+          {/* RIGHT COLUMN: CLEAN FORM PANEL (Reduced top gap for 360x640 fit) */}
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white min-h-full">
             <div className="w-full max-w-md">
-              <div className="mb-4 sm:mb-5">
+              <div className="mb-2.5 sm:mb-4">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
                   Log In
                 </h2>
-                <p className="text-sm text-slate-500 font-medium mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
                   Enter your credentials to access your operator portal.
                 </p>
               </div>
 
               {error && (
-                <div className={`mb-3.5 text-xs font-bold rounded-xl p-3 text-center shadow-xs animate-shake tracking-wide ${
+                <div className={`mb-3 text-xs font-bold rounded-xl p-3 text-center shadow-xs animate-shake tracking-wide ${
                   error.toLowerCase().includes('google')
                     ? 'bg-amber-50 border border-amber-300 text-amber-900 leading-relaxed'
                     : 'bg-red-50 border border-red-200 text-red-600'
@@ -241,9 +241,9 @@ const Login = () => {
                 </div>
               )}
 
-              <form onSubmit={handleLogin} className="space-y-3.5">
+              <form onSubmit={handleLogin} className="space-y-2.5 sm:space-y-3.5">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Email or Phone Number
                   </label>
                   <div className="relative">
@@ -269,7 +269,7 @@ const Login = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider">
+                    <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider">
                       Password
                     </label>
                   </div>
@@ -296,21 +296,21 @@ const Login = () => {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  <div className="text-right mt-1.5">
+                  <div className="text-right mt-1">
                     <Link 
                       to="/forgot-password" 
-                      className="text-sm font-bold text-[#801820] hover:underline transition-colors"
+                      className="text-xs sm:text-sm font-bold text-[#801820] hover:underline transition-colors"
                     >
                       Forgot Password?
                     </Link>
                   </div>
                 </div>
 
-                <div className="pt-1.5">
+                <div className="pt-1">
                   <button
                     type="submit"
                     disabled={isLoading || lockoutSeconds > 0}
-                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-2.5 sm:py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[48px]"
                   >
                     {isLoading ? (
                       <>
@@ -326,11 +326,11 @@ const Login = () => {
                 </div>
               </form>
 
-              {/* DIVIDER */}
-              <div className="flex items-center gap-3 my-3.5">
-                <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-xs font-bold text-slate-400">OR</span>
-                <div className="flex-1 h-px bg-slate-200" />
+              {/* DIVIDER (Contrast >= 4.5:1 text, >= 3:1 line) */}
+              <div className="flex items-center gap-3 my-2 sm:my-3">
+                <div className="flex-1 h-px bg-slate-300" />
+                <span className="text-xs font-bold text-slate-600">OR</span>
+                <div className="flex-1 h-px bg-slate-300" />
               </div>
 
               {/* GOOGLE SIGN IN BUTTON */}
@@ -363,8 +363,8 @@ const Login = () => {
                 />
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-                <p className="text-sm text-slate-600 font-medium">
+              <div className="mt-2.5 pt-2 sm:mt-4 sm:pt-3 border-t border-slate-100 text-center">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium">
                   Don't have an account?{' '}
                   <Link to="/register" className="font-bold text-[#801820] hover:underline">
                     Register

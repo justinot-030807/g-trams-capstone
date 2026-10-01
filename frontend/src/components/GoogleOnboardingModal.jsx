@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
 import TermsPolicyModal from './common/TermsPolicyModal';
-import { Loader2, X, User, Mail, Phone, MapPin, Building2, ShieldCheck } from 'lucide-react';
+import { Loader2, X, User, Mail, Phone, MapPin, Building2, ShieldCheck, ChevronDown } from 'lucide-react';
 
 const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) => {
   const [editableName, setEditableName] = useState('');
@@ -120,7 +120,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
     }
   };
 
-  const inputClasses = "w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-1 focus:ring-[#801820] focus:ring-offset-0 transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
 
   return (
     <div 
@@ -225,7 +225,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 value={email}
                 readOnly
                 disabled
-                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-slate-100 text-base sm:text-sm text-slate-600 font-medium cursor-not-allowed select-none"
+                className="w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-200 bg-slate-100 text-base sm:text-sm text-slate-600 font-medium cursor-not-allowed select-none"
               />
             </div>
           </div>
@@ -256,7 +256,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             </div>
           </div>
 
-          {/* Barangay Dropdown */}
+          {/* Barangay Dropdown (Item 1: Consistent styling, gray placeholder, custom chevron) */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
               Barangay <span className="text-red-500">*</span>
@@ -272,19 +272,24 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   if (error) setError('');
                 }}
                 required
-                className={`${inputClasses} cursor-pointer`}
+                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
+                  !selectedBarangay ? 'text-slate-500' : 'text-slate-900'
+                }`}
               >
-                <option value="" disabled>Select Barangay</option>
+                <option value="" disabled className="text-slate-500">Select Barangay</option>
                 {GASAN_BARANGAYS.map((brgy) => (
-                  <option key={brgy} value={brgy}>
+                  <option key={brgy} value={brgy} className="text-slate-900">
                     {brgy}
                   </option>
                 ))}
               </select>
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown size={18} />
+              </div>
             </div>
           </div>
 
-          {/* TODA Dropdown */}
+          {/* TODA Dropdown (Item 1: Consistent styling, gray placeholder, custom chevron) */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
               TODA <span className="text-red-500">*</span>
@@ -300,15 +305,20 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   if (error) setError('');
                 }}
                 required
-                className={`${inputClasses} cursor-pointer`}
+                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
+                  !selectedToda ? 'text-slate-500' : 'text-slate-900'
+                }`}
               >
-                <option value="" disabled>Select TODA</option>
+                <option value="" disabled className="text-slate-500">Select TODA</option>
                 {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => (
-                  <option key={toda} value={toda}>
+                  <option key={toda} value={toda} className="text-slate-900">
                     {toda}
                   </option>
                 ))}
               </select>
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown size={18} />
+              </div>
             </div>
           </div>
 

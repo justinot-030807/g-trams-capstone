@@ -15,7 +15,8 @@ import {
   MapPin, 
   Building2, 
   Mail, 
-  AlertCircle 
+  AlertCircle,
+  ChevronDown 
 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
@@ -300,7 +301,7 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-1 focus:ring-[#801820] focus:ring-offset-0 transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
 
   return (
     <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
@@ -319,31 +320,31 @@ const Register = () => {
         {/* MAIN FULL-WIDTH SPLIT LAYOUT */}
         <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
           
-          {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY (R27, R28, Task 5, 6, 8) */}
-          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-28 sm:h-32 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
+          {/* LEFT COLUMN: SLIM HERO BANNER WITH EQUAL OVERLAY (Items 3, 5) */}
+          <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-3.5 sm:p-5 md:p-10 lg:p-12 h-20 sm:h-28 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
             {/* Background Photo (Tricycle 2 for Register) */}
             <img 
               src="/tricycle-register.jpg" 
               alt="Gasan Tricycle" 
               className="absolute inset-0 w-full h-full object-cover object-center" 
             />
-            {/* Lightened Velvet Maroon Overlay - clearly shows tricycle photo with >=4.5:1 text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/95 via-[#5E0D14]/75 to-[#3D080D]/80" />
+            {/* Equal Velvet Maroon Overlay - identical brightness & >=4.5:1 text contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2A0408]/90 via-[#5E0D14]/70 to-[#3D080D]/75" />
             <div className="absolute inset-0 bg-black/20" />
 
-            {/* Bottom: Brand Title & Subtitle */}
-            <div className="relative z-10 pb-2 sm:pb-3 md:pb-5">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-1 uppercase">
-                <span className="whitespace-nowrap">G-TRAMS</span>
-              </h1>
-              <p className="text-[11px] sm:text-xs md:text-sm text-white/90 font-medium leading-relaxed max-w-sm">
+            {/* Bottom: Tagline Only (No duplicate G-TRAMS title) */}
+            <div className="relative z-10 pb-1 sm:pb-3 md:pb-5">
+              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-xs">
                 Gasan Tricycle Records &amp; Application Management System
+              </p>
+              <p className="hidden md:block text-xs text-amber-200/90 font-medium mt-1">
+                Official Tricycle Franchising &amp; Regulatory Portal
               </p>
             </div>
           </div>
 
           {/* RIGHT COLUMN: CLEAN FORM PANEL (Task 7: Reduced top gap, R29: 16px inputs) */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8 md:py-10 bg-white min-h-full">
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-12 lg:px-16 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white min-h-full">
             <div className="w-full max-w-lg">
               <div className="mb-3 sm:mb-4">
                 <h2 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight">
@@ -390,16 +391,16 @@ const Register = () => {
                       onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
                     />
                     <div className="flex items-center gap-3 my-2.5 sm:my-3">
-                      <div className="flex-1 h-px bg-slate-200" />
-                      <span className="text-xs font-semibold text-slate-400">Or register with email/phone</span>
-                      <div className="flex-1 h-px bg-slate-200" />
+                      <div className="flex-1 h-px bg-slate-300" />
+                      <span className="text-xs font-semibold text-slate-600">Or register with email/phone</span>
+                      <div className="flex-1 h-px bg-slate-300" />
                     </div>
                   </div>
 
                   <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5 sm:space-y-3">
                     {/* Full Name */}
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                      <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                           <User size={18} />
@@ -418,10 +419,10 @@ const Register = () => {
                       </div>
                     </div>
                     
-                    {/* Barangay & TODA */}
+                    {/* Barangay & TODA (Item 1: Consistent styling, gray placeholder, custom chevron) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay</label>
+                        <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
                             <MapPin size={18} />
@@ -431,15 +432,24 @@ const Register = () => {
                             value={formData.address} 
                             onChange={handleChange} 
                             required 
-                            className={`${inputClasses} cursor-pointer`}
+                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
+                              !formData.address ? 'text-slate-500' : 'text-slate-900'
+                            }`}
                           >
-                            <option value="" disabled>Select Barangay</option>
-                            {GASAN_BARANGAYS.map((brgy) => <option key={brgy} value={brgy}>{brgy}</option>)}
+                            <option value="" disabled className="text-slate-500">Select Barangay</option>
+                            {GASAN_BARANGAYS.map((brgy) => (
+                              <option key={brgy} value={brgy} className="text-slate-900">
+                                {brgy}
+                              </option>
+                            ))}
                           </select>
+                          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                            <ChevronDown size={18} />
+                          </div>
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">TODA</label>
+                        <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">TODA</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
                             <Building2 size={18} />
@@ -449,11 +459,20 @@ const Register = () => {
                             value={formData.todaAssociation} 
                             onChange={handleChange} 
                             required 
-                            className={`${inputClasses} cursor-pointer`}
+                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
+                              !formData.todaAssociation ? 'text-slate-500' : 'text-slate-900'
+                            }`}
                           >
-                            <option value="" disabled>Select TODA</option>
-                            {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => <option key={toda} value={toda}>{toda}</option>)}
+                            <option value="" disabled className="text-slate-500">Select TODA</option>
+                            {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => (
+                              <option key={toda} value={toda} className="text-slate-900">
+                                {toda}
+                              </option>
+                            ))}
                           </select>
+                          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                            <ChevronDown size={18} />
+                          </div>
                         </div>
                       </div>
                     </div>
