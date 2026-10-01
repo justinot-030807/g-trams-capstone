@@ -47,8 +47,13 @@ const CashierDashboard = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setQueue(data.pendingQueue || []);
-        setPaidList(data.recentlyPaid || []);
+        if (Array.isArray(data)) {
+          setQueue(data.filter(f => f.paymentStatus !== 'Paid' && f.status === 'Ready for Pickup'));
+          setPaidList(data.filter(f => f.paymentStatus === 'Paid'));
+        } else {
+          setQueue(data.pendingQueue || []);
+          setPaidList(data.recentlyPaid || []);
+        }
       } else {
         showToast('Failed to load cashier payment queue.', 'error');
       }
@@ -113,7 +118,7 @@ const CashierDashboard = () => {
 
       const data = await res.json();
       if (res.ok) {
-        showToast(`Official Receipt ${payFormData.officialReceiptNo} issued! Franchise activated.`, 'success');
+        showToast(`Official Receipt ${payFormData.officialReceiptNo} issued! Payment marked as Paid.`, 'success');
         setIsPayModalOpen(false);
         
         // Open printable Official Receipt

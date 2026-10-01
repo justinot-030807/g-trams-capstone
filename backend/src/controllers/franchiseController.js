@@ -556,7 +556,7 @@ const getCashierQueue = async (req, res) => {
         if (status) {
             query.status = status;
         } else {
-            query.status = { $in: ['Ready for Pickup', 'Active'] };
+            query.status = { $in: ['Ready for Pickup', 'Active', 'For Payment'] };
         }
 
         let franchises = await Franchise.find(query)
@@ -575,7 +575,14 @@ const getCashierQueue = async (req, res) => {
             );
         }
 
-        res.status(200).json(franchises);
+        const pendingQueue = franchises.filter(f => f.paymentStatus !== 'Paid' && f.status === 'Ready for Pickup');
+        const recentlyPaid = franchises.filter(f => f.paymentStatus === 'Paid');
+
+        res.status(200).json({
+            pendingQueue,
+            recentlyPaid,
+            all: franchises
+        });
     } catch (error) {
         console.error('Error fetching cashier queue:', error);
         res.status(500).json({ message: 'Failed to fetch cashier queue' });
@@ -604,19 +611,15 @@ const processCashierPayment = async (req, res) => {
         franchise.cashierName = req.user.name || 'Municipal Cashier';
         franchise.paymentRemarks = paymentRemarks || '';
 
-        // Transition status from Ready for Pickup to Active
-        franchise.status = 'Active';
-        franchise.releaseDate = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-        if (!franchise.approvalDate) {
-            franchise.approvalDate = now;
-        }
+        // Status remains 'Ready for Pickup' so that Admin can officially release/activate it in the queue
+        franchise.status = 'Ready for Pickup';
 
         await franchise.save();
 
-        // Notify operator of official receipt and release
+        // Notify operator of official receipt
         if (franchise.operator) {
-            const notifTitle = 'Official Payment Receipt Issued & Franchise Activated!';
-            const notifMessage = `Your payment of ₱${franchise.amountPaid} has been confirmed under Official Receipt No. ${franchise.officialReceiptNo}. Your MTOP Franchise for ${franchise.plateNo} is now officially ACTIVE.`;
+            const notifTitle = 'Payment Confirmed by Municipal Cashier!';
+            const notifMessage = `Your payment of ₱${franchise.amountPaid} has been confirmed under Official Receipt No. ${franchise.officialReceiptNo}. Your application is now marked as Paid and ready for final release by the Municipal Admin.`;
 
             const notification = await Notification.create({
                 recipient: franchise.operator._id,
@@ -643,18 +646,17 @@ const processCashierPayment = async (req, res) => {
                 plateNo: franchise.plateNo,
                 officialReceiptNo: franchise.officialReceiptNo,
                 amountPaid: franchise.amountPaid,
-                paymentMethod: franchise.paymentMethod,
-                cashierName: franchise.cashierName
+                cashier: req.user.name
             }
         });
 
         res.status(200).json({
-            message: 'Payment recorded and franchise successfully activated.',
+            message: 'Payment recorded successfully under Official Receipt No. ' + franchise.officialReceiptNo,
             franchise
         });
     } catch (error) {
         console.error('Error processing cashier payment:', error);
-        res.status(500).json({ message: 'Failed to process payment.' });
+        res.status(500).json({ message: 'Failed to process cashier payment' });
     }
 };
 

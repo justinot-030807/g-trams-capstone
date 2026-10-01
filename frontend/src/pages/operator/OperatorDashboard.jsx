@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
-  RefreshCw, AlertCircle, CheckCircle, Clock, Loader2, 
+  RefreshCw, AlertCircle, CheckCircle, CheckCircle2, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, User, ShieldAlert, Receipt, XCircle, Car,
+  Check, FileText, User, ShieldAlert, Receipt, XCircle, Car, Banknote,
   Sun, Moon, SunMedium, Laptop, ArrowRight, Users, Sparkles, HelpCircle,
   Bell, Settings, ChevronRight, LogOut
 } from 'lucide-react';
@@ -641,17 +641,17 @@ const OperatorDashboard = () => {
               <div className="h-8 w-24 bg-white/20 rounded-xl shrink-0" />
             </div>
           ) : franchises.some(f => f.status === 'Ready for Pickup') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-white/20">
+            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-emerald-200 dark:border-emerald-900/60">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  <Receipt size={18} />
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Banknote size={18} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs sm:text-sm font-bold truncate">
-                    Franchise Approved!
+                  <h4 className="text-xs sm:text-sm font-bold truncate text-emerald-950 dark:text-emerald-200">
+                    Ready for Municipal Cashier Payment
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
-                    Claim Stub is ready for Municipal Cashier
+                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
+                    Amount Payable: <strong className="text-emerald-700 dark:text-emerald-400 font-mono">₱500.00</strong> • Settle at Treasury window with Plate No.
                   </p>
                 </div>
               </div>
@@ -660,13 +660,13 @@ const OperatorDashboard = () => {
                   const target = franchises.find(f => f.status === 'Ready for Pickup');
                   if (target) {
                     setSelectedUnit(target);
-                    setIsPrintOpen(true);
+                    setIsDetailsOpen(true);
                   }
                 }}
-                className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Receipt size={15} />
-                <span>Get Claim Stub</span>
+                <Banknote size={15} />
+                <span>View Payment Details</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'For Signing') ? (
@@ -1114,20 +1114,34 @@ const OperatorDashboard = () => {
                     return (
                       <div className="mb-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3 rounded-2xl space-y-1.5">
                         <div className="flex items-start gap-2.5">
-                          <FileText className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
-                          <div>
-                            <h4 className="text-blue-900 dark:text-blue-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.approvedPaymentTitle', 'Approved! Next Step: Payment')}</h4>
-                            <p className="text-xs font-normal text-blue-700 dark:text-blue-300 leading-snug">{t('dashboard.approvedPaymentDesc', 'Present your Claim Stub to the Municipal Cashier to pay the fee and claim your Official Permit.')} (<b>₱{parseFloat(systemFranchiseFee).toFixed(2)}</b>)</p>
+                          <Banknote className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2 flex-wrap mb-0.5">
+                              <h4 className="text-blue-900 dark:text-blue-200 font-bold text-xs uppercase">
+                                Ready for Cashier Payment
+                              </h4>
+                              <span className="font-mono font-bold text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/70 px-2 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-800">
+                                Amount Payable: ₱{parseFloat(systemFranchiseFee || 500).toFixed(2)}
+                              </span>
+                            </div>
+                            <p className="text-xs font-normal text-blue-700 dark:text-blue-300 leading-snug">
+                              Please present your Plate No. (<b>{unit.plateNo}</b>) to the Municipal Cashier / Treasury Window to pay the fee. Once confirmed paid, the Municipal Admin will release your active franchise.
+                            </p>
                           </div>
                         </div>
-                        {info && (
+                        {unit.paymentStatus === 'Paid' ? (
+                          <div className="flex justify-between items-center text-[11px] font-bold pt-1.5 border-t border-blue-200/60 dark:border-blue-800/60 text-emerald-700 dark:text-emerald-300">
+                            <span>Status: Paid at Cashier (OR# {unit.officialReceiptNo || 'Recorded'})</span>
+                            <span>Awaiting Admin Release</span>
+                          </div>
+                        ) : info && (
                           <div className={`flex justify-between items-center text-[11px] font-bold pt-1 border-t border-blue-200/60 dark:border-blue-800/60 ${
                             info.isOverdue ? 'text-red-600 dark:text-red-400' : info.isUrgent ? 'text-amber-600 dark:text-amber-400' : 'text-blue-800 dark:text-blue-300'
                           }`}>
-                            <span>Claim Deadline: {info.deadlineStr}</span>
+                            <span>Payment Deadline: {info.deadlineStr}</span>
                             <span className="flex items-center gap-1">
                               <Clock size={11} />
-                              {info.isOverdue ? '⚠️ Payment window overdue' : `💰 Settle payment within ${info.diffDays} day(s)`}
+                              {info.isOverdue ? 'Payment window overdue' : `Settle payment within ${info.diffDays} day(s)`}
                             </span>
                           </div>
                         )}
@@ -1167,20 +1181,23 @@ const OperatorDashboard = () => {
                   <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
                 ) : unit?.status === 'Ready for Pickup' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
-                    <button 
-                      onClick={() => { setSelectedUnit(unit); setIsPrintOpen(true); }} 
-                      className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#c59f2c] text-slate-950 hover:opacity-95 font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
-                    >
-                      <Receipt size={14} /> {t('dashboard.btnViewStub', 'Claim Stub')}
-                    </button>
-                    <button 
-                      onClick={() => handleDirectDownload(unit)} 
-                      className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-                      title="Download PDF"
-                    >
-                      <Download size={14} />
-                      <span className="sm:hidden font-bold">Download</span>
-                    </button>
+                    {unit.paymentStatus === 'Paid' ? (
+                      <button 
+                        onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                        className="flex-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                      >
+                        <CheckCircle2 size={14} /> 
+                        <span>Paid • Awaiting Release</span>
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                        className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:opacity-95 font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                      >
+                        <Banknote size={14} /> 
+                        <span>Pay ₱500 at Cashier (Plate: {unit.plateNo})</span>
+                      </button>
+                    )}
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
                       className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer"

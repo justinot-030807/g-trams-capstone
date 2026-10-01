@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   X, FileText, User, Car, Receipt, ShieldCheck, FileCheck, 
-  CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles, AlertTriangle, Check
+  CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles, AlertTriangle, Check,
+  ChevronLeft, ChevronRight, Eye
 } from 'lucide-react';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
 
@@ -12,8 +13,14 @@ const AdminApplicationSummaryModal = ({
   onApprove,
   onReject,
   onReview,
+  onNext,
+  onPrev,
+  currentIndex,
+  totalCount,
   isProcessing = false
 }) => {
+  const [previewDoc, setPreviewDoc] = useState(null); // { label, url }
+
   if (!isOpen || !franchise) return null;
 
   const formatDate = (dateStr) => {
@@ -46,7 +53,7 @@ const AdminApplicationSummaryModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
               <FileText size={18} />
@@ -78,13 +85,41 @@ const AdminApplicationSummaryModal = ({
               </p>
             </div>
           </div>
-          <button 
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <X size={18} />
-          </button>
+          
+          <div className="flex items-center gap-2 shrink-0">
+            {totalCount > 1 && (
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={onPrev}
+                  disabled={!onPrev}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                  title="Previous application"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-xs font-bold px-1.5 text-slate-600 dark:text-slate-300 min-w-[42px] text-center">
+                  {(currentIndex ?? 0) + 1} / {totalCount}
+                </span>
+                <button
+                  type="button"
+                  onClick={onNext}
+                  disabled={!onNext}
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                  title="Next application"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+            <button 
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Modal Scrollable Body */}
@@ -288,7 +323,7 @@ const AdminApplicationSummaryModal = ({
             <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <ShieldCheck size={13} /> 5. Attached Documents
             </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
                 { label: 'OR / CR', url: franchise.orCrUrl },
                 { label: "Driver's License", url: franchise.licenseUrl },
@@ -296,24 +331,66 @@ const AdminApplicationSummaryModal = ({
                 { label: 'TODA Endorsement', url: franchise.todaEndorsementUrl },
                 { label: 'Brgy Clearance', url: franchise.brgyClearanceUrl }
               ].map((doc, idx) => (
-                <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs flex items-center justify-between">
-                  <span className="font-medium text-slate-700 dark:text-slate-300 truncate">{doc.label}</span>
+                <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs flex items-center justify-between">
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">{doc.label}</span>
                   {doc.url ? (
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-0.5 text-[10px] font-bold shrink-0 ml-1"
-                      title="View document image"
-                    >
-                      <span>View</span>
-                      <ExternalLink size={10} />
-                    </a>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDoc(doc)}
+                        className="text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-1 rounded-md flex items-center gap-1 text-[11px] font-bold transition-colors cursor-pointer"
+                        title={`Preview ${doc.label}`}
+                      >
+                        <Eye size={12} />
+                        <span>Preview</span>
+                      </button>
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        title="Open in new tab"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
                   ) : (
                     <span className="text-slate-400 text-[10px]">None</span>
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* 6. Treasury / Cashier Payment */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt size={13} /> 6. Treasury / Cashier Payment
+              </h4>
+              {franchise.paymentStatus === 'Paid' || franchise.isPaid ? (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
+                  <Check size={12} /> Paid • OR# {franchise.officialReceiptNo || franchise.orNo || 'Recorded'}
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                  Awaiting Cashier Payment (₱500)
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Amount Payable</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">₱500.00</span>
+              </div>
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Official Receipt (OR)</span>
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.officialReceiptNo || franchise.orNo || 'Pending Payment'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Payment Date</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.paymentDate ? formatDate(franchise.paymentDate) : 'Not settled yet'}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -340,6 +417,17 @@ const AdminApplicationSummaryModal = ({
               >
                 <ExternalLink size={13} />
                 <span>Review Photos</span>
+              </button>
+            )}
+            {onNext && (
+              <button
+                type="button"
+                onClick={onNext}
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                title="Go to next application"
+              >
+                <span>Next</span>
+                <ChevronRight size={13} />
               </button>
             )}
           </div>
@@ -376,6 +464,59 @@ const AdminApplicationSummaryModal = ({
           </div>
         </div>
       </div>
+
+      {/* In-Modal Document Lightbox Preview */}
+      {previewDoc && (
+        <div 
+          className="fixed inset-0 z-[10001] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <div 
+            className="relative max-w-4xl w-full max-h-[92vh] bg-slate-900 rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-slate-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 bg-slate-800/90 border-b border-slate-700 text-white">
+              <div className="flex items-center gap-2.5">
+                <FileText size={18} className="text-[#D4AF37]" />
+                <span className="font-bold text-sm">{previewDoc.label}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewDoc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
+                >
+                  <span>Open in New Tab</span>
+                  <ExternalLink size={13} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(null)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950/80 min-h-[300px]">
+              {previewDoc.url?.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={previewDoc.url}
+                  title={previewDoc.label}
+                  className="w-full h-[70vh] rounded-xl border border-slate-800"
+                />
+              ) : (
+                <img
+                  src={previewDoc.url}
+                  alt={previewDoc.label}
+                  className="max-h-[75vh] max-w-full object-contain rounded-xl shadow-lg"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -436,6 +436,24 @@ const FranchiseApproval = () => {
   const endIndex = Math.min(startIndex + pageSize, totalApps);
   const paginatedApps = filteredApps.slice(startIndex, endIndex);
 
+  // Dossier summary next / prev sequential traversal
+  const currentDossierIndex = useMemo(() => {
+    if (!dossierTargetUnit) return -1;
+    return filteredApps.findIndex(a => a._id === dossierTargetUnit._id);
+  }, [dossierTargetUnit, filteredApps]);
+
+  const handleNextDossier = () => {
+    if (currentDossierIndex >= 0 && currentDossierIndex < filteredApps.length - 1) {
+      setDossierTargetUnit(filteredApps[currentDossierIndex + 1]);
+    }
+  };
+
+  const handlePrevDossier = () => {
+    if (currentDossierIndex > 0) {
+      setDossierTargetUnit(filteredApps[currentDossierIndex - 1]);
+    }
+  };
+
   // Checkbox selection helpers
   const isAllSelected = paginatedApps.length > 0 && paginatedApps.every(a => selectedIds.includes(a._id));
 
@@ -519,7 +537,13 @@ const FranchiseApproval = () => {
       <BatchMtopModal
         isOpen={isBatchPrintOpen}
         onClose={() => setIsBatchPrintOpen(false)}
-        units={applications.filter(a => selectedIds.includes(a._id))}
+        units={
+          selectedIds.length > 0 
+            ? applications.filter(a => selectedIds.includes(a._id))
+            : activeTab === 'signing'
+            ? filteredApps.filter(a => a.status === 'For Signing')
+            : applications.filter(a => a.status === 'For Signing')
+        }
       />
 
       {/* Official LGU Transmittal Summary Sheet Modal */}
@@ -547,6 +571,10 @@ const FranchiseApproval = () => {
         onReview={(unit) => {
           handleOpenWorkstation(unit);
         }}
+        onNext={currentDossierIndex < filteredApps.length - 1 ? handleNextDossier : null}
+        onPrev={currentDossierIndex > 0 ? handlePrevDossier : null}
+        currentIndex={currentDossierIndex}
+        totalCount={filteredApps.length}
         isProcessing={isProcessing} 
       />
 
@@ -563,14 +591,14 @@ const FranchiseApproval = () => {
                   {isPendingStatus(quickApproveTarget.status) 
                     ? 'Approve for Municipal Signatures?' 
                     : quickApproveTarget.status === 'For Signing'
-                    ? 'Mark Signed & Ready for Pickup?'
+                    ? 'Mark Signed & Route to Cashier?'
                     : 'Acknowledge Payment & Release?'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {isPendingStatus(quickApproveTarget.status) 
                     ? 'Queue for Mayor and Licensing Official signatures' 
                     : quickApproveTarget.status === 'For Signing'
-                    ? 'Notify operator that MTOP certificate is ready for claiming'
+                    ? 'Route to Municipal Cashier / Treasury Window for payment collection'
                     : 'Set status to Active road-authorized franchise'}
                 </p>
               </div>
@@ -581,6 +609,33 @@ const FranchiseApproval = () => {
               <p><span className="font-bold text-slate-500">TODA / Zone:</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
               <p><span className="font-bold text-slate-500">Plate Number:</span> <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
             </div>
+
+            {quickApproveTarget.status === 'Ready for Pickup' && (
+              <div className={`p-2.5 rounded-xl text-xs font-bold flex items-center justify-between gap-2 border ${
+                quickApproveTarget.paymentStatus === 'Paid'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+              }`}>
+                <div className="flex items-center gap-1.5">
+                  {quickApproveTarget.paymentStatus === 'Paid' ? (
+                    <>
+                      <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                      <span>Cashier Payment Confirmed</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock size={14} className="text-amber-600 shrink-0" />
+                      <span>Awaiting Cashier Payment (₱500.00)</span>
+                    </>
+                  )}
+                </div>
+                {quickApproveTarget.officialReceiptNo && (
+                  <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-white/70 dark:bg-slate-900/70">
+                    OR# {quickApproveTarget.officialReceiptNo}
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center gap-2 pt-1">
               <button
@@ -1000,6 +1055,18 @@ const FranchiseApproval = () => {
 
         {/* Triage Controls: Select All Clean + Batch Action */}
         <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+          {activeTab === 'signing' && (
+            <button
+              type="button"
+              onClick={() => setIsBatchPrintOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-xs transition-all cursor-pointer"
+              title="Batch print MTOP certificates for mayor/licensing official signature"
+            >
+              <Printer size={14} />
+              <span>Batch Print MTOP {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}</span>
+            </button>
+          )}
+
           {paginatedApps.length > 0 && (
             <>
               {/* Select All Clean */}
@@ -1036,6 +1103,14 @@ const FranchiseApproval = () => {
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
                 >
                   Release ({selectedIds.length})
+                </button>
+              ) : activeTab === 'signing' ? (
+                <button
+                  onClick={() => setBatchApproveModal(true)}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <CheckCircle2 size={13} />
+                  <span>Send to Cashier ({selectedIds.length})</span>
                 </button>
               ) : (
                 <button
@@ -1148,9 +1223,17 @@ const FranchiseApproval = () => {
                           For Signing
                         </span>
                       ) : app.status === 'Ready for Pickup' ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
-                          Ready for Pickup
-                        </span>
+                        app.paymentStatus === 'Paid' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                            <CheckCircle2 size={12} />
+                            <span>Paid • OR# {app.officialReceiptNo || 'Recorded'}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                            <Clock size={12} />
+                            <span>Awaiting Cashier (₱500)</span>
+                          </span>
+                        )
                       ) : app.status === 'Active' ? (
                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                           Approved
@@ -1178,8 +1261,12 @@ const FranchiseApproval = () => {
                     {app.status === 'Ready for Pickup' ? (
                       <button
                         onClick={() => setQuickApproveTarget(app)}
-                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-                        title="Acknowledge payment and release franchise"
+                        className={`px-3.5 py-1.5 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer ${
+                          app.paymentStatus === 'Paid' 
+                            ? 'bg-emerald-600 hover:bg-emerald-700' 
+                            : 'bg-amber-600 hover:bg-amber-700'
+                        }`}
+                        title={app.paymentStatus === 'Paid' ? 'Release active franchise' : 'Release franchise (Cashier payment pending)'}
                       >
                         <CheckCircle2 size={14} />
                         <span>Release</span>
