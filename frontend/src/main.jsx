@@ -15,13 +15,31 @@ if (savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark)) {
 }
 
 // Auto-recover from Vite dynamic chunk import errors caused by new deployments or network drops
-window.addEventListener('vite:preloadError', (event) => {
-  event.preventDefault();
+const handleChunkError = () => {
   const lastReload = sessionStorage.getItem('gtrams_preload_reload');
   const now = Date.now();
   if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
     sessionStorage.setItem('gtrams_preload_reload', String(now));
     window.location.reload();
+  }
+};
+
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  handleChunkError();
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const msg = String(event?.reason?.message || event?.reason || '').toLowerCase();
+  if (
+    msg.includes('dynamically imported module') ||
+    msg.includes('loading chunk') ||
+    msg.includes('failed to fetch') ||
+    msg.includes('failed to load module script') ||
+    msg.includes('importing a module script failed')
+  ) {
+    event.preventDefault();
+    handleChunkError();
   }
 });
 
