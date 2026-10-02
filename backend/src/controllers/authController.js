@@ -1009,6 +1009,21 @@ exports.submitAppeal = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' });
     }
 };
+// Mask contact info for public QR verification compliance with RA 10173
+const maskContactInfo = (val) => {
+    if (!val) return '';
+    const str = String(val).trim();
+    if (str.includes('@')) {
+        const [username, domain] = str.split('@');
+        const visibleLen = Math.min(2, username.length);
+        return `${username.slice(0, visibleLen)}****@${domain}`;
+    }
+    if (str.length >= 10) {
+        return `${str.slice(0, 4)}****${str.slice(-3)}`;
+    }
+    return str.length > 4 ? `${str.slice(0, 2)}****` : '****';
+};
+
 // Verify Operator for QR Code
 exports.verifyOperator = async (req, res) => {
     try {
@@ -1037,7 +1052,7 @@ exports.verifyOperator = async (req, res) => {
             role: user.role,
             todaAssociation: user.todaAssociation || 'NON-TODA',
             isActive: user.isActive,
-            contact: user.contact,
+            contact: maskContactInfo(user.contact),
             franchises: franchises || []
         });
     } catch (error) {
