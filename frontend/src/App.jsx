@@ -1,41 +1,42 @@
-import React, { useEffect, Suspense, lazy } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import { lazyRetry } from './utils/lazyRetry';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Home from './pages/Home';
 
-// Operator Core Routes (lazy-loaded to reduce initial bundle size)
-const OperatorDashboard = lazy(() => import('./pages/operator/OperatorDashboard'));
-const ApplyFranchise = lazy(() => import('./pages/operator/ApplyFranchise'));
-const RenewFranchise = lazy(() => import('./pages/operator/RenewFranchise'));
-const OperatorSettings = lazy(() => import('./pages/operator/OperatorSettings'));
+// Operator Core Routes (lazy-loaded with auto-chunk retry to prevent 404s after new deploys)
+const OperatorDashboard = lazyRetry(() => import('./pages/operator/OperatorDashboard'), 'OperatorDashboard');
+const ApplyFranchise = lazyRetry(() => import('./pages/operator/ApplyFranchise'), 'ApplyFranchise');
+const RenewFranchise = lazyRetry(() => import('./pages/operator/RenewFranchise'), 'RenewFranchise');
+const OperatorSettings = lazyRetry(() => import('./pages/operator/OperatorSettings'), 'OperatorSettings');
 
 import MaintenanceMode from './pages/MaintenanceMode';
 
 // Lazy-loaded Admin and Secondary Routes for optimal bundle size
-const AccountDeactivated = lazy(() => import('./pages/AccountDeactivated'));
-const VerifyOperator = lazy(() => import('./pages/shared/VerifyOperator'));
-const About = lazy(() => import('./pages/shared/About'));
-const NotFound = lazy(() => import('./pages/shared/NotFound'));
-const SubmitMembers = lazy(() => import('./pages/operator/SubmitMembers'));
-const HelpSupport = lazy(() => import('./pages/operator/HelpSupport'));
+const AccountDeactivated = lazyRetry(() => import('./pages/AccountDeactivated'), 'AccountDeactivated');
+const VerifyOperator = lazyRetry(() => import('./pages/shared/VerifyOperator'), 'VerifyOperator');
+const About = lazyRetry(() => import('./pages/shared/About'), 'About');
+const NotFound = lazyRetry(() => import('./pages/shared/NotFound'), 'NotFound');
+const SubmitMembers = lazyRetry(() => import('./pages/operator/SubmitMembers'), 'SubmitMembers');
+const HelpSupport = lazyRetry(() => import('./pages/operator/HelpSupport'), 'HelpSupport');
 
 // Admin Pages (Code-split to isolate large administrative bundles from operator devices)
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const FranchiseMasterlist = lazy(() => import('./pages/admin/FranchiseMasterlist'));
-const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
-const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
-const FranchiseApproval = lazy(() => import('./pages/admin/FranchiseApproval'));
-const FranchiseReviewPage = lazy(() => import('./pages/admin/FranchiseReviewPage'));
-const ManageRevocations = lazy(() => import('./pages/admin/ManageRevocations'));
-const ValidateTODA = lazy(() => import('./pages/admin/ValidateTODA'));
-const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
-const AdminTickets = lazy(() => import('./pages/admin/AdminTickets'));
-const CashierDashboard = lazy(() => import('./pages/cashier/CashierDashboard'));
+const AdminDashboard = lazyRetry(() => import('./pages/admin/AdminDashboard'), 'AdminDashboard');
+const FranchiseMasterlist = lazyRetry(() => import('./pages/admin/FranchiseMasterlist'), 'FranchiseMasterlist');
+const UserManagement = lazyRetry(() => import('./pages/admin/UserManagement'), 'UserManagement');
+const AdminSettings = lazyRetry(() => import('./pages/admin/AdminSettings'), 'AdminSettings');
+const FranchiseApproval = lazyRetry(() => import('./pages/admin/FranchiseApproval'), 'FranchiseApproval');
+const FranchiseReviewPage = lazyRetry(() => import('./pages/admin/FranchiseReviewPage'), 'FranchiseReviewPage');
+const ManageRevocations = lazyRetry(() => import('./pages/admin/ManageRevocations'), 'ManageRevocations');
+const ValidateTODA = lazyRetry(() => import('./pages/admin/ValidateTODA'), 'ValidateTODA');
+const AdminReports = lazyRetry(() => import('./pages/admin/AdminReports'), 'AdminReports');
+const AdminTickets = lazyRetry(() => import('./pages/admin/AdminTickets'), 'AdminTickets');
+const CashierDashboard = lazyRetry(() => import('./pages/cashier/CashierDashboard'), 'CashierDashboard');
 
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';

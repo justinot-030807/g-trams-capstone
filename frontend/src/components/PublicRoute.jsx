@@ -9,6 +9,9 @@ const PublicRoute = ({ children }) => {
     if (role === 'admin' || role === 'administrator') {
       return <Navigate to="/admin-dashboard" replace />;
     }
+    if (role === 'cashier') {
+      return <Navigate to="/cashier-dashboard" replace />;
+    }
     return <Navigate to="/operator-dashboard" replace />;
   }
 

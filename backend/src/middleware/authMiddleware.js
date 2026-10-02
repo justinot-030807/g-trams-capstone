@@ -13,6 +13,16 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
 
+            // Block deactivated accounts
+            if (req.user.isActive === false) {
+                return res.status(403).json({ 
+                    message: 'Your account has been deactivated.', 
+                    accountDeactivated: true,
+                    reason: req.user.deactivationReason || 'Account suspended by administrator.',
+                    appealStatus: req.user.appealStatus || 'none'
+                });
+            }
+
             // Update lastActive timestamp (throttled to once per 15s to optimize DB load)
             const now = Date.now();
             if (!req.user.lastActive || (now - new Date(req.user.lastActive).getTime() > 15000)) {

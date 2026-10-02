@@ -763,6 +763,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     localStorage.removeItem('name');
                     localStorage.removeItem('user');
                     localStorage.removeItem('userId');
+                    localStorage.removeItem('gtrams_apply_draft');
+                    localStorage.removeItem('reapply_target');
                     navigate('/login');
                   }}
                   className="w-full px-4 py-2.5 text-left text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2.5 transition-colors"

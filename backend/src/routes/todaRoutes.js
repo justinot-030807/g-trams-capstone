@@ -73,7 +73,9 @@ router.get('/my-members', protect, async (req, res) => {
     try {
         // Determine the target TODA association
         let todaName = (req.query.todaName || '').trim();
-        
+        const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const isAdmin = userRole === 'admin' || userRole === 'administrator';
+
         if (!todaName) {
             if (req.user.todaAssociation && req.user.todaAssociation !== 'NON-TODA') {
                 todaName = req.user.todaAssociation.trim();
@@ -86,6 +88,12 @@ router.get('/my-members', protect, async (req, res) => {
                 if (userFranchise && userFranchise.todaName) {
                     todaName = userFranchise.todaName.trim();
                 }
+            }
+        } else if (!isAdmin) {
+            // Non-admin users are restricted to viewing only their own assigned TODA association
+            const userToda = (req.user.todaAssociation || '').trim();
+            if (userToda.toUpperCase() !== todaName.toUpperCase()) {
+                return res.status(403).json({ message: 'ACCESS DENIED: You can only view members of your own TODA association.' });
             }
         }
 

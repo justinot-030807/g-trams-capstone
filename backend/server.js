@@ -49,7 +49,9 @@ const ALLOWED_ORIGINS = [
     'http://localhost:5175',
     'http://localhost:5176',
     'http://localhost:3000',
-    'https://g-trams-official.vercel.app'
+    'https://g-trams-official.vercel.app',
+    'https://g-trams-web2.vercel.app',
+    ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL.replace(/\/$/, '')] : [])
 ];
 
 app.use(cors({

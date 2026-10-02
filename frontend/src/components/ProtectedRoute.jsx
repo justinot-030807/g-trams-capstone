@@ -54,6 +54,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   if (!isAuthorized) {
     if (safeUserRole === 'admin' || safeUserRole === 'administrator') {
       return <Navigate to="/admin-dashboard" replace />;
+    } else if (safeUserRole === 'cashier') {
+      return <Navigate to="/cashier-dashboard" replace />;
     } else if (isUserOperatorOrToda) {
       return <Navigate to="/operator-dashboard" replace />;
     } else {

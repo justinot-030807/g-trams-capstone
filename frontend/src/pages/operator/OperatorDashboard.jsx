@@ -62,6 +62,8 @@ const OperatorDashboard = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
     localStorage.removeItem('name');
+    localStorage.removeItem('gtrams_apply_draft');
+    localStorage.removeItem('reapply_target');
     navigate('/login');
   };
 

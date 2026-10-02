@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -628,6 +628,8 @@ const OperatorSettings = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
     localStorage.removeItem('name');
+    localStorage.removeItem('gtrams_apply_draft');
+    localStorage.removeItem('reapply_target');
     navigate('/login');
   };
 

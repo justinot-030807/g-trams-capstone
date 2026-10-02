@@ -545,6 +545,20 @@ const getFranchiseById = async (req, res) => {
     try {
         const franchise = await Franchise.findById(req.params.id).populate('operator', 'name address contact');
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        // IDOR Protection: verify user is owner, admin, or cashier
+        const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const isAdmin = role === 'admin' || role === 'administrator';
+        const isCashier = role === 'cashier';
+        const isOwner = franchise.operator && (
+            (franchise.operator._id && franchise.operator._id.toString() === req.user._id.toString()) ||
+            franchise.operator.toString() === req.user._id.toString()
+        );
+
+        if (!isAdmin && !isCashier && !isOwner) {
+            return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to view this franchise record.' });
+        }
+
         res.status(200).json(franchise);
     } catch (error) {
         res.status(500).json({ error: 'An internal server error occurred' });

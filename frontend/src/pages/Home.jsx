@@ -27,6 +27,8 @@ const Home = () => {
     if (token) {
       if (role === 'admin' || role === 'administrator') {
         navigate('/admin-dashboard', { replace: true });
+      } else if (role === 'cashier') {
+        navigate('/cashier-dashboard', { replace: true });
       } else {
         navigate('/operator-dashboard', { replace: true });
       }

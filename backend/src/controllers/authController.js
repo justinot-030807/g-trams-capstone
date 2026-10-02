@@ -661,8 +661,8 @@ exports.googleAuth = async (req, res) => {
                     console.warn('Google tokeninfo id_token verification note:', err.message);
                 }
 
-                // Robust fallback: decode JWT directly without outbound request
-                if (!email) {
+                // Safe fallback: only allowed in non-production environments (e.g., local tests/offline mock)
+                if (!email && process.env.NODE_ENV !== 'production') {
                     try {
                         const decoded = jwt.decode(tokenCandidate);
                         if (decoded && (decoded.email || decoded.sub || decoded.email_verified)) {

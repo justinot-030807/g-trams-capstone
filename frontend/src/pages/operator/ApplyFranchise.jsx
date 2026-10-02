@@ -86,6 +86,14 @@ const ApplyFranchise = () => {
     onConfirm: null
   });
 
+  // Draft Resume Modal state
+  const [draftResumeModal, setDraftResumeModal] = useState({
+    isOpen: false,
+    draftData: null,
+    savedTime: '',
+    step: 1
+  });
+
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [fullPreview, setFullPreview] = useState(null);
   const [showTodaGuide, setShowTodaGuide] = useState(false);
@@ -247,11 +255,31 @@ const ApplyFranchise = () => {
     }
   }, [formData.todaName]);
 
-  const getDraftKey = () => {
-    if (formMode === 'Renewal' && selectedId) {
-      return `gtrams_renewal_draft_${selectedId}`;
+  const getCurrentUserId = () => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u._id) return String(u._id);
+      if (u.id) return String(u.id);
+      if (u.contact) return String(u.contact);
+    } catch {}
+    const uid = localStorage.getItem('userId');
+    if (uid) return String(uid);
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.id) return String(payload.id);
+      } catch {}
     }
-    return DRAFT_STORAGE_KEY;
+    return 'operator_user';
+  };
+
+  const getDraftKey = () => {
+    const uid = getCurrentUserId();
+    if (formMode === 'Renewal' && selectedId) {
+      return `gtrams_renewal_draft_${uid}_${selectedId}`;
+    }
+    return `gtrams_apply_draft_${uid}`;
   };
 
   // Accurate 4-Step Progress Calculation
@@ -286,10 +314,27 @@ const ApplyFranchise = () => {
   };
 
   const handleSaveProgress = (isManual = true) => {
-    if (!formMode) return;
+    if (!formMode || formMode === 'Re-apply') return;
     const key = getDraftKey();
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Don't auto-save if form is completely pristine/empty
+    if (!isManual) {
+      const hasContent = (
+        currentStep > 1 ||
+        Boolean(formData.plateNo?.trim()) ||
+        Boolean(formData.motorNo?.trim()) ||
+        Boolean(formData.chassisNo?.trim()) ||
+        Boolean(formData.make?.trim()) ||
+        Boolean(formData.driverLicenseNo?.trim()) ||
+        Boolean(formData.cedulaSerialNo?.trim()) ||
+        Boolean(formData.orCrUrl) ||
+        Boolean(formData.licenseUrl) ||
+        Object.keys(uploadedDocs).length > 0
+      );
+      if (!hasContent) return;
+    }
 
     try {
       localforage.setItem(key, {
@@ -298,7 +343,8 @@ const ApplyFranchise = () => {
         savedAt: now.toISOString(),
         timeFormatted: timeStr,
         formMode,
-        selectedId
+        selectedId,
+        userId: getCurrentUserId()
       }).catch(err => console.error('Draft save error:', err));
  
       if (isManual) {
@@ -306,8 +352,10 @@ const ApplyFranchise = () => {
         setFeedbackModal({
           isOpen: true,
           type: 'success',
-          title: 'Draft Saved',
-          message: `Application draft saved at ${timeStr}. You can safely return and finish anytime.`,
+          title: language === 'fil' ? 'Nai-save ang Draft' : 'Draft Saved',
+          message: language === 'fil'
+            ? `Nai-save ang draft application noong ${timeStr}. Maaari mong balikan ito anumang oras.`
+            : `Application draft saved at ${timeStr}. You can safely return and finish anytime.`,
           confirmText: 'OK',
           onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
         });
@@ -326,6 +374,53 @@ const ApplyFranchise = () => {
       return () => clearTimeout(timer);
     }
   }, [formData, currentStep, formMode, selectedId]);
+
+  // Keep references for immediate auto-save on navigation / back / unload
+  const formDataRef = useRef(formData);
+  const currentStepRef = useRef(currentStep);
+  const formModeRef = useRef(formMode);
+
+  useEffect(() => { formDataRef.current = formData; }, [formData]);
+  useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
+  useEffect(() => { formModeRef.current = formMode; }, [formMode]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (formModeRef.current === 'New' || formModeRef.current === 'Renewal') {
+        const key = getDraftKey();
+        const dataToSave = formDataRef.current;
+        const stepToSave = currentStepRef.current;
+        const hasContent = (
+          stepToSave > 1 ||
+          Boolean(dataToSave.plateNo?.trim()) ||
+          Boolean(dataToSave.motorNo?.trim()) ||
+          Boolean(dataToSave.chassisNo?.trim()) ||
+          Boolean(dataToSave.make?.trim()) ||
+          Boolean(dataToSave.driverLicenseNo?.trim()) ||
+          Boolean(dataToSave.cedulaSerialNo?.trim()) ||
+          Boolean(dataToSave.orCrUrl) ||
+          Boolean(dataToSave.licenseUrl)
+        );
+        if (hasContent) {
+          const now = new Date();
+          localforage.setItem(key, {
+            formData: dataToSave,
+            currentStep: stepToSave,
+            savedAt: now.toISOString(),
+            timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            formMode: formModeRef.current,
+            userId: getCurrentUserId()
+          }).catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      handleBeforeUnload();
+    };
+  }, []);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -360,46 +455,12 @@ const ApplyFranchise = () => {
     }
   };
 
-  const handleStartNewApplication = async () => {
-    setFormMode('New');
-    setSelectedId(null);
-    setFilePreviews({});
-    
-    try {
-      const savedDraft = await localforage.getItem(DRAFT_STORAGE_KEY);
-      if (savedDraft && savedDraft.formData) {
-        setFormData({
-          ...savedDraft.formData,
-          dateApplied: savedDraft.formData.dateApplied || new Date().toISOString().split('T')[0],
-          todaName: loggedInToda 
-        });
-        const urlStep = parseInt(searchParams.get('step') || '0', 10);
-        const targetStep = (urlStep >= 1 && urlStep <= 4) ? urlStep : (savedDraft.currentStep || 1);
-        navigate(`/apply-franchise?mode=new&step=${targetStep}`);
-        setCurrentStep(targetStep);
-        setHasDraftRestored(true);
-        showToast("Your saved draft has been restored.", "success");
-        return;
-      }
-    } catch (e) {
-      console.error('Error loading draft from IndexedDB', e);
-    }
-
+  const initFreshForm = () => {
     navigate('/apply-franchise?mode=new&step=1');
+    setCurrentStep(1);
     setHasDraftRestored(false);
-
-    let smartCedulaDate = '';
-    let smartCedulaAddress = 'Gasan, Marinduque';
-    let smartCedulaSerialNo = '';
-
-    if (myFranchises && myFranchises.length > 0) {
-      const recent = [...myFranchises].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-      if (recent) {
-        smartCedulaDate = recent.cedulaDate ? recent.cedulaDate.substring(0, 10) : '';
-        smartCedulaAddress = recent.cedulaAddress || 'Gasan, Marinduque';
-        smartCedulaSerialNo = recent.cedulaSerialNo || '';
-      }
-    }
+    setUploadedDocs({});
+    setFilePreviews({});
 
     setFormData({ 
       fullName: loggedInUserName, 
@@ -407,9 +468,9 @@ const ApplyFranchise = () => {
       zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
       todaName: loggedInToda, 
       dateApplied: new Date().toISOString().split('T')[0], 
-      cedulaDate: smartCedulaDate, 
-      cedulaAddress: smartCedulaAddress, 
-      cedulaSerialNo: smartCedulaSerialNo,
+      cedulaDate: '', 
+      cedulaAddress: 'Gasan, Marinduque', 
+      cedulaSerialNo: '',
       orCrNo: '',
       orCrExpiryDate: '',
       isOperatorDriver: true,
@@ -431,21 +492,107 @@ const ApplyFranchise = () => {
     });
   };
 
+  const handleStartNewApplication = async () => {
+    setFormMode('New');
+    setSelectedId(null);
+    setFilePreviews({});
+    
+    // Purge any legacy global un-scoped draft key to prevent cross-account leak
+    localforage.removeItem('gtrams_apply_draft').catch(() => {});
+    localStorage.removeItem('gtrams_apply_draft');
+
+    try {
+      const userDraftKey = getDraftKey();
+      const savedDraft = await localforage.getItem(userDraftKey);
+      
+      const hasMeaningfulDraft = savedDraft && savedDraft.formData && (
+        savedDraft.currentStep > 1 ||
+        Boolean(savedDraft.formData.plateNo?.trim()) ||
+        Boolean(savedDraft.formData.motorNo?.trim()) ||
+        Boolean(savedDraft.formData.chassisNo?.trim()) ||
+        Boolean(savedDraft.formData.make?.trim()) ||
+        Boolean(savedDraft.formData.driverLicenseNo?.trim()) ||
+        Boolean(savedDraft.formData.cedulaSerialNo?.trim()) ||
+        Boolean(savedDraft.formData.orCrUrl) ||
+        Boolean(savedDraft.formData.licenseUrl)
+      );
+
+      if (hasMeaningfulDraft) {
+        setDraftResumeModal({
+          isOpen: true,
+          draftData: savedDraft,
+          savedTime: savedDraft.timeFormatted || (savedDraft.savedAt ? new Date(savedDraft.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently'),
+          step: savedDraft.currentStep || 1
+        });
+        return;
+      }
+    } catch (e) {
+      console.error('Error checking draft in IndexedDB', e);
+    }
+
+    initFreshForm();
+  };
+
+  const handleConfirmResumeDraft = () => {
+    if (!draftResumeModal.draftData) return;
+    const { formData: savedForm, currentStep: savedStep } = draftResumeModal.draftData;
+
+    setFormData({
+      ...savedForm,
+      fullName: loggedInUserName || savedForm.fullName,
+      address: loggedInAddress || savedForm.address,
+      todaName: loggedInToda || savedForm.todaName
+    });
+
+    const previews = {};
+    if (savedForm.orCrUrl) previews.orCrDocument = savedForm.orCrUrl;
+    if (savedForm.licenseUrl) previews.license = savedForm.licenseUrl;
+    if (savedForm.todaEndorsementUrl) previews.todaEndorsement = savedForm.todaEndorsementUrl;
+    if (savedForm.brgyClearanceUrl) previews.brgyClearance = savedForm.brgyClearanceUrl;
+    if (savedForm.cedulaUrl) previews.cedulaDoc = savedForm.cedulaUrl;
+    setFilePreviews(previews);
+
+    const urlStep = parseInt(searchParams.get('step') || '0', 10);
+    const targetStep = (urlStep >= 1 && urlStep <= 4) ? urlStep : (savedStep || 1);
+    navigate(`/apply-franchise?mode=new&step=${targetStep}`);
+    setCurrentStep(targetStep);
+    setHasDraftRestored(true);
+    setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
+    showToast(language === 'fil' ? 'Naibalik ang iyong nasimulang draft.' : 'Your saved draft has been restored.', 'success');
+  };
+
+  const handleDiscardDraft = async () => {
+    const userDraftKey = getDraftKey();
+    try {
+      await localforage.removeItem(userDraftKey);
+      await localforage.removeItem('gtrams_apply_draft');
+      localStorage.removeItem('gtrams_apply_draft');
+    } catch (err) {
+      console.error('Error clearing draft:', err);
+    }
+    setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
+    initFreshForm();
+    showToast(language === 'fil' ? 'Na-clear ang draft. Nagsimula ng bagong aplikasyon.' : 'Draft cleared. Starting a fresh application.', 'info');
+  };
+
   const handleClearDraft = async () => {
     const key = getDraftKey();
     try {
       await localforage.removeItem(key);
-      await localforage.removeItem(DRAFT_STORAGE_KEY);
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      await localforage.removeItem('gtrams_apply_draft');
+      localStorage.removeItem('gtrams_apply_draft');
       setHasDraftRestored(false);
-      handleStartNewApplication();
-      showToast('Draft has been reset.', 'info');
+      initFreshForm();
+      showToast(language === 'fil' ? 'Na-clear ang draft.' : 'Draft has been reset.', 'info');
     } catch (err) {
       console.error('Error resetting draft:', err);
     }
   };
 
   const handleBackToDashboard = () => {
+    if (formMode === 'New' || formMode === 'Renewal') {
+      handleSaveProgress(false);
+    }
     if (window.history.state && window.history.state.idx > 0) {
       navigate(-1);
     } else {
@@ -965,12 +1112,17 @@ const ApplyFranchise = () => {
 
       if (response.ok) {
         try {
-          await localforage.removeItem(getDraftKey());
-          await localforage.removeItem(DRAFT_STORAGE_KEY);
+          const key = getDraftKey();
+          await localforage.removeItem(key);
+          await localforage.removeItem('gtrams_apply_draft');
+          const uid = getCurrentUserId();
+          await localforage.removeItem(`gtrams_apply_draft_${uid}`);
         } catch {}
 
+        localStorage.removeItem('gtrams_apply_draft');
         localStorage.removeItem(DRAFT_STORAGE_KEY);
         localStorage.removeItem('reapply_target');
+        setHasDraftRestored(false);
 
         setFeedbackModal({
           isOpen: true,
@@ -2128,6 +2280,86 @@ const ApplyFranchise = () => {
           onConfirm={handleConfirmCancel}
           isSubmitting={cancelModal.isSubmitting}
         />
+      )}
+
+      {/* Draft Resume Confirmation Modal */}
+      {draftResumeModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 text-center">
+            
+            {/* Modal Icon */}
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <Clock className="w-7 h-7" />
+            </div>
+
+            {/* Modal Title */}
+            <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-2">
+              {language === 'fil' ? 'Mayroon Kang Hindi Natapos na Draft' : 'Resume In-Progress Application?'}
+            </h3>
+
+            {/* Modal Description */}
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-5 leading-relaxed">
+              {language === 'fil' ? (
+                <>
+                  May na-save kang draft noong <span className="font-bold text-slate-800 dark:text-slate-200">{draftResumeModal.savedTime}</span> (Hakbang {draftResumeModal.step} ng 4). Nais mo bang ipagpatuloy ang iyong nasimulan?
+                </>
+              ) : (
+                <>
+                  You have an in-progress draft saved at <span className="font-bold text-slate-800 dark:text-slate-200">{draftResumeModal.savedTime}</span> (Step {draftResumeModal.step} of 4). Would you like to pick up where you left off?
+                </>
+              )}
+            </p>
+
+            {/* Draft Details Preview */}
+            {draftResumeModal.draftData?.formData && (
+              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3.5 mb-6 text-left text-xs space-y-1.5">
+                <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                  <span>{language === 'fil' ? 'Hakbang' : 'Progress'}:</span>
+                  <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                    {language === 'fil' ? `Hakbang ${draftResumeModal.step} ng 4` : `Step ${draftResumeModal.step} of 4`}
+                  </span>
+                </div>
+                {draftResumeModal.draftData.formData.plateNo && (
+                  <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                    <span>{language === 'fil' ? 'Plate / MV No' : 'Plate No'}:</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                      {draftResumeModal.draftData.formData.plateNo}
+                    </span>
+                  </div>
+                )}
+                {draftResumeModal.draftData.formData.make && (
+                  <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                    <span>{language === 'fil' ? 'Modelo / Make' : 'Model'}:</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">
+                      {draftResumeModal.draftData.formData.make}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <button
+                type="button"
+                onClick={handleConfirmResumeDraft}
+                className="w-full py-3 px-4 rounded-xl bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>{language === 'fil' ? 'Ipagpatuloy ang Draft' : 'Continue Draft'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>{language === 'fil' ? 'Magsimula ng Bago' : 'Start Fresh'}</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
 
     </MainLayout>
