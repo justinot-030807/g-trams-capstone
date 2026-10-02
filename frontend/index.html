@@ -38,6 +38,12 @@
           // Unify standard zoom to 1.0 (100%) so all text respects minimum 14px body standard
           document.documentElement.style.zoom = '1';
 
+          // Restore operator text scale preference (normal, large, xlarge)
+          const savedScale = localStorage.getItem('gtrams_text_scale');
+          if (savedScale && savedScale !== 'normal') {
+            document.documentElement.setAttribute('data-text-scale', savedScale);
+          }
+
           const savedTheme = localStorage.getItem('theme');
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           if (savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark)) {

@@ -40,6 +40,7 @@ const CashierDashboard = lazyRetry(() => import('./pages/cashier/CashierDashboar
 
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { TextSizeProvider } from './context/TextSizeContext';
 
 import { SocketProvider } from './context/SocketContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -94,10 +95,11 @@ function App() {
 
   return (
     <ThemeProvider>
-      <LanguageProvider>
-        <SocketProvider>
-          <NotificationProvider>
-            <ErrorBoundary>
+      <TextSizeProvider>
+        <LanguageProvider>
+          <SocketProvider>
+            <NotificationProvider>
+              <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* PUBLIC ROUTES */}
@@ -150,6 +152,7 @@ function App() {
           </NotificationProvider>
         </SocketProvider>
       </LanguageProvider>
+      </TextSizeProvider>
     </ThemeProvider>
   );
 }

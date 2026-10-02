@@ -148,14 +148,14 @@ const SimpleDatePicker = ({
     return `${monthObj.label} ${d}, ${y}`;
   }, [value]);
 
-  const selectClasses = "w-full py-2 px-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-2xs disabled:opacity-50 cursor-pointer";
+  const selectClasses = "w-full py-3 px-3 text-base min-h-[50px] font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-2xs disabled:opacity-50 cursor-pointer";
 
   return (
     <div className="space-y-1.5">
       {/* Label and Quick Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-0.5">
         {label && (
-          <label className="block text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300">
+          <label className="block text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
             {label} {required && <span className="text-red-500">*</span>}
           </label>
         )}
@@ -166,20 +166,20 @@ const SimpleDatePicker = ({
               type="button"
               onClick={setToday}
               disabled={disabled}
-              className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
             >
-              <Sparkles size={11} />
+              <Sparkles size={12} />
               <span>Ngayong Araw</span>
             </button>
           )}
 
           {mode === 'expiry' && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => addYears(1)}
                 disabled={disabled}
-                className="text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 cursor-pointer"
+                className="text-xs font-semibold px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 cursor-pointer min-h-[32px]"
                 title="Dagdag 1 taon mula ngayon"
               >
                 +1 Taon
@@ -188,7 +188,7 @@ const SimpleDatePicker = ({
                 type="button"
                 onClick={() => addYears(3)}
                 disabled={disabled}
-                className="text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 cursor-pointer"
+                className="text-xs font-semibold px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 cursor-pointer min-h-[32px]"
                 title="Dagdag 3 taon"
               >
                 +3 Taon

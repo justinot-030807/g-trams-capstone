@@ -80,25 +80,25 @@ const DocumentUploadCard = ({
         {/* Card Header: Label & Status */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
-            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate leading-snug">
+            <p className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate leading-snug">
               {label} {required && <span className="text-red-500">*</span>}
             </p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
               {isCompressing ? (
                 <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                  <Loader2 size={12} className="animate-spin" /> Optimizing photo...
+                  <Loader2 size={13} className="animate-spin" /> Optimizing photo...
                 </span>
               ) : isScanning ? (
                 <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold flex items-center gap-1 animate-pulse">
-                  <Sparkles size={12} className="animate-spin" /> AI scanning details...
+                  <Sparkles size={13} className="animate-spin" /> AI scanning details...
                 </span>
               ) : scanSuccess ? (
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
-                  <Sparkles size={12} /> Auto-filled by AI
+                <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                  <Sparkles size={13} /> Auto-filled by AI
                 </span>
               ) : hasFile ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Ready
+                  <CheckCircle2 size={13} /> Ready
                 </span>
               ) : (
                 'Attach photo or PDF (Max 10MB)'
@@ -116,10 +116,10 @@ const DocumentUploadCard = ({
                 }
                 onFileRemove(id);
               }}
-              className="text-slate-500 dark:text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center -mr-1 -mt-1"
+              className="text-slate-500 dark:text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center -mr-1 -mt-1"
               title="Remove document"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           )}
         </div>
@@ -131,35 +131,35 @@ const DocumentUploadCard = ({
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer min-h-[42px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all shadow-xs active:scale-95 cursor-pointer min-h-[48px]"
               >
-                <Camera size={15} className="text-[#D4AF37]" />
+                <Camera size={16} className="text-[#D4AF37]" />
                 <span>Take Photo</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs min-h-[42px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs min-h-[48px]"
               >
-                <Upload size={15} />
+                <Upload size={16} />
                 <span>Upload File</span>
               </button>
             </div>
           </div>
         ) : (
-          <div className="my-1.5 relative rounded-2xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[130px]">
+          <div className="my-1.5 relative rounded-2xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[140px]">
             {isPdf ? (
               <div className="p-4 text-center flex flex-col items-center justify-center w-full">
-                <FileCheck size={36} className="text-emerald-600 dark:text-emerald-400 mb-1.5" />
-                <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Naka-attach ang PDF</span>
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-2.5">Handa nang i-review</span>
+                <FileCheck size={38} className="text-emerald-600 dark:text-emerald-400 mb-1.5" />
+                <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Naka-attach ang PDF</span>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-2.5">Handa nang i-review</span>
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: true })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer active:scale-95"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer active:scale-95 min-h-[44px]"
                 >
-                  <ZoomIn size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  <ZoomIn size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>I-preview ang PDF</span>
                 </button>
               </div>

@@ -5,13 +5,21 @@
 @tailwind utilities;
 
 @layer base {
-  /* Dynamic OS font scaling support & Minimum 14px accessible baseline */
+  /* Dynamic OS font scaling support & Accessible baseline */
   html {
-    font-size: 14px;
+    font-size: 100%; /* Automatically scales with mobile device OS font size settings (16px browser base) */
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    zoom: 1;
+  }
+
+  /* User-selectable text scale preferences for Operator Portal */
+  html[data-text-scale="large"] {
+    font-size: 112.5%; /* ~18px base font */
+  }
+
+  html[data-text-scale="xlarge"] {
+    font-size: 125%; /* ~20px base font */
   }
 
   /* Universal 100% zoom across desktop and mobile displays */

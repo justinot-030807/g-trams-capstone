@@ -9,6 +9,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
+import { useTextSize } from '../context/TextSizeContext';
 import { 
   getNotificationVisuals, 
   formatRelativeTime, 
@@ -18,6 +19,7 @@ import {
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const { t, language, changeLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { textScale, cycleTextScale, scaleLabel } = useTextSize();
   const { 
     notifications: ctxNotifs, 
     markAsRead: ctxMarkRead, 
@@ -400,6 +402,17 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Quick Text Size Accessibility Button */}
+            <button
+              type="button"
+              onClick={cycleTextScale}
+              title={`Laki ng Letra: ${scaleLabel} (Pindutin upang lakihan)`}
+              aria-label={`Laki ng Letra: ${scaleLabel}`}
+              className="px-2.5 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs transition-all cursor-pointer active:scale-95 shadow-2xs font-mono select-none"
+            >
+              <span>{textScale === 'xlarge' ? 'A++' : textScale === 'large' ? 'A+' : 'A'}</span>
+            </button>
+
             {/* Quick Theme Toggle Circle */}
             <button
               type="button"
@@ -565,6 +578,17 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
       {/* Right: 1-Click Dark Mode Toggle, Notifications & Simplified User Avatar */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         
+        {/* 1-Click Quick Text Size Accessibility Button */}
+        <button
+          type="button"
+          onClick={cycleTextScale}
+          title={`Laki ng Letra: ${scaleLabel} (Pindutin upang lakihan)`}
+          aria-label={`Laki ng Letra: ${scaleLabel}`}
+          className="px-2.5 py-1.5 h-[38px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-xs transition-all focus:outline-none shrink-0 cursor-pointer shadow-2xs font-mono flex items-center justify-center active:scale-95 select-none"
+        >
+          <span>{textScale === 'xlarge' ? 'A++' : textScale === 'large' ? 'A+' : 'A'}</span>
+        </button>
+
         {/* 1-Click Quick Theme Toggle */}
         <button
           onClick={toggleTheme}

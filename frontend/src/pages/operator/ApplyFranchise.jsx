@@ -1154,8 +1154,8 @@ const ApplyFranchise = () => {
     }
   };
 
-  const inputClasses = "w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-2xs font-medium";
-  const disabledClasses = "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 text-xs sm:text-sm cursor-not-allowed font-medium";
+  const inputClasses = "w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-base min-h-[50px] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-2xs font-medium";
+  const disabledClasses = "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 text-base min-h-[50px] cursor-not-allowed font-medium";
 
   const steps = [
     { num: 1, title: 'Operator & Driver' },
@@ -1237,10 +1237,10 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={handleTopBack}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-xs font-bold transition-all border border-white/15 shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-sm font-bold transition-all border border-white/15 shadow-xs cursor-pointer min-h-[44px]"
                 title="Back"
               >
-                <ArrowLeft size={16} />
+                <ArrowLeft size={18} />
                 <span>Back</span>
               </button>
 
@@ -1248,10 +1248,10 @@ const ApplyFranchise = () => {
                 <button
                   type="button"
                   onClick={() => handleSaveProgress(true)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 text-[11px] font-semibold transition-all border border-white/15 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white/95 text-xs sm:text-sm font-semibold transition-all border border-white/15 cursor-pointer min-h-[44px]"
                   title="Save draft"
                 >
-                  <Save size={13} />
+                  <Save size={15} />
                   <span>Save Draft</span>
                 </button>
               </div>
@@ -1262,7 +1262,7 @@ const ApplyFranchise = () => {
               <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-sm">
                 {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
               </h1>
-              <p className="text-[11px] sm:text-xs text-white/80 font-medium mt-0.5">
+              <p className="text-xs sm:text-sm text-white/85 font-medium mt-0.5">
                 Bayan ng Gasan • Sangguniang Bayan Franchising Office
               </p>
             </div>
@@ -1300,7 +1300,7 @@ const ApplyFranchise = () => {
 
                     {/* Step Circle */}
                     <div 
-                      className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                      className={`relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
                         isCompleted 
                           ? 'bg-[#D4AF37] text-slate-950 font-black shadow-xs' 
                           : isCurrent 
@@ -1309,14 +1309,14 @@ const ApplyFranchise = () => {
                       }`}
                     >
                       {isCompleted ? (
-                        <Check size={14} className="stroke-[3]" />
+                        <Check size={16} className="stroke-[3]" />
                       ) : (
-                        <span className="text-xs font-black">{step.num}</span>
+                        <span className="text-xs sm:text-sm font-black">{step.num}</span>
                       )}
                     </div>
                     
-                    <span className={`text-[10px] sm:text-xs font-bold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
-                      isCurrent ? 'text-white' : isCompleted ? 'text-[#D4AF37]' : 'text-white/50'
+                    <span className={`text-xs sm:text-sm font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                      isCurrent ? 'text-white font-bold' : isCompleted ? 'text-[#D4AF37]' : 'text-white/60'
                     }`}>
                       {step.title}
                     </span>
@@ -1326,13 +1326,13 @@ const ApplyFranchise = () => {
             </div>
 
             {/* Gold Progress Bar */}
-            <div className="w-full bg-black/25 h-1.5 rounded-full overflow-hidden mt-4">
+            <div className="w-full bg-black/25 h-2 rounded-full overflow-hidden mt-4">
               <div 
                 className="bg-[#D4AF37] h-full rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${calculateProgress().percentage}%` }}
               />
             </div>
-            <div className="flex justify-between items-center text-[10.5px] text-white/70 mt-1 font-medium px-1">
+            <div className="flex justify-between items-center text-xs sm:text-sm text-white/80 mt-1.5 font-medium px-1">
               <span>Progress: {calculateProgress().percentage}% Completed</span>
               <span>Step {currentStep} of 4</span>
             </div>
@@ -1353,10 +1353,10 @@ const ApplyFranchise = () => {
                     <User size={18} />
                   </div>
                   <div>
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                       Operator & Driver Information
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
                       Enter personal identity and driver credentials
                     </p>
                   </div>
@@ -1365,17 +1365,17 @@ const ApplyFranchise = () => {
                 {/* Operator Details Card */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
                   <div className="flex items-center justify-between pb-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Operator Identity
                     </span>
-                    <span className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
                       Verified Account
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                         Operator Full Name <span className="text-red-500">*</span>
                       </label>
                       <input 
@@ -1390,7 +1390,7 @@ const ApplyFranchise = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                         Barangay / Address <span className="text-red-500">*</span>
                       </label>
                       <select 
@@ -1410,7 +1410,7 @@ const ApplyFranchise = () => {
 
                   {/* Driver Designation Choice */}
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
+                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-2">
                       Sino po ang magmamaneho ng tricycle? <span className="text-red-500">*</span>
                     </label>
 
@@ -1418,22 +1418,22 @@ const ApplyFranchise = () => {
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: true }))}
-                        className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                        className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
                           formData.isOperatorDriver 
                             ? 'bg-amber-50/60 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
                             : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
                           formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-slate-400'
                         }`}>
-                          {formData.isOperatorDriver && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          {formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                          <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
                             Ako mismo (Operator-Driver)
                           </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                             Ikaw mismo ang may hawak ng lisensya
                           </p>
                         </div>
@@ -1442,22 +1442,22 @@ const ApplyFranchise = () => {
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: false }))}
-                        className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                        className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
                           !formData.isOperatorDriver 
                             ? 'bg-amber-50/60 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
                             : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
                           !formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-slate-400'
                         }`}>
-                          {!formData.isOperatorDriver && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          {!formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                          <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
                             May Itinalagang Drayber (Hired Driver)
                           </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                             Ibang tao ang magpapasada ng tricycle
                           </p>
                         </div>
@@ -1469,7 +1469,7 @@ const ApplyFranchise = () => {
                   {!formData.isOperatorDriver && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
                       <div>
-                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                           Pangalan ng Drayber <span className="text-red-500">*</span>
                         </label>
                         <input 
@@ -1483,7 +1483,7 @@ const ApplyFranchise = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                           Contact No. ng Drayber <span className="text-red-500">*</span>
                         </label>
                         <input 
@@ -1503,11 +1503,11 @@ const ApplyFranchise = () => {
                 {/* Driver's License Document & Smart AI Scan Card */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
                       Driver's License Photo <span className="text-red-500">*</span>
                     </label>
-                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={12} /> Real-time AI OCR
+                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={14} /> Real-time AI OCR
                     </span>
                   </div>
 
@@ -1525,16 +1525,16 @@ const ApplyFranchise = () => {
                   />
 
                   {/* Auto-filled License Details Grid */}
-                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                      <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
                         License Details {aiSuccess.license && <span className="text-emerald-600 font-semibold">(Verified via AI)</span>}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                           Driver's License Number <span className="text-red-500">*</span>
                         </label>
                         <input 
@@ -1567,10 +1567,10 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={nextStep}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[50px] active:scale-95 transition-all"
                   >
                     <span>Next: Vehicle Details</span>
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
               </div>
@@ -1586,10 +1586,10 @@ const ApplyFranchise = () => {
                     <Car size={18} />
                   </div>
                   <div>
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                       Vehicle Details & LTO OR/CR
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
                       Upload LTO document for instant automated vehicle pre-fill
                     </p>
                   </div>
@@ -1598,11 +1598,11 @@ const ApplyFranchise = () => {
                 {/* Document Upload for OR/CR */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
                       LTO Official Receipt / Certificate of Registration (OR / CR) <span className="text-red-500">*</span>
                     </label>
-                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={12} /> Auto-reads Plate & Chassis
+                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={14} /> Auto-reads Plate & Chassis
                     </span>
                   </div>
 
@@ -1622,15 +1622,15 @@ const ApplyFranchise = () => {
 
                 {/* AI Detection Banner */}
                 {aiSuccess.orCrDocument && (
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                    <Sparkles size={15} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                    <Sparkles size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <span>Na-scan ng AI ang OR/CR! Kusang nailagay ang Plate, Motor, at Chassis. Pakitingnan kung tama ang mga detalye.</span>
                   </div>
                 )}
 
                 {/* Vehicle Details Form Fields */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3.5 shadow-2xs">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block pb-1 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block pb-1 border-b border-slate-100 dark:border-slate-800">
                     Tricycle Specifications
                   </span>
 
@@ -1638,7 +1638,7 @@ const ApplyFranchise = () => {
                     
                     {/* Make / Brand */}
                     <div id="field-make">
-                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                         Make / Brand <span className="text-red-500">*</span>
                       </label>
                       <input 
@@ -1653,13 +1653,13 @@ const ApplyFranchise = () => {
 
                       {/* Quick Select Brand Chips */}
                       {formMode === 'New' && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
+                        <div className="mt-2.5 flex flex-wrap gap-2">
                           {POPULAR_MAKES.map((brand) => (
                             <button
                               key={brand}
                               type="button"
                               onClick={() => setFormData(prev => ({ ...prev, make: brand }))}
-                              className={`px-2 py-0.5 text-[10.5px] font-bold rounded-lg border transition-all cursor-pointer ${
+                              className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg border transition-all cursor-pointer min-h-[36px] ${
                                 formData.make === brand
                                   ? 'bg-[#9E2A2B] text-white border-[#541116] dark:bg-[#D4AF37] dark:text-slate-950'
                                   : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
@@ -1674,7 +1674,7 @@ const ApplyFranchise = () => {
 
                     {/* Model Year */}
                     <div id="field-made">
-                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                         Model Year <span className="text-red-500">*</span>
                       </label>
                       <input 
@@ -1692,16 +1692,16 @@ const ApplyFranchise = () => {
 
                     {/* Route / Zone Selection */}
                     <div id="field-zone" className="sm:col-span-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
                           Route / Zone Selection <span className="text-red-500">*</span>
                         </label>
                         <button
                           type="button"
                           onClick={() => setShowTodaGuide(true)}
-                          className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          className="text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline inline-flex items-center gap-1 cursor-pointer"
                         >
-                          <Compass size={12} />
+                          <Compass size={14} />
                           <span>View Route Guide</span>
                         </button>
                       </div>
@@ -1725,12 +1725,12 @@ const ApplyFranchise = () => {
                         const zInfo = GASAN_ZONES.find(z => z.id === currentZ);
                         if (!zInfo) return null;
                         return (
-                          <div className="p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-left space-y-1 mt-2 shadow-2xs">
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
-                              <Compass size={13} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-left space-y-1.5 mt-2.5 shadow-2xs">
+                            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white">
+                              <Compass size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                               <span>{zInfo.name}</span>
                             </div>
-                            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                               <strong>Route:</strong> {zInfo.coverage}
                             </p>
                           </div>
@@ -1740,7 +1740,7 @@ const ApplyFranchise = () => {
 
                     {/* Plate Number */}
                     <div id="field-plateNo">
-                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                         Plate Number <span className="text-red-500">*</span>
                       </label>
                       <input 
@@ -1754,25 +1754,25 @@ const ApplyFranchise = () => {
                         placeholder="e.g. 123-ABC" 
                       />
                       {duplicateStatus.plateNo.checking && (
-                        <p className="text-[10.5px] text-slate-500 flex items-center gap-1 mt-1">
-                          <Loader2 size={11} className="animate-spin" /> Checking plate number...
+                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1.5">
+                          <Loader2 size={13} className="animate-spin" /> Checking plate number...
                         </p>
                       )}
                       {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && (
-                        <p className="text-[10.5px] font-bold text-red-600 flex items-center gap-1 mt-1">
-                          <AlertCircle size={11} /> {duplicateStatus.plateNo.message}
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
+                          <AlertCircle size={13} /> {duplicateStatus.plateNo.message}
                         </p>
                       )}
                       {!duplicateStatus.plateNo.checking && !duplicateStatus.plateNo.duplicate && duplicateStatus.plateNo.message && (
-                        <p className="text-[10.5px] font-bold text-emerald-600 flex items-center gap-1 mt-1">
-                          <CheckCircle2 size={11} /> {duplicateStatus.plateNo.message}
+                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
+                          <CheckCircle2 size={13} /> {duplicateStatus.plateNo.message}
                         </p>
                       )}
                     </div>
 
                     {/* Engine / Motor Number */}
                     <div id="field-motorNo">
-                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                         Engine / Motor No. <span className="text-red-500">*</span>
                       </label>
                       <input 
@@ -1786,20 +1786,20 @@ const ApplyFranchise = () => {
                         placeholder="Motor Serial Number" 
                       />
                       {duplicateStatus.motorNo.checking && (
-                        <p className="text-[10.5px] text-slate-500 flex items-center gap-1 mt-1">
-                          <Loader2 size={11} className="animate-spin" /> Checking motor number...
+                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1.5">
+                          <Loader2 size={13} className="animate-spin" /> Checking motor number...
                         </p>
                       )}
                       {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && (
-                        <p className="text-[10.5px] font-bold text-red-600 flex items-center gap-1 mt-1">
-                          <AlertCircle size={11} /> {duplicateStatus.motorNo.message}
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
+                          <AlertCircle size={13} /> {duplicateStatus.motorNo.message}
                         </p>
                       )}
                     </div>
 
                     {/* Chassis Serial Number */}
                     <div id="field-chassisNo" className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
                         Chassis Serial No. <span className="text-red-500">*</span>
                       </label>
                       <input 
@@ -1813,13 +1813,13 @@ const ApplyFranchise = () => {
                         placeholder="17-Digit Vehicle Identification Number (VIN)" 
                       />
                       {duplicateStatus.chassisNo.checking && (
-                        <p className="text-[10.5px] text-slate-500 flex items-center gap-1 mt-1">
-                          <Loader2 size={11} className="animate-spin" /> Checking chassis number...
+                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1.5">
+                          <Loader2 size={13} className="animate-spin" /> Checking chassis number...
                         </p>
                       )}
                       {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && (
-                        <p className="text-[10.5px] font-bold text-red-600 flex items-center gap-1 mt-1">
-                          <AlertCircle size={11} /> {duplicateStatus.chassisNo.message}
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
+                          <AlertCircle size={13} /> {duplicateStatus.chassisNo.message}
                         </p>
                       )}
                     </div>
@@ -1827,7 +1827,7 @@ const ApplyFranchise = () => {
                     {/* LTO Document Metadata */}
                     <div className="sm:col-span-2 pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                           LTO OR / CR Number
                         </label>
                         <input 
@@ -1859,19 +1859,19 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={prevStep}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[44px] cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl font-bold text-sm sm:text-base text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[50px] cursor-pointer"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={18} />
                     <span>Back</span>
                   </button>
 
                   <button 
                     type="button" 
                     onClick={nextStep}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[50px] active:scale-95 transition-all"
                   >
                     <span>Next: Clearances</span>
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
               </div>
@@ -1887,10 +1887,10 @@ const ApplyFranchise = () => {
                     <ShieldCheck size={18} />
                   </div>
                   <div>
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                       Barangay & TODA Clearances
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
                       Attach membership endorsement and residency clearances
                     </p>
                   </div>
@@ -1899,11 +1899,11 @@ const ApplyFranchise = () => {
                 {/* TODA Endorsement Card */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
                       TODA Endorsement Certificate <span className="text-red-500">*</span>
                     </label>
-                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={12} /> AI Scanner
+                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={14} /> AI Scanner
                     </span>
                   </div>
 
@@ -1922,7 +1922,7 @@ const ApplyFranchise = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                         Certificate / Control No.
                       </label>
                       <input 
@@ -1950,11 +1950,11 @@ const ApplyFranchise = () => {
                 {/* Barangay Clearance Card */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
                       Barangay Clearance <span className="text-red-500">*</span>
                     </label>
-                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={12} /> AI Scanner
+                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={14} /> AI Scanner
                     </span>
                   </div>
 
@@ -1973,7 +1973,7 @@ const ApplyFranchise = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                         Barangay Clearance No.
                       </label>
                       <input 
@@ -2003,19 +2003,19 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={prevStep}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[44px] cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl font-bold text-sm sm:text-base text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[50px] cursor-pointer"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={18} />
                     <span>Back</span>
                   </button>
 
                   <button 
                     type="button" 
                     onClick={nextStep}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950 shadow-sm cursor-pointer min-h-[50px] active:scale-95 transition-all"
                   >
                     <span>Next: Cedula &amp; Review</span>
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
               </div>
@@ -2031,10 +2031,10 @@ const ApplyFranchise = () => {
                     <FileCheck size={18} />
                   </div>
                   <div>
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                       Community Tax Certificate (Cedula) &amp; Review
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
                       Upload your current-year CTC and verify application summary
                     </p>
                   </div>
@@ -2043,11 +2043,11 @@ const ApplyFranchise = () => {
                 {/* Cedula Upload & Input Card */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
                       Community Tax Certificate (Cedula / CTC) <span className="text-red-500">*</span>
                     </label>
-                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={12} /> AI Scanner
+                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                      <Sparkles size={14} /> AI Scanner
                     </span>
                   </div>
 
@@ -2066,7 +2066,7 @@ const ApplyFranchise = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                         Cedula Serial Number <span className="text-red-500">*</span>
                       </label>
                       <input 
@@ -2096,42 +2096,42 @@ const ApplyFranchise = () => {
                 {/* Application Review & Verification Card */}
                 <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3.5 shadow-2xs">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                       <span>Application Summary Verification</span>
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsSummaryModalOpen(true)}
-                      className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                      className="text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
                     >
                       Full Details
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1">
-                      <p className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase">Operator &amp; Driver</p>
-                      <p className="font-bold text-slate-900 dark:text-white">{formData.fullName || 'N/A'}</p>
-                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">{formData.address || 'N/A'}</p>
-                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Operator &amp; Driver</p>
+                      <p className="font-bold text-base text-slate-900 dark:text-white">{formData.fullName || 'N/A'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm">{formData.address || 'N/A'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm">
                         License: <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.driverLicenseNo || 'N/A'}</span>
                       </p>
                     </div>
 
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1">
-                      <p className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase">Vehicle &amp; Route</p>
-                      <p className="font-bold text-slate-900 dark:text-white">{formData.plateNo || 'No Plate'} • {formData.make || 'Tricycle'}</p>
-                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">Route: Zone {formData.zone || 'N/A'} • {formData.todaName || 'NON-TODA'}</p>
-                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">
-                        Chassis: <span className="font-mono text-[10.5px]">{formData.chassisNo || 'N/A'}</span>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Vehicle &amp; Route</p>
+                      <p className="font-bold text-base text-slate-900 dark:text-white">{formData.plateNo || 'No Plate'} • {formData.make || 'Tricycle'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm">Route: Zone {formData.zone || 'N/A'} • {formData.todaName || 'NON-TODA'}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm">
+                        Chassis: <span className="font-mono text-xs sm:text-sm">{formData.chassisNo || 'N/A'}</span>
                       </p>
                     </div>
                   </div>
 
                   {/* Document Thumbnails Preview Strip */}
                   <div className="pt-2">
-                    <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2">Attached Documents (Click to preview):</p>
+                    <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Attached Documents (Click to preview):</p>
                     <div className="flex flex-wrap gap-2">
                       {[
                         { id: 'license', label: "Driver's License", url: filePreviews.license || formData.licenseUrl },
@@ -2149,11 +2149,11 @@ const ApplyFranchise = () => {
                               title: `${item.label} Document`,
                               isPdf: item.url?.toLowerCase().includes('.pdf') || (uploadedDocs[item.id] && uploadedDocs[item.id].type === 'application/pdf')
                             })}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 hover:border-slate-400 cursor-pointer shadow-2xs active:scale-95"
+                            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2 hover:border-slate-400 cursor-pointer shadow-2xs active:scale-95 min-h-[44px]"
                           >
-                            <CheckCircle2 size={12} className="text-emerald-600" />
+                            <CheckCircle2 size={14} className="text-emerald-600" />
                             <span>{item.label}</span>
-                            <ZoomIn size={11} className="text-slate-400" />
+                            <ZoomIn size={13} className="text-slate-400" />
                           </button>
                         ) : null
                       ))}
@@ -2161,8 +2161,8 @@ const ApplyFranchise = () => {
                   </div>
 
                   {/* LGU Treasury Fee Notice */}
-                  <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
-                    <Receipt size={16} className="shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
+                  <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                    <Receipt size={18} className="shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
                     <div className="leading-snug">
                       <strong className="font-bold">Municipal Treasury Notice:</strong> Standard MTOP Franchise Fee of <strong className="font-bold underline">₱500.00</strong> will be paid directly at the Municipal Cashier upon LGU evaluation approval.
                     </div>
@@ -2175,22 +2175,22 @@ const ApplyFranchise = () => {
                     <button 
                       type="button" 
                       onClick={prevStep}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[44px] cursor-pointer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-3 rounded-xl font-bold text-sm sm:text-base text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 min-h-[50px] cursor-pointer"
                     >
-                      <ChevronLeft size={16} />
+                      <ChevronLeft size={18} />
                       <span>Back to Clearances</span>
                     </button>
 
                     <button 
                       type="submit" 
                       disabled={isSubmitting}
-                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px] ${
+                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl font-bold text-sm sm:text-base text-white transition-all shadow-md active:scale-95 cursor-pointer min-h-[50px] ${
                         isSubmitting 
                           ? 'bg-slate-500 cursor-not-allowed' 
                           : 'bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-slate-950'
                       }`}
                     >
-                      {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
                       <span>{isSubmitting ? (uploadPhase || 'Submitting...') : 'Submit Application'}</span>
                     </button>
                   </div>
@@ -2200,18 +2200,18 @@ const ApplyFranchise = () => {
                     <button
                       type="button"
                       onClick={() => handleSaveProgress(true)}
-                      className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Save size={13} />
+                      <Save size={14} />
                       <span>Save Draft</span>
                     </button>
                     {hasDraftRestored && (
                       <button
                         type="button"
                         onClick={handleClearDraft}
-                        className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
                       >
-                        <RotateCcw size={13} />
+                        <RotateCcw size={14} />
                         <span>Reset Draft</span>
                       </button>
                     )}
@@ -2312,7 +2312,7 @@ const ApplyFranchise = () => {
 
             {/* Draft Details Preview */}
             {draftResumeModal.draftData?.formData && (
-              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3.5 mb-6 text-left text-xs space-y-1.5">
+              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-4 mb-6 text-left text-xs sm:text-sm space-y-2">
                 <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
                   <span>{language === 'fil' ? 'Hakbang' : 'Progress'}:</span>
                   <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
@@ -2339,21 +2339,21 @@ const ApplyFranchise = () => {
             )}
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2.5">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={handleConfirmResumeDraft}
-                className="w-full py-3 px-4 rounded-xl bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm sm:text-base shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-5 h-5" />
                 <span>{language === 'fil' ? 'Ipagpatuloy ang Draft' : 'Continue Draft'}</span>
               </button>
               <button
                 type="button"
                 onClick={handleDiscardDraft}
-                className="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm sm:text-base transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
               >
-                <PlusCircle className="w-4 h-4" />
+                <PlusCircle className="w-5 h-5" />
                 <span>{language === 'fil' ? 'Magsimula ng Bago' : 'Start Fresh'}</span>
               </button>
             </div>
