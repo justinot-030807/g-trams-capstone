@@ -563,18 +563,18 @@ const FranchiseReviewPage = () => {
   }
 
   return (
-    <div className="fixed inset-0 w-full h-full flex flex-col bg-slate-50 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 overflow-hidden select-none z-40">
+    <div className="fixed inset-0 w-full h-full flex flex-col bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] overflow-hidden select-none z-40">
       
       {/* Toast Notification */}
       {toast.show && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[300] pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200">
-          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xl rounded-2xl px-4 py-2.5 flex items-center gap-2.5 max-w-md">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm rounded-lg px-4 py-2.5 flex items-center gap-2.5 max-w-md">
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
               toast.type === 'error' ? 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60' : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60'
             }`}>
               {toast.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
             </div>
-            <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">{toast.message}</p>
+            <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{toast.message}</p>
           </div>
         </div>
       )}
@@ -582,7 +582,7 @@ const FranchiseReviewPage = () => {
       {/* 10-Second Undo Banner Toast */}
       {undoState.show && (
         <div className="fixed bottom-6 right-6 z-[350] animate-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-slate-900 text-white rounded-2xl shadow-2xl p-4 border border-slate-700 flex flex-col gap-2.5 min-w-[320px] max-w-sm">
+          <div className="bg-[#1F1D1B] dark:bg-[#1C1917] text-white rounded-lg shadow-sm p-4 border border-[#E4E1DC]/20 dark:border-[#2E2A27] flex flex-col gap-2.5 min-w-[320px] max-w-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
                 <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
@@ -590,14 +590,14 @@ const FranchiseReviewPage = () => {
                   <p className="text-xs font-bold text-white truncate">
                     Moved to {undoState.newStatus}
                   </p>
-                  <p className="text-xs text-slate-300 truncate">
+                  <p className="text-xs text-[#A8A29E] truncate">
                     {undoState.applicantName}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleExecuteUndo}
-                className="px-3 py-1.5 bg-[#D4AF37] hover:bg-[#c29d28] text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+                className="px-3 py-1.5 bg-[#D4AF37] hover:bg-[#c29d28] text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
               >
                 <Undo2 size={14} />
                 <span>Undo ({undoState.secondsLeft}s)</span>
@@ -759,35 +759,35 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* LEFT REVIEW SHEET: DOCUMENT CHECKLIST & TABBED METADATA INSPECTOR       */}
         {/* ======================================================================= */}
-        <aside className="w-full md:w-[340px] lg:w-[380px] bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
+        <aside className="w-full md:w-[340px] lg:w-[380px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
           
           <div className="p-3.5 space-y-3 flex-1 flex flex-col">
             
             {/* 1. APPLICANT SUMMARY */}
-            <div className="bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 space-y-2">
+              <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
                 <User size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 Applicant Information
               </span>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-400 block font-medium">Name</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fullName}</span>
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Name</span>
+                  <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{currentApp.fullName}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block font-medium">Contact</span>
-                  <span className="font-mono text-slate-800 dark:text-slate-100 block">{currentApp.contact || '—'}</span>
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Contact</span>
+                  <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] block">{currentApp.contact || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block font-medium">TODA / Zone</span>
-                  <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">TODA / Zone</span>
+                  <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">
                     {currentApp.todaName || 'NON-TODA'} {currentApp.zone ? `(Zone ${currentApp.zone})` : ''}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block font-medium">Barangay</span>
-                  <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Barangay</span>
+                  <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">
                     {currentApp.barangay || currentApp.address || '—'}
                   </span>
                 </div>
@@ -796,24 +796,24 @@ const FranchiseReviewPage = () => {
 
             {/* 2. REJECTION ACCORDION (If Admin clicked Reject) */}
             {isRejecting && (
-              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl p-3 space-y-2.5 animate-in fade-in">
-                <div className="flex items-center justify-between text-red-800 dark:text-red-300 text-xs font-bold">
+              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg p-3 space-y-2.5 animate-in fade-in">
+                <div className="flex items-center justify-between text-red-800 dark:text-red-300 text-xs font-semibold">
                   <span className="flex items-center gap-1.5">
                     <XCircle size={14} className="text-red-600 dark:text-red-400" /> Reason for Rejection
                   </span>
                   <button 
                     onClick={() => setIsRejecting(false)} 
-                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs underline cursor-pointer"
+                    className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-white text-xs underline cursor-pointer"
                   >
                     Cancel
                   </button>
                 </div>
 
-                <label className="text-xs font-bold text-red-900 dark:text-red-300 uppercase tracking-wider block">Defective Field (Directs Operator)</label>
+                <label className="text-xs font-semibold text-red-900 dark:text-red-300 uppercase tracking-wider block">Defective Field (Directs Operator)</label>
                 <select
                   value={rejectField}
                   onChange={(e) => setRejectField(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
+                  className="w-full bg-white dark:bg-[#14110F] border border-red-300 dark:border-red-900/80 rounded-lg px-2.5 py-1.5 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:ring-1 focus:ring-red-500 font-medium"
                 >
                   <option value="chassisNo">Chassis Number (Numero ng Chassis)</option>
                   <option value="motorNo">Motor / Engine Number (Numero ng Makina)</option>
@@ -829,11 +829,11 @@ const FranchiseReviewPage = () => {
                   <option value="applicantName">Applicant / Personal Details</option>
                 </select>
 
-                <label className="text-xs font-bold text-red-900 dark:text-red-300 uppercase tracking-wider block">Reason for Rejection</label>
+                <label className="text-xs font-semibold text-red-900 dark:text-red-300 uppercase tracking-wider block">Reason for Rejection</label>
                 <select
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
+                  className="w-full bg-white dark:bg-[#14110F] border border-red-300 dark:border-red-900/80 rounded-lg px-2.5 py-1.5 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:ring-1 focus:ring-red-500 font-medium"
                 >
                   {REJECT_REASONS.map((r, i) => (
                     <option key={i} value={r}>{r}</option>
@@ -846,7 +846,7 @@ const FranchiseReviewPage = () => {
                     placeholder="Enter specific reason for rejection..."
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/80 rounded-xl p-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-red-500 font-medium"
+                    className="w-full bg-white dark:bg-[#14110F] border border-red-300 dark:border-red-900/80 rounded-lg p-2 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:ring-1 focus:ring-red-500 font-medium"
                   />
                 )}
 
@@ -856,7 +856,7 @@ const FranchiseReviewPage = () => {
                     handleUpdateStatus('Cancelled', reason, true, rejectField);
                   }}
                   disabled={isProcessing}
-                  className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                  className="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer"
                 >
                   {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
                   <span>Confirm Rejection &amp; Next</span>
@@ -867,7 +867,7 @@ const FranchiseReviewPage = () => {
             {/* 3. DOCUMENT SPECIFICATIONS (DYNAMIC TO ACTIVE DOCUMENT) */}
             <div className="space-y-2 flex-1">
               <div className="flex items-center justify-between px-0.5">
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
                   <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   Document Details &amp; Validity
                 </span>
@@ -876,9 +876,9 @@ const FranchiseReviewPage = () => {
                 </span>
               </div>
 
-              <div className="bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2.5">
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 space-y-2.5">
                 {!currentDoc.url && (
-                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+                  <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
                     <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
                     <span>No document uploaded for this requirement.</span>
                   </div>
@@ -1210,10 +1210,10 @@ const FranchiseReviewPage = () => {
             }`}
           >
             {!currentDoc?.url ? (
-              <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md max-w-sm">
+              <div className="p-8 text-center bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm max-w-sm">
                 <AlertCircle size={38} className="text-amber-500 mx-auto mb-2" />
-                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">No Attached Document</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <h3 className="font-semibold text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">No Attached Document</h3>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
                   The applicant has not uploaded a file for {currentDoc.short} yet.
                 </p>
               </div>
@@ -1221,7 +1221,7 @@ const FranchiseReviewPage = () => {
               <iframe
                 src={currentDoc.url}
                 title={currentDoc.label}
-                className="w-full h-full border-0 bg-white rounded-xl shadow-lg"
+                className="w-full h-full border border-[#E4E1DC] dark:border-[#2E2A27] bg-white rounded-lg shadow-sm"
               />
             ) : (
               <div
@@ -1235,26 +1235,26 @@ const FranchiseReviewPage = () => {
               >
                 {/* Instant Loading Shimmer / Spinner Overlay */}
                 {isDocLoading && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 dark:bg-[#111827]/85 backdrop-blur-xs rounded-2xl z-10 p-6 min-w-[280px] min-h-[280px] border border-slate-200 dark:border-slate-800 shadow-xl animate-in fade-in duration-150">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 dark:bg-[#1C1917]/90 rounded-lg z-10 p-6 min-w-[280px] min-h-[280px] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm animate-in fade-in duration-150">
                     <Loader2 size={32} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37] mb-2" />
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Loading document...</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Rendering {currentDoc.short}</span>
+                    <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">Loading document...</span>
+                    <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Rendering {currentDoc.short}</span>
                   </div>
                 )}
 
                 {/* Error Fallback */}
                 {docError ? (
-                  <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-2xl border border-red-200 dark:border-red-900/60 shadow-xl max-w-sm pointer-events-auto">
+                  <div className="p-8 text-center bg-white dark:bg-[#1C1917] rounded-lg border border-red-200 dark:border-red-900/60 shadow-sm max-w-sm pointer-events-auto">
                     <AlertTriangle size={36} className="text-red-500 mx-auto mb-2" />
-                    <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Unable to Load Document</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <h3 className="font-semibold text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">Unable to Load Document</h3>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
                       A network error occurred while loading the image. You can open the original file directly.
                     </p>
                     <a
                       href={currentDoc.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] transition-colors"
                     >
                       <ExternalLink size={13} /> Open in New Tab
                     </a>
@@ -1270,7 +1270,7 @@ const FranchiseReviewPage = () => {
                       setIsDocLoading(false);
                       setDocError(true);
                     }}
-                    className={`${isFitToWidth ? 'w-[90vw] max-w-none' : 'max-h-[82vh] max-w-[85vw]'} object-contain rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-black/70 bg-white dark:bg-[#111827] border border-slate-300/80 dark:border-slate-700/80 p-1.5 select-none transition-opacity duration-200 ${
+                    className={`${isFitToWidth ? 'w-[90vw] max-w-none' : 'max-h-[82vh] max-w-[85vw]'} object-contain rounded-lg shadow-sm bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-1.5 select-none transition-opacity duration-200 ${
                       isDocLoading ? 'opacity-0' : 'opacity-100'
                     }`}
                   />

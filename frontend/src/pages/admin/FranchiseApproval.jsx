@@ -13,6 +13,8 @@ import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import BatchMtopModal from '../../components/admin/BatchMtopModal';
 import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
+import PageHeader from '../../components/common/PageHeader';
+import StatusBadge from '../../components/common/StatusBadge';
 import { evaluateDocumentValidity, triageApplication, getTimeWaiting } from '../../utils/dateValidity';
 import { GASAN_BARANGAYS } from '../../utils/constants';
 
@@ -487,17 +489,17 @@ const FranchiseApproval = () => {
       {/* 10-Second Floating Undo Toast */}
       {undoState && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] animate-in slide-in-from-bottom-4 duration-200">
-          <div className="bg-slate-900 text-white border border-slate-700 shadow-2xl rounded-2xl px-5 py-3.5 flex items-center gap-4 max-w-lg">
-            <div className="w-8 h-8 rounded-xl bg-amber-400/20 text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0 font-mono">
+          <div className="bg-[#1F1D1B] dark:bg-[#1C1917] text-white border border-[#E4E1DC]/20 dark:border-[#2E2A27] shadow-sm rounded-lg px-4 py-3 flex items-center gap-4 max-w-lg">
+            <div className="w-8 h-8 rounded-lg bg-amber-400/20 text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0 font-mono">
               {undoState.secondsLeft}s
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-white truncate">{undoState.message}</p>
-              <p className="text-[11px] text-slate-400">Press Undo to revert this action within 10 seconds.</p>
+              <p className="text-[11px] text-[#A8A29E]">Press Undo to revert this action within 10 seconds.</p>
             </div>
             <button
               onClick={handleRollbackUndo}
-              className="px-3.5 py-1.5 bg-[#D4AF37] hover:bg-[#c49f2b] text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer shadow-sm"
+              className="px-3 py-1.5 bg-[#D4AF37] hover:bg-[#c49f2b] text-slate-950 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer"
             >
               <Undo2 size={13} />
               <span>Undo</span>
@@ -509,8 +511,8 @@ const FranchiseApproval = () => {
       {/* Floating Standard Toast */}
       {toast.show && !undoState && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
-            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm rounded-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
               toast.type === 'error'
                 ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
                 : toast.type === 'warning'
@@ -519,7 +521,7 @@ const FranchiseApproval = () => {
             }`}>
               {toast.type === 'error' ? <AlertCircle size={15} /> : toast.type === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
             </div>
-            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+            <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] leading-snug">
               {toast.message}
             </p>
           </div>
@@ -580,21 +582,21 @@ const FranchiseApproval = () => {
 
       {/* Quick Approve Confirmation Modal */}
       {quickApproveTarget && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-6 max-w-md w-full shadow-sm space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={22} />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-white">
                   {isPendingStatus(quickApproveTarget.status) 
                     ? 'Approve for Municipal Signatures?' 
                     : quickApproveTarget.status === 'For Signing'
                     ? 'Mark Signed & Route to Cashier?'
                     : 'Acknowledge Payment & Release?'}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
                   {isPendingStatus(quickApproveTarget.status) 
                     ? 'Queue for Mayor and Licensing Official signatures' 
                     : quickApproveTarget.status === 'For Signing'
@@ -604,14 +606,14 @@ const FranchiseApproval = () => {
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1.5">
-              <p><span className="font-bold text-slate-500">Operator:</span> <strong className="text-slate-900 dark:text-white">{quickApproveTarget.fullName}</strong></p>
-              <p><span className="font-bold text-slate-500">TODA / Zone:</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
-              <p><span className="font-bold text-slate-500">Plate Number:</span> <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
+            <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-xs space-y-1.5">
+              <p><span className="text-[#6B6761] dark:text-[#A8A29E]">Operator:</span> <strong className="text-[#1F1D1B] dark:text-white">{quickApproveTarget.fullName}</strong></p>
+              <p><span className="text-[#6B6761] dark:text-[#A8A29E]">TODA / Zone:</span> <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
+              <p><span className="text-[#6B6761] dark:text-[#A8A29E]">Plate Number:</span> <span className="font-mono font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
             </div>
 
             {quickApproveTarget.status === 'Ready for Pickup' && (
-              <div className={`p-2.5 rounded-xl text-xs font-bold flex items-center justify-between gap-2 border ${
+              <div className={`p-2.5 rounded-lg text-xs font-medium flex items-center justify-between gap-2 border ${
                 quickApproveTarget.paymentStatus === 'Paid'
                   ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                   : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
@@ -630,7 +632,7 @@ const FranchiseApproval = () => {
                   )}
                 </div>
                 {quickApproveTarget.officialReceiptNo && (
-                  <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-white/70 dark:bg-slate-900/70">
+                  <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white/70 dark:bg-[#14110F]">
                     OR# {quickApproveTarget.officialReceiptNo}
                   </span>
                 )}
@@ -641,7 +643,7 @@ const FranchiseApproval = () => {
               <button
                 onClick={() => setQuickApproveTarget(null)}
                 disabled={isProcessing}
-                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -655,7 +657,7 @@ const FranchiseApproval = () => {
                   quickApproveTarget
                 )}
                 disabled={isProcessing}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
                 <span>
@@ -669,24 +671,24 @@ const FranchiseApproval = () => {
 
       {/* Quick Reject Modal */}
       {quickRejectTarget && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-6 max-w-md w-full shadow-sm space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
                 <XCircle size={22} />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white">Reject Application</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Return for operator correction: {quickRejectTarget.fullName}</p>
+                <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-white">Reject Application</h3>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Return for operator correction: {quickRejectTarget.fullName}</p>
               </div>
             </div>
 
             <div className="space-y-2.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Defective / Incorrect Field (Directs Operator)</label>
+              <label className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block">Defective / Incorrect Field (Directs Operator)</label>
               <select
                 value={quickRejectField}
                 onChange={(e) => setQuickRejectField(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-200"
+                className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:ring-1 focus:ring-[#9E2A2B]"
               >
                 <option value="chassisNo">Chassis Number (Numero ng Chassis)</option>
                 <option value="motorNo">Motor / Engine Number (Numero ng Makina)</option>
@@ -702,11 +704,11 @@ const FranchiseApproval = () => {
                 <option value="applicantName">Applicant / Personal Details</option>
               </select>
 
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Preset Rejection Reason</label>
+              <label className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block">Preset Rejection Reason</label>
               <select
                 value={quickRejectReason}
                 onChange={(e) => setQuickRejectReason(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-200"
+                className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:ring-1 focus:ring-[#9E2A2B]"
               >
                 {REJECT_REASONS.map((r, i) => <option key={i} value={r}>{r}</option>)}
               </select>
@@ -716,7 +718,7 @@ const FranchiseApproval = () => {
                   placeholder="Specify review defect or correction instruction for the operator..."
                   value={quickRejectCustom}
                   onChange={(e) => setQuickRejectCustom(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white min-h-[70px] outline-none focus:ring-2 focus:ring-red-200"
+                  className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] min-h-[70px] outline-none focus:ring-1 focus:ring-[#9E2A2B]"
                 />
               )}
             </div>
@@ -725,7 +727,7 @@ const FranchiseApproval = () => {
               <button
                 onClick={() => setQuickRejectTarget(null)}
                 disabled={isProcessing}
-                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -735,7 +737,7 @@ const FranchiseApproval = () => {
                   handleUpdateStatus('Cancelled', quickRejectTarget, reasonText, quickRejectField);
                 }}
                 disabled={isProcessing}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-red-700 hover:bg-red-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
                 <span>Confirm Rejection</span>
@@ -747,34 +749,34 @@ const FranchiseApproval = () => {
 
       {/* Batch Approve Modal */}
       {batchApproveModal && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-6 max-w-lg w-full shadow-sm space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <Layers size={22} />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white">Confirm Batch Approval</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-white">Confirm Batch Approval</h3>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
                   You are approving <strong>{selectedIds.length}</strong> application(s) at once.
                 </p>
               </div>
             </div>
 
-            <div className="max-h-48 overflow-y-auto space-y-1.5 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div className="max-h-48 overflow-y-auto space-y-1.5 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
               {applications.filter(a => selectedIds.includes(a._id)).map((app, i) => (
-                <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-white dark:hover:bg-slate-800">
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{i + 1}. {app.fullName}</span>
-                  <span className="text-xs font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
+                <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-white dark:hover:bg-[#1C1917]">
+                  <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{i + 1}. {app.fullName}</span>
+                  <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
                 </div>
               ))}
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300">
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
               {activeTab === 'signing' ? (
-                <>All selected applications will transition to <strong className="text-blue-600 dark:text-blue-400">Ready for Pickup</strong>.</>
+                <>All selected applications will transition to <strong className="text-amber-700 dark:text-amber-400">Ready for Pickup</strong>.</>
               ) : (
-                <>All selected applications will transition to <strong className="text-purple-600 dark:text-purple-400">For Signing</strong>. A 10-second undo window will be available.</>
+                <>All selected applications will transition to <strong className="text-amber-700 dark:text-amber-400">For Signing</strong>. A 10-second undo window will be available.</>
               )}
             </p>
 
@@ -782,14 +784,14 @@ const FranchiseApproval = () => {
               <button
                 onClick={() => setBatchApproveModal(false)}
                 disabled={isBatchProcessing}
-                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmBatchApprove}
                 disabled={isBatchProcessing}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isBatchProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 <span>Approve All ({selectedIds.length})</span>
@@ -801,25 +803,25 @@ const FranchiseApproval = () => {
 
       {/* Batch Release Modal */}
       {batchReleaseModal && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-6 max-w-lg w-full shadow-sm space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={22} />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white">Confirm Batch Release</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-white">Confirm Batch Release</h3>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
                   You are activating <strong>{selectedIds.length}</strong> franchise(s).
                 </p>
               </div>
             </div>
 
-            <div className="max-h-48 overflow-y-auto space-y-1.5 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div className="max-h-48 overflow-y-auto space-y-1.5 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
               {applications.filter(a => selectedIds.includes(a._id)).map((app, i) => (
-                <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-white dark:hover:bg-slate-800">
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{i + 1}. {app.fullName}</span>
-                  <span className="text-xs font-mono text-slate-500">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
+                <div key={app._id} className="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-white dark:hover:bg-[#1C1917]">
+                  <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{i + 1}. {app.fullName}</span>
+                  <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">{app.todaName || 'NON-TODA'} &bull; {app.plateNo || 'PENDING'}</span>
                 </div>
               ))}
             </div>
@@ -828,14 +830,14 @@ const FranchiseApproval = () => {
               <button
                 onClick={() => setBatchReleaseModal(false)}
                 disabled={isBatchProcessing}
-                className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmBatchRelease}
                 disabled={isBatchProcessing}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isBatchProcessing ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 <span>Release All ({selectedIds.length})</span>
@@ -845,52 +847,42 @@ const FranchiseApproval = () => {
         </div>
       )}
 
-      {/* 1. SLIM & COMPACT HEADER RIBBON */}
-      <header className="mb-4 bg-gradient-to-r from-[#852024] via-[#9E2A2B] to-[#70151c] dark:from-[#180407] dark:via-[#24060a] dark:to-[#120305] rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 text-white shadow-md flex items-center justify-between gap-3 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-white/10 dark:bg-white/5 border border-white/15 flex items-center justify-center shrink-0">
-            <CheckCircle2 size={18} className="text-[#D4AF37]" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-base sm:text-lg font-bold tracking-tight text-white truncate">
-              Franchise Approval Queue
-            </h1>
-            <p className="text-white/80 text-xs hidden sm:block truncate mt-0.5">
-              {pendingCount} application{pendingCount !== 1 ? 's' : ''} waiting review &bull; Oldest applications prioritized
-            </p>
-          </div>
-        </div>
+      {/* 1. Page Header */}
+      <PageHeader
+        title="Franchise Approval Queue"
+        subtitle={`${pendingCount} application${pendingCount !== 1 ? 's' : ''} waiting review • Oldest applications prioritized`}
+        actions={
+          <div className="flex items-center gap-2">
+            {pendingCount > 0 && (
+              <button
+                onClick={() => {
+                  const firstPending = applications.find(a => isPendingStatus(a.status)) || applications[0];
+                  if (firstPending) handleOpenWorkstation(firstPending);
+                }}
+                className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer"
+                title="Open full-screen review workstation"
+              >
+                <Eye size={14} />
+                <span className="hidden sm:inline">Start Review Queue</span>
+                <span>({pendingCount})</span>
+                <ChevronRight size={14} />
+              </button>
+            )}
 
-        <div className="flex items-center gap-2 shrink-0">
-          {pendingCount > 0 && (
             <button
-              onClick={() => {
-                const firstPending = applications.find(a => isPendingStatus(a.status)) || applications[0];
-                if (firstPending) handleOpenWorkstation(firstPending);
-              }}
-              className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-              title="Open full-screen review workstation"
+              onClick={fetchApplications}
+              disabled={isLoading}
+              className="p-2 bg-white dark:bg-[#1C1917] hover:bg-slate-100 dark:hover:bg-slate-800 border border-[#E4E1DC] dark:border-[#2E2A27] text-slate-700 dark:text-slate-200 rounded-lg transition-all cursor-pointer shadow-2xs"
+              title="Refresh queue"
             >
-              <Eye size={14} />
-              <span className="hidden sm:inline">Start Review Queue</span>
-              <span>({pendingCount})</span>
-              <ChevronRight size={14} />
+              <RefreshCw size={15} className={isLoading ? 'animate-spin text-[#9E2A2B]' : ''} />
             </button>
-          )}
-
-          <button
-            onClick={fetchApplications}
-            disabled={isLoading}
-            className="p-2 bg-white/10 hover:bg-white/20 border border-white/15 text-white rounded-xl transition-all cursor-pointer"
-            title="Refresh queue"
-          >
-            <RefreshCw size={15} className={isLoading ? 'animate-spin text-[#D4AF37]' : ''} />
-          </button>
-        </div>
-      </header>
+          </div>
+        }
+      />
 
       {/* 2. ADVANCED TOOLBAR (Single TODA dropdown, Type, Barangay, Date, Flagged, Compact Toggle) */}
-      <div className="mb-4 bg-white dark:bg-[#111827] p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5">
+      <div className="mb-4 bg-white dark:bg-[#1C1917] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-2.5">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
           {/* Left: Quick Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -900,17 +892,17 @@ const FranchiseApproval = () => {
               placeholder="Search Name, Plate, Motor, or Chassis..." 
               value={searchQuery} 
               onChange={(e) => updateParams({ q: e.target.value, page: 1 })} 
-              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+              className="w-full bg-[#F6F5F3]/70 dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
             />
           </div>
 
           {/* Right Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* TODA Dropdown (Single instance, duplicate chips removed!) */}
+            {/* TODA Dropdown */}
             <select
               value={selectedToda}
               onChange={(e) => updateParams({ toda: e.target.value, page: 1 })}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] cursor-pointer"
+              className="bg-[#F6F5F3]/70 dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] cursor-pointer"
             >
               <option value="all">All TODAs</option>
               {uniqueTodas.map(t => <option key={t} value={t}>{t}</option>)}
@@ -920,7 +912,7 @@ const FranchiseApproval = () => {
             <select
               value={selectedType}
               onChange={(e) => updateParams({ type: e.target.value, page: 1 })}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] cursor-pointer"
+              className="bg-[#F6F5F3]/70 dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] cursor-pointer"
             >
               <option value="all">All Types</option>
               <option value="New">New</option>
@@ -932,7 +924,7 @@ const FranchiseApproval = () => {
             <select
               value={selectedBarangay}
               onChange={(e) => updateParams({ barangay: e.target.value, page: 1 })}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] cursor-pointer max-w-[140px]"
+              className="bg-[#F6F5F3]/70 dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] cursor-pointer max-w-[140px]"
             >
               <option value="all">All Barangays</option>
               {GASAN_BARANGAYS.map(b => <option key={b} value={b}>{b}</option>)}
@@ -941,10 +933,10 @@ const FranchiseApproval = () => {
             {/* Flagged Only Toggle */}
             <button
               onClick={() => updateParams({ flaggedOnly: !flaggedOnly, page: 1 })}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer border ${
                 flaggedOnly 
                   ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                  : 'bg-[#F6F5F3]/70 dark:bg-[#14110F] text-slate-600 dark:text-slate-300 border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-slate-100'
               }`}
               title="Filter applications with issues or warnings only"
             >
@@ -955,12 +947,12 @@ const FranchiseApproval = () => {
             {/* Compact Density Toggle */}
             <button
               onClick={() => updateParams({ compact: !compactView })}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer border ${
                 compactView 
-                  ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-700'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                  ? 'bg-[#9E2A2B] text-white border-[#9E2A2B]'
+                  : 'bg-[#F6F5F3]/70 dark:bg-[#14110F] text-slate-600 dark:text-slate-300 border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-slate-100'
               }`}
-              title="Toggle compact row view for 1366x768 screens"
+              title="Toggle compact row view"
             >
               <SlidersHorizontal size={13} />
               <span className="hidden sm:inline">Compact</span>
@@ -970,7 +962,7 @@ const FranchiseApproval = () => {
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60"
                 title="Reset all active search and filter criteria"
               >
                 <X size={13} />
@@ -982,21 +974,21 @@ const FranchiseApproval = () => {
       </div>
 
       {/* 3. STATUS TABS BAR & TRIAGE ACTIONS */}
-      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#1C1917] p-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
         {/* Status Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto">
           <button
             onClick={() => updateParams({ tab: 'pending', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'pending'
                 ? 'bg-[#9E2A2B] text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FileText size={14} />
             <span>Needs Review</span>
-            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
-              activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+              activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
               {pendingCount}
             </span>
@@ -1004,16 +996,16 @@ const FranchiseApproval = () => {
 
           <button
             onClick={() => updateParams({ tab: 'signing', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'signing'
-                ? 'bg-purple-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <ShieldCheck size={14} />
             <span>For Signing</span>
-            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
-              activeTab === 'signing' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+              activeTab === 'signing' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
               {signingCount}
             </span>
@@ -1021,16 +1013,16 @@ const FranchiseApproval = () => {
 
           <button
             onClick={() => updateParams({ tab: 'ready', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'ready'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <Printer size={14} />
             <span>Ready for Pickup</span>
-            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
-              activeTab === 'ready' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+              activeTab === 'ready' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
               {readyCount}
             </span>
@@ -1038,15 +1030,15 @@ const FranchiseApproval = () => {
 
           <button
             onClick={() => updateParams({ tab: 'all', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'all'
-                ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <span>All in Queue</span>
-            <span className={`text-xs px-1.5 py-0.2 rounded-full ${
-              activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+              activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
             }`}>
               {allCount}
             </span>
@@ -1059,7 +1051,7 @@ const FranchiseApproval = () => {
             <button
               type="button"
               onClick={() => setIsBatchPrintOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-xs transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs transition-all cursor-pointer"
               title="Batch print MTOP certificates for mayor/licensing official signature"
             >
               <Printer size={14} />
@@ -1072,7 +1064,7 @@ const FranchiseApproval = () => {
               {/* Select All Clean */}
               <button
                 onClick={selectAllClean}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
                 title="Select all verified clean applications on current page"
               >
                 <CheckCheck size={14} />
@@ -1082,7 +1074,7 @@ const FranchiseApproval = () => {
               {/* Standard Select All */}
               <button
                 onClick={toggleSelectAll}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer"
               >
                 {isAllSelected ? (
                   <CheckSquare size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -1096,18 +1088,18 @@ const FranchiseApproval = () => {
 
           {/* Batch Actions Trigger */}
           {selectedIds.length > 0 && (
-            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-1.5 pl-2 border-l border-[#E4E1DC] dark:border-[#2E2A27]">
               {activeTab === 'ready' ? (
                 <button
                   onClick={() => setBatchReleaseModal(true)}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
                 >
                   Release ({selectedIds.length})
                 </button>
               ) : activeTab === 'signing' ? (
                 <button
                   onClick={() => setBatchApproveModal(true)}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
                 >
                   <CheckCircle2 size={13} />
                   <span>Send to Cashier ({selectedIds.length})</span>
@@ -1115,7 +1107,7 @@ const FranchiseApproval = () => {
               ) : (
                 <button
                   onClick={() => setBatchApproveModal(true)}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
                 >
                   <CheckCircle2 size={13} />
                   <span>Batch Approve ({selectedIds.length})</span>
@@ -1130,10 +1122,10 @@ const FranchiseApproval = () => {
       {isLoading ? (
         <QueueListSkeleton count={4} baseDelay={50} stepDelay={70} />
       ) : filteredApps.length === 0 ? (
-        <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 transition-colors">
-          <CheckCircle size={48} className="mx-auto mb-4 text-emerald-400 opacity-50" />
-          <p className="font-bold text-base text-slate-800 dark:text-slate-200">No applications found!</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-12 text-center text-[#6B6761] dark:text-[#A8A29E] transition-colors">
+          <CheckCircle size={40} className="mx-auto mb-3 text-[#6B6761] dark:text-[#A8A29E] opacity-40" />
+          <p className="font-semibold text-base text-[#1F1D1B] dark:text-[#F6F5F3]">No applications found</p>
+          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 max-w-md mx-auto">
             {hasActiveFilters
               ? 'No applications match your active search and filter criteria. Click below to reset.' 
               : activeTab === 'pending'
@@ -1143,7 +1135,7 @@ const FranchiseApproval = () => {
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 dark:bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-[#9E2A2B] transition-colors cursor-pointer"
+              className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1F1D1B] dark:bg-[#2E2A27] text-white rounded-lg text-xs font-semibold hover:bg-[#9E2A2B] transition-colors cursor-pointer"
             >
               <RefreshCw size={13} />
               <span>Reset All Filters</span>
@@ -1152,7 +1144,7 @@ const FranchiseApproval = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-2.5 pb-6">
+          <div className="space-y-2 pb-6">
             {paginatedApps.map((app, index) => {
               const isSelected = selectedIds.includes(app._id);
               const isMenuOpen = activeMenuId === app._id;
@@ -1160,47 +1152,47 @@ const FranchiseApproval = () => {
               return (
                 <div 
                   key={app._id} 
-                  className={`bg-white dark:bg-[#111827] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 ${
-                    compactView ? 'p-3 rounded-2xl' : 'p-4 sm:p-5 rounded-3xl'
+                  className={`bg-white dark:bg-[#1C1917] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+                    compactView ? 'p-3 rounded-lg' : 'p-3.5 sm:p-4 rounded-lg'
                   } ${
                     isSelected 
-                      ? 'border-[#9E2A2B] dark:border-[#D4AF37] ring-2 ring-[#9E2A2B]/15 dark:ring-[#D4AF37]/20 shadow-md' 
-                      : 'border-slate-200 dark:border-slate-800 shadow-xs hover:border-[#9E2A2B]/30 dark:hover:border-[#D4AF37]/30'
+                      ? 'border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B]/20 dark:ring-[#D4AF37]/30' 
+                      : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/30 dark:hover:border-[#D4AF37]/30'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     {/* Checkbox */}
                     <button
                       onClick={() => toggleSelect(app._id)}
-                      className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
+                      className="p-1 text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] transition-colors cursor-pointer shrink-0"
                       title={isSelected ? "Deselect" : "Select"}
                     >
                       {isSelected ? (
-                        <CheckSquare size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                        <CheckSquare size={17} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                       ) : (
-                        <Square size={18} className="text-slate-300 dark:text-slate-600" />
+                        <Square size={17} className="text-[#E4E1DC] dark:text-[#2E2A27]" />
                       )}
                     </button>
 
                     {/* Queue Position */}
-                    <span className="text-xs font-semibold text-slate-400 font-mono w-5 shrink-0">
+                    <span className="text-xs font-semibold text-[#6B6761] font-mono tabular-nums w-5 shrink-0">
                       {startIndex + index + 1}.
                     </span>
 
                     {/* Applicant & Unit Details */}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">
+                        <h3 className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm truncate">
                           {app.fullName}
                         </h3>
                         {app.isResubmitted && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 shrink-0">
                             Corrected
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                        <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{app.plateNo || 'No Plate'}</span>
+                      <div className="flex items-center gap-1.5 text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 truncate">
+                        <span className="font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{app.plateNo || 'No Plate'}</span>
                         <span>&bull;</span>
                         <span className="truncate">{app.todaName || 'NON-TODA'}</span>
                         {app.applicationType && (
@@ -1212,46 +1204,29 @@ const FranchiseApproval = () => {
                       </div>
                     </div>
 
-                    {/* Clean Single Status Badge */}
+                    {/* Clean Standard Status Badge */}
                     <div className="shrink-0">
-                      {isPendingStatus(app.status) ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                          Needs Review
-                        </span>
-                      ) : app.status === 'For Signing' ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
-                          For Signing
-                        </span>
-                      ) : app.status === 'Ready for Pickup' ? (
-                        app.paymentStatus === 'Paid' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                            <CheckCircle2 size={12} />
-                            <span>Paid • OR# {app.officialReceiptNo || 'Recorded'}</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                            <Clock size={12} />
-                            <span>Awaiting Cashier (₱500)</span>
-                          </span>
-                        )
-                      ) : app.status === 'Active' ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                          Approved
-                        </span>
+                      {app.status === 'Ready for Pickup' ? (
+                        <StatusBadge
+                          status={app.status}
+                          customLabel={
+                            app.paymentStatus === 'Paid'
+                              ? `Ready for Pickup • Paid`
+                              : `Ready for Pickup • Awaiting Cashier`
+                          }
+                        />
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-                          {app.status || 'Pending'}
-                        </span>
+                        <StatusBadge status={app.status} />
                       )}
                     </div>
                   </div>
 
                   {/* Actions: View Summary text button + Primary Action + More Menu */}
-                  <div className="flex items-center gap-2 justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
-                    {/* View Summary text button (Requested by user) */}
+                  <div className="flex items-center gap-2 justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E4E1DC] dark:border-[#2E2A27]">
+                    {/* View Summary text button */}
                     <button
                       onClick={() => setDossierTargetUnit(app)}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-xs transition-colors cursor-pointer"
+                      className="px-3 py-1.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg font-medium text-xs transition-colors cursor-pointer"
                       title="View Application Summary"
                     >
                       View Summary
@@ -1261,35 +1236,25 @@ const FranchiseApproval = () => {
                     {app.status === 'Ready for Pickup' ? (
                       <button
                         onClick={() => setQuickApproveTarget(app)}
-                        className={`px-3.5 py-1.5 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer ${
+                        className={`px-3.5 py-1.5 text-white rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer ${
                           app.paymentStatus === 'Paid' 
-                            ? 'bg-emerald-600 hover:bg-emerald-700' 
+                            ? 'bg-emerald-700 hover:bg-emerald-800' 
                             : 'bg-amber-600 hover:bg-amber-700'
                         }`}
                         title={app.paymentStatus === 'Paid' ? 'Release active franchise' : 'Release franchise (Cashier payment pending)'}
                       >
-                        <CheckCircle2 size={14} />
+                        <CheckCircle2 size={13} />
                         <span>Release</span>
-                      </button>
-                    ) : app.status === 'For Signing' ? (
-                      <button
-                        onClick={() => handleOpenWorkstation(app)}
-                        className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-                        title="Open review workstation to sign and verify"
-                      >
-                        <Eye size={14} />
-                        <span>Review</span>
-                        <ChevronRight size={13} />
                       </button>
                     ) : (
                       <button
                         onClick={() => handleOpenWorkstation(app)}
-                        className="bg-slate-900 dark:bg-slate-800 text-white hover:bg-[#9E2A2B] dark:hover:bg-[#9E2A2B] px-3.5 py-1.5 rounded-xl font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                         title="Open full review workstation"
                       >
-                        <Eye size={14} />
+                        <Eye size={13} />
                         <span>Review</span>
-                        <ChevronRight size={13} />
+                        <ChevronRight size={12} />
                       </button>
                     )}
 
@@ -1297,20 +1262,20 @@ const FranchiseApproval = () => {
                     <div className="relative">
                       <button
                         onClick={() => setActiveMenuId(isMenuOpen ? null : app._id)}
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                        className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] rounded-lg text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] transition-colors cursor-pointer"
                         title="More options"
                       >
                         <MoreVertical size={16} />
                       </button>
 
                       {isMenuOpen && (
-                        <div className="absolute right-0 top-full mt-1.5 z-30 w-44 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xl rounded-2xl py-1.5 animate-in fade-in duration-100">
+                        <div className="absolute right-0 top-full mt-1 z-30 w-44 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-lg rounded-lg py-1">
                           <button
                             onClick={() => {
                               setActiveMenuId(null);
                               setDossierTargetUnit(app);
                             }}
-                            className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
                           >
                             <FileText size={14} />
                             <span>View Summary</span>
@@ -1322,7 +1287,7 @@ const FranchiseApproval = () => {
                                 setActiveMenuId(null);
                                 handleOpenWorkstation(app);
                               }}
-                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
                             >
                               <Eye size={14} />
                               <span>Review Documents</span>
@@ -1364,24 +1329,24 @@ const FranchiseApproval = () => {
           </div>
 
           {/* 5. PAGINATION & ROWS SELECTOR (Default 25, options 25/50/100) */}
-          <div className="mt-2 mb-20 p-4 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium flex-wrap justify-center sm:justify-start">
+          <div className="mt-2 mb-16 p-3.5 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-[#6B6761] dark:text-[#A8A29E] font-medium flex-wrap justify-center sm:justify-start">
               <span>Showing</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{startIndex + 1}</span>
+              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{startIndex + 1}</span>
               <span>to</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{endIndex}</span>
+              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{endIndex}</span>
               <span>of</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{totalApps}</span>
+              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{totalApps}</span>
               <span>applications</span>
 
-              <span className="mx-1 text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+              <span className="mx-1 text-[#E4E1DC] dark:text-[#2E2A27] hidden sm:inline">|</span>
 
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <span className="text-xs">Page Size:</span>
                 <select
                   value={pageSize}
                   onChange={(e) => updateParams({ limit: Number(e.target.value), page: 1 })}
-                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] cursor-pointer"
+                  className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2 py-1 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] cursor-pointer"
                 >
                   <option value={25}>25</option>
                   <option value={50}>50</option>
@@ -1395,7 +1360,7 @@ const FranchiseApproval = () => {
                 type="button"
                 onClick={() => updateParams({ page: Math.max(1, validCurrentPage - 1) })}
                 disabled={validCurrentPage <= 1}
-                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 title="Previous Page"
               >
                 <ChevronLeft size={16} />
@@ -1418,7 +1383,7 @@ const FranchiseApproval = () => {
                   .map((item) => {
                     if (typeof item === 'string') {
                       return (
-                        <span key={item} className="px-1.5 text-slate-400 select-none">
+                        <span key={item} className="px-1.5 text-[#6B6761] select-none">
                           ...
                         </span>
                       );
@@ -1429,10 +1394,10 @@ const FranchiseApproval = () => {
                         key={item}
                         type="button"
                         onClick={() => updateParams({ page: item })}
-                        className={`min-w-[30px] h-[30px] rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        className={`min-w-[30px] h-[30px] rounded-lg text-xs font-semibold tabular-nums transition-all cursor-pointer ${
                           isCurrent
-                            ? 'bg-[#9E2A2B] text-white shadow-2xs scale-105'
-                            : 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                            ? 'bg-[#9E2A2B] text-white'
+                            : 'border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]'
                         }`}
                       >
                         {item}
@@ -1445,7 +1410,7 @@ const FranchiseApproval = () => {
                 type="button"
                 onClick={() => updateParams({ page: Math.min(totalPages, validCurrentPage + 1) })}
                 disabled={validCurrentPage >= totalPages}
-                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                className="inline-flex items-center justify-center p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 title="Next Page"
               >
                 <ChevronRight size={16} />

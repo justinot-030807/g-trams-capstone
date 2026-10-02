@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, FileSpreadsheet, ShieldCheck, Download } from 'lucide-react';
 
@@ -80,21 +80,21 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
   return (
     <div 
       id="printable-transmittal-root" 
-      className="fixed inset-0 z-[220] bg-slate-950/85 backdrop-blur-md overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible"
+      className="fixed inset-0 z-[220] bg-black/75 overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible"
     >
       <div className="min-h-full w-full flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:p-0 print:m-0">
         <div className="w-full max-w-[860px] flex flex-col items-center shrink-0 print:max-w-full print:m-0">
 
           {/* Action Toolbar (Hidden during print) */}
-          <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
+          <div className="w-full bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-lg p-3 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-sm print:hidden sticky top-2 z-50">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
                 <FileSpreadsheet size={18} />
               </div>
               <div>
-                <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
+                <h3 className="font-semibold text-xs sm:text-sm tracking-wide flex items-center gap-2">
                   Official Transmittal Summary Sheet
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     {units.length} Units Listed
                   </span>
                 </h3>
@@ -105,7 +105,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
             <div className="flex items-center gap-2">
               <button
                 onClick={handleExportCSV}
-                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0"
                 title="Export transmittal data to CSV (Excel compatible)"
               >
                 <Download size={14} />
@@ -114,7 +114,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#922029] active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0"
                 title="Print Transmittal Sheet"
               >
                 <Printer size={14} />
@@ -123,7 +123,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
               <button
                 onClick={onClose}
-                className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                className="text-white/60 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer shrink-0"
                 title="Close"
               >
                 <X size={18} />
@@ -135,7 +135,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
           <div className="w-full overflow-x-auto pb-4 custom-scrollbar flex justify-start sm:justify-center">
             <div 
               id="printable-transmittal-document"
-              className="relative bg-white text-slate-900 w-[780px] sm:w-full max-w-[820px] shrink-0 rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-300 print:border-none print:shadow-none print:m-0 print:max-w-full"
+              className="relative bg-white text-slate-900 w-[780px] sm:w-full max-w-[820px] shrink-0 rounded-lg shadow-sm p-6 sm:p-8 border border-[#E4E1DC] print:border-none print:shadow-none print:m-0 print:max-w-full"
               style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
             >
               {/* Print Styles */}

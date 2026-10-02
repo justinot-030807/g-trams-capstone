@@ -1,14 +1,14 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileText, CheckCircle, CheckCircle2, Search, Eye, FolderTree,
-  Building2, ShieldCheck, AlertCircle, AlertTriangle, Clock, ChevronDown, ChevronRight,
-  Car, Sparkles, X, Check
+  Building2, ShieldCheck, AlertCircle, AlertTriangle, Clock, ChevronDown,
+  X
 } from 'lucide-react';
 import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
-
-
+import PageHeader from '../../components/common/PageHeader';
+import StatusBadge from '../../components/common/StatusBadge';
 
 const ValidateTODA = () => {
   const [activeTab, setActiveTab] = useState('directory');
@@ -170,9 +170,6 @@ const ValidateTODA = () => {
     }).filter(toda => toda.members.length > 0);
   }, [users, franchises, query, isSearching]);
 
-  // Total matching members count across all TODAs
-  const totalMatchingMembers = groupedToda.reduce((acc, toda) => acc + toda.members.length, 0);
-
   const filteredSubmissions = submissions.filter(sub => 
     (sub.presidentName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
     (sub.fileName || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -180,431 +177,376 @@ const ValidateTODA = () => {
 
   return (
     <MainLayout>
-      {/* PAGE HEADER RIBBON */}
-      <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all">
-        <div className="relative z-10 flex items-center gap-4 min-w-0">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
-             <Building2 size={20} className="text-[#D4AF37]" />
+      <div className="w-full space-y-6 pb-24">
+        {/* Page Header */}
+        <PageHeader 
+          title="TODA Management"
+          subtitle="Manage recognized TODA directories, member rosters, and masterlist submissions."
+        />
+
+        {/* TODA Ecosystem Stats Strip */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Total TODAs */}
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+              <Building2 size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Recognized TODAs</p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
+                {totalRecognizedTodas} <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 font-sans">Gasan</span>
+              </h3>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Official Associations</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">TODA Management</h1>
-            <p className="text-white/80 dark:text-white/70 font-medium text-xs sm:text-xs max-w-xl">
-              Manage recognized TODA directories, member rosters, and masterlist submissions.
-            </p>
+
+          {/* Total Members */}
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#F6F5F3] dark:bg-[#2E2A27] flex items-center justify-center text-[#1F1D1B] dark:text-[#F6F5F3] shrink-0 border border-[#E4E1DC] dark:border-[#3D3834]">
+              <Users size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Total Operators</p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
+                {totalOperatorsCount}
+              </h3>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Registered in Directory</p>
+            </div>
+          </div>
+
+          {/* Active MTOP & Compliance */}
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800/40">
+              <ShieldCheck size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Active & Compliant</p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-400 font-mono tabular-nums">
+                {activeMtopCount} <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] font-sans">({totalOperatorsCount > 0 ? Math.round((activeMtopCount / totalOperatorsCount) * 100) : 0}%)</span>
+              </h3>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Street-Legal Franchises</p>
+            </div>
+          </div>
+
+          {/* Pending Validations */}
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0 border border-amber-200 dark:border-amber-800/40">
+              <Clock size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Pending Actions</p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-amber-700 dark:text-amber-400 font-mono tabular-nums">
+                {pendingValidationCount}
+              </h3>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Submissions & Reviews</p>
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* ========================================================================= */}
-      {/* 📊 ITEM 1: TODA ECOSYSTEM STATS STRIP */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        
-        {/* Total TODAs */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#9E2A2B]/30 dark:hover:border-[#D4AF37]/30">
-          <div className="w-11 h-11 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 border border-[#9E2A2B]/20">
-            <Building2 size={22} />
+        {/* Content Tabs & Main Card */}
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors">
+          {/* Tabs */}
+          <div className="flex border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F]">
+            <button 
+              onClick={() => { setActiveTab('directory'); setSearchQuery(''); }}
+              className={`flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                activeTab === 'directory' 
+                  ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#1C1917]' 
+                  : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+              }`}
+            >
+              <FolderTree size={16} /> Live Members Directory
+            </button>
+            <button 
+              onClick={() => { setActiveTab('validations'); setSearchQuery(''); }}
+              className={`flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                activeTab === 'validations' 
+                  ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#1C1917]' 
+                  : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+              }`}
+            >
+              <FileText size={16} /> Document Validations
+            </button>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recognized TODAs</p>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {totalRecognizedTodas} <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-sans">100% Gasan</span>
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Official Associations</p>
-          </div>
-        </div>
 
-        {/* Total Members */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-[#9E2A2B]/30 dark:hover:border-[#D4AF37]/30">
-          <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 border border-blue-200 dark:border-blue-800/40">
-            <Users size={22} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Operators</p>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {totalOperatorsCount}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Registered in Directory</p>
-          </div>
-        </div>
-
-        {/* Active MTOP & Compliance */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-emerald-500/30">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800/40">
-            <ShieldCheck size={22} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active & Compliant</p>
-            <h3 className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-              {activeMtopCount} <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-sans">({totalOperatorsCount > 0 ? Math.round((activeMtopCount / totalOperatorsCount) * 100) : 0}%)</span>
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Street-Legal Franchises</p>
-          </div>
-        </div>
-
-        {/* Pending Validations */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5 transition-all hover:border-amber-500/30">
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 border border-amber-200 dark:border-amber-800/40">
-            <Clock size={22} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pending Actions</p>
-            <h3 className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
-              {pendingValidationCount}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Submissions & Reviews</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-        {/* TABS */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0c101c]">
-          <button 
-            onClick={() => { setActiveTab('directory'); setSearchQuery(''); }}
-            className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'directory' ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <FolderTree size={18} /> Live Members Directory
-          </button>
-          <button 
-            onClick={() => { setActiveTab('validations'); setSearchQuery(''); }}
-            className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'validations' ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#111827]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <FileText size={18} /> Document Validations
-          </button>
-        </div>
-
-        {/* Live directory content */}
-        {activeTab === 'directory' && (
-          <div className="p-5 sm:p-6">
-            
-            {/* ========================================================================= */}
-            {/* 🔍 ITEM 2: UNIFIED SMART SEARCH BAR & ACCORDION CONTROLS */}
-            {/* ========================================================================= */}
-            <div className="mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-              <div className="relative flex-1 max-w-xl">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search by driver name, plate no., barangay, motor no., or TODA..." 
-                  value={searchQuery} 
-                  onChange={(e) => setSearchQuery(e.target.value)} 
-                  className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 transition-all shadow-xs" 
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
-                    title="Clear search"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
+          {/* Live directory content */}
+          {activeTab === 'directory' && (
+            <div className="p-4 sm:p-6">
+              {/* Search Bar */}
+              <div className="mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                <div className="relative flex-1 max-w-xl">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="Search by driver name, plate no., barangay, motor no., or TODA..." 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                    className="w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-9 py-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] cursor-pointer"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Match Feedback Badge */}
-              {isSearching && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 text-xs font-bold animate-in fade-in">
-                  <Search size={14} />
-                  <span>
-                    Found {totalMatchingMembers} driver{totalMatchingMembers === 1 ? '' : 's'} across {groupedToda.length} TODA{groupedToda.length === 1 ? '' : 's'}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {isLoading ? (
-              <AccordionListSkeleton count={5} baseDelay={30} stepDelay={45} />
-            ) : groupedToda.length === 0 ? (
-               <div className="text-center py-16 text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-[#0c101c]/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-                 <Users size={36} className="mx-auto mb-3 opacity-30"/>
-                 <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                   {isSearching ? `No members or TODAs match "${searchQuery}"` : 'No registered members found yet.'}
-                 </p>
-                 {isSearching && (
-                   <button 
-                     onClick={() => setSearchQuery('')}
-                     className="mt-3 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline"
-                   >
-                     Reset Search Filters
-                   </button>
-                 )}
-               </div>
-            ) : (
-              <div className="space-y-3.5">
-                {groupedToda.map((toda, tIdx) => {
-                  const isOpen = isSearching || expandedToda === toda.name;
-
-                  return (
-                    <div 
-                      key={toda.name} 
-                      className={`border rounded-2xl overflow-hidden shadow-xs transition-all ${
-                        isOpen 
-                          ? 'border-[#9E2A2B]/40 dark:border-[#D4AF37]/40 ring-1 ring-[#9E2A2B]/10 dark:ring-[#D4AF37]/10' 
-                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                      }`}
-                      style={{ animationDelay: `${tIdx * 30}ms` }}
+              {/* Directory Accordion List */}
+              {isLoading ? (
+                <AccordionListSkeleton count={5} baseDelay={30} stepDelay={45} />
+              ) : groupedToda.length === 0 ? (
+                <div className="text-center py-16 text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <Users size={32} className="mx-auto mb-2 opacity-40"/>
+                  <p className="font-semibold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    {isSearching ? `No members or TODAs match "${searchQuery}"` : 'No registered members found yet.'}
+                  </p>
+                  {isSearching && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="mt-2 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
                     >
-                      <button 
-                        onClick={() => setExpandedToda(expandedToda === toda.name ? null : toda.name)}
-                        className={`w-full p-4 flex justify-between items-center transition-colors text-left ${
+                      Reset Search Filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {groupedToda.map((toda) => {
+                    const isOpen = isSearching || expandedToda === toda.name;
+
+                    return (
+                      <div 
+                        key={toda.name} 
+                        className={`border rounded-lg overflow-hidden transition-colors ${
                           isOpen 
-                            ? 'bg-slate-100/80 dark:bg-[#161f30]' 
-                            : 'bg-slate-50 dark:bg-[#0c101c]/90 hover:bg-slate-100/60 dark:hover:bg-[#161f30]/60'
+                            ? 'border-[#9E2A2B] dark:border-[#D4AF37]' 
+                            : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40'
                         }`}
                       >
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#9E2A2B] to-[#7A1B22] text-white font-black rounded-xl flex items-center justify-center text-xs shadow-xs shrink-0 border border-[#D4AF37]/30">
-                            {toda.name.substring(0, 3)}
+                        <button 
+                          onClick={() => setExpandedToda(expandedToda === toda.name ? null : toda.name)}
+                          className={`w-full p-3.5 sm:p-4 flex justify-between items-center transition-colors text-left cursor-pointer ${
+                            isOpen 
+                              ? 'bg-[#F6F5F3] dark:bg-[#2E2A27]/30' 
+                              : 'bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 bg-[#9E2A2B] text-white font-semibold rounded-lg flex items-center justify-center text-xs shrink-0">
+                              {toda.name.substring(0, 3)}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate">
+                                {toda.name}
+                              </h3>
+                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                                {toda.members.length} {toda.members.length === 1 ? 'Driver' : 'Drivers'} 
+                                {toda.totalCount !== toda.members.length && ` (filtered from ${toda.totalCount})`}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <h3 className="font-black text-slate-900 dark:text-white text-sm sm:text-base truncate">
-                              {toda.name}
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              {toda.members.length} {toda.members.length === 1 ? 'Driver' : 'Drivers'} 
-                              {toda.totalCount !== toda.members.length && ` (filtered from ${toda.totalCount})`}
-                            </p>
-                          </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap justify-end">
-                          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                            toda.complianceRate >= 80 
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
-                              : toda.complianceRate >= 50 
-                                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' 
-                                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800'
-                          }`}>
-                            {toda.complianceRate}% Compliant
-                          </span>
-                          {toda.colorumCount > 0 && (
-                            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60" title={`${toda.colorumCount} driver(s) without active MTOP`}>
-                              <AlertTriangle size={11} /> {toda.colorumCount} At-Risk
+                          <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap justify-end">
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
+                              toda.complianceRate >= 80 
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' 
+                                : toda.complianceRate >= 50 
+                                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' 
+                                  : 'bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800'
+                            }`}>
+                              {toda.complianceRate}% Compliant
                             </span>
-                          )}
-                          <span className="text-xs font-bold bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300 shadow-2xs">
-                            {toda.members.length} Member{toda.members.length > 1 ? 's' : ''}
-                          </span>
-                          <div className={`p-1 text-slate-600 dark:text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-slate-600 dark:text-slate-200' : ''}`}>
-                            <ChevronDown size={18} />
+                            {toda.colorumCount > 0 && (
+                              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60" title={`${toda.colorumCount} driver(s) without active MTOP`}>
+                                <AlertTriangle size={11} /> {toda.colorumCount} At-Risk
+                              </span>
+                            )}
+                            <span className="text-xs font-semibold bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] px-2.5 py-0.5 rounded-lg text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
+                              {toda.members.length}
+                            </span>
+                            <div className={`p-1 text-[#6B6761] dark:text-[#A8A29E] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                              <ChevronDown size={16} />
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                      
-                      {/* ========================================================================= */}
-                      {/* 🛵 ITEM 4: MEMBER ROSTER WITH LIVE FRANCHISE STATUS BADGES */}
-                      {/* ========================================================================= */}
-                      {isOpen && (
-                        <div className="bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-slate-800 overflow-x-auto">
-                          <table className="w-full text-left border-collapse min-w-[650px]">
-                            <thead>
-                              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold bg-slate-50/70 dark:bg-[#0c101c]">
-                                <th className="py-2.5 px-4">Operator / Driver</th>
-                                <th className="py-2.5 px-4">Barangay Address</th>
-                                <th className="py-2.5 px-4">Role</th>
-                                <th className="py-2.5 px-4">Tricycle & Franchise MTOP Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                              {toda.members.map(member => {
-                                const franchise = getMemberFranchise(member);
+                        </button>
+                        
+                        {/* Member Roster Table */}
+                        {isOpen && (
+                          <div className="bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27] overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[650px]">
+                              <thead>
+                                <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold bg-[#F6F5F3] dark:bg-[#14110F]">
+                                  <th className="py-2.5 px-4">Operator / Driver</th>
+                                  <th className="py-2.5 px-4">Barangay Address</th>
+                                  <th className="py-2.5 px-4">Role</th>
+                                  <th className="py-2.5 px-4">Tricycle & Franchise Status</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                                {toda.members.map(member => {
+                                  const franchise = getMemberFranchise(member);
 
-                                return (
-                                  <tr key={member._id} className="text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50/80 dark:hover:bg-[#161f30]/40 transition-colors">
-                                    {/* Name & Contact */}
-                                    <td className="py-3 px-4">
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="font-bold text-slate-900 dark:text-white text-sm">
-                                          {member.name}
-                                        </span>
-                                        {(member.authProvider === 'google' || member.googleId) && (
-                                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[9px] font-bold border border-blue-200 dark:border-blue-800/60 shadow-2xs" title="Verified using Google Login">
-                                            <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24">
-                                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                                            </svg>
-                                            Google
+                                  return (
+                                    <tr key={member._id} className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                                      {/* Name & Contact */}
+                                      <td className="py-3 px-4">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                            {member.name}
                                           </span>
-                                        )}
-                                      </div>
-                                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                                        {member.contact || 'No contact'}
-                                      </div>
-                                    </td>
+                                        </div>
+                                        <div className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono mt-0.5">
+                                          {member.contact || 'No contact'}
+                                        </div>
+                                      </td>
 
-                                    {/* Barangay */}
-                                    <td className="py-3 px-4 font-medium text-slate-600 dark:text-slate-300">
-                                      {member.address || 'Gasan, Marinduque'}
-                                    </td>
+                                      {/* Barangay */}
+                                      <td className="py-3 px-4 text-[#6B6761] dark:text-[#A8A29E]">
+                                        {member.address || 'Gasan, Marinduque'}
+                                      </td>
 
-                                    {/* Role */}
-                                    <td className="py-3 px-4">
-                                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
-                                        member.role === 'toda_president' 
-                                          ? 'bg-[#D4AF37]/20 dark:bg-[#D4AF37]/30 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#D4AF37]/40' 
-                                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
-                                      }`}>
-                                        {member.role === 'toda_president' ? 'TODA President' : 'Operator'}
-                                      </span>
-                                    </td>
+                                      {/* Role */}
+                                      <td className="py-3 px-4">
+                                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider border ${
+                                          member.role === 'toda_president' 
+                                            ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' 
+                                            : 'bg-[#F6F5F3] dark:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#3D3834]'
+                                        }`}>
+                                          {member.role === 'toda_president' ? 'TODA President' : 'Operator'}
+                                        </span>
+                                      </td>
 
-                                    {/* Franchise Status Badge per Member */}
-                                    <td className="py-3 px-4">
-                                      {franchise ? (
-                                        franchise.status === 'Active' ? (
-                                          <div className="flex flex-col gap-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-black px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 w-fit">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                              Active MTOP
-                                            </span>
-                                            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-                                              Plate: {franchise.plateNo || 'N/A'} &bull; <span className="font-sans font-medium text-slate-500 dark:text-slate-400">{franchise.make || 'Tricycle'}</span>
-                                            </span>
-                                          </div>
-                                        ) : franchise.status === 'For Signing' ? (
-                                          <div className="flex flex-col gap-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60 w-fit">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                                              For Signing
-                                            </span>
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                                              Plate: {franchise.plateNo || 'PENDING'}
-                                            </span>
-                                          </div>
-                                        ) : franchise.status === 'Pending' || franchise.status === 'Ready for Pickup' ? (
-                                          <div className="flex flex-col gap-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 w-fit">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                              {franchise.status === 'Ready for Pickup' ? 'Awaiting Release' : 'Pending MTOP'}
-                                            </span>
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                                              Plate: {franchise.plateNo || 'PENDING'}
-                                            </span>
-                                          </div>
-                                        ) : franchise.status === 'Expired' ? (
-                                          <div className="flex flex-col gap-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 w-fit">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                              Expired MTOP
-                                            </span>
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                                              Plate: {franchise.plateNo || 'N/A'}
+                                      {/* Franchise Status Badge per Member */}
+                                      <td className="py-3 px-4">
+                                        {franchise ? (
+                                          <div className="flex flex-col gap-1 items-start">
+                                            <StatusBadge status={franchise.status} />
+                                            <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">
+                                              Plate: {franchise.plateNo || 'PENDING'} &bull; {franchise.make || 'Tricycle'}
                                             </span>
                                           </div>
                                         ) : (
-                                          <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
-                                            {franchise.status}
+                                          <span className="inline-flex items-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                                            No Franchise Record
                                           </span>
-                                        )
-                                      ) : (
-                                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-fit">
-                                          No Franchise Record
-                                        </span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Document validations content */}
-        {activeTab === 'validations' && (
-          <>
-            <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/70 dark:bg-[#0c101c]">
-              <div className="relative w-full sm:w-96">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
-                <input type="text" placeholder="Search by TODA President or filename..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/20 dark:focus:ring-[#D4AF37]/20 transition-all shadow-xs" />
+          {/* Document validations content */}
+          {activeTab === 'validations' && (
+            <>
+              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F]">
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
+                  <input 
+                    type="text" 
+                    placeholder="Search by TODA President or filename..." 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-1.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/80 dark:bg-[#0c101c] border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
-                    <th className="p-4 pl-6">Submitted By</th>
-                    <th className="p-4">Document</th>
-                    <th className="p-4">Date Submitted</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-center pr-6">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                  {isLoading ? (
-                    <TableRowsSkeleton rows={4} columns={5} baseDelay={30} stepDelay={45} />
-                  ) : filteredSubmissions.length === 0 ? (
-                    <tr><td colSpan="5" className="p-12 text-center text-sm font-medium text-slate-500 dark:text-slate-400">No TODA member lists found.</td></tr>
-                  ) : (
-                    filteredSubmissions.map((sub, sIdx) => (
-                      <tr 
-                        key={sub._id} 
-                        className="stagger-reveal hover:bg-slate-50 dark:hover:bg-[#161f30]/40 transition-colors group"
-                        style={{ animationDelay: `${sIdx * 35}ms` }}
-                      >
-                        <td className="p-4 pl-6"><p className="font-bold text-slate-900 dark:text-white">{sub.presidentName}</p></td>
-                        <td className="p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37]"><FileText size={16} /> {sub.fileName}</div></td>
-                        <td className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300">{new Date(sub.createdAt).toLocaleDateString()}</td>
-                        <td className="p-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${sub.status === 'Approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'}`}>
-                            {sub.status}
-                          </span>
-                        </td>
-                        <td className="p-4 pr-6 text-center space-x-2 flex justify-center">
-                          {(() => {
-                            const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
-                            return (
-                              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
-                                <Eye size={14} /> View
-                              </a>
-                            );
-                          })()}
-                          <button onClick={() => handleApprove(sub._id)} disabled={sub.status === 'Approved'} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${sub.status === 'Approved' ? 'bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'}`}>
-                            <CheckCircle size={14} /> {sub.status === 'Approved' ? 'Approved' : 'Approve'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
+                      <th className="p-3.5 pl-5">Submitted By</th>
+                      <th className="p-3.5">Document</th>
+                      <th className="p-3.5">Date Submitted</th>
+                      <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-center pr-5">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
+                    {isLoading ? (
+                      <TableRowsSkeleton rows={4} columns={5} baseDelay={30} stepDelay={45} />
+                    ) : filteredSubmissions.length === 0 ? (
+                      <tr><td colSpan="5" className="p-12 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">No TODA member lists found.</td></tr>
+                    ) : (
+                      filteredSubmissions.map((sub) => (
+                        <tr 
+                          key={sub._id} 
+                          className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors"
+                        >
+                          <td className="p-3.5 pl-5"><p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{sub.presidentName}</p></td>
+                          <td className="p-3.5"><div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]"><FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> {sub.fileName}</div></td>
+                          <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{new Date(sub.createdAt).toLocaleDateString()}</td>
+                          <td className="p-3.5">
+                            <StatusBadge status={sub.status === 'Approved' ? 'Active' : 'Pending'} label={sub.status} />
+                          </td>
+                          <td className="p-3.5 pr-5 text-center space-x-2 flex justify-center">
+                            {(() => {
+                              const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
+                              return (
+                                <a 
+                                  href={fileUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27]"
+                                >
+                                  <Eye size={13} /> View
+                                </a>
+                              );
+                            })()}
+                            <button 
+                              onClick={() => handleApprove(sub._id)} 
+                              disabled={sub.status === 'Approved'} 
+                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${
+                                sub.status === 'Approved' 
+                                  ? 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27] cursor-not-allowed' 
+                                  : 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-700 cursor-pointer'
+                              }`}
+                            >
+                              <CheckCircle size={13} /> {sub.status === 'Approved' ? 'Approved' : 'Approve'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Floating Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
-            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border ${
               toast.type === 'error'
                 ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
                 : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
             }`}>
               {toast.type === 'error' ? (
-                <AlertCircle size={15} />
+                <AlertCircle size={14} />
               ) : (
-                <CheckCircle2 size={15} />
+                <CheckCircle2 size={14} />
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+              <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] leading-snug">
                 {toast.message}
               </p>
             </div>

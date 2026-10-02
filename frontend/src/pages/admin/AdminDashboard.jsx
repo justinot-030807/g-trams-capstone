@@ -36,7 +36,7 @@ const AdminDashboard = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return t('common.justNow', 'Kani-kanina lang');
+    if (diffMins < 1) return t('common.justNow', 'Just now');
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}d`;
@@ -51,32 +51,32 @@ const AdminDashboard = () => {
   const getActionDetails = (log) => {
     const name = log.fullName || log.operator?.name || 'an Operator';
     if (log.isArchived) {
-      return { name, verb: t('admin.verbArchived', 'Inarchive ang talaan ng') };
+      return { name, verb: t('admin.verbArchived', 'Archived record of') };
     }
     if (log.status === 'Active' && log.applicationType === 'Renewal') {
-      return { name, verb: t('admin.verbRenewalApproved', 'Inaprubahan ang renewal ng') };
+      return { name, verb: t('admin.verbRenewalApproved', 'Approved renewal for') };
     }
     if (log.status === 'Active') {
-      return { name, verb: t('admin.verbApproved', 'Inaprubahan ang prangkisa ng') };
+      return { name, verb: t('admin.verbApproved', 'Approved franchise for') };
     }
     if (log.status === 'Cancelled') {
       return {
         name,
         verb: log.cancelReason
-          ? `${t('admin.verbCancelled', 'Kinansela')} (${log.cancelReason}) —`
-          : t('admin.verbCancelledApp', 'Kinansela ang aplikasyon ng'),
+          ? `${t('admin.verbCancelled', 'Cancelled')} (${log.cancelReason}) —`
+          : t('admin.verbCancelledApp', 'Cancelled application of'),
       };
     }
     if (log.status === 'Expired') {
-      return { name, verb: t('admin.verbExpired', 'Itinalang expired para kay') };
+      return { name, verb: t('admin.verbExpired', 'Marked expired for') };
     }
     if (log.status === 'For Signing') {
-      return { name, verb: t('admin.verbForSigning', 'Pinapapirmahan para kay') };
+      return { name, verb: t('admin.verbForSigning', 'Routed for signing for') };
     }
     if (log.status === 'Ready for Pickup') {
-      return { name, verb: t('admin.verbReadyPickup', 'Handa nang kunin ni') };
+      return { name, verb: t('admin.verbReadyPickup', 'Ready for pickup by') };
     }
-    return { name, verb: t('admin.verbUpdated', 'Inupdate ang aplikasyon ng') };
+    return { name, verb: t('admin.verbUpdated', 'Updated application for') };
   };
 
   // Pipeline links for PageHeader
@@ -87,21 +87,21 @@ const AdminDashboard = () => {
         count: stats.pending,
         onClick: () => navigate('/franchise-approval?tab=pending'),
         active: stats.pending > 0,
-        title: 'Tingnan ang mga aplikasyong naghihintay ng desisyon',
+        title: t('admin.tooltipNeedsReview', 'View applications awaiting decision'),
       },
       {
         label: t('admin.pipelineForSigning', 'For Signing'),
         count: stats.forSigning,
         onClick: () => navigate('/franchise-approval?tab=signing'),
         active: false,
-        title: 'Tingnan ang mga aplikasyong pinapapirmahan',
+        title: t('admin.tooltipForSigning', 'View applications routed for signing'),
       },
       {
         label: t('admin.pipelineReadyPickup', 'Ready for Pickup'),
         count: stats.readyForPickup,
         onClick: () => navigate('/franchise-approval?tab=ready'),
         active: false,
-        title: 'Tingnan ang mga prangkisang handa nang kunin',
+        title: t('admin.tooltipReadyPickup', 'View franchises ready for pickup'),
       },
     ],
     [stats.pending, stats.forSigning, stats.readyForPickup, navigate, t]
@@ -110,18 +110,18 @@ const AdminDashboard = () => {
   // Subtitle for PageHeader
   const headerSubtitle = useMemo(() => {
     if (isLoading) {
-      return t('admin.loadingSummary', 'Kinukuha ang pangkalahatang-ideya ng prangkisa...');
+      return t('admin.loadingSummary', 'Loading franchise overview...');
     }
     if (stats.pending > 0) {
       return `${stats.pending} ${t(
         'admin.subtextPending',
-        'aplikasyon ang naghihintay ng pagsusuri sa queue'
-      )} (${stats.pipeline} ${t('admin.subtextPipeline', 'kabuuang yunit sa aktibong pipeline ng munisipyo')}).`;
+        'application(s) awaiting review in queue'
+      )} (${stats.pipeline} ${t('admin.subtextPipeline', 'total units in active municipal pipeline')}).`;
     }
     return `${t(
       'admin.subtextAllCleared',
-      'Lahat ng review queue ay naasikaso na'
-    )} (${stats.pipeline} ${t('admin.subtextPipeline', 'kabuuang yunit sa aktibong pipeline ng munisipyo')}).`;
+      'All review queues cleared'
+    )} (${stats.pipeline} ${t('admin.subtextPipeline', 'total units in active municipal pipeline')}).`;
   }, [isLoading, stats.pending, stats.pipeline, t]);
 
   // Columns for Pending Approvals Queue DataTable
@@ -161,7 +161,7 @@ const AdminDashboard = () => {
       },
       {
         key: 'daysWaiting',
-        header: t('admin.colDaysWaiting', 'Araw na Naghihintay'),
+        header: t('admin.colDaysWaiting', 'Days Waiting'),
         render: (app) => {
           const days = getDaysPending(app.dateApplied || app.createdAt);
           const isUrgent = days >= 7;
@@ -187,7 +187,7 @@ const AdminDashboard = () => {
                     : 'text-[#15803D] dark:text-[#4ADE80]'
                 }`}
               >
-                {days > 0 ? `${days}d` : t('common.today', 'Ngayon')}
+                {days > 0 ? `${days}d` : t('common.today', 'Today')}
               </span>
             </div>
           );
@@ -195,7 +195,7 @@ const AdminDashboard = () => {
       },
       {
         key: 'action',
-        header: t('admin.colAction', 'Aksyon'),
+        header: t('admin.colAction', 'Action'),
         align: 'right',
         render: (app) => (
           <button
@@ -209,7 +209,7 @@ const AdminDashboard = () => {
             }
             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] bg-[#FDF2F4] dark:bg-[#9E2A2B]/20 hover:bg-[#9E2A2B] hover:text-white dark:hover:bg-[#9E2A2B] dark:hover:text-white rounded border border-[#9E2A2B]/30 transition-colors cursor-pointer active:scale-95"
           >
-            <span>{t('admin.review', 'Suriin')}</span>
+            <span>{t('admin.review', 'Review')}</span>
             <ArrowRight size={12} />
           </button>
         ),
@@ -223,7 +223,7 @@ const AdminDashboard = () => {
     () => [
       {
         key: 'time',
-        header: t('admin.colTime', 'Oras'),
+        header: t('admin.colTime', 'Time'),
         width: '80px',
         render: (log) => (
           <span className="font-mono text-xs text-[#6B6761] dark:text-[#A8A29E] tabular-nums whitespace-nowrap">
@@ -233,7 +233,7 @@ const AdminDashboard = () => {
       },
       {
         key: 'activity',
-        header: t('admin.colAction', 'Aksyon'),
+        header: t('admin.colAction', 'Action'),
         render: (log) => {
           const details = getActionDetails(log);
           return (
@@ -246,7 +246,7 @@ const AdminDashboard = () => {
       },
       {
         key: 'status',
-        header: t('admin.colStatus', 'Katayuan'),
+        header: t('admin.colStatus', 'Status'),
         align: 'right',
         render: (log) => <StatusBadge status={log.status} />,
       },
@@ -270,7 +270,7 @@ const AdminDashboard = () => {
             >
               <Clock size={13} />
               <span>
-                {t('admin.reviewQueue', 'Buksan ang Pila')} ({stats.pending})
+                {t('admin.reviewQueue', 'Open Queue')} ({stats.pending})
               </span>
             </button>
           ) : null
@@ -287,30 +287,30 @@ const AdminDashboard = () => {
           <StatCard
             label={t('admin.totalFranchises', 'Total Franchises')}
             count={stats.total}
-            subtext={t('admin.totalFranchisesSub', 'Rehistradong yunit sa database')}
+            subtext={t('admin.totalFranchisesSub', 'Registered units in database')}
             onClick={() => navigate('/franchise-masterlist')}
-            title="Tingnan ang kabuuang talaan sa Masterlist"
+            title="View complete record in Masterlist"
           />
           <StatCard
             label={t('admin.activeFranchises', 'Active Franchises')}
             count={stats.active}
-            subtext={`${getPercentage(stats.active)}% ${t('admin.operational', 'pumapasada')}`}
+            subtext={`${getPercentage(stats.active)}% ${t('admin.operational', 'operational')}`}
             onClick={() => navigate('/franchise-masterlist?status=Active')}
-            title="I-filter ang mga aktibong prangkisa"
+            title="Filter active franchises"
           />
           <StatCard
             label={t('admin.pendingReview', 'Pending Review')}
             count={stats.pending}
-            subtext={t('admin.pendingReviewSub', 'Naghihintay ng desisyon')}
+            subtext={t('admin.pendingReviewSub', 'Awaiting municipal decision')}
             onClick={() => navigate('/franchise-approval?tab=pending')}
-            title="Buksan ang review approval queue"
+            title="Open review approval queue"
           />
           <StatCard
             label={t('admin.expiredUnits', 'Expired Units')}
             count={stats.expired}
-            subtext={t('admin.expiredUnitsSub', 'Kailangang i-renew')}
+            subtext={t('admin.expiredUnitsSub', 'Renewal overdue')}
             onClick={() => navigate('/franchise-masterlist?status=Expired')}
-            title="I-filter ang mga pasong prangkisa"
+            title="Filter expired franchises"
           />
         </div>
       )}
@@ -323,17 +323,17 @@ const AdminDashboard = () => {
             count={stats.renewalsDue30}
             subtext={`60d: ${stats.renewalsDue60} • 90d: ${stats.renewalsDue90}`}
             onClick={() => navigate('/franchise-masterlist?status=Active')}
-            title="Mga unit na mag-eexpire sa darating na 30 araw"
+            title="Units expiring in the next 30 days"
           />
           <StatCard
             label={t('admin.receivedToday', 'Received Today')}
             count={stats.receivedToday}
-            subtext={t('admin.receivedTodaySub', 'Bagong aplikasyong naitala ngayong araw')}
+            subtext={t('admin.receivedTodaySub', 'New applications filed today')}
           />
           <StatCard
             label={t('admin.processedToday', 'Processed Today')}
             count={stats.processedToday}
-            subtext={t('admin.processedTodaySub', 'Naaprubahan o naresolba')}
+            subtext={t('admin.processedTodaySub', 'Approved, signed, or resolved')}
           />
           <StatCard
             label={t('admin.oldestWaiting', 'Oldest Waiting')}
@@ -341,9 +341,9 @@ const AdminDashboard = () => {
             subtext={
               stats.oldestWaiting
                 ? `${stats.oldestWaiting.fullName} (${stats.oldestWaiting.todaName || 'Unit'})`
-                : t('admin.noBacklog', 'Walang backlog sa pila')
+                : t('admin.noBacklog', 'No queue backlog')
             }
-            actionLabel={stats.oldestWaiting ? t('admin.review', 'Suriin') : null}
+            actionLabel={stats.oldestWaiting ? t('admin.review', 'Review') : null}
             onAction={
               stats.oldestWaiting
                 ? () =>
@@ -367,11 +367,11 @@ const AdminDashboard = () => {
                   {t('admin.franchiseHealth', 'Franchise Health Overview')}
                 </h2>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                  {t('admin.franchiseHealthSub', 'Distribusyon ng estado sa lahat ng rehistradong yunit')}
+                  {t('admin.franchiseHealthSub', 'Status distribution across all registered tricycle units')}
                 </p>
               </div>
               <span className="text-xs font-mono font-medium text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
-                {stats.total} {t('admin.unitsTotal', 'Yunit')}
+                {stats.total} {t('admin.unitsTotal', 'Units')}
               </span>
             </div>
 
@@ -417,21 +417,21 @@ const AdminDashboard = () => {
                 count: stats.active,
                 pct: getPercentage(stats.active),
                 dotBg: 'bg-[#15803D]',
-                desc: t('admin.operational', 'Pumapasada'),
+                desc: t('admin.operational', 'Operational'),
               },
               {
                 label: t('status.pending', 'Pending'),
                 count: stats.pending,
                 pct: getPercentage(stats.pending),
                 dotBg: 'bg-[#B45309]',
-                desc: t('admin.awaitingReview', 'Sinusuri'),
+                desc: t('admin.awaitingReview', 'Awaiting review'),
               },
               {
                 label: t('status.expired', 'Expired'),
                 count: stats.expired,
                 pct: getPercentage(stats.expired),
                 dotBg: 'bg-[#B91C1C]',
-                desc: t('admin.overdue', 'Paso na'),
+                desc: t('admin.overdue', 'Renewal overdue'),
               },
               {
                 label: t('admin.revokedCancelled', 'Revoked / Cancelled'),
@@ -473,10 +473,10 @@ const AdminDashboard = () => {
         <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
             <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-              {t('admin.summaryTitle', 'Buod')}
+              {t('admin.summaryTitle', 'Summary')}
             </h2>
             <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-              {t('admin.systemSnapshot', 'Impormasyon')}
+              {t('admin.systemSnapshot', 'Snapshot')}
             </span>
           </div>
 
@@ -485,7 +485,7 @@ const AdminDashboard = () => {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[#6B6761] dark:text-[#A8A29E]">
-                  {t('admin.complianceRate', 'Antas ng Pagsunod')}
+                  {t('admin.complianceRate', 'Compliance Rate')}
                 </span>
                 <span className="font-mono font-semibold text-[#15803D] dark:text-[#4ADE80] tabular-nums">
                   {getPercentage(stats.active)}%
@@ -498,8 +498,8 @@ const AdminDashboard = () => {
                 />
               </div>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                {stats.active} {t('common.of', 'sa')} {stats.total}{' '}
-                {t('admin.activeAndCompliant', 'aktibo at sumusunod sa regulasyon')}
+                {stats.active} {t('common.of', 'of')} {stats.total}{' '}
+                {t('admin.activeAndCompliant', 'active and compliant')}
               </p>
             </div>
 
@@ -507,12 +507,12 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between py-1.5 border-t border-[#E4E1DC]/70 dark:border-[#2E2A27]/70">
               <div>
                 <p className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium">
-                  {t('admin.newApplications', 'Mga Bagong Aplikasyon')}
+                  {t('admin.newApplications', 'New Applications')}
                 </p>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
                   {stats.newAppsThisYear > 0 
-                    ? `${stats.newAppsThisYear} ${t('admin.thisYear', 'ngayong taon')} (${stats.newApps} ${t('admin.lifetime', 'kabuuang bago')})`
-                    : t('admin.newApplicationsSub', 'Unang beses na nag-apply')}
+                    ? `${stats.newAppsThisYear} ${t('admin.thisYear', 'this year')} (${stats.newApps} ${t('admin.lifetime', 'lifetime total')})`
+                    : t('admin.newApplicationsSub', 'First-time franchise filings')}
                 </p>
               </div>
               <span className="font-mono text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">
@@ -524,12 +524,12 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between py-1.5 border-t border-[#E4E1DC]/70 dark:border-[#2E2A27]/70">
               <div>
                 <p className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium">
-                  {t('admin.approvalQueue', 'Pila ng Pag-apruba')}
+                  {t('admin.approvalQueue', 'Approval Queue')}
                 </p>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
                   {stats.pending > 0
-                    ? t('admin.actionNeeded', 'Kailangan ng aksyon sa pila')
-                    : t('admin.queuesCleared', 'Lahat ng pila ay naasikaso')}
+                    ? t('admin.actionNeeded', 'Action needed in queue')
+                    : t('admin.queuesCleared', 'All queues cleared')}
                 </p>
               </div>
               <span
@@ -547,10 +547,10 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between py-1.5 border-t border-[#E4E1DC]/70 dark:border-[#2E2A27]/70">
               <div>
                 <p className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium">
-                  {t('admin.lastActivity', 'Huling Aktibidad')}
+                  {t('admin.lastActivity', 'Last System Activity')}
                 </p>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                  {t('admin.mostRecentUpdate', 'Kamakailang update sa prangkisa')}
+                  {t('admin.mostRecentUpdate', 'Most recent franchise update')}
                 </p>
               </div>
               <span className="font-mono text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] tabular-nums">
@@ -569,7 +569,7 @@ const AdminDashboard = () => {
           title={t('admin.todaDistribution', 'TODA Unit Distribution & Share')}
           subtitle={t(
             'admin.todaDistributionSub',
-            'Bilang ng mga rehistradong yunit ng traysikel bawat samahan sa Gasan'
+            'Breakdown of active tricycle units per transport association across Gasan'
           )}
         />
       </div>
@@ -594,7 +594,7 @@ const AdminDashboard = () => {
               onClick={() => navigate('/franchise-approval?tab=pending')}
               className="text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
             >
-              <span>{t('common.viewAll', 'Tingnan lahat')}</span>
+              <span>{t('common.viewAll', 'View all')}</span>
               <ArrowRight size={12} />
             </button>
           </div>
@@ -603,10 +603,10 @@ const AdminDashboard = () => {
             columns={pendingColumns}
             data={recentApps}
             isLoading={isLoading}
-            emptyTitle={t('admin.allCaughtUp', 'Walang nakabinbing aplikasyon')}
+            emptyTitle={t('admin.allCaughtUp', 'All caught up! No pending applications.')}
             emptySubtitle={t(
               'admin.queueClean',
-              'Lahat ng aplikasyon para sa pagsusuri ay naasikaso na.'
+              'All applications for review have been processed.'
             )}
             rowKey="_id"
           />
@@ -632,10 +632,10 @@ const AdminDashboard = () => {
             columns={historyColumns}
             data={historyLogs}
             isLoading={isLoading}
-            emptyTitle={t('admin.noActivityLogs', 'Walang tala ng aktibidad')}
+            emptyTitle={t('admin.noActivityLogs', 'No recent system activity logged.')}
             emptySubtitle={t(
               'admin.noRecentActions',
-              'Walang naitalang pagbabago sa sistema sa nakaraang mga araw.'
+              'No system changes logged in recent days.'
             )}
             rowKey="_id"
           />

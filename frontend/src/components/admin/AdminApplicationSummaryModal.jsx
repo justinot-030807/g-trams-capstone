@@ -45,22 +45,22 @@ const AdminApplicationSummaryModal = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div 
-        className="relative max-w-xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 max-h-[90vh] flex flex-col animate-spring-in"
+        className="relative max-w-xl w-full bg-white dark:bg-[#1C1917] rounded-lg overflow-hidden shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 gap-3">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
               <FileText size={18} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-base text-slate-900 dark:text-white truncate">
+                <h3 className="font-semibold text-base text-[#1F1D1B] dark:text-white truncate">
                   Application Summary
                 </h3>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
@@ -337,45 +337,45 @@ const AdminApplicationSummaryModal = ({
           </div>
 
           {/* 6. Treasury / Cashier Payment */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
                 <Receipt size={13} /> 6. Treasury / Cashier Payment
               </h4>
               {franchise.paymentStatus === 'Paid' || franchise.isPaid ? (
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
                   <Check size={12} /> Paid • OR# {franchise.officialReceiptNo || franchise.orNo || 'Recorded'}
                 </span>
               ) : (
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
                   Awaiting Cashier Payment (₱500)
                 </span>
               )}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <div>
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Amount Payable</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">₱500.00</span>
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Amount Payable</span>
+                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-white">₱500.00</span>
               </div>
               <div>
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Official Receipt (OR)</span>
-                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.officialReceiptNo || franchise.orNo || 'Pending Payment'}</span>
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Official Receipt (OR)</span>
+                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{franchise.officialReceiptNo || franchise.orNo || 'Pending Payment'}</span>
               </div>
               <div>
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Payment Date</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.paymentDate ? formatDate(franchise.paymentDate) : 'Not settled yet'}</span>
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Payment Date</span>
+                <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{franchise.paymentDate ? formatDate(franchise.paymentDate) : 'Not settled yet'}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Modal Actions */}
-        <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div className="pt-3.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
             >
               Close
             </button>
@@ -386,7 +386,7 @@ const AdminApplicationSummaryModal = ({
                   onClose();
                   onReview(franchise);
                 }}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 title="Open image inspection workbench"
               >
                 <ExternalLink size={13} />
@@ -397,7 +397,7 @@ const AdminApplicationSummaryModal = ({
               <button
                 type="button"
                 onClick={onNext}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 title="Go to next application"
               >
                 <span>Next</span>
@@ -415,7 +415,7 @@ const AdminApplicationSummaryModal = ({
                 onReject(franchise);
               }}
               disabled={isProcessing}
-              className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
             >
               <XCircle size={14} />
               <span>Reject</span>
@@ -429,7 +429,7 @@ const AdminApplicationSummaryModal = ({
                   onApprove(franchise);
                 }}
                 disabled={isProcessing}
-                className="flex-1 sm:flex-initial px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+                className="flex-1 sm:flex-initial px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
               >
                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                 <span>Approve for Signing</span>
@@ -442,24 +442,24 @@ const AdminApplicationSummaryModal = ({
       {/* In-Modal Document Lightbox Preview */}
       {previewDoc && (
         <div 
-          className="fixed inset-0 z-[10001] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[10001] bg-black/80 flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
           onClick={() => setPreviewDoc(null)}
         >
           <div 
-            className="relative max-w-4xl w-full max-h-[92vh] bg-slate-900 rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-slate-700"
+            className="relative max-w-4xl w-full max-h-[92vh] bg-[#1C1917] rounded-lg overflow-hidden flex flex-col shadow-sm border border-[#2E2A27]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-3.5 bg-slate-800/90 border-b border-slate-700 text-white">
+            <div className="flex items-center justify-between px-5 py-3.5 bg-[#14110F] border-b border-[#2E2A27] text-white">
               <div className="flex items-center gap-2.5">
                 <FileText size={18} className="text-[#D4AF37]" />
-                <span className="font-bold text-sm">{previewDoc.label}</span>
+                <span className="font-semibold text-sm">{previewDoc.label}</span>
               </div>
               <div className="flex items-center gap-2">
                 <a
                   href={previewDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
+                  className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 flex items-center gap-1.5 transition-colors"
                 >
                   <span>Open in New Tab</span>
                   <ExternalLink size={13} />
@@ -467,7 +467,7 @@ const AdminApplicationSummaryModal = ({
                 <button
                   type="button"
                   onClick={() => setPreviewDoc(null)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <X size={18} />
                 </button>

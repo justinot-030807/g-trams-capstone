@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, Award, Layers } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -44,13 +44,13 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
   return (
     <div 
       id="printable-batch-mtop-root" 
-      className="fixed inset-0 z-[220] bg-slate-950/85 backdrop-blur-md overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible"
+      className="fixed inset-0 z-[220] bg-black/75 overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible"
     >
       <div className="min-h-full w-full flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:p-0 print:m-0">
         <div className="w-full max-w-[800px] flex flex-col items-center shrink-0 print:max-w-full print:m-0">
 
           {/* Action Toolbar (Hidden during print) */}
-          <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
+          <div className="w-full bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-lg p-3 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-sm print:hidden sticky top-2 z-50">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
                 <Layers size={18} />
@@ -199,7 +199,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                   {/* Scrollable Container preserving Desktop Certificate Geometry on Mobile */}
                   <div className="w-full max-w-[780px] overflow-x-auto pb-2 custom-scrollbar flex justify-start sm:justify-center">
                     <div 
-                      className="batch-mtop-cert-card relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] min-h-[880px] flex flex-col justify-between shrink-0 rounded-2xl shadow-2xl p-7 sm:p-9 md:p-10 border-4 sm:border-8 border-double border-[#9E2A2B] overflow-hidden print:border-[4px] print:border-double print:border-[#9E2A2B] print:shadow-none print:m-0 print:max-w-full"
+                      className="batch-mtop-cert-card relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] min-h-[880px] flex flex-col justify-between shrink-0 rounded-lg shadow-sm p-7 sm:p-9 md:p-10 border-4 sm:border-8 border-double border-[#9E2A2B] overflow-hidden print:border-[4px] print:border-double print:border-[#9E2A2B] print:shadow-none print:m-0 print:max-w-full"
                       style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
                     >
                       {/* Municipal Seal Watermark */}

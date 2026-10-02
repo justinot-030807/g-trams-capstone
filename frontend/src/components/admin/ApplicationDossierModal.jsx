@@ -51,20 +51,20 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
   return (
     <div 
       id="printable-dossier-modal-root" 
-      className="fixed inset-0 z-[120] bg-slate-950/85 backdrop-blur-md overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-hidden flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:m-0"
+      className="fixed inset-0 z-[120] bg-black/75 overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-hidden flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:m-0"
     >
       <div className="w-full max-w-[840px] flex flex-col items-center shrink-0 print:max-w-full print:m-0">
         
         {/* Floating Action Bar (Hidden during print) */}
-        <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-3 sm:p-4 mb-3 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
+        <div className="w-full bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-lg p-3 sm:p-4 mb-3 flex items-center justify-between text-white shadow-sm print:hidden sticky top-2 z-50">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/30 border border-[#9E2A2B]/60 flex items-center justify-center text-[#D4AF37] shrink-0">
               <FileText size={18} />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+              <h2 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
                 <span>Application Dossier &amp; Evaluation Sheet</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                   franchise.status === 'Pending' 
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                     : franchise.status === 'Active'
@@ -74,7 +74,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                   {franchise.status}
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-400">Pre-Approval Official Municipal Dossier</p>
+              <p className="text-[11px] text-[#A8A29E]">Pre-Approval Official Municipal Dossier</p>
             </div>
           </div>
 
@@ -82,7 +82,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             <button
               type="button"
               onClick={handlePrint}
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 bg-[#14110F] hover:bg-[#2E2A27] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-[#2E2A27] transition-colors cursor-pointer"
             >
               <Printer size={14} className="text-[#D4AF37]" />
               <span className="hidden sm:inline">Print Dossier</span>
@@ -93,7 +93,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 type="button"
                 onClick={onApprove}
                 disabled={isProcessing}
-                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
               >
                 <CheckCircle2 size={14} />
                 <span>Approve for Signing</span>
@@ -105,7 +105,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 type="button"
                 onClick={onReject}
                 disabled={isProcessing}
-                className="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
               >
                 <span>Reject</span>
               </button>
@@ -114,7 +114,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -125,7 +125,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
         <div 
           ref={dossierRef}
           id="printable-dossier-content"
-          className="w-full bg-[#FFFDF9] text-slate-900 border border-slate-300 rounded-3xl p-6 sm:p-10 shadow-2xl print:border-none print:shadow-none print:p-6 print:m-0 print:w-full print:rounded-none relative overflow-hidden"
+          className="w-full bg-[#FFFDF9] text-slate-900 border border-[#E4E1DC] rounded-lg p-6 sm:p-10 shadow-sm print:border-none print:shadow-none print:p-6 print:m-0 print:w-full print:rounded-none relative overflow-hidden"
           style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}
         >
           {/* Print Styles */}

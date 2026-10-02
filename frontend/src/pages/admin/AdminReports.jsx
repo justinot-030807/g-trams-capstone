@@ -1,8 +1,10 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
-import { Printer, Filter, CheckCircle, Clock, AlertTriangle, XCircle, FileText, Ban, Loader2, Download } from 'lucide-react';
+import { Printer, Filter, Download } from 'lucide-react';
 import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
+import PageHeader from '../../components/common/PageHeader';
+import StatusBadge from '../../components/common/StatusBadge';
 
 const AdminReports = () => {
   const [reports, setReports] = useState([]);
@@ -103,7 +105,7 @@ const AdminReports = () => {
     URL.revokeObjectURL(url);
   };
 
-  const inputClasses = "w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-white outline-none focus:bg-white dark:focus:bg-[#111827] focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/10 dark:focus:ring-[#D4AF37]/20 transition-all";
+  const inputClasses = "w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-1.5 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors";
 
   return (
     <MainLayout>
@@ -123,7 +125,6 @@ const AdminReports = () => {
             height: auto !important;
             overflow: visible !important;
           }
-          /* Completely hide sidebar, header navbar, filters, and buttons */
           aside,
           header.sticky,
           nav,
@@ -150,7 +151,6 @@ const AdminReports = () => {
             color: black !important;
             display: block !important;
           }
-          /* Fallback if printed via Ctrl+P */
           body:not(.printing-mtop):not(.printing-batch-mtop) #printable-report,
           body:not(.printing-mtop):not(.printing-batch-mtop) #printable-report * {
             visibility: visible;
@@ -161,7 +161,6 @@ const AdminReports = () => {
             top: 0;
             width: 100% !important;
           }
-          /* Clean table styling for print */
           #printable-report table {
             border-collapse: collapse !important;
             width: 100% !important;
@@ -186,52 +185,49 @@ const AdminReports = () => {
         }
       `}</style>
 
-      {/* Header Ribbon */}
-      <header className="mb-6 bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-2xl p-4 sm:px-6 sm:py-5 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-4 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all print:hidden print-hide">
-        <div className="relative z-10 flex items-center gap-4 min-w-0">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
-             <Filter size={20} className="text-[#D4AF37]" />
-          </div>
-          <div>
-            <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">System Reports</h1>
-            <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-xs max-w-xl">
-              Filter, view, and print franchise records.
-            </p>
-          </div>
-        </div>
-        <div className="relative z-10 flex items-center gap-2 w-full md:w-auto">
-          <button 
-            onClick={handleExportCSV}
-            className="flex-1 md:flex-initial bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-            title="Export filtered reports to CSV"
-          >
-            <Download size={16} /> Export CSV
-          </button>
-          <button 
-            onClick={handlePrint}
-            className="flex-1 md:flex-initial bg-white text-[#9E2A2B] dark:bg-[#D4AF37] dark:text-slate-900 hover:bg-slate-100 dark:hover:bg-[#c29e2f] px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
-          >
-            <Printer size={16} /> Print Report
-          </button>
-        </div>
-      </header>
+      {/* Header */}
+      <div className="print:hidden print-hide mb-6">
+        <PageHeader 
+          title="System Reports"
+          subtitle="Filter, inspect, export, and print official municipality franchise records."
+          actions={
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button 
+                onClick={handleExportCSV}
+                className="flex-1 sm:flex-initial bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-1.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                title="Export filtered reports to CSV"
+              >
+                <Download size={15} />
+                <span>Export CSV</span>
+              </button>
+              <button 
+                onClick={handlePrint}
+                className="flex-1 sm:flex-initial bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-1.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+              >
+                <Printer size={15} />
+                <span>Print Report</span>
+              </button>
+            </div>
+          }
+        />
+      </div>
 
       {/* Filter Criteria */}
-      <div className="bg-white dark:bg-[#111827] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 print:hidden print-hide transition-colors">
-        <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+      <div className="bg-white dark:bg-[#1C1917] p-4 sm:p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs mb-6 print:hidden print-hide transition-colors">
+        <h2 className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-3 flex items-center gap-2">
           <Filter size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Filter Criteria
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Date From</label>
+            <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Date From</label>
             <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={inputClasses} />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Date To</label>
+            <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Date To</label>
             <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={inputClasses} />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Status</label>
+            <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Status</label>
             <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All Status</option>
               <option value="Active">Active</option>
@@ -242,14 +238,14 @@ const AdminReports = () => {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">TODA</label>
+            <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">TODA</label>
             <select name="todaName" value={filters.todaName} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All TODA</option>
               {TODA_LIST.map((toda, i) => <option key={i} value={toda}>{toda}</option>)}
             </select>
           </div>
           <div className="sm:col-span-2 lg:col-span-1">
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Barangay</label>
+            <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Barangay</label>
             <select name="barangay" value={filters.barangay} onChange={handleFilterChange} className={inputClasses}>
               <option value="">All Barangays</option>
               {GASAN_BARANGAYS.map((brgy, i) => <option key={i} value={brgy}>{brgy}</option>)}
@@ -270,9 +266,9 @@ const AdminReports = () => {
             <div className="text-center flex-1">
               <p className="text-xs uppercase tracking-widest font-serif text-slate-700 font-semibold">Republic of the Philippines</p>
               <p className="text-xs uppercase tracking-wider font-serif text-slate-700">Province of Marinduque</p>
-              <p className="text-sm font-black uppercase tracking-wide text-slate-950">Municipality of Gasan</p>
-              <p className="text-xs font-bold text-[#9E2A2B] uppercase tracking-wider mt-0.5">Office of the Municipal Mayor &bull; Office of the Vice Mayor Extension / Licensing Division</p>
-              <h2 className="text-base font-black uppercase tracking-wider text-slate-900 mt-1">
+              <p className="text-sm font-bold uppercase tracking-wide text-slate-950">Municipality of Gasan</p>
+              <p className="text-xs font-bold text-[#9E2A2B] uppercase tracking-wider mt-0.5">Office of the Municipal Mayor &bull; Licensing Division</p>
+              <h2 className="text-base font-bold uppercase tracking-wider text-slate-900 mt-1">
                 Official Franchise System Report
               </h2>
             </div>
@@ -306,60 +302,54 @@ const AdminReports = () => {
           <StatsCardsSkeleton count={6} gridClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 print-hide" baseDelay={40} stepDelay={40} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 print:grid-cols-6 print:gap-2 print:mb-4">
-            <div className="stagger-reveal bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.04s' }}>
-              <FileText size={18} className="mx-auto text-slate-500 dark:text-slate-400 mb-1 print:hidden" />
-              <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white print:text-lg">{summary.total}</p>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Total Records</p>
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+              <p className="text-xl sm:text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums print:text-lg">{summary.total}</p>
+              <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Total Records</p>
             </div>
-            <div className="stagger-reveal bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.08s' }}>
-              <CheckCircle size={18} className="mx-auto text-emerald-600 dark:text-emerald-400 mb-1 print:hidden" />
-              <p className="text-xl sm:text-2xl font-black text-emerald-900 dark:text-emerald-300 print:text-slate-900 print:text-lg">{summary.active}</p>
-              <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Active</p>
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+              <p className="text-xl sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.active}</p>
+              <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Active</p>
             </div>
-            <div className="stagger-reveal bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.12s' }}>
-              <Clock size={18} className="mx-auto text-amber-600 dark:text-amber-400 mb-1 print:hidden" />
-              <p className="text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-300 print:text-slate-900 print:text-lg">{summary.pending}</p>
-              <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Pending</p>
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+              <p className="text-xl sm:text-2xl font-semibold text-amber-700 dark:text-amber-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.pending}</p>
+              <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Pending</p>
             </div>
-            <div className="stagger-reveal bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.16s' }}>
-              <AlertTriangle size={18} className="mx-auto text-orange-600 dark:text-orange-400 mb-1 print:hidden" />
-              <p className="text-xl sm:text-2xl font-black text-orange-900 dark:text-orange-300 print:text-slate-900 print:text-lg">{summary.expired}</p>
-              <p className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Expired</p>
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+              <p className="text-xl sm:text-2xl font-semibold text-red-700 dark:text-red-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.expired}</p>
+              <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Expired</p>
             </div>
-            <div className="stagger-reveal bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.2s' }}>
-              <XCircle size={18} className="mx-auto text-red-600 dark:text-red-400 mb-1 print:hidden" />
-              <p className="text-xl sm:text-2xl font-black text-red-900 dark:text-red-300 print:text-slate-900 print:text-lg">{summary.cancelled}</p>
-              <p className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Cancelled</p>
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+              <p className="text-xl sm:text-2xl font-semibold text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.cancelled}</p>
+              <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Cancelled</p>
             </div>
-            <div className="stagger-reveal bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 p-3 sm:p-4 rounded-2xl text-center shadow-xs transition-colors print:bg-white print:border-slate-300 print:p-2 print:shadow-none" style={{ animationDelay: '0.24s' }}>
-              <Ban size={18} className="mx-auto text-rose-600 dark:text-rose-400 mb-1 print:hidden" />
-              <p className="text-xl sm:text-2xl font-black text-rose-900 dark:text-rose-300 print:text-slate-900 print:text-lg">{summary.revoked}</p>
-              <p className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide print:text-[8px] print:text-slate-600">Revoked</p>
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+              <p className="text-xl sm:text-2xl font-semibold text-red-700 dark:text-red-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.revoked}</p>
+              <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Revoked</p>
             </div>
           </div>
         )}
 
         {/* Responsive Data Table */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-colors print:border-none print:shadow-none print:rounded-none">
+        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xs overflow-hidden transition-colors print:border-none print:shadow-none print:rounded-none">
           <div className="overflow-x-auto print:overflow-visible">
             <table className="w-full text-left text-xs sm:text-sm print:text-xs print:table">
-              <thead className="bg-slate-50/80 dark:bg-[#0c101c] border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider whitespace-nowrap print:bg-slate-100 print:text-slate-900 print:border-b-2 print:border-slate-400">
+              <thead className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs tracking-wider whitespace-nowrap print:bg-slate-100 print:text-slate-900 print:border-b-2 print:border-slate-400">
                 <tr>
-                  <th className="p-3.5 sm:p-4 print:p-1.5 w-10 text-center">#</th>
-                  <th className="p-3.5 sm:p-4 print:p-1.5">Plate No.</th>
-                  <th className="p-3.5 sm:p-4 print:p-1.5">Operator Name</th>
-                  <th className="p-3.5 sm:p-4 print:p-1.5">Address / Barangay</th>
-                  <th className="p-3.5 sm:p-4 print:p-1.5">TODA</th>
-                  <th className="p-3.5 sm:p-4 print:p-1.5">Date Applied</th>
-                  <th className="p-3.5 sm:p-4 print:p-1.5">Status</th>
+                  <th className="p-3 sm:p-3.5 print:p-1.5 w-10 text-center font-mono">#</th>
+                  <th className="p-3 sm:p-3.5 print:p-1.5">Plate No.</th>
+                  <th className="p-3 sm:p-3.5 print:p-1.5">Operator Name</th>
+                  <th className="p-3 sm:p-3.5 print:p-1.5">Address / Barangay</th>
+                  <th className="p-3 sm:p-3.5 print:p-1.5">TODA</th>
+                  <th className="p-3 sm:p-3.5 print:p-1.5">Date Applied</th>
+                  <th className="p-3 sm:p-3.5 print:p-1.5">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 whitespace-nowrap text-xs print:divide-slate-200">
+              <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] whitespace-nowrap text-xs print:divide-slate-200">
                 {isLoading ? (
                   <TableRowsSkeleton rows={6} columns={7} baseDelay={140} stepDelay={40} />
                 ) : reports.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm print:p-4">
+                    <td colSpan="7" className="p-8 text-center text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm print:p-4">
                       No records found for the selected filters.
                     </td>
                   </tr>
@@ -367,36 +357,28 @@ const AdminReports = () => {
                   reports.map((report, rIdx) => (
                     <tr 
                       key={report._id} 
-                      className="stagger-reveal hover:bg-slate-50/80 dark:hover:bg-[#161f30]/40 transition-colors print:hover:bg-transparent"
-                      style={{ animationDelay: `${rIdx * 30}ms` }}
+                      className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors print:hover:bg-transparent"
                     >
-                      <td className="p-3.5 sm:p-4 print:p-1.5 text-center font-mono text-slate-500 dark:text-slate-400 print:text-slate-600 text-xs print:text-[9px]">
+                      <td className="p-3 sm:p-3.5 print:p-1.5 text-center font-mono text-[#6B6761] dark:text-[#A8A29E] print:text-slate-600 text-xs print:text-[9px] tabular-nums">
                         {rIdx + 1}
                       </td>
-                      <td className="p-3.5 sm:p-4 print:p-1.5 font-black text-slate-900 dark:text-white print:text-black">
+                      <td className="p-3 sm:p-3.5 print:p-1.5 font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] print:text-black">
                         {report.plateNo || 'PENDING'}
                       </td>
-                      <td className="p-3.5 sm:p-4 print:p-1.5 text-slate-700 dark:text-slate-200 print:text-black font-medium">
+                      <td className="p-3 sm:p-3.5 print:p-1.5 text-[#1F1D1B] dark:text-[#F6F5F3] print:text-black font-medium">
                         {report.fullName}
                       </td>
-                      <td className="p-3.5 sm:p-4 print:p-1.5 text-slate-600 dark:text-slate-300 print:text-slate-800">
+                      <td className="p-3 sm:p-3.5 print:p-1.5 text-[#6B6761] dark:text-[#A8A29E] print:text-slate-800">
                         {report.address || 'N/A'}
                       </td>
-                      <td className="p-3.5 sm:p-4 print:p-1.5 text-slate-600 dark:text-slate-300 print:text-slate-800">
+                      <td className="p-3 sm:p-3.5 print:p-1.5 text-[#6B6761] dark:text-[#A8A29E] print:text-slate-800">
                         {report.todaName || 'NON-TODA'}
                       </td>
-                      <td className="p-3.5 sm:p-4 print:p-1.5 text-slate-500 dark:text-slate-400 print:text-slate-700 font-mono">
+                      <td className="p-3 sm:p-3.5 print:p-1.5 text-[#6B6761] dark:text-[#A8A29E] print:text-slate-700 font-mono tabular-nums">
                         {report.dateApplied ? new Date(report.dateApplied).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
                       </td>
-                      <td className="p-3.5 sm:p-4 print:p-1.5">
-                        <span className={`px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wider print:px-1.5 print:py-0.5 print:text-[8px] print:border print:border-slate-400 print:bg-transparent print:text-black ${
-                          report.status === 'Active' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400' :
-                          report.status === 'Cancelled' || report.status === 'Revoked' ? 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400' :
-                          report.status === 'Expired' ? 'bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400' :
-                          'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
-                        }`}>
-                          {report.status}
-                        </span>
+                      <td className="p-3 sm:p-3.5 print:p-1.5">
+                        <StatusBadge status={report.status} />
                       </td>
                     </tr>
                   ))
@@ -412,19 +394,19 @@ const AdminReports = () => {
             <div>
               <p className="text-xs uppercase font-bold text-slate-500 mb-8">Prepared By:</p>
               <div className="border-b border-slate-900 w-4/5 mx-auto mb-1"></div>
-              <p className="font-black text-slate-900 uppercase text-xs">{localStorage.getItem('name') || 'ADMINISTRATOR'}</p>
+              <p className="font-bold text-slate-900 uppercase text-xs">{localStorage.getItem('name') || 'ADMINISTRATOR'}</p>
               <p className="text-xs text-slate-600">G-TRAMS System Administrator</p>
             </div>
             <div>
               <p className="text-xs uppercase font-bold text-slate-500 mb-8">Verified & Certified Correct:</p>
               <div className="border-b border-slate-900 w-4/5 mx-auto mb-1"></div>
-              <p className="font-black text-slate-900 uppercase text-xs">Office of the Vice Mayor Extension / LICENSING OFFICER</p>
+              <p className="font-bold text-slate-900 uppercase text-xs">LICENSING OFFICER</p>
               <p className="text-xs text-slate-600">Municipality of Gasan</p>
             </div>
             <div>
               <p className="text-xs uppercase font-bold text-slate-500 mb-8">Approved By:</p>
               <div className="border-b border-slate-900 w-4/5 mx-auto mb-1"></div>
-              <p className="font-black text-slate-900 uppercase text-xs">MUNICIPAL MAYOR</p>
+              <p className="font-bold text-slate-900 uppercase text-xs">MUNICIPAL MAYOR</p>
               <p className="text-xs text-slate-600">Municipality of Gasan</p>
             </div>
           </div>
@@ -439,4 +421,3 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
-

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Radio, Send, Loader2, Megaphone, Trash2, CheckCircle, 
   AlertCircle, Users, Clock, Bold, List, AlertTriangle, Eye, EyeOff, Filter
@@ -268,48 +268,48 @@ const AdminBroadcastCenter = () => {
       
       {/* Toast Alert */}
       {toastMessage && (
-        <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${
+        <div className={`p-3.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-2 ${
           toastMessage.type === 'error' 
             ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/60' 
             : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60'
         }`}>
-          {toastMessage.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle size={18} />}
+          {toastMessage.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle size={16} />}
           <span>{toastMessage.text}</span>
         </div>
       )}
 
       {/* Broadcast Composer Section */}
-      <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-6 shadow-xs">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
-            <Megaphone size={20} />
+          <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+            <Megaphone size={18} />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
               Create System Broadcast Announcement
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
               Dispatches an immediate notification and announcement to all registered operators and TODA associations.
             </p>
           </div>
         </div>
 
         {/* Target Audience Controls */}
-        <div className="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-[#0c101c] border border-slate-200/80 dark:border-slate-800 space-y-3">
+        <div className="mb-4 p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <Users size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-              <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+              <Users size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+              <span className="font-semibold text-xs text-[#1F1D1B] dark:text-[#F6F5F3]">
                 Audience Targeting Filters
               </span>
             </div>
             
             <div className="flex items-center gap-1.5 text-[11px]">
-              <span className="text-slate-500 dark:text-slate-400">Selected Scope:</span>
-              <span className={`px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[10px] border ${
+              <span className="text-[#6B6761] dark:text-[#A8A29E]">Selected Scope:</span>
+              <span className={`px-2 py-0.5 rounded font-semibold uppercase tracking-wider text-[10px] border ${
                 targetToda === 'ALL' && targetStatus === 'ALL'
-                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
-                  : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60'
+                  : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800/60'
               }`}>
                 {targetToda === 'ALL' && targetStatus === 'ALL' ? 'LGU-Wide (All Operators)' : 'Targeted Group'}
               </span>
@@ -318,13 +318,13 @@ const AdminBroadcastCenter = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">
                 Target TODA Association
               </label>
               <select
                 value={targetToda}
                 onChange={(e) => setTargetToda(e.target.value)}
-                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B]/20 transition-all cursor-pointer"
+                className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-1.5 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors cursor-pointer"
               >
                 <option value="ALL">All TODA Associations (LGU-Wide)</option>
                 {TODA_LIST.map((toda) => (
@@ -334,13 +334,13 @@ const AdminBroadcastCenter = () => {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">
                 Target Franchise Status
               </label>
               <select
                 value={targetStatus}
                 onChange={(e) => setTargetStatus(e.target.value)}
-                className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B]/20 transition-all cursor-pointer"
+                className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-1.5 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors cursor-pointer"
               >
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -350,7 +350,7 @@ const AdminBroadcastCenter = () => {
           </div>
 
           {(targetToda !== 'ALL' || targetStatus !== 'ALL') && (
-            <div className="flex items-center gap-2 pt-1 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200/50 dark:border-amber-800/40">
+            <div className="flex items-center gap-2 pt-1 text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/20 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/40">
               <AlertCircle size={14} className="shrink-0" />
               <span>
                 Targeted Broadcast: Only operators registered in <strong>{targetToda === 'ALL' ? 'all TODAs' : targetToda}</strong> with status <strong>{targetStatus === 'ALL' ? 'any status' : targetStatus}</strong> will receive push notifications and inbox alerts.
@@ -360,10 +360,10 @@ const AdminBroadcastCenter = () => {
         </div>
 
         {/* Composer Form */}
-        <form onSubmit={handleBroadcast} className="space-y-3.5">
+        <form onSubmit={handleBroadcast} className="space-y-3">
           <div>
             <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                 Announcement Message
               </label>
               
@@ -372,7 +372,7 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => insertFormatting('**', '**')}
-                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded text-xs font-medium bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors flex items-center gap-1 cursor-pointer"
                   title="Make text bold (**text**)"
                 >
                   <Bold size={13} />
@@ -381,7 +381,7 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => insertFormatting('\n• ')}
-                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded text-xs font-medium bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors flex items-center gap-1 cursor-pointer"
                   title="Add bullet list (• item)"
                 >
                   <List size={13} />
@@ -390,7 +390,7 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => insertFormatting('\n🚨 [IMPORTANT NOTICE]: ')}
-                  className="px-2 py-1 rounded-md text-xs font-bold bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded text-xs font-medium bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60 transition-colors flex items-center gap-1 cursor-pointer"
                   title="Insert Important Notice callout"
                 >
                   <AlertTriangle size={13} />
@@ -399,10 +399,10 @@ const AdminBroadcastCenter = () => {
                 <button
                   type="button"
                   onClick={() => setShowPreview(!showPreview)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer border ${
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer border ${
                     showPreview
-                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-950 border-[#9E2A2B] dark:border-[#D4AF37]'
-                      : 'bg-slate-100 dark:bg-[#0c101c] hover:bg-slate-200 dark:hover:bg-[#161f30] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/80'
+                      ? 'bg-[#9E2A2B] text-white border-[#9E2A2B]'
+                      : 'bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27]'
                   }`}
                   title="Toggle announcement preview"
                 >
@@ -413,12 +413,12 @@ const AdminBroadcastCenter = () => {
             </div>
 
             {showPreview ? (
-              <div className="w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 min-h-[110px]">
-                <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-2 tracking-wider">Live Preview</p>
+              <div className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 min-h-[110px]">
+                <p className="text-[10px] font-semibold uppercase text-[#6B6761] dark:text-[#A8A29E] mb-2 tracking-wider">Live Preview</p>
                 {broadcastMessage.trim() ? (
                   renderFormattedAnnouncement(broadcastMessage)
                 ) : (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 italic">No announcement text typed yet...</p>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] italic">No announcement text typed yet...</p>
                 )}
               </div>
             ) : (
@@ -429,29 +429,29 @@ const AdminBroadcastCenter = () => {
                 rows={4}
                 placeholder="Type your official announcement here... (e.g. Please be reminded of the upcoming annual franchise inspection at the Municipal Hall grounds.)"
                 required
-                className="w-full bg-slate-50 dark:bg-[#0c101c] border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:bg-white dark:focus:bg-[#0c101c] focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/10 dark:focus:ring-[#D4AF37]/20 transition-all resize-none leading-relaxed shadow-2xs"
+                className="w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors resize-none leading-relaxed"
               />
             )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-            <span className="text-xs text-slate-400 dark:text-slate-500 order-2 sm:order-1">
+            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] order-2 sm:order-1 font-mono tabular-nums">
               {broadcastMessage.length} characters
             </span>
 
             <button
               type="submit"
               disabled={!broadcastMessage.trim() || isBroadcasting}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer order-1 sm:order-2"
+              className="w-full sm:w-auto px-5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer order-1 sm:order-2"
             >
               {isBroadcasting ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={15} className="animate-spin" />
                   <span>Broadcasting Announcement...</span>
                 </>
               ) : (
                 <>
-                  <Send size={15} />
+                  <Send size={14} />
                   <span>{targetToda === 'ALL' && targetStatus === 'ALL' ? 'Send Broadcast to All' : 'Send Targeted Broadcast'}</span>
                 </>
               )}
@@ -461,51 +461,51 @@ const AdminBroadcastCenter = () => {
       </div>
 
       {/* Broadcast History Section */}
-      <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-6 shadow-xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
           <div className="flex items-center gap-2">
-            <Clock size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+            <Clock size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+            <h3 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
               Broadcast History ({announcements.length})
             </h3>
           </div>
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
             Past announcements sent to operators
           </span>
         </div>
 
         {isLoadingHistory ? (
-          <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs">
-            <Loader2 size={20} className="animate-spin mx-auto mb-2" />
+          <div className="text-center py-10 text-[#6B6761] dark:text-[#A8A29E] text-xs">
+            <Loader2 size={18} className="animate-spin mx-auto mb-2" />
             Loading previous announcements...
           </div>
         ) : announcements.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
-            <Megaphone size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-700" />
-            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No broadcasts sent yet</p>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Use the composer above to broadcast an official announcement.</p>
+          <div className="text-center py-12 text-[#6B6761] dark:text-[#A8A29E]">
+            <Megaphone size={28} className="mx-auto mb-2 text-[#6B6761] dark:text-[#A8A29E]" />
+            <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">No broadcasts sent yet</p>
+            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Use the composer above to broadcast an official announcement.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {announcements.map((ann) => (
               <div
                 key={ann._id}
-                className="p-4 rounded-xl bg-slate-50/80 dark:bg-[#0c101c] border border-slate-200/70 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors relative group"
+                className="p-3.5 rounded-lg bg-[#F6F5F3]/60 dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40 transition-colors relative group"
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="w-2 h-2 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                       {ann.sender?.name || 'Municipal Administrator'}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-[10px] uppercase border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+                    <span className="px-1.5 py-0.5 rounded bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-semibold text-[10px] uppercase border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
                       Official Broadcast
                     </span>
                     {(() => {
                       const target = getTargetBadge(ann);
                       if (!target) return null;
                       return (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-bold text-[10px] border border-amber-300 dark:border-amber-800/60 flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-semibold text-[10px] border border-amber-300 dark:border-amber-800/60 flex items-center gap-1">
                           <Filter size={10} />
                           <span>{target}</span>
                         </span>
@@ -514,7 +514,7 @@ const AdminBroadcastCenter = () => {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
                       {new Date(ann.createdAt).toLocaleString([], {
                         month: 'short',
                         day: 'numeric',
@@ -525,15 +525,15 @@ const AdminBroadcastCenter = () => {
                     </span>
                     <button
                       onClick={() => handleDeleteBroadcast(ann._id)}
-                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity p-1 rounded cursor-pointer"
+                      className="opacity-0 group-hover:opacity-100 text-[#6B6761] hover:text-red-600 transition-opacity p-1 rounded cursor-pointer"
                       title="Delete announcement"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
 
-                <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                <div className="text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] leading-relaxed">
                   {renderFormattedAnnouncement(cleanMessageText(ann.message))}
                 </div>
               </div>

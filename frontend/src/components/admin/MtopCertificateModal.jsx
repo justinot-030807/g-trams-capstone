@@ -87,13 +87,13 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
   return (
     <div 
       id="printable-mtop-modal-root" 
-      className="fixed inset-0 z-[120] bg-slate-950/85 backdrop-blur-md overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-hidden"
+      className="fixed inset-0 z-[120] bg-black/75 overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-hidden"
     >
       <div className="min-h-full w-full flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:p-0 print:m-0">
         <div className="w-full max-w-[780px] flex flex-col items-center shrink-0 print:max-w-full print:m-0">
         
         {/* Action Toolbar (Hidden during print) */}
-        <div className="w-full bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-2.5 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-xl print:hidden sticky top-2 z-50">
+        <div className="w-full bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-lg p-2.5 sm:p-3.5 mb-3 flex items-center justify-between text-white shadow-sm print:hidden sticky top-2 z-50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
               <Award size={18} />
@@ -177,7 +177,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           <div 
             ref={certRef}
             id="printable-mtop-certificate" 
-            className="relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] min-h-[880px] flex flex-col justify-between shrink-0 rounded-2xl shadow-2xl p-7 sm:p-9 md:p-10 border-4 sm:border-8 border-double border-[#9E2A2B] overflow-hidden print:border-[4px] print:border-double print:border-[#9E2A2B] print:shadow-none print:m-0 print:max-w-full"
+            className="relative bg-[#FFFDF9] text-slate-900 w-[720px] sm:w-full max-w-[740px] min-h-[880px] flex flex-col justify-between shrink-0 rounded-lg shadow-sm p-7 sm:p-9 md:p-10 border-4 sm:border-8 border-double border-[#9E2A2B] overflow-hidden print:border-[4px] print:border-double print:border-[#9E2A2B] print:shadow-none print:m-0 print:max-w-full"
             style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
           >
           {/* Print Stylesheet - Precision 1-Page Fit on Long Bond Paper (8.5 x 13 in) */}
