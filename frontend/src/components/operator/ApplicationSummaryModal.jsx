@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, FileText, User, Car, Receipt, ShieldCheck, FileCheck } from 'lucide-react';
+import { X, FileText, User, Receipt, ShieldCheck, FileCheck } from 'lucide-react';
+import TricycleIcon from '../common/TricycleIcon';
 
 const ApplicationSummaryModal = ({
   isSummaryModalOpen,
@@ -71,7 +72,7 @@ const ApplicationSummaryModal = ({
           {/* 2. Tricycle Details */}
           <div>
             <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Car size={13} /> 2. Tricycle Details
+              <TricycleIcon size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> 2. Tricycle Details
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">

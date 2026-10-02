@@ -7,13 +7,14 @@ import MainLayout from '../../components/MainLayout';
 import { 
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
-  ChevronRight, ChevronLeft, ShieldCheck, Car, FileText, RotateCcw,
+  ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
   Save, XCircle, CheckCircle2, Clock, Sparkles, User, Eye, Receipt,
   Compass, MapPin, ExternalLink
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
+import TricycleIcon from '../../components/common/TricycleIcon';
 import TodaZoneGuideModal, { TODA_DIRECTORY, GASAN_ZONES } from '../../components/operator/TodaZoneGuideModal';
 import CancelApplicationModal from '../../components/operator/CancelApplicationModal';
 import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
@@ -1583,7 +1584,7 @@ const ApplyFranchise = () => {
                 {/* Header */}
                 <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
                   <div className="w-8 h-8 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <Car size={18} />
+                    <TricycleIcon size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   </div>
                   <div>
                     <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">

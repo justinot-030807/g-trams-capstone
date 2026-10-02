@@ -1,8 +1,8 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   BookOpen, X, ChevronRight, FileCheck, RefreshCw, 
   ShieldCheck, HelpCircle, CheckCircle2, Clock, Sparkles,
-  ExternalLink, Car, FileText, ArrowRight
+  ExternalLink, FileText, ArrowRight
 } from 'lucide-react';
 
 const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {

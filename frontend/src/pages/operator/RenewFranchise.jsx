@@ -7,10 +7,11 @@ import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal
 import SimpleDatePicker from '../../components/common/SimpleDatePicker';
 import { 
   RefreshCw, ArrowLeft, CheckCircle2, AlertCircle, Loader2, 
-  X, FileCheck, ShieldCheck, Car, Calendar, CalendarDays, MapPin, Hash, Sparkles,
+  X, FileCheck, ShieldCheck, Calendar, CalendarDays, MapPin, Hash, Sparkles,
   FileText, User
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import TricycleIcon from '../../components/common/TricycleIcon';
 
 const RenewFranchise = () => {
   const navigate = useNavigate();
@@ -376,7 +377,7 @@ const RenewFranchise = () => {
             <div className="p-4 sm:p-6 bg-slate-50/70 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800">
               <div className="flex items-center justify-between gap-2 mb-2.5">
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Car size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   Official Tricycle Details (Transport Pass)
                 </span>
                 <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">

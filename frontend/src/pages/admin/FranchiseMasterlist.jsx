@@ -5,12 +5,13 @@ import {
   Clock, AlertCircle, Loader2, X, CalendarDays, Printer,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag,
   ChevronDown, Check, CheckSquare, Square, RotateCcw, Eye,
-  Car, User, ShieldCheck, Shield, FileCheck, Phone, MapPin, Hash, ExternalLink
+  User, ShieldCheck, Shield, FileCheck, Phone, MapPin, Hash, ExternalLink
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
+import TricycleIcon from '../../components/common/TricycleIcon';
 
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'Active', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800' },
@@ -280,7 +281,7 @@ const FranchiseMasterlist = () => {
             <div className="sticky top-0 bg-white dark:bg-[#1C1917] border-b border-[#E4E1DC] dark:border-[#2E2A27] p-5 flex justify-between items-center z-20 rounded-t-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center font-semibold">
-                  <Car size={18} />
+                  <TricycleIcon size={22} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 </div>
                 <div>
                   <h2 className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
@@ -354,7 +355,7 @@ const FranchiseMasterlist = () => {
               {/* VEHICLE SPECIFICATIONS */}
               <div className="border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4">
                 <h3 className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Car size={14} /> Tricycle Specifications
+                  <TricycleIcon size={15} className="text-[#6B6761] dark:text-[#A8A29E]" /> Tricycle Specifications
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
@@ -733,7 +734,7 @@ const FranchiseMasterlist = () => {
                         </td>
                         <td className="p-3.5">
                           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3]">
-                            <Car size={12} className="text-[#6B6761] dark:text-[#A8A29E]" />
+                            <TricycleIcon size={13} className="text-[#6B6761] dark:text-[#A8A29E]" />
                             <span>{f.plateNo || 'PENDING'}</span>
                           </div>
                           <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 font-normal truncate max-w-[190px]">

@@ -4,7 +4,7 @@ import {
   ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
   ZoomIn, ZoomOut, RotateCw, RotateCcw, RefreshCw, ExternalLink, 
   FileText, AlertCircle, Loader2, Printer, Check, AlertTriangle,
-  Copy, ShieldCheck, User, Car, FileCheck, Layers, FileSpreadsheet, Sparkles,
+  Copy, ShieldCheck, User, FileCheck, Layers, FileSpreadsheet, Sparkles,
   Maximize2, SunMedium, Undo2, Lock
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';

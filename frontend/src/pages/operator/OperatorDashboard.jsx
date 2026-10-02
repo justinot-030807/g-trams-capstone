@@ -4,13 +4,14 @@ import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, CheckCircle2, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, User, ShieldAlert, Receipt, XCircle, Car, Banknote,
+  Check, FileText, User, ShieldAlert, Receipt, XCircle, Banknote,
   Sun, Moon, SunMedium, Laptop, ArrowRight, Users, Sparkles, HelpCircle,
   Bell, Settings, ChevronRight, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import TricycleIcon from '../../components/common/TricycleIcon';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
 import OperatorGuideModal from '../../components/operator/OperatorGuideModal';
@@ -864,11 +865,10 @@ const OperatorDashboard = () => {
           id="tour-empty-garage"
           className="animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-6 sm:p-10 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400 flex flex-col items-center justify-center min-h-[260px] transition-colors shadow-2xs"
         >
-          {/* Glowing Halo Icon Container */}
+          {/* Tricycle Icon Container */}
           <div className="relative mb-3">
-            <div className="absolute inset-0 bg-[#9E2A2B]/15 dark:bg-[#D4AF37]/20 rounded-full blur-lg scale-125 animate-pulse pointer-events-none" />
-            <div className="relative w-14 h-14 bg-gradient-to-br from-red-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-red-200/60 dark:border-amber-800/40 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shadow-2xs">
-              <Car size={26} />
+            <div className="relative w-16 h-16 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 rounded-xl border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 flex items-center justify-center p-2.5 shadow-xs">
+              <TricycleIcon size={42} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             </div>
           </div>
 

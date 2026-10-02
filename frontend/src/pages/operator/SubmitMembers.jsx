@@ -1,15 +1,15 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   UploadCloud, FileText, CheckCircle2, Clock3, ArrowLeft, X, Loader2, 
   FileSpreadsheet, Users, ShieldCheck, Phone, MapPin, Hash, Search, 
-  Filter, Printer, Sparkles, RefreshCw, AlertCircle, Check, ChevronRight,
-  Car
+  Filter, Printer, Sparkles, RefreshCw, AlertCircle, Check, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SubmissionCardsSkeleton } from '../../components/skeleton';
 import { useLanguage } from '../../context/LanguageContext';
 import FeedbackModal from '../../components/common/FeedbackModal';
+import TricycleIcon from '../../components/common/TricycleIcon';
 
 const SubmitMembers = () => {
   const { t, language } = useLanguage();
@@ -580,7 +580,7 @@ const SubmitMembers = () => {
                       {/* Member's Registered Units Roster */}
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
-                          <Car size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                          <TricycleIcon size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                           <span>Registered Tricycle Units</span>
                         </p>
 

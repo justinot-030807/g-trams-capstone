@@ -1,9 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import { 
   Printer, X, FileText, CheckCircle2, AlertTriangle, ShieldCheck, 
-  User, Car, Check, ExternalLink, Calendar, MapPin, Hash, Phone, Clock
+  User, Check, ExternalLink, Calendar, MapPin, Hash, Phone, Clock
 } from 'lucide-react';
 import { GASAN_ZONES } from '../operator/TodaZoneGuideModal';
+import TricycleIcon from '../common/TricycleIcon';
 
 const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReject, isProcessing = false }) => {
   const dossierRef = useRef(null);
@@ -353,7 +354,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             <div className="border border-slate-200 rounded-xl overflow-hidden">
               <div className="bg-slate-800 text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
                 <span className="flex items-center gap-1.5">
-                  <Car size={14} className="text-[#D4AF37]" />
+                  <TricycleIcon size={14} className="text-[#D4AF37]" />
                   Section 3: Tricycle Unit &amp; LTO OR/CR Specifications
                 </span>
                 <span className="text-[10px] font-normal text-slate-300">Mechanical Verification</span>
