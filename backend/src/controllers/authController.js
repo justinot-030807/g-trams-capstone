@@ -53,6 +53,20 @@ const getContactQueryFilter = (contactStr) => {
     return orConditions.length === 1 ? orConditions[0] : { $or: orConditions };
 };
 
+// Cryptographic OTP hashing helper (SHA-256)
+const hashOtp = (rawOtp) => {
+    return crypto.createHash('sha256').update(String(rawOtp || '').trim()).digest('hex');
+};
+
+// Strictly fetch JWT secret or throw error (no insecure hardcoded fallback)
+const getJwtSecret = () => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('JWT_SECRET is not configured on the server');
+    }
+    return secret;
+};
+
 // Register user and send OTP
 exports.register = async (req, res) => {
     try {
@@ -109,6 +123,7 @@ exports.register = async (req, res) => {
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedOtp = hashOtp(otp);
         
         user = new User({
             name: resolvedName,
@@ -119,7 +134,7 @@ exports.register = async (req, res) => {
             role: assignedRole,
             todaAssociation: normalizedToda,
             isVerified: false,
-            otp,
+            otp: hashedOtp,
             otpExpire: Date.now() + 10 * 60 * 1000 
         });
         
@@ -175,9 +190,10 @@ exports.verifyOTP = async (req, res) => {
         }
 
         const contactFilter = getContactQueryFilter(rawContact);
+        const hashedInputOtp = hashOtp(normalizedOtp);
         const user = await User.findOne({ 
             ...contactFilter,
-            otp: normalizedOtp, 
+            $or: [{ otp: hashedInputOtp }, { otp: normalizedOtp }], 
             otpExpire: { $gt: Date.now() } 
         });
         
@@ -192,7 +208,7 @@ exports.verifyOTP = async (req, res) => {
         }
         await user.save();
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '1d' });
         const userObj = user.toObject();
         delete userObj.password;
         
@@ -378,7 +394,7 @@ exports.forgotPassword = async (req, res) => {
         if (!user) return res.status(404).json({ message: 'Contact is not registered.' });
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        user.otp = otp;
+        user.otp = hashOtp(otp);
         user.otpExpire = Date.now() + 10 * 60 * 1000;
         await user.save();
 
@@ -431,9 +447,10 @@ exports.resetPassword = async (req, res) => {
         }
 
         const contactFilter = getContactQueryFilter(rawContact);
+        const hashedInputOtp = hashOtp(normalizedOtp);
         const user = await User.findOne({
             ...contactFilter,
-            otp: normalizedOtp,
+            $or: [{ otp: hashedInputOtp }, { otp: normalizedOtp }],
             otpExpire: { $gt: Date.now() }
         });
         if (!user) return res.status(400).json({ message: 'Invalid or expired OTP code.' });
@@ -762,22 +779,23 @@ exports.googleAuth = async (req, res) => {
             }
         }
 
-        // 4. Direct email field in body
-        if (!email && req.body.email && String(req.body.email).includes('@')) {
-            email = String(req.body.email).toLowerCase().trim();
-        }
-
-        // 5. Direct contact field in body if it's an email
-        if (!email && req.body.contact && String(req.body.contact).includes('@')) {
-            email = String(req.body.contact).toLowerCase().trim();
-        }
-
-        // 6. onboardingData email or contact
-        if (!email && onboardingData) {
-            const candidate = onboardingData.email || onboardingData.contact;
-            if (candidate && String(candidate).includes('@')) {
-                email = String(candidate).toLowerCase().trim();
+        // 4. In non-production environments (test/local dev), allow direct body / onboarding mock fields
+        if (!email && process.env.NODE_ENV !== 'production') {
+            if (req.body.email && String(req.body.email).includes('@')) {
+                email = String(req.body.email).toLowerCase().trim();
+            } else if (req.body.contact && String(req.body.contact).includes('@')) {
+                email = String(req.body.contact).toLowerCase().trim();
+            } else if (onboardingData) {
+                const candidate = onboardingData.email || onboardingData.contact;
+                if (candidate && String(candidate).includes('@')) {
+                    email = String(candidate).toLowerCase().trim();
+                }
             }
+        }
+
+        // In production, require that a valid Google credential or token was supplied
+        if (process.env.NODE_ENV === 'production' && !tokenCandidate && !accessTokenCandidate) {
+            return res.status(400).json({ message: 'Valid Google credential or token is required in production.' });
         }
 
         if (!email) {
@@ -815,6 +833,14 @@ exports.googleAuth = async (req, res) => {
             const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
             const isAdmin = normalizedRole === 'admin' || normalizedRole === 'administrator';
 
+            // Protect administrative and cashier accounts from unauthorized public Google takeover
+            const isOperator = normalizedRole === 'operator';
+            if (!isOperator && user.authProvider !== 'google' && !user.googleId) {
+                return res.status(403).json({ 
+                    message: 'Administrative and Cashier accounts must log in using their official municipal credentials.' 
+                });
+            }
+
             if (isMaintenance && !isAdmin) {
                 return res.status(503).json({ 
                     message: sysSettings.maintenanceMessage || 'Portal is currently undergoing system maintenance. Access is restricted.',
@@ -850,7 +876,7 @@ exports.googleAuth = async (req, res) => {
             user.lastLogin = new Date();
             await user.save();
 
-            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
+            const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '1d' });
             const userObj = user.toObject();
             delete userObj.password;
 
@@ -913,7 +939,7 @@ exports.googleAuth = async (req, res) => {
             existingContact.lastLogin = new Date();
             await existingContact.save();
 
-            const token = jwt.sign({ id: existingContact._id, role: existingContact.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
+            const token = jwt.sign({ id: existingContact._id, role: existingContact.role }, getJwtSecret(), { expiresIn: '1d' });
             const userObj = existingContact.toObject();
             delete userObj.password;
 
@@ -957,7 +983,7 @@ exports.googleAuth = async (req, res) => {
             details: { name: user.name, email: user.email, contact: user.contact, address: user.address, toda: user.todaAssociation }
         });
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'gtrams_jwt_default_secret', { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '1d' });
         const userObj = user.toObject();
         delete userObj.password;
 

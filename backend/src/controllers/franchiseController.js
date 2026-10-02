@@ -55,7 +55,11 @@ const createFranchise = async (req, res) => {
             cedulaUrl: findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']) || req.body.cedulaUrl || ''
         };
         
-        const franchiseOwner = req.body.operator || req.user._id;
+        const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'administrator');
+        const franchiseOwner = (isAdmin && req.body.operator) ? req.body.operator : req.user._id;
+        if (!isAdmin || !data.status) {
+            data.status = 'Pending';
+        }
         const franchise = await FranchiseService.createFranchise(data, franchiseOwner);
         
         res.status(201).json(franchise);
@@ -618,10 +622,19 @@ const processCashierPayment = async (req, res) => {
             return res.status(404).json({ message: 'Franchise record not found.' });
         }
 
+        if (franchise.paymentStatus === 'Paid') {
+            return res.status(400).json({ message: 'Franchise payment has already been recorded and processed.' });
+        }
+
+        const validAmount = amountPaid !== undefined ? Number(amountPaid) : 500;
+        if (isNaN(validAmount) || validAmount <= 0) {
+            return res.status(400).json({ message: 'Valid payment amount is required.' });
+        }
+
         const now = new Date();
         franchise.paymentStatus = 'Paid';
         franchise.officialReceiptNo = officialReceiptNo.trim().toUpperCase();
-        franchise.amountPaid = Number(amountPaid) || 500;
+        franchise.amountPaid = validAmount;
         franchise.paymentMethod = paymentMethod || 'Cash';
         franchise.paymentDate = now;
         franchise.paidByCashier = req.user._id;
