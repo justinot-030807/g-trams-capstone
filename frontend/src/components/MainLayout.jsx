@@ -137,7 +137,7 @@ const MainLayout = ({ children, hideNav = false }) => {
 
   if (hideNav) {
     return (
-      <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200 print:bg-white print:text-black">
+      <div className="min-h-[100dvh] bg-neutral-bg dark:bg-neutral-bg-dark text-neutral-text dark:text-neutral-text-dark flex flex-col transition-colors duration-200 print:bg-white print:text-black">
         {isOffline && (
           <div className="bg-red-600 text-white text-center py-2 px-4 text-[11px] font-bold z-50 shadow-md">
             ⚠️ Offline ka ngayon. Limitado ang ibang features.
@@ -151,7 +151,7 @@ const MainLayout = ({ children, hideNav = false }) => {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-200 overscroll-y-contain print:bg-white print:text-black print:block print:min-h-0">
+    <div className="min-h-[100dvh] bg-neutral-bg dark:bg-neutral-bg-dark text-neutral-text dark:text-neutral-text-dark flex flex-col md:flex-row transition-colors duration-200 overscroll-y-contain print:bg-white print:text-black print:block print:min-h-0">
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={closeSidebar} 

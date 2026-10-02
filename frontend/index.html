@@ -9,13 +9,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#801820" />
+    <meta name="theme-color" content="#9E2A2B" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="G-TRAMS" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     
+    <!-- Google Fonts: IBM Plex Sans & IBM Plex Mono (Weights: 400, 500, 600) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+
     <title>G-TRAMS | Municipality of Gasan</title>
     <script>
       (function() {
@@ -26,19 +31,12 @@
 
           if (isAuthPage) {
             document.documentElement.classList.add('auth-view');
-            document.documentElement.style.backgroundColor = '#1A0B0E';
-            document.body.style.backgroundColor = '#1A0B0E';
+            document.documentElement.style.backgroundColor = '#14110F';
+            document.body.style.backgroundColor = '#14110F';
           }
 
-          const isReviewStation = window.location.pathname.includes('/franchise-approval/review');
-          if (isReviewStation) {
-            document.documentElement.classList.add('review-station-active');
-            document.documentElement.style.zoom = '1';
-          } else if (window.innerWidth >= 769) {
-            document.documentElement.style.zoom = '0.9';
-          } else {
-            document.documentElement.style.zoom = '1';
-          }
+          // Unify standard zoom to 1.0 (100%) so all text respects minimum 14px body standard
+          document.documentElement.style.zoom = '1';
 
           const savedTheme = localStorage.getItem('theme');
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

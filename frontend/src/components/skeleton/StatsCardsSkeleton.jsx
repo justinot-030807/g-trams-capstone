@@ -21,26 +21,24 @@ const StatsCardsSkeleton = ({
         return (
           <div
             key={index}
-            className="stagger-reveal bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-sm relative overflow-hidden flex justify-between items-start"
+            className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 shadow-xs flex flex-col justify-between"
             style={{ animationDelay: `${cardDelay}ms` }}
           >
-            {/* Top Accent Strip Placeholder */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-slate-200/80 dark:bg-slate-700/80" />
-
-            {/* Left Metrics */}
-            <div className="space-y-1.5 flex-1 pr-2">
+            <div className="space-y-2">
               <SkeletonElement
                 height="12px"
                 className="w-24 sm:w-28"
-                rounded="rounded-md"
+                rounded="rounded-sm"
                 delay={cardDelay}
               />
               <SkeletonElement
-                height="30px"
+                height="28px"
                 className="w-16 sm:w-20 my-1"
-                rounded="rounded-lg"
+                rounded="rounded-sm"
                 delay={cardDelay + 15}
               />
+            </div>
+            <div className="mt-2">
               <SkeletonElement
                 height="10px"
                 className="w-28 sm:w-32 max-w-full"
@@ -48,13 +46,6 @@ const StatsCardsSkeleton = ({
                 delay={cardDelay + 25}
               />
             </div>
-
-            {/* Right Icon Box */}
-            <SkeletonElement
-              rounded="rounded-2xl"
-              className="w-10 h-10 sm:w-12 sm:h-12 shrink-0"
-              delay={cardDelay + 20}
-            />
           </div>
         );
       })}

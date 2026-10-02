@@ -3,13 +3,13 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
   FileCheck, ShieldAlert, LogOut, User, Printer, 
-  HelpCircle, ChevronDown, Folder, PanelLeftClose, Layers, Receipt
+  HelpCircle, ChevronDown, Folder, PanelLeftClose, Receipt
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSocket } from '../context/SocketContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { t } = useLanguage();
+  const { t } = useLanguage() || { t: (_, def) => def };
   const { socket } = useSocket() || {};
   const navigate = useNavigate();
   const location = useLocation();
@@ -80,7 +80,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   // Listen for socket real-time chat and notifications
   useEffect(() => {
     if (role === 'admin' || role === 'administrator') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchChatUnreadCount();
 
       const handleUnreadUpdate = (e) => {
@@ -138,7 +137,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         onClose();
       }
     }
-  }, [location.pathname]);
+  }, [location.pathname, onClose]);
 
   useEffect(() => {
     if (role === 'admin' || role === 'administrator') {
@@ -287,7 +286,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         );
         if (isCurrentInside) {
           setOpenSubMenus(prev => {
-            if (prev[item.id]) return prev; // Avoid unnecessary state update if already open
+            if (prev[item.id]) return prev;
             const next = { ...prev, [item.id]: true };
             localStorage.setItem('gtrams_open_submenus', JSON.stringify(next));
             return next;
@@ -303,13 +302,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       localStorage.setItem('gtrams_open_submenus', JSON.stringify(next));
       return next;
     });
-  };
-
-  const handleNavigate = (path) => {
-    navigate(path);
-    if (window.innerWidth < 768 && onClose) {
-      onClose();
-    }
   };
 
   const getRoleLabel = () => {
@@ -332,15 +324,16 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
       `}</style>
 
+      {/* Solid Dim Overlay on Mobile (No blurry glassmorphism) */}
       {isOpen && !hideMobileSidebar && (
         <div 
-          className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-300 print:hidden print-hide"
+          className="md:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-150 print:hidden print-hide"
           onClick={onClose}
         />
       )}
 
       <aside 
-        className={`bg-[#9E2A2B] dark:bg-[#0c101c] fixed inset-y-0 left-0 flex flex-col justify-between shadow-2xl z-50 transition-all duration-300 ease-in-out border-r border-white/10 dark:border-slate-800 print:hidden print-hide ${
+        className={`bg-[#9E2A2B] dark:bg-[#14110F] fixed inset-y-0 left-0 flex flex-col justify-between shadow-xs z-50 transition-all duration-200 ease-in-out border-r border-[#E4E1DC]/20 dark:border-[#2E2A27] print:hidden print-hide ${
           hideMobileSidebar ? 'hidden md:flex' : 'flex'
         } ${
           isOpen 
@@ -349,30 +342,30 @@ const Sidebar = ({ isOpen, onClose }) => {
         }`}
       >
         {/* Brand Header */}
-        <div className={`p-4 sm:p-5 flex items-center border-b border-white/10 dark:border-slate-800/80 shrink-0 bg-[#6c171e]/70 dark:bg-[#080c16] ${isOpen ? 'justify-between' : 'justify-center'}`}>
+        <div className={`p-4 flex items-center border-b border-white/10 dark:border-[#2E2A27] shrink-0 bg-[#7A1B22]/50 dark:bg-[#1C1917]/70 ${isOpen ? 'justify-between' : 'justify-center'}`}>
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 shrink-0 flex items-center justify-center">
-              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-10 h-10 object-contain drop-shadow-md shrink-0" />
+            <div className="w-9 h-9 shrink-0 flex items-center justify-center">
+              <img src="/gasan-logo.png" alt="Gasan Seal" className="w-9 h-9 object-contain shrink-0" />
             </div>
             {isOpen && (
-              <div className="flex flex-col min-w-0 transition-opacity duration-200">
-                <span className="text-white font-black text-sm tracking-wider whitespace-nowrap">G-TRAMS</span>
-                <span className="text-white/70 dark:text-slate-400 text-xs font-semibold tracking-tight truncate whitespace-nowrap">Municipality of Gasan</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-white font-semibold text-sm tracking-normal whitespace-nowrap">G-TRAMS</span>
+                <span className="text-white/70 dark:text-[#A8A29E] text-xs font-normal truncate whitespace-nowrap">Municipality of Gasan</span>
               </div>
             )}
           </div>
 
-          {/* Close button strictly on mobile drawer only - removed on desktop so there's no duplicate button */}
+          {/* Close button strictly on mobile drawer */}
           <button 
             onClick={onClose}
             title="Close Menu"
-            className="md:hidden text-white/70 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors focus:outline-none shrink-0"
+            className="md:hidden text-white/70 hover:text-white p-1 rounded-md transition-colors focus:outline-none shrink-0"
           >
             <PanelLeftClose size={18} />
           </button>
         </div>
 
-        <nav className="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto min-h-0 custom-sidebar-scroll">
+        <nav className="flex-1 px-2.5 py-3 space-y-1 overflow-y-auto min-h-0 custom-sidebar-scroll">
           {activeMenu.map((item, index) => {
             if (item.type === 'link') {
               const isActive = location.pathname === item.path;
@@ -384,17 +377,17 @@ const Sidebar = ({ isOpen, onClose }) => {
                       if (window.innerWidth < 768 && onClose) onClose();
                     }}
                     title={item.name}
-                    className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
+                    className={`w-full flex items-center px-3 py-2 rounded-md text-xs sm:text-sm transition-colors duration-100 ${
                       isActive 
-                        ? 'bg-white text-[#9E2A2B] dark:bg-white/10 dark:text-[#D4AF37] dark:border dark:border-[#D4AF37]/30 shadow-xs' 
-                        : 'text-white/80 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white dark:hover:text-white'
+                        ? 'border-l-4 border-[#D4AF37] bg-black/25 text-white font-medium pl-2' 
+                        : 'border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white font-normal pl-2'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-110 group-active/navitem:scale-95 origin-center relative">
+                      <div className="shrink-0 relative">
                         {item.icon}
                         {!isOpen && Boolean(item.badge) && (
-                          <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#9E2A2B]">
+                          <span className="absolute -top-1 -right-2 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white">
                             {item.badge > 99 ? '99+' : item.badge}
                           </span>
                         )}
@@ -403,7 +396,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     </div>
 
                     {isOpen && Boolean(item.badge) && (
-                      <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm shrink-0">
+                      <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white shrink-0">
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
@@ -411,10 +404,10 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                   {/* Icon Hover Tooltip (Only when sidebar is minimized) */}
                   {!isOpen && (
-                    <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/navitem:opacity-100 group-hover/navitem:translate-x-0 -translate-x-1 transition-all duration-200 pointer-events-none z-[100] items-center gap-2">
+                    <div className="hidden md:flex absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-[#1C1917] text-white text-xs rounded-md border border-[#2E2A27] whitespace-nowrap opacity-0 group-hover/navitem:opacity-100 transition-opacity duration-150 pointer-events-none z-[100] items-center gap-1.5 shadow-sm">
                       <span>{item.name}</span>
                       {Boolean(item.badge) && (
-                        <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black">
+                        <span className="bg-red-600 text-white text-[9px] px-1 rounded-full font-semibold">
                           {item.badge}
                         </span>
                       )}
@@ -429,18 +422,18 @@ const Sidebar = ({ isOpen, onClose }) => {
               const isAnySubActive = item.subItems.some(sub => sub.path === location.pathname);
 
               return (
-                <div key={index} className="space-y-1 relative group/navitem">
+                <div key={index} className="space-y-0.5 relative group/navitem">
                   <button
                     onClick={() => toggleSubMenu(item.id)}
                     title={item.name}
-                    className={`w-full flex items-center px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-150 ${
+                    className={`w-full flex items-center px-3 py-2 rounded-md text-xs sm:text-sm transition-colors duration-100 ${
                       isAnySubActive 
-                        ? (isExpanded ? 'bg-white/15 dark:bg-white/10 dark:text-white dark:border dark:border-white/15' : 'bg-white/20 dark:bg-white/10 text-white shadow-sm ring-1 ring-white/20 dark:ring-[#D4AF37]/30 dark:text-[#D4AF37]') 
-                        : 'text-white/80 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/5 hover:text-white dark:hover:text-white'
+                        ? 'border-l-4 border-[#D4AF37]/80 bg-black/20 text-white font-medium pl-2' 
+                        : 'border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white font-normal pl-2'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="shrink-0 transition-transform duration-200 group-hover/navitem:scale-110 group-active/navitem:scale-95 origin-center">
+                      <div className="shrink-0">
                         {item.icon}
                       </div>
                       {isOpen && <span className="truncate">{item.name}</span>}
@@ -449,79 +442,43 @@ const Sidebar = ({ isOpen, onClose }) => {
                     {isOpen && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         {Boolean(item.badge) && (
-                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm ring-1 ring-[#9E2A2B]">
+                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white">
                             {item.badge}
                           </span>
                         )}
                         <ChevronDown 
                           size={14} 
-                          className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-white' : 'text-white/60 dark:text-slate-400'}`} 
+                          className={`transition-transform duration-150 ${isExpanded ? 'rotate-180 text-white' : 'text-white/60'}`} 
                         />
                       </div>
                     )}
                   </button>
 
-                  {/* Icon Hover Tooltip (When minimized and not hovering a subitem) */}
-                  {!isOpen && (
-                    <div className="hidden md:flex absolute left-full ml-3 top-2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/navitem:opacity-100 group-hover/navitem:translate-x-0 -translate-x-1 transition-all duration-200 pointer-events-none z-[100] items-center gap-2">
-                      <span>{item.name}</span>
-                      {Boolean(item.badge) && (
-                        <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Sub folder items accordion (Visible in BOTH expanded and minimized modes!) */}
-                  {isExpanded && (
-                    <div className={
-                      isOpen 
-                        ? "ml-3 pl-3 py-1 border-l-2 border-white/20 dark:border-slate-800 space-y-1 animate-in fade-in duration-150" 
-                        : "py-1 space-y-1.5 flex flex-col items-center bg-black/20 dark:bg-slate-950/60 rounded-xl mx-1 my-1 p-1 animate-in fade-in duration-150 border border-white/5 dark:border-slate-800/60"
-                    }>
-                      {item.subItems.map((sub, idx) => {
+                  {/* Submenu Items */}
+                  {isExpanded && isOpen && (
+                    <div className="pl-7 pr-1 space-y-0.5 pt-0.5">
+                      {item.subItems.map((sub, sIdx) => {
                         const isSubActive = location.pathname === sub.path || (sub.path === '/franchise-approval' && location.pathname.startsWith('/franchise-approval/review'));
                         return (
-                          <div key={idx} className="relative group/subitem w-full flex justify-center">
-                            <Link
-                              to={sub.path}
-                              onClick={() => {
-                                if (window.innerWidth < 768 && onClose) onClose();
-                              }}
-                              title={sub.name}
-                              className={`flex items-center rounded-lg text-xs font-bold transition-colors duration-150 ${
-                                isSubActive 
-                                  ? 'bg-white text-[#9E2A2B] dark:bg-white/15 dark:text-[#D4AF37] shadow-sm font-black dark:border dark:border-[#D4AF37]/30' 
-                                  : 'text-white/75 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/10 hover:text-white dark:hover:text-white'
-                              } ${isOpen ? 'w-full px-2.5 py-2 justify-between' : 'w-9 h-9 justify-center'}`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="shrink-0 transition-transform duration-200 group-hover/subitem:scale-110 origin-center">
-                                  {sub.icon}
-                                </div>
-                                {isOpen && <span className="truncate">{sub.name}</span>}
-                              </div>
-
-                              {isOpen && Boolean(sub.badge) && (
-                                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-sm">
-                                  {sub.badge}
-                                </span>
-                              )}
-                            </Link>
-
-                            {/* Tooltip for sub folder icon in minimized mode */}
-                            {!isOpen && (
-                              <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/subitem:opacity-100 transition-all pointer-events-none z-[100] items-center gap-1.5">
-                                <span>{sub.name}</span>
-                                {Boolean(sub.badge) && (
-                                  <span className="bg-red-500 text-white text-[9px] px-1 rounded-full font-black">
-                                    {sub.badge}
-                                  </span>
-                                )}
-                              </div>
+                          <Link
+                            key={sIdx}
+                            to={sub.path}
+                            onClick={() => {
+                              if (window.innerWidth < 768 && onClose) onClose();
+                            }}
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors duration-100 ${
+                              isSubActive 
+                                ? 'bg-black/25 text-[#D4AF37] font-medium' 
+                                : 'text-white/70 hover:text-white hover:bg-white/5 font-normal'
+                            }`}
+                          >
+                            <span className="truncate">{sub.name}</span>
+                            {Boolean(sub.badge) && (
+                              <span className="flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white">
+                                {sub.badge}
+                              </span>
                             )}
-                          </div>
+                          </Link>
                         );
                       })}
                     </div>
@@ -535,26 +492,26 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* User Profile & Logout - Bottom */}
-        <div className={`p-3 border-t border-white/10 dark:border-slate-800/80 shrink-0 bg-[#6c171e]/60 dark:bg-[#080c16] ${isOpen ? 'space-y-2' : 'flex flex-col items-center gap-2'}`}>
-          <div className={`flex items-center gap-2.5 ${isOpen ? 'px-2 py-1.5 rounded-xl bg-white/5 dark:bg-slate-800/60 border border-transparent dark:border-slate-700/60' : 'justify-center relative group/profile'}`}>
-            <div className="w-9 h-9 rounded-full bg-black/20 dark:bg-slate-800 border border-white/20 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+        <div className={`p-3 border-t border-white/10 dark:border-[#2E2A27] shrink-0 bg-[#7A1B22]/40 dark:bg-[#1C1917]/70 ${isOpen ? 'space-y-2' : 'flex flex-col items-center gap-2'}`}>
+          <div className={`flex items-center gap-2.5 ${isOpen ? 'px-2 py-1.5 rounded-md bg-black/15' : 'justify-center relative group/profile'}`}>
+            <div className="w-8 h-8 rounded-full bg-black/20 border border-white/20 flex items-center justify-center overflow-hidden shrink-0">
               {userData.profilePic ? (
                 <img src={userData.profilePic} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <User size={16} className="text-white/80 dark:text-slate-300" />
+                <User size={15} className="text-white/80" />
               )}
             </div>
             {isOpen ? (
               <div className="flex flex-col min-w-0">
-                <span className="text-white font-bold text-xs tracking-tight truncate leading-tight">
+                <span className="text-white font-medium text-xs truncate leading-tight">
                   {userData.name}
                 </span>
-                <span className="text-[#D4AF37] text-[10px] font-black tracking-wider uppercase">
+                <span className="text-[#D4AF37] text-[10px] font-semibold uppercase tracking-wider">
                   {getRoleLabel()}
                 </span>
               </div>
             ) : (
-              <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/profile:opacity-100 transition-all pointer-events-none z-[70]">
+              <div className="hidden md:flex absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-[#1C1917] text-white text-xs rounded-md border border-[#2E2A27] whitespace-nowrap opacity-0 group-hover/profile:opacity-100 transition-opacity pointer-events-none z-[70]">
                 {userData.name} ({getRoleLabel()})
               </div>
             )}
@@ -567,19 +524,11 @@ const Sidebar = ({ isOpen, onClose }) => {
                 window.location.href = '/login';
               }}
               title={!isOpen ? t('nav.logOut', 'Log Out') : undefined}
-              className={`flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-200 text-white/90 hover:text-white bg-white/10 hover:bg-red-600 dark:bg-slate-800/90 dark:text-slate-300 dark:hover:text-red-400 dark:hover:bg-red-950/40 border border-white/10 dark:border-slate-700/70 hover:border-red-500/40 shadow-xs ${isOpen ? 'w-full py-2 gap-2' : 'w-10 h-10'}`}
+              className={`flex items-center justify-center rounded-md text-xs font-medium transition-colors duration-150 text-white/90 hover:text-white bg-white/10 hover:bg-red-700 dark:bg-black/30 dark:hover:bg-red-900 border border-white/10 ${isOpen ? 'w-full py-1.5 gap-2' : 'w-9 h-9'}`}
             >
-              <div className="shrink-0 transition-transform duration-200 group-hover/logout:scale-125">
-                <LogOut size={16} />
-              </div>
+              <LogOut size={15} />
               {isOpen && <span>{t('nav.logOut', 'Log Out')}</span>}
             </button>
-
-            {!isOpen && (
-              <div className="hidden md:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900 text-rose-300 text-xs font-bold rounded-xl shadow-2xl border border-white/15 whitespace-nowrap opacity-0 group-hover/logout:opacity-100 transition-all pointer-events-none z-[70]">
-                {t('nav.logOut', 'Log Out')}
-              </div>
-            )}
           </div>
         </div>
       </aside>

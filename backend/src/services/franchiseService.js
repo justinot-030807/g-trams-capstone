@@ -39,6 +39,11 @@ class FranchiseService {
             cancelled: reports.filter(r => r.status === 'Cancelled').length,
             expired: reports.filter(r => r.status === 'Expired').length,
             newApps: reports.filter(r => r.applicationType === 'New').length,
+            newAppsThisYear: reports.filter(r => {
+                if (r.applicationType !== 'New') return false;
+                const d = new Date(r.dateApplied || r.createdAt || 0);
+                return d.getFullYear() === new Date().getFullYear();
+            }).length,
             
             // Peak readiness metrics for January renewal surge
             renewalsDue30: reports.filter(r => {

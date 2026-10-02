@@ -1,185 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import MainLayout from '../../components/MainLayout';
-import { 
-  Users, FileStack, Clock, ShieldCheck, AlertTriangle, 
-  BarChart3, History, CheckCircle, ArrowRight, TrendingUp, Sparkles,
-  PieChart as PieChartIcon, Sun, Moon, SunMedium, FileCheck,
-  CalendarDays, Inbox, CheckCircle2
-} from 'lucide-react';
-import { 
-  ResponsiveContainer, PieChart, Pie, Cell, Tooltip 
-} from 'recharts';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { StatsCardsSkeleton, SkeletonElement } from '../../components/skeleton';
-
-const TODA_COLORS = [
-  '#9E2A2B', // Maroon (Municipal Core)
-  '#D4AF37', // Gold (Accent)
-  '#2563EB', // Blue (BATODA)
-  '#059669', // Emerald (POB TODA)
-  '#D97706', // Amber (GT TODA)
-  '#7C3AED', // Purple (NBI TODA)
-  '#0D9488', // Teal (TAB TODA)
-  '#E11D48', // Rose (BANGBANG IPIL)
-  '#0284C7', // Sky (BAHI TODA)
-  '#4F46E5', // Indigo (GASAN CENTRAL)
-  '#64748B'  // Slate (NON-TODA / Others)
-];
-
-const CustomTodaTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-white dark:bg-[#111827] p-3.5 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 text-xs z-50 relative pointer-events-none select-none">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: data.color }} />
-          <span className="font-black text-slate-900 dark:text-white">{data.name}</span>
-        </div>
-        <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-400 font-medium">
-          <span>Units: <strong className="text-slate-900 dark:text-white font-bold">{data.value}</strong></span>
-          <span className="font-black text-[#9E2A2B] dark:text-[#D4AF37]">{data.percentage}% share</span>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
+import MainLayout from '../../components/MainLayout';
+import PageHeader from '../../components/common/PageHeader';
+import StatCard from '../../components/common/StatCard';
+import BarList from '../../components/common/BarList';
+import DataTable from '../../components/common/DataTable';
+import StatusBadge from '../../components/common/StatusBadge';
+import { useLanguage } from '../../context/LanguageContext';
+import { useDashboardStats } from '../../hooks/useDashboardStats';
+import { StatsCardsSkeleton } from '../../components/skeleton';
+import { ArrowRight, Clock } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({ 
-    total: 0, 
-    active: 0, 
-    pending: 0, // Strictly Needs Review (awaiting decision: Pending & Pending for Approval)
-    forSigning: 0,
-    readyForPickup: 0,
-    pipeline: 0,
-    expired: 0, 
-    cancelled: 0, 
-    newApps: 0,
-    renewalsDue30: 0,
-    renewalsDue60: 0,
-    renewalsDue90: 0,
-    receivedToday: 0,
-    processedToday: 0,
-    oldestWaiting: null
-  });
-  const [todaStats, setTodaStats] = useState([]);
-  const [hoveredTodaIndex, setHoveredTodaIndex] = useState(null);
-  const [recentApps, setRecentApps] = useState([]);
-  const [historyLogs, setHistoryLogs] = useState([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isGraphAnimated, setIsGraphAnimated] = useState(false);
-  
+  const {
+    stats,
+    todaStats,
+    recentApps,
+    historyLogs,
+    isLoading,
+    error,
+    refetch
+  } = useDashboardStats({ pollingInterval: 60000 });
+
   const navigate = useNavigate();
-  const loggedInAdminName = localStorage.getItem('name') || 'Administrator';
+  const { t } = useLanguage() || { t: (_, def) => def };
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    fetchDashboardData();
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading) {
-      setIsGraphAnimated(false);
-      const timer = setTimeout(() => setIsGraphAnimated(true), 80);
-      return () => clearTimeout(timer);
-    } else {
-      setIsGraphAnimated(false);
-    }
-  }, [isLoading]);
-
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/reports`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      const raw = await response.json();
-      
-      if (response.ok) {
-        const sum = raw.summary || {};
-        
-        setStats({ 
-          total: sum.total || 0,
-          active: sum.active || 0, 
-          pending: sum.pending || 0, // Unified: strictly awaiting decision (Needs Review tab)
-          forSigning: sum.forSigning || 0,
-          readyForPickup: sum.readyForPickup || 0,
-          pipeline: (sum.pending || 0) + (sum.forSigning || 0) + (sum.readyForPickup || 0),
-          expired: sum.expired || 0,
-          cancelled: (sum.cancelled || 0) + (sum.revoked || 0),
-          newApps: sum.newApps || 0,
-          renewalsDue30: sum.renewalsDue30 || 0,
-          renewalsDue60: sum.renewalsDue60 || 0,
-          renewalsDue90: sum.renewalsDue90 || 0,
-          receivedToday: sum.receivedToday || 0,
-          processedToday: sum.processedToday || 0,
-          oldestWaiting: sum.oldestWaiting || null
-        });
-
-        // Compute TODA distribution directly from server's map
-        const todaMap = sum.todaMap || {};
-        const totalRecords = sum.total || 1;
-
-        const todaList = Object.entries(todaMap)
-          .map(([name, count]) => ({
-            name,
-            value: count,
-            percentage: Math.round((count / totalRecords) * 100)
-          }))
-          .sort((a, b) => b.value - a.value);
-
-        const formattedTodaStats = todaList.map((item, idx) => ({
-          ...item,
-          color: TODA_COLORS[idx % TODA_COLORS.length]
-        }));
-
-        setTodaStats(formattedTodaStats);
-        setRecentApps(sum.recentApps || []);
-        setHistoryLogs(sum.historyLogs || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getPercentage = (count) => stats.total === 0 ? 0 : Math.round((count / stats.total) * 100);
-
-  const getGraphHeight = (count) => {
-    if (!count || count === 0) return '0%';
-    const maxCount = Math.max(stats.active, stats.pending, stats.expired, stats.cancelled, 1);
-    const calculated = (count / maxCount) * 100;
-    return `${Math.max(calculated, 16)}%`;
-  };
-
-  const getActionDetails = (log) => {
-    const name = log.fullName || log.operator?.name || 'an Operator';
-    if (log.isArchived) return { name, verb: 'Archived record of', icon: FileStack, color: 'text-slate-600 bg-slate-100 border-slate-200', dotColor: 'bg-slate-400', badgeColor: 'text-slate-600 bg-slate-100 border-slate-200' };
-    if (log.status === 'Active' && log.applicationType === 'Renewal') return { name, verb: 'Approved renewal for', icon: CheckCircle, color: 'text-blue-700 bg-blue-50 border-blue-200', dotColor: 'bg-blue-500', badgeColor: 'text-blue-700 bg-blue-50 border-blue-200' };
-    if (log.status === 'Active') return { name, verb: 'Approved franchise of', icon: CheckCircle, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dotColor: 'bg-emerald-500', badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
-    if (log.status === 'Cancelled') return { name, verb: log.cancelReason ? `Cancelled (${log.cancelReason}) —` : 'Cancelled application of', icon: AlertTriangle, color: 'text-red-700 bg-red-50 border-red-200', dotColor: 'bg-red-500', badgeColor: 'text-red-700 bg-red-50 border-red-200' };
-    if (log.status === 'Expired') return { name, verb: 'Flagged as expired for', icon: Clock, color: 'text-orange-700 bg-orange-50 border-orange-200', dotColor: 'bg-orange-500', badgeColor: 'text-orange-700 bg-orange-50 border-orange-200' };
-    if (log.status === 'For Signing') return { name, verb: 'Routed for signature of', icon: FileCheck, color: 'text-purple-700 bg-purple-50 border-purple-200', dotColor: 'bg-purple-500', badgeColor: 'text-purple-700 bg-purple-50 border-purple-200' };
-    if (log.status === 'Ready for Pickup') return { name, verb: 'Marked ready for pickup for', icon: Sparkles, color: 'text-blue-700 bg-blue-50 border-blue-200', dotColor: 'bg-blue-500', badgeColor: 'text-blue-700 bg-blue-50 border-blue-200' };
-    return { name, verb: 'Updated pending record of', icon: Clock, color: 'text-amber-700 bg-amber-50 border-amber-200', dotColor: 'bg-amber-500', badgeColor: 'text-amber-700 bg-amber-50 border-amber-200' };
-  };
+  const getPercentage = (count) => (stats.total === 0 ? 0 : Math.round((count / stats.total) * 100));
 
   const getRelativeTime = (dateStr) => {
-    if (!dateStr) return '';
+    if (!dateStr) return '—';
     const now = new Date();
     const date = new Date(dateStr);
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+
+    if (diffMins < 1) return t('common.justNow', 'Kani-kanina lang');
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays < 7) return `${diffDays}d`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -188,859 +48,601 @@ const AdminDashboard = () => {
     return Math.floor((new Date() - new Date(dateStr)) / 86400000);
   };
 
-  const getGreeting = () => {
-    const hour = currentTime.getHours();
-    if (hour >= 5 && hour < 12) {
-      return { 
-        text: 'Good morning', 
-        tag: 'Morning Briefing', 
-        icon: Sun, 
-        badgeColor: 'text-amber-300' 
-      };
-    } else if (hour >= 12 && hour < 18) {
-      return { 
-        text: 'Good afternoon', 
-        tag: 'Afternoon Overview', 
-        icon: SunMedium, 
-        badgeColor: 'text-orange-300' 
-      };
-    } else {
-      return { 
-        text: 'Good evening', 
-        tag: 'Evening Summary', 
-        icon: Moon, 
-        badgeColor: 'text-indigo-200' 
+  const getActionDetails = (log) => {
+    const name = log.fullName || log.operator?.name || 'an Operator';
+    if (log.isArchived) {
+      return { name, verb: t('admin.verbArchived', 'Inarchive ang talaan ng') };
+    }
+    if (log.status === 'Active' && log.applicationType === 'Renewal') {
+      return { name, verb: t('admin.verbRenewalApproved', 'Inaprubahan ang renewal ng') };
+    }
+    if (log.status === 'Active') {
+      return { name, verb: t('admin.verbApproved', 'Inaprubahan ang prangkisa ng') };
+    }
+    if (log.status === 'Cancelled') {
+      return {
+        name,
+        verb: log.cancelReason
+          ? `${t('admin.verbCancelled', 'Kinansela')} (${log.cancelReason}) —`
+          : t('admin.verbCancelledApp', 'Kinansela ang aplikasyon ng'),
       };
     }
+    if (log.status === 'Expired') {
+      return { name, verb: t('admin.verbExpired', 'Itinalang expired para kay') };
+    }
+    if (log.status === 'For Signing') {
+      return { name, verb: t('admin.verbForSigning', 'Pinapapirmahan para kay') };
+    }
+    if (log.status === 'Ready for Pickup') {
+      return { name, verb: t('admin.verbReadyPickup', 'Handa nang kunin ni') };
+    }
+    return { name, verb: t('admin.verbUpdated', 'Inupdate ang aplikasyon ng') };
   };
 
-  const getGreetingSubtext = () => {
+  // Pipeline links for PageHeader
+  const pipelineLinks = useMemo(
+    () => [
+      {
+        label: t('admin.pipelineNeedsReview', 'Needs Review'),
+        count: stats.pending,
+        onClick: () => navigate('/franchise-approval?tab=pending'),
+        active: stats.pending > 0,
+        title: 'Tingnan ang mga aplikasyong naghihintay ng desisyon',
+      },
+      {
+        label: t('admin.pipelineForSigning', 'For Signing'),
+        count: stats.forSigning,
+        onClick: () => navigate('/franchise-approval?tab=signing'),
+        active: false,
+        title: 'Tingnan ang mga aplikasyong pinapapirmahan',
+      },
+      {
+        label: t('admin.pipelineReadyPickup', 'Ready for Pickup'),
+        count: stats.readyForPickup,
+        onClick: () => navigate('/franchise-approval?tab=ready'),
+        active: false,
+        title: 'Tingnan ang mga prangkisang handa nang kunin',
+      },
+    ],
+    [stats.pending, stats.forSigning, stats.readyForPickup, navigate, t]
+  );
+
+  // Subtitle for PageHeader
+  const headerSubtitle = useMemo(() => {
     if (isLoading) {
-      return 'Loading system overview and franchise status...';
+      return t('admin.loadingSummary', 'Kinukuha ang pangkalahatang-ideya ng prangkisa...');
     }
     if (stats.pending > 0) {
-      return `Welcome back! You have ${stats.pending} application${stats.pending > 1 ? 's' : ''} awaiting review in the approval queue (${stats.pipeline} in active municipal pipeline).`;
+      return `${stats.pending} ${t(
+        'admin.subtextPending',
+        'aplikasyon ang naghihintay ng pagsusuri sa queue'
+      )} (${stats.pipeline} ${t('admin.subtextPipeline', 'kabuuang yunit sa aktibong pipeline ng munisipyo')}).`;
     }
-    return `Welcome back! All review queues are up-to-date (${stats.pipeline} total units in active municipal pipeline).`;
-  };
+    return `${t(
+      'admin.subtextAllCleared',
+      'Lahat ng review queue ay naasikaso na'
+    )} (${stats.pipeline} ${t('admin.subtextPipeline', 'kabuuang yunit sa aktibong pipeline ng munisipyo')}).`;
+  }, [isLoading, stats.pending, stats.pipeline, t]);
 
-  const greeting = getGreeting();
-  const GreetingIcon = greeting.icon;
+  // Columns for Pending Approvals Queue DataTable
+  const pendingColumns = useMemo(
+    () => [
+      {
+        key: 'operator',
+        header: t('admin.colOperator', 'Operator'),
+        render: (app) => (
+          <div>
+            <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] leading-snug">
+              {app.fullName || 'Applicant'}
+            </p>
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+              {app.applicationType || 'New Application'}
+            </p>
+          </div>
+        ),
+      },
+      {
+        key: 'toda',
+        header: t('admin.colToda', 'TODA'),
+        render: (app) => (
+          <span className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3]">
+            {app.todaName || '—'}
+          </span>
+        ),
+      },
+      {
+        key: 'unit',
+        header: t('admin.colUnit', 'Unit'),
+        render: (app) => (
+          <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">
+            {app.make || 'Tricycle'}
+          </span>
+        ),
+      },
+      {
+        key: 'daysWaiting',
+        header: t('admin.colDaysWaiting', 'Araw na Naghihintay'),
+        render: (app) => {
+          const days = getDaysPending(app.dateApplied || app.createdAt);
+          const isUrgent = days >= 7;
+          const isWarning = days >= 3 && days < 7;
+
+          return (
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  isUrgent
+                    ? 'bg-[#B91C1C]'
+                    : isWarning
+                    ? 'bg-[#B45309]'
+                    : 'bg-[#15803D]'
+                }`}
+              />
+              <span
+                className={`font-mono text-xs font-semibold tabular-nums ${
+                  isUrgent
+                    ? 'text-[#B91C1C] dark:text-[#F87171]'
+                    : isWarning
+                    ? 'text-[#B45309] dark:text-[#FBBF24]'
+                    : 'text-[#15803D] dark:text-[#4ADE80]'
+                }`}
+              >
+                {days > 0 ? `${days}d` : t('common.today', 'Ngayon')}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'action',
+        header: t('admin.colAction', 'Aksyon'),
+        align: 'right',
+        render: (app) => (
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                app._id
+                  ? `/franchise-approval/review/${app._id}?tab=pending`
+                  : '/franchise-approval?tab=pending'
+              )
+            }
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] bg-[#FDF2F4] dark:bg-[#9E2A2B]/20 hover:bg-[#9E2A2B] hover:text-white dark:hover:bg-[#9E2A2B] dark:hover:text-white rounded border border-[#9E2A2B]/30 transition-colors cursor-pointer active:scale-95"
+          >
+            <span>{t('admin.review', 'Suriin')}</span>
+            <ArrowRight size={12} />
+          </button>
+        ),
+      },
+    ],
+    [navigate, t]
+  );
+
+  // Columns for System Activity History DataTable
+  const historyColumns = useMemo(
+    () => [
+      {
+        key: 'time',
+        header: t('admin.colTime', 'Oras'),
+        width: '80px',
+        render: (log) => (
+          <span className="font-mono text-xs text-[#6B6761] dark:text-[#A8A29E] tabular-nums whitespace-nowrap">
+            {getRelativeTime(log.updatedAt)}
+          </span>
+        ),
+      },
+      {
+        key: 'activity',
+        header: t('admin.colAction', 'Aksyon'),
+        render: (log) => {
+          const details = getActionDetails(log);
+          return (
+            <p className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] leading-snug">
+              <span className="text-[#6B6761] dark:text-[#A8A29E]">{details.verb} </span>
+              <span className="font-semibold">{details.name}</span>
+            </p>
+          );
+        },
+      },
+      {
+        key: 'status',
+        header: t('admin.colStatus', 'Katayuan'),
+        align: 'right',
+        render: (log) => <StatusBadge status={log.status} />,
+      },
+    ],
+    [t]
+  );
 
   return (
     <MainLayout>
-      {/* BUTTERY-SMOOTH CUSTOM ANIMATIONS */}
-      <style>{`
-        @keyframes smoothSlideUp {
-          0% { opacity: 0; transform: translateY(24px) scale(0.98); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes floatOrb {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(20px, -20px) scale(1.12); }
-        }
-        .animate-smooth-card {
-          opacity: 0;
-          animation: smoothSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          will-change: transform, opacity;
-        }
-        .animate-banner-orb {
-          animation: floatOrb 10s ease-in-out infinite alternate;
-          will-change: transform;
-        }
-        .smooth-bar-transition {
-          transition: height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-      `}</style>
-
-      {/* 1. HERO BANNER WITH CLICKABLE PIPELINE COUNTS */}
-      <div 
-        className="animate-smooth-card bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#1b0609] dark:via-[#26080d] dark:to-[#120305] rounded-3xl p-6 sm:p-8 mb-8 text-white shadow-xl dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/25 transition-all duration-300"
-        style={{ animationDelay: '0.05s' }}
-      >
-        <div className="relative z-10 text-center md:text-left min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-white/10 dark:bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold tracking-widest text-[#D4AF37] uppercase mb-2.5 border border-white/15 dark:border-[#D4AF37]/30 shadow-sm">
-            <GreetingIcon size={13} className={greeting.badgeColor} />
-            <span>{greeting.tag}</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2 text-white">
-            {greeting.text}, {loggedInAdminName}!
-          </h1>
-          <p className="text-white/80 dark:text-slate-300 font-medium text-xs sm:text-sm max-w-xl leading-relaxed mb-3">
-            {getGreetingSubtext()}
-          </p>
-
-          {/* Clickable Pipeline Counts Matching Queue Tabs */}
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+      {/* 1. MINIMALIST PAGE HEADER (Replaces old hero banner) */}
+      <PageHeader
+        title={t('admin.dashboardTitle', 'Dashboard')}
+        subtitle={headerSubtitle}
+        pipelineLinks={pipelineLinks}
+        actions={
+          stats.pending > 0 ? (
             <button
+              type="button"
               onClick={() => navigate('/franchise-approval?tab=pending')}
-              className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all text-xs font-semibold cursor-pointer active:scale-95 shadow-2xs"
-              title="Click to view applications awaiting review"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer"
             >
-              <span className="w-2 h-2 rounded-full bg-amber-400 group-hover:scale-125 transition-transform" />
-              <span className="text-white/90">Needs Review:</span>
-              <span className="text-amber-300 font-bold px-1.5 py-0.5 rounded bg-black/30 font-mono">{stats.pending}</span>
+              <Clock size={13} />
+              <span>
+                {t('admin.reviewQueue', 'Buksan ang Pila')} ({stats.pending})
+              </span>
             </button>
+          ) : null
+        }
+      />
 
-            <button
-              onClick={() => navigate('/franchise-approval?tab=signing')}
-              className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all text-xs font-semibold cursor-pointer active:scale-95 shadow-2xs"
-              title="Click to view applications queued for signing"
-            >
-              <span className="w-2 h-2 rounded-full bg-purple-400 group-hover:scale-125 transition-transform" />
-              <span className="text-white/90">For Signing:</span>
-              <span className="text-purple-300 font-bold px-1.5 py-0.5 rounded bg-black/30 font-mono">{stats.forSigning}</span>
-            </button>
+      {/* 2. PRIMARY STATS CARDS (Flat, no icon tiles, tabular-nums) */}
+      {isLoading ? (
+        <div className="mb-6">
+          <StatsCardsSkeleton count={4} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            label={t('admin.totalFranchises', 'Total Franchises')}
+            count={stats.total}
+            subtext={t('admin.totalFranchisesSub', 'Rehistradong yunit sa database')}
+            onClick={() => navigate('/franchise-masterlist')}
+            title="Tingnan ang kabuuang talaan sa Masterlist"
+          />
+          <StatCard
+            label={t('admin.activeFranchises', 'Active Franchises')}
+            count={stats.active}
+            subtext={`${getPercentage(stats.active)}% ${t('admin.operational', 'pumapasada')}`}
+            onClick={() => navigate('/franchise-masterlist?status=Active')}
+            title="I-filter ang mga aktibong prangkisa"
+          />
+          <StatCard
+            label={t('admin.pendingReview', 'Pending Review')}
+            count={stats.pending}
+            subtext={t('admin.pendingReviewSub', 'Naghihintay ng desisyon')}
+            onClick={() => navigate('/franchise-approval?tab=pending')}
+            title="Buksan ang review approval queue"
+          />
+          <StatCard
+            label={t('admin.expiredUnits', 'Expired Units')}
+            count={stats.expired}
+            subtext={t('admin.expiredUnitsSub', 'Kailangang i-renew')}
+            onClick={() => navigate('/franchise-masterlist?status=Expired')}
+            title="I-filter ang mga pasong prangkisa"
+          />
+        </div>
+      )}
 
-            <button
-              onClick={() => navigate('/franchise-approval?tab=ready')}
-              className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition-all text-xs font-semibold cursor-pointer active:scale-95 shadow-2xs"
-              title="Click to view signed franchises ready for pickup"
-            >
-              <span className="w-2 h-2 rounded-full bg-blue-400 group-hover:scale-125 transition-transform" />
-              <span className="text-white/90">Ready for Pickup:</span>
-              <span className="text-blue-300 font-bold px-1.5 py-0.5 rounded bg-black/30 font-mono">{stats.readyForPickup}</span>
-            </button>
+      {/* 2.5 PEAK READINESS & REGULATORY THROUGHPUT (January surge metrics) */}
+      {!isLoading && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            label={t('admin.renewalsDue30', 'Renewals Due (30d)')}
+            count={stats.renewalsDue30}
+            subtext={`60d: ${stats.renewalsDue60} • 90d: ${stats.renewalsDue90}`}
+            onClick={() => navigate('/franchise-masterlist?status=Active')}
+            title="Mga unit na mag-eexpire sa darating na 30 araw"
+          />
+          <StatCard
+            label={t('admin.receivedToday', 'Received Today')}
+            count={stats.receivedToday}
+            subtext={t('admin.receivedTodaySub', 'Bagong aplikasyong naitala ngayong araw')}
+          />
+          <StatCard
+            label={t('admin.processedToday', 'Processed Today')}
+            count={stats.processedToday}
+            subtext={t('admin.processedTodaySub', 'Naaprubahan o naresolba')}
+          />
+          <StatCard
+            label={t('admin.oldestWaiting', 'Oldest Waiting')}
+            count={stats.oldestWaiting ? stats.oldestWaiting.timeWaiting : 0}
+            subtext={
+              stats.oldestWaiting
+                ? `${stats.oldestWaiting.fullName} (${stats.oldestWaiting.todaName || 'Unit'})`
+                : t('admin.noBacklog', 'Walang backlog sa pila')
+            }
+            actionLabel={stats.oldestWaiting ? t('admin.review', 'Suriin') : null}
+            onAction={
+              stats.oldestWaiting
+                ? () =>
+                    navigate(
+                      `/franchise-approval/review/${stats.oldestWaiting._id}?tab=pending`
+                    )
+                : null
+            }
+          />
+        </div>
+      )}
+
+      {/* 3. FRANCHISE HEALTH OVERVIEW & BUOD (SIDE BY SIDE) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Franchise Health Overview (Segmented bar + 4 status breakdown) */}
+        <div className="lg:col-span-2 bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div>
+                <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                  {t('admin.franchiseHealth', 'Franchise Health Overview')}
+                </h2>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                  {t('admin.franchiseHealthSub', 'Distribusyon ng estado sa lahat ng rehistradong yunit')}
+                </p>
+              </div>
+              <span className="text-xs font-mono font-medium text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
+                {stats.total} {t('admin.unitsTotal', 'Yunit')}
+              </span>
+            </div>
+
+            {/* Segmented Bar (4 semantic colors only) */}
+            <div className="mb-4">
+              <div
+                className="w-full h-3 rounded bg-[#E4E1DC]/60 dark:bg-[#2E2A27]/60 overflow-hidden flex"
+                role="progressbar"
+                aria-label="Franchise status distribution"
+                aria-valuenow={getPercentage(stats.active)}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <div
+                  className="bg-[#15803D] h-full transition-all duration-500"
+                  style={{ width: `${getPercentage(stats.active)}%` }}
+                  title={`Active: ${stats.active} (${getPercentage(stats.active)}%)`}
+                />
+                <div
+                  className="bg-[#B45309] h-full transition-all duration-500"
+                  style={{ width: `${getPercentage(stats.pending)}%` }}
+                  title={`Pending: ${stats.pending} (${getPercentage(stats.pending)}%)`}
+                />
+                <div
+                  className="bg-[#B91C1C] h-full transition-all duration-500"
+                  style={{ width: `${getPercentage(stats.expired)}%` }}
+                  title={`Expired: ${stats.expired} (${getPercentage(stats.expired)}%)`}
+                />
+                <div
+                  className="bg-[#6B7280] h-full transition-all duration-500"
+                  style={{ width: `${getPercentage(stats.cancelled + stats.revoked)}%` }}
+                  title={`Cancelled / Revoked: ${stats.cancelled + stats.revoked} (${getPercentage(stats.cancelled + stats.revoked)}%)`}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Status Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            {[
+              {
+                label: t('status.active', 'Active'),
+                count: stats.active,
+                pct: getPercentage(stats.active),
+                dotBg: 'bg-[#15803D]',
+                desc: t('admin.operational', 'Pumapasada'),
+              },
+              {
+                label: t('status.pending', 'Pending'),
+                count: stats.pending,
+                pct: getPercentage(stats.pending),
+                dotBg: 'bg-[#B45309]',
+                desc: t('admin.awaitingReview', 'Sinusuri'),
+              },
+              {
+                label: t('status.expired', 'Expired'),
+                count: stats.expired,
+                pct: getPercentage(stats.expired),
+                dotBg: 'bg-[#B91C1C]',
+                desc: t('admin.overdue', 'Paso na'),
+              },
+              {
+                label: t('admin.revokedCancelled', 'Revoked / Cancelled'),
+                count: stats.cancelled + stats.revoked,
+                pct: getPercentage(stats.cancelled + stats.revoked),
+                dotBg: 'bg-[#6B7280]',
+                desc: `${stats.cancelled} cancelled • ${stats.revoked} revoked`,
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${item.dotBg}`} />
+                    <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider truncate">
+                      {item.label}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">
+                      {item.count}
+                    </span>
+                    <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
+                      ({item.pct}%)
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 truncate">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right Side: Interactive Action Badge & Compact Date */}
-        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
-          {isLoading ? (
-            <div className="h-10 w-36 rounded-2xl bg-white/10 dark:bg-white/5 animate-pulse border border-white/10" />
-          ) : stats.pending > 0 ? (
-            <button
-              onClick={() => navigate('/franchise-approval?tab=pending')}
-              className="group flex items-center gap-3 bg-white/15 hover:bg-white/25 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 border border-white/20 dark:border-[#D4AF37]/40 px-4 py-2.5 rounded-2xl transition-all shadow-sm cursor-pointer active:scale-95 text-left"
-              title="Open Approvals Queue"
-            >
-              <div className="w-8 h-8 rounded-xl bg-amber-400/25 border border-amber-400/40 text-[#D4AF37] flex items-center justify-center shrink-0">
-                <Clock size={16} />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-wider text-[#D4AF37]">Needs Action</p>
-                <p className="text-xs font-black text-white">{stats.pending} Pending Review</p>
-              </div>
-              <ArrowRight size={15} className="text-[#D4AF37] group-hover:translate-x-1 transition-transform ml-0.5" />
-            </button>
-          ) : (
-            <div className="flex items-center gap-2.5 bg-white/10 dark:bg-emerald-950/40 border border-white/15 dark:border-emerald-800/50 px-4 py-2.5 rounded-2xl text-xs font-bold text-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>All Queues Cleared</span>
-            </div>
-          )}
+        {/* Buod (Summary) - Replaces Quick Insights with simple label:value list, no Sparkles */}
+        <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+            <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+              {t('admin.summaryTitle', 'Buod')}
+            </h2>
+            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+              {t('admin.systemSnapshot', 'Impormasyon')}
+            </span>
+          </div>
 
-          <div className="hidden sm:flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/15 dark:border-slate-800 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-white/90">
-            <GreetingIcon size={14} className={greeting.badgeColor} />
-            <span>{currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+          <div className="space-y-3.5 flex-1 flex flex-col justify-around text-xs">
+            {/* Compliance Rate */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[#6B6761] dark:text-[#A8A29E]">
+                  {t('admin.complianceRate', 'Antas ng Pagsunod')}
+                </span>
+                <span className="font-mono font-semibold text-[#15803D] dark:text-[#4ADE80] tabular-nums">
+                  {getPercentage(stats.active)}%
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-[#E4E1DC] dark:bg-[#2E2A27] overflow-hidden">
+                <div
+                  className="h-full bg-[#15803D] rounded-full"
+                  style={{ width: `${getPercentage(stats.active)}%` }}
+                />
+              </div>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                {stats.active} {t('common.of', 'sa')} {stats.total}{' '}
+                {t('admin.activeAndCompliant', 'aktibo at sumusunod sa regulasyon')}
+              </p>
+            </div>
+
+            {/* New Applications */}
+            <div className="flex items-center justify-between py-1.5 border-t border-[#E4E1DC]/70 dark:border-[#2E2A27]/70">
+              <div>
+                <p className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium">
+                  {t('admin.newApplications', 'Mga Bagong Aplikasyon')}
+                </p>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  {stats.newAppsThisYear > 0 
+                    ? `${stats.newAppsThisYear} ${t('admin.thisYear', 'ngayong taon')} (${stats.newApps} ${t('admin.lifetime', 'kabuuang bago')})`
+                    : t('admin.newApplicationsSub', 'Unang beses na nag-apply')}
+                </p>
+              </div>
+              <span className="font-mono text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">
+                {stats.newAppsThisYear || stats.newApps}
+              </span>
+            </div>
+
+            {/* Approval Queue */}
+            <div className="flex items-center justify-between py-1.5 border-t border-[#E4E1DC]/70 dark:border-[#2E2A27]/70">
+              <div>
+                <p className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium">
+                  {t('admin.approvalQueue', 'Pila ng Pag-apruba')}
+                </p>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  {stats.pending > 0
+                    ? t('admin.actionNeeded', 'Kailangan ng aksyon sa pila')
+                    : t('admin.queuesCleared', 'Lahat ng pila ay naasikaso')}
+                </p>
+              </div>
+              <span
+                className={`font-mono text-sm font-semibold tabular-nums ${
+                  stats.pending > 0
+                    ? 'text-[#B45309] dark:text-[#FBBF24]'
+                    : 'text-[#1F1D1B] dark:text-[#F6F5F3]'
+                }`}
+              >
+                {stats.pending}
+              </span>
+            </div>
+
+            {/* Last System Activity */}
+            <div className="flex items-center justify-between py-1.5 border-t border-[#E4E1DC]/70 dark:border-[#2E2A27]/70">
+              <div>
+                <p className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium">
+                  {t('admin.lastActivity', 'Huling Aktibidad')}
+                </p>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  {t('admin.mostRecentUpdate', 'Kamakailang update sa prangkisa')}
+                </p>
+              </div>
+              <span className="font-mono text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] tabular-nums">
+                {historyLogs.length > 0 ? getRelativeTime(historyLogs[0]?.updatedAt) : '—'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 2. PRIMARY STATS CARDS */}
-      {isLoading ? (
-        <div className="mb-8">
-          <StatsCardsSkeleton count={4} baseDelay={60} stepDelay={70} />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
-          {[
-            { label: 'Total Franchises', count: stats.total, sub: 'Registered units', icon: <Users size={22} />, iconBg: 'bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37]' },
-            { label: 'Active Franchises', count: stats.active, sub: `${getPercentage(stats.active)}% operational`, icon: <ShieldCheck size={22} />, iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 dark:border dark:border-emerald-800/40' },
-            { label: 'Pending Review', count: stats.pending, sub: 'Awaiting decision', icon: <Clock size={22} />, iconBg: 'bg-amber-50 dark:bg-amber-950/50 text-[#D4AF37] dark:border dark:border-amber-800/40' },
-            { label: 'Expired Units', count: stats.expired, sub: 'Renewal overdue', icon: <AlertTriangle size={22} />, iconBg: 'bg-red-50 dark:bg-red-950/50 text-red-500 dark:text-red-400 dark:border dark:border-red-800/40' }
-          ].map((stat, index) => (
-            <div 
-              key={index} 
-              className="animate-smooth-card bg-white dark:bg-[#111827] p-5 sm:p-6 rounded-3xl shadow-xs border border-slate-200/80 dark:border-slate-800 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 relative overflow-hidden group"
-              style={{ animationDelay: `${0.06 + (index * 0.06)}s` }}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                  <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{stat.count}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{stat.sub}</p>
-                </div>
-                <div className={`p-2.5 sm:p-3 rounded-2xl ${stat.iconBg} group-hover:scale-110 transition-transform duration-300 shadow-2xs`}>
-                  {stat.icon}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* 4. TODA DISTRIBUTION (Single-color horizontal BarList replacing 11-color donut) */}
+      <div className="mb-6">
+        <BarList
+          data={todaStats}
+          initialLimit={6}
+          title={t('admin.todaDistribution', 'TODA Unit Distribution & Share')}
+          subtitle={t(
+            'admin.todaDistributionSub',
+            'Bilang ng mga rehistradong yunit ng traysikel bawat samahan sa Gasan'
+          )}
+        />
+      </div>
 
-      {/* 2.5 PEAK READINESS & THROUGHPUT METRICS (JANUARY RENEWAL SURGE) */}
-      {!isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Renewals Due Card */}
-          <div 
-            onClick={() => navigate('/franchise-masterlist?status=Active')}
-            className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-[#D4AF37]/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Renewals Due</span>
-              <CalendarDays size={16} className="text-[#D4AF37] group-hover:scale-110 transition-transform" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-black text-slate-900 dark:text-white">{stats.renewalsDue30}</span>
-              <span className="text-xs font-bold text-amber-600 dark:text-amber-400">within 30 days</span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-              60d: <strong className="text-slate-700 dark:text-slate-300">{stats.renewalsDue60}</strong> &bull; 90d: <strong className="text-slate-700 dark:text-slate-300">{stats.renewalsDue90}</strong>
-            </p>
-          </div>
-
-          {/* Received Today Card */}
-          <div className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Received Today</span>
-              <Inbox size={16} className="text-blue-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-black text-slate-900 dark:text-white">{stats.receivedToday}</span>
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">new submissions</span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-              Applications filed since 12:00 AM
-            </p>
-          </div>
-
-          {/* Processed Today Card */}
-          <div className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Processed Today</span>
-              <CheckCircle2 size={16} className="text-emerald-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-black text-slate-900 dark:text-white">{stats.processedToday}</span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">adjudicated</span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-              Approved, signed, or resolved
-            </p>
-          </div>
-
-          {/* Oldest Waiting Application Card */}
-          <div className="animate-smooth-card bg-white dark:bg-[#111827] p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Oldest Waiting</span>
-              <Clock size={16} className="text-rose-500" />
-            </div>
-            {stats.oldestWaiting ? (
-              <div className="flex items-center justify-between gap-2 mt-1">
-                <div className="min-w-0">
-                  <p className="text-xs font-black text-slate-900 dark:text-white truncate">
-                    {stats.oldestWaiting.fullName}
-                  </p>
-                  <p className="text-xs text-rose-600 dark:text-rose-400 font-bold">
-                    Waiting {stats.oldestWaiting.timeWaiting}
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate(`/franchise-approval/review/${stats.oldestWaiting._id}?tab=pending`)}
-                  className="px-2.5 py-1 bg-[#9E2A2B] hover:bg-[#801820] text-white text-xs font-bold rounded-lg transition-colors shrink-0 cursor-pointer shadow-2xs"
-                >
-                  Review
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
-                <CheckCircle2 size={14} />
-                <span>No queue backlog</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 3. SMOOTH ANALYTICS GRAPH */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* SKELETON: FRANCHISE HEALTH OVERVIEW (Matches horizontal stacked bar + 4 status cards) */}
-          <div 
-            className="stagger-reveal lg:col-span-2 bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" 
-            style={{ animationDelay: '200ms' }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2.5">
-                <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={210} />
-                <div>
-                  <SkeletonElement height="16px" className="w-48 mb-1.5" rounded="rounded-md" delay={220} />
-                  <SkeletonElement height="11px" className="w-64" rounded="rounded-sm" delay={230} />
-                </div>
-              </div>
-              <SkeletonElement height="24px" className="w-20" rounded="rounded-full" delay={240} />
-            </div>
-
-            {/* Horizontal Stacked Bar Placeholder */}
-            <div className="mb-6">
-              <SkeletonElement height="20px" className="w-full" rounded="rounded-full" delay={250} />
-            </div>
-
-            {/* Status Breakdown Grid (4 cards matching Active, Pending, Expired, Cancelled) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div 
-                  key={i} 
-                  className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <SkeletonElement rounded="rounded-full" className="w-2.5 h-2.5 shrink-0" delay={260 + i * 20} />
-                    <SkeletonElement height="10px" className="w-14" rounded="rounded-sm" delay={270 + i * 20} />
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <SkeletonElement height="22px" className="w-10" rounded="rounded-md" delay={280 + i * 20} />
-                    <SkeletonElement height="11px" className="w-7" rounded="rounded-sm" delay={290 + i * 20} />
-                  </div>
-                  <SkeletonElement height="9px" className="w-16" rounded="rounded-sm" delay={300 + i * 20} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* SKELETON: QUICK INSIGHTS (Matches 4 insights cards) */}
-          <div 
-            className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col" 
-            style={{ animationDelay: '280ms' }}
-          >
-            <div className="flex items-center gap-2.5 mb-5">
-              <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={290} />
-              <SkeletonElement height="16px" className="w-32" rounded="rounded-md" delay={300} />
-            </div>
-
-            <div className="space-y-3 flex-1">
-              {/* Compliance Rate Card */}
-              <div className="p-3.5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/40 space-y-2">
-                <div className="flex items-center justify-between">
-                  <SkeletonElement height="11px" className="w-24" rounded="rounded-sm" delay={310} />
-                  <SkeletonElement height="18px" className="w-10" rounded="rounded-md" delay={320} />
-                </div>
-                <SkeletonElement height="6px" className="w-full" rounded="rounded-full" delay={330} />
-                <SkeletonElement height="9px" className="w-40" rounded="rounded-sm" delay={340} />
-              </div>
-
-              {/* New Applications Card */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <SkeletonElement height="11px" className="w-24 mb-1.5" rounded="rounded-sm" delay={350} />
-                  <SkeletonElement height="9px" className="w-32" rounded="rounded-sm" delay={360} />
-                </div>
-                <SkeletonElement height="22px" className="w-8" rounded="rounded-md" delay={370} />
-              </div>
-
-              {/* Approval Queue Card */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <SkeletonElement height="11px" className="w-24 mb-1.5" rounded="rounded-sm" delay={380} />
-                  <SkeletonElement height="9px" className="w-28" rounded="rounded-sm" delay={390} />
-                </div>
-                <SkeletonElement height="22px" className="w-8" rounded="rounded-md" delay={400} />
-              </div>
-
-              {/* Last Activity Card */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <SkeletonElement height="11px" className="w-28 mb-1.5" rounded="rounded-sm" delay={410} />
-                  <SkeletonElement height="9px" className="w-36" rounded="rounded-sm" delay={420} />
-                </div>
-                <SkeletonElement height="14px" className="w-14" rounded="rounded-md" delay={430} />
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* FRANCHISE HEALTH OVERVIEW — Horizontal stacked bar + status breakdown */}
-          <div 
-            className="animate-smooth-card lg:col-span-2 bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
-            style={{ animationDelay: '0.2s' }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 text-[#9E2A2B] dark:text-[#D4AF37] rounded-xl">
-                  <BarChart3 size={18} />
-                </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Franchise Health Overview</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Status distribution across all registered units</p>
-                </div>
-              </div>
-              <span className="text-xs font-bold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 text-[#9E2A2B] dark:text-[#D4AF37] px-3 py-1 rounded-full uppercase tracking-wider border border-[#9E2A2B]/20">
-                {stats.total} Units
-              </span>
-            </div>
-
-            {/* Horizontal Stacked Bar */}
-            <div className="mb-6">
-              <div className="w-full h-5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex shadow-inner">
-                {[
-                  { count: stats.active, color: 'bg-emerald-500' },
-                  { count: stats.pending, color: 'bg-[#D4AF37]' },
-                  { count: stats.expired, color: 'bg-rose-400' },
-                  { count: stats.cancelled, color: 'bg-slate-400' }
-                ].map((seg, i) => (
-                  <div 
-                    key={i}
-                    className={`${seg.color} h-full transition-all duration-1000 ease-out first:rounded-l-full last:rounded-r-full`}
-                    style={{ 
-                      width: isGraphAnimated ? `${getPercentage(seg.count)}%` : '0%',
-                      transitionDelay: `${i * 120}ms`
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Status Breakdown Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: 'Active', count: stats.active, dotColor: 'bg-emerald-500', pct: getPercentage(stats.active), desc: 'Operational' },
-                { label: 'Pending', count: stats.pending, dotColor: 'bg-[#D4AF37]', pct: getPercentage(stats.pending), desc: 'Awaiting review' },
-                { label: 'Expired', count: stats.expired, dotColor: 'bg-rose-400', pct: getPercentage(stats.expired), desc: 'Renewal overdue' },
-                { label: 'Cancelled', count: stats.cancelled, dotColor: 'bg-slate-400', pct: getPercentage(stats.cancelled), desc: 'Revoked/Cancelled' }
-              ].map((item, i) => (
-                <div 
-                  key={i} 
-                  className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={`w-2.5 h-2.5 rounded-full ${item.dotColor} shrink-0 shadow-xs group-hover:scale-125 transition-transform`} />
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">{item.label}</span>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-xl font-black text-slate-900 dark:text-white">{item.count}</span>
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{item.pct}%</span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* QUICK INSIGHTS — Transport-contextual snapshot */}
-          <div 
-            className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col"
-            style={{ animationDelay: '0.28s' }}
-          >
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-2 bg-[#D4AF37]/15 dark:bg-[#D4AF37]/20 text-[#D4AF37] rounded-xl">
-                <Sparkles size={18} />
-              </div>
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Quick Insights</h2>
-            </div>
-
-            <div className="space-y-3 flex-1">
-              {/* Compliance Health */}
-              <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Compliance Rate</span>
-                  <span className="text-lg font-black text-emerald-700 dark:text-emerald-400">{getPercentage(stats.active)}%</span>
-                </div>
-                <div className="w-full bg-emerald-200/50 dark:bg-emerald-900/50 rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out" 
-                    style={{ width: isGraphAnimated ? `${getPercentage(stats.active)}%` : '0%', transitionDelay: '200ms' }}
-                  />
-                </div>
-                <p className="text-xs text-emerald-700/80 dark:text-emerald-400 font-medium mt-1.5">{stats.active} of {stats.total} franchises are active and compliant</p>
-              </div>
-
-              {/* New Applications */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">New Applications</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">First-time franchise filings</p>
-                </div>
-                <span className="text-xl font-black text-slate-900 dark:text-white">{stats.newApps}</span>
-              </div>
-
-              {/* Pending Queue Urgency */}
-              <div className={`p-3.5 rounded-2xl border flex items-center justify-between ${
-                stats.pending > 0 
-                  ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/40'
-                  : 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-100 dark:border-slate-800'
-              }`}>
-                <div>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-300'}`}>
-                    Approval Queue
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                    {stats.pending > 0 ? 'Action needed from Office of the Vice Mayor Extension' : 'All queues cleared'}
-                  </p>
-                </div>
-                <span className={`text-xl font-black ${stats.pending > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>{stats.pending}</span>
-              </div>
-
-              {/* Last Activity */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Last System Activity</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Most recent franchise update</p>
-                </div>
-                <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                  {historyLogs.length > 0 ? getRelativeTime(historyLogs[0]?.updatedAt) : '—'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. TODA DISTRIBUTION DONUT CHART */}
-      {isLoading ? (
-        <div 
-          className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
-          style={{ animationDelay: '320ms' }}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2.5">
-              <SkeletonElement rounded="rounded-xl" className="w-9 h-9" delay={330} />
-              <div>
-                <SkeletonElement height="16px" className="w-48 sm:w-60 mb-1.5" rounded="rounded-md" delay={340} />
-                <SkeletonElement height="11px" className="w-64 sm:w-80" rounded="rounded-sm" delay={350} />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <SkeletonElement height="30px" className="w-36" rounded="rounded-xl" delay={360} />
-              <SkeletonElement height="30px" className="w-24" rounded="rounded-xl" delay={370} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-            {/* Donut Chart Skeleton */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
-              <div className="w-64 h-64 relative flex items-center justify-center">
-                <div className="w-48 h-48 rounded-full border-[18px] border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center">
-                  <SkeletonElement height="10px" className="w-16 mb-1" rounded="rounded-sm" delay={380} />
-                  <SkeletonElement height="28px" className="w-12 mb-1" rounded="rounded-md" delay={390} />
-                  <SkeletonElement height="10px" className="w-20" rounded="rounded-sm" delay={400} />
-                </div>
-              </div>
-            </div>
-
-            {/* Top TODAs Legend Grid Skeleton */}
-            <div className="lg:col-span-7 space-y-2.5 max-h-72 overflow-hidden pr-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div 
-                    key={i} 
-                    className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col justify-between"
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <SkeletonElement rounded="rounded-full" className="w-2.5 h-2.5 shrink-0" delay={400 + i * 20} />
-                        <SkeletonElement height="12px" className="w-24" rounded="rounded-sm" delay={410 + i * 20} />
-                      </div>
-                      <SkeletonElement height="12px" className="w-12" rounded="rounded-sm" delay={420 + i * 20} />
-                    </div>
-                    <SkeletonElement height="6px" className="w-full" rounded="rounded-full" delay={430 + i * 20} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : todaStats.length > 0 ? (
-        <div 
-          className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 mb-8"
-          style={{ animationDelay: '0.32s' }}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 text-[#9E2A2B] dark:text-[#D4AF37] rounded-xl">
-                <PieChartIcon size={18} />
-              </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">
-                  TODA Unit Distribution &amp; Share
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Breakdown of active tricycle units per transport association across Gasan
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs sm:text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700">
-                {todaStats.length} Transport Associations
-              </span>
-              <span className="text-xs sm:text-xs font-black bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] px-3 py-1.5 rounded-xl border border-[#9E2A2B]/20">
-                {stats.total} Total Units
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-            {/* Donut Chart with Center Metric */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
-              <div className="w-full h-64 relative flex items-center justify-center">
-                {/* Center Badge in Donut Hole - Placed behind chart layer with smooth hover fade */}
-                <div 
-                  className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 transition-all duration-200 ${
-                    hoveredTodaIndex !== null ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-                  }`}
-                >
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Unit Share
-                  </span>
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                    {stats.total}
-                  </span>
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    100% Tracked
-                  </span>
-                </div>
-
-                <div className="w-full h-full relative z-10">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={todaStats}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={68}
-                        outerRadius={96}
-                        paddingAngle={3}
-                        dataKey="value"
-                        strokeWidth={2}
-                        stroke="transparent"
-                        onMouseEnter={(_, index) => setHoveredTodaIndex(index)}
-                        onMouseLeave={() => setHoveredTodaIndex(null)}
-                      >
-                        {todaStats.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        content={<CustomTodaTooltip />} 
-                        wrapperStyle={{ zIndex: 50, pointerEvents: 'none' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Top TODAs Legend with Percentage Bars */}
-            <div className="lg:col-span-7 space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {todaStats.map((toda, idx) => (
-                  <div 
-                    key={idx} 
-                    className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col justify-between"
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span 
-                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" 
-                          style={{ backgroundColor: toda.color }} 
-                        />
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={toda.name}>
-                          {toda.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-xs font-black text-slate-900 dark:text-white">
-                          {toda.value}
-                        </span>
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                          ({toda.percentage}%)
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="w-full bg-slate-200/80 dark:bg-slate-700/80 rounded-full h-1.5 overflow-hidden">
-                      <div 
-                        className="h-full rounded-full transition-all duration-700 ease-out" 
-                        style={{ 
-                          width: isGraphAnimated ? `${toda.percentage}%` : '0%', 
-                          transitionDelay: `${200 + idx * 50}ms`,
-                          backgroundColor: toda.color 
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* 5. ACTIVITY LOGS & PENDING QUEUE */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* ACTIVITY HISTORY SKELETON */}
-          <div className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '460ms' }}>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <SkeletonElement rounded="rounded-lg" className="w-6 h-6" delay={470} />
-                <SkeletonElement height="16px" className="w-44" rounded="rounded-md" delay={480} />
-              </div>
-              <SkeletonElement height="14px" className="w-16" rounded="rounded-md" delay={490} />
-            </div>
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="p-3 bg-slate-50/70 dark:bg-slate-800/70 rounded-2xl flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <SkeletonElement rounded="rounded-xl" className="w-8 h-8 shrink-0" delay={495 + i * 25} />
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <SkeletonElement height="12px" className="w-3/4" rounded="rounded-md" delay={500 + i * 25} />
-                      <SkeletonElement height="10px" className="w-1/3" rounded="rounded-sm" delay={510 + i * 25} />
-                    </div>
-                  </div>
-                  <SkeletonElement height="18px" className="w-14 shrink-0" rounded="rounded-md" delay={520 + i * 25} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* PENDING APPROVAL QUEUE SKELETON */}
-          <div className="stagger-reveal bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800" style={{ animationDelay: '520ms' }}>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <SkeletonElement rounded="rounded-lg" className="w-6 h-6" delay={530} />
-                <SkeletonElement height="16px" className="w-48" rounded="rounded-md" delay={540} />
-              </div>
-              <SkeletonElement height="18px" className="w-14" rounded="rounded-full" delay={545} />
-            </div>
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="p-3.5 bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                  <div className="flex flex-col items-center shrink-0 gap-1">
-                    <SkeletonElement rounded="rounded-full" className="w-2 h-2" delay={540 + i * 25} />
-                    <SkeletonElement height="8px" className="w-4" rounded="rounded-xs" delay={545 + i * 25} />
-                  </div>
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <SkeletonElement height="13px" className="w-1/2" rounded="rounded-md" delay={550 + i * 25} />
-                    <SkeletonElement height="10px" className="w-1/3" rounded="rounded-sm" delay={560 + i * 25} />
-                  </div>
-                  <SkeletonElement height="32px" className="w-20 shrink-0" rounded="rounded-xl" delay={570 + i * 25} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* ACTIVITY HISTORY — Upgraded with icons, relative time, bold names */}
-          <div 
-            className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
-            style={{ animationDelay: '0.34s' }}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <History size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">System Activity History</h2>
-              </div>
-              <button onClick={() => navigate('/franchise-masterlist')} className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1">
-                Masterlist <ArrowRight size={12} />
-              </button>
-            </div>
-
-            <div className="space-y-2.5">
-              {historyLogs.length === 0 ? (
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-8">No recent system actions logged.</p>
-              ) : (
-                historyLogs.map((log) => {
-                  const actionData = getActionDetails(log);
-                  const ActionIcon = actionData.icon;
-                  return (
-                    <div key={log._id} className="group p-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 rounded-2xl flex items-start gap-3 transition-all duration-200 border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
-                      {/* Action Icon + Colored Dot */}
-                      <div className="relative shrink-0 mt-0.5">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${actionData.color} border`}>
-                          <ActionIcon size={14} />
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                          {actionData.verb} <span className="font-black text-slate-900 dark:text-white">{actionData.name}</span>
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-                          {getRelativeTime(log.updatedAt)}
-                        </p>
-                      </div>
-
-                      {/* Status Badge */}
-                      <span className={`px-2 py-0.5 text-xs uppercase font-bold rounded-md border shrink-0 mt-0.5 ${actionData.badgeColor}`}>
-                        {log.status}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* PENDING APPROVAL QUEUE — Upgraded with urgency indicators */}
-          <div 
-            className="animate-smooth-card bg-white dark:bg-[#111827] p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800"
-            style={{ animationDelay: '0.4s' }}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <FileStack size={18} className="text-[#D4AF37]" />
-                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">Pending Approvals Queue</h2>
-              </div>
+      {/* 5. QUEUES & ACTIVITY HISTORY (2 Compact DataTables) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pending Approvals Queue */}
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between mb-2 px-0.5">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                {t('admin.pendingApprovalsQueue', 'Pending Approvals Queue')}
+              </h2>
               {stats.pending > 0 && (
-                <span className="bg-[#9E2A2B] text-white text-xs font-black px-2.5 py-0.5 rounded-full">
-                  {stats.pending} New
+                <span className="bg-[#9E2A2B] text-white text-xs font-mono font-medium px-2 py-0.2 rounded">
+                  {stats.pending}
                 </span>
               )}
             </div>
-
-            <div className="space-y-2.5">
-              {recentApps.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center">
-                  <CheckCircle size={28} className="text-emerald-500 mb-1" />
-                  All caught up! No pending applications.
-                </div>
-              ) : (
-                recentApps.map((app) => {
-                  const daysPending = getDaysPending(app.dateApplied || app.createdAt);
-                  const urgencyColor = daysPending >= 7 ? 'text-red-500' : daysPending >= 3 ? 'text-amber-500' : 'text-emerald-500';
-                  const urgencyDot = daysPending >= 7 ? 'bg-red-500' : daysPending >= 3 ? 'bg-amber-400' : 'bg-emerald-500';
-                  return (
-                    <div key={app._id} className="p-3.5 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-3 transition-all duration-200">
-                      {/* Urgency Indicator */}
-                      <div className="flex flex-col items-center shrink-0 gap-0.5">
-                        <span className={`w-2 h-2 rounded-full ${urgencyDot} shadow-xs`} />
-                        <span className={`text-xs font-bold ${urgencyColor}`}>
-                          {daysPending > 0 ? `${daysPending}d` : 'New'}
-                        </span>
-                      </div>
-
-                      {/* Applicant Info */}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-black text-slate-900 dark:text-white truncate">{app.fullName || 'Applicant'}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{app.todaName} • {app.make || 'Tricycle'}</p>
-                      </div>
-
-                      {/* Review CTA */}
-                      <button 
-                        onClick={() => navigate('/franchise-approval?tab=pending')}
-                        className="px-4 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold rounded-xl transition-all shrink-0 active:scale-95 shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <ArrowRight size={13} />
-                        Review
-                      </button>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/franchise-approval?tab=pending')}
+              className="text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>{t('common.viewAll', 'Tingnan lahat')}</span>
+              <ArrowRight size={12} />
+            </button>
           </div>
-        </div>
-      )}
 
+          <DataTable
+            columns={pendingColumns}
+            data={recentApps}
+            isLoading={isLoading}
+            emptyTitle={t('admin.allCaughtUp', 'Walang nakabinbing aplikasyon')}
+            emptySubtitle={t(
+              'admin.queueClean',
+              'Lahat ng aplikasyon para sa pagsusuri ay naasikaso na.'
+            )}
+            rowKey="_id"
+          />
+        </div>
+
+        {/* System Activity History */}
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between mb-2 px-0.5">
+            <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+              {t('admin.systemActivityHistory', 'System Activity History')}
+            </h2>
+            <button
+              type="button"
+              onClick={() => navigate('/franchise-masterlist')}
+              className="text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>{t('admin.masterlist', 'Masterlist')}</span>
+              <ArrowRight size={12} />
+            </button>
+          </div>
+
+          <DataTable
+            columns={historyColumns}
+            data={historyLogs}
+            isLoading={isLoading}
+            emptyTitle={t('admin.noActivityLogs', 'Walang tala ng aktibidad')}
+            emptySubtitle={t(
+              'admin.noRecentActions',
+              'Walang naitalang pagbabago sa sistema sa nakaraang mga araw.'
+            )}
+            rowKey="_id"
+          />
+        </div>
+      </div>
     </MainLayout>
   );
 };
 
 export default AdminDashboard;
-
