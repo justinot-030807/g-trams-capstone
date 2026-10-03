@@ -4,6 +4,7 @@ import {
   User, Check, ExternalLink, Calendar, MapPin, Hash, Phone, Clock
 } from 'lucide-react';
 import { GASAN_ZONES } from '../operator/TodaZoneGuideModal';
+import { formatZoneLabel, normalizeZone } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
 
 const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReject, isProcessing = false }) => {
@@ -47,7 +48,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
   };
 
   const isOperatorDriver = franchise.isOperatorDriver !== false;
-  const zoneInfo = GASAN_ZONES.find(z => z.id === String(franchise.zone || '').replace(/^Zone\s*/i, ''));
+  const zoneInfo = GASAN_ZONES.find(z => z.id === normalizeZone(franchise.zone));
 
   return (
     <div 
@@ -264,7 +265,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Route &amp; Zone</span>
                   <span className="text-xs font-bold text-[#7A1B22]">
-                    {franchise.zone ? `Zone ${franchise.zone}` : '—'} {zoneInfo ? `(${zoneInfo.name})` : ''}
+                    {formatZoneLabel(franchise.zone)}
                   </span>
                 </div>
                 <div>

@@ -3,6 +3,7 @@ import {
   FileText, Download, X, Printer, CheckCircle2, ShieldCheck, 
   User, AlertCircle, Loader2, Scissors 
 } from 'lucide-react';
+import { formatZoneLabel } from '../../utils/constants';
 
 const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' }) => {
   const voucherRef = useRef(null);
@@ -318,7 +319,7 @@ const ClaimStubVoucher = ({ isOpen, onClose, unit, systemFranchiseFee = '500' })
 
                 <div>
                   <span className="text-[9px] font-bold text-[#6B6761] uppercase block">Make &amp; Route</span>
-                  <span className="font-medium text-[#1F1D1B] text-xs block">{unit?.make} &bull; {unit?.zone || 'Zone 1'}</span>
+                  <span className="font-medium text-[#1F1D1B] text-xs block">{unit?.make} &bull; {formatZoneLabel(unit?.zone)}</span>
                 </div>
 
                 <div>

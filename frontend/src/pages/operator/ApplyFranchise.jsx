@@ -1,8 +1,10 @@
 import localforage from 'localforage';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '../../context/LanguageContext';
-import { GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS } from '../../utils/constants';
+import { 
+  GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS, 
+  getZoneForBarangay, normalizeZone, normalizeBarangayName, formatZoneLabel 
+} from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
@@ -146,7 +148,8 @@ const ApplyFranchise = () => {
   const [formData, setFormData] = useState({
     fullName: loggedInUserName, 
     address: loggedInAddress, 
-    zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+    zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
+    made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
     todaName: loggedInToda,
     dateApplied: new Date().toISOString().split('T')[0], 
     cedulaDate: '', 
@@ -247,11 +250,10 @@ const ApplyFranchise = () => {
   useEffect(() => {
     if (!formData.zone && formData.todaName) {
       const match = TODA_DIRECTORY.find(t => t.id === formData.todaName || t.name.startsWith(formData.todaName));
-      if (match) {
-        const zoneNum = match.zone.match(/Zone\s*(\d+)/i)?.[1];
-        if (zoneNum) {
-          setFormData(prev => ({ ...prev, zone: zoneNum }));
-        }
+      if (match && match.zone) {
+        if (match.zone.includes('Central')) setFormData(prev => ({ ...prev, zone: 'Central' }));
+        else if (match.zone.includes('North')) setFormData(prev => ({ ...prev, zone: 'North' }));
+        else if (match.zone.includes('South')) setFormData(prev => ({ ...prev, zone: 'South' }));
       }
     }
   }, [formData.todaName]);
@@ -466,7 +468,8 @@ const ApplyFranchise = () => {
     setFormData({ 
       fullName: loggedInUserName, 
       address: loggedInAddress, 
-      zone: '', made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+      zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
+      made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
       todaName: loggedInToda, 
       dateApplied: new Date().toISOString().split('T')[0], 
       cedulaDate: '', 
@@ -542,6 +545,7 @@ const ApplyFranchise = () => {
       ...savedForm,
       fullName: loggedInUserName || savedForm.fullName,
       address: loggedInAddress || savedForm.address,
+      zone: savedForm.zone ? normalizeZone(savedForm.zone) : (loggedInAddress ? getZoneForBarangay(loggedInAddress) : ''),
       todaName: loggedInToda || savedForm.todaName
     });
 
@@ -559,7 +563,7 @@ const ApplyFranchise = () => {
     setCurrentStep(targetStep);
     setHasDraftRestored(true);
     setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
-    showToast(language === 'fil' ? 'Naibalik ang iyong nasimulang draft.' : 'Your saved draft has been restored.', 'success');
+    showToast('Your saved draft has been restored.', 'success');
   };
 
   const handleDiscardDraft = async () => {
@@ -573,7 +577,7 @@ const ApplyFranchise = () => {
     }
     setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
     initFreshForm();
-    showToast(language === 'fil' ? 'Na-clear ang draft. Nagsimula ng bagong aplikasyon.' : 'Draft cleared. Starting a fresh application.', 'info');
+    showToast('Draft cleared. Starting a fresh application.', 'info');
   };
 
   const handleClearDraft = async () => {
@@ -584,7 +588,7 @@ const ApplyFranchise = () => {
       localStorage.removeItem('gtrams_apply_draft');
       setHasDraftRestored(false);
       initFreshForm();
-      showToast(language === 'fil' ? 'Na-clear ang draft.' : 'Draft has been reset.', 'info');
+      showToast('Draft has been reset.', 'info');
     } catch (err) {
       console.error('Error resetting draft:', err);
     }
@@ -628,7 +632,7 @@ const ApplyFranchise = () => {
     setFormData({
       fullName: franchise.fullName || '',
       address: franchise.address || '',
-      zone: franchise.zone || '',
+      zone: franchise.zone ? normalizeZone(franchise.zone) : (franchise.address ? getZoneForBarangay(franchise.address) : ''),
       made: franchise.made || '',
       make: franchise.make || '',
       motorNo: franchise.motorNo || '',
@@ -674,13 +678,30 @@ const ApplyFranchise = () => {
     let sanitized = value;
     if (name === 'made') {
       sanitized = value.replace(/\D/g, '').slice(0, 4);
-    } else if (name === 'zone') {
-      sanitized = value.replace(/\D/g, '');
     } else if (name === 'cedulaSerialNo') {
       sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 20).toUpperCase();
     } else if (['motorNo', 'chassisNo', 'plateNo', 'orCrNo', 'driverLicenseNo', 'todaCertNo', 'brgyClearanceNo'].includes(name)) {
       sanitized = value.toUpperCase();
     }
+
+    if (name === 'address') {
+      const autoZone = getZoneForBarangay(sanitized);
+      setFormData(prev => ({
+        ...prev,
+        address: sanitized,
+        zone: autoZone || prev.zone
+      }));
+      return;
+    }
+
+    if (name === 'zone') {
+      setFormData(prev => ({
+        ...prev,
+        zone: normalizeZone(sanitized)
+      }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: sanitized }));
   };
 
@@ -753,7 +774,7 @@ const ApplyFranchise = () => {
               driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : prev.driverName
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Na-scan ng AI: Driver's License details detected!", 'success');
+            showToast("✨ AI Scan: Driver's License details detected!", 'success');
           } else if (docType === 'orCr') {
             setFormData(prev => ({
               ...prev,
@@ -766,7 +787,7 @@ const ApplyFranchise = () => {
               orCrExpiryDate: d.expiryDate || prev.orCrExpiryDate
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Na-scan ng AI: Plate, Motor, at Chassis kusang nailagay!", 'success');
+            showToast("✨ AI Scan: Plate, Motor, and Chassis details auto-filled!", 'success');
           } else if (docType === 'todaEndorsement') {
             setFormData(prev => ({
               ...prev,
@@ -775,16 +796,22 @@ const ApplyFranchise = () => {
               todaCertDate: d.dateIssued || prev.todaCertDate
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Na-scan ng AI: TODA Certificate details detected!", 'success');
+            showToast("✨ AI Scan: TODA Certificate details detected!", 'success');
           } else if (docType === 'brgyClearance') {
-            setFormData(prev => ({
-              ...prev,
-              brgyClearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : prev.brgyClearanceNo,
-              brgyClearanceDate: d.dateIssued || prev.brgyClearanceDate,
-              brgyIssuer: d.issuer || prev.brgyIssuer
-            }));
+            setFormData(prev => {
+              const detectedBrgy = d.barangay ? normalizeBarangayName(d.barangay) : prev.address;
+              const autoZone = detectedBrgy ? getZoneForBarangay(detectedBrgy) : prev.zone;
+              return {
+                ...prev,
+                address: detectedBrgy || prev.address,
+                zone: autoZone || prev.zone,
+                brgyClearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : prev.brgyClearanceNo,
+                brgyClearanceDate: d.dateIssued || prev.brgyClearanceDate,
+                brgyIssuer: d.issuer || prev.brgyIssuer
+              };
+            });
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Na-scan ng AI: Barangay Clearance details detected!", 'success');
+            showToast("✨ AI Scan: Barangay Clearance details detected!", 'success');
           } else if (docType === 'cedula') {
             setFormData(prev => ({
               ...prev,
@@ -793,7 +820,7 @@ const ApplyFranchise = () => {
               cedulaAddress: d.placeIssued || prev.cedulaAddress
             }));
             setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ Na-scan ng AI: Cedula details detected!", 'success');
+            showToast("✨ AI Scan: Cedula (CTC) details detected!", 'success');
           }
         } else if (json.noKey) {
           showToast(json.message, 'warning');
@@ -811,7 +838,7 @@ const ApplyFranchise = () => {
   const handleFileChange = (reqId, file) => {
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        showToast('Masyadong malaki ang dokumento. Hanggang 10MB lamang ang pinapayagan.', 'error');
+        showToast('Document file is too large. Maximum allowed size is 10MB.', 'error');
         return;
       }
       setFilePreviews(prev => {
@@ -920,35 +947,35 @@ const ApplyFranchise = () => {
 
     if (currentStep === 1) {
       if (!formData.fullName?.trim()) {
-        showToast('Pakilagay ang buong pangalan ng operator.', 'error');
+        showToast('Please enter the operator full name.', 'error');
         return false;
       }
       if (!formData.address?.trim()) {
-        showToast('Pakilagay ang tirahan o barangay ng operator.', 'error');
+        showToast('Please select the operator Barangay address.', 'error');
         return false;
       }
       if (!formData.isOperatorDriver) {
         if (!formData.driverName?.trim()) {
-          showToast('Pakilagay ang buong pangalan ng itinalagang drayber.', 'error');
+          showToast('Please enter the designated driver full name.', 'error');
           return false;
         }
         if (!formData.driverContact?.trim()) {
-          showToast('Pakilagay ang contact number ng itinalagang drayber.', 'error');
+          showToast('Please enter the designated driver contact number.', 'error');
           return false;
         }
       }
       if (formMode === 'New') {
         const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
         if (!hasLicense) {
-          showToast("Kinakailangang i-upload ang Driver's License.", 'error');
+          showToast("Driver's License upload is required.", 'error');
           return false;
         }
         if (!formData.driverLicenseNo?.trim()) {
-          showToast("Pakilagay o i-scan ang Driver's License Number.", 'error');
+          showToast("Please enter or scan the Driver's License Number.", 'error');
           return false;
         }
         if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
-          showToast("Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO.", 'error');
+          showToast("Driver's License is expired. Please renew with LTO first.", 'error');
           return false;
         }
       }
@@ -959,39 +986,39 @@ const ApplyFranchise = () => {
       if (formMode === 'New') {
         const hasOrCr = uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
         if (!hasOrCr) {
-          showToast('Kinakailangang i-upload ang LTO OR/CR ng sasakyan.', 'error');
+          showToast('LTO OR/CR document upload is required.', 'error');
           return false;
         }
         if (!formData.make?.trim()) {
-          showToast('Pakilagay ang Make / Brand ng motor.', 'error');
+          showToast('Please enter the vehicle Make / Brand.', 'error');
           return false;
         }
         if (!formData.made?.trim()) {
-          showToast('Pakilagay ang Model Year.', 'error');
+          showToast('Please enter the Model Year.', 'error');
           return false;
         }
         if (!formData.zone?.trim()) {
-          showToast('Pakipili ang Route / Zone ng prangkisa.', 'error');
+          showToast('Please select the Route / Municipal Zone for the franchise.', 'error');
           return false;
         }
         if (!formData.plateNo?.trim()) {
-          showToast('Pakilagay ang Plate Number.', 'error');
+          showToast('Please enter the Plate Number.', 'error');
           return false;
         }
         if (!formData.motorNo?.trim()) {
-          showToast('Pakilagay ang Engine / Motor Number.', 'error');
+          showToast('Please enter the Engine / Motor Number.', 'error');
           return false;
         }
         if (!formData.chassisNo?.trim()) {
-          showToast('Pakilagay ang Chassis Serial Number.', 'error');
+          showToast('Please enter the Chassis Serial Number.', 'error');
           return false;
         }
         if (duplicateStatus.plateNo.duplicate || duplicateStatus.motorNo.duplicate || duplicateStatus.chassisNo.duplicate) {
-          showToast('May duplicate na Plate/Motor/Chassis number. Pakitama muna.', 'error');
+          showToast('Duplicate Plate, Motor, or Chassis number found. Please verify details.', 'error');
           return false;
         }
         if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
-          showToast('Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO.', 'error');
+          showToast('LTO OR/CR is expired. Please renew with LTO first.', 'error');
           return false;
         }
       }
@@ -1003,11 +1030,11 @@ const ApplyFranchise = () => {
         const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
         const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
         if (!hasToda) {
-          showToast('Kinakailangang i-upload ang TODA Endorsement Certificate.', 'error');
+          showToast('TODA Endorsement Certificate upload is required.', 'error');
           return false;
         }
         if (!hasBrgy) {
-          showToast('Kinakailangang i-upload ang Barangay Clearance.', 'error');
+          showToast('Barangay Clearance upload is required.', 'error');
           return false;
         }
       }
@@ -1050,23 +1077,23 @@ const ApplyFranchise = () => {
     // Cedula validation
     const currentYear = new Date().getFullYear();
     if (!formData.cedulaSerialNo?.trim()) {
-      showToast('Pakilagay ang CTC / Cedula Serial Number.', 'error');
+      showToast('Please enter the Community Tax Certificate (Cedula) Serial Number.', 'error');
       return;
     }
     if (!formData.cedulaDate) {
-      showToast('Pakilagay ang Date Issued ng Cedula.', 'error');
+      showToast('Please enter the Cedula Date Issued.', 'error');
       return;
     }
     const cedulaYear = new Date(formData.cedulaDate).getFullYear();
     if (cedulaYear < currentYear) {
-      showToast(`Paso na ang Cedula para sa taong ${cedulaYear}. Kinakailangan ang Cedula para sa taong ${currentYear}.`, 'error');
+      showToast(`Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`, 'error');
       return;
     }
 
     if (formMode === 'New') {
       const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
       if (!hasCedula) {
-        showToast('Kinakailangang i-upload ang kopya ng Cedula (CTC).', 'error');
+        showToast('Community Tax Certificate (Cedula) upload is required.', 'error');
         return;
       }
     }
@@ -1165,7 +1192,8 @@ const ApplyFranchise = () => {
     { num: 4, title: 'Cedula & Review' }
   ];
 
-  if (!isLoading && myFranchises.length >= maxAllowedUnits && formMode === 'New') {
+  const activeOrPendingUnits = myFranchises.filter(f => !['Cancelled', 'Revoked'].includes(f.status));
+  if (!isLoading && activeOrPendingUnits.length >= maxAllowedUnits && formMode === 'New') {
     return (
       <MainLayout hideNav={true}>
         <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center p-4 sm:p-6 transition-colors">
@@ -1263,7 +1291,7 @@ const ApplyFranchise = () => {
                 {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
               </h1>
               <p className="text-xs sm:text-sm text-white/90 font-medium mt-0.5">
-                Bayan ng Gasan • Sangguniang Bayan Franchising Office
+                Municipality of Gasan • Sangguniang Bayan Franchising Office
               </p>
             </div>
 
@@ -1390,9 +1418,16 @@ const ApplyFranchise = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Barangay / Address <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          Barangay Residency / Address <span className="text-red-500">*</span>
+                        </label>
+                        {formData.address && getZoneForBarangay(formData.address) && (
+                          <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                            Zone: <strong className="text-[#9E2A2B] dark:text-[#D4AF37]">{getZoneForBarangay(formData.address)} Zone</strong>
+                          </span>
+                        )}
+                      </div>
                       <select 
                         name="address" 
                         value={formData.address} 
@@ -1400,11 +1435,14 @@ const ApplyFranchise = () => {
                         className={`${inputClasses} cursor-pointer`} 
                         required
                       >
-                        <option value="" disabled>-- Select Barangay --</option>
+                        <option value="" disabled>-- Select Official Barangay --</option>
                         {GASAN_BARANGAYS.map((b) => (
                           <option key={b} value={b}>{b}</option>
                         ))}
                       </select>
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                        Zoning is assigned based on Barangay residency. Selecting your barangay automatically pre-fills your designated Route Zone.
+                      </p>
                     </div>
                   </div>
 
@@ -1633,7 +1671,7 @@ const ApplyFranchise = () => {
                 {aiSuccess.orCrDocument && (
                   <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg flex items-center gap-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                     <Sparkles size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    <span>Na-scan ng AI ang OR/CR! Kusang nailagay ang Plate, Motor, at Chassis. Pakitingnan kung tama ang mga detalye.</span>
+                    <span>AI scanned your OR/CR! Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
                   </div>
                 )}
 
@@ -1701,10 +1739,17 @@ const ApplyFranchise = () => {
 
                     {/* Route / Zone Selection */}
                     <div id="field-zone" className="sm:col-span-2">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                          Route / Zone Selection <span className="text-red-500">*</span>
-                        </label>
+                      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                            Route / Municipal Zone <span className="text-red-500">*</span>
+                          </label>
+                          {formData.address && getZoneForBarangay(formData.address) && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+                              Auto-filled from Barangay
+                            </span>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => setShowTodaGuide(true)}
@@ -1717,8 +1762,8 @@ const ApplyFranchise = () => {
 
                       <select
                         name="zone"
-                        value={formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, zone: e.target.value }))}
+                        value={normalizeZone(formData.zone)}
+                        onChange={handleInputChange}
                         className={`${inputClasses} cursor-pointer font-medium`}
                         required
                       >
@@ -1727,10 +1772,13 @@ const ApplyFranchise = () => {
                           <option key={z.id} value={z.id}>{z.name}</option>
                         ))}
                       </select>
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                        Pre-filled based on your Barangay residency, but you can change it if you operate on another authorized zone.
+                      </p>
 
                       {/* Route Coverage Preview Card */}
                       {(() => {
-                        const currentZ = formData.zone ? formData.zone.toString().replace(/^Zone\s*/i, '').trim() : '';
+                        const currentZ = normalizeZone(formData.zone);
                         const zInfo = GASAN_ZONES.find(z => z.id === currentZ);
                         if (!zInfo) return null;
                         return (
@@ -1740,7 +1788,7 @@ const ApplyFranchise = () => {
                               <span>{zInfo.name}</span>
                             </div>
                             <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
-                              <strong>Route:</strong> {zInfo.coverage}
+                              <strong>Coverage:</strong> {zInfo.coverage}
                             </p>
                           </div>
                         );
@@ -2131,7 +2179,7 @@ const ApplyFranchise = () => {
                     <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg space-y-1">
                       <p className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase">Vehicle &amp; Route</p>
                       <p className="font-bold text-base text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.plateNo || 'No Plate'} • {formData.make || 'Tricycle'}</p>
-                      <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm">Route: Zone {formData.zone || 'N/A'} • {formData.todaName || 'NON-TODA'}</p>
+                      <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm">Route: {formatZoneLabel(formData.zone)} • {formData.todaName || 'NON-TODA'}</p>
                       <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm">
                         Chassis: <span className="font-mono text-xs sm:text-sm">{formData.chassisNo || 'N/A'}</span>
                       </p>
@@ -2303,34 +2351,26 @@ const ApplyFranchise = () => {
 
             {/* Modal Title */}
             <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
-              {language === 'fil' ? 'Mayroon Kang Hindi Natapos na Draft' : 'Resume In-Progress Application?'}
+              Resume In-Progress Application?
             </h3>
 
             {/* Modal Description */}
             <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
-              {language === 'fil' ? (
-                <>
-                  May na-save kang draft noong <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{draftResumeModal.savedTime}</span> (Hakbang {draftResumeModal.step} ng 4). Nais mo bang ipagpatuloy ang iyong nasimulan?
-                </>
-              ) : (
-                <>
-                  You have an in-progress draft saved at <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{draftResumeModal.savedTime}</span> (Step {draftResumeModal.step} of 4). Would you like to pick up where you left off?
-                </>
-              )}
+              You have an in-progress draft saved at <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{draftResumeModal.savedTime}</span> (Step {draftResumeModal.step} of 4). Would you like to pick up where you left off?
             </p>
 
             {/* Draft Details Preview */}
             {draftResumeModal.draftData?.formData && (
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 mb-6 text-left text-xs sm:text-sm space-y-2">
                 <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                  <span>{language === 'fil' ? 'Hakbang' : 'Progress'}:</span>
+                  <span>Progress:</span>
                   <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                    {language === 'fil' ? `Hakbang ${draftResumeModal.step} ng 4` : `Step ${draftResumeModal.step} of 4`}
+                    Step {draftResumeModal.step} of 4
                   </span>
                 </div>
                 {draftResumeModal.draftData.formData.plateNo && (
                   <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>{language === 'fil' ? 'Plate / MV No' : 'Plate No'}:</span>
+                    <span>Plate No:</span>
                     <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       {draftResumeModal.draftData.formData.plateNo}
                     </span>
@@ -2338,7 +2378,7 @@ const ApplyFranchise = () => {
                 )}
                 {draftResumeModal.draftData.formData.make && (
                   <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>{language === 'fil' ? 'Modelo / Make' : 'Model'}:</span>
+                    <span>Model:</span>
                     <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">
                       {draftResumeModal.draftData.formData.make}
                     </span>
@@ -2355,7 +2395,7 @@ const ApplyFranchise = () => {
                 className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>{language === 'fil' ? 'Ipagpatuloy ang Draft' : 'Continue Draft'}</span>
+                <span>Continue Draft</span>
               </button>
               <button
                 type="button"
@@ -2363,7 +2403,7 @@ const ApplyFranchise = () => {
                 className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>{language === 'fil' ? 'Magsimula ng Bago' : 'Start Fresh'}</span>
+                <span>Start Fresh</span>
               </button>
             </div>
 

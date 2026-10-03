@@ -96,13 +96,13 @@ describe('Document Verification Service Unit & API Tests', () => {
         it('should identify mismatched fields and provide descriptive note', () => {
             const result = compareField('CHAS-1111', 'CHAS-9999', 'Chassis No', 'chassisNo');
             expect(result.status).toBe('mismatch');
-            expect(result.notes).toContain('Hindi tugma');
+            expect(result.notes).toContain('Mismatch');
         });
 
         it('should flag unclear or unreadable extracted values', () => {
             const result = compareField('ABC-1234', null, 'Plate Number', 'plateNo');
             expect(result.status).toBe('unclear');
-            expect(result.notes).toContain('Hindi malinaw');
+            expect(result.notes).toContain('Unclear');
         });
     });
 

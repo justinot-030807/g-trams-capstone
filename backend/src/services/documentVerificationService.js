@@ -23,10 +23,10 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
             field: fieldKey,
             label: fieldLabel,
             inputValue: inputVal || 'N/A',
-            extractedValue: 'Hindi mabasa / Malabo',
+            extractedValue: 'Illegible / Unclear',
             status: 'unclear',
             confidence: 0.5,
-            notes: 'Hindi malinaw o hindi makita sa larawan ng dokumento'
+            notes: 'Unclear or not visible in document image'
         };
     }
 
@@ -34,11 +34,11 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
         return {
             field: fieldKey,
             label: fieldLabel,
-            inputValue: 'Walang in-enter',
+            inputValue: 'No entry provided',
             extractedValue: String(extractedVal),
             status: 'unclear',
             confidence: 0.6,
-            notes: 'Nasa dokumento ngunit walang in-enter na halaga ang operator'
+            notes: 'Found in document but no corresponding value was entered'
         };
     }
 
@@ -50,7 +50,7 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
             extractedValue: String(extractedVal),
             status: 'match',
             confidence: 0.98,
-            notes: 'Perpektong tugma ang in-enter na impormasyon sa dokumento'
+            notes: 'Entered data perfectly matches official document'
         };
     }
 
@@ -63,7 +63,7 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
             extractedValue: String(extractedVal),
             status: 'match',
             confidence: 0.88,
-            notes: 'Tugma (may kaunting pagkakaiba sa prefix o format)'
+            notes: 'Matches (minor prefix or formatting variation)'
         };
     }
 
@@ -74,7 +74,7 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
         extractedValue: String(extractedVal),
         status: 'mismatch',
         confidence: 0.95,
-        notes: `Hindi tugma: In-enter [${inputVal}], ngunit nakita sa dokumento [${extractedVal}]`
+        notes: `Mismatch: Entered [${inputVal}], but document shows [${extractedVal}]`
     };
 }
 
@@ -280,7 +280,7 @@ async function verifyFranchiseDocuments(franchise) {
                     extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
                     status: 'mismatch',
                     confidence: 0.95,
-                    notes: 'Ang larawang na-upload ay hindi lehitimong LTO OR/CR.'
+                    notes: 'Uploaded image does not appear to be a valid LTO OR/CR document.'
                 });
             } else {
                 comparisons.push(
@@ -336,7 +336,7 @@ async function verifyFranchiseDocuments(franchise) {
                     extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
                     status: 'mismatch',
                     confidence: 0.95,
-                    notes: "Ang larawang na-upload ay hindi lehitimong Driver's License."
+                    notes: "Uploaded image does not appear to be a valid Driver's License."
                 });
             } else {
                 comparisons.push(
@@ -386,7 +386,7 @@ async function verifyFranchiseDocuments(franchise) {
                     extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
                     status: 'mismatch',
                     confidence: 0.95,
-                    notes: 'Ang larawang na-upload ay hindi lehitimong Cedula (CTC).'
+                    notes: 'Uploaded image does not appear to be a valid Community Tax Certificate (Cedula).'
                 });
             } else {
                 comparisons.push(compareField(franchise.cedulaSerialNo, extracted.serialNo, 'Cedula / CTC Serial No', 'cedulaSerialNo'));
@@ -433,7 +433,7 @@ async function verifyFranchiseDocuments(franchise) {
                     extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
                     status: 'mismatch',
                     confidence: 0.95,
-                    notes: 'Ang larawang na-upload ay hindi lehitimong TODA Endorsement.'
+                    notes: 'Uploaded image does not appear to be a valid TODA Endorsement certificate.'
                 });
             } else {
                 comparisons.push(compareField(franchise.todaName, extracted.todaName, 'Accredited TODA Association', 'todaName'));
@@ -483,7 +483,7 @@ async function verifyFranchiseDocuments(franchise) {
                     extractedValue: extracted.detectedDocumentType || 'Unrecognized / Wrong Document',
                     status: 'mismatch',
                     confidence: 0.95,
-                    notes: 'Ang larawang na-upload ay hindi lehitimong Barangay Clearance.'
+                    notes: 'Uploaded image does not appear to be a valid Barangay Clearance document.'
                 });
             } else if (franchise.brgyClearanceNo) {
                 comparisons.push(compareField(franchise.brgyClearanceNo, extracted.clearanceNo, 'Barangay Clearance No', 'brgyClearanceNo'));
@@ -536,17 +536,17 @@ async function verifyFranchiseDocuments(franchise) {
     if (wrongTypeCount > 0 || mismatched > 0) {
         results.status = 'flagged';
         results.overallNotes = wrongTypeCount > 0 
-            ? `May ${wrongTypeCount} dokumento na hindi tumutugma sa inaasahang opisyal na uri (wrong document type) o may ${mismatched} mismatch.`
-            : `Mayroong ${mismatched} field na hindi tugma sa dokumentong litrato. Kinakailangan ang masusing pagsusuri ng Municipal Admin.`;
+            ? `${wrongTypeCount} document(s) did not match the expected official document type or contain ${mismatched} data mismatch(es).`
+            : `${mismatched} field(s) do not match official document images. Manual review by Municipal Admin is required.`;
     } else if (total === 0 || unverifiedCount === Object.keys(results.documents).length) {
         results.status = 'unverified';
-        results.overallNotes = 'Hindi naging available ang automated OCR scan. Maaaring manu-manong i-verify ng Admin ang mga dokumento.';
+        results.overallNotes = 'Automated OCR scan unavailable. Admin manual document review required.';
     } else if (unclear > 0) {
         results.status = 'flagged';
-        results.overallNotes = `May ilang field (${unclear}) na malabo o hindi sigurado. Kinakailangan ang manu-manong kumpirmasyon ng Admin.`;
+        results.overallNotes = `Some fields (${unclear}) are unclear or unconfirmed. Admin manual verification required.`;
     } else if (matched > 0 && mismatched === 0) {
         results.status = 'verified';
-        results.overallNotes = `Tugma ang lahat ng ${matched} impormasyon sa mga kalakip na opisyal na dokumento.`;
+        results.overallNotes = `All ${matched} submitted fields match the attached official documents.`;
     } else {
         results.status = 'unverified';
         results.overallNotes = 'Manual review required.';

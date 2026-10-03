@@ -5,6 +5,7 @@ import {
   ChevronLeft, ChevronRight, Eye
 } from 'lucide-react';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
+import { formatZoneLabel } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
 
 const AdminApplicationSummaryModal = ({
@@ -141,7 +142,7 @@ const AdminApplicationSummaryModal = ({
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Route Zone</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.zone ? `Zone ${franchise.zone}` : '—'}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.zone ? formatZoneLabel(franchise.zone) : '—'}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">TODA Association</span>

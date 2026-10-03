@@ -128,13 +128,13 @@ router.post('/test', async (req, res) => {
     if (result.sentCount === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Walang aktibong subscription na natagpuan para sa device na ito. I-enable muna ang push notification.'
+        message: 'No active subscription found for this device. Please enable push notifications first.'
       });
     }
 
     res.json({
       success: true,
-      message: 'Matagumpay na naipadala ang test push alert sa iyong telepono!',
+      message: 'Test push alert sent successfully to your device!',
       result
     });
   } catch (error) {

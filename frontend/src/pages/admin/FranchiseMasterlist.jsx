@@ -12,6 +12,7 @@ import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import TricycleIcon from '../../components/common/TricycleIcon';
+import { formatZoneLabel } from '../../utils/constants';
 
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'Active', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800' },
@@ -347,7 +348,7 @@ const FranchiseMasterlist = () => {
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Authorized Route Zone</span>
-                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Zone {selectedFranchise.zone || 'N/A'}</span>
+                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatZoneLabel(selectedFranchise.zone)}</span>
                   </div>
                 </div>
               </div>
@@ -743,7 +744,7 @@ const FranchiseMasterlist = () => {
                         </td>
                         <td className="p-3.5">
                           <p className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{f.todaName || 'Non-TODA'}</p>
-                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Zone {f.zone || 1}</p>
+                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">{formatZoneLabel(f.zone)}</p>
                         </td>
                         <td className="p-3.5 text-center">
                           <StatusBadge status={f.status} />
@@ -756,7 +757,7 @@ const FranchiseMasterlist = () => {
                               type="button"
                               onClick={() => setSelectedFranchise(f)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-all cursor-pointer"
-                              title="Tingnan ang kumpletong detalye"
+                              title="View complete details"
                             >
                               <Eye size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Details
                             </button>
@@ -779,7 +780,7 @@ const FranchiseMasterlist = () => {
                                 type="button"
                                 onClick={() => initiateToggleArchive(f._id, displayName, true)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
-                                title="Ibalik sa Masterlist"
+                                title="Restore to Masterlist"
                               >
                                 <ArchiveRestore size={13} /> Restore
                               </button>
@@ -790,7 +791,7 @@ const FranchiseMasterlist = () => {
                                   type="button"
                                   onClick={() => initiateToggleArchive(f._id, displayName, false)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
-                                  title="Ilipat sa Archives ang lumang record"
+                                  title="Move record to Archives"
                                 >
                                   <Archive size={13} /> Archive
                                 </button>

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
+import { formatZoneLabel } from '../../utils/constants';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -1002,7 +1003,7 @@ const UserManagement = () => {
                           </div>
                           <div>
                             <span>TODA/Route:</span>{' '}
-                            <strong className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">{unit.todaName || unit.zone || 'N/A'}</strong>
+                            <strong className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">{unit.todaName || (unit.zone ? formatZoneLabel(unit.zone) : 'N/A')}</strong>
                           </div>
                           <div>
                             <span>Motor No:</span>{' '}

@@ -11,6 +11,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import StatusBadge from '../../components/common/StatusBadge';
+import { formatZoneLabel } from '../../utils/constants';
 
 const SubmitMembers = () => {
   const { t, language } = useLanguage();
@@ -608,7 +609,7 @@ const SubmitMembers = () => {
                                     </span>
                                   </div>
                                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-normal truncate">
-                                    Zone {unit.zone || 'N/A'} {unit.motorNo ? `• Motor: ${unit.motorNo}` : ''}
+                                    {formatZoneLabel(unit.zone)} {unit.motorNo ? `• Motor: ${unit.motorNo}` : ''}
                                   </p>
                                 </div>
 

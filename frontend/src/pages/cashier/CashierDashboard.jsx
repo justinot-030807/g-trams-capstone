@@ -6,6 +6,7 @@ import {
   Printer, ArrowRight, Loader2, AlertCircle, RefreshCw,
   FileText, ShieldCheck, User, Calendar, CreditCard, Banknote, Sparkles, Filter, X, Settings
 } from 'lucide-react';
+import { formatZoneLabel } from '../../utils/constants';
 
 const CashierDashboard = () => {
   const navigate = useNavigate();
@@ -424,7 +425,7 @@ const CashierDashboard = () => {
                           <td className="py-3.5 px-4">
                             <div>
                               <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
-                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono">Zone {item.zone || 'N/A'}</p>
+                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
                             </div>
                           </td>
 
@@ -477,7 +478,7 @@ const CashierDashboard = () => {
                         <td className="py-3.5 px-4">
                           <div>
                             <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
-                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono">Zone {item.zone || 'N/A'}</p>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
                           </div>
                         </td>
 

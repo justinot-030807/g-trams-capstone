@@ -11,6 +11,7 @@ import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
 import { useSocket } from '../../context/SocketContext';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
+import { formatZoneLabel } from '../../utils/constants';
 
 const REJECT_REASONS = [
   'Missing or Expired LTO Official Receipt / Certificate of Registration (OR/CR)',
@@ -782,7 +783,7 @@ const FranchiseReviewPage = () => {
                 <div>
                   <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">TODA / Zone</span>
                   <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">
-                    {currentApp.todaName || 'NON-TODA'} {currentApp.zone ? `(Zone ${currentApp.zone})` : ''}
+                    {currentApp.todaName || 'NON-TODA'} {currentApp.zone ? `(${formatZoneLabel(currentApp.zone)})` : ''}
                   </span>
                 </div>
                 <div>
@@ -815,12 +816,12 @@ const FranchiseReviewPage = () => {
                   onChange={(e) => setRejectField(e.target.value)}
                   className="w-full bg-white dark:bg-[#14110F] border border-red-300 dark:border-red-900/80 rounded-lg px-2.5 py-1.5 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:ring-1 focus:ring-red-500 font-medium"
                 >
-                  <option value="chassisNo">Chassis Number (Numero ng Chassis)</option>
-                  <option value="motorNo">Motor / Engine Number (Numero ng Makina)</option>
-                  <option value="plateNo">Plate Number (Plaka)</option>
+                  <option value="chassisNo">Chassis Number</option>
+                  <option value="motorNo">Motor / Engine Number</option>
+                  <option value="plateNo">Plate Number</option>
                   <option value="cedulaDoc">Community Tax Certificate (Cedula) Document</option>
                   <option value="orCrDocument">Tricycle OR/CR Document (LTO)</option>
-                  <option value="license">Driver's License (Lisensya)</option>
+                  <option value="license">Driver's License</option>
                   <option value="todaEndorsement">TODA Endorsement Certificate</option>
                   <option value="brgyClearance">Barangay Clearance</option>
                   <option value="make">Vehicle Make / Brand</option>
@@ -1022,7 +1023,7 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Assigned Zone</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100">
-                          {currentApp.zone ? (currentApp.zone.toString().toLowerCase().includes('zone') ? currentApp.zone : `Zone ${currentApp.zone}`) : '—'}
+                          {currentApp.zone ? formatZoneLabel(currentApp.zone) : '—'}
                         </span>
                       </div>
                     </div>

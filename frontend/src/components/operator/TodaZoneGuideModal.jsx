@@ -1,29 +1,35 @@
 import React, { useState } from 'react';
-import { MapPin, Search, X, Compass, CheckCircle2, Shield, Info, Navigation, Users } from 'lucide-react';
+import { 
+  MapPin, Search, X, Compass, CheckCircle2, Shield, Info, 
+  Navigation, Users, Layers, ExternalLink 
+} from 'lucide-react';
+import { GASAN_ZONES, GASAN_BARANGAYS } from '../../utils/constants';
+
+export { GASAN_ZONES };
 
 export const TODA_DIRECTORY = [
   {
     id: 'BATODA',
     name: 'BATODA (Bachao TODA)',
-    zone: 'Zone 2 - Coastal Route',
+    zone: 'South Zone',
     color: 'bg-blue-500',
     terminal: 'Bachao Ibaba Junction / Poblacion Market',
     barangays: ['Bachao Ibaba', 'Bachao Ilaya', 'Antipolo', 'Barangay I (Poblacion)'],
-    description: 'Servicing Bachao coastal and interior routes heading to Gasan Public Market.'
+    description: 'Servicing Bachao coastal and interior routes connecting to Gasan Public Market.'
   },
   {
     id: 'POB TODA',
     name: 'POB TODA (Poblacion Central)',
-    zone: 'Zone 1 - Town Proper Loop',
+    zone: 'Central Zone',
     color: 'bg-emerald-500',
     terminal: 'Gasan Municipal Plaza / Town Terminal',
     barangays: ['Barangay I (Poblacion)', 'Barangay II (Poblacion)', 'Barangay III (Poblacion)'],
-    description: 'Town center internal loop connecting banks, municipal hall, churches, and central schools.'
+    description: 'Town proper internal loop connecting banks, municipal hall, churches, and central schools.'
   },
   {
     id: 'GT TODA',
     name: 'GT TODA (Gasan-Tapuyan)',
-    zone: 'Zone 2 - Highway Route',
+    zone: 'North Zone',
     color: 'bg-amber-500',
     terminal: 'Tapuyan Crossing / Highway Outpost',
     barangays: ['Tapuyan', 'Dili', 'Libtangin', 'Barangay II (Poblacion)'],
@@ -32,16 +38,16 @@ export const TODA_DIRECTORY = [
   {
     id: 'NBI TODA',
     name: 'NBI TODA (North Bay Interstate)',
-    zone: 'Zone 2 - North Coastal',
+    zone: 'South Zone',
     color: 'bg-purple-500',
     terminal: 'Bognuyan Port Terminal',
     barangays: ['Bognuyan', 'Cabugao', 'Dawis', 'Mangiliol'],
-    description: 'Port and northern coastal connectivity covering fishing and agricultural communities.'
+    description: 'Port and coastal connectivity covering fishing and agricultural communities.'
   },
   {
     id: 'BANGBANG IPIL TODA',
     name: 'BANGBANG IPIL TODA',
-    zone: 'Zone 3 - Interior & Upland',
+    zone: 'North Zone',
     color: 'bg-rose-500',
     terminal: 'Bangbang Barangay Hall Outpost',
     barangays: ['Bangbang', 'Banot', 'Banuyo', 'Pangi'],
@@ -50,7 +56,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'TAB TODA',
     name: 'TAB TODA (Tabionan Transport)',
-    zone: 'Zone 3 - Upland South',
+    zone: 'South Zone',
     color: 'bg-teal-500',
     terminal: 'Tabionan Junction Terminal',
     barangays: ['Tabionan', 'Tiguion', 'Masiga', 'Matandang Gasan'],
@@ -59,7 +65,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'GASAN CENTRAL TODA',
     name: 'GASAN CENTRAL TODA',
-    zone: 'Zone 1 - Central Interchange',
+    zone: 'Central Zone',
     color: 'bg-indigo-500',
     terminal: 'Gasan Central Integrated Terminal',
     barangays: ['Barangay I (Poblacion)', 'Barangay II (Poblacion)', 'Barangay III (Poblacion)', 'Mahunig'],
@@ -68,77 +74,55 @@ export const TODA_DIRECTORY = [
   {
     id: 'BAHI TODA',
     name: 'BAHI TODA',
-    zone: 'Zone 2 - Coastal South',
+    zone: 'North Zone',
     color: 'bg-cyan-500',
     terminal: 'Bahi Seashore Terminal',
     barangays: ['Bahi', 'Pinggan', 'Bacong-Bacong'],
-    description: 'Coastal shoreline route linking southern coastal barangays to downtown markets.'
+    description: 'Coastal shoreline route linking shoreline barangays to downtown markets.'
   },
   {
     id: 'NON-TODA',
-    name: 'NON-TODA (Independent / Free Franchise)',
-    zone: 'All Approved Municipal Zones',
+    name: 'NON-TODA (Independent Franchise)',
+    zone: 'All Authorized Municipal Routes',
     color: 'bg-slate-500',
-    terminal: 'Non-Exclusive / Operator Residence',
+    terminal: 'Operator Residence Base',
     barangays: ['All Gasan Barangays'],
-    description: 'Operators operating independently within permitted municipal municipal boundaries.'
+    description: 'Independent operators authorized to operate within their designated residency zone.'
   }
-];
-
-export const GASAN_ZONES = [
-  {
-    id: '1',
-    name: 'Zone 1 - Poblacion Town Proper Loop',
-    route: 'Brgy. I, II, III (Poblacion), Mahunig',
-    terminal: 'Gasan Central Integrated Terminal & Municipal Plaza',
-    coverage: 'Poblacion town center, public market, schools, banks, and municipal hall loop'
-  },
-  {
-    id: '2',
-    name: 'Zone 2 - Coastal & Highway Route',
-    route: 'Bachao Ibaba/Ilaya, Tapuyan, Dili, Libtangin, Bognuyan, Bahi, Pinggan',
-    terminal: 'Bachao Junction, Tapuyan Crossing, Bognuyan Port, Bahi Terminal',
-    coverage: 'Main provincial highway and coastal barangays connected to downtown'
-  },
-  {
-    id: '3',
-    name: 'Zone 3 - Interior & Upland Feeder Route',
-    route: 'Bangbang, Banot, Banuyo, Tabionan, Tiguion, Masiga, Matandang Gasan',
-    terminal: 'Bangbang Outpost & Tabionan Junction Outpost',
-    coverage: 'Upland farm-to-market communities and interior residential feeders'
-  },
-  {
-    id: '4',
-    name: 'Zone 4 - Perimeter & Special Municipal Route',
-    route: 'All Authorized Municipal Routes (Non-TODA / Free Franchise)',
-    terminal: 'Non-Exclusive / Operator Residence Base',
-    coverage: 'Special authorized non-exclusive franchise operations within municipal limits'
-  }
-];
-
-const QUICK_BARANGAYS = [
-  "All", "Poblacion", "Bachao", "Bognuyan", "Bangbang", "Tapuyan", "Bahi", "Pinggan", "Tabionan", "Dawis"
 ];
 
 const TodaZoneGuideModal = ({ isOpen, onClose }) => {
+  const [activeTab, setActiveTab] = useState('zones'); // 'zones' | 'toda'
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBrgyTag, setSelectedBrgyTag] = useState('All');
+  const [selectedZoneFilter, setSelectedZoneFilter] = useState('All');
 
   if (!isOpen) return null;
 
-  const filteredList = TODA_DIRECTORY.filter(toda => {
-    const matchesSearch = 
-      toda.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      toda.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      toda.zone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      toda.terminal.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      toda.barangays.some(b => b.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredZones = GASAN_ZONES.filter(z => {
+    if (selectedZoneFilter !== 'All' && z.id !== selectedZoneFilter) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      z.name.toLowerCase().includes(q) ||
+      z.description.toLowerCase().includes(q) ||
+      z.coverage.toLowerCase().includes(q) ||
+      z.barangays.some(b => b.toLowerCase().includes(q))
+    );
+  });
 
-    const matchesTag = 
-      selectedBrgyTag === 'All' ||
-      toda.barangays.some(b => b.toLowerCase().includes(selectedBrgyTag.toLowerCase()));
-
-    return matchesSearch && matchesTag;
+  const filteredToda = TODA_DIRECTORY.filter(toda => {
+    if (selectedZoneFilter !== 'All') {
+      if (!toda.zone.toLowerCase().includes(selectedZoneFilter.toLowerCase())) return false;
+    }
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      toda.name.toLowerCase().includes(q) ||
+      toda.id.toLowerCase().includes(q) ||
+      toda.zone.toLowerCase().includes(q) ||
+      toda.terminal.toLowerCase().includes(q) ||
+      toda.barangays.some(b => b.toLowerCase().includes(q))
+    );
   });
 
   return (
@@ -161,10 +145,10 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
               </div>
               <div>
                 <h3 className="font-bold text-base sm:text-lg tracking-wide uppercase">
-                  TODA Routes &amp; Zone Guide
+                  Municipal Routes &amp; Zone Guide
                 </h3>
                 <p className="text-xs text-white/80 font-normal">
-                  Municipality of Gasan Transport Network &amp; Coverage
+                  Official Zoning Policy &bull; Bayan ng Gasan
                 </p>
               </div>
             </div>
@@ -177,14 +161,14 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Live Search Bar */}
+          {/* Search Bar */}
           <div className="mt-4 relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" size={16} />
             <input 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by Barangay, TODA name, terminal, or zone..."
+              placeholder="Search by Barangay name, zone, or TODA..."
               className="w-full bg-white/10 border border-white/20 rounded-lg pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/50 outline-none focus:bg-white/20 focus:border-[#D4AF37] transition-all font-medium"
             />
             {searchQuery && (
@@ -198,98 +182,194 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Quick Filter Barangay Tags */}
-        <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
-          <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider pl-2 pr-1 shrink-0">
-            Quick Filter:
-          </span>
-          {QUICK_BARANGAYS.map((b) => (
+        {/* Tab Switcher & Zone Filter Bar */}
+        <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between gap-2 overflow-x-auto shrink-0">
+          <div className="flex items-center gap-1.5">
             <button
-              key={b}
-              onClick={() => setSelectedBrgyTag(b)}
-              className={`px-3 py-1 rounded-md text-xs font-bold shrink-0 transition-colors cursor-pointer ${
-                selectedBrgyTag === b
+              onClick={() => setActiveTab('zones')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'zones'
                   ? 'bg-[#9E2A2B] text-white shadow-xs'
-                  : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27]'
+                  : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1]'
               }`}
             >
-              {b}
+              <Layers size={13} />
+              <span>Municipal Zones (3)</span>
             </button>
-          ))}
+
+            <button
+              onClick={() => setActiveTab('toda')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'toda'
+                  ? 'bg-[#9E2A2B] text-white shadow-xs'
+                  : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1]'
+              }`}
+            >
+              <Users size={13} />
+              <span>TODA Directory</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0 ml-auto">
+            {['All', 'Central', 'North', 'South'].map((z) => (
+              <button
+                key={z}
+                onClick={() => setSelectedZoneFilter(z)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
+                  selectedZoneFilter === z
+                    ? 'bg-[#1F1D1B] text-white dark:bg-[#EAE7E1] dark:text-[#14110F]'
+                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
+                }`}
+              >
+                {z}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* TODA Directory Cards List */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-3.5 flex-1">
-          {filteredList.length === 0 ? (
-            <div className="text-center py-12 text-[#6B6761] dark:text-[#A8A29E]">
-              <Info size={32} className="mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">No matching TODA or route found</p>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Try searching with a different barangay name or clearing filters.</p>
-            </div>
-          ) : (
-            filteredList.map((toda) => (
-              <div 
-                key={toda.id}
-                className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors relative overflow-hidden"
-              >
-                <div className={`absolute top-0 left-0 w-1.5 h-full ${toda.color}`} />
-
-                <div className="pl-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] tracking-wide">
-                        {toda.name}
-                      </span>
-                      <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27]">
-                        {toda.id}
-                      </span>
-                    </div>
-
-                    <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1">
-                      <Navigation size={11} /> {toda.zone}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-3 font-normal leading-relaxed">
-                    {toda.description}
-                  </p>
-
-                  <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3 border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2 text-xs">
-                    <div className="flex items-start gap-2">
-                      <MapPin size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block">Terminal Base</span>
-                        <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{toda.terminal}</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block mb-1">
-                        Covered Barangays &amp; Route Stops:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {toda.barangays.map((brgy) => (
-                          <span 
-                            key={brgy}
-                            className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] px-2 py-0.5 rounded-md text-xs font-medium"
-                          >
-                            {brgy}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
+        {/* Content Body */}
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+          {activeTab === 'zones' ? (
+            /* OFFICIAL MUNICIPAL ZONES VIEW */
+            filteredZones.length === 0 ? (
+              <div className="text-center py-12 text-[#6B6761] dark:text-[#A8A29E]">
+                <Info size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">No matching zone found</p>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Try searching for a different barangay name.</p>
               </div>
-            ))
+            ) : (
+              filteredZones.map((zone) => (
+                <div 
+                  key={zone.id}
+                  className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors relative overflow-hidden"
+                >
+                  {/* Left Accent Strip */}
+                  <div className={`absolute top-0 left-0 w-1.5 h-full ${
+                    zone.id === 'Central' ? 'bg-[#9E2A2B]' : zone.id === 'North' ? 'bg-amber-500' : 'bg-blue-600'
+                  }`} />
+
+                  <div className="pl-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-base text-[#1F1D1B] dark:text-[#F6F5F3] tracking-wide">
+                          {zone.name}
+                        </span>
+                        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                          {zone.barangays.length} Barangays
+                        </span>
+                      </div>
+
+                      <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                        {zone.description}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-3 leading-relaxed">
+                      <strong>Coverage:</strong> {zone.coverage}
+                    </p>
+
+                    <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3 border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2 text-xs">
+                      <div className="flex items-start gap-2">
+                        <MapPin size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
+                        <div>
+                          <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block">Terminal Outposts</span>
+                          <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{zone.terminal}</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block mb-1.5">
+                          Assigned Barangays (Residency Base):
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {zone.barangays.map((b) => (
+                            <span 
+                              key={b}
+                              className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] px-2.5 py-0.5 rounded-md text-xs font-medium"
+                            >
+                              {b}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )
+          ) : (
+            /* TODA ASSOCIATIONS VIEW */
+            filteredToda.length === 0 ? (
+              <div className="text-center py-12 text-[#6B6761] dark:text-[#A8A29E]">
+                <Info size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">No matching TODA found</p>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Try searching with a different keyword.</p>
+              </div>
+            ) : (
+              filteredToda.map((toda) => (
+                <div 
+                  key={toda.id}
+                  className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors relative overflow-hidden"
+                >
+                  <div className={`absolute top-0 left-0 w-1.5 h-full ${toda.color}`} />
+
+                  <div className="pl-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] tracking-wide">
+                          {toda.name}
+                        </span>
+                        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                          {toda.id}
+                        </span>
+                      </div>
+
+                      <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1">
+                        <Navigation size={11} /> {toda.zone}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-3 font-normal leading-relaxed">
+                      {toda.description}
+                    </p>
+
+                    <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3 border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2 text-xs">
+                      <div className="flex items-start gap-2">
+                        <MapPin size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
+                        <div>
+                          <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block">Terminal Base</span>
+                          <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{toda.terminal}</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block mb-1">
+                          Covered Barangays &amp; Route Stops:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {toda.barangays.map((brgy) => (
+                            <span 
+                              key={brgy}
+                              className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] px-2 py-0.5 rounded-md text-xs font-medium"
+                            >
+                              {brgy}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              ))
+            )
           )}
         </div>
 
         {/* Footer */}
         <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] border-t border-[#E4E1DC] dark:border-[#2E2A27] flex justify-between items-center text-xs shrink-0">
           <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
-            Official Gasan TODA Route Network
+            Municipal Franchising Policy: Zoning is primarily based on Operator Barangay residency.
           </p>
           <button
             onClick={onClose}

@@ -251,7 +251,7 @@ exports.login = async (req, res) => {
         if (!isMatch) {
             if (user.authProvider === 'google' || user.googleId) {
                 return res.status(400).json({ 
-                    message: 'Ang account na ito ay naka-link sa Google. Pindutin lamang ang "Continue with Google" sa ibaba para makapasok, o gamitin ang "Forgot Password" kung nais mag-set ng sariling password.',
+                    message: 'This account is linked with Google. Please click "Continue with Google" below to log in, or use "Forgot Password" to set a local password.',
                     isGoogleAccount: true
                 });
             }

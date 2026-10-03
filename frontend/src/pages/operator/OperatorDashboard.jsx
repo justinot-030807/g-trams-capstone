@@ -25,6 +25,7 @@ import {
   formatRelativeTime, 
   renderRichNotificationMessage 
 } from '../../utils/notificationUtils';
+import { formatZoneLabel } from '../../utils/constants';
 
 const CANCEL_REASONS = [
   "Need to correct vehicle or tricycle details",
@@ -962,7 +963,7 @@ const OperatorDashboard = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="text-[9px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
-                      <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{unit?.zone || 'N/A'}</p>
+                      <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{unit?.zone ? formatZoneLabel(unit.zone) : 'N/A'}</p>
                     </div>
                   </div>
 
@@ -1239,7 +1240,7 @@ const OperatorDashboard = () => {
                 <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.fullName}</p>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.todaName}</p></div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">Zone {selectedUnit?.zone}</p></div>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.zone ? formatZoneLabel(selectedUnit.zone) : 'N/A'}</p></div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.motorNo}</p></div>

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { formatZoneLabel } from '../../utils/constants';
 
 const CashierSettings = () => {
   const navigate = useNavigate();
@@ -747,7 +748,7 @@ const CashierSettings = () => {
                             {item.plateNo || '—'}
                           </td>
                           <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                            {item.todaName || 'NON-TODA'} {item.zone ? `• Zone ${item.zone}` : ''}
+                            {item.todaName || 'NON-TODA'} {item.zone ? `• ${formatZoneLabel(item.zone)}` : ''}
                           </td>
                           <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-400">
                             ₱{parseFloat(item.amountPaid || 500).toFixed(2)}

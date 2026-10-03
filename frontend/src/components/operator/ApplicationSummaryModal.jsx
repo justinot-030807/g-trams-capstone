@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, FileText, User, Receipt, ShieldCheck, FileCheck } from 'lucide-react';
+import { formatZoneLabel } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
 
 const ApplicationSummaryModal = ({
@@ -60,7 +61,7 @@ const ApplicationSummaryModal = ({
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Route Zone</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.zone ? `Zone ${formData.zone}` : '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.zone ? formatZoneLabel(formData.zone) : '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">TODA Association</span>

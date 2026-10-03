@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import TricycleIcon from '../../components/common/TricycleIcon';
+import { formatZoneLabel } from '../../utils/constants';
 
 const RenewFranchise = () => {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ const RenewFranchise = () => {
   const handleFileSelect = (fieldId, file) => {
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        showToast(language === 'fil' ? 'Masyadong malaki ang dokumento. Hanggang 10MB lamang ang pinapayagan.' : 'File is too large. Maximum size is 10MB.', 'error');
+        showToast('File is too large. Maximum size is 10MB.', 'error');
         return;
       }
       if (fieldId === 'cedulaDoc') {
@@ -167,43 +168,23 @@ const RenewFranchise = () => {
       const currentYear = new Date().getFullYear();
       const cedulaYear = new Date(formData.dateIssued).getFullYear();
       if (cedulaYear < currentYear) {
-        showToast(
-          language === 'fil'
-            ? `Paso na ang Cedula (CTC). Ang Cedula para sa taong ${cedulaYear} ay hindi na tanggap; kinakailangan ang Cedula na kinuha para sa kasalukuyang taon (${currentYear}).`
-            : `Expired Community Tax Certificate (Cedula). A Cedula issued in ${cedulaYear} is not valid for this fiscal year (${currentYear}).`,
-          'error'
-        );
+        showToast(`Expired Community Tax Certificate (Cedula). A Cedula issued in ${cedulaYear} is not valid for this fiscal year (${currentYear}).`, 'error');
         return;
       }
       if (formData.dateIssued > today) {
-        showToast(
-          language === 'fil'
-            ? 'Hindi maaaring sa hinaharap ang petsa ng pagkuha ng Cedula.'
-            : 'Date issued for Cedula cannot be in the future.',
-          'error'
-        );
+        showToast('Date issued for Cedula cannot be in the future.', 'error');
         return;
       }
     }
 
     // Expiry validation: Warn operator that LTO renewal is required before franchise renewal
     if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
-      showToast(
-        language === 'fil'
-          ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa.'
-          : 'Expired LTO OR/CR: Renewal with LTO is required before franchise renewal.',
-        'error'
-      );
+      showToast('Expired LTO OR/CR: Renewal with LTO is required before franchise renewal.', 'error');
       return;
     }
 
     if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
-      showToast(
-        language === 'fil'
-          ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa."
-          : "Expired Driver's License: Renewal with LTO is required before franchise renewal.",
-        'error'
-      );
+      showToast("Expired Driver's License: Renewal with LTO is required before franchise renewal.", 'error');
       return;
     }
 
@@ -435,7 +416,7 @@ const RenewFranchise = () => {
                     <div className="pt-1.5 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                       <span className="text-xs font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block">Route / Zone</span>
                       <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] truncate block mt-0.5">
-                        Zone {franchise.zone || 'N/A'} (Gasan)
+                        {formatZoneLabel(franchise.zone)} (Gasan)
                       </span>
                     </div>
                   </div>
@@ -598,9 +579,7 @@ const RenewFranchise = () => {
                   <div className="max-w-xl p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-lg flex items-start gap-2.5 text-xs sm:text-sm font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
                     <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
                     <p className="leading-snug">
-                      {language === 'fil'
-                        ? 'Paso na ang LTO OR/CR: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa.'
-                        : 'Expired LTO OR/CR: Renewal with LTO is required before franchise renewal.'}
+                      Expired LTO OR/CR: Renewal with LTO is required before franchise renewal.
                     </p>
                   </div>
                 )}
@@ -666,9 +645,7 @@ const RenewFranchise = () => {
                   <div className="max-w-xl p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-lg flex items-start gap-2.5 text-xs sm:text-sm font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
                     <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
                     <p className="leading-snug">
-                      {language === 'fil'
-                        ? "Paso na ang Driver's License: Kinakailangang mag-renew muna sa LTO bago mag-renew ng prangkisa."
-                        : "Expired Driver's License: Renewal with LTO is required before franchise renewal."}
+                      Expired Driver's License: Renewal with LTO is required before franchise renewal.
                     </p>
                   </div>
                 )}

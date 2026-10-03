@@ -537,7 +537,7 @@ const checkUniqueFranchiseField = async (req, res) => {
             field,
             value: value.trim(),
             existingStatus: existing ? existing.status : null,
-            message: existing ? `Ang ${field === 'plateNo' ? 'Plate Number' : field === 'motorNo' ? 'Motor Number' : 'Chassis Number'} na ito ay nakarehistro na sa ibang unit.` : 'Available'
+            message: existing ? `This ${field === 'plateNo' ? 'Plate Number' : field === 'motorNo' ? 'Motor Number' : 'Chassis Number'} is already registered to another unit.` : 'Available'
         });
     } catch (error) {
         console.error('Error checking unique franchise field:', error);
@@ -696,7 +696,7 @@ const scanDocument = async (req, res) => {
         const file = req.file;
 
         if (!file && !req.body.fileUrl && !req.body.base64) {
-            return res.status(400).json({ success: false, message: 'Walang file na naipadala para sa pag-scan.' });
+            return res.status(400).json({ success: false, message: 'No file received for document scanning.' });
         }
 
         const fileUrl = file ? (file.path || file.secure_url || file.url) : req.body.fileUrl;
@@ -715,7 +715,7 @@ const scanDocument = async (req, res) => {
                 success: false,
                 noKey: true,
                 fileUrl,
-                message: 'Naka-attach ang dokumento! (Paalala: Kailangang i-set ang GEMINI_API_KEY sa Render environment variables para gumana ang AI auto-fill.)'
+                message: 'Document attached! (Notice: GEMINI_API_KEY must be configured in environment variables for AI auto-fill to activate.)'
             });
         }
 
@@ -733,7 +733,7 @@ const scanDocument = async (req, res) => {
             return res.status(200).json({
                 success: false,
                 fileUrl,
-                message: 'Naka-upload ang dokumento, ngunit hindi mabasa ang imahe.'
+                message: 'Document uploaded, but the image could not be processed.'
             });
         }
 
@@ -743,7 +743,7 @@ const scanDocument = async (req, res) => {
             return res.status(200).json({
                 success: false,
                 fileUrl,
-                message: 'Hindi mabasa o walang nakitang impormasyon sa dokumento. Maaari mo itong i-type nang manu-mano.'
+                message: 'Could not extract information from document. You may enter the details manually.'
             });
         }
 

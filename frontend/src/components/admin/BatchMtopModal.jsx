@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
+import { MUNICIPAL_SIGNATORY, formatZoneLabel } from '../../utils/constants';
 import { Printer, X, Award, Layers } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -265,7 +265,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                             </div>
                             <div>
                               <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Authorized Route &amp; Zone:</span>
-                              <span className="font-bold text-slate-800 text-xs sm:text-sm">Zone {unit.zone} &bull; {unit.todaName || 'NON-TODA'}</span>
+                              <span className="font-bold text-slate-800 text-xs sm:text-sm">{formatZoneLabel(unit.zone)} &bull; {unit.todaName || 'NON-TODA'}</span>
                             </div>
                           </div>
                         </div>

@@ -16,7 +16,7 @@ import AdminApplicationSummaryModal from '../../components/admin/AdminApplicatio
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { evaluateDocumentValidity, triageApplication, getTimeWaiting } from '../../utils/dateValidity';
-import { GASAN_BARANGAYS } from '../../utils/constants';
+import { GASAN_BARANGAYS, formatZoneLabel } from '../../utils/constants';
 
 const REJECT_REASONS = [
   "Expired OR/CR Registration",
@@ -608,7 +608,7 @@ const FranchiseApproval = () => {
 
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-xs space-y-1.5">
               <p><span className="text-[#6B6761] dark:text-[#A8A29E]">Operator:</span> <strong className="text-[#1F1D1B] dark:text-white">{quickApproveTarget.fullName}</strong></p>
-              <p><span className="text-[#6B6761] dark:text-[#A8A29E]">TODA / Zone:</span> <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">{quickApproveTarget.todaName || 'NON-TODA'} (Zone {quickApproveTarget.zone})</span></p>
+              <p><span className="text-[#6B6761] dark:text-[#A8A29E]">TODA / Zone:</span> <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">{quickApproveTarget.todaName || 'NON-TODA'} ({formatZoneLabel(quickApproveTarget.zone)})</span></p>
               <p><span className="text-[#6B6761] dark:text-[#A8A29E]">Plate Number:</span> <span className="font-mono font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">{quickApproveTarget.plateNo || 'PENDING'}</span></p>
             </div>
 
@@ -690,12 +690,12 @@ const FranchiseApproval = () => {
                 onChange={(e) => setQuickRejectField(e.target.value)}
                 className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:ring-1 focus:ring-[#9E2A2B]"
               >
-                <option value="chassisNo">Chassis Number (Numero ng Chassis)</option>
-                <option value="motorNo">Motor / Engine Number (Numero ng Makina)</option>
-                <option value="plateNo">Plate Number (Plaka)</option>
+                <option value="chassisNo">Chassis Number</option>
+                <option value="motorNo">Motor / Engine Number</option>
+                <option value="plateNo">Plate Number</option>
                 <option value="cedulaDoc">Community Tax Certificate (Cedula) Document</option>
                 <option value="orCrDocument">Tricycle OR/CR Document (LTO)</option>
-                <option value="license">Driver's License (Lisensya)</option>
+                <option value="license">Driver's License</option>
                 <option value="todaEndorsement">TODA Endorsement Certificate</option>
                 <option value="brgyClearance">Barangay Clearance</option>
                 <option value="make">Vehicle Make / Brand</option>
