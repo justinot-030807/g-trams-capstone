@@ -694,10 +694,10 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold truncate text-[#92400E] dark:text-[#FDE68A]">
-                    {t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}
+                    {t('dashboard.signingTitle', 'Application Approved — Signing in Progress')}
                   </h4>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 leading-snug">
-                    {t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}
+                    {t('dashboard.signingDesc', 'Approved. Documents are being signed. We will notify you when ready for payment.')}
                   </p>
                 </div>
               </div>
@@ -734,13 +734,13 @@ const OperatorDashboard = () => {
               <div className="min-w-0">
                 <h4 className="text-xs sm:text-sm font-bold truncate text-[#1F1D1B] dark:text-[#F6F5F3]">
                   {franchises.length >= maxUnits 
-                    ? `Maximum Fleet Capacity (${maxUnits}/${maxUnits})`
+                    ? `Maximum Capacity (${maxUnits}/${maxUnits})`
                     : 'Available Franchise Slot'}
                 </h4>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
                   {franchises.length >= maxUnits
-                    ? `All allowed ${maxUnits} units are currently registered`
-                    : `Registered operators may register up to ${maxUnits} units in Gasan`}
+                    ? `All ${maxUnits} units are registered`
+                    : `You can register up to ${maxUnits} tricycle units`}
                 </p>
               </div>
               {franchises.length < maxUnits && (
@@ -767,7 +767,7 @@ const OperatorDashboard = () => {
             <div>
               <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">TODA Management Console</h3>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 max-w-md leading-relaxed">
-                Welcome President. You can view your registered members, submit the official TODA Masterlist, and coordinate with the Office of the Vice Mayor Extension office here.
+                Manage your association members and submit the official TODA masterlist.
               </p>
             </div>
           </div>
@@ -1115,7 +1115,7 @@ const OperatorDashboard = () => {
                               </span>
                             </div>
                             <p className="text-xs font-normal text-[#92400E]/90 dark:text-[#FDE68A]/90 leading-snug">
-                              Please present your Plate No. (<b>{unit.plateNo}</b>) to the Municipal Cashier / Treasury Window to pay the fee. Once confirmed paid, the Municipal Admin will release your active franchise.
+                              Pay ₱500 at the Municipal Cashier window with Plate No. <b>{unit.plateNo}</b>. Your franchise will be activated once payment is confirmed.
                             </p>
                           </div>
                         </div>

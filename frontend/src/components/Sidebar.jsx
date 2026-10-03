@@ -242,6 +242,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         name: 'Cashier Terminal', 
         path: '/cashier-dashboard', 
         icon: <Receipt size={18} /> 
+      },
+      { 
+        type: 'link', 
+        name: t('nav.settings', 'Settings & Archive'), 
+        path: '/cashier-settings', 
+        icon: <Settings size={18} /> 
       }
     ],
     'operator': [
@@ -307,6 +313,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const getRoleLabel = () => {
     if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     if (role === 'admin') return t('nav.roleAdmin', 'ADMINISTRATOR');
+    if (role === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
     return t('nav.roleOperator', 'OPERATOR');
   };
 

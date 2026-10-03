@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
   Receipt, Search, CheckCircle2, Clock, DollarSign, 
   Printer, ArrowRight, Loader2, AlertCircle, RefreshCw,
-  FileText, ShieldCheck, User, Calendar, CreditCard, Banknote, Sparkles, Filter, X
+  FileText, ShieldCheck, User, Calendar, CreditCard, Banknote, Sparkles, Filter, X, Settings
 } from 'lucide-react';
 
 const CashierDashboard = () => {
+  const navigate = useNavigate();
   const [queue, setQueue] = useState([]);
   const [paidList, setPaidList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -229,15 +231,27 @@ const CashierDashboard = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-3.5 bg-black/20 p-3.5 rounded-lg border border-white/15 shrink-0">
-              <div className="w-10 h-10 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center text-[#D4AF37] font-bold text-base border border-[#D4AF37]/30">
-                <DollarSign size={20} />
+            <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+              <div className="flex items-center gap-3.5 bg-black/20 p-3 rounded-lg border border-white/15">
+                <div className="w-10 h-10 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center text-[#D4AF37] font-bold text-base border border-[#D4AF37]/30">
+                  <DollarSign size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/70">Terminal Cashier</p>
+                  <p className="text-sm font-bold text-white">{currentCashierName}</p>
+                  <p className="text-[10px] text-white/60">LGU Gasan, Marinduque</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/70">Terminal Cashier</p>
-                <p className="text-sm font-bold text-white">{currentCashierName}</p>
-                <p className="text-[10px] text-white/60">LGU Gasan, Marinduque</p>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate('/cashier-settings')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-3 rounded-lg bg-black/25 hover:bg-black/40 text-white text-xs font-bold transition-all border border-white/20 cursor-pointer shadow-xs active:scale-95"
+                title="Open Cashier Settings & Archive"
+              >
+                <Settings size={15} />
+                <span>Settings &amp; Archive</span>
+              </button>
             </div>
           </div>
         </div>

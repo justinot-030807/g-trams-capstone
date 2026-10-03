@@ -1,20 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { Calendar, Check, Sparkles, ChevronDown } from 'lucide-react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { 
+  Calendar as CalendarIcon, ChevronLeft, ChevronRight, 
+  X, Check, Sparkles, Clock, CalendarDays 
+} from 'lucide-react';
 
-const MONTHS = [
-  { value: '01', name: 'Enero (01)', label: 'January' },
-  { value: '02', name: 'Pebrero (02)', label: 'February' },
-  { value: '03', name: 'Marso (03)', label: 'March' },
-  { value: '04', name: 'Abril (04)', label: 'April' },
-  { value: '05', name: 'Mayo (05)', label: 'May' },
-  { value: '06', name: 'Hunyo (06)', label: 'June' },
-  { value: '07', name: 'Hulyo (07)', label: 'July' },
-  { value: '08', name: 'Agosto (08)', label: 'August' },
-  { value: '09', name: 'Setyembre (09)', label: 'September' },
-  { value: '10', name: 'Oktubre (10)', label: 'October' },
-  { value: '11', name: 'Nobyembre (11)', label: 'November' },
-  { value: '12', name: 'Disyembre (12)', label: 'December' }
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
+
+const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 const SimpleDatePicker = ({
   name,
@@ -27,279 +22,440 @@ const SimpleDatePicker = ({
   disabled = false,
   error
 }) => {
-  const [useNative, setUseNative] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   // Parse YYYY-MM-DD
-  const { currentYear, currentMonth, currentDay } = useMemo(() => {
-    if (!value || typeof value !== 'string') {
-      return { currentYear: '', currentMonth: '', currentDay: '' };
-    }
+  const parsedDate = useMemo(() => {
+    if (!value || typeof value !== 'string') return null;
     const parts = value.split('-');
     if (parts.length >= 3) {
-      return {
-        currentYear: parts[0] || '',
-        currentMonth: parts[1] || '',
-        currentDay: parts[2].substring(0, 2) || ''
-      };
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2].substring(0, 2), 10);
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        return new Date(y, m, d);
+      }
     }
-    return { currentYear: '', currentMonth: '', currentDay: '' };
+    return null;
   }, [value]);
 
-  const thisYear = new Date().getFullYear();
+  // Current view month & year in calendar popup
+  const [viewYear, setViewYear] = useState(() => parsedDate ? parsedDate.getFullYear() : today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(() => parsedDate ? parsedDate.getMonth() : today.getMonth());
+
+  // Update view when value changes from outside
+  useEffect(() => {
+    if (parsedDate) {
+      setViewYear(parsedDate.getFullYear());
+      setViewMonth(parsedDate.getMonth());
+    }
+  }, [parsedDate]);
+
+  // Close calendar on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isOpen]);
 
   // Generate Year List based on mode
   const yearOptions = useMemo(() => {
+    const thisYear = today.getFullYear();
     const years = [];
     if (mode === 'issuance') {
-      // Past 6 years up to next year
-      for (let y = thisYear + 1; y >= thisYear - 6; y--) {
+      for (let y = thisYear + 1; y >= thisYear - 8; y--) {
         years.push(y);
       }
     } else if (mode === 'expiry') {
-      // Current year up to next 12 years
       for (let y = thisYear; y <= thisYear + 12; y++) {
         years.push(y);
       }
     } else {
-      // General: past 10 years to future 10 years
       for (let y = thisYear + 10; y >= thisYear - 10; y--) {
         years.push(y);
       }
     }
     return years;
-  }, [mode, thisYear]);
+  }, [mode, today]);
 
-  // Compute number of days in selected month and year
-  const daysInMonth = useMemo(() => {
-    const y = parseInt(currentYear, 10) || thisYear;
-    const m = parseInt(currentMonth, 10) || 1;
-    return new Date(y, m, 0).getDate();
-  }, [currentYear, currentMonth, thisYear]);
+  // Days in current view month
+  const calendarDays = useMemo(() => {
+    const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInCurrentMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
 
-  const dayOptions = useMemo(() => {
     const days = [];
-    for (let d = 1; d <= daysInMonth; d++) {
-      days.push(String(d).padStart(2, '0'));
+
+    // Prev month padding
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      days.push({
+        day: daysInPrevMonth - i,
+        month: viewMonth - 1,
+        year: viewMonth === 0 ? viewYear - 1 : viewYear,
+        isCurrentMonth: false
+      });
     }
+
+    // Current month days
+    for (let d = 1; d <= daysInCurrentMonth; d++) {
+      days.push({
+        day: d,
+        month: viewMonth,
+        year: viewYear,
+        isCurrentMonth: true
+      });
+    }
+
+    // Next month padding to fill grid to multiple of 7
+    const remaining = (7 - (days.length % 7)) % 7;
+    for (let n = 1; n <= remaining; n++) {
+      days.push({
+        day: n,
+        month: viewMonth + 1,
+        year: viewMonth === 11 ? viewYear + 1 : viewYear,
+        isCurrentMonth: false
+      });
+    }
+
     return days;
-  }, [daysInMonth]);
+  }, [viewYear, viewMonth]);
 
   const emitDate = (y, m, d) => {
     if (!onChange) return;
-    if (!y && !m && !d) {
-      onChange({ target: { name, value: '' } });
-      return;
-    }
-    // Auto-fill fallback for comfortable UX
-    const finalYear = y || String(thisYear);
-    const finalMonth = m || '01';
-    let finalDay = d || '01';
-
-    // Clamp day to valid range
-    const maxD = new Date(parseInt(finalYear, 10), parseInt(finalMonth, 10), 0).getDate();
-    if (parseInt(finalDay, 10) > maxD) {
-      finalDay = String(maxD).padStart(2, '0');
-    }
-
+    const finalYear = String(y);
+    const finalMonth = String(m + 1).padStart(2, '0');
+    const finalDay = String(d).padStart(2, '0');
     const isoString = `${finalYear}-${finalMonth}-${finalDay}`;
     onChange({ target: { name, value: isoString } });
   };
 
-  const handleMonthChange = (e) => {
-    emitDate(currentYear || String(thisYear), e.target.value, currentDay || '01');
+  const handleSelectDay = (cell) => {
+    emitDate(cell.year, cell.month, cell.day);
+    setIsOpen(false);
   };
 
-  const handleDayChange = (e) => {
-    emitDate(currentYear || String(thisYear), currentMonth || '01', e.target.value);
+  const handleClear = (e) => {
+    e.stopPropagation();
+    if (onChange) {
+      onChange({ target: { name, value: '' } });
+    }
   };
 
-  const handleYearChange = (e) => {
-    emitDate(e.target.value, currentMonth || '01', currentDay || '01');
-  };
-
-  // Quick preset shortcuts
-  const setToday = () => {
+  const setToday = (e) => {
+    e?.stopPropagation?.();
     const now = new Date();
-    const y = String(now.getFullYear());
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    emitDate(y, m, d);
+    emitDate(now.getFullYear(), now.getMonth(), now.getDate());
+    setViewYear(now.getFullYear());
+    setViewMonth(now.getMonth());
+    setIsOpen(false);
   };
 
-  const addYears = (numYears) => {
-    const baseDate = value ? new Date(value) : new Date();
-    baseDate.setFullYear(baseDate.getFullYear() + numYears);
-    const y = String(baseDate.getFullYear());
-    const m = String(baseDate.getMonth() + 1).padStart(2, '0');
-    const d = String(baseDate.getDate()).padStart(2, '0');
-    emitDate(y, m, d);
+  const addYears = (numYears, e) => {
+    e?.stopPropagation?.();
+    const baseDate = parsedDate || new Date();
+    const targetDate = new Date(baseDate);
+    targetDate.setFullYear(targetDate.getFullYear() + numYears);
+    emitDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    setViewYear(targetDate.getFullYear());
+    setViewMonth(targetDate.getMonth());
+    setIsOpen(false);
   };
 
-  // Human-readable formatted string
+  const prevMonth = (e) => {
+    e.stopPropagation();
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear(prev => prev - 1);
+    } else {
+      setViewMonth(prev => prev - 1);
+    }
+  };
+
+  const nextMonth = (e) => {
+    e.stopPropagation();
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear(prev => prev + 1);
+    } else {
+      setViewMonth(prev => prev + 1);
+    }
+  };
+
+  // Formatted display in input
   const formattedDisplay = useMemo(() => {
-    if (!value) return null;
-    const parts = value.split('-');
-    if (parts.length < 3) return null;
-    const y = parts[0];
-    const mIdx = parseInt(parts[1], 10) - 1;
-    const d = parseInt(parts[2], 10);
-    const monthObj = MONTHS[mIdx];
-    if (!monthObj) return null;
-    return `${monthObj.label} ${d}, ${y}`;
-  }, [value]);
-
-  const selectClasses = "w-full py-3 px-3 text-base min-h-[50px] font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-2xs disabled:opacity-50 cursor-pointer";
+    if (!parsedDate) return '';
+    return parsedDate.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }, [parsedDate]);
 
   return (
-    <div className="space-y-1.5">
-      {/* Label and Quick Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-0.5">
+    <div className="space-y-1 relative" ref={containerRef}>
+      {/* Label & Presets */}
+      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1">
         {label && (
-          <label className="block text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+          <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
             {label} {required && <span className="text-red-500">*</span>}
           </label>
         )}
 
+        {/* Quick Shortcut Buttons in Label Row */}
         <div className="flex items-center gap-1.5 ml-auto">
           {mode === 'issuance' && (
             <button
               type="button"
               onClick={setToday}
               disabled={disabled}
-              className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+              className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors flex items-center gap-1 cursor-pointer min-h-[28px]"
+              title="Set to today's date"
             >
-              <Sparkles size={12} />
-              <span>Ngayong Araw</span>
+              <Sparkles size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+              <span>Today</span>
             </button>
           )}
 
           {mode === 'expiry' && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => addYears(1)}
+                onClick={(e) => addYears(1, e)}
                 disabled={disabled}
-                className="text-xs font-semibold px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 cursor-pointer min-h-[32px]"
-                title="Dagdag 1 taon mula ngayon"
+                className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer min-h-[28px]"
+                title="+1 Year from date"
               >
-                +1 Taon
+                +1 Year
               </button>
               <button
                 type="button"
-                onClick={() => addYears(3)}
+                onClick={(e) => addYears(3, e)}
                 disabled={disabled}
-                className="text-xs font-semibold px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 cursor-pointer min-h-[32px]"
-                title="Dagdag 3 taon"
+                className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer min-h-[28px]"
+                title="+3 Years from date"
               >
-                +3 Taon
+                +3 Years
               </button>
               <button
                 type="button"
-                onClick={() => addYears(5)}
+                onClick={(e) => addYears(5, e)}
                 disabled={disabled}
-                className="text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 cursor-pointer"
-                title="Dagdag 5 taon (Standard Driver's License)"
+                className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 hover:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/30 dark:border-[#D4AF37]/30 cursor-pointer min-h-[28px]"
+                title="+5 Years (Standard Driver's License)"
               >
-                +5 Taon
+                +5 Years
               </button>
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={() => setUseNative(!useNative)}
-            className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline ml-1 cursor-pointer"
-            title="Lumipat sa calendar picker"
-          >
-            {useNative ? 'Dropdown' : 'Calendar'}
-          </button>
         </div>
       </div>
 
-      {useNative ? (
-        <div className="relative">
-          <input
-            type="date"
-            name={name}
-            value={value || ''}
-            onChange={onChange}
-            disabled={disabled}
-            className="w-full py-2.5 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs sm:text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37]"
-          />
-        </div>
-      ) : (
-        /* 3-Part Intuitive Dropdowns: Buwan (Month), Araw (Day), Taon (Year) */
-        <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
-          {/* Month Selector */}
-          <div className="col-span-5 sm:col-span-5 relative">
-            <select
-              value={currentMonth}
-              onChange={handleMonthChange}
-              disabled={disabled}
-              className={selectClasses}
-              aria-label="Pumili ng Buwan"
-            >
-              <option value="">Buwan (Month)</option>
-              {MONTHS.map(m => (
-                <option key={m.value} value={m.value}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+      {/* Primary Input Trigger */}
+      <div className="relative">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full py-2.5 px-3.5 text-left font-medium text-sm sm:text-base rounded-lg border bg-white dark:bg-[#1C1917] transition-all shadow-xs flex items-center justify-between min-h-[46px] cursor-pointer ${
+            error 
+              ? 'border-red-500 ring-1 ring-red-500' 
+              : isOpen 
+              ? 'border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
+              : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/50'
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <div className="flex items-center gap-2.5 truncate">
+            <CalendarIcon 
+              size={17} 
+              className={value ? 'text-[#9E2A2B] dark:text-[#D4AF37] shrink-0' : 'text-[#6B6761] dark:text-[#A8A29E] shrink-0'} 
+            />
+            {formattedDisplay ? (
+              <span className="text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold truncate">
+                {formattedDisplay}
+              </span>
+            ) : (
+              <span className="text-[#6B6761] dark:text-[#A8A29E] text-sm">
+                Select date (YYYY-MM-DD)
+              </span>
+            )}
           </div>
 
-          {/* Day Selector */}
-          <div className="col-span-3 sm:col-span-3 relative">
-            <select
-              value={currentDay}
-              onChange={handleDayChange}
-              disabled={disabled}
-              className={selectClasses}
-              aria-label="Pumili ng Araw"
+          <div className="flex items-center gap-1 shrink-0 ml-2">
+            {value && !disabled && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={handleClear}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClear(e); }}
+                className="w-6 h-6 rounded-md hover:bg-[#F6F5F3] dark:hover:bg-[#252220] text-[#6B6761] dark:text-[#A8A29E] hover:text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                title="Clear date"
+              >
+                <X size={14} />
+              </span>
+            )}
+            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">
+              {value ? value : '📅'}
+            </span>
+          </div>
+        </button>
+
+        {/* Hidden native input for form compatibility */}
+        <input 
+          type="hidden" 
+          name={name} 
+          value={value || ''} 
+          required={required} 
+        />
+      </div>
+
+      {/* Popover Calendar Container */}
+      {isOpen && (
+        <div 
+          className="absolute z-50 mt-1.5 left-0 sm:left-auto right-0 sm:right-auto w-full sm:w-[320px] max-w-[95vw] bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl p-3.5 animate-in fade-in zoom-in-95 duration-150"
+          style={{ minWidth: '290px' }}
+        >
+          {/* Calendar Header: Month & Year Selector + Arrows */}
+          <div className="flex items-center justify-between gap-1 pb-3 mb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="w-8 h-8 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shrink-0"
+              title="Previous Month"
             >
-              <option value="">Araw</option>
-              {dayOptions.map(d => (
-                <option key={d} value={d}>
-                  {parseInt(d, 10)}
-                </option>
-              ))}
-            </select>
+              <ChevronLeft size={16} />
+            </button>
+
+            <div className="flex items-center gap-1.5 flex-1 justify-center">
+              {/* Month Dropdown */}
+              <select
+                value={viewMonth}
+                onChange={(e) => setViewMonth(parseInt(e.target.value, 10))}
+                className="text-xs sm:text-sm font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-md px-2 py-1 outline-none cursor-pointer"
+              >
+                {MONTH_NAMES.map((m, idx) => (
+                  <option key={m} value={idx}>{m}</option>
+                ))}
+              </select>
+
+              {/* Year Dropdown */}
+              <select
+                value={viewYear}
+                onChange={(e) => setViewYear(parseInt(e.target.value, 10))}
+                className="text-xs sm:text-sm font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-md px-2 py-1 outline-none cursor-pointer"
+              >
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="w-8 h-8 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shrink-0"
+              title="Next Month"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
 
-          {/* Year Selector */}
-          <div className="col-span-4 sm:col-span-4 relative">
-            <select
-              value={currentYear}
-              onChange={handleYearChange}
-              disabled={disabled}
-              className={selectClasses}
-              aria-label="Pumili ng Taon"
+          {/* Days of Week Header */}
+          <div className="grid grid-cols-7 gap-1 text-center mb-1">
+            {DAYS_OF_WEEK.map((d, i) => (
+              <span 
+                key={d} 
+                className={`text-[11px] font-bold uppercase tracking-wider py-1 ${
+                  i === 0 || i === 6 ? 'text-red-500/80 dark:text-red-400/80' : 'text-[#6B6761] dark:text-[#A8A29E]'
+                }`}
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+
+          {/* Days Grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((cell, idx) => {
+              const cellDateStr = `${cell.year}-${String(cell.month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
+              const isSelected = value === cellDateStr;
+              const isToday = todayStr === cellDateStr;
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSelectDay(cell)}
+                  className={`h-9 w-full rounded-md text-xs sm:text-sm font-semibold flex items-center justify-center transition-all cursor-pointer relative ${
+                    isSelected
+                      ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-[#14110F] font-bold shadow-xs scale-102'
+                      : !cell.isCurrentMonth
+                      ? 'text-[#6B6761]/40 dark:text-[#A8A29E]/30 hover:bg-[#F6F5F3] dark:hover:bg-[#252220]'
+                      : 'text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#F6F5F3] dark:hover:bg-[#252220]'
+                  } ${isToday && !isSelected ? 'ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37] font-bold' : ''}`}
+                >
+                  <span>{cell.day}</span>
+                  {isToday && !isSelected && (
+                    <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Calendar Footer Actions */}
+          <div className="flex items-center justify-between pt-3 mt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+            <button
+              type="button"
+              onClick={setToday}
+              className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-1"
             >
-              <option value="">Taon</option>
-              {yearOptions.map(y => (
-                <option key={y} value={String(y)}>
-                  {y}
-                </option>
-              ))}
-            </select>
+              <Sparkles size={12} />
+              <span>Today</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              {value && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:text-red-600 cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-1 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#EAE7E1] cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Selected Date Confirmation Badge */}
-      {formattedDisplay && (
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/60 w-fit">
-          <Calendar size={12} />
-          <span>Piniling Petsa: {formattedDisplay}</span>
-        </div>
-      )}
-
+      {/* Helper text or Error */}
       {helperText && !error && (
-        <p className="text-[10px] text-slate-500 dark:text-slate-400">{helperText}</p>
+        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">{helperText}</p>
       )}
 
       {error && (
-        <p className="text-[10px] font-bold text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">{error}</p>
       )}
     </div>
   );

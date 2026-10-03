@@ -19,11 +19,7 @@ const RenewFranchise = () => {
   const { language } = useLanguage();
 
   const handleBack = () => {
-    if (window.history.state && window.history.state.idx > 0) {
-      navigate(-1);
-    } else {
-      navigate('/operator-dashboard');
-    }
+    navigate('/operator-dashboard');
   };
 
   const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
@@ -514,7 +510,7 @@ const RenewFranchise = () => {
                       label="Date Issued"
                       required
                       mode="issuance"
-                      helperText="Piliin ang Araw ng Pagkuha ng Cedula"
+                      helperText="Date CTC was issued."
                     />
                     {formData.dateIssued && new Date(formData.dateIssued).getFullYear() < new Date().getFullYear() && (
                       <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mt-1.5 flex items-center gap-1">
@@ -593,7 +589,7 @@ const RenewFranchise = () => {
                       onChange={handleChange}
                       label="LTO Registration Expiry Date"
                       mode="expiry"
-                      helperText="Petsa ng pagkasira o pagkapaso ng LTO rehistro."
+                      helperText="LTO registration expiration date."
                     />
                   </div>
                 </div>
@@ -661,7 +657,7 @@ const RenewFranchise = () => {
                       onChange={handleChange}
                       label="License Expiry Date"
                       mode="expiry"
-                      helperText="Petsa ng pagkapaso ng lisensya."
+                      helperText="Driver's license expiration date."
                     />
                   </div>
                 </div>
@@ -683,10 +679,10 @@ const RenewFranchise = () => {
                 <ShieldCheck size={22} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm sm:text-base font-bold text-amber-950 dark:text-amber-200">
-                    Claim Stub & Settlement Notice
+                    Payment & Collection Notice
                   </h4>
                   <p className="text-xs sm:text-sm text-[#6B6761] dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                    Online renewal submission is free. After Municipal Franchising Office verification, download your official Claim Stub Voucher indicating your franchise details and fee breakdown for final settlement and sticker collection at the Municipal Treasury / Office of the Sangguniang Bayan.
+                    Submission is free. Once approved by the Franchising Office, pay the ₱500 fee at the Municipal Treasury window to claim your updated MTOP and sticker.
                   </p>
                 </div>
               </div>

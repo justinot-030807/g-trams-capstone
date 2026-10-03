@@ -345,6 +345,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     const normalized = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
     if (normalized === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     if (normalized === 'admin' || normalized === 'administrator') return t('nav.roleAdmin', 'ADMINISTRATOR');
+    if (normalized === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
     return t('nav.roleOperator', 'OPERATOR');
   };
 
@@ -766,6 +767,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     const normalizedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
                     if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
                       navigate('/admin/settings');
+                    } else if (normalizedRole === 'cashier') {
+                      navigate('/cashier-settings');
                     } else {
                       navigate('/operator/settings');
                     }

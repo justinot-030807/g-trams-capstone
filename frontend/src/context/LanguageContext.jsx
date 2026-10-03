@@ -22,6 +22,7 @@ const translations = {
     'nav.roleOperator': 'OPERATOR',
     'nav.roleTodaPresident': 'TODA PRESIDENT',
     'nav.roleAdmin': 'ADMINISTRATOR',
+    'nav.roleCashier': 'MUNICIPAL CASHIER',
 
     // Operator Dashboard
     'dashboard.badge': 'Operator Portal',
@@ -240,6 +241,7 @@ const translations = {
     'nav.roleOperator': 'OPERATOR',
     'nav.roleTodaPresident': 'PANGULO NG TODA',
     'nav.roleAdmin': 'ADMINISTRATOR',
+    'nav.roleCashier': 'KASHER NG MUNISIPYO',
 
     // Operator Dashboard
     'dashboard.badge': 'Operator Portal',

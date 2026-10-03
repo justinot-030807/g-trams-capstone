@@ -37,6 +37,7 @@ const ValidateTODA = lazyRetry(() => import('./pages/admin/ValidateTODA'), 'Vali
 const AdminReports = lazyRetry(() => import('./pages/admin/AdminReports'), 'AdminReports');
 const AdminTickets = lazyRetry(() => import('./pages/admin/AdminTickets'), 'AdminTickets');
 const CashierDashboard = lazyRetry(() => import('./pages/cashier/CashierDashboard'), 'CashierDashboard');
+const CashierSettings = lazyRetry(() => import('./pages/cashier/CashierSettings'), 'CashierSettings');
 
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -64,7 +65,7 @@ const ProfileRedirect = () => {
     return <Navigate to="/admin/settings" replace />;
   }
   if (role === 'cashier') {
-    return <Navigate to="/cashier-dashboard" replace />;
+    return <Navigate to="/cashier-settings" replace />;
   }
   return <Navigate to="/operator/settings" replace />;
 };
@@ -126,6 +127,8 @@ function App() {
 
                   {/* MUNICIPAL CASHIER & TREASURY ROUTES */}
                   <Route path="/cashier-dashboard" element={<ProtectedRoute allowedRoles={['cashier', 'admin']}><CashierDashboard /></ProtectedRoute>} />
+                  <Route path="/cashier-settings" element={<ProtectedRoute allowedRoles={['cashier', 'admin']}><CashierSettings /></ProtectedRoute>} />
+                  <Route path="/cashier/settings" element={<Navigate to="/cashier-settings" replace />} />
 
                   {/* TODA PRESIDENT SECURE ROUTES */}
                   <Route path="/submit-members" element={<ProtectedRoute allowedRoles={['toda president']}><SubmitMembers /></ProtectedRoute>} />

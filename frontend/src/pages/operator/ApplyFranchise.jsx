@@ -592,13 +592,13 @@ const ApplyFranchise = () => {
 
   const handleBackToDashboard = () => {
     if (formMode === 'New' || formMode === 'Renewal') {
-      handleSaveProgress(false);
+      try {
+        handleSaveProgress(false);
+      } catch {
+        // ignore
+      }
     }
-    if (window.history.state && window.history.state.idx > 0) {
-      navigate(-1);
-    } else {
-      navigate('/operator-dashboard');
-    }
+    navigate('/operator-dashboard');
   };
 
   const handleTopBack = () => {
@@ -1411,7 +1411,7 @@ const ApplyFranchise = () => {
                   {/* Driver Designation Choice */}
                   <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
-                      Sino po ang magmamaneho ng tricycle? <span className="text-red-500">*</span>
+                      Who will drive the tricycle? <span className="text-red-500">*</span>
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -1431,10 +1431,10 @@ const ApplyFranchise = () => {
                         </div>
                         <div>
                           <p className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
-                            Ako mismo (Operator-Driver)
+                            I am the Driver (Operator-Driver)
                           </p>
                           <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            Ikaw mismo ang may hawak ng lisensya
+                            You hold the driver's license
                           </p>
                         </div>
                       </button>
@@ -1455,10 +1455,10 @@ const ApplyFranchise = () => {
                         </div>
                         <div>
                           <p className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
-                            May Itinalagang Drayber (Hired Driver)
+                            Hired Driver
                           </p>
                           <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            Ibang tao ang magpapasada ng tricycle
+                            A designated driver operates the tricycle
                           </p>
                         </div>
                       </button>
@@ -1470,7 +1470,7 @@ const ApplyFranchise = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Pangalan ng Drayber <span className="text-red-500">*</span>
+                          Driver's Full Name <span className="text-red-500">*</span>
                         </label>
                         <input 
                           type="text" 
@@ -1479,12 +1479,12 @@ const ApplyFranchise = () => {
                           onChange={handleInputChange} 
                           className={inputClasses} 
                           required 
-                          placeholder="Buong pangalan ng driver" 
+                          placeholder="Full name of driver" 
                         />
                       </div>
                       <div>
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Contact No. ng Drayber <span className="text-red-500">*</span>
+                          Driver Contact No. <span className="text-red-500">*</span>
                         </label>
                         <input 
                           type="tel" 
@@ -1555,7 +1555,7 @@ const ApplyFranchise = () => {
                           onChange={handleInputChange}
                           label="License Expiry Date"
                           mode="expiry"
-                          helperText="Petsa ng pagkapaso ng lisensya (Pumili o gamitin ang +5 Taon preset)."
+                          helperText="Driver's license expiration date."
                         />
                       </div>
                     </div>
@@ -1563,7 +1563,16 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Step 1 Actions */}
-                <div className="pt-3 flex justify-end">
+                <div className="pt-3 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={handleBackToDashboard}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
+                  >
+                    <ArrowLeft size={18} />
+                    <span>Back to Dashboard</span>
+                  </button>
+
                   <button 
                     type="button" 
                     onClick={nextStep}
@@ -1846,7 +1855,7 @@ const ApplyFranchise = () => {
                           onChange={handleInputChange}
                           label="LTO Expiry / Registration Date"
                           mode="expiry"
-                          helperText="Petsa ng pagkapaso ng LTO rehistro."
+                          helperText="LTO registration expiration date."
                         />
                       </div>
                     </div>
@@ -1941,7 +1950,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange}
                         label="Date Issued"
                         mode="issuance"
-                        helperText="Petsa ng pagka-isyu ng TODA certification."
+                        helperText="Date TODA certificate was issued."
                       />
                     </div>
                   </div>
@@ -1992,7 +2001,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange}
                         label="Date Issued"
                         mode="issuance"
-                        helperText="Petsa ng pagka-isyu ng Barangay Clearance."
+                        helperText="Date Barangay clearance was issued."
                       />
                     </div>
                   </div>
@@ -2087,7 +2096,7 @@ const ApplyFranchise = () => {
                         label="Date Issued"
                         required
                         mode="issuance"
-                        helperText="Petsa ng pagka-isyu ng Cedula para sa kasalukuyang taon."
+                        helperText="Date CTC / Cedula was issued."
                       />
                     </div>
                   </div>
@@ -2164,7 +2173,7 @@ const ApplyFranchise = () => {
                   <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
                     <Receipt size={18} className="shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
                     <div className="leading-snug">
-                      <strong className="font-bold">Municipal Treasury Notice:</strong> Standard MTOP Franchise Fee of <strong className="font-bold underline">₱500.00</strong> will be paid directly at the Municipal Cashier upon LGU evaluation approval.
+                      <strong className="font-bold">Franchise Fee:</strong> Standard fee of <strong className="font-bold underline">₱500.00</strong> is payable at the Municipal Cashier window upon application approval.
                     </div>
                   </div>
                 </div>
