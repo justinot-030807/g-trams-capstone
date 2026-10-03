@@ -61,10 +61,10 @@ const LandingAnnouncements = () => {
       
       <motion.div variants={cardVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight uppercase mb-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight uppercase mb-2">
             Municipal <span className="text-[#9E2A2B]">Bulletin Board</span>
           </h2>
-          <p className="text-slate-600 text-xs sm:text-sm font-medium">Latest advisories and updates from the LGU.</p>
+          <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm font-medium">Latest advisories and updates from the LGU.</p>
         </div>
       </motion.div>
 
@@ -73,23 +73,22 @@ const LandingAnnouncements = () => {
           <motion.div 
             key={item.id} 
             variants={cardVariants}
-            whileHover={{ y: -5, scale: 1.02 }}
-            className="flex flex-col p-6 rounded-3xl bg-white border border-slate-200/90 hover:border-[#D4AF37]/60 shadow-xs hover:shadow-md transition-all relative overflow-hidden group"
+            className="flex flex-col p-6 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#D4AF37] shadow-xs transition-colors relative overflow-hidden group"
           >
             <div className="flex justify-between items-center mb-4 relative z-10">
-              <span className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg shadow-2xs ${
-                item.type === 'alert' ? 'bg-red-50 text-red-700 border border-red-200' :
-                item.type === 'info' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                'bg-amber-50 text-amber-800 border border-amber-200'
+              <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${
+                item.type === 'alert' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60' :
+                item.type === 'info' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60' :
+                'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
               }`}>
                 {item.icon}
                 {item.type}
               </span>
-              <span className="text-[10px] text-slate-500 font-bold tracking-wider">{item.date}</span>
+              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-medium tracking-wider">{item.date}</span>
             </div>
             
-            <h3 className="font-bold text-slate-900 text-base mb-2.5 relative z-10">{item.title}</h3>
-            <p className="text-slate-600 text-xs sm:text-sm leading-relaxed font-medium relative z-10">{item.desc}</p>
+            <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-base mb-2.5 relative z-10">{item.title}</h3>
+            <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm leading-relaxed font-normal relative z-10">{item.desc}</p>
           </motion.div>
         ))}
       </div>

@@ -11,7 +11,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useTextSize } from '../../context/TextSizeContext';
 import TricycleIcon from '../../components/common/TricycleIcon';
+import StatusBadge from '../../components/common/StatusBadge';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
 import OperatorGuideModal from '../../components/operator/OperatorGuideModal';
@@ -35,6 +37,7 @@ const CANCEL_REASONS = [
 const OperatorDashboard = () => {
   const { t, language, changeLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { textScale, cycleTextScale, scaleLabel } = useTextSize();
   const [franchises, setFranchises] = useState(() => {
     try {
       const cached = localStorage.getItem('gtrams_cached_franchises');
@@ -380,11 +383,11 @@ const OperatorDashboard = () => {
 
     if (status === 'Cancelled') {
       return (
-        <div className="mb-5 bg-red-50/80 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-2xl p-3.5 flex items-start gap-2.5">
-          <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={18} />
+        <div className="mb-4 bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 border border-[#EF4444]/30 rounded-lg p-3.5 flex items-start gap-2.5">
+          <AlertCircle className="text-[#B91C1C] dark:text-[#EF4444] shrink-0 mt-0.5" size={18} />
           <div>
-            <p className="text-xs font-bold text-red-900 dark:text-red-300">{t('dashboard.attentionTitle', 'Application Needs Attention')}</p>
-            <p className="text-xs text-red-700 dark:text-red-400 leading-snug">{t('dashboard.attentionDesc', 'Please review the reason below and click "Fix Issues" to re-submit corrected details.')}</p>
+            <p className="text-xs font-bold text-[#991B1B] dark:text-[#FCA5A5]">{t('dashboard.attentionTitle', 'Application Needs Attention')}</p>
+            <p className="text-xs text-[#B91C1C] dark:text-[#F87171] leading-snug mt-0.5">{t('dashboard.attentionDesc', 'Please review the reason below and click "Fix Issues" to re-submit corrected details.')}</p>
           </div>
         </div>
       );
@@ -392,11 +395,11 @@ const OperatorDashboard = () => {
 
     if (status === 'Expired') {
       return (
-        <div className="mb-5 bg-orange-50/80 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 rounded-2xl p-3.5 flex items-start gap-2.5">
-          <AlertCircle className="text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" size={18} />
+        <div className="mb-4 bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 border border-[#F59E0B]/30 rounded-lg p-3.5 flex items-start gap-2.5">
+          <AlertCircle className="text-[#B45309] dark:text-[#F59E0B] shrink-0 mt-0.5" size={18} />
           <div>
-            <p className="text-xs font-bold text-orange-900 dark:text-orange-300">{t('dashboard.expiredTitle', 'Franchise Expired')}</p>
-            <p className="text-xs text-orange-700 dark:text-orange-400 leading-snug">{t('dashboard.expiredDesc', 'Your franchise validity has ended. Click "Renew Franchise" to submit your updated CTC/Cedula.')}</p>
+            <p className="text-xs font-bold text-[#92400E] dark:text-[#FDE68A]">{t('dashboard.expiredTitle', 'Franchise Expired')}</p>
+            <p className="text-xs text-[#B45309] dark:text-[#FCD34D] leading-snug mt-0.5">{t('dashboard.expiredDesc', 'Your franchise validity has ended. Click "Renew Franchise" to submit your updated CTC/Cedula.')}</p>
           </div>
         </div>
       );
@@ -417,13 +420,13 @@ const OperatorDashboard = () => {
     else if (status === 'Active') currentStepNum = 5;
 
     return (
-      <div className="mb-5 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5 sm:p-5">
-        <p className="text-[11px] sm:text-xs font-black text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3.5 sm:mb-4">
+      <div className="mb-4 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4">
+        <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-3">
           {t('dashboard.appProgress', 'Application Progress')}
         </p>
         
         {/* Seamless Step progress track & nodes */}
-        <div className="flex items-start w-full px-1 sm:px-2">
+        <div className="flex items-start w-full px-1">
           {steps.map((step, idx) => {
             const isCompleted = currentStepNum > step.id || (status === 'Active' && step.id === 5);
             const isCurrent = currentStepNum === step.id && status !== 'Active';
@@ -432,12 +435,12 @@ const OperatorDashboard = () => {
               <div key={step.id} className="relative flex-1 flex flex-col items-center group min-w-0">
                 {/* Seamless Connector Line to Next Step */}
                 {idx < steps.length - 1 && (
-                  <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2.5px] sm:h-[3px] -translate-y-1/2 z-0 pointer-events-none">
+                  <div className="absolute top-3.5 sm:top-4 left-1/2 w-full h-[2px] -translate-y-1/2 z-0 pointer-events-none">
                     {/* Background Inactive Track */}
-                    <div className="w-full h-full bg-slate-200 dark:bg-slate-700/80 rounded-full" />
+                    <div className="w-full h-full bg-[#E4E1DC] dark:bg-[#2E2A27]" />
                     {/* Active Progress Fill */}
                     <div 
-                      className={`absolute top-0 left-0 h-full bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full transition-all duration-500 ease-out ${
+                      className={`absolute top-0 left-0 h-full bg-[#9E2A2B] dark:bg-[#D4AF37] transition-all duration-300 ease-out ${
                         currentStepNum > step.id ? 'w-full' : 'w-0'
                       }`} 
                     />
@@ -448,10 +451,10 @@ const OperatorDashboard = () => {
                 <div 
                   className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
                     isCompleted 
-                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-slate-900 shadow-xs' 
+                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-[#14110F] shadow-xs' 
                       : isCurrent 
-                      ? 'bg-white dark:bg-slate-800 border-2 border-[#9E2A2B] dark:border-[#D4AF37] ring-4 ring-[#9E2A2B]/15 dark:ring-[#D4AF37]/20 shadow-xs' 
-                      : 'bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700'
+                      ? 'bg-white dark:bg-[#1C1917] border-2 border-[#9E2A2B] dark:border-[#D4AF37] ring-2 ring-[#9E2A2B]/20 dark:ring-[#D4AF37]/30 shadow-xs' 
+                      : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]'
                   }`}
                 >
                   {isCompleted ? (
@@ -459,17 +462,17 @@ const OperatorDashboard = () => {
                   ) : isCurrent ? (
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full animate-pulse" />
                   ) : (
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-slate-300 dark:bg-slate-700 rounded-full" />
+                    <div className="w-1.5 h-1.5 bg-[#6B6761]/40 dark:bg-[#A8A29E]/40 rounded-full" />
                   )}
                 </div>
 
                 {/* Step Label */}
-                <span className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 tracking-tight text-center leading-tight max-w-full px-0.5 whitespace-nowrap transition-colors ${
+                <span className={`text-[10px] sm:text-xs mt-1.5 tracking-tight text-center leading-tight max-w-full px-0.5 whitespace-nowrap transition-colors ${
                   isCurrent 
-                    ? 'text-[#9E2A2B] dark:text-[#D4AF37] font-black' 
+                    ? 'text-[#9E2A2B] dark:text-[#D4AF37] font-bold' 
                     : isCompleted 
-                    ? 'text-slate-800 dark:text-slate-200 font-bold' 
-                    : 'text-slate-600 dark:text-slate-400 font-medium'
+                    ? 'text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold' 
+                    : 'text-[#6B6761] dark:text-[#A8A29E] font-medium'
                 }`}>
                   {step.label}
                 </span>
@@ -540,26 +543,26 @@ const OperatorDashboard = () => {
         }
       `}</style>
 
-      {/* 1. ELEVATED MOBILE & DESKTOP HERO APP HEADER (Matching media_1788958383307.jpg) */}
+      {/* 1. ELEVATED GOVERNMENT OPERATOR HERO CARD */}
       <div 
         id="tour-hero-banner"
-        className="animate-spring-in bg-gradient-to-br from-[#852024] via-[#9E2A2B] to-[#3a0b0f] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] rounded-3xl p-4 sm:p-7 mb-6 text-white shadow-xl dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.85)] relative overflow-hidden border border-[#D4AF37]/30 transition-all"
+        className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 mb-6 text-[#1F1D1B] dark:text-[#F6F5F3] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 border-l-[#9E2A2B] relative transition-all"
       >
-        {/* Top Native Mobile Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
-        <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/10">
+        {/* Top Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
+        <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Interactive Circular Avatar with Profile Popover */}
+            {/* Interactive Rounded Avatar with Profile Popover */}
             <div className="relative" id="tour-profile-menu">
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen(prev => !prev)}
-                className="w-11 h-11 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#520f14] flex items-center justify-center shrink-0 active:scale-95 transition-all cursor-pointer ring-2 ring-white/20 hover:ring-[#D4AF37]/50"
+                className="w-11 h-11 rounded-lg border-2 border-[#D4AF37] shadow-xs overflow-hidden bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 active:scale-95 transition-all cursor-pointer hover:ring-2 hover:ring-[#9E2A2B]/20"
                 title="My Account & Logout"
               >
                 {profilePic ? (
                   <img src={profilePic} alt="User" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-[#D4AF37] font-black text-base">
+                  <span className="text-[#D4AF37] font-bold text-base">
                     {loggedInUserName.charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -568,53 +571,64 @@ const OperatorDashboard = () => {
 
             {/* Greeting & Bold User Name */}
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
                 {opGreeting.text},
               </span>
-              <span className="text-base sm:text-xl font-black text-white tracking-tight truncate">
+              <span className="text-base sm:text-xl font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight truncate">
                 {loggedInUserName}!
               </span>
             </div>
           </div>
 
-          {/* Micro Action Buttons in Frosted Glass Circles (Theme, Guide & Bell) */}
+          {/* Micro Action Buttons (Text Size, Guide, Theme & Bell) */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Quick Text Size Accessibility Button */}
+            <button
+              type="button"
+              onClick={cycleTextScale}
+              title={`Text Size: ${scaleLabel} (Click to toggle A / A+ / A++)`}
+              aria-label={`Text Size: ${scaleLabel}`}
+              className="px-2.5 py-1.5 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs font-mono flex items-center justify-center active:scale-95 cursor-pointer shadow-xs select-none"
+            >
+              <span>{textScale === 'xlarge' ? 'A++' : textScale === 'large' ? 'A+' : 'A'}</span>
+            </button>
+
             {/* Quick Guide / Help Trigger */}
             <button
               type="button"
               onClick={() => setIsTourOpen(true)}
               title="Operator Quick Guide & FAQs"
-              className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-[#D4AF37] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
             >
               <HelpCircle size={17} />
             </button>
 
-            {/* Quick Theme Toggle Circle */}
+            {/* Quick Theme Toggle */}
             <button
               type="button"
               onClick={toggleTheme}
               title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
-              className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+              className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
             >
               {theme === 'system' ? (
-                <Laptop size={17} className="text-blue-300" />
+                <Laptop size={17} className="text-blue-500" />
               ) : isDark ? (
-                <Moon size={17} className="text-indigo-200" />
+                <Moon size={17} className="text-amber-300" />
               ) : (
-                <Sun size={17} className="text-amber-300" />
+                <Sun size={17} className="text-amber-500" />
               )}
             </button>
 
-            {/* Notification Bell Circle */}
+            {/* Notification Bell */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="relative w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                className="relative w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
               >
                 <Bell size={17} />
                 {unreadNotifCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-xs">
                     {unreadNotifCount}
                   </span>
                 )}
@@ -624,37 +638,37 @@ const OperatorDashboard = () => {
         </div>
 
         {/* Hero Title & Subtitle */}
-        <div className="relative z-10 pt-4 pb-2">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-1 text-white uppercase">
+        <div className="pt-4 pb-2">
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight mb-1 text-[#1F1D1B] dark:text-[#F6F5F3] uppercase">
             Operator Portal
           </h1>
-          <p className="text-white/80 dark:text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
+          <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm max-w-xl leading-relaxed">
             {getOperatorSubtext()}
           </p>
         </div>
 
         {/* Action Status Banner */}
-        <div id="tour-hero-action" className="relative z-10 mt-3 pt-3 border-t border-white/10">
+        <div id="tour-hero-action" className="mt-3 pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
           {isLoading ? (
-            <div className="bg-white/15 dark:bg-slate-900/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-white/20 animate-pulse">
+            <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#E4E1DC] dark:border-[#2E2A27] animate-pulse">
               <div className="space-y-1.5 flex-1 pr-4">
-                <div className="h-3.5 w-44 bg-white/20 rounded-md" />
-                <div className="h-2.5 w-64 bg-white/15 rounded-sm" />
+                <div className="h-3.5 w-44 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-md" />
+                <div className="h-2.5 w-64 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-sm" />
               </div>
-              <div className="h-8 w-24 bg-white/20 rounded-xl shrink-0" />
+              <div className="h-8 w-24 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-lg shrink-0" />
             </div>
           ) : franchises.some(f => f.status === 'Ready for Pickup') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-emerald-200 dark:border-emerald-900/60">
+            <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <Banknote size={18} />
+                <div className="w-10 h-10 rounded-lg bg-[#F59E0B]/15 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
+                  <Banknote size={20} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs sm:text-sm font-bold truncate text-emerald-950 dark:text-emerald-200">
+                  <h4 className="text-xs sm:text-sm font-bold truncate text-[#92400E] dark:text-[#FDE68A]">
                     Ready for Municipal Cashier Payment
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-400">
-                    Amount Payable: <strong className="text-emerald-700 dark:text-emerald-400 font-mono">₱500.00</strong> • Settle at Treasury window with Plate No.
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                    Amount Payable: <strong className="text-[#9E2A2B] dark:text-[#D4AF37] font-mono">₱500.00</strong> • Settle at Treasury window with Plate No.
                   </p>
                 </div>
               </div>
@@ -666,42 +680,40 @@ const OperatorDashboard = () => {
                     setIsDetailsOpen(true);
                   }
                 }}
-                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Banknote size={15} />
                 <span>View Payment Details</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'For Signing') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-purple-200 dark:border-purple-900/60">
+            <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                  <FileText size={18} />
+                <div className="w-10 h-10 rounded-lg bg-[#F59E0B]/15 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
+                  <FileText size={20} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs sm:text-sm font-bold truncate text-purple-950 dark:text-purple-200">
+                  <h4 className="text-xs sm:text-sm font-bold truncate text-[#92400E] dark:text-[#FDE68A]">
                     {t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 leading-snug">
                     {t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}
                   </p>
                 </div>
               </div>
-              <span className="px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800 text-purple-800 dark:text-purple-300 text-xs font-bold shrink-0 text-center">
-                {t('dashboard.statusSigning', 'For Signing')}
-              </span>
+              <StatusBadge status="For Signing" />
             </div>
           ) : franchises.some(f => f.status === 'Cancelled') ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 text-slate-950 dark:text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-red-300 dark:border-red-900/60">
+            <div className="bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#EF4444]/30 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                  <AlertCircle size={18} />
+                <div className="w-10 h-10 rounded-lg bg-[#EF4444]/15 text-[#B91C1C] dark:text-[#EF4444] flex items-center justify-center shrink-0">
+                  <AlertCircle size={20} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs sm:text-sm font-bold truncate">
+                  <h4 className="text-xs sm:text-sm font-bold truncate text-[#991B1B] dark:text-[#FCA5A5]">
                     Application Needs Attention
                   </h4>
-                  <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
                     Review remarks and submit corrected documents
                   </p>
                 </div>
@@ -711,21 +723,21 @@ const OperatorDashboard = () => {
                   const attentionUnit = franchises.find(f => f.status === 'Cancelled');
                   handleFixIssues(attentionUnit);
                 }}
-                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <RefreshCw size={15} />
                 <span>Fix Issues</span>
               </button>
             </div>
           ) : (
-            <div className="bg-white/15 dark:bg-slate-900/60 text-white rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-white/20">
+            <div className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="min-w-0">
-                <h4 className="text-xs sm:text-sm font-bold truncate">
+                <h4 className="text-xs sm:text-sm font-bold truncate text-[#1F1D1B] dark:text-[#F6F5F3]">
                   {franchises.length >= maxUnits 
                     ? `Maximum Fleet Capacity (${maxUnits}/${maxUnits})`
                     : 'Available Franchise Slot'}
                 </h4>
-                <p className="text-xs sm:text-xs text-white/80 mt-0.5">
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
                   {franchises.length >= maxUnits
                     ? `All allowed ${maxUnits} units are currently registered`
                     : `Registered operators may register up to ${maxUnits} units in Gasan`}
@@ -734,7 +746,7 @@ const OperatorDashboard = () => {
               {franchises.length < maxUnits && (
                 <button
                   onClick={() => navigate('/apply-franchise?mode=new&step=1')}
-                  className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c29e2f] text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shrink-0 transition-all active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <PlusCircle size={15} />
                   <span>Apply Now</span>
@@ -747,23 +759,23 @@ const OperatorDashboard = () => {
 
       {/* TODA PRESIDENT SUMMARY SECTION */}
       {isTodaPresident && !isLoading && (
-        <div className="bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/40 rounded-3xl p-4 sm:p-5 shadow-sm mb-6 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs mb-6 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-[#D4AF37]">
           <div className="flex items-start sm:items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-100 dark:border-indigo-800/50">
-              <Users size={24} />
+            <div className="w-11 h-11 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27]">
+              <Users size={22} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">TODA Management Console</h3>
-              <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 max-w-md leading-relaxed">
+              <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">TODA Management Console</h3>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 max-w-md leading-relaxed">
                 Welcome President. You can view your registered members, submit the official TODA Masterlist, and coordinate with the Office of the Vice Mayor Extension office here.
               </p>
             </div>
           </div>
           <button
             onClick={() => navigate('/submit-members')}
-            className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 shadow-xs cursor-pointer shrink-0"
           >
-            Open TODA Tools
+            <span>Open TODA Tools</span>
             <ArrowRight size={14} />
           </button>
         </div>
@@ -772,20 +784,20 @@ const OperatorDashboard = () => {
       {/* 2. FLEET CAPACITY SLOTS (Dynamic with Admin Settings, Clean & Minimal) */}
       <div 
         id="tour-capacity-card"
-        className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-2xs mb-5 transition-all"
+        className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 sm:p-4 shadow-xs mb-5 transition-all"
       >
         {isLoading ? (
           <div className="space-y-2 animate-pulse">
             <div className="flex items-center justify-between">
-              <div className="h-3.5 w-28 bg-slate-200 dark:bg-slate-700 rounded-md" />
-              <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded-sm" />
+              <div className="h-3.5 w-28 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-md" />
+              <div className="h-3 w-24 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-sm" />
             </div>
             <div 
               className="grid gap-2"
               style={{ gridTemplateColumns: `repeat(${maxUnits}, minmax(0, 1fr))` }}
             >
               {Array.from({ length: maxUnits }).map((_, idx) => (
-                <div key={idx} className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70" />
+                <div key={idx} className="h-2 rounded-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]" />
               ))}
             </div>
           </div>
@@ -793,7 +805,7 @@ const OperatorDashboard = () => {
           <>
             <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                   Unit Capacity
                 </span>
                 <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
@@ -801,7 +813,7 @@ const OperatorDashboard = () => {
                 </span>
               </div>
 
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-600 dark:text-slate-400">
+              <span className="text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
                 {franchises.length >= maxUnits 
                   ? 'Slots Full' 
                   : `${maxUnits - franchises.length} Slot(s) Available`}
@@ -821,7 +833,7 @@ const OperatorDashboard = () => {
                       className={`h-2 rounded-full transition-all duration-300 ${
                         isFilled 
                           ? 'bg-[#9E2A2B] dark:bg-[#D4AF37]' 
-                          : 'bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+                          : 'bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]'
                       }`} 
                     />
                   </div>
@@ -833,14 +845,14 @@ const OperatorDashboard = () => {
       </div>
 
       {/* 3. GARAGE SECTION HEADER */}
-      <header id="tour-garage-section" className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75 mb-4 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
+      <header id="tour-garage-section" className="mb-4 flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full" />
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight">
               {t('dashboard.garageTitle', 'My Franchise Garage')}
             </h2>
-            <p className="text-xs sm:text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-normal mt-0.5">
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-normal mt-0.5">
               {t('dashboard.garageSub', 'Assigned tricycle units under your account')}
             </p>
           </div>
@@ -848,9 +860,9 @@ const OperatorDashboard = () => {
 
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
           {isLoading ? (
-            <div className="w-24 h-6 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+            <div className="w-24 h-6 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-lg animate-pulse" />
           ) : (
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700">
+            <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] px-2.5 py-1 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
               {franchises.length} Registered
             </span>
           )}
@@ -863,25 +875,25 @@ const OperatorDashboard = () => {
       ) : franchises.length === 0 ? (
         <div 
           id="tour-empty-garage"
-          className="animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-6 sm:p-10 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400 flex flex-col items-center justify-center min-h-[260px] transition-colors shadow-2xs"
+          className="bg-white dark:bg-[#1C1917] rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] p-8 sm:p-12 text-center text-[#6B6761] dark:text-[#A8A29E] flex flex-col items-center justify-center min-h-[260px] shadow-xs"
         >
           {/* Tricycle Icon Container */}
           <div className="relative mb-3">
-            <div className="relative w-16 h-16 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 rounded-xl border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 flex items-center justify-center p-2.5 shadow-xs">
+            <div className="relative w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-xs">
               <TricycleIcon size={42} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             </div>
           </div>
 
-          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1">
+          <h3 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
             {t('dashboard.noUnitsTitle', 'No Franchise Units Found')}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mb-5 max-w-sm leading-relaxed">
+          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-5 max-w-sm leading-relaxed">
             {t('dashboard.noUnitsDesc', 'Your garage is currently empty. Register your tricycle unit for a franchise.')}
           </p>
 
           <button 
             onClick={() => navigate('/apply-franchise?mode=new&step=1')} 
-            className="inline-flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors shadow-xs active:scale-95 cursor-pointer"
           >
             <PlusCircle size={16} />
             <span>{t('dashboard.applyNew', 'Apply New Franchise')}</span>
@@ -892,72 +904,48 @@ const OperatorDashboard = () => {
           {franchises.map((unit, unitIndex) => (
             <div 
               key={unit?._id} 
-              className="animate-spring-in bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group"
-              style={{ animationDelay: `${0.04 + unitIndex * 0.08}s` }}
+              className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors flex flex-col justify-between relative overflow-hidden group"
             >
               {/* Top Accent Strip */}
-              <div className={`absolute top-0 left-0 w-full h-1.5 ${
-                unit?.status === 'Active' ? 'bg-emerald-500' :
-                unit?.status === 'Ready for Pickup' ? 'bg-blue-500' :
-                unit?.status === 'For Signing' ? 'bg-purple-500' :
-                unit?.status === 'Expired' ? 'bg-orange-500' :
-                unit?.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-400'
+              <div className={`absolute top-0 left-0 w-full h-1 ${
+                unit?.status === 'Active' ? 'bg-[#15803D]' :
+                (unit?.status === 'Expired' || unit?.status === 'Cancelled' || unit?.status === 'Rejected') ? 'bg-[#B91C1C]' :
+                'bg-[#B45309]'
               }`} />
 
               <div>
                 {/* Header Row: TODA tag & Status Badge */}
                 <div className="flex justify-between items-center mb-3 mt-0.5 gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-black uppercase tracking-wider border border-slate-200/60 dark:border-slate-700/60 shrink-0 max-w-[60%]">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-bold uppercase tracking-wider border border-[#E4E1DC] dark:border-[#2E2A27] shrink-0 max-w-[60%]">
                     <Users size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                     <span className="truncate">{unit?.todaName || 'TODA'}</span>
                   </span>
 
-                  <span className={`px-2.5 py-1 text-xs font-black rounded-xl uppercase tracking-wider flex items-center gap-1.5 border shadow-2xs shrink-0 ${
-                    unit?.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60' :
-                    unit?.status === 'Ready for Pickup' ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60' :
-                    unit?.status === 'For Signing' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60' :
-                    unit?.status === 'Expired' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60' :
-                    unit?.status === 'Cancelled' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60' :
-                    'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
-                  }`}>
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${
-                      unit?.status === 'Active' ? 'bg-emerald-500' :
-                      unit?.status === 'Ready for Pickup' ? 'bg-blue-500 animate-pulse-beacon' :
-                      unit?.status === 'For Signing' ? 'bg-purple-500 animate-pulse-beacon' :
-                      unit?.status === 'Expired' ? 'bg-orange-500' :
-                      unit?.status === 'Cancelled' ? 'bg-red-500' : 'bg-amber-500 animate-pulse-beacon'
-                    }`} />
-                    {unit?.status === 'Active' ? t('dashboard.statusActive', 'Active') :
-                     unit?.status === 'Ready for Pickup' ? t('dashboard.statusReadyPickup', 'Awaiting Payment') :
-                     unit?.status === 'For Signing' ? t('dashboard.statusSigning', 'For Signing') :
-                     unit?.status === 'Expired' ? t('dashboard.statusExpired', 'Expired') :
-                     unit?.status === 'Cancelled' ? t('dashboard.statusCancelled', 'Cancelled') :
-                     t('dashboard.statusPending', 'Pending')}
-                  </span>
+                  <StatusBadge status={unit?.status} />
                 </div>
 
                 {/* Modern Government MTOP Plate Box */}
                 <div 
                   id={unitIndex === 0 ? "tour-mtop-plate" : undefined}
-                  className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 dark:from-slate-800/70 dark:to-slate-800/30 border border-slate-200/90 dark:border-slate-700/80 mb-3.5 flex items-center justify-between relative overflow-hidden"
+                  className="p-3 sm:p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] mb-3.5 flex items-center justify-between relative overflow-hidden"
                 >
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] whitespace-nowrap">
                         MUNICIPALITY OF GASAN &bull; MTOP
                       </p>
                     </div>
-                    <h3 className="font-mono text-lg sm:text-xl font-bold tracking-wider text-slate-900 dark:text-white truncate">
+                    <h3 className="font-mono text-lg sm:text-xl font-bold tracking-wider text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
                       {unit?.plateNo || t('dashboard.pendingPlate', 'PENDING')}
                     </h3>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="inline-block px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight shadow-2xs">
+                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-tight shadow-xs">
                       {unit?.make || 'Tricycle'}
                     </span>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium mt-0.5 uppercase">
+                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5 uppercase">
                       {unit?.made || 'Model'}
                     </p>
                   </div>
@@ -968,23 +956,23 @@ const OperatorDashboard = () => {
                   id={unitIndex === 0 ? "tour-specs-grid" : undefined}
                   className="grid grid-cols-2 gap-2.5 mb-3.5"
                 >
-                  <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                  <div className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-xs">
                       <MapPin size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
-                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{unit?.zone || 'N/A'}</p>
+                      <p className="text-[9px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider truncate">{t('dashboard.routeZone', 'Route Zone')}</p>
+                      <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{unit?.zone || 'N/A'}</p>
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700/60 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-2xs">
+                  <div className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-xs">
                       <Hash size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{t('dashboard.motorNumber', 'Motor Number')}</p>
-                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{unit?.motorNo || 'N/A'}</p>
+                      <p className="text-[9px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider truncate">{t('dashboard.motorNumber', 'Motor Number')}</p>
+                      <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono truncate">{unit?.motorNo || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -998,34 +986,34 @@ const OperatorDashboard = () => {
                     const isOverdue = daysRemaining !== null && daysRemaining <= 0;
 
                     return (
-                      <div className={`mb-3.5 p-3 rounded-2xl border transition-all ${
+                      <div className={`mb-3.5 p-3 rounded-lg border transition-all ${
                         isOverdue
-                          ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900/60'
+                          ? 'bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 border-[#EF4444]/30'
                           : isExpiringSoon
-                          ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
-                          : 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50'
+                          ? 'bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 border-[#F59E0B]/30'
+                          : 'bg-[#F0FDF4]/60 dark:bg-[#052E16]/30 border-[#BBF7D0] dark:border-[#166534]'
                       }`}>
                         <div className="flex justify-between items-center mb-1.5">
                           <div className="flex items-center gap-1.5">
-                            <CalendarDays size={13} className={isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'} />
-                            <span className={`text-xs font-bold uppercase tracking-wider ${isOverdue ? 'text-red-800 dark:text-red-300' : isExpiringSoon ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'}`}>
+                            <CalendarDays size={13} className={isOverdue ? 'text-[#B91C1C]' : isExpiringSoon ? 'text-[#B45309]' : 'text-[#15803D]'} />
+                            <span className={`text-xs font-bold uppercase tracking-wider ${isOverdue ? 'text-[#B91C1C]' : isExpiringSoon ? 'text-[#B45309]' : 'text-[#15803D]'}`}>
                               {t('dashboard.validUntil', 'Valid Until')}
                             </span>
                           </div>
-                          <p className={`text-xs font-bold ${isOverdue ? 'text-red-950 dark:text-red-200' : isExpiringSoon ? 'text-amber-950 dark:text-amber-200' : 'text-emerald-950 dark:text-emerald-200'}`}>
+                          <p className={`text-xs font-bold ${isOverdue ? 'text-[#991B1B] dark:text-[#FCA5A5]' : isExpiringSoon ? 'text-[#92400E] dark:text-[#FDE68A]' : 'text-[#15803D] dark:text-[#4ADE80]'}`}>
                             {getExpirationDate(unit)}
                           </p>
                         </div>
 
-                        {/* Traffic-Light Urgency Meter */}
+                        {/* Urgency Meter */}
                         {daysRemaining !== null && (
                           <div className="space-y-1 pt-0.5">
                             <div className="flex justify-between items-center text-xs font-semibold">
-                              <span className="text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                              <span className="text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
                                 Status
                               </span>
                               <span className={`flex items-center gap-1 font-bold ${
-                                isOverdue ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-emerald-700 dark:text-emerald-400'
+                                isOverdue ? 'text-[#B91C1C]' : isExpiringSoon ? 'text-[#B45309]' : 'text-[#15803D] dark:text-[#4ADE80]'
                               }`}>
                                 {isOverdue 
                                   ? `⚠️ Overdue by ${Math.abs(daysRemaining)} days` 
@@ -1035,22 +1023,22 @@ const OperatorDashboard = () => {
                               </span>
                             </div>
 
-                            <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="w-full h-1.5 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-full overflow-hidden">
                               <div 
                                 className={`h-full rounded-full transition-all duration-500 ${
-                                  isOverdue ? 'w-full bg-red-500' : isExpiringSoon ? 'w-3/4 bg-amber-500' : 'w-full bg-emerald-500'
+                                  isOverdue ? 'w-full bg-[#B91C1C]' : isExpiringSoon ? 'w-3/4 bg-[#B45309]' : 'w-full bg-[#15803D]'
                                 }`} 
                               />
                             </div>
 
                             {isExpiringSoon && (
                               <div className="pt-1.5 flex items-center justify-between">
-                                <p className="text-xs text-amber-800 dark:text-amber-300 font-medium leading-tight">
+                                <p className="text-xs text-[#92400E] dark:text-[#FDE68A] font-medium leading-tight">
                                   Within 60-day renewal window. Renew early to avoid penalties.
                                 </p>
                                 <button
                                   onClick={() => navigate(`/renew-franchise/${unit._id}`)}
-                                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black uppercase px-3.5 py-2.5 min-h-[44px] rounded-xl shadow-sm transition-all shrink-0 ml-2 active:scale-95 cursor-pointer flex items-center justify-center"
+                                  className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold uppercase px-3.5 py-2.5 min-h-[44px] rounded-lg shadow-xs transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer flex items-center justify-center"
                                 >
                                   Renew Now
                                 </button>
@@ -1066,23 +1054,23 @@ const OperatorDashboard = () => {
                     const info = getApplicationValidityInfo(unit);
                     if (!info) return null;
                     return (
-                      <div className="mb-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 p-3 rounded-2xl space-y-1.5">
+                      <div className="mb-3.5 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 rounded-lg space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Filing Date: <strong className="text-slate-800 dark:text-slate-200">{info.filingDateStr}</strong>
+                          <span className="font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                            Filing Date: <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{info.filingDateStr}</strong>
                           </span>
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Eval Window: <strong className="text-slate-800 dark:text-slate-200">{info.deadlineStr}</strong>
+                          <span className="font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                            Eval Window: <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{info.deadlineStr}</strong>
                           </span>
                         </div>
-                        <div className={`text-xs font-bold flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60 ${
-                          info.isOverdue ? 'text-red-600 dark:text-red-400' : info.isUrgent ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-300'
+                        <div className={`text-xs font-bold flex items-center justify-between pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27] ${
+                          info.isOverdue ? 'text-[#B91C1C]' : info.isUrgent ? 'text-[#B45309]' : 'text-[#6B6761] dark:text-[#A8A29E]'
                         }`}>
                           <span className="flex items-center gap-1">
                             <Clock size={12} className={info.isUrgent ? 'animate-pulse' : ''} />
                             {info.isOverdue ? 'Evaluation period lapsed' : `${info.diffDays} day(s) remaining for evaluation`}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-700 font-semibold text-slate-700 dark:text-slate-300">
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#E4E1DC] dark:bg-[#2E2A27] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                             30-Day Charter
                           </span>
                         </div>
@@ -1093,16 +1081,16 @@ const OperatorDashboard = () => {
                   {unit?.status === 'For Signing' && (() => {
                     const info = getApplicationValidityInfo(unit);
                     return (
-                      <div className="mb-3.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 p-3 rounded-2xl space-y-1.5">
+                      <div className="mb-3.5 bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 border border-[#F59E0B]/30 p-3 rounded-lg space-y-1.5">
                         <div className="flex items-start gap-2.5">
-                          <FileText className="text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" size={16} />
+                          <FileText className="text-[#B45309] dark:text-[#FBBF24] shrink-0 mt-0.5" size={16} />
                           <div>
-                            <h4 className="text-purple-900 dark:text-purple-200 font-bold text-xs uppercase mb-0.5">{t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}</h4>
-                            <p className="text-xs font-normal text-purple-700 dark:text-purple-300 leading-snug">{t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}</p>
+                            <h4 className="text-[#92400E] dark:text-[#FDE68A] font-bold text-xs uppercase mb-0.5">{t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}</h4>
+                            <p className="text-xs font-normal text-[#92400E]/90 dark:text-[#FDE68A]/90 leading-snug">{t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}</p>
                           </div>
                         </div>
                         {info && (
-                          <div className="flex justify-between items-center text-[11px] font-semibold text-purple-700 dark:text-purple-300 pt-1 border-t border-purple-200/60 dark:border-purple-800/60">
+                          <div className="flex justify-between items-center text-[11px] font-semibold text-[#92400E] dark:text-[#FDE68A] pt-1 border-t border-[#F59E0B]/30">
                             <span>Processing Window: {info.filingDateStr} → {info.deadlineStr}</span>
                             <span>⏳ {info.diffDays > 0 ? `${info.diffDays} days left` : 'Finalizing'}</span>
                           </div>
@@ -1114,31 +1102,31 @@ const OperatorDashboard = () => {
                   {unit?.status === 'Ready for Pickup' && (() => {
                     const info = getApplicationValidityInfo(unit);
                     return (
-                      <div className="mb-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 p-3 rounded-2xl space-y-1.5">
+                      <div className="mb-3.5 bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 border border-[#F59E0B]/30 p-3 rounded-lg space-y-1.5">
                         <div className="flex items-start gap-2.5">
-                          <Banknote className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={16} />
+                          <Banknote className="text-[#B45309] dark:text-[#FBBF24] shrink-0 mt-0.5" size={16} />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2 flex-wrap mb-0.5">
-                              <h4 className="text-blue-900 dark:text-blue-200 font-bold text-xs uppercase">
+                              <h4 className="text-[#92400E] dark:text-[#FDE68A] font-bold text-xs uppercase">
                                 Ready for Cashier Payment
                               </h4>
-                              <span className="font-mono font-bold text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/70 px-2 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-800">
+                              <span className="font-mono font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37] bg-white dark:bg-[#1C1917] px-2 py-0.5 rounded-md border border-[#E4E1DC] dark:border-[#2E2A27]">
                                 Amount Payable: ₱{parseFloat(systemFranchiseFee || 500).toFixed(2)}
                               </span>
                             </div>
-                            <p className="text-xs font-normal text-blue-700 dark:text-blue-300 leading-snug">
+                            <p className="text-xs font-normal text-[#92400E]/90 dark:text-[#FDE68A]/90 leading-snug">
                               Please present your Plate No. (<b>{unit.plateNo}</b>) to the Municipal Cashier / Treasury Window to pay the fee. Once confirmed paid, the Municipal Admin will release your active franchise.
                             </p>
                           </div>
                         </div>
                         {unit.paymentStatus === 'Paid' ? (
-                          <div className="flex justify-between items-center text-[11px] font-bold pt-1.5 border-t border-blue-200/60 dark:border-blue-800/60 text-emerald-700 dark:text-emerald-300">
+                          <div className="flex justify-between items-center text-[11px] font-bold pt-1.5 border-t border-[#F59E0B]/30 text-[#15803D] dark:text-[#4ADE80]">
                             <span>Status: Paid at Cashier (OR# {unit.officialReceiptNo || 'Recorded'})</span>
                             <span>Awaiting Admin Release</span>
                           </div>
                         ) : info && (
-                          <div className={`flex justify-between items-center text-[11px] font-bold pt-1 border-t border-blue-200/60 dark:border-blue-800/60 ${
-                            info.isOverdue ? 'text-red-600 dark:text-red-400' : info.isUrgent ? 'text-amber-600 dark:text-amber-400' : 'text-blue-800 dark:text-blue-300'
+                          <div className={`flex justify-between items-center text-[11px] font-bold pt-1 border-t border-[#F59E0B]/30 ${
+                            info.isOverdue ? 'text-[#B91C1C]' : info.isUrgent ? 'text-[#B45309]' : 'text-[#92400E] dark:text-[#FDE68A]'
                           }`}>
                             <span>Payment Deadline: {info.deadlineStr}</span>
                             <span className="flex items-center gap-1">
@@ -1152,16 +1140,16 @@ const OperatorDashboard = () => {
                   })()}
 
                   {unit?.status === 'Cancelled' && (
-                    <div className="mb-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 p-3 rounded-2xl">
+                    <div className="mb-3.5 bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 border border-[#EF4444]/30 p-3 rounded-lg">
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={15} />
+                        <AlertCircle className="text-[#B91C1C] dark:text-[#EF4444] shrink-0 mt-0.5" size={15} />
                         <div className="min-w-0">
-                          <h4 className="text-red-950 dark:text-red-200 font-bold text-xs uppercase mb-0.5">Application Needs Correction</h4>
-                          <p className="text-xs text-red-800 dark:text-red-300 font-medium leading-relaxed">
+                          <h4 className="text-[#991B1B] dark:text-[#FCA5A5] font-bold text-xs uppercase mb-0.5">Application Needs Correction</h4>
+                          <p className="text-xs text-[#B91C1C] dark:text-[#F87171] font-medium leading-relaxed">
                             {unit.cancelReason || 'Application requires correction. Click Fix Issues below.'}
                           </p>
                           {unit.rejectedField && (
-                            <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 text-[10px] font-bold uppercase tracking-wider">
+                            <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#FEE2E2] dark:bg-[#7F1D1D]/60 text-[#B91C1C] dark:text-[#FCA5A5] text-[10px] font-bold uppercase tracking-wider">
                               Target Field: {unit.rejectedField}
                             </span>
                           )}
@@ -1175,18 +1163,18 @@ const OperatorDashboard = () => {
               {/* Action Buttons Row */}
               <div 
                 id={unitIndex === 0 ? "tour-card-actions" : undefined}
-                className="flex flex-col sm:flex-row gap-2 mt-auto pt-3 border-t border-slate-100 dark:border-slate-800"
+                className="flex flex-col sm:flex-row gap-2 mt-auto pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27]"
               >
                 {unit?.status === 'Expired' ? (
-                  <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
+                  <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
-                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs">{t('dashboard.btnViewDetails', 'View Details')}</button>
                 ) : unit?.status === 'Ready for Pickup' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
                     {unit.paymentStatus === 'Paid' ? (
                       <button 
                         onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                        className="flex-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                        className="flex-1 bg-[#F0FDF4] dark:bg-[#052E16]/40 text-[#15803D] dark:text-[#4ADE80] border border-[#BBF7D0] dark:border-[#166534] font-bold text-xs sm:text-sm py-2.5 px-3.5 min-h-[44px] rounded-lg flex items-center justify-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
                       >
                         <CheckCircle2 size={14} /> 
                         <span>Paid • Awaiting Release</span>
@@ -1194,7 +1182,7 @@ const OperatorDashboard = () => {
                     ) : (
                       <button 
                         onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                        className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:opacity-95 font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                        className="flex-1 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm py-2.5 px-3.5 min-h-[44px] rounded-lg flex items-center justify-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
                       >
                         <Banknote size={14} /> 
                         <span>Pay ₱500 at Cashier (Plate: {unit.plateNo})</span>
@@ -1202,18 +1190,18 @@ const OperatorDashboard = () => {
                     )}
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer"
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => handleFixIssues(unit)} className="w-full bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs">
+                  <button onClick={() => handleFixIssues(unit)} className="w-full bg-[#B91C1C] hover:bg-[#991B1B] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs">
                     <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                   </button>
                 ) : (
                   <div className="flex flex-col sm:flex-row items-center w-full gap-2">
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs">{t('dashboard.btnViewDetails', 'View Details')}</button>
                     {(unit?.status === 'Pending' || unit?.status === 'For Signing' || unit?.status === 'Ready for Pickup') && (
                       <button 
                         onClick={() => setCancelModal({
@@ -1223,7 +1211,7 @@ const OperatorDashboard = () => {
                           customReason: '',
                           isSubmitting: false
                         })}
-                        className="w-full sm:w-auto bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
+                        className="w-full sm:w-auto bg-white dark:bg-[#1C1917] hover:bg-[#FEE2E2]/50 text-[#B91C1C] dark:text-[#EF4444] border border-[#EF4444]/40 px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
                       >
                         <XCircle size={14} /> Cancel
                       </button>
@@ -1239,45 +1227,45 @@ const OperatorDashboard = () => {
       {/* Details Modal */}
       {isDetailsOpen && selectedUnit && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-5 sm:p-7 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
-              <button onClick={() => setIsDetailsOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-red-500 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"><X size={18} /></button>
+          <div className="absolute inset-0 bg-black/60 animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-lg rounded-lg shadow-xl relative z-10 p-5 sm:p-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <h2 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
+              <button onClick={() => setIsDetailsOpen(false)} className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#B91C1C] p-1.5 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] cursor-pointer"><X size={18} /></button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
-                <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
-                <p className="font-bold text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.fullName}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+              <div className="sm:col-span-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]">
+                <p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
+                <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.fullName}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.todaName}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">Zone {selectedUnit?.zone}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.motorNo}</p></div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl"><p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-slate-900 dark:text-white mt-0.5">{selectedUnit?.chassisNo}</p></div>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.todaName}</p></div>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">Zone {selectedUnit?.zone}</p></div>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.motorNo}</p></div>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.chassisNo}</p></div>
               {selectedUnit?.cedulaSerialNo && (
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
-                  <p className="text-slate-600 dark:text-slate-400 font-semibold uppercase text-xs">Cedula / CTC No.</p>
-                  <p className="font-mono font-medium text-xs sm:text-sm text-slate-900 dark:text-white mt-0.5">{selectedUnit?.cedulaSerialNo}</p>
+                <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]">
+                  <p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">Cedula / CTC No.</p>
+                  <p className="font-mono font-medium text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.cedulaSerialNo}</p>
                 </div>
               )}
               {selectedUnit?.officialReceiptNo && (
-                <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                  <p className="text-emerald-700 dark:text-emerald-400 font-semibold uppercase text-xs">Official Receipt (OR) No.</p>
-                  <p className="font-mono font-bold text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 mt-0.5">{selectedUnit?.officialReceiptNo} (₱{selectedUnit?.amountPaid || 500})</p>
+                <div className="bg-[#F0FDF4] dark:bg-[#052E16]/40 p-3 rounded-lg border border-[#BBF7D0] dark:border-[#166534]">
+                  <p className="text-[#15803D] dark:text-[#4ADE80] font-semibold uppercase text-xs">Official Receipt (OR) No.</p>
+                  <p className="font-mono font-bold text-xs sm:text-sm text-[#15803D] dark:text-[#4ADE80] mt-0.5">{selectedUnit?.officialReceiptNo} (₱{selectedUnit?.amountPaid || 500})</p>
                 </div>
               )}
               {selectedUnit?.cedulaUrl && (
-                <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
-                  <p className="text-slate-600 dark:text-slate-400 font-semibold uppercase text-xs mb-1.5">Cedula / CTC Document</p>
+                <div className="sm:col-span-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]">
+                  <p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs mb-1.5">Cedula / CTC Document</p>
                   <a href={selectedUnit.cedulaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline">
                     <FileText size={14} /> View Uploaded Cedula
                   </a>
                 </div>
               )}
             </div>
-            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
+            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-5 py-2.5 min-h-[44px] bg-[#1F1D1B] hover:bg-black dark:bg-[#2E2A27] dark:hover:bg-[#3E3835] text-white font-bold rounded-lg text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
           </div>
         </div>
       )}
@@ -1296,49 +1284,49 @@ const OperatorDashboard = () => {
       {cancelModal.isOpen && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
           <div 
-            className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" 
+            className="absolute inset-0 bg-black/60 animate-in fade-in duration-200" 
             onClick={() => !cancelModal.isSubmitting && setCancelModal(prev => ({ ...prev, isOpen: false }))} 
           />
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400">
-                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center shrink-0">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-lg rounded-lg shadow-xl relative z-10 p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="flex items-center gap-2.5 text-[#B91C1C] dark:text-[#EF4444]">
+                <div className="w-8 h-8 rounded-lg bg-[#FEE2E2] dark:bg-[#7F1D1D]/60 flex items-center justify-center shrink-0">
                   <XCircle size={18} />
                 </div>
                 <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-white">Cancel Application</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
+                  <h3 className="font-bold text-base text-[#1F1D1B] dark:text-[#F6F5F3]">Cancel Application</h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
                 </div>
               </div>
               <button 
                 disabled={cancelModal.isSubmitting}
                 onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))} 
-                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1"
               >
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3.5 rounded-2xl flex items-start gap-2.5">
-                <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+              <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 border border-[#F59E0B]/30 p-3.5 rounded-lg flex items-start gap-2.5">
+                <AlertCircle size={16} className="text-[#B45309] dark:text-[#F59E0B] shrink-0 mt-0.5" />
+                <p className="text-xs text-[#92400E] dark:text-[#FDE68A] leading-relaxed font-medium">
                   Notice: Cancelling this application will set its status to <b>Cancelled</b>. The reason provided will be recorded and visible to the LGU Admin.
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-2">
                   Select Reason for Cancellation:
                 </label>
                 <div className="space-y-2">
                   {CANCEL_REASONS.map((r, idx) => (
                     <label 
                       key={idx} 
-                      className={`flex items-start gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
+                      className={`flex items-start gap-2.5 p-3 rounded-lg border text-xs cursor-pointer transition-colors ${
                         cancelModal.reason === r 
-                          ? 'border-red-500 bg-red-50/40 dark:bg-red-950/20 text-slate-900 dark:text-white font-bold' 
-                          : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
+                          ? 'border-[#B91C1C] bg-[#FEE2E2]/30 dark:bg-[#7F1D1D]/20 text-[#1F1D1B] dark:text-[#F6F5F3] font-bold' 
+                          : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3]'
                       }`}
                     >
                       <input
@@ -1346,7 +1334,7 @@ const OperatorDashboard = () => {
                         name="dash_cancel_reason"
                         checked={cancelModal.reason === r}
                         onChange={() => setCancelModal(prev => ({ ...prev, reason: r }))}
-                        className="mt-0.5 text-red-600 focus:ring-red-500"
+                        className="mt-0.5 text-[#B91C1C] focus:ring-[#B91C1C]"
                       />
                       <span>{r}</span>
                     </label>
@@ -1356,7 +1344,7 @@ const OperatorDashboard = () => {
 
               {cancelModal.reason === "Other reason (Please specify below)" && (
                 <div className="animate-in fade-in duration-150">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
                     Other Reason Details:
                   </label>
                   <textarea
@@ -1364,18 +1352,18 @@ const OperatorDashboard = () => {
                     value={cancelModal.customReason}
                     onChange={(e) => setCancelModal(prev => ({ ...prev, customReason: e.target.value }))}
                     placeholder="Enter reason for cancelling..."
-                    className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-500"
+                    className="w-full text-xs p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] focus:outline-none focus:ring-1 focus:ring-[#9E2A2B]"
                   />
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
               <button
                 type="button"
                 disabled={cancelModal.isSubmitting}
                 onClick={() => setCancelModal(prev => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] transition-colors"
               >
                 Close
               </button>
@@ -1383,7 +1371,7 @@ const OperatorDashboard = () => {
                 type="button"
                 disabled={cancelModal.isSubmitting || (cancelModal.reason === "Other reason (Please specify below)" && !cancelModal.customReason?.trim())}
                 onClick={handleConfirmCancel}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {cancelModal.isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
                 {cancelModal.isSubmitting ? 'Cancelling...' : 'Confirm Cancellation'}
@@ -1422,34 +1410,34 @@ const OperatorDashboard = () => {
       {/* Portalled Profile Bottom Sheet / Modal (Escape stacking context) */}
       {isProfileMenuOpen && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-center sm:items-center">
-          {/* Backdrop with modern blur */}
+          {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200 cursor-pointer"
+            className="fixed inset-0 bg-black/60 transition-opacity animate-in fade-in duration-200 cursor-pointer"
             onClick={() => setIsProfileMenuOpen(false)}
           />
 
           {/* Bottom Sheet Card */}
-          <div className="relative z-10 w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 p-6 text-slate-900 dark:text-white animate-in slide-in-from-bottom duration-250 max-h-[90vh] flex flex-col overflow-y-auto">
+          <div className="relative z-10 w-full sm:max-w-md bg-white dark:bg-[#1C1917] rounded-t-lg sm:rounded-lg shadow-xl border-t sm:border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 text-[#1F1D1B] dark:text-[#F6F5F3] animate-in slide-in-from-bottom duration-200 max-h-[90vh] flex flex-col overflow-y-auto">
             {/* Drag Handle Bar (Mobile) */}
-            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-4 sm:hidden" />
+            <div className="w-12 h-1 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-full mx-auto mb-4 sm:hidden" />
 
             {/* Header Profile Info */}
-            <div className="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="w-14 h-14 rounded-full border-2 border-[#D4AF37] shadow-md overflow-hidden bg-[#9E2A2B] flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-3.5 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="w-12 h-12 rounded-lg border-2 border-[#D4AF37] shadow-xs overflow-hidden bg-[#9E2A2B] text-white flex items-center justify-center shrink-0">
                 {profilePic ? (
                   <img src={profilePic} alt="User" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-[#D4AF37] font-black text-xl">
+                  <span className="text-[#D4AF37] font-bold text-lg">
                     {loggedInUserName.charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-black text-base text-slate-900 dark:text-white truncate">
+                <h3 className="font-bold text-base text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
                   {loggedInUserName}
                 </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/40">
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-[#FEF3C7]/60 text-[#92400E] dark:bg-[#78350F]/40 dark:text-[#FDE68A] border border-[#F59E0B]/30">
                     {isTodaPresident ? 'TODA President' : 'Franchise Operator'}
                   </span>
                 </div>
@@ -1457,7 +1445,7 @@ const OperatorDashboard = () => {
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-600 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="w-8 h-8 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center transition-colors cursor-pointer shrink-0"
               >
                 <X size={18} />
               </button>
@@ -1472,18 +1460,18 @@ const OperatorDashboard = () => {
                   setIsProfileMenuOpen(false);
                   navigate('/operator/settings');
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
+                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center">
-                    <Settings size={20} />
+                  <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <Settings size={18} />
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">Account & Document Settings</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Manage profile, documents & security</p>
+                    <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">Account & Document Settings</p>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Manage profile, documents & security</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               {/* Language Preference */}
@@ -1493,18 +1481,18 @@ const OperatorDashboard = () => {
                   setIsProfileMenuOpen(false);
                   setIsLangModalOpen(true);
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
+                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                    <span className="font-black text-xs">A/文</span>
+                  <div className="w-9 h-9 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center justify-center shrink-0">
+                    <span className="font-bold text-xs">A/文</span>
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">Language / Wika</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">{language === 'fil' ? 'Filipino (Tagalog)' : 'English (US)'}</p>
+                    <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">Language / Wika</p>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">{language === 'fil' ? 'Filipino (Tagalog)' : 'English (US)'}</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               {/* Operator Quick Guide & FAQs */}
@@ -1514,27 +1502,27 @@ const OperatorDashboard = () => {
                   setIsProfileMenuOpen(false);
                   setIsTourOpen(true);
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left group cursor-pointer"
+                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                    <Sparkles size={20} />
+                  <div className="w-9 h-9 rounded-lg bg-[#FEF3C7]/60 dark:bg-[#78350F]/40 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
+                    <Sparkles size={18} />
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">Operator Quick Guide & FAQs</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Step-by-step instructions & tips</p>
+                    <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">Operator Quick Guide & FAQs</p>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Step-by-step instructions & tips</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
 
             {/* Logout Button */}
-            <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-3 mt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-sm transition-all active:scale-98 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 p-3 min-h-[44px] rounded-lg bg-[#FEE2E2]/60 hover:bg-[#FEE2E2] dark:bg-[#7F1D1D]/30 dark:hover:bg-[#7F1D1D]/50 text-[#B91C1C] dark:text-[#EF4444] font-bold text-sm transition-colors active:scale-98 cursor-pointer"
               >
                 <LogOut size={18} />
                 <span>Sign Out / Mag-logout</span>
@@ -1548,29 +1536,29 @@ const OperatorDashboard = () => {
       {/* Portalled Notification Bottom Sheet / Dropdown (Escape stacking context) */}
       {isNotifOpen && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-start sm:items-end sm:p-4 sm:pt-16 sm:pr-8">
-          {/* Backdrop with modern blur */}
+          {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200 cursor-pointer" 
+            className="fixed inset-0 bg-black/60 transition-opacity animate-in fade-in duration-200 cursor-pointer" 
             onClick={() => setIsNotifOpen(false)} 
           />
 
           {/* Notification Card */}
           <div 
-            className="relative z-10 w-full sm:w-96 bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-3xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 py-4 text-slate-900 dark:text-white animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-250 max-h-[85vh] flex flex-col"
+            className="relative z-10 w-full sm:w-96 bg-white dark:bg-[#1C1917] rounded-t-lg sm:rounded-lg shadow-xl border-t sm:border border-[#E4E1DC] dark:border-[#2E2A27] py-4 text-[#1F1D1B] dark:text-[#F6F5F3] animate-in slide-in-from-bottom sm:slide-in-from-top-2 duration-200 max-h-[85vh] flex flex-col"
           >
             {/* Mobile drag bar */}
-            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
+            <div className="w-12 h-1 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-full mx-auto mb-3 sm:hidden" />
 
             {/* Header */}
-            <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="px-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <Bell size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                  <h4 className="font-black text-sm text-slate-900 dark:text-white">
+                  <h4 className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
                     {t('nav.notifications', 'Notifications')}
                   </h4>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5">
                   {unreadNotifCount > 0 ? `${unreadNotifCount} update(s)` : t('nav.allCaughtUp', 'All caught up')}
                 </p>
               </div>
@@ -1588,7 +1576,7 @@ const OperatorDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setIsNotifOpen(false)}
-                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-600 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center transition-colors cursor-pointer"
                   aria-label="Close"
                 >
                   <X size={16} />
@@ -1597,14 +1585,14 @@ const OperatorDashboard = () => {
             </div>
 
             {/* Notification List */}
-            <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 flex-1 max-h-[60vh] overscroll-contain">
+            <div className="overflow-y-auto divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] flex-1 max-h-[60vh] overscroll-contain">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center flex flex-col items-center justify-center">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-2.5">
+                  <div className="w-12 h-12 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#6B6761] dark:text-[#A8A29E] mb-2.5">
                     <Bell size={22} />
                   </div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('nav.noNotifications', 'No new notifications')}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
+                  <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{t('nav.noNotifications', 'No new notifications')}</p>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 max-w-xs">Franchise updates and announcements will appear here.</p>
                 </div>
               ) : (
                 notifications.map(notif => {
@@ -1622,12 +1610,12 @@ const OperatorDashboard = () => {
                       }}
                       className={`p-4 cursor-pointer transition-colors border-l-4 flex items-start gap-3.5 ${
                         notif.isRead 
-                          ? 'bg-white dark:bg-slate-900 border-l-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60' 
-                          : 'bg-amber-50/40 dark:bg-amber-950/20 ' + visuals.accentBorder + ' hover:bg-amber-100/40 dark:hover:bg-amber-950/30'
+                          ? 'bg-white dark:bg-[#1C1917] border-l-transparent hover:bg-[#F6F5F3] dark:hover:bg-[#14110F]' 
+                          : 'bg-[#FEF3C7]/20 dark:bg-[#78350F]/10 ' + visuals.accentBorder + ' hover:bg-[#FEF3C7]/30 dark:hover:bg-[#78350F]/20'
                       }`}
                     >
                       <div className="mt-0.5 shrink-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${visuals.iconBg}`}>
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${visuals.iconBg}`}>
                           <IconComponent size={18} />
                         </div>
                       </div>
@@ -1637,16 +1625,16 @@ const OperatorDashboard = () => {
                             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border shrink-0 ${visuals.badgeClass}`}>
                               {visuals.badgeText}
                             </span>
-                            <p className={`text-xs truncate ${notif.isRead ? 'font-semibold text-slate-700 dark:text-slate-300' : 'font-bold text-slate-900 dark:text-white'}`}>
+                            <p className={`text-xs truncate ${notif.isRead ? 'font-semibold text-[#6B6761] dark:text-[#A8A29E]' : 'font-bold text-[#1F1D1B] dark:text-[#F6F5F3]'}`}>
                               {notif.title}
                             </p>
                           </div>
                           {!notif.isRead && <span className="w-2 h-2 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0" />}
                         </div>
-                        <p className={`text-xs line-clamp-2 leading-relaxed ${notif.isRead ? 'text-slate-500 dark:text-slate-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                        <p className={`text-xs line-clamp-2 leading-relaxed ${notif.isRead ? 'text-[#6B6761] dark:text-[#A8A29E]' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'}`}>
                           {renderRichNotificationMessage(notif.message)}
                         </p>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-1.5 block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-medium mt-1.5 block">
                           {timeStr}
                         </span>
                       </div>

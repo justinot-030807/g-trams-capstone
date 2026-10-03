@@ -203,18 +203,18 @@ const TermsPolicyModal = ({
   const shouldShowAccept = showAcceptButton || Boolean(onAccept);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-card-entrance">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 select-none animate-in fade-in">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#1C1917] rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-[#801820] via-[#8E2028] to-[#70141B] p-4 sm:p-6 text-white shrink-0">
+        <div className="relative bg-[#9E2A2B] p-4 sm:p-6 text-white shrink-0 border-b-2 border-[#D4AF37]">
           <div className="flex items-center justify-between gap-2.5 sm:gap-4">
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-white/10 border border-white/20 p-1 sm:p-1.5 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 p-1.5 flex items-center justify-center shrink-0">
                 <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-black text-xs sm:text-sm md:text-base tracking-wide uppercase leading-tight break-words">
+                <h3 className="font-bold text-xs sm:text-sm md:text-base tracking-wide uppercase leading-tight break-words">
                   {current.headerTitle}
                 </h3>
                 <p className="text-[10px] sm:text-xs text-[#D4AF37] font-semibold mt-0.5 leading-snug break-words">
@@ -228,7 +228,7 @@ const TermsPolicyModal = ({
               <button
                 type="button"
                 onClick={() => setLang(l => l === 'en' ? 'tl' : 'en')}
-                className="px-2.5 py-1 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-colors cursor-pointer min-h-[36px]"
                 title="Switch Language"
               >
                 {lang === 'en' ? 'Tagalog' : 'English'}
@@ -236,7 +236,7 @@ const TermsPolicyModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                 title="Close"
               >
                 <X size={18} />
@@ -246,21 +246,21 @@ const TermsPolicyModal = ({
         </div>
 
         {/* Modal Single Continuous Scrollable Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-7 text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-7 text-[#1F1D1B] dark:text-[#EAE7E1] text-xs sm:text-sm leading-relaxed divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
           {current.sections.map((section, sIdx) => {
             const SectionIcon = section.icon;
             return (
               <div key={section.id} className={sIdx > 0 ? "pt-6 space-y-4" : "space-y-4"}>
                 {/* Section Header */}
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#801820]/10 dark:bg-[#D4AF37]/15 text-[#801820] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
                     <SectionIcon size={18} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                    <h4 className="font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#F6F5F3]">
                       {section.title}
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
                       {section.subtitle}
                     </p>
                   </div>
@@ -271,13 +271,13 @@ const TermsPolicyModal = ({
                   {section.points.map((pt, pIdx) => (
                     <div 
                       key={pIdx} 
-                      className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-1 hover:border-[#D4AF37]/50 transition-colors"
+                      className="p-3.5 sm:p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-1 hover:border-[#D4AF37] transition-colors"
                     >
-                      <h5 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#801820] dark:bg-[#D4AF37] shrink-0" />
+                      <h5 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-xs sm:text-sm flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] shrink-0" />
                         {pt.title}
                       </h5>
-                      <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-normal pl-3.5">
+                      <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs leading-relaxed font-normal pl-3.5">
                         {pt.desc}
                       </p>
                     </div>
@@ -289,16 +289,16 @@ const TermsPolicyModal = ({
 
           {/* Municipal Helpdesk Banner */}
           <div className="pt-6">
-            <div className="p-4 rounded-2xl bg-[#801820]/5 dark:bg-[#801820]/15 border border-[#801820]/15 dark:border-[#801820]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="p-4 rounded-lg bg-[#9E2A2B]/5 dark:bg-[#9E2A2B]/15 border border-[#9E2A2B]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <div>
-                <p className="font-bold text-slate-900 dark:text-white">{MUNICIPAL_OFFICE_NAME} &amp; MTFRB</p>
-                <p className="text-slate-500 dark:text-slate-400 mt-0.5">{OFFICE_LOCATION} • {HELP_DESK_EMAIL}</p>
+                <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{MUNICIPAL_OFFICE_NAME} &amp; MTFRB</p>
+                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5">{OFFICE_LOCATION} • {HELP_DESK_EMAIL}</p>
               </div>
               <a 
                 href={MUNICIPAL_WEBSITE} 
                 target="_blank" 
                 rel="noreferrer" 
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#801820] hover:bg-[#5a1419] text-white font-bold transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold transition-colors shrink-0 min-h-[40px]"
               >
                 <span>Visit gasan.ph</span>
                 <ExternalLink size={12} />
@@ -307,12 +307,12 @@ const TermsPolicyModal = ({
           </div>
         </div>
 
-        {/* Modal Footer Actions (Task 17: I Understand & Accept button) */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 flex items-center justify-end gap-3 shrink-0">
+        {/* Modal Footer Actions */}
+        <div className="p-4 sm:p-5 border-t border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px]"
+            className="px-5 py-2.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] font-bold text-xs uppercase tracking-wider hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors cursor-pointer min-h-[44px]"
           >
             {current.closeBtn}
           </button>
@@ -323,7 +323,7 @@ const TermsPolicyModal = ({
                 if (onAccept) onAccept();
                 onClose();
               }}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#801820] to-[#70141B] text-white font-bold text-xs uppercase tracking-wider hover:shadow-md transition-all cursor-pointer min-h-[44px]"
+              className="px-6 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs uppercase tracking-wider shadow-xs transition-colors cursor-pointer min-h-[44px]"
             >
               {current.acceptBtn}
             </button>

@@ -64,8 +64,8 @@ const Register = () => {
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#f8fafc';
-    document.body.style.backgroundColor = '#f8fafc';
+    document.documentElement.style.backgroundColor = '#F6F5F3';
+    document.body.style.backgroundColor = '#F6F5F3';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -301,10 +301,10 @@ const Register = () => {
 
   // Removed unused handleOnboardingSubmit
 
-  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium";
 
   return (
-    <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
+    <div className="relative w-full bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col overflow-x-hidden min-h-screen">
       
       {/* Zero-Lag Lightweight Watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -318,7 +318,7 @@ const Register = () => {
         <AuthNavbar />
 
         {/* MAIN FULL-WIDTH SPLIT LAYOUT */}
-        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
+        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-[#F6F5F3] dark:bg-[#14110F]">
           
           {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY */}
           <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-24 sm:h-28 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
@@ -341,30 +341,30 @@ const Register = () => {
           </div>
 
           {/* RIGHT COLUMN: CLEAN FORM PANEL (No card) */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white min-h-full">
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white dark:bg-[#1C1917] min-h-full">
             <div className="w-full max-w-xl">
               <div className="mb-4 sm:mb-5">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] tracking-tight leading-tight">
                   {step === 1 ? 'Register' : 'Verify contact'}
                 </h1>
-                <div className="w-10 h-1 bg-[#F0B429] rounded-full mt-2" />
-                <p className="text-xs sm:text-sm text-slate-600 font-medium mt-2 leading-relaxed">
+                <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2" />
+                <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-2 leading-relaxed">
                   {step === 1 ? 'Create your operator account to apply online.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
                 </p>
               </div>
 
               {error && (
-                <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
                   <p>{error}</p>
                   {error.includes('ALREADY EXISTS') && (
-                    <Link to="/login" className="inline-block mt-1 font-black text-[#801820] underline tracking-wider">
+                    <Link to="/login" className="inline-block mt-1 font-bold text-[#9E2A2B] dark:text-[#D4AF37] underline tracking-wider">
                       Click here to log in →
                     </Link>
                   )}
                 </div>
               )}
               {success && (
-                <div className="mb-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
                   {success}
                 </div>
               )}
@@ -389,18 +389,18 @@ const Register = () => {
                       onError={(msg) => setError(typeof msg === 'string' ? msg : msg.message || 'Google Auth Error')}
                     />
                     <div className="flex items-center gap-3 my-2.5 sm:my-3">
-                      <div className="flex-1 h-px bg-slate-300" />
-                      <span className="text-xs font-semibold text-slate-600">Or register with email/phone</span>
-                      <div className="flex-1 h-px bg-slate-300" />
+                      <div className="flex-1 h-px bg-[#E4E1DC] dark:bg-[#2E2A27]" />
+                      <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">Or register with email/phone</span>
+                      <div className="flex-1 h-px bg-[#E4E1DC] dark:bg-[#2E2A27]" />
                     </div>
                   </div>
 
                   <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5 sm:space-y-3">
                     {/* Full Name */}
                     <div>
-                      <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                      <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">Full Name</label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                           <User size={18} />
                         </div>
                         <input 
@@ -420,9 +420,9 @@ const Register = () => {
                     {/* Barangay & TODA */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay</label>
+                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">Barangay</label>
                         <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
                             <MapPin size={18} />
                           </div>
                           <select 
@@ -430,26 +430,26 @@ const Register = () => {
                             value={formData.address} 
                             onChange={handleChange} 
                             required 
-                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
-                              !formData.address ? 'text-slate-500' : 'text-slate-900'
+                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer ${
+                              !formData.address ? 'text-[#6B6761] dark:text-[#A8A29E]' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'
                             }`}
                           >
-                            <option value="" disabled className="text-slate-500">Select Barangay</option>
+                            <option value="" disabled className="text-[#6B6761]">Select Barangay</option>
                             {GASAN_BARANGAYS.map((brgy) => (
-                              <option key={brgy} value={brgy} className="text-slate-900">
+                              <option key={brgy} value={brgy} className="text-[#1F1D1B] dark:text-[#F6F5F3]">
                                 {brgy}
                               </option>
                             ))}
                           </select>
-                          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                             <ChevronDown size={18} />
                           </div>
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">TODA</label>
+                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">TODA</label>
                         <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
                             <Building2 size={18} />
                           </div>
                           <select 
@@ -457,18 +457,18 @@ const Register = () => {
                             value={formData.todaAssociation} 
                             onChange={handleChange} 
                             required 
-                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
-                              !formData.todaAssociation ? 'text-slate-500' : 'text-slate-900'
+                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer ${
+                              !formData.todaAssociation ? 'text-[#6B6761] dark:text-[#A8A29E]' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'
                             }`}
                           >
-                            <option value="" disabled className="text-slate-500">Select TODA</option>
+                            <option value="" disabled className="text-[#6B6761]">Select TODA</option>
                             {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => (
-                              <option key={toda} value={toda} className="text-slate-900">
+                              <option key={toda} value={toda} className="text-[#1F1D1B] dark:text-[#F6F5F3]">
                                 {toda}
                               </option>
                             ))}
                           </select>
-                          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                             <ChevronDown size={18} />
                           </div>
                         </div>
@@ -477,9 +477,9 @@ const Register = () => {
 
                     {/* Email or Phone Number */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">Email or phone number</label>
+                      <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case mb-2">Email or phone number</label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                           <Mail size={18} />
                         </div>
                         <input 
@@ -503,9 +503,9 @@ const Register = () => {
                     {/* Password & Confirm Password */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">Password</label>
+                        <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case mb-2">Password</label>
                         <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                             <Lock size={18} />
                           </div>
                           <input 
@@ -526,7 +526,7 @@ const Register = () => {
                           <button 
                             type="button" 
                             onClick={() => setShowPassword(!showPassword)} 
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6761] hover:text-[#9E2A2B] dark:text-[#A8A29E] dark:hover:text-[#D4AF37] cursor-pointer"
                             aria-label={showPassword ? "Hide password" : "Show password"}
                           >
                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -536,12 +536,12 @@ const Register = () => {
                         {/* MOBILE ONLY: Directly below Password field (Only shows when typing) */}
                         <div className="block sm:hidden mt-2">
                           {Boolean(formData.password && formData.password.length > 0) && (
-                            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-700">
+                                <span className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                                   Password Qualifications
                                 </span>
-                                <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
                                   {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
                                 </span>
                               </div>
@@ -553,7 +553,7 @@ const Register = () => {
                                     <div
                                       key={rule.id}
                                       className={`flex items-center gap-1.5 text-xs leading-tight transition-colors duration-200 ${
-                                        isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-slate-500 font-medium'
+                                        isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-[#6B6761] dark:text-[#A8A29E] font-medium'
                                       }`}
                                     >
                                       {isMet ? (
@@ -561,7 +561,7 @@ const Register = () => {
                                       ) : showRed ? (
                                         <X size={13} className="shrink-0 stroke-[2.5] text-red-500" />
                                       ) : (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mx-1" />
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#E4E1DC] dark:bg-[#2E2A27] shrink-0 mx-1" />
                                       )}
                                       <span>{rule.label}</span>
                                     </div>
@@ -574,9 +574,9 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 normal-case mb-2">Confirm password</label>
+                        <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case mb-2">Confirm password</label>
                         <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                             <Lock size={18} />
                           </div>
                           <input 
@@ -592,16 +592,16 @@ const Register = () => {
                           <button 
                             type="button" 
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#801820] cursor-pointer"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6761] hover:text-[#9E2A2B] dark:text-[#A8A29E] dark:hover:text-[#D4AF37] cursor-pointer"
                             aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                           >
                             {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
                         </div>
 
-                        {/* Password Mismatch Notice (Task 12) */}
+                        {/* Password Mismatch Notice */}
                         {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                          <div className="flex items-center gap-1.5 text-xs text-red-600 font-semibold mt-1.5">
+                          <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 font-semibold mt-1.5">
                             <AlertCircle size={14} className="shrink-0" />
                             <span>Hindi magkapareho ang password.</span>
                           </div>
@@ -612,12 +612,12 @@ const Register = () => {
                     {/* DESKTOP ONLY: Full-width below the two-column row (Only shows when typing) */}
                     {Boolean(formData.password && formData.password.length > 0) && (
                       <div className="hidden sm:block">
-                        <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-700">
+                            <span className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                               Password Qualifications
                             </span>
-                            <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-slate-500'}`}>
+                            <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
                               {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
                             </span>
                           </div>
@@ -629,7 +629,7 @@ const Register = () => {
                                 <div
                                   key={rule.id}
                                   className={`flex items-center gap-1.5 text-xs sm:text-[13px] leading-tight transition-colors duration-200 ${
-                                    isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-slate-500 font-medium'
+                                    isMet ? 'text-emerald-600 font-bold' : showRed ? 'text-red-500 font-semibold' : 'text-[#6B6761] dark:text-[#A8A29E] font-medium'
                                   }`}
                                 >
                                   {isMet ? (
@@ -637,7 +637,7 @@ const Register = () => {
                                   ) : showRed ? (
                                     <X size={13} className="shrink-0 stroke-[2.5] text-red-500" />
                                   ) : (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mx-1" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#E4E1DC] dark:bg-[#2E2A27] shrink-0 mx-1" />
                                   )}
                                   <span>{rule.label}</span>
                                 </div>
@@ -648,16 +648,16 @@ const Register = () => {
                       </div>
                     )}
 
-                    {/* Terms Checkbox (Task 13: 24px checkbox, 44px min row, isolated modal click) */}
+                    {/* Terms Checkbox */}
                     <div className="flex items-center gap-3 min-h-[44px] pt-1">
                       <input 
                         type="checkbox" 
                         id="terms" 
                         checked={termsAccepted} 
                         onChange={() => setTermsAccepted(!termsAccepted)} 
-                        className="w-6 h-6 rounded-md accent-[#801820] cursor-pointer shrink-0"
+                        className="w-5 h-5 rounded-md accent-[#9E2A2B] cursor-pointer shrink-0"
                       />
-                      <label htmlFor="terms" className="text-sm text-slate-600 leading-snug cursor-pointer font-medium select-none">
+                      <label htmlFor="terms" className="text-sm text-[#6B6761] dark:text-[#A8A29E] leading-snug cursor-pointer font-medium select-none">
                         I accept the{' '}
                         <button 
                           type="button" 
@@ -666,7 +666,7 @@ const Register = () => {
                             e.stopPropagation(); 
                             setShowTermsModal(true); 
                           }} 
-                          className="font-bold text-[#801820] hover:underline focus:outline-none"
+                          className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline focus:outline-none cursor-pointer"
                         >
                           Terms &amp; Privacy Policy
                         </button>.
@@ -678,7 +678,7 @@ const Register = () => {
                       <button 
                         type="submit" 
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
+                        className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-base font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
                       >
                         {isLoading ? (
                           <>
@@ -695,10 +695,10 @@ const Register = () => {
                   </form>
 
                   {/* BOTTOM LINKS */}
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
-                    <p className="text-sm text-slate-600 font-medium">
+                  <div className="mt-3 pt-2.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-center">
+                    <p className="text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
                       Already have an account?{' '}
-                      <Link to="/login" className="font-bold text-[#801820] hover:underline">
+                      <Link to="/login" className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline">
                         Log In
                       </Link>
                     </p>
@@ -709,7 +709,7 @@ const Register = () => {
               {step === 2 && (
                 <form onSubmit={handleVerifyOTP} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 normal-case mb-2 text-center">
+                    <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case mb-2 text-center">
                       Enter 6-digit code
                     </label>
                     <input 
@@ -718,14 +718,14 @@ const Register = () => {
                       value={otpCode} 
                       onChange={(e) => setOtpCode(e.target.value)} 
                       required 
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-2xl font-black text-slate-900 tracking-[0.3em] outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 shadow-inner" 
+                      className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2.5 text-center text-2xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-[0.3em] font-mono outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] shadow-inner" 
                       placeholder="000000" 
                     />
                   </div>
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
                   >
                     {isLoading ? (
                       <>
@@ -744,14 +744,14 @@ const Register = () => {
                       type="button" 
                       onClick={handleResendOTP} 
                       disabled={resendCooldown > 0 || isLoading}
-                      className="text-xs font-bold text-[#801820] hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
+                      className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
                     >
                       {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
                     </button>
                     <button 
                       type="button" 
                       onClick={() => setStep(1)} 
-                      className="text-xs font-bold text-slate-500 hover:text-[#801820] transition-colors cursor-pointer"
+                      className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
                     >
                       ← Change Info
                     </button>

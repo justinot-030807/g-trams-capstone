@@ -44,57 +44,51 @@ const MaintenanceMode = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#1A0B0E] flex flex-col justify-between items-center px-4 py-8 sm:p-10 select-none relative overflow-hidden text-white">
+    <div className="min-h-[100dvh] w-full bg-[#14110F] flex flex-col justify-between items-center px-4 py-8 sm:p-10 select-none text-white">
       
-      {/* Dynamic Background Glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#9E2A2B]/40 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#D4AF37]/20 rounded-full blur-[110px]" />
-      </div>
-
       {/* Top Header */}
-      <header className="relative z-10 flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center p-1 shadow-md border-2 border-[#D4AF37] shrink-0">
+      <header className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-xs border border-[#D4AF37] shrink-0">
           <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
         </div>
         <div>
-          <h1 className="text-lg font-black tracking-wider text-white">G-TRAMS</h1>
-          <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest">Municipality of Gasan</p>
+          <h1 className="text-base font-bold tracking-wider text-white">G-TRAMS</h1>
+          <p className="text-[11px] text-[#D4AF37] font-semibold uppercase tracking-wider">Pamahalaang Bayan ng Gasan</p>
         </div>
       </header>
 
       {/* Main Card */}
-      <main className="relative z-10 w-full max-w-lg my-auto bg-white/95 backdrop-blur-2xl text-slate-900 rounded-3xl shadow-2xl border border-white/40 p-6 sm:p-8 text-center animate-in zoom-in-95 duration-300">
+      <main className="w-full max-w-lg my-auto bg-[#1C1917] text-white rounded-lg shadow-xl border border-[#2E2A27] p-6 sm:p-8 text-center animate-in zoom-in-95 duration-200">
         
-        {/* Animated Icon */}
-        <div className="w-18 h-18 bg-orange-100 dark:bg-orange-950/40 text-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-inner border border-orange-200">
-          <Wrench size={36} className="animate-bounce" />
+        {/* Icon */}
+        <div className="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-lg flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
+          <Wrench size={32} />
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-widest border border-orange-200 mb-3 shadow-xs">
-          <ShieldAlert size={12} /> Scheduled System Maintenance
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/20 mb-3 shadow-xs">
+          <ShieldAlert size={13} /> Naka-iskedyul na Maintenance
         </span>
 
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-          System Temporarily Offline
+        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+          Pansamantalang Naka-offline ang System
         </h2>
 
-        <p className="text-xs sm:text-sm text-slate-600 mt-2.5 leading-relaxed font-medium">
-          The G-TRAMS Portal is currently undergoing scheduled database optimizations and system updates by the Local Government Unit of Gasan.
+        <p className="text-xs sm:text-sm text-[#A8A29E] mt-2 leading-relaxed font-normal">
+          Kasalukuyang sumasailalim sa routine maintenance at database optimization ang G-TRAMS Portal para sa mas mabilis at ligtas na serbisyo.
         </p>
 
-        <div className="my-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-left text-xs text-slate-600 space-y-1.5">
-          <p className="font-bold text-slate-800 flex items-center gap-2">
-            <Lock size={14} className="text-[#9E2A2B]" /> Public & Operator Access Paused
+        <div className="my-5 p-4 rounded-lg bg-[#14110F] border border-[#2E2A27] text-left text-xs text-[#A8A29E] space-y-1.5">
+          <p className="font-bold text-white flex items-center gap-2">
+            <Lock size={14} className="text-[#D4AF37]" /> Public & Operator Access Paused
           </p>
-          <p className="text-xs text-slate-500 leading-snug">
-            Franchise submissions, renewals, and member validation are temporarily locked to ensure data integrity during maintenance.
+          <p className="text-[11px] text-[#A8A29E] leading-relaxed">
+            Ang pagpapasa ng bagong prangkisa, renewal, at member verification ay pansamantalang naka-pause upang maprotektahan ang data integrity.
           </p>
         </div>
 
         {statusMessage && (
-          <div className={`mb-4 p-3 rounded-xl text-xs font-bold ${
-            statusMessage.includes('ended') ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+          <div className={`mb-4 p-3 rounded-lg text-xs font-bold ${
+            statusMessage.includes('ended') ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-600/30' : 'bg-amber-500/10 text-amber-300 border border-amber-600/30'
           }`}>
             {statusMessage}
           </div>
@@ -105,36 +99,36 @@ const MaintenanceMode = () => {
           <button
             onClick={checkStatus}
             disabled={isChecking}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#9E2A2B] text-white py-3 px-4 rounded-xl text-xs font-bold hover:bg-[#7A1B22] active:scale-95 transition-all shadow-md"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 px-4 rounded-lg text-xs font-bold transition-all shadow-xs min-h-[44px] cursor-pointer"
           >
             <RefreshCw size={15} className={isChecking ? 'animate-spin' : ''} />
-            {isChecking ? 'Checking Server...' : 'Check Status'}
+            {isChecking ? 'Sinusuri ang Server...' : 'Suriin ang Status'}
           </button>
 
           <button
             onClick={() => navigate('/login')}
-            className="flex items-center justify-center gap-1.5 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#2E2A27] hover:bg-[#3E3834] text-[#EAE7E1] font-bold rounded-lg text-xs transition-colors cursor-pointer min-h-[44px] border border-[#3E3834]"
           >
             Admin Log In <ArrowRight size={14} />
           </button>
         </div>
 
         {/* Hotline */}
-        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-slate-600 dark:text-slate-400 font-medium">
-          <a href={`tel:${HOTLINE_NUMBER}`} className="flex items-center gap-1 hover:text-[#9E2A2B] transition-colors">
-            <Phone size={12} className="text-[#9E2A2B]" /> {HOTLINE_DISPLAY}
+        <div className="mt-6 pt-4 border-t border-[#2E2A27] flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-[#A8A29E] font-medium">
+          <a href={`tel:${HOTLINE_NUMBER}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
+            <Phone size={13} className="text-[#D4AF37]" /> {HOTLINE_DISPLAY}
           </a>
-          <span className="hidden sm:inline">•</span>
-          <a href={`mailto:${HELP_DESK_EMAIL}`} className="flex items-center gap-1 hover:text-[#9E2A2B] transition-colors">
-            <Mail size={12} className="text-[#9E2A2B]" /> {HELP_DESK_EMAIL}
+          <span className="hidden sm:inline">&bull;</span>
+          <a href={`mailto:${HELP_DESK_EMAIL}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
+            <Mail size={13} className="text-[#D4AF37]" /> {HELP_DESK_EMAIL}
           </a>
         </div>
 
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center text-white/50 text-xs">
-        © 2026 Municipality of Gasan, Marinduque. All rights reserved.
+      <footer className="text-center text-[#A8A29E] text-xs">
+        &copy; 2026 Pamahalaang Bayan ng Gasan, Marinduque. All rights reserved.
       </footer>
 
     </div>

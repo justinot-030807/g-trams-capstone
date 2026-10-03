@@ -34,7 +34,7 @@ const AuthFooter = () => {
   const [legalTab, setLegalTab] = useState('privacy');
 
   return (
-    <footer className="relative z-20 w-full bg-[#0a0102] border-t border-white/10 pt-12 pb-6 px-4 sm:px-6 lg:px-8 text-white/80">
+    <footer className="relative z-20 w-full bg-[#14110F] border-t border-[#2E2A27] pt-12 pb-6 px-4 sm:px-6 lg:px-8 text-white/80">
       <div className="max-w-7xl mx-auto">
         
         {/* Top Section: Multi-column links */}
@@ -74,10 +74,10 @@ const AuthFooter = () => {
           <div className="flex flex-col space-y-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Quick Links</h3>
             <ul className="space-y-3 text-sm text-white/60">
-              <li><Link to="/" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#801820]" /> Home</Link></li>
-              <li><Link to="/login" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#801820]" /> Log In</Link></li>
-              <li><Link to="/register" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#801820]" /> Register</Link></li>
-              <li><a href="https://marinduque.gov.ph" target="_blank" rel="noreferrer" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-500" /> Provincial Government</a></li>
+              <li><Link to="/" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Home</Link></li>
+              <li><Link to="/login" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Log In</Link></li>
+              <li><Link to="/register" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Register</Link></li>
+              <li><a href="https://marinduque.gov.ph" target="_blank" rel="noreferrer" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-stone-500" /> Provincial Government</a></li>
             </ul>
           </div>
 
@@ -120,7 +120,7 @@ const AuthFooter = () => {
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Contact</h3>
             <ul className="space-y-4 text-sm text-white/60">
               <li className="flex items-start gap-3">
-                <MapPin size={16} className="text-[#801820] shrink-0 mt-0.5" />
+                <MapPin size={16} className="text-[#9E2A2B] shrink-0 mt-0.5" />
                 <span>{OFFICE_LOCATION}</span>
               </li>
               <li className="flex items-center gap-3">
@@ -137,7 +137,7 @@ const AuthFooter = () => {
         </div>
 
         {/* Bottom Section: Copyright */}
-        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40 font-medium">
+        <div className="pt-6 border-t border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40 font-medium">
           <p>© 2026 Municipality of Gasan. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <span className="font-mono text-xs bg-white/5 px-2 py-1 rounded text-white/60">v2.4.0</span>

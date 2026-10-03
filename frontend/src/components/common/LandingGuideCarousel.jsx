@@ -157,13 +157,13 @@ const LandingGuideCarousel = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-slate-200 relative z-10 overflow-hidden"
+      className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-[#E4E1DC] dark:border-[#2E2A27] relative z-10 overflow-hidden"
     >
       <div className="text-center mb-10 sm:mb-16 px-4">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight uppercase mb-3">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight uppercase mb-3">
           Citizen's <span className="text-[#9E2A2B]">Charter</span>
         </h2>
-        <p className="text-slate-600 text-xs sm:text-base max-w-2xl mx-auto font-medium">
+        <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-base max-w-2xl mx-auto font-medium">
           Simplifying the motorized tricycle franchise application process in Gasan. Follow this 5-step digital flow.
         </p>
       </div>
@@ -192,7 +192,7 @@ const LandingGuideCarousel = () => {
                   filter: styles.filter,
                 }}
                 transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-3xl bg-gradient-to-b from-[#801820] via-[#9E2A2B] to-[#70141b] text-white border border-[#D4AF37]/40 shadow-xl text-center cursor-pointer select-none shrink-0"
+                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-lg bg-[#9E2A2B] text-white border border-[#D4AF37] shadow-md text-center cursor-pointer select-none shrink-0"
                 onClick={() => {
                   pauseInteraction();
                   setCurrentIndex(index);
@@ -200,18 +200,18 @@ const LandingGuideCarousel = () => {
                 }}
               >
                 {/* Step Badge */}
-                <div className="absolute -top-5 w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8972E] text-[#1A0B0E] rounded-full flex items-center justify-center font-black text-lg sm:text-xl border-4 border-white shadow-md">
+                <div className="absolute -top-4 w-9 h-9 sm:w-10 sm:h-10 bg-[#D4AF37] text-[#1C1917] rounded-full flex items-center justify-center font-black text-base sm:text-lg border-2 border-white shadow-sm">
                   {step.id}
                 </div>
 
-                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 shadow-inner border border-white/10">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 rounded-lg flex items-center justify-center mb-4 sm:mb-5 shadow-inner border border-white/10">
                   {step.icon}
                 </div>
                 
                 <h3 className="font-bold text-white text-base sm:text-lg mb-2 uppercase tracking-wide leading-snug">
                   {step.title}
                 </h3>
-                <p className="text-white/80 text-xs sm:text-sm leading-relaxed font-normal">
+                <p className="text-white/90 text-xs sm:text-sm leading-relaxed font-normal">
                   {step.desc}
                 </p>
               </motion.div>
@@ -224,7 +224,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handlePrev}
           aria-label="Previous Slide"
-          className="absolute left-1 sm:left-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white hover:bg-[#9E2A2B] text-slate-800 hover:text-white transition-all duration-300 border border-slate-200 hover:border-[#9E2A2B] shadow-md cursor-pointer active:scale-90"
+          className="absolute left-1 sm:left-6 z-20 w-11 h-11 flex items-center justify-center rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#9E2A2B] text-[#1F1D1B] dark:text-[#F6F5F3] hover:text-white transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] shadow-xs cursor-pointer min-h-[44px] min-w-[44px]"
         >
           <ChevronLeft size={20} />
         </button>
@@ -232,7 +232,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handleNext}
           aria-label="Next Slide"
-          className="absolute right-1 sm:right-6 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white hover:bg-[#9E2A2B] text-slate-800 hover:text-white transition-all duration-300 border border-slate-200 hover:border-[#9E2A2B] shadow-md cursor-pointer active:scale-90"
+          className="absolute right-1 sm:right-6 z-20 w-11 h-11 flex items-center justify-center rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#9E2A2B] text-[#1F1D1B] dark:text-[#F6F5F3] hover:text-white transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] shadow-xs cursor-pointer min-h-[44px] min-w-[44px]"
         >
           <ChevronRight size={20} />
         </button>
@@ -252,8 +252,8 @@ const LandingGuideCarousel = () => {
             }}
             className={`transition-all duration-300 rounded-full cursor-pointer ${
               currentIndex === idx 
-                ? 'w-8 h-2.5 bg-[#9E2A2B] shadow-sm' 
-                : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
+                ? 'w-8 h-2.5 bg-[#9E2A2B] shadow-xs' 
+                : 'w-2.5 h-2.5 bg-[#E4E1DC] dark:bg-[#2E2A27] hover:bg-[#D4AF37]'
             }`}
           />
         ))}
@@ -261,7 +261,7 @@ const LandingGuideCarousel = () => {
 
       {/* Swipe Indicator on Mobile */}
       <div className="text-center mt-3 sm:hidden">
-        <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">
+        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold tracking-widest">
           ← Swipe to navigate →
         </span>
       </div>

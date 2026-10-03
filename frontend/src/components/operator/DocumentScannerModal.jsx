@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Camera, Upload, RotateCw, Check, X, RefreshCw, 
   Sparkles, FlipHorizontal, ArrowLeft,
@@ -273,8 +273,8 @@ const DocumentScannerModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full h-[94vh] max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-white">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-2 sm:p-4 bg-black/60 animate-in fade-in duration-200">
+      <div className="relative w-full h-[94vh] max-w-2xl bg-[#1C1917] border border-[#2E2A27] rounded-lg shadow-xl flex flex-col overflow-hidden text-white">
         
         {/* Hidden File Input for Gallery */}
         <input 
@@ -289,16 +289,16 @@ const DocumentScannerModal = ({
         <canvas ref={canvasRef} className="hidden" />
 
         {/* TOP BAR */}
-        <div className="px-4 sm:px-5 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="px-4 sm:px-5 py-3 bg-[#1C1917] border-b border-[#2E2A27] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] flex items-center justify-center text-[#D4AF37] font-bold text-xs shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] flex items-center justify-center text-[#D4AF37] font-bold text-xs shrink-0">
               <Camera size={16} />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-white truncate">
                 {mode === 'camera' ? `Scan ${documentTitle}` : `Enhance & Verify ${documentTitle}`}
               </h3>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+              <p className="text-[11px] text-[#A8A29E] truncate">
                 {mode === 'camera' ? 'Align paper within guidelines' : 'Review clarity before attaching'}
               </p>
             </div>
@@ -312,7 +312,7 @@ const DocumentScannerModal = ({
                   setMode('camera');
                   startCamera();
                 }}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 py-2 rounded-lg bg-[#2E2A27] hover:bg-[#3E3834] text-xs font-bold text-[#EAE7E1] flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
               >
                 <ArrowLeft size={14} /> Retake
               </button>
@@ -320,7 +320,7 @@ const DocumentScannerModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-[#2E2A27] hover:bg-[#3E3834] text-[#A8A29E] hover:text-white transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Close (Esc)"
             >
               <X size={18} />
@@ -345,18 +345,18 @@ const DocumentScannerModal = ({
 
             {/* If Camera Error / Unsupported: Fallback Card */}
             {cameraError && (
-              <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center space-y-3 z-30">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#14110F]/95 flex flex-col items-center justify-center p-6 text-center space-y-3 z-30">
+                <div className="w-12 h-12 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
                   <AlertCircle size={24} />
                 </div>
                 <h4 className="text-base font-bold text-white">Camera Unavailable</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm">
+                <p className="text-xs text-[#A8A29E] max-w-sm">
                   {cameraError} You can choose a photo directly from your device gallery.
                 </p>
                 <button
                   type="button"
                   onClick={() => galleryInputRef.current?.click()}
-                  className="px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#8E2028] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
+                  className="px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer min-h-[44px]"
                 >
                   <Upload size={15} /> Upload from Gallery / Files
                 </button>
@@ -368,7 +368,7 @@ const DocumentScannerModal = ({
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4 sm:p-6 z-20">
                 
                 {/* Floating Top 2 Concise Steps */}
-                <div className="mb-3 px-3.5 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold flex items-center gap-2 shadow-lg">
+                <div className="mb-3 px-3.5 py-1.5 rounded-lg bg-[#1C1917]/90 border border-[#2E2A27] text-white text-[11px] font-bold flex items-center gap-2 shadow-sm">
                   <span className="text-[#D4AF37]">Hakbang 1:</span>
                   <span>Kumuha ng malinaw na litrato</span>
                   <span className="text-white/40">•</span>
@@ -376,13 +376,13 @@ const DocumentScannerModal = ({
                 </div>
 
                 {/* Rectangular Document Frame */}
-                <div className="relative w-full max-w-[420px] aspect-[3/4] max-h-[64vh] rounded-2xl border-2 border-white/50 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] flex flex-col justify-between overflow-hidden">
+                <div className="relative w-full max-w-[420px] aspect-[3/4] max-h-[64vh] rounded-lg border-2 border-white/50 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] flex flex-col justify-between overflow-hidden">
                   
                   {/* Corner Target Brackets */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#D4AF37] rounded-tl-xl" />
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#D4AF37] rounded-tr-xl" />
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#D4AF37] rounded-bl-xl" />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#D4AF37] rounded-br-xl" />
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#D4AF37] rounded-tl-sm" />
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#D4AF37] rounded-tr-sm" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#D4AF37] rounded-bl-sm" />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#D4AF37] rounded-br-sm" />
 
                   {/* 3x3 Rule-of-Thirds Grid Lines */}
                   <div className="absolute inset-0 grid grid-cols-3 pointer-events-none opacity-25">
@@ -404,7 +404,7 @@ const DocumentScannerModal = ({
                 </div>
 
                 {/* Bottom Helpful Guideline */}
-                <p className="mt-3 text-[11px] text-white/70 font-medium bg-black/50 px-3 py-1 rounded-full backdrop-blur-xs">
+                <p className="mt-3 text-[11px] text-white/80 font-medium bg-black/60 px-3 py-1 rounded-md">
                   Avoid glare, shadows, and tilted angles
                 </p>
               </div>
@@ -417,7 +417,7 @@ const DocumentScannerModal = ({
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="w-12 h-12 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-95 text-white backdrop-blur-md flex flex-col items-center justify-center transition-all cursor-pointer border border-white/10"
+                className="w-12 h-12 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 text-white flex flex-col items-center justify-center transition-all cursor-pointer border border-white/20 min-h-[44px] min-w-[44px]"
                 title="Choose from Gallery"
               >
                 <Upload size={18} />
@@ -429,10 +429,10 @@ const DocumentScannerModal = ({
                 type="button"
                 onClick={handleShutterCapture}
                 disabled={!isCameraReady && !cameraError}
-                className="w-20 h-20 rounded-full bg-white p-1 shadow-2xl active:scale-90 transition-transform cursor-pointer flex items-center justify-center ring-4 ring-[#9E2A2B]/50 hover:ring-[#9E2A2B]"
+                className="w-20 h-20 rounded-full bg-white p-1 shadow-xl active:scale-90 transition-transform cursor-pointer flex items-center justify-center ring-4 ring-[#9E2A2B]/50 hover:ring-[#9E2A2B]"
                 title="Take Document Photo"
               >
-                <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#9E2A2B] to-[#99222B] border-3 border-white flex items-center justify-center text-white">
+                <div className="w-full h-full rounded-full bg-[#9E2A2B] border-2 border-white flex items-center justify-center text-white">
                   <Camera size={26} />
                 </div>
               </button>
@@ -441,7 +441,7 @@ const DocumentScannerModal = ({
               <button
                 type="button"
                 onClick={handleSwitchCamera}
-                className="w-12 h-12 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-95 text-white backdrop-blur-md flex flex-col items-center justify-center transition-all cursor-pointer border border-white/10"
+                className="w-12 h-12 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 text-white flex flex-col items-center justify-center transition-all cursor-pointer border border-white/20 min-h-[44px] min-w-[44px]"
                 title="Flip Camera (Front / Back)"
               >
                 <FlipHorizontal size={18} />
@@ -455,12 +455,12 @@ const DocumentScannerModal = ({
         {/* MODE 2: CAMSCANNER-STYLE ENHANCER & REVIEW CANVAS */}
         {/* ========================================================================= */}
         {mode === 'preview' && (
-          <div className="flex-1 flex flex-col min-h-0 bg-slate-950">
+          <div className="flex-1 flex flex-col min-h-0 bg-[#14110F]">
             
             {/* CANVAS PREVIEW AREA */}
-            <div className="flex-1 relative flex items-center justify-center p-3 sm:p-4 overflow-auto bg-slate-900/60 select-none">
+            <div className="flex-1 relative flex items-center justify-center p-3 sm:p-4 overflow-auto bg-[#1C1917]/80 select-none">
               {isProcessing && (
-                <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex items-center justify-center gap-2 text-xs font-bold text-[#D4AF37]">
+                <div className="absolute inset-0 z-30 bg-black/70 flex items-center justify-center gap-2 text-xs font-bold text-[#D4AF37]">
                   <RefreshCw size={16} className="animate-spin" />
                   <span>Enhancing document...</span>
                 </div>
@@ -470,23 +470,23 @@ const DocumentScannerModal = ({
                 <img 
                   src={capturedImage || originalImage} 
                   alt="Scanned Document Preview"
-                  className="max-h-[64vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/15 bg-white"
+                  className="max-h-[64vh] max-w-full object-contain rounded-lg shadow-xl border border-white/15 bg-white"
                 />
 
                 {/* Status Badge */}
-                <div className={`absolute top-3 left-3 font-black text-[10px] uppercase px-2.5 py-1 rounded-lg shadow-md tracking-wider flex items-center gap-1.5 ${
+                <div className={`absolute top-3 left-3 font-bold text-[10px] uppercase px-2.5 py-1 rounded-md shadow-sm tracking-wider flex items-center gap-1.5 ${
                   isEnhanced 
                     ? 'bg-[#9E2A2B] text-[#D4AF37] border border-[#D4AF37]/50' 
-                    : 'bg-slate-800 text-slate-200 border border-slate-700'
+                    : 'bg-[#2E2A27] text-[#EAE7E1] border border-[#3E3834]'
                 }`}>
-                  <Sparkles size={12} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-600 dark:text-slate-400'} />
+                  <Sparkles size={12} className={isEnhanced ? 'text-[#D4AF37]' : 'text-[#A8A29E]'} />
                   <span>{isEnhanced ? 'Magic Enhanced (CamScanner)' : 'Original Photo'}</span>
                 </div>
               </div>
             </div>
 
             {/* ENHANCEMENT CONTROLS TOOLBAR */}
-            <div className="px-4 py-3.5 bg-slate-900 border-t border-slate-800 space-y-2.5 shrink-0">
+            <div className="px-4 py-3 bg-[#1C1917] border-t border-[#2E2A27] space-y-2.5 shrink-0">
               
               {/* Single Enhance Button + Rotate Button */}
               <div className="flex items-center gap-2">
@@ -494,14 +494,14 @@ const DocumentScannerModal = ({
                 <button
                   type="button"
                   onClick={() => setIsEnhanced(prev => !prev)}
-                  className={`flex-1 py-3 px-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm border-2 active:scale-95 ${
+                  className={`flex-1 py-2.5 px-3.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs border active:scale-95 min-h-[44px] ${
                     isEnhanced
-                      ? 'bg-gradient-to-r from-[#9E2A2B] to-[#99222B] text-white border-[#D4AF37] shadow-[#9E2A2B]/30'
-                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                      ? 'bg-[#9E2A2B] text-white border-[#D4AF37]'
+                      : 'bg-[#2E2A27] text-[#EAE7E1] border-[#3E3834] hover:bg-[#3E3834]'
                   }`}
                   title={isEnhanced ? 'CamScanner Magic Color Active (Tap to view original)' : 'Tap to enhance document'}
                 >
-                  <Sparkles size={16} className={isEnhanced ? 'text-[#D4AF37]' : 'text-slate-600 dark:text-slate-400'} />
+                  <Sparkles size={16} className={isEnhanced ? 'text-[#D4AF37]' : 'text-[#A8A29E]'} />
                   <span>{isEnhanced ? 'Magic Enhance: ON' : 'Magic Enhance: OFF'}</span>
                 </button>
 
@@ -509,7 +509,7 @@ const DocumentScannerModal = ({
                 <button
                   type="button"
                   onClick={() => setRotation(prev => (prev + 90) % 360)}
-                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 border-2 border-slate-700 active:scale-95"
+                  className="px-4 py-2.5 bg-[#2E2A27] hover:bg-[#3E3834] text-[#EAE7E1] rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 border border-[#3E3834] active:scale-95 min-h-[44px]"
                   title="Rotate 90° Clockwise"
                 >
                   <RotateCw size={16} />
@@ -521,7 +521,7 @@ const DocumentScannerModal = ({
               <button
                 type="button"
                 onClick={handleApplyAndAttach}
-                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer border-2 border-emerald-500"
+                className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer border border-emerald-600 min-h-[44px]"
               >
                 <Check size={18} />
                 <span>Hakbang 2: I-confirm ang Upload</span>

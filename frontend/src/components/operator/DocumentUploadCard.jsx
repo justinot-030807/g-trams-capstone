@@ -52,10 +52,10 @@ const DocumentUploadCard = ({
 
   return (
     <>
-      <div className={`relative border rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
+      <div className={`relative border rounded-lg p-3.5 sm:p-4 transition-colors flex flex-col justify-between overflow-hidden group ${
         hasFile 
-          ? 'bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700 shadow-xs' 
-          : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
+          ? 'bg-white dark:bg-[#1C1917] border-emerald-600/40 dark:border-emerald-500/40 shadow-xs' 
+          : 'bg-white dark:bg-[#1C1917] border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40'
       }`}>
         
         {/* Hidden camera input for direct native camera photo capture */}
@@ -80,25 +80,25 @@ const DocumentUploadCard = ({
         {/* Card Header: Label & Status */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
-            <p className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate leading-snug">
-              {label} {required && <span className="text-red-500">*</span>}
+            <p className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate leading-snug">
+              {label} {required && <span className="text-[#B91C1C] dark:text-[#EF4444]">*</span>}
             </p>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
               {isCompressing ? (
-                <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                <span className="text-[#B45309] dark:text-[#FBBF24] font-medium flex items-center gap-1">
                   <Loader2 size={13} className="animate-spin" /> Optimizing photo...
                 </span>
               ) : isScanning ? (
-                <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold flex items-center gap-1 animate-pulse">
-                  <Sparkles size={13} className="animate-spin" /> AI scanning details...
+                <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold flex items-center gap-1">
+                  <Sparkles size={13} className="animate-spin" /> Scanning details...
                 </span>
               ) : scanSuccess ? (
-                <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                  <Sparkles size={13} /> Auto-filled by AI
+                <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
+                  <Sparkles size={13} /> Auto-filled from document
                 </span>
               ) : hasFile ? (
-                <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 size={13} /> Ready
+                <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
+                  <CheckCircle2 size={13} /> Attached & Ready
                 </span>
               ) : (
                 'Attach photo or PDF (Max 10MB)'
@@ -116,7 +116,7 @@ const DocumentUploadCard = ({
                 }
                 onFileRemove(id);
               }}
-              className="text-slate-500 dark:text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center -mr-1 -mt-1"
+              className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#B91C1C] p-2 rounded-lg hover:bg-[#B91C1C]/10 transition-colors shrink-0 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center -mr-1 -mt-1"
               title="Remove document"
             >
               <X size={18} />
@@ -126,21 +126,21 @@ const DocumentUploadCard = ({
 
         {/* Middle Body */}
         {!hasFile ? (
-          <div className="my-1.5 py-2.5 px-3 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/70 dark:bg-slate-800/40">
+          <div className="my-1.5 py-3 px-3 border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg flex flex-col items-center justify-center text-center bg-[#F6F5F3] dark:bg-[#14110F]">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full justify-center">
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all shadow-xs active:scale-95 cursor-pointer min-h-[48px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
               >
-                <Camera size={16} className="text-[#D4AF37]" />
+                <Camera size={16} />
                 <span>Take Photo</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs min-h-[48px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors active:scale-95 cursor-pointer shadow-xs min-h-[44px]"
               >
                 <Upload size={16} />
                 <span>Upload File</span>
@@ -148,23 +148,23 @@ const DocumentUploadCard = ({
             </div>
           </div>
         ) : (
-          <div className="my-1.5 relative rounded-2xl overflow-hidden border border-emerald-200 dark:border-emerald-800/80 bg-white dark:bg-slate-900 flex flex-col items-center justify-center min-h-[140px]">
+          <div className="my-1.5 relative rounded-lg overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center min-h-[140px]">
             {isPdf ? (
               <div className="p-4 text-center flex flex-col items-center justify-center w-full">
-                <FileCheck size={38} className="text-emerald-600 dark:text-emerald-400 mb-1.5" />
-                <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Naka-attach ang PDF</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-2.5">Handa nang i-review</span>
+                <FileCheck size={38} className="text-emerald-700 dark:text-emerald-400 mb-1.5" />
+                <span className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Naka-attach ang PDF</span>
+                <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium mb-2.5">Handa nang i-review</span>
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: true })}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer active:scale-95 min-h-[44px]"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs cursor-pointer active:scale-95 min-h-[44px]"
                 >
                   <ZoomIn size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>I-preview ang PDF</span>
                 </button>
               </div>
             ) : (
-              <div className="w-full h-32 relative overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+              <div className="w-full h-32 relative overflow-hidden flex items-center justify-center bg-[#F6F5F3] dark:bg-[#14110F]">
                 <img 
                   src={previewUrl} 
                   alt={label} 
@@ -173,9 +173,9 @@ const DocumentUploadCard = ({
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: false })}
-                  className="absolute inset-0 bg-black/40 sm:bg-black/30 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs font-bold cursor-pointer"
+                  className="absolute inset-0 bg-black/50 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs font-semibold cursor-pointer"
                 >
-                  <span className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                  <span className="bg-black/70 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
                     <ZoomIn size={15} />
                     <span>I-preview</span>
                   </span>
@@ -184,22 +184,22 @@ const DocumentUploadCard = ({
             )}
 
             {/* Retake & Preview Bar */}
-            <div className="w-full bg-emerald-50 dark:bg-emerald-950/70 py-2 px-3 flex items-center justify-between text-xs border-t border-emerald-200 dark:border-emerald-900/60">
-              <span className="flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-300 text-xs">
+            <div className="w-full bg-emerald-500/10 dark:bg-emerald-950/40 py-2 px-3 flex items-center justify-between text-xs border-t border-emerald-500/20">
+              <span className="flex items-center gap-1 font-semibold text-emerald-800 dark:text-emerald-300 text-xs">
                 <CheckCircle2 size={13} /> Attached
               </span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf })}
-                  className="text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
+                  className="text-emerald-700 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
                 >
                   <ZoomIn size={12} /> Tingnan
                 </button>
                 <button
                   type="button"
                   onClick={() => cameraInputRef.current?.click()}
-                  className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
+                  className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
                 >
                   <RotateCcw size={12} /> Palitan
                 </button>
@@ -209,7 +209,7 @@ const DocumentUploadCard = ({
         )}
 
         {sizeError && (
-          <p className="mt-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+          <p className="mt-1.5 text-xs font-semibold text-[#B91C1C] dark:text-[#EF4444]">
             File exceeds 10MB size limit. Please choose a smaller file.
           </p>
         )}

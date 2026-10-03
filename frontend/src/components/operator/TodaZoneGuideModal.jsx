@@ -145,25 +145,25 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm animate-in fade-in"
+        className="absolute inset-0 bg-black/60 animate-in fade-in duration-200"
         onClick={onClose}
       />
 
       {/* Modal Container */}
-      <div className="relative bg-white dark:bg-slate-900 w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+      <div className="relative bg-white dark:bg-[#1C1917] w-full max-w-3xl rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden z-10 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#9E2A2B] via-[#8C2028] to-[#7A1B22] p-5 sm:p-6 text-white relative shrink-0">
+        <div className="bg-[#9E2A2B] p-5 sm:p-6 text-white relative shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[#D4AF37]">
+              <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[#D4AF37]">
                 <Compass size={22} />
               </div>
               <div>
-                <h3 className="font-black text-base sm:text-lg tracking-wide uppercase">
+                <h3 className="font-bold text-base sm:text-lg tracking-wide uppercase">
                   TODA Routes &amp; Zone Guide
                 </h3>
-                <p className="text-xs text-white/80 font-medium">
+                <p className="text-xs text-white/80 font-normal">
                   Municipality of Gasan Transport Network &amp; Coverage
                 </p>
               </div>
@@ -171,7 +171,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
 
             <button 
               onClick={onClose}
-              className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+              className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X size={20} />
             </button>
@@ -185,12 +185,12 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by Barangay, TODA name, terminal, or zone..."
-              className="w-full bg-white/10 border border-white/20 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/50 outline-none focus:bg-white/20 focus:border-[#D4AF37] transition-all font-medium"
+              className="w-full bg-white/10 border border-white/20 rounded-lg pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/50 outline-none focus:bg-white/20 focus:border-[#D4AF37] transition-all font-medium"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-xs font-bold"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-xs font-bold cursor-pointer"
               >
                 Clear
               </button>
@@ -199,18 +199,18 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Quick Filter Barangay Tags */}
-        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
-          <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider pl-2 pr-1 shrink-0">
+        <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
+          <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider pl-2 pr-1 shrink-0">
             Quick Filter:
           </span>
           {QUICK_BARANGAYS.map((b) => (
             <button
               key={b}
               onClick={() => setSelectedBrgyTag(b)}
-              className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all ${
+              className={`px-3 py-1 rounded-md text-xs font-bold shrink-0 transition-colors cursor-pointer ${
                 selectedBrgyTag === b
                   ? 'bg-[#9E2A2B] text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600'
+                  : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27]'
               }`}
             >
               {b}
@@ -221,26 +221,26 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
         {/* TODA Directory Cards List */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-3.5 flex-1">
           {filteredList.length === 0 ? (
-            <div className="text-center py-12 text-slate-600 dark:text-slate-400">
+            <div className="text-center py-12 text-[#6B6761] dark:text-[#A8A29E]">
               <Info size={32} className="mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-bold text-slate-600 dark:text-slate-300">No matching TODA or route found</p>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Try searching with a different barangay name or clearing filters.</p>
+              <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">No matching TODA or route found</p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Try searching with a different barangay name or clearing filters.</p>
             </div>
           ) : (
             filteredList.map((toda) => (
               <div 
                 key={toda.id}
-                className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 hover:shadow-md transition-all relative overflow-hidden"
+                className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors relative overflow-hidden"
               >
                 <div className={`absolute top-0 left-0 w-1.5 h-full ${toda.color}`} />
 
                 <div className="pl-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-black text-sm text-slate-900 dark:text-white tracking-wide">
+                      <span className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] tracking-wide">
                         {toda.name}
                       </span>
-                      <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                      <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27]">
                         {toda.id}
                       </span>
                     </div>
@@ -250,28 +250,28 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mb-3 font-medium">
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-3 font-normal leading-relaxed">
                     {toda.description}
                   </p>
 
-                  <div className="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50 space-y-2 text-xs">
+                  <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3 border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2 text-xs">
                     <div className="flex items-start gap-2">
                       <MapPin size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">Terminal Base</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">{toda.terminal}</span>
+                        <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block">Terminal Base</span>
+                        <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{toda.terminal}</span>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-1">
+                      <span className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider block mb-1">
                         Covered Barangays &amp; Route Stops:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {toda.barangays.map((brgy) => (
                           <span 
                             key={brgy}
-                            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md text-xs font-semibold"
+                            className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] px-2 py-0.5 rounded-md text-xs font-medium"
                           >
                             {brgy}
                           </span>
@@ -287,13 +287,13 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs shrink-0">
-          <p className="text-xs text-slate-500 font-medium">
+        <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] border-t border-[#E4E1DC] dark:border-[#2E2A27] flex justify-between items-center text-xs shrink-0">
+          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
             Official Gasan TODA Route Network
           </p>
           <button
             onClick={onClose}
-            className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 px-4 py-1.5 rounded-xl font-bold text-xs transition-colors"
+            className="bg-white dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2 min-h-[44px] rounded-lg font-bold text-xs transition-colors cursor-pointer"
           >
             Close Guide
           </button>

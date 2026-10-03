@@ -83,7 +83,7 @@ const PublicStats = () => {
   };
 
   return (
-    <div className="w-full relative z-10 py-16 sm:py-24 border-t border-slate-200 bg-slate-50 overflow-hidden select-none">
+    <div className="w-full relative z-10 py-16 sm:py-24 border-t border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] overflow-hidden select-none">
       <motion.div 
         initial="hidden"
         whileInView="visible"
@@ -92,52 +92,52 @@ const PublicStats = () => {
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
       >
         <motion.div variants={fadeIn} className="max-w-7xl mx-auto flex flex-col items-center mb-12 sm:mb-16">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 text-center tracking-tight uppercase mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] text-center tracking-tight uppercase mb-4">
             Public <span className="text-[#9E2A2B]">Stats</span>
           </h2>
-          <p className="text-slate-600 text-sm sm:text-base font-medium max-w-2xl mx-auto text-center">
+          <p className="text-[#6B6761] dark:text-[#A8A29E] text-sm sm:text-base font-medium max-w-2xl mx-auto text-center">
             A unified ecosystem for a more organized, safe, and efficient transportation system in Gasan.
           </p>
         </motion.div>
 
         <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
           {/* Stat 1 */}
-          <motion.div variants={fadeIn} className="relative group bg-white border border-slate-200/90 rounded-3xl p-8 text-center transition-all duration-300 hover:-translate-y-2 shadow-xs hover:shadow-md hover:border-[#D4AF37]">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#801820] to-[#9E2A2B] rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
-              <Users className="text-white w-8 h-8" />
+          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-xs">
+            <div className="w-14 h-14 mx-auto bg-[#9E2A2B] rounded-lg flex items-center justify-center mb-6 shadow-xs">
+              <Users className="text-white w-7 h-7" />
             </div>
-            <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-2">
+            <div className="text-4xl sm:text-5xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tighter mb-2">
               <CountUp end={stats.operators} />
               <span className="text-[#9E2A2B]">+</span>
             </div>
-            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest">
+            <h3 className="text-sm font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-widest">
               Registered Operators
             </h3>
           </motion.div>
 
           {/* Stat 2 */}
-          <motion.div variants={fadeIn} className="relative group bg-white border border-slate-200/90 rounded-3xl p-8 text-center transition-all duration-300 hover:-translate-y-2 shadow-xs hover:shadow-md hover:border-[#D4AF37]">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#D4AF37] to-[#B8972E] rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
-              <Building2 className="text-[#1A0B0E] w-8 h-8" />
+          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-xs">
+            <div className="w-14 h-14 mx-auto bg-[#D4AF37] rounded-lg flex items-center justify-center mb-6 shadow-xs">
+              <Building2 className="text-[#1C1917] w-7 h-7" />
             </div>
-            <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-2">
+            <div className="text-4xl sm:text-5xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tighter mb-2">
               <CountUp end={stats.todas} />
             </div>
-            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest">
+            <h3 className="text-sm font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-widest">
               TODA Associations
             </h3>
           </motion.div>
 
           {/* Stat 3 */}
-          <motion.div variants={fadeIn} className="relative group bg-white border border-slate-200/90 rounded-3xl p-8 text-center transition-all duration-300 hover:-translate-y-2 shadow-xs hover:shadow-md hover:border-[#D4AF37]">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#801820] to-[#9E2A2B] rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform duration-300">
-              <FileCheck2 className="text-white w-8 h-8" />
+          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-xs">
+            <div className="w-14 h-14 mx-auto bg-[#9E2A2B] rounded-lg flex items-center justify-center mb-6 shadow-xs">
+              <FileCheck2 className="text-white w-7 h-7" />
             </div>
-            <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-2">
+            <div className="text-4xl sm:text-5xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tighter mb-2">
               <CountUp end={stats.franchises} />
               <span className="text-[#9E2A2B]">+</span>
             </div>
-            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest">
+            <h3 className="text-sm font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-widest">
               Active Franchises
             </h3>
           </motion.div>

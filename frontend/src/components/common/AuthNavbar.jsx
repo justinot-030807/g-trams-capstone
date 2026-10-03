@@ -96,8 +96,8 @@ const AuthNavbar = () => {
 
   return (
     <>
-      {/* FULL-WIDTH TOP NAVBAR (Velvet Maroon Header with Glass Backdrop) */}
-      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-[#6E1219]/95 backdrop-blur-md text-white shadow-md border-b border-white/15 flex items-center justify-between select-none shrink-0 transition-colors">
+      {/* FULL-WIDTH TOP NAVBAR (Velvet Maroon Header) */}
+      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-[#9E2A2B] border-b border-[#7A1B22] text-white shadow-xs flex items-center justify-between select-none shrink-0 transition-colors">
         
         {/* FAR LEFT: Interactive Flip Medallion (G-TRAMS <-> Sangguniang Bayan Seal) */}
         <div className="flex items-center gap-3 sm:gap-3.5">
@@ -110,11 +110,11 @@ const AuthNavbar = () => {
             className="flex flex-col group cursor-pointer"
             title="Go to G-TRAMS Home"
           >
-            <span className="text-base sm:text-lg font-black tracking-tight text-white leading-none group-hover:text-amber-200 transition-colors">
+            <span className="text-base sm:text-lg font-bold tracking-tight text-white leading-none group-hover:text-[#D4AF37] transition-colors">
               G-TRAMS
             </span>
-            <span className="text-[9px] sm:text-[10px] text-white/80 font-bold tracking-wider uppercase mt-0.5">
-              Municipality of Gasan
+            <span className="text-[9px] sm:text-[10px] text-white/80 font-semibold tracking-wider uppercase mt-0.5">
+              Pamahalaang Bayan ng Gasan
             </span>
           </Link>
         </div>
@@ -125,7 +125,7 @@ const AuthNavbar = () => {
           {/* Back to Home Icon Button */}
           <Link
             to="/"
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5"
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer flex items-center gap-1.5 min-h-[44px]"
             title="Back to Home"
           >
             <Home size={17} />
@@ -137,9 +137,9 @@ const AuthNavbar = () => {
             <Link
               to="/login"
               aria-current={currentPath === '/login' ? 'page' : undefined}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#801820] bg-white hover:bg-amber-50 shadow-sm hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer border border-white/40"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#9E2A2B] bg-white hover:bg-[#F6F5F3] shadow-xs transition-all cursor-pointer border border-white/40 min-h-[44px]"
             >
-              <LogIn size={13} className="text-[#801820]" />
+              <LogIn size={13} className="text-[#9E2A2B]" />
               <span>Log In</span>
             </Link>
           )}
@@ -148,9 +148,9 @@ const AuthNavbar = () => {
             <Link
               to="/register"
               aria-current={currentPath === '/register' ? 'page' : undefined}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-[#1A0B0E] bg-[#D4AF37] hover:bg-[#E5C158] shadow-sm hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#14110F] bg-[#D4AF37] hover:bg-[#c29e2f] shadow-xs transition-all cursor-pointer min-h-[44px]"
             >
-              <UserPlus size={13} className="text-[#1A0B0E]" />
+              <UserPlus size={13} className="text-[#14110F]" />
               <span>Register</span>
             </Link>
           )}
@@ -163,7 +163,7 @@ const AuthNavbar = () => {
             aria-expanded={isMenuOpen}
             aria-haspopup="dialog"
             aria-label="Open Navigation Menu"
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="Menu & Guidelines"
           >
             <Menu size={19} />
@@ -180,7 +180,7 @@ const AuthNavbar = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleCloseMenu}
-            className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-md select-none"
+            className="fixed inset-0 z-50 flex justify-end bg-black/60 select-none"
             role="presentation"
           >
             <motion.div 
@@ -193,12 +193,12 @@ const AuthNavbar = () => {
               role="dialog"
               aria-modal="true"
               aria-label="Navigation Menu"
-              className="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#180407] to-[#0D0103] p-5 sm:p-6 flex flex-col justify-between shadow-2xl h-full overflow-y-auto"
+              className="relative w-full max-w-sm sm:max-w-md bg-[#1C1917] border-l border-[#2E2A27] p-5 sm:p-6 flex flex-col justify-between shadow-xl h-full overflow-y-auto text-white"
             >
               
               {/* Drawer Header */}
               <div>
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                <div className="flex items-center justify-between pb-4 border-b border-[#2E2A27]">
                   <div className="flex items-center gap-2.5">
                     <InteractiveLogo size="w-9 h-9" />
                     <Link 
@@ -206,15 +206,15 @@ const AuthNavbar = () => {
                       onClick={handleCloseMenu}
                       className="cursor-pointer"
                     >
-                      <h3 className="font-black text-sm text-white tracking-wide">G-TRAMS PORTAL</h3>
-                      <p className="text-xs text-[#D4AF37] font-semibold">Municipality of Gasan</p>
+                      <h3 className="font-bold text-sm text-white tracking-wide">G-TRAMS PORTAL</h3>
+                      <p className="text-xs text-[#D4AF37] font-semibold">Pamahalaang Bayan ng Gasan</p>
                     </Link>
                   </div>
                   <button
                     type="button"
                     onClick={handleCloseMenu}
                     aria-label="Close navigation menu"
-                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-[#A8A29E] hover:text-white transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                   >
                     <X size={18} />
                   </button>
@@ -222,19 +222,19 @@ const AuthNavbar = () => {
 
                 {/* Navigation Links */}
                 <div className="mt-5 space-y-2">
-                  <p className="text-xs font-bold text-amber-200/90 uppercase tracking-widest px-1">Navigation</p>
+                  <p className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider px-1">Navigation</p>
                   
                   <Link
                     to="/"
                     onClick={handleCloseMenu}
-                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer min-h-[44px] ${
                       currentPath === '/' 
-                        ? 'bg-gradient-to-r from-[#801820] to-[#70141B] text-white font-bold shadow-md' 
-                        : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
+                        ? 'bg-[#9E2A2B] text-white font-bold shadow-xs' 
+                        : 'bg-[#14110F] hover:bg-[#2E2A27] text-[#EAE7E1] border border-[#2E2A27]'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Home size={16} className={currentPath === '/' ? 'text-[#D4AF37]' : 'text-white/50'} />
+                      <Home size={16} className={currentPath === '/' ? 'text-[#D4AF37]' : 'text-[#A8A29E]'} />
                       <span className="text-xs font-semibold">Home</span>
                     </div>
                     <ChevronRight size={14} className="text-white/40" />
@@ -244,10 +244,10 @@ const AuthNavbar = () => {
                     to="/login"
                     onClick={handleCloseMenu}
                     aria-current={currentPath === '/login' ? 'page' : undefined}
-                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer ${
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer min-h-[44px] ${
                       currentPath === '/login' 
-                        ? 'bg-white/15 text-white font-bold border border-white/20' 
-                        : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white'
+                        ? 'bg-[#9E2A2B] text-white font-bold shadow-xs' 
+                        : 'bg-[#14110F] hover:bg-[#2E2A27] text-[#EAE7E1] border border-[#2E2A27]'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">

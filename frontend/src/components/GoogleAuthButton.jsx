@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2, ShieldCheck, X } from 'lucide-react';
 import { unwrapGoogleProfile } from '../utils/googleAuthUtils';
 
@@ -243,10 +243,10 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
         type="button"
         onClick={handleButtonClick}
         disabled={isLoading}
-        className={`w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98] disabled:opacity-50 ${className}`}
+        className={`w-full flex items-center justify-center gap-3 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-bold shadow-xs transition-colors active:scale-[0.98] disabled:opacity-50 min-h-[44px] cursor-pointer ${className}`}
       >
         {isLoading ? (
-          <Loader2 size={18} className="animate-spin text-slate-500" />
+          <Loader2 size={18} className="animate-spin text-[#6B6761]" />
         ) : (
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -262,49 +262,49 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
       {showConfigModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div 
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm animate-in fade-in"
+            className="absolute inset-0 bg-black/60 animate-in fade-in"
             onClick={() => setShowConfigModal(false)}
           />
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-md p-6 overflow-hidden z-10 animate-in zoom-in-95">
+          <div className="relative bg-white dark:bg-[#1C1917] rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-md p-6 overflow-hidden z-10 animate-in zoom-in-95">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
                   <ShieldCheck size={22} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900 tracking-wide">
+                  <h3 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-wide">
                     Google OAuth Client ID Required
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
                     To show the official Google Account Chooser
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowConfigModal(false)}
-                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="text-xs text-slate-600 space-y-3 leading-relaxed mb-5">
+            <div className="text-xs text-[#6B6761] dark:text-[#A8A29E] space-y-3 leading-relaxed mb-5">
               <p>
-                To display the official Google account chooser (like in Figma) on your live site, Google requires a registered <strong>Client ID</strong>.
+                To display the official Google account chooser on your live site, Google requires a registered <strong>Client ID</strong>.
               </p>
               
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5 font-mono text-xs">
-                <div className="text-slate-500 font-sans font-bold text-xs uppercase">Add Environment Variable in Render or Vercel:</div>
-                <div className="text-[#9E2A2B] font-bold select-all bg-white px-2 py-1 rounded border border-slate-200">
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 space-y-1.5 font-mono text-xs">
+                <div className="text-[#6B6761] dark:text-[#A8A29E] font-sans font-bold text-xs uppercase">Add Environment Variable in Render or Vercel:</div>
+                <div className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold select-all bg-white dark:bg-[#1C1917] px-2 py-1 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                   GOOGLE_CLIENT_ID
                 </div>
               </div>
 
               <div className="space-y-1 text-xs">
-                <p className="font-bold text-slate-700">Where to add it:</p>
-                <ul className="list-disc list-inside space-y-1 pl-1 text-slate-500">
-                  <li><strong>Render (Backend):</strong> Add <code className="text-slate-700 font-bold">GOOGLE_CLIENT_ID</code> in your Render Service Environment Variables.</li>
-                  <li><strong>Vercel (Frontend):</strong> Or add <code className="text-slate-700 font-bold">VITE_GOOGLE_CLIENT_ID</code> in your Vercel Project Settings.</li>
+                <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">Where to add it:</p>
+                <ul className="list-disc list-inside space-y-1 pl-1 text-[#6B6761] dark:text-[#A8A29E]">
+                  <li><strong>Render (Backend):</strong> Add <code className="text-[#1F1D1B] dark:text-[#F6F5F3] font-bold">GOOGLE_CLIENT_ID</code> in your Render Service Environment Variables.</li>
+                  <li><strong>Vercel (Frontend):</strong> Or add <code className="text-[#1F1D1B] dark:text-[#F6F5F3] font-bold">VITE_GOOGLE_CLIENT_ID</code> in your Vercel Project Settings.</li>
                 </ul>
               </div>
             </div>
@@ -313,7 +313,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               <button
                 type="button"
                 onClick={() => setShowConfigModal(false)}
-                className="bg-[#9E2A2B] hover:bg-[#8E2028] text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-md"
+                className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-xs min-h-[44px] cursor-pointer"
               >
                 Understood
               </button>

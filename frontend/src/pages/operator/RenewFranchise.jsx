@@ -284,8 +284,8 @@ const RenewFranchise = () => {
       {/* Toast Notification */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.6)] backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm">
-            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-lg rounded-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
               toast.type === 'error'
                 ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
                 : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
@@ -293,7 +293,7 @@ const RenewFranchise = () => {
               {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug">
+              <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-snug">
                 {toast.message}
               </p>
             </div>
@@ -302,18 +302,17 @@ const RenewFranchise = () => {
       )}
 
       {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
-      <div className="w-full min-h-screen bg-slate-100/60 dark:bg-[#080b11] flex flex-col transition-colors">
+      <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
         {/* Top Hero Banner */}
-        <div className="w-full bg-gradient-to-br from-[#541116] via-[#9E2A2B] to-[#3f0b0f] dark:from-[#0a0d16] dark:via-[#190c12] dark:to-[#07090f] text-white pt-4 pb-7 px-4 sm:px-6 relative overflow-hidden shadow-md">
-          {/* Official Gasan Seal Watermark in Full Color */}
+        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
+          {/* Official Gasan Seal Watermark */}
           <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
             <img 
               src="/gasan-logo.png" 
               alt="Seal of Gasan" 
-              className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-25 dark:opacity-30 drop-shadow-md" 
+              className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-20 drop-shadow-md" 
             />
           </div>
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 w-96 h-28 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
 
           <div className="max-w-2xl mx-auto relative z-10">
             {/* Top Navigation Row */}
@@ -321,7 +320,7 @@ const RenewFranchise = () => {
               <button
                 type="button"
                 onClick={handleBack}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md text-xs font-bold transition-all border border-white/15 shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
                 title="Back"
               >
                 <ArrowLeft size={16} />
@@ -331,9 +330,12 @@ const RenewFranchise = () => {
 
             {/* Form Title in Banner */}
             <div className="text-center pt-1 pb-3 flex flex-col items-center">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase drop-shadow-sm">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white uppercase">
                 Franchise Renewal Application
               </h1>
+              <p className="text-xs sm:text-sm text-white/90 font-medium mt-0.5">
+                Bayan ng Gasan • Sangguniang Bayan Franchising Office
+              </p>
             </div>
           </div>
         </div>
@@ -344,27 +346,27 @@ const RenewFranchise = () => {
           {/* Loading Skeleton */}
           {loadingFranchise && (
             <div className="p-6 sm:p-8 space-y-4">
-              <div className="h-28 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse" />
-              <div className="h-44 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse" />
+              <div className="h-28 bg-[#E4E1DC]/60 dark:bg-[#2E2A27] rounded-lg animate-pulse" />
+              <div className="h-44 bg-[#E4E1DC]/60 dark:bg-[#2E2A27] rounded-lg animate-pulse" />
             </div>
           )}
 
           {/* If Franchise Not Found */}
           {!loadingFranchise && !franchise && (
-            <div className="p-8 sm:p-12 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
-                <AlertCircle size={28} />
+            <div className="p-8 sm:p-12 text-center bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+              <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center mx-auto mb-3">
+                <AlertCircle size={24} />
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+              <h3 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                 Franchise Record Not Found
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 max-w-sm mx-auto font-medium">
+              <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-1 max-w-sm mx-auto font-medium">
                 This franchise record could not be located. Please return to your franchises list.
               </p>
               <button
                 type="button"
                 onClick={handleBack}
-                className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#9E2A2B] text-white font-bold text-xs sm:text-sm shadow-sm hover:bg-[#7A1B22] cursor-pointer active:scale-95"
+                className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#9E2A2B] text-white font-bold text-sm shadow-xs hover:bg-[#7A1B22] cursor-pointer active:scale-95 min-h-[44px]"
               >
                 <ArrowLeft size={15} />
                 <span>Back</span>
@@ -372,25 +374,25 @@ const RenewFranchise = () => {
             </div>
           )}
 
-          {/* Transport Boarding Pass Style Summary */}
+          {/* Transport Summary Pass Card */}
           {!loadingFranchise && franchise && (
-            <div className="p-4 sm:p-6 bg-slate-50/70 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800">
-              <div className="flex items-center justify-between gap-2 mb-2.5">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <div className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider flex items-center gap-1.5">
                   <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   Official Tricycle Details (Transport Pass)
                 </span>
-                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                   {franchise.status || 'Active'}
                 </span>
               </div>
 
               {/* The Pass Card */}
-              <div className="relative bg-white dark:bg-slate-800/95 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-xs overflow-hidden">
+              <div className="relative bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
                 {/* Top Pass Header */}
-                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-white px-4 sm:px-5 py-3 flex items-center justify-between flex-wrap gap-2">
+                <div className="bg-[#1C1917] dark:bg-[#14110F] text-white px-4 sm:px-5 py-3 flex items-center justify-between flex-wrap gap-2 border-b border-[#2E2A27]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-[#D4AF37] flex items-center justify-center text-slate-950 font-bold text-xs shadow-2xs">
+                    <div className="w-7 h-7 rounded-md bg-[#D4AF37] flex items-center justify-center text-[#14110F] font-bold text-xs shadow-xs">
                       GT
                     </div>
                     <div>
@@ -398,7 +400,7 @@ const RenewFranchise = () => {
                       <p className="text-xs font-semibold text-white/90">Tricycle Franchise Renewal Pass</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-lg text-xs font-mono font-medium text-white/90">
+                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-md text-xs font-mono font-medium text-white/90 border border-white/10">
                     <Hash size={12} className="text-[#D4AF37]" />
                     <span>{franchise.mtopNo ? `MTOP #${franchise.mtopNo}` : `ID: ${franchise._id ? franchise._id.slice(-6).toUpperCase() : 'N/A'}`}</span>
                   </div>
@@ -408,65 +410,58 @@ const RenewFranchise = () => {
                 <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-center">
                   {/* Plate Number & Model */}
                   <div className="sm:col-span-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block mb-1">
                       Plate Number
                     </span>
-                    <div className="inline-flex items-center gap-2.5 bg-slate-100 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-xl border border-slate-300/80 dark:border-slate-700 shadow-inner">
-                      <span className="font-mono text-xl sm:text-2xl font-bold tracking-wider text-slate-900 dark:text-white">
+                    <div className="inline-flex items-center gap-2.5 bg-white dark:bg-[#1C1917] px-3.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+                      <span className="font-mono text-xl sm:text-2xl font-bold tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
                         {franchise.plateNo}
                       </span>
                       <span className="text-xs font-bold uppercase px-2 py-0.5 rounded-md bg-[#9E2A2B] text-white">
                         GASAN
                       </span>
                     </div>
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mt-1.5 flex items-center gap-1.5">
+                    <p className="text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] mt-1.5 flex items-center gap-1.5">
                       <span className="font-semibold">{franchise.make || 'Tricycle'}</span>
-                      <span className="text-slate-300 dark:text-slate-600">&bull;</span>
-                      <span className="text-slate-500 dark:text-slate-600 dark:text-slate-400">Model Year {franchise.made || 'N/A'}</span>
+                      <span className="text-[#6B6761] dark:text-[#A8A29E]">&bull;</span>
+                      <span className="text-[#6B6761] dark:text-[#A8A29E]">Model Year {franchise.made || 'N/A'}</span>
                     </p>
                   </div>
 
                   {/* Route & Toda Info Card */}
-                  <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60">
+                  <div className="space-y-1.5 bg-white dark:bg-[#1C1917] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                     <div>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">TODA Association</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block">TODA Association</span>
                       <span className="text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] truncate block mt-0.5">
                         {franchise.todaName || 'NON-TODA'}
                       </span>
                     </div>
-                    <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">Route / Zone</span>
-                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                    <div className="pt-1.5 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block">Route / Zone</span>
+                      <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] truncate block mt-0.5">
                         Zone {franchise.zone || 'N/A'} (Gasan)
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Perforated Divider with Circular Notches */}
-                <div className="relative flex items-center justify-between px-2">
-                  <div className="w-4 h-4 rounded-full bg-slate-50 dark:bg-[#0b0f19] -ml-4 border-r border-slate-200/80 dark:border-slate-700"></div>
-                  <div className="w-full border-t border-dashed border-slate-200 dark:border-slate-700 mx-1"></div>
-                  <div className="w-4 h-4 rounded-full bg-slate-50 dark:bg-[#0b0f19] -mr-4 border-l border-slate-200/80 dark:border-slate-700"></div>
-                </div>
-
                 {/* Pass Footer / Stub Details */}
-                <div className="px-4 sm:px-5 py-2.5 bg-slate-50/70 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                <div className="px-4 sm:px-5 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-wrap items-center justify-between gap-2.5 text-xs">
                   <div className="flex items-center gap-3.5 flex-wrap">
                     {franchise.motorNo && (
-                      <span className="text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs">
-                        <strong className="text-slate-700 dark:text-slate-300 font-semibold">Motor:</strong> {franchise.motorNo}
+                      <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium text-xs">
+                        <strong className="text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold">Motor:</strong> {franchise.motorNo}
                       </span>
                     )}
                     {franchise.chassisNo && (
-                      <span className="text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium text-xs sm:text-xs">
-                        <strong className="text-slate-700 dark:text-slate-300 font-semibold">Chassis:</strong> {franchise.chassisNo}
+                      <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium text-xs">
+                        <strong className="text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold">Chassis:</strong> {franchise.chassisNo}
                       </span>
                     )}
                   </div>
-                  <span className="text-xs sm:text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
+                  <span className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
                     <ShieldCheck size={13} />
-                    Official Office of the Vice Mayor Extension Registry
+                    Official Franchising & MTOP Extension Registry
                   </span>
                 </div>
               </div>
@@ -475,19 +470,19 @@ const RenewFranchise = () => {
 
           {/* Renewal Form */}
           {!loadingFranchise && franchise && (
-            <form onSubmit={handleSubmit} className="p-4 sm:p-7 space-y-5 sm:space-y-6">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-5 sm:space-y-6 shadow-xs">
               
               {/* Step 1: Updated Cedula Information */}
               <div className="space-y-3.5">
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-sm flex items-center justify-center shrink-0">
                     1
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Step 1: Latest Community Tax Certificate (CTC)
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
                       Enter details of your current Community Tax Certificate issued for this year.
                     </p>
                   </div>
@@ -495,7 +490,7 @@ const RenewFranchise = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-4">
                   <div>
-                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                       CTC / Cedula Serial No.
                     </label>
                     <input 
@@ -505,10 +500,10 @@ const RenewFranchise = () => {
                       value={formData.ctcNo}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-base font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs placeholder:text-slate-600 dark:text-slate-400 min-h-[50px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] min-h-[48px]" 
                       placeholder="e.g. 08123456"
                     />
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">8–16 characters (letters &amp; numbers)</p>
+                    <p className="text-xs font-medium text-[#6B6761] dark:text-[#A8A29E] mt-1">8–16 characters (letters &amp; numbers)</p>
                   </div>
 
                   <div>
@@ -530,7 +525,7 @@ const RenewFranchise = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                       Place Issued
                     </label>
                     <input 
@@ -539,7 +534,7 @@ const RenewFranchise = () => {
                       value={formData.placeIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-base font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[50px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[48px]" 
                       placeholder="Gasan, Marinduque"
                     />
                   </div>
@@ -562,15 +557,15 @@ const RenewFranchise = () => {
 
               {/* Step 2: Vehicle Document (Mobile-first Camera Upload) */}
               <div className="space-y-3.5 pt-2">
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-sm flex items-center justify-center shrink-0">
                     2
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Step 2: Latest Tricycle OR/CR (LTO)
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
                       Take a photo or upload your latest Official Receipt & Certificate of Registration from LTO.
                     </p>
                   </div>
@@ -578,7 +573,7 @@ const RenewFranchise = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl">
                   <div>
-                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                       OR / CR Number
                     </label>
                     <input 
@@ -586,7 +581,7 @@ const RenewFranchise = () => {
                       name="orCrNo" 
                       value={formData.orCrNo}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-base font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[50px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[48px]" 
                       placeholder="e.g. OR-12345678 / CR-87654321"
                     />
                   </div>
@@ -604,7 +599,7 @@ const RenewFranchise = () => {
                 </div>
 
                 {Boolean(formData.orCrExpiryDate && formData.orCrExpiryDate < new Date().toISOString().split('T')[0]) && (
-                  <div className="max-w-xl p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
+                  <div className="max-w-xl p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-lg flex items-start gap-2.5 text-xs sm:text-sm font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
                     <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
                     <p className="leading-snug">
                       {language === 'fil'
@@ -630,15 +625,15 @@ const RenewFranchise = () => {
 
               {/* Step 3: Driver's License Information */}
               <div className="space-y-3.5 pt-2">
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                  <div className="w-8 h-8 rounded-xl bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-slate-950 font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-sm flex items-center justify-center shrink-0">
                     3
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Step 3: Driver's License Information
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
                       Enter the current Driver's License number and validity details.
                     </p>
                   </div>
@@ -646,7 +641,7 @@ const RenewFranchise = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl">
                   <div>
-                    <label className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                       Driver's License No.
                     </label>
                     <input 
@@ -654,7 +649,7 @@ const RenewFranchise = () => {
                       name="driverLicenseNo" 
                       value={formData.driverLicenseNo}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-base font-semibold text-slate-900 dark:text-white outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:ring-offset-0 transition-all shadow-xs min-h-[50px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[48px]" 
                       placeholder="e.g. D01-23-456789"
                     />
                   </div>
@@ -672,7 +667,7 @@ const RenewFranchise = () => {
                 </div>
 
                 {Boolean(formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < new Date().toISOString().split('T')[0]) && (
-                  <div className="max-w-xl p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
+                  <div className="max-w-xl p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-lg flex items-start gap-2.5 text-xs sm:text-sm font-bold text-red-700 dark:text-red-300 animate-in fade-in duration-200">
                     <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
                     <p className="leading-snug">
                       {language === 'fil'
@@ -684,24 +679,24 @@ const RenewFranchise = () => {
               </div>
 
               {/* Claim Stub Notice */}
-              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-900/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex items-start gap-3">
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg p-4 sm:p-5 flex items-start gap-3">
                 <ShieldCheck size={22} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm sm:text-base font-bold text-amber-950 dark:text-amber-200">
                     Claim Stub & Settlement Notice
                   </h4>
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                    Online renewal submission is free. After Office of the Vice Mayor Extension verification, download your official Claim Stub Voucher indicating your franchise details and fee breakdown for final settlement and sticker collection at the Municipal Treasury / Office of the Vice Mayor Extension Office.
+                  <p className="text-xs sm:text-sm text-[#6B6761] dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
+                    Online renewal submission is free. After Municipal Franchising Office verification, download your official Claim Stub Voucher indicating your franchise details and fee breakdown for final settlement and sticker collection at the Municipal Treasury / Office of the Sangguniang Bayan.
                   </p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 gap-3">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
                 <button 
                   type="button" 
                   onClick={handleBack} 
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm sm:text-base text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer min-h-[50px] flex items-center justify-center active:scale-95 shadow-xs"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] transition-all cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95 shadow-xs"
                 >
                   <span>Back</span>
                 </button>
@@ -709,8 +704,8 @@ const RenewFranchise = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3 rounded-xl font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[50px] border-2 border-[#541116] dark:border-[#b89428] ${
-                    isSubmitting ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed border-transparent' : 'bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-[#9E2A2B]/20'
+                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] ${
+                    isSubmitting ? 'bg-[#6B7280] cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
                   }`}
                 >
                   {isSubmitting ? (

@@ -39,8 +39,8 @@ const Login = () => {
   useEffect(() => {
     document.documentElement.classList.add('auth-view');
     document.body.classList.add('auth-view');
-    document.documentElement.style.backgroundColor = '#f8fafc';
-    document.body.style.backgroundColor = '#f8fafc';
+    document.documentElement.style.backgroundColor = '#F6F5F3';
+    document.body.style.backgroundColor = '#F6F5F3';
     return () => {
       document.documentElement.classList.remove('auth-view');
       document.body.classList.remove('auth-view');
@@ -172,10 +172,10 @@ const Login = () => {
     }
   };
 
-  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium";
 
   return (
-    <div className="relative w-full bg-white flex flex-col overflow-x-hidden min-h-screen">
+    <div className="relative w-full bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col overflow-x-hidden min-h-screen">
       
       {/* Zero-Lag Lightweight Watermark */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -189,7 +189,7 @@ const Login = () => {
         <AuthNavbar />
 
         {/* MAIN FULL-WIDTH SPLIT LAYOUT */}
-        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-white">
+        <main className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 min-h-0 bg-[#F6F5F3] dark:bg-[#14110F]">
           
           {/* LEFT COLUMN: HERO PHOTO BANNER WITH LIGHTENED MAROON OVERLAY */}
           <div className="md:col-span-5 lg:col-span-5 relative overflow-hidden flex flex-col justify-end p-4 sm:p-6 md:p-10 lg:p-12 h-24 sm:h-28 md:h-auto md:min-h-full md:self-stretch bg-[#3D080D]">
@@ -212,27 +212,27 @@ const Login = () => {
           </div>
 
           {/* RIGHT COLUMN: CLEAN FORM PANEL */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white min-h-full">
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white dark:bg-[#1C1917] min-h-full">
             <div className="w-full max-w-md">
               <div className="mb-4 sm:mb-5">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#801820] tracking-tight leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] tracking-tight leading-tight">
                   Welcome back
                 </h1>
-                <div className="w-10 h-1 bg-[#F0B429] rounded-full mt-2" />
-                <p className="text-xs sm:text-sm text-slate-600 font-medium mt-2 leading-relaxed">
+                <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2" />
+                <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-2 leading-relaxed">
                   Log in to access your account and track your application.
                 </p>
               </div>
 
               {error && (
-                <div className={`mb-3 text-xs font-bold rounded-xl p-3 text-center shadow-xs animate-shake tracking-wide ${
+                <div className={`mb-3 text-xs font-bold rounded-lg p-3 text-center shadow-xs animate-shake tracking-wide ${
                   error.toLowerCase().includes('google')
-                    ? 'bg-amber-50 border border-amber-300 text-amber-900 leading-relaxed'
-                    : 'bg-red-50 border border-red-200 text-red-600'
+                    ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 leading-relaxed'
+                    : 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400'
                 }`}>
                   <p>{error}</p>
                   {error.toLowerCase().includes('maintenance') && (
-                    <Link to="/maintenance" className="inline-block mt-1 font-black text-[#801820] underline tracking-wider">
+                    <Link to="/maintenance" className="inline-block mt-1 font-bold text-[#9E2A2B] dark:text-[#D4AF37] underline tracking-wider">
                       View System Status Page →
                     </Link>
                   )}
@@ -241,11 +241,11 @@ const Login = () => {
 
               <form onSubmit={handleLogin} className="space-y-2.5 sm:space-y-3.5">
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
                     Email or Phone Number
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                       <User size={18} />
                     </div>
                     <input
@@ -267,12 +267,12 @@ const Login = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="block text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider">
+                    <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
                       Password
                     </label>
                   </div>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                       <Lock size={18} />
                     </div>
                     <input
@@ -289,7 +289,7 @@ const Login = () => {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
-                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#801820] transition-colors cursor-pointer"
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#6B6761] hover:text-[#9E2A2B] dark:text-[#A8A29E] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -297,7 +297,7 @@ const Login = () => {
                   <div className="text-right mt-1">
                     <Link 
                       to="/forgot-password" 
-                      className="text-xs sm:text-sm font-bold text-[#801820] hover:underline transition-colors"
+                      className="text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline transition-colors"
                     >
                       Forgot Password?
                     </Link>
@@ -308,7 +308,7 @@ const Login = () => {
                   <button
                     type="submit"
                     disabled={isLoading || lockoutSeconds > 0}
-                    className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-2.5 sm:py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[48px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 sm:py-3 rounded-lg text-base font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[48px]"
                   >
                     {isLoading ? (
                       <>
@@ -326,9 +326,9 @@ const Login = () => {
 
               {/* DIVIDER */}
               <div className="flex items-center gap-3 my-2 sm:my-3">
-                <div className="flex-1 h-px bg-slate-300" />
-                <span className="text-xs font-bold text-slate-600">OR</span>
-                <div className="flex-1 h-px bg-slate-300" />
+                <div className="flex-1 h-px bg-[#E4E1DC] dark:bg-[#2E2A27]" />
+                <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E]">OR</span>
+                <div className="flex-1 h-px bg-[#E4E1DC] dark:bg-[#2E2A27]" />
               </div>
 
               {/* GOOGLE SIGN IN BUTTON */}
@@ -361,10 +361,10 @@ const Login = () => {
                 />
               </div>
 
-              <div className="mt-2.5 pt-2 sm:mt-4 sm:pt-3 border-t border-slate-100 text-center">
-                <p className="text-xs sm:text-sm text-slate-600 font-medium">
+              <div className="mt-2.5 pt-2 sm:mt-4 sm:pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-center">
+                <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
                   Don't have an account?{' '}
-                  <Link to="/register" className="font-bold text-[#801820] hover:underline">
+                  <Link to="/register" className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline">
                     Register
                   </Link>
                 </p>

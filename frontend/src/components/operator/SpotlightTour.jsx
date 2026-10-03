@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Sparkles, ArrowRight, ArrowLeft, X, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
@@ -163,18 +163,18 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
       {/* 1. Backdrop with Spotlight Hole */}
       {targetRect ? (
         <div 
-          className="fixed transition-all duration-300 pointer-events-none rounded-3xl ring-4 ring-[#D4AF37] ring-offset-2 ring-offset-slate-900 shadow-[0_0_40px_rgba(212,175,55,0.45)]"
+          className="fixed transition-all duration-300 pointer-events-none rounded-lg ring-2 ring-[#D4AF37] ring-offset-2 ring-offset-[#1C1917] shadow-[0_0_20px_rgba(212,175,55,0.35)]"
           style={{
             top: `${Math.max(0, targetRect.top - 8)}px`,
             left: `${Math.max(0, targetRect.left - 8)}px`,
             width: `${targetRect.width + 16}px`,
             height: `${targetRect.height + 16}px`,
-            boxShadow: '0 0 0 9999px rgba(11, 15, 25, 0.82)'
+            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)'
           }}
         />
       ) : (
         <div 
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 transition-opacity duration-300"
           onClick={handleFinish}
         />
       )}
@@ -188,13 +188,13 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
         }`}
         style={dialogStyle}
       >
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.4)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-4 sm:p-5 animate-spring-in relative overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl p-4 sm:p-5 relative overflow-hidden flex flex-col">
           {/* Subtle top gold accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#9E2A2B] via-[#D4AF37] to-[#9E2A2B]" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#9E2A2B]" />
 
           {/* Header Row: Step counter pill & Close button */}
           <div className="flex items-center justify-between mb-2.5 pt-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] text-xs font-black uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] text-xs font-bold uppercase tracking-wider">
               <StepIcon size={12} />
               <span>
                 {`Step ${currentStepIndex + 1} of ${steps.length}`}
@@ -204,7 +204,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
             <button
               type="button"
               onClick={handleFinish}
-              className="text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#EAE7E1] p-1.5 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
               title="Skip Tour"
             >
               <X size={16} />
@@ -213,16 +213,16 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
 
           {/* Step Title & Description */}
           <div className="mb-3.5">
-            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight mb-1">
+            <h3 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-white tracking-tight mb-1">
               {isFilipino ? (currentStep.titleFil || currentStep.title) : currentStep.title}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] leading-relaxed font-medium">
               {isFilipino ? (currentStep.descriptionFil || currentStep.description) : currentStep.description}
             </p>
           </div>
 
           {/* Stepper Dots & Action Buttons */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 gap-3">
+          <div className="flex items-center justify-between pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
             {/* Dots indicator */}
             <div className="flex items-center gap-1">
               {steps.map((_, sIdx) => (
@@ -231,7 +231,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     sIdx === currentStepIndex
                       ? 'w-5 bg-[#9E2A2B] dark:bg-[#D4AF37]'
-                      : 'w-1.5 bg-slate-200 dark:bg-slate-700'
+                      : 'w-1.5 bg-[#E4E1DC] dark:bg-[#2E2A27]'
                   }`}
                 />
               ))}
@@ -243,7 +243,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="px-3 py-2 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-2 rounded-lg font-bold text-xs text-[#6B6761] dark:text-[#A8A29E] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors active:scale-95 flex items-center gap-1 cursor-pointer min-h-[44px]"
                 >
                   <ArrowLeft size={13} />
                   <span>Back</span>
@@ -253,7 +253,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-4 py-2 rounded-xl font-black text-xs text-slate-950 bg-[#D4AF37] hover:bg-[#c29e2f] transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer ring-2 ring-[#D4AF37]/40"
+                className="px-4 py-2 rounded-lg font-bold text-xs text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-all shadow-xs active:scale-95 flex items-center gap-1.5 cursor-pointer min-h-[44px]"
               >
                 <span>
                   {isLastStep ? 'Finish' : 'Next'}

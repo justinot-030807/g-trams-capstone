@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
 import { ShieldCheck, MapPin, Phone, Award, User, RefreshCw, Smartphone } from 'lucide-react';
@@ -27,54 +27,53 @@ const OperatorIdCard = ({ user }) => {
       >
         {/* Front of ID */}
         <div 
-          className="absolute inset-0 w-full h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-2 border-[#D4AF37] rounded-3xl overflow-hidden shadow-xl flex flex-col"
+          className="absolute inset-0 w-full h-full bg-[#1C1917] border-2 border-[#D4AF37] rounded-lg overflow-hidden shadow-md flex flex-col"
           style={{ backfaceVisibility: 'hidden' }}
         >
           {/* Header */}
-          <div className="bg-[#9E2A2B] p-4 flex items-center justify-between border-b-4 border-[#D4AF37]">
+          <div className="bg-[#9E2A2B] p-4 flex items-center justify-between border-b-2 border-[#D4AF37]">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="text-[#D4AF37]" size={24} />
+              <ShieldCheck className="text-[#D4AF37]" size={22} />
               <div>
                 <h3 className="text-white font-bold text-xs leading-tight tracking-wider uppercase">LGU Gasan</h3>
-                <p className="text-[#D4AF37] text-xs font-semibold uppercase tracking-widest">Digital Operator ID</p>
+                <p className="text-[#D4AF37] text-[11px] font-semibold uppercase tracking-widest">Digital Operator ID</p>
               </div>
             </div>
-            <img src="/gasan-logo.png" alt="LGU Gasan" className="w-10 h-10 object-contain opacity-90" onError={(e) => e.target.style.display = 'none'} />
+            <img src="/gasan-logo.png" alt="LGU Gasan" className="w-9 h-9 object-contain opacity-90" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           </div>
 
           {/* Photo & Name */}
           <div className="flex-1 flex flex-col items-center justify-center p-5 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#D4AF37]/10 rounded-full blur-3xl" />
-            <div className="w-28 h-28 rounded-full border-4 border-[#D4AF37] bg-slate-800 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(212,175,55,0.3)] overflow-hidden relative z-10">
+            <div className="w-24 h-24 rounded-full border-2 border-[#D4AF37] bg-[#14110F] flex items-center justify-center mb-3 shadow-inner overflow-hidden relative z-10">
               {safeUser.profilePic ? (
                 <img src={safeUser.profilePic} alt={safeUser.name} className="w-full h-full object-cover" />
               ) : (
-                <User size={48} className="text-[#D4AF37]/50" />
+                <User size={42} className="text-[#D4AF37]/60" />
               )}
             </div>
-            <h2 className="text-xl font-bold text-white text-center tracking-tight mb-1 relative z-10">{safeUser.name}</h2>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 relative z-10">
+            <h2 className="text-base sm:text-lg font-bold text-[#F6F5F3] text-center tracking-tight mb-1 relative z-10">{safeUser.name}</h2>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 relative z-10">
               <Award size={12} className="text-[#D4AF37]" />
-              <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-wider">
                 {safeUser.role === 'toda president' ? 'TODA President' : 'Registered Operator'}
               </span>
             </div>
           </div>
 
           {/* Footer Info */}
-          <div className="bg-slate-900/80 p-4 border-t border-slate-700 backdrop-blur-sm">
+          <div className="bg-[#14110F] p-3.5 border-t border-[#2E2A27]">
             <div className="flex justify-between items-end">
-              <div className="space-y-1.5">
-                <p className="flex items-center gap-1.5 text-xs text-slate-300">
+              <div className="space-y-1">
+                <p className="flex items-center gap-1.5 text-xs text-[#EAE7E1]">
                   <MapPin size={12} className="text-[#D4AF37]" /> {safeUser.todaAssociation}
                 </p>
-                <p className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                <p className="flex items-center gap-1.5 text-xs text-[#A8A29E]">
                   <Smartphone size={12} className="text-[#D4AF37]" /> {safeUser.contact || 'No Contact'}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">Tap to flip</p>
-                <RefreshCw size={14} className="text-slate-600 dark:text-slate-400 inline-block animate-pulse" />
+                <p className="text-[9px] text-[#A8A29E] uppercase tracking-widest mb-0.5">Tap to flip</p>
+                <RefreshCw size={13} className="text-[#D4AF37] inline-block animate-pulse" />
               </div>
             </div>
           </div>
@@ -82,22 +81,22 @@ const OperatorIdCard = ({ user }) => {
 
         {/* Back of ID */}
         <div 
-          className="absolute inset-0 w-full h-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-xl flex flex-col items-center justify-center p-6"
+          className="absolute inset-0 w-full h-full bg-white dark:bg-[#1C1917] border-2 border-[#D4AF37] rounded-lg overflow-hidden shadow-md flex flex-col items-center justify-center p-6"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <div className="text-center mb-6">
-            <h3 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Official LGU QR Code</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400">Scan to verify operator credentials</p>
+          <div className="text-center mb-4">
+            <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-wider text-xs sm:text-sm mb-0.5">Official LGU QR Code</h3>
+            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Scan to verify operator credentials</p>
           </div>
           
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6">
-            <QRCodeSVG value={qrData} size={160} level="H" includeMargin={false} />
+          <div className="bg-white p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs mb-4">
+            <QRCodeSVG value={qrData} size={150} level="H" includeMargin={false} />
           </div>
 
-          <div className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center border border-slate-100 dark:border-slate-700">
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">In case of emergency</p>
-            <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-center gap-1">
-              <Phone size={12} className="text-red-500" /> {safeUser.emergencyContact || 'Not Provided'}
+          <div className="w-full bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-2.5 text-center border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-0.5">In case of emergency</p>
+            <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center justify-center gap-1">
+              <Phone size={12} className="text-[#B91C1C]" /> {safeUser.emergencyContact || 'Not Provided'}
             </p>
           </div>
         </div>

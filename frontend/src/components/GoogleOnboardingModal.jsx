@@ -120,52 +120,52 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
     }
   };
 
-  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium";
+  const inputClasses = "w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium";
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="google-onboarding-title"
     >
       {/* Centered Modal Card */}
-      <div className="relative w-full max-w-[440px] max-h-[92vh] overflow-y-auto bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-[440px] max-h-[92vh] overflow-y-auto bg-white dark:bg-[#1C1917] rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Top Gold & Maroon Decorative Ribbon */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#801820] via-[#D4AF37] to-[#801820]" />
+        <div className="h-1 w-full bg-[#9E2A2B]" />
 
         {/* Modal Header */}
         <div className="p-5 pb-2 relative">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="absolute right-4 top-4 p-1.5 rounded-lg text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
             aria-label="Close setup modal"
           >
             <X size={18} />
           </button>
 
           <div className="flex items-center gap-2.5 mb-2">
-            <div className="w-8 h-8 rounded-full bg-[#801820]/10 border border-[#801820]/20 flex items-center justify-center p-1 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center p-1 shrink-0">
               <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-[10px] font-bold tracking-wider text-[#801820] uppercase block">
+              <span className="text-[10px] font-bold tracking-wider text-[#9E2A2B] uppercase block">
                 Municipality of Gasan
               </span>
-              <h2 id="google-onboarding-title" className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+              <h2 id="google-onboarding-title" className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] leading-tight">
                 Complete Registration
               </h2>
             </div>
           </div>
 
-          {/* Step Indicator & Intro (Task 20) */}
+          {/* Step Indicator & Intro */}
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 text-[11px] font-bold border border-amber-200 dark:border-amber-800/60">
               Step 2 of 2
             </span>
-            <p className="text-xs text-slate-600 font-medium">
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
               Almost done! Piliin ang Barangay at TODA mo.
             </p>
           </div>
@@ -173,7 +173,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
         {/* Error Banner */}
         {error && (
-          <div className="mx-5 mt-2 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-2.5 text-center shadow-xs uppercase tracking-wide animate-shake">
+          <div className="mx-5 mt-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-2.5 text-center shadow-xs uppercase tracking-wide animate-shake">
             <p>{error}</p>
           </div>
         )}
@@ -181,13 +181,13 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           
-          {/* Editable Full Name (Task 21) */}
+          {/* Editable Full Name */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
               Full Name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                 <User size={18} />
               </div>
               <input
@@ -206,10 +206,10 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             </div>
           </div>
 
-          {/* Read-Only Google Email (Task 22) */}
+          {/* Read-Only Google Email */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
                 Google Account Email
               </label>
               <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
@@ -217,7 +217,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
               </span>
             </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                 <Mail size={18} />
               </div>
               <input
@@ -225,18 +225,18 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 value={email}
                 readOnly
                 disabled
-                className="w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-xl border border-slate-200 bg-slate-100 text-base sm:text-sm text-slate-600 font-medium cursor-not-allowed select-none"
+                className="w-full pl-10 pr-3.5 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium cursor-not-allowed select-none"
               />
             </div>
           </div>
 
-          {/* Mobile Phone Number (Task 23: Philippine validation) */}
+          {/* Mobile Phone Number */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
               Phone Number (Mobile) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                 <Phone size={18} />
               </div>
               <input
@@ -256,13 +256,13 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             </div>
           </div>
 
-          {/* Barangay Dropdown (Item 1: Consistent styling, gray placeholder, custom chevron) */}
+          {/* Barangay Dropdown */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
               Barangay <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
                 <MapPin size={18} />
               </div>
               <select
@@ -272,30 +272,30 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   if (error) setError('');
                 }}
                 required
-                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
-                  !selectedBarangay ? 'text-slate-500' : 'text-slate-900'
+                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer ${
+                  !selectedBarangay ? 'text-[#6B6761] dark:text-[#A8A29E]' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'
                 }`}
               >
-                <option value="" disabled className="text-slate-500">Select Barangay</option>
+                <option value="" disabled className="text-[#6B6761]">Select Barangay</option>
                 {GASAN_BARANGAYS.map((brgy) => (
-                  <option key={brgy} value={brgy} className="text-slate-900">
+                  <option key={brgy} value={brgy} className="text-[#1F1D1B] dark:text-[#F6F5F3]">
                     {brgy}
                   </option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                 <ChevronDown size={18} />
               </div>
             </div>
           </div>
 
-          {/* TODA Dropdown (Item 1: Consistent styling, gray placeholder, custom chevron) */}
+          {/* TODA Dropdown */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
               TODA <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
                 <Building2 size={18} />
               </div>
               <select
@@ -305,24 +305,24 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   if (error) setError('');
                 }}
                 required
-                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-xl border border-slate-400 bg-white text-base sm:text-sm outline-none focus:outline-none focus:bg-white focus:border-[#801820] focus:ring-0 transition-all font-medium appearance-none cursor-pointer ${
-                  !selectedToda ? 'text-slate-500' : 'text-slate-900'
+                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer ${
+                  !selectedToda ? 'text-[#6B6761] dark:text-[#A8A29E]' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'
                 }`}
               >
-                <option value="" disabled className="text-slate-500">Select TODA</option>
+                <option value="" disabled className="text-[#6B6761]">Select TODA</option>
                 {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => (
-                  <option key={toda} value={toda} className="text-slate-900">
+                  <option key={toda} value={toda} className="text-[#1F1D1B] dark:text-[#F6F5F3]">
                     {toda}
                   </option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                 <ChevronDown size={18} />
               </div>
             </div>
           </div>
 
-          {/* Terms & Privacy Policy Checkbox (Task 13: 24px checkbox, min 44px touch target) */}
+          {/* Terms & Privacy Policy Checkbox */}
           <div className="flex items-center gap-3 min-h-[44px] pt-1">
             <input
               type="checkbox"
@@ -332,11 +332,11 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 setTermsAccepted(e.target.checked);
                 if (error) setError('');
               }}
-              className="w-6 h-6 rounded-md accent-[#801820] cursor-pointer shrink-0"
+              className="w-5 h-5 rounded-md accent-[#9E2A2B] cursor-pointer shrink-0"
             />
             <label
               htmlFor="google-onboarding-terms"
-              className="text-xs sm:text-sm text-slate-600 leading-snug cursor-pointer font-medium select-none"
+              className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] leading-snug cursor-pointer font-medium select-none"
             >
               I accept the{' '}
               <button
@@ -346,7 +346,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   e.stopPropagation();
                   setShowTermsModal(true);
                 }}
-                className="font-bold text-[#801820] hover:underline cursor-pointer focus:outline-none"
+                className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer focus:outline-none"
               >
                 Terms &amp; Privacy Policy
               </button>.
@@ -358,7 +358,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 bg-[#801820] hover:bg-[#9E2A2B] text-white py-3 rounded-xl text-base font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-base font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
             >
               {isLoading ? (
                 <>

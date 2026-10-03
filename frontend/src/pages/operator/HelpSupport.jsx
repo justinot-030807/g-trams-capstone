@@ -181,33 +181,39 @@ const HelpSupport = () => {
     <MainLayout>
       <div className="w-full space-y-8 pb-28 sm:pb-24">
         {/* Header Ribbon */}
-        <div className="bg-gradient-to-br from-[#9E2A2B] to-[#9B2A33] dark:from-[#0d121f] dark:via-[#1e0e15] dark:to-[#0a0d16] border border-transparent dark:border-[#D4AF37]/30 rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-[#D4AF37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+        <div className="bg-[#9E2A2B] rounded-lg p-5 sm:p-6 text-white shadow-xs border-l-4 border-l-[#D4AF37] relative overflow-hidden">
           <div className="relative z-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-950 bg-[#D4AF37] px-2.5 py-0.5 rounded-md">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#14110F] bg-[#D4AF37] px-2.5 py-0.5 rounded">
               Helpdesk &amp; Support
             </span>
             <h1 className="text-lg sm:text-xl font-bold tracking-tight mt-2 mb-1">
               Help Center &amp; Information
             </h1>
-            <p className="text-white/90 dark:text-slate-300 text-xs sm:text-sm font-medium max-w-2xl leading-relaxed">
+            <p className="text-white/90 text-xs sm:text-sm font-medium max-w-2xl leading-relaxed">
               Usage guides, frequently asked questions, and official contact channels for the Municipality of Gasan.
             </p>
           </div>
+          <img
+            src="/gasan-logo.png"
+            alt=""
+            aria-hidden="true"
+            className="absolute -right-6 -bottom-6 w-36 h-36 opacity-10 pointer-events-none select-none object-contain"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
         </div>
 
         {/* About & Contact Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           
           {/* About Us Card */}
-          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors">
+          <div className="lg:col-span-2 bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between transition-colors">
             <div>
               <div className="flex items-center gap-3 mb-3.5">
-                <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] rounded-xl shrink-0">
+                <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg shrink-0">
                   <Info size={22} />
                 </div>
                 <div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight">
                     About the G-TRAMS Portal
                   </h2>
                   <p className="text-xs text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">
@@ -215,17 +221,17 @@ const HelpSupport = () => {
                   </p>
                 </div>
               </div>
-              <p className="text-slate-700 dark:text-slate-200 text-xs sm:text-sm leading-relaxed mb-5 font-normal">
+              <p className="text-[#1F1D1B] dark:text-[#F6F5F3] text-xs sm:text-sm leading-relaxed mb-5 font-normal">
                 <strong>G-TRAMS</strong> (Gasan Tricycle Records and Application Management System) is an official digital platform developed for the <strong>Municipality of Gasan, Marinduque</strong>. It streamlines tricycle franchise applications, annual renewals, document verification, and association management into a fast, transparent, and user-friendly experience.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="flex items-center gap-2.5 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                 <Building size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                 <span>{MUNICIPAL_OFFICE_NAME}</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <div className="flex items-center gap-2.5 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                 <MapPin size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                 <span>Municipal Hall, Gasan, Marinduque</span>
               </div>
@@ -233,7 +239,7 @@ const HelpSupport = () => {
           </div>
 
           {/* Admin Contact Info Card */}
-          <div className="bg-gradient-to-br from-[#9E2A2B] to-[#4D1115] dark:from-[#1b0d11] dark:to-[#0d121f] border border-transparent dark:border-slate-800 text-white rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div className="bg-[#1C1917] dark:bg-[#14110F] border border-[#2E2A27] text-white rounded-lg p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck size={18} className="text-[#D4AF37]" />
@@ -252,10 +258,10 @@ const HelpSupport = () => {
             <div className="space-y-2.5 text-xs">
               <a 
                 href={`tel:${HOTLINE_NUMBER}`} 
-                className="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:scale-95 p-3 rounded-xl border border-white/15 transition-all shadow-xs cursor-pointer min-h-[46px]"
+                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 active:scale-95 p-3 rounded-lg border border-white/10 transition-all shadow-xs cursor-pointer min-h-[46px]"
                 title="Call Municipal Hotline"
               >
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[#D4AF37] shrink-0">
                   <Phone size={15} />
                 </div>
                 <div>
@@ -268,10 +274,10 @@ const HelpSupport = () => {
 
               <a 
                 href={`mailto:${HELP_DESK_EMAIL}`} 
-                className="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:scale-95 p-3 rounded-xl border border-white/15 transition-all shadow-xs cursor-pointer min-h-[46px]"
+                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 active:scale-95 p-3 rounded-lg border border-white/10 transition-all shadow-xs cursor-pointer min-h-[46px]"
                 title="Send Email to Municipal Helpdesk"
               >
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-[#D4AF37] shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[#D4AF37] shrink-0">
                   <Mail size={15} />
                 </div>
                 <div>
@@ -286,57 +292,57 @@ const HelpSupport = () => {
         </div>
 
         {/* Municipal Office Hours & Fee Schedule */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs mb-8">
           <div className="flex items-center gap-2 mb-5">
             <Building size={24} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Office Hours & Fees</h2>
+            <h2 className="text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">Office Hours &amp; Fees</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-sm flex items-center gap-2">
+            <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-3 text-sm flex items-center gap-2">
                 <Clock size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 Operating Hours
               </h3>
-              <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+              <ul className="space-y-2 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2">
                   <span className="font-semibold">Monday - Friday</span>
                   <span>8:00 AM - 5:00 PM</span>
                 </li>
-                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2 pt-1">
+                <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2 pt-1">
                   <span className="font-semibold">Saturday - Sunday</span>
-                  <span className="text-slate-500">Closed</span>
+                  <span className="text-[#6B6761] dark:text-[#A8A29E]">Closed</span>
                 </li>
                 <li className="flex justify-between pt-1">
                   <span className="font-semibold">Holidays</span>
-                  <span className="text-slate-500">Closed</span>
+                  <span className="text-[#6B6761] dark:text-[#A8A29E]">Closed</span>
                 </li>
               </ul>
-              <p className="text-xs text-slate-500 mt-3 font-medium italic">
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-3 font-medium italic">
                 * Processing of new franchises and renewals are only done during office hours.
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-3 text-sm flex items-center gap-2">
+            <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-3 text-sm flex items-center gap-2">
                 <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 Standard Fees
               </h3>
-              <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+              <ul className="space-y-2 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2">
                   <span className="font-semibold">Annual Franchise Fee</span>
                   <span>₱500.00</span>
                 </li>
-                <li className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2 pt-1">
+                <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2 pt-1">
                   <span className="font-semibold">New Application Fee</span>
                   <span>₱500.00</span>
                 </li>
                 <li className="flex justify-between pt-1">
                   <span className="font-semibold">Late Penalty (per month)</span>
-                  <span className="text-red-500 font-bold">₱50.00</span>
+                  <span className="text-[#B91C1C] font-bold">₱50.00</span>
                 </li>
               </ul>
-              <p className="text-xs text-slate-500 mt-3 font-medium italic">
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-3 font-medium italic">
                 * All payments must be made directly to the Municipal Cashier. Do not pay online.
               </p>
             </div>
@@ -344,24 +350,24 @@ const HelpSupport = () => {
         </div>
 
         {/* Legal & Privacy Policy Banner */}
-        <div className="bg-gradient-to-r from-[#9E2A2B] via-[#7A1B22] to-[#3D0A0E] rounded-3xl p-5 sm:p-6 text-white mb-8 border border-amber-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-[#1C1917] dark:bg-[#14110F] rounded-lg p-5 sm:p-6 text-white mb-8 border border-[#2E2A27] border-l-4 border-l-[#9E2A2B] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 text-center sm:text-left">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[#D4AF37] shrink-0 mx-auto sm:mx-0 shadow-inner">
+            <div className="w-12 h-12 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[#D4AF37] shrink-0 mx-auto sm:mx-0 shadow-inner">
               <ShieldCheck size={26} />
             </div>
             <div>
               <div className="flex items-center justify-center sm:justify-start gap-2">
-                <span className="bg-[#D4AF37] text-slate-950 text-[9px] font-black px-2 py-0.5 rounded tracking-widest uppercase">
-                  LEGAL & PRIVACY
+                <span className="bg-[#D4AF37] text-[#14110F] text-[9px] font-black px-2 py-0.5 rounded tracking-widest uppercase">
+                  LEGAL &amp; PRIVACY
                 </span>
-                <span className="text-xs text-amber-200/90 font-medium">
+                <span className="text-xs text-[#EAE7E1] font-medium">
                   RA 10173 • RA 7160 • Art. 172 RPC
                 </span>
               </div>
-              <h3 className="text-sm sm:text-base font-black uppercase tracking-wide mt-1">
+              <h3 className="text-sm sm:text-base font-bold uppercase tracking-wide mt-1">
                 {currentLang === 'fil' ? 'Mga Tuntunin sa Paggamit at Patakaran sa Privacy' : 'Terms of Use & Municipal Privacy Policy'}
               </h3>
-              <p className="text-xs text-amber-100/80 font-medium mt-0.5">
+              <p className="text-xs text-[#A8A29E] font-medium mt-0.5">
                 {currentLang === 'fil'
                   ? 'Basahin ang opisyal na alituntunin sa prangkisa, taripa, 20% discount, at proteksyon sa datos.'
                   : 'Review complete municipal guidelines on MTOP franchising, fare discounts, road safety, and data rights.'}
@@ -371,7 +377,7 @@ const HelpSupport = () => {
           <button
             type="button"
             onClick={() => setShowTermsModal(true)}
-            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#B89628] hover:brightness-105 active:scale-[0.98] text-[#3D0A0E] text-xs font-black rounded-xl shadow-md uppercase tracking-wider transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-[0.98] text-[#14110F] text-xs font-bold rounded-lg shadow-xs uppercase tracking-wider transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
           >
             <FileText size={15} />
             <span>{currentLang === 'fil' ? 'BUKSAN ANG PATAKARAN' : 'VIEW FULL POLICY'}</span>
@@ -379,74 +385,74 @@ const HelpSupport = () => {
         </div>
 
         {/* Dynamic FAQ Module */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight flex items-center gap-2">
                 <HelpCircle className="text-[#9E2A2B] dark:text-[#D4AF37]" size={20} /> 
                 <span>Frequently Asked Questions (FAQ)</span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 font-medium">
                 Ranked by trending and frequently accessed topics
               </p>
             </div>
 
             <div className="relative w-full md:w-80">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" size={16} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={16} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search help topics (e.g. renewal, permit)..."
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-2 focus:ring-[#9E2A2B]/15 transition-all shadow-2xs placeholder:text-slate-600 dark:text-slate-400 min-h-[40px]"
+                className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors shadow-2xs placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] min-h-[44px]"
               />
             </div>
           </div>
 
           <div className="space-y-3">
             {filteredAndSortedFaqs.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="p-8 text-center text-[#6B6761] dark:text-[#A8A29E] text-xs font-medium bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27]">
                 No matching questions found. Try different search keywords.
               </div>
             ) : (
               filteredAndSortedFaqs.map((faq, idx) => (
                 <div 
                   key={faq.id}
-                  className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs"
+                  className="border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg overflow-hidden transition-colors hover:border-[#9E2A2B]/40 shadow-2xs"
                 >
                   <button
                     onClick={() => handleFaqClick(faq.id)}
-                    className="w-full p-3.5 sm:p-4 flex items-center justify-between text-left bg-slate-50/70 dark:bg-slate-800/50 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors cursor-pointer min-h-[48px]"
+                    className="w-full p-3.5 sm:p-4 flex items-center justify-between text-left bg-[#F6F5F3]/70 dark:bg-[#14110F]/50 hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors cursor-pointer min-h-[48px]"
                   >
                     <div className="flex items-center gap-2.5 pr-3 flex-wrap sm:flex-nowrap">
                       {idx === 0 && !searchQuery && (
-                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-300 dark:border-amber-800/80">
+                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider shrink-0 border border-amber-300 dark:border-amber-800/80">
                           <Flame size={12} className="text-amber-600 dark:text-amber-400" /> 
                           <span>Top FAQ</span>
                         </span>
                       )}
-                      <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 leading-snug">
+                      <span className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] leading-snug">
                         {faq.question}
                       </span>
                     </div>
                     <ChevronDown 
                       size={18} 
-                      className={`text-slate-500 transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#9E2A2B] dark:text-[#D4AF37]' : ''}`} 
+                      className={`text-[#6B6761] dark:text-[#A8A29E] transition-transform duration-200 shrink-0 ${expandedFaq === faq.id ? 'rotate-180 text-[#9E2A2B] dark:text-[#D4AF37]' : ''}`} 
                     />
                   </button>
 
                   {expandedFaq === faq.id && (
-                    <div className="p-4 sm:p-5 bg-white dark:bg-slate-900/90 border-t border-slate-200/70 dark:border-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed space-y-3">
+                    <div className="p-4 sm:p-5 bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] leading-relaxed space-y-3">
                       <p className="font-normal">{faq.answer}</p>
-                      <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                      <div className="flex items-center justify-between pt-2.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex-wrap gap-2">
                         <div className="flex gap-1.5 flex-wrap">
                           {faq.tags.map(tag => (
-                            <span key={tag} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-md">
+                            <span key={tag} className="text-xs bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] font-semibold px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
                               #{tag}
                             </span>
                           ))}
                         </div>
-                        <span className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500 font-medium">
+                        <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
                           {faq.views} views
                         </span>
                       </div>
@@ -459,25 +465,23 @@ const HelpSupport = () => {
         </div>
 
         {/* Support Ticket Submission Form */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+          <div className="mb-6 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+            <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight flex items-center gap-2">
               <Mail className="text-[#9E2A2B] dark:text-[#D4AF37]" size={20} /> 
               <span>Submit a Support Ticket</span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 font-medium">
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 font-medium">
               Need further assistance? Send us a message and we'll get back to you during office hours.
             </p>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-black/20 border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#9E2A2B]/5 to-[#D4AF37]/5 dark:from-[#9E2A2B]/10 dark:to-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700" />
-            
-            <div className="flex items-center gap-3 mb-6 relative z-10">
-              <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 rounded-xl text-[#9E2A2B] dark:text-[#E8C340]">
+          <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-6 sm:p-8 border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 rounded-lg text-[#9E2A2B] dark:text-[#D4AF37]">
                 <MessageSquare className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+              <h3 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                 {currentLang === 'fil' ? 'Mag-sumite ng Ticket' : 'Submit a Ticket'}
               </h3>
             </div>
@@ -485,11 +489,11 @@ const HelpSupport = () => {
             <form className="space-y-4" onSubmit={handleTicketSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
                     {currentLang === 'fil' ? 'Paksa' : 'Subject'}
                   </label>
                   <select 
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px]"
                     value={ticketData.subject}
                     onChange={(e) => setTicketData({...ticketData, subject: e.target.value})}
                     required
@@ -501,13 +505,13 @@ const HelpSupport = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
                     {currentLang === 'fil' ? 'Numero sa Telepono' : 'Contact Number'}
                   </label>
                   <input 
                     type="text" 
                     placeholder="09123456789" 
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]" 
+                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px]" 
                     value={ticketData.contactNumber}
                     onChange={(e) => setTicketData({...ticketData, contactNumber: e.target.value})}
                     required
@@ -515,13 +519,13 @@ const HelpSupport = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
                   {currentLang === 'fil' ? 'Mensahe' : 'Message'}
                 </label>
                 <textarea 
                   rows="4" 
                   placeholder={currentLang === 'fil' ? 'Ilarawan ang iyong isyu...' : 'Describe your issue in detail...'} 
-                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] resize-none"
+                  className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] resize-none"
                   value={ticketData.message}
                   onChange={(e) => setTicketData({...ticketData, message: e.target.value})}
                   required
@@ -530,7 +534,7 @@ const HelpSupport = () => {
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#9E2A2B] to-[#B22222] hover:from-[#7A1B22] hover:to-[#9E2A2B] dark:from-[#D4AF37] dark:to-[#F1C40F] dark:hover:from-[#B8962E] dark:hover:to-[#D4AF37] text-white dark:text-slate-900 text-sm font-bold rounded-xl shadow-lg shadow-[#9E2A2B]/20 dark:shadow-[#D4AF37]/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] text-xs font-bold rounded-lg shadow-xs transition-colors active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmitting ? (currentLang === 'fil' ? 'Sinasubmit...' : 'Submitting...') : (currentLang === 'fil' ? 'Ipadala ang Ticket' : 'Send Ticket')}</span>
@@ -540,37 +544,37 @@ const HelpSupport = () => {
         </div>
 
         {/* System Developers Section */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="mb-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+          <div className="mb-6 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between flex-wrap gap-2">
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight flex items-center gap-2">
                 <Users className="text-[#9E2A2B] dark:text-[#D4AF37]" size={20} /> 
                 <span>About the Development Team</span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 mt-1 font-medium">
-                G-TRAMS is a Capstone Project developed by students from <strong className="text-slate-700 dark:text-slate-300">Marinduque State University (MarSU)</strong>.
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 font-medium">
+                G-TRAMS is a Capstone Project developed by students from <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">Marinduque State University (MarSU)</strong>.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-[#9E2A2B] dark:text-[#D4AF37] border border-red-200 dark:border-red-900/60 text-xs font-black uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-[#9E2A2B] dark:text-[#D4AF37] border border-red-200 dark:border-red-900/60 text-xs font-bold uppercase tracking-wider">
               <GraduationCap size={14} /> MarSU Capstone
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {[
-              { name: "John Doe", role: "Project Manager / Lead Dev", icon: <Users size={18} className="text-blue-500" /> },
-              { name: "Jane Smith", role: "Frontend Developer", icon: <Code size={18} className="text-emerald-500" /> },
-              { name: "Juan Dela Cruz", role: "Backend / Database", icon: <Server size={18} className="text-amber-500" /> },
-              { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={18} className="text-rose-500" /> },
-              { name: "Pedro Penduko", role: "QA / Compliance Specialist", icon: <ShieldCheck size={18} className="text-indigo-500" /> },
+              { name: "John Doe", role: "Project Manager / Lead Dev", icon: <Users size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
+              { name: "Jane Smith", role: "Frontend Developer", icon: <Code size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
+              { name: "Juan Dela Cruz", role: "Backend / Database", icon: <Server size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
+              { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
+              { name: "Pedro Penduko", role: "QA / Compliance Specialist", icon: <ShieldCheck size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
             ].map((dev, idx) => (
-              <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 flex items-center gap-3 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700/80 shadow-xs flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-slate-600/50">
+              <div key={idx} className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3 hover:border-[#9E2A2B]/40 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1C1917] shadow-xs flex items-center justify-center shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27]">
                   {dev.icon}
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{dev.name}</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-600 dark:text-slate-400 font-medium truncate">{dev.role}</p>
+                  <h4 className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{dev.name}</h4>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium truncate">{dev.role}</p>
                 </div>
               </div>
             ))}

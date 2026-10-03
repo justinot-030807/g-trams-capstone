@@ -64,11 +64,10 @@ const OperatorBottomNav = ({ role }) => {
 
   return (
     <div 
-      className="fixed inset-x-3.5 sm:inset-x-6 z-40 md:hidden print:hidden max-w-md mx-auto pointer-events-none animate-spring-in"
-      style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+      className="fixed bottom-0 inset-x-0 z-40 md:hidden print:hidden bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      {/* High-Performance Floating Dock Container (Avoids GPU backdrop-filter churn during scroll) */}
-      <nav id="tour-bottom-nav" className="pointer-events-auto bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.7)] rounded-3xl sm:rounded-full px-2 py-1.5 flex items-center justify-around transition-all transform-gpu">
+      <nav id="tour-bottom-nav" className="flex items-center justify-around px-2 py-1.5 max-w-lg mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
 
@@ -82,21 +81,21 @@ const OperatorBottomNav = ({ role }) => {
                   navigate(item.path);
                 }
               }}
-              className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1 sm:py-1.5 px-1 rounded-2xl transition-all duration-200 active:scale-90 cursor-pointer ${
+              className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-lg transition-colors cursor-pointer min-h-[48px] ${
                 item.active
                   ? 'text-[#9E2A2B] dark:text-[#D4AF37]'
-                  : 'text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
               }`}
             >
-              <div className={`relative p-1 rounded-xl transition-all duration-300 shrink-0 ${
+              <div className={`relative p-1 rounded-md transition-colors shrink-0 ${
                 item.active 
-                  ? 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 scale-105' 
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  ? 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15' 
+                  : 'hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]'
               }`}>
-                <Icon size={18} className={item.active ? 'stroke-[2.5]' : 'stroke-[2]'} />
+                <Icon size={18} className={item.active ? 'stroke-[2.2]' : 'stroke-[1.8]'} />
               </div>
-              <span className={`text-[11px] sm:text-xs mt-0.5 tracking-tight transition-all duration-200 truncate w-full text-center leading-tight ${
-                item.active ? 'font-black scale-105' : 'font-semibold'
+              <span className={`text-[11px] sm:text-xs mt-0.5 tracking-normal truncate w-full text-center leading-tight ${
+                item.active ? 'font-semibold' : 'font-normal'
               }`}>
                 {item.label}
               </span>
