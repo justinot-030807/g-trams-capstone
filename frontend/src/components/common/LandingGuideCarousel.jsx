@@ -23,14 +23,14 @@ const steps = [
   },
   {
     id: 4,
-    title: "Print Claim Stub",
-    desc: "Once marked as 'Ready for Pickup', print your official claim stub from the system and proceed to the Treasury.",
+    title: "Payment Clearance",
+    desc: "Review your assessed municipal fees and complete payment through the Municipal Cashier with recorded official receipts.",
     icon: <CreditCard size={32} className="text-[#D4AF37]" />
   },
   {
     id: 5,
-    title: "Claim Franchise",
-    desc: "Present your claim stub and pay the required fees at the Munisipyo to officially receive your Mayor's Permit and MTOP.",
+    title: "Digital MTOP & QR",
+    desc: "Receive your digitally signed MTOP certificate equipped with a secure QR code for instant field validation.",
     icon: <Award size={32} className="text-[#D4AF37]" />
   }
 ];

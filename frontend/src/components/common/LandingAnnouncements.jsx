@@ -6,25 +6,25 @@ const announcements = [
   {
     id: 1,
     type: 'alert',
-    date: 'Dec 15, 2024',
-    title: 'Deadline for 2025 Renewal',
-    desc: 'All existing MTOP holders must submit their renewal applications before December 31, 2024 to avoid penalties.',
+    date: 'Annual Cycle',
+    title: 'Franchise Renewal Schedule',
+    desc: 'All registered tricycle operators must complete annual MTOP renewal before designated deadline to maintain active status.',
     icon: <AlertTriangle size={16} />
   },
   {
     id: 2,
     type: 'info',
-    date: 'Nov 20, 2024',
-    title: 'New Online Claim Stub System',
-    desc: 'Operators can now directly print their claim stubs from the dashboard without visiting the office initially.',
+    date: 'Portal Update',
+    title: 'Digital MTOP & QR Verification',
+    desc: 'Approved operators can now view and download their digitally signed MTOP certificates with verifiable QR codes directly from their dashboard.',
     icon: <Megaphone size={16} />
   },
   {
     id: 3,
     type: 'event',
-    date: 'Oct 05, 2024',
-    title: 'Holiday Schedule Notice',
-    desc: 'The Municipal Office will be closed on Oct 31 to Nov 1. Online submissions will still be accepted but validated next working day.',
+    date: 'Advisory',
+    title: 'Online Application Support',
+    desc: 'Municipal Tricycle Franchising staff are available to assist operators with online registration, document scanning, and route zoning inquiries.',
     icon: <Calendar size={16} />
   }
 ];

@@ -157,31 +157,31 @@ const Home = () => {
                 <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
                   <ShieldCheck size={20} />
                 </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">TODA Masterlist</h3>
+                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">TODA Verification</h3>
                 <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Verified registry of accredited TODA associations, designated zones, and authorized units.
+                  Verified registry of accredited TODA associations, designated routes, and authorized unit rosters.
                 </p>
               </motion.div>
 
-              {/* Card 3: Claim Stub & Tracking */}
+              {/* Card 3: Cashier Clearance */}
               <motion.div variants={springFade} className="p-4 sm:p-5 rounded-lg bg-black/45 border border-white/20 shadow-xs hover:border-[#D4AF37] transition-colors">
                 <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
                   <Clock size={20} />
                 </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Claim Stub &amp; Tracking</h3>
+                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Cashier Clearance</h3>
                 <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Track approval milestones live and generate official printable payment claim stubs.
+                  Track real-time approval milestones, assessed fee breakdowns, and municipal cashier payment verification.
                 </p>
               </motion.div>
 
-              {/* Card 4: Official Compliance */}
+              {/* Card 4: Digital MTOP & QR */}
               <motion.div variants={springFade} className="p-4 sm:p-5 rounded-lg bg-black/45 border border-white/20 shadow-xs hover:border-[#D4AF37] transition-colors">
                 <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
                   <Award size={20} />
                 </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Official Compliance</h3>
+                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Digital MTOP &amp; QR</h3>
                 <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Full compliance with Gasan Municipal Ordinances, fare matrices, and Municipal Tricycle Franchising and Regulatory Board (MTFRB) standards.
+                  Instant issuance of digitally signed MTOP certificates equipped with tamper-proof QR codes for roadside verification.
                 </p>
               </motion.div>
 
