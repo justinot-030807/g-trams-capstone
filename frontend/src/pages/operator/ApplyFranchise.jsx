@@ -2344,6 +2344,11 @@ const ApplyFranchise = () => {
                           <AlertCircle size={13} /> {duplicateStatus.motorNo.message}
                         </p>
                       )}
+                      {!duplicateStatus.motorNo.checking && !duplicateStatus.motorNo.duplicate && duplicateStatus.motorNo.message && (
+                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
+                          <CheckCircle2 size={13} /> {duplicateStatus.motorNo.message}
+                        </p>
+                      )}
                     </div>
 
                     {/* Chassis Serial Number */}
@@ -2374,6 +2379,11 @@ const ApplyFranchise = () => {
                       {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && !formErrors.chassisNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
                           <AlertCircle size={13} /> {duplicateStatus.chassisNo.message}
+                        </p>
+                      )}
+                      {!duplicateStatus.chassisNo.checking && !duplicateStatus.chassisNo.duplicate && duplicateStatus.chassisNo.message && (
+                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
+                          <CheckCircle2 size={13} /> {duplicateStatus.chassisNo.message}
                         </p>
                       )}
                     </div>
