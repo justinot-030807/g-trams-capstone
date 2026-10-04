@@ -125,6 +125,7 @@ const ApplyFranchise = () => {
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [formErrors, setFormErrors] = useState({});
   const [fullPreview, setFullPreview] = useState(null);
   const [showTodaGuide, setShowTodaGuide] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -272,6 +273,52 @@ const ApplyFranchise = () => {
   }, [focusField, currentStep]);
 
   const isFieldFocused = (field) => focusField === field;
+
+  // Smooth scroll and focus helper for error fields
+  const scrollToField = (fieldName) => {
+    setTimeout(() => {
+      const target = 
+        document.getElementById(`field-${fieldName}`) ||
+        document.getElementById(`card-${fieldName}`) ||
+        document.getElementById(fieldName) ||
+        document.querySelector(`[name="${fieldName}"]`) ||
+        document.querySelector(`[data-field="${fieldName}"]`);
+
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const inputToFocus = 
+          ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) 
+            ? target 
+            : target.querySelector('input, select, textarea, button');
+        inputToFocus?.focus?.();
+      }
+    }, 120);
+  };
+
+  // Center modal popup for validation errors with auto-scroll and red highlight
+  const showValidationModal = (fieldName, title, message) => {
+    if (fieldName) {
+      setFormErrors(prev => ({ ...prev, [fieldName]: message }));
+    }
+
+    setFeedbackModal({
+      isOpen: true,
+      type: 'error',
+      title,
+      message,
+      confirmText: 'Review & Correct',
+      onConfirm: () => {
+        setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+        if (fieldName) {
+          scrollToField(fieldName);
+        }
+      }
+    });
+
+    if (fieldName) {
+      scrollToField(fieldName);
+    }
+  };
 
   // Auto-sync route/zone with TODA association if zone is not yet chosen
   useEffect(() => {
@@ -700,6 +747,13 @@ const ApplyFranchise = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
+      });
+    }
     let sanitized = value;
     if (name === 'made') {
       sanitized = value.replace(/\D/g, '').slice(0, 4);
@@ -812,21 +866,38 @@ const ApplyFranchise = () => {
           if (docType === 'license') {
             const hasData = d.licenseNo || d.driverName || d.expiryDate;
             if (hasData) {
+              const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
+              const today = new Date().toISOString().split('T')[0];
+              const isExpired = normExpiry && normExpiry < today;
+
               setFormData(prev => ({
                 ...prev,
                 fullName: (!prev.fullName && d.driverName) ? d.driverName : prev.fullName,
                 driverLicenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : prev.driverLicenseNo,
-                driverLicenseExpiryDate: d.expiryDate ? normalizeDateStr(d.expiryDate) : prev.driverLicenseExpiryDate,
+                driverLicenseExpiryDate: normExpiry || prev.driverLicenseExpiryDate,
                 driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : (prev.driverName || d.driverName)
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("✨ AI Scan: Driver's License details detected!", 'success');
+
+              if (isExpired) {
+                showValidationModal(
+                  'driverLicenseExpiryDate',
+                  "Driver's License Expired",
+                  `The scanned Driver's License has expired (validity ended on ${normExpiry}). An active, unexpired license is required by the Sangguniang Bayan Franchising Office. Please verify or update the license.`
+                );
+              } else {
+                showToast("✨ AI Scan: Driver's License details detected!", 'success');
+              }
             } else {
               showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
             }
           } else if (docType === 'orCr') {
-            const hasData = d.plateNo || d.motorNo || d.chassisNo || d.make || d.year || d.orCrNo;
+            const hasData = d.plateNo || d.motorNo || d.chassisNo || d.make || d.year || d.orCrNo || d.expiryDate;
             if (hasData) {
+              const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
+              const today = new Date().toISOString().split('T')[0];
+              const isExpired = normExpiry && normExpiry < today;
+
               setFormData(prev => ({
                 ...prev,
                 plateNo: d.plateNo ? d.plateNo.toUpperCase() : prev.plateNo,
@@ -835,10 +906,19 @@ const ApplyFranchise = () => {
                 make: d.make || prev.make,
                 made: d.year ? String(d.year) : prev.made,
                 orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : prev.orCrNo,
-                orCrExpiryDate: d.expiryDate ? normalizeDateStr(d.expiryDate) : prev.orCrExpiryDate
+                orCrExpiryDate: normExpiry || prev.orCrExpiryDate
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("✨ AI Scan: Vehicle details auto-filled from OR/CR!", 'success');
+
+              if (isExpired) {
+                showValidationModal(
+                  'orCrExpiryDate',
+                  "LTO Registration Expired",
+                  `The scanned vehicle registration has expired (validity ended on ${normExpiry}). Please renew with the LTO before applying for a franchise.`
+                );
+              } else {
+                showToast("✨ AI Scan: Vehicle details auto-filled from OR/CR!", 'success');
+              }
             } else {
               showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
             }
@@ -916,8 +996,15 @@ const ApplyFranchise = () => {
 
   const handleFileChange = (reqId, file) => {
     if (file) {
+      if (formErrors[reqId]) {
+        setFormErrors(prev => {
+          const copy = { ...prev };
+          delete copy[reqId];
+          return copy;
+        });
+      }
       if (file.size > 10 * 1024 * 1024) {
-        showToast('Document file is too large. Maximum allowed size is 10MB.', 'error');
+        showValidationModal(reqId, 'File Exceeds Size Limit', 'Document file is too large. Maximum allowed size is 10MB.');
         return;
       }
       setFilePreviews(prev => {
@@ -947,6 +1034,12 @@ const ApplyFranchise = () => {
       if (prev[reqId] && typeof prev[reqId] === 'string' && prev[reqId].startsWith('blob:')) {
         URL.revokeObjectURL(prev[reqId]);
       }
+      const copy = { ...prev };
+      delete copy[reqId];
+      return copy;
+    });
+
+    setFormErrors(prev => {
       const copy = { ...prev };
       delete copy[reqId];
       return copy;
@@ -1026,35 +1119,39 @@ const ApplyFranchise = () => {
 
     if (currentStep === 1) {
       if (!formData.fullName?.trim()) {
-        showToast('Please enter the operator full name.', 'error');
+        showValidationModal('fullName', 'Operator Full Name Required', 'Please enter the complete name of the tricycle operator.');
         return false;
       }
       if (!formData.address?.trim()) {
-        showToast('Please select the operator Barangay address.', 'error');
+        showValidationModal('address', 'Barangay Address Required', 'Please select your official Barangay of residence in Gasan.');
         return false;
       }
       if (!formData.isOperatorDriver) {
         if (!formData.driverName?.trim()) {
-          showToast('Please enter the designated driver full name.', 'error');
+          showValidationModal('driverName', "Driver's Name Required", 'Please enter the full name of the hired or designated driver.');
           return false;
         }
         if (!formData.driverContact?.trim()) {
-          showToast('Please enter the designated driver contact number.', 'error');
+          showValidationModal('driverContact', "Driver's Contact Number Required", 'Please enter an active contact number for the designated driver.');
           return false;
         }
       }
       if (formMode === 'New') {
         const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
         if (!hasLicense) {
-          showToast("Driver's License upload is required.", 'error');
+          showValidationModal('license', "Driver's License Upload Required", "Please upload a clear photo or copy of the driver's license.");
           return false;
         }
         if (!formData.driverLicenseNo?.trim()) {
-          showToast("Please enter or scan the Driver's License Number.", 'error');
+          showValidationModal('driverLicenseNo', "Driver's License Number Required", "Please enter or scan the official Driver's License Number.");
+          return false;
+        }
+        if (!formData.driverLicenseExpiryDate) {
+          showValidationModal('driverLicenseExpiryDate', "License Expiry Date Required", "Please select or verify the Driver's License expiration date.");
           return false;
         }
         if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
-          showToast("Driver's License is expired. Please renew with LTO first.", 'error');
+          showValidationModal('driverLicenseExpiryDate', "Driver's License Expired", `The Driver's License expired on ${formData.driverLicenseExpiryDate}. An active, unexpired license is required.`);
           return false;
         }
       }
@@ -1065,39 +1162,47 @@ const ApplyFranchise = () => {
       if (formMode === 'New') {
         const hasOrCr = uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
         if (!hasOrCr) {
-          showToast('LTO OR/CR document upload is required.', 'error');
+          showValidationModal('orCrDocument', 'LTO OR/CR Document Required', 'Please upload a photo of your LTO Official Receipt / Certificate of Registration (OR/CR).');
           return false;
         }
         if (!formData.make?.trim()) {
-          showToast('Please enter the vehicle Make / Brand.', 'error');
+          showValidationModal('make', 'Vehicle Make Required', 'Please enter or select the vehicle make and model (e.g. Honda TMX 125).');
           return false;
         }
         if (!formData.made?.trim()) {
-          showToast('Please enter the Model Year.', 'error');
+          showValidationModal('made', 'Model Year Required', 'Please enter the 4-digit model year of the vehicle.');
           return false;
         }
         if (!formData.zone?.trim()) {
-          showToast('Please select the Route / Municipal Zone for the franchise.', 'error');
+          showValidationModal('zone', 'Municipal Route / Zone Required', 'Please select the authorized Route Zone for this franchise.');
           return false;
         }
         if (!formData.plateNo?.trim()) {
-          showToast('Please enter the Plate Number.', 'error');
+          showValidationModal('plateNo', 'Plate Number Required', 'Please enter the official Plate Number or MV File Number.');
           return false;
         }
         if (!formData.motorNo?.trim()) {
-          showToast('Please enter the Engine / Motor Number.', 'error');
+          showValidationModal('motorNo', 'Engine / Motor Number Required', 'Please enter the Engine / Motor Number from your OR/CR.');
           return false;
         }
         if (!formData.chassisNo?.trim()) {
-          showToast('Please enter the Chassis Serial Number.', 'error');
+          showValidationModal('chassisNo', 'Chassis Serial Number Required', 'Please enter the 17-digit Chassis Serial Number / VIN.');
           return false;
         }
-        if (duplicateStatus.plateNo.duplicate || duplicateStatus.motorNo.duplicate || duplicateStatus.chassisNo.duplicate) {
-          showToast('Duplicate Plate, Motor, or Chassis number found. Please verify details.', 'error');
+        if (duplicateStatus.plateNo.duplicate) {
+          showValidationModal('plateNo', 'Duplicate Plate Number', duplicateStatus.plateNo.message || 'This plate number is already registered to another unit.');
+          return false;
+        }
+        if (duplicateStatus.motorNo.duplicate) {
+          showValidationModal('motorNo', 'Duplicate Motor Number', duplicateStatus.motorNo.message || 'This motor number is already registered to another unit.');
+          return false;
+        }
+        if (duplicateStatus.chassisNo.duplicate) {
+          showValidationModal('chassisNo', 'Duplicate Chassis Number', duplicateStatus.chassisNo.message || 'This chassis number is already registered to another unit.');
           return false;
         }
         if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
-          showToast('LTO OR/CR is expired. Please renew with LTO first.', 'error');
+          showValidationModal('orCrExpiryDate', 'LTO Registration Expired', `The LTO OR/CR expired on ${formData.orCrExpiryDate}. Please renew vehicle registration with LTO.`);
           return false;
         }
       }
@@ -1109,11 +1214,11 @@ const ApplyFranchise = () => {
         const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
         const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
         if (!hasToda) {
-          showToast('TODA Endorsement Certificate upload is required.', 'error');
+          showValidationModal('todaEndorsement', 'TODA Endorsement Required', 'Please upload the TODA Endorsement Certificate issued by your association.');
           return false;
         }
         if (!hasBrgy) {
-          showToast('Barangay Clearance upload is required.', 'error');
+          showValidationModal('brgyClearance', 'Barangay Clearance Required', 'Please upload the Barangay Clearance document.');
           return false;
         }
       }
@@ -1156,23 +1261,23 @@ const ApplyFranchise = () => {
     // Cedula validation
     const currentYear = new Date().getFullYear();
     if (!formData.cedulaSerialNo?.trim()) {
-      showToast('Please enter the Community Tax Certificate (Cedula) Serial Number.', 'error');
+      showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
       return;
     }
     if (!formData.cedulaDate) {
-      showToast('Please enter the Cedula Date Issued.', 'error');
+      showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
       return;
     }
     const cedulaYear = new Date(formData.cedulaDate).getFullYear();
     if (cedulaYear < currentYear) {
-      showToast(`Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`, 'error');
+      showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
       return;
     }
 
     if (formMode === 'New') {
       const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
       if (!hasCedula) {
-        showToast('Community Tax Certificate (Cedula) upload is required.', 'error');
+        showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) upload is required.');
         return;
       }
     }
@@ -1263,6 +1368,13 @@ const ApplyFranchise = () => {
 
   const inputClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-xs font-medium";
   const disabledClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] text-base min-h-[48px] cursor-not-allowed font-medium";
+
+  const getInputClasses = (fieldName) => {
+    if (formErrors[fieldName]) {
+      return "w-full px-4 py-3 rounded-lg border-2 border-red-500 ring-2 ring-red-500/20 bg-red-50/10 dark:bg-red-950/20 text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-xs font-medium";
+    }
+    return inputClasses;
+  };
 
   const steps = [
     { num: 1, title: 'Operator', fullTitle: 'Operator & Driver' },
@@ -1481,7 +1593,7 @@ const ApplyFranchise = () => {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
+                    <div id="field-fullName">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Operator Full Name
                       </label>
@@ -1490,13 +1602,19 @@ const ApplyFranchise = () => {
                         name="fullName" 
                         value={formData.fullName} 
                         onChange={handleInputChange} 
-                        className={inputClasses} 
+                        className={getInputClasses('fullName')} 
                         required 
                         placeholder="Juan Dela Cruz" 
                       />
+                      {formErrors.fullName && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.fullName}</span>
+                        </p>
+                      )}
                     </div>
 
-                    <div>
+                    <div id="field-address">
                       <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                           Barangay Residency / Address
@@ -1511,7 +1629,7 @@ const ApplyFranchise = () => {
                         name="address" 
                         value={formData.address} 
                         onChange={handleInputChange} 
-                        className={`${inputClasses} cursor-pointer`} 
+                        className={`${getInputClasses('address')} cursor-pointer`} 
                         required
                       >
                         <option value="" disabled>-- Select Official Barangay --</option>
@@ -1519,6 +1637,12 @@ const ApplyFranchise = () => {
                           <option key={b} value={b}>{b}</option>
                         ))}
                       </select>
+                      {formErrors.address && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.address}</span>
+                        </p>
+                      )}
                       <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
                         Zoning is assigned based on Barangay residency. Selecting your barangay automatically pre-fills your designated Route Zone.
                       </p>
@@ -1585,7 +1709,7 @@ const ApplyFranchise = () => {
                   {/* If Hired Driver: Inputs */}
                   {!formData.isOperatorDriver && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <div>
+                      <div id="field-driverName">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                           Driver's Full Name
                         </label>
@@ -1594,12 +1718,18 @@ const ApplyFranchise = () => {
                           name="driverName" 
                           value={formData.driverName} 
                           onChange={handleInputChange} 
-                          className={inputClasses} 
+                          className={getInputClasses('driverName')} 
                           required 
                           placeholder="Full name of driver" 
                         />
+                        {formErrors.driverName && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverName}</span>
+                          </p>
+                        )}
                       </div>
-                      <div>
+                      <div id="field-driverContact">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                           Driver Contact No.
                         </label>
@@ -1608,10 +1738,16 @@ const ApplyFranchise = () => {
                           name="driverContact" 
                           value={formData.driverContact} 
                           onChange={handleInputChange} 
-                          className={inputClasses} 
+                          className={getInputClasses('driverContact')} 
                           required 
                           placeholder="09123456789" 
                         />
+                        {formErrors.driverContact && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverContact}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1640,6 +1776,7 @@ const ApplyFranchise = () => {
                     required={true}
                     isScanning={aiScanning.license}
                     scanSuccess={aiSuccess.license}
+                    error={formErrors.license}
                   />
 
                   {/* Auto-filled License Details Grid */}
@@ -1651,7 +1788,7 @@ const ApplyFranchise = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div>
+                      <div id="field-driverLicenseNo">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                           Driver's License Number
                         </label>
@@ -1660,13 +1797,19 @@ const ApplyFranchise = () => {
                           name="driverLicenseNo" 
                           value={formData.driverLicenseNo} 
                           onChange={handleInputChange} 
-                          className={inputClasses} 
+                          className={getInputClasses('driverLicenseNo')} 
                           required 
                           placeholder="e.g. D01-12-345678" 
                         />
+                        {formErrors.driverLicenseNo && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverLicenseNo}</span>
+                          </p>
+                        )}
                       </div>
 
-                      <div>
+                      <div id="field-driverLicenseExpiryDate">
                         <SimpleDatePicker
                           name="driverLicenseExpiryDate"
                           value={formData.driverLicenseExpiryDate}
@@ -1674,6 +1817,7 @@ const ApplyFranchise = () => {
                           label="License Expiry Date"
                           mode="expiry"
                           helperText="Driver's license expiration date."
+                          error={formErrors.driverLicenseExpiryDate}
                         />
                       </div>
                     </div>
@@ -1745,6 +1889,7 @@ const ApplyFranchise = () => {
                     required={formMode === 'New'}
                     isScanning={aiScanning.orCrDocument}
                     scanSuccess={aiSuccess.orCrDocument}
+                    error={formErrors.orCrDocument}
                   />
                 </div>
 
@@ -1774,10 +1919,16 @@ const ApplyFranchise = () => {
                         name="make" 
                         value={formData.make} 
                         onChange={handleInputChange} 
-                        className={inputClasses} 
+                        className={getInputClasses('make')} 
                         required 
                         placeholder="e.g. Honda TMX 125" 
                       />
+                      {formErrors.make && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.make}</span>
+                        </p>
+                      )}
 
                       {/* Quick Select Brand Chips */}
                       {formMode === 'New' && (
@@ -1812,10 +1963,16 @@ const ApplyFranchise = () => {
                         name="made" 
                         value={formData.made} 
                         onChange={handleInputChange} 
-                        className={inputClasses} 
+                        className={getInputClasses('made')} 
                         required 
                         placeholder="e.g. 2024" 
                       />
+                      {formErrors.made && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.made}</span>
+                        </p>
+                      )}
                     </div>
 
                     {/* Route / Zone Selection */}
@@ -1845,7 +2002,7 @@ const ApplyFranchise = () => {
                         name="zone"
                         value={normalizeZone(formData.zone)}
                         onChange={handleInputChange}
-                        className={`${inputClasses} cursor-pointer font-medium`}
+                        className={`${getInputClasses('zone')} cursor-pointer font-medium`}
                         required
                       >
                         <option value="" disabled>-- Select Municipal Route &amp; Zone --</option>
@@ -1853,6 +2010,12 @@ const ApplyFranchise = () => {
                           <option key={z.id} value={z.id}>{z.name}</option>
                         ))}
                       </select>
+                      {formErrors.zone && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.zone}</span>
+                        </p>
+                      )}
                       <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
                         Pre-filled based on your Barangay residency, but you can change it if you operate on another authorized zone.
                       </p>
@@ -1887,16 +2050,21 @@ const ApplyFranchise = () => {
                         maxLength={8}
                         value={formData.plateNo} 
                         onChange={handleInputChange} 
-                        className={`${inputClasses} ${duplicateStatus.plateNo.duplicate ? 'border-red-500' : ''}`} 
+                        className={`${getInputClasses('plateNo')} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                         required 
                         placeholder="e.g. 123-ABC" 
                       />
+                      {formErrors.plateNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
+                          <AlertCircle size={13} /> <span>{formErrors.plateNo}</span>
+                        </p>
+                      )}
                       {duplicateStatus.plateNo.checking && (
                         <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
                           <Loader2 size={13} className="animate-spin" /> Checking plate number...
                         </p>
                       )}
-                      {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && (
+                      {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && !formErrors.plateNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
                           <AlertCircle size={13} /> {duplicateStatus.plateNo.message}
                         </p>
@@ -1919,16 +2087,21 @@ const ApplyFranchise = () => {
                         maxLength={25}
                         value={formData.motorNo} 
                         onChange={handleInputChange} 
-                        className={`${inputClasses} ${duplicateStatus.motorNo.duplicate ? 'border-red-500' : ''}`} 
+                        className={`${getInputClasses('motorNo')} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                         required 
                         placeholder="Motor Serial Number" 
                       />
+                      {formErrors.motorNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
+                          <AlertCircle size={13} /> <span>{formErrors.motorNo}</span>
+                        </p>
+                      )}
                       {duplicateStatus.motorNo.checking && (
                         <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
                           <Loader2 size={13} className="animate-spin" /> Checking motor number...
                         </p>
                       )}
-                      {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && (
+                      {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && !formErrors.motorNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
                           <AlertCircle size={13} /> {duplicateStatus.motorNo.message}
                         </p>
@@ -1946,16 +2119,21 @@ const ApplyFranchise = () => {
                         maxLength={25}
                         value={formData.chassisNo} 
                         onChange={handleInputChange} 
-                        className={`${inputClasses} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500' : ''}`} 
+                        className={`${getInputClasses('chassisNo')} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                         required 
                         placeholder="17-Digit Vehicle Identification Number (VIN)" 
                       />
+                      {formErrors.chassisNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
+                          <AlertCircle size={13} /> <span>{formErrors.chassisNo}</span>
+                        </p>
+                      )}
                       {duplicateStatus.chassisNo.checking && (
                         <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
                           <Loader2 size={13} className="animate-spin" /> Checking chassis number...
                         </p>
                       )}
-                      {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && (
+                      {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && !formErrors.chassisNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
                           <AlertCircle size={13} /> {duplicateStatus.chassisNo.message}
                         </p>
@@ -1977,7 +2155,7 @@ const ApplyFranchise = () => {
                           placeholder="e.g. OR-98765432" 
                         />
                       </div>
-                      <div>
+                      <div id="field-orCrExpiryDate">
                         <SimpleDatePicker
                           name="orCrExpiryDate"
                           value={formData.orCrExpiryDate}
@@ -1985,6 +2163,7 @@ const ApplyFranchise = () => {
                           label="LTO Expiry / Registration Date"
                           mode="expiry"
                           helperText="LTO registration expiration date."
+                          error={formErrors.orCrExpiryDate}
                         />
                       </div>
                     </div>
@@ -2057,6 +2236,7 @@ const ApplyFranchise = () => {
                     required={formMode === 'New'}
                     isScanning={aiScanning.todaEndorsement}
                     scanSuccess={aiSuccess.todaEndorsement}
+                    error={formErrors.todaEndorsement}
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -2109,6 +2289,7 @@ const ApplyFranchise = () => {
                     required={formMode === 'New'}
                     isScanning={aiScanning.brgyClearance}
                     scanSuccess={aiSuccess.brgyClearance}
+                    error={formErrors.brgyClearance}
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -2203,10 +2384,11 @@ const ApplyFranchise = () => {
                     required={formMode === 'New'}
                     isScanning={aiScanning.cedulaDoc}
                     scanSuccess={aiSuccess.cedulaDoc}
+                    error={formErrors.cedulaDoc}
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div>
+                    <div id="field-cedulaSerialNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Cedula Serial Number
                       </label>
@@ -2215,12 +2397,18 @@ const ApplyFranchise = () => {
                         name="cedulaSerialNo" 
                         value={formData.cedulaSerialNo} 
                         onChange={handleInputChange} 
-                        className={inputClasses} 
+                        className={getInputClasses('cedulaSerialNo')} 
                         required 
                         placeholder="e.g. 08123456" 
                       />
+                      {formErrors.cedulaSerialNo && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.cedulaSerialNo}</span>
+                        </p>
+                      )}
                     </div>
-                    <div>
+                    <div id="field-cedulaDate">
                       <SimpleDatePicker
                         name="cedulaDate"
                         value={formData.cedulaDate}
@@ -2229,6 +2417,7 @@ const ApplyFranchise = () => {
                         required
                         mode="issuance"
                         helperText="Date CTC / Cedula was issued."
+                        error={formErrors.cedulaDate}
                       />
                     </div>
                   </div>

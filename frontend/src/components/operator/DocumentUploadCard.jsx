@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Loader2, Sparkles } from 'lucide-react';
+import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
 
 const DocumentUploadCard = ({ 
@@ -13,7 +13,8 @@ const DocumentUploadCard = ({
   onRescan = null,
   required = false,
   isScanning = false,
-  scanSuccess = false
+  scanSuccess = false,
+  error = null
 }) => {
   const galleryInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -51,12 +52,18 @@ const DocumentUploadCard = ({
     }
   };
 
+  const displayError = error || (sizeError ? "File exceeds 15MB size limit. Please choose a smaller file." : null);
+
   return (
     <>
-      <div className={`relative border rounded-lg p-3.5 sm:p-4 transition-colors flex flex-col justify-between overflow-hidden group ${
-        hasFile 
-          ? 'bg-white dark:bg-[#1C1917] border-emerald-600/40 dark:border-emerald-500/40 shadow-xs' 
-          : 'bg-white dark:bg-[#1C1917] border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40'
+      <div 
+        id={`card-${id}`}
+        className={`relative border rounded-lg p-3.5 sm:p-4 transition-all flex flex-col justify-between overflow-hidden group ${
+        displayError
+          ? 'bg-red-50/20 dark:bg-red-950/20 border-2 border-red-500 ring-2 ring-red-500/20 shadow-xs'
+          : hasFile 
+            ? 'bg-white dark:bg-[#1C1917] border-emerald-600/40 dark:border-emerald-500/40 shadow-xs' 
+            : 'bg-white dark:bg-[#1C1917] border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40'
       }`}>
         
         {/* Hidden camera input for direct native camera photo capture */}
@@ -225,9 +232,10 @@ const DocumentUploadCard = ({
           </div>
         )}
 
-        {sizeError && (
-          <p className="mt-1.5 text-xs font-semibold text-[#B91C1C] dark:text-[#EF4444]">
-            File exceeds 10MB size limit. Please choose a smaller file.
+        {displayError && (
+          <p className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5 animate-fadeIn">
+            <AlertCircle size={14} className="shrink-0" />
+            <span>{displayError}</span>
           </p>
         )}
 
