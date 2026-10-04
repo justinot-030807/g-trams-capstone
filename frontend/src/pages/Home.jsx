@@ -174,14 +174,14 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              {/* Card 4: Digital MTOP & QR */}
+              {/* Card 4: Official MTOP Release */}
               <motion.div variants={springFade} className="p-4 sm:p-5 rounded-lg bg-black/45 border border-white/20 shadow-xs hover:border-[#D4AF37] transition-colors">
                 <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
                   <Award size={20} />
                 </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Digital MTOP &amp; QR</h3>
+                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Official MTOP Release</h3>
                 <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Instant issuance of digitally signed MTOP certificates equipped with tamper-proof QR codes for roadside verification.
+                  Claim your signed MTOP certificate and official franchise sticker at the Franchising Office once payment is cleared.
                 </p>
               </motion.div>
 

@@ -29,8 +29,8 @@ const steps = [
   },
   {
     id: 5,
-    title: "Digital MTOP & QR",
-    desc: "Receive your digitally signed MTOP certificate equipped with a secure QR code for instant field validation.",
+    title: "Official MTOP Release",
+    desc: "Claim your signed MTOP certificate and official franchise sticker at the Franchising Office once payment is cleared.",
     icon: <Award size={32} className="text-[#D4AF37]" />
   }
 ];
