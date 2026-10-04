@@ -10,6 +10,7 @@ const DocumentUploadCard = ({
   onFileSelect, 
   onFileRemove, 
   onPreviewZoom,
+  onRescan = null,
   required = false,
   isScanning = false,
   scanSuccess = false
@@ -152,15 +153,15 @@ const DocumentUploadCard = ({
             {isPdf ? (
               <div className="p-4 text-center flex flex-col items-center justify-center w-full">
                 <FileCheck size={38} className="text-emerald-700 dark:text-emerald-400 mb-1.5" />
-                <span className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Naka-attach ang PDF</span>
-                <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium mb-2.5">Handa nang i-review</span>
+                <span className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">PDF Attached</span>
+                <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium mb-2.5">Ready for review</span>
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: true })}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs cursor-pointer active:scale-95 min-h-[44px]"
                 >
                   <ZoomIn size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                  <span>I-preview ang PDF</span>
+                  <span>Preview PDF</span>
                 </button>
               </div>
             ) : (
@@ -177,31 +178,47 @@ const DocumentUploadCard = ({
                 >
                   <span className="bg-black/70 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
                     <ZoomIn size={15} />
-                    <span>I-preview</span>
+                    <span>Preview</span>
                   </span>
                 </button>
               </div>
             )}
 
-            {/* Retake & Preview Bar */}
+            {/* Retake, Re-scan & Preview Bar */}
             <div className="w-full bg-emerald-500/10 dark:bg-emerald-950/40 py-2 px-3 flex items-center justify-between text-xs border-t border-emerald-500/20">
               <span className="flex items-center gap-1 font-semibold text-emerald-800 dark:text-emerald-300 text-xs">
                 <CheckCircle2 size={13} /> Attached
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-end">
+                {onRescan && !isPdf && (
+                  <button
+                    type="button"
+                    disabled={isScanning}
+                    onClick={() => onRescan(id)}
+                    className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs disabled:opacity-50"
+                    title="Re-run AI OCR extraction on this document"
+                  >
+                    {isScanning ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}
+                    <span>{isScanning ? 'Scanning...' : 'Re-scan'}</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf })}
                   className="text-emerald-700 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
                 >
-                  <ZoomIn size={12} /> Tingnan
+                  <ZoomIn size={12} /> View
                 </button>
                 <button
                   type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="text-[#6B6761] dark:text-[#A8A29E] font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
                 >
-                  <RotateCcw size={12} /> Palitan
+                  <RotateCcw size={12} /> Replace
                 </button>
               </div>
             </div>

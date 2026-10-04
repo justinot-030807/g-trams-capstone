@@ -705,7 +705,7 @@ const ApplyFranchise = () => {
   };
 
   // AI OCR Scanner Engine for Operator Form
-  const triggerAiScan = async (reqId, file) => {
+  const triggerAiScan = async (reqId, fileArg = null) => {
     let docType = '';
     const lower = (reqId || '').toLowerCase();
     if (lower === 'license' || lower.includes('license')) docType = 'license';
@@ -721,22 +721,40 @@ const ApplyFranchise = () => {
 
     try {
       const scanFormData = new FormData();
-      scanFormData.append('file', file);
       scanFormData.append('docType', docType);
 
-      // Pre-read base64 client-side to eliminate extra remote Cloudinary re-fetch
-      try {
-        const base64Data = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = () => resolve(null);
-          reader.readAsDataURL(file);
-        });
-        if (base64Data) {
-          scanFormData.append('base64', base64Data);
+      let fileToScan = fileArg || uploadedDocs[reqId] || uploadedDocs[docType];
+      const preview = filePreviews[reqId] || filePreviews[docType] || formData[`${docType === 'orCr' ? 'orCr' : docType}Url`];
+
+      if (!fileToScan && preview && typeof preview === 'string') {
+        if (preview.startsWith('blob:')) {
+          try {
+            const resp = await fetch(preview);
+            fileToScan = await resp.blob();
+          } catch (e) {
+            console.warn('Could not fetch blob for re-scan:', e);
+          }
+        } else if (preview.startsWith('http')) {
+          scanFormData.append('fileUrl', preview);
         }
-      } catch (err) {
-        console.warn('Local base64 conversion skipped:', err);
+      }
+
+      if (fileToScan) {
+        scanFormData.append('file', fileToScan, 'document.jpg');
+        // Pre-read base64 client-side to eliminate extra remote Cloudinary re-fetch
+        try {
+          const base64Data = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(fileToScan);
+          });
+          if (base64Data) {
+            scanFormData.append('base64', base64Data);
+          }
+        } catch (err) {
+          console.warn('Local base64 conversion skipped:', err);
+        }
       }
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
@@ -857,6 +875,11 @@ const ApplyFranchise = () => {
     } finally {
       setAiScanning(prev => ({ ...prev, [reqId]: false }));
     }
+  };
+
+  const handleRescan = (reqId) => {
+    showToast('Re-scanning document with AI...', 'info');
+    triggerAiScan(reqId);
   };
 
   const handleFileChange = (reqId, file) => {
@@ -1581,6 +1604,7 @@ const ApplyFranchise = () => {
                     onFileSelect={handleFileChange}
                     onFileRemove={handleRemoveFile}
                     onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
                     required={true}
                     isScanning={aiScanning.license}
                     scanSuccess={aiSuccess.license}
@@ -1685,6 +1709,7 @@ const ApplyFranchise = () => {
                     onFileSelect={handleFileChange}
                     onFileRemove={handleRemoveFile}
                     onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
                     required={formMode === 'New'}
                     isScanning={aiScanning.orCrDocument}
                     scanSuccess={aiSuccess.orCrDocument}
@@ -1996,6 +2021,7 @@ const ApplyFranchise = () => {
                     onFileSelect={handleFileChange}
                     onFileRemove={handleRemoveFile}
                     onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
                     required={formMode === 'New'}
                     isScanning={aiScanning.todaEndorsement}
                     scanSuccess={aiSuccess.todaEndorsement}
@@ -2047,6 +2073,7 @@ const ApplyFranchise = () => {
                     onFileSelect={handleFileChange}
                     onFileRemove={handleRemoveFile}
                     onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
                     required={formMode === 'New'}
                     isScanning={aiScanning.brgyClearance}
                     scanSuccess={aiSuccess.brgyClearance}
@@ -2140,6 +2167,7 @@ const ApplyFranchise = () => {
                     onFileSelect={handleFileChange}
                     onFileRemove={handleRemoveFile}
                     onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
                     required={formMode === 'New'}
                     isScanning={aiScanning.cedulaDoc}
                     scanSuccess={aiSuccess.cedulaDoc}
