@@ -43,7 +43,7 @@ const SimpleDatePicker = ({
         onClick={() => inputRef.current?.showPicker ? inputRef.current.showPicker() : inputRef.current?.focus()}
         className={`relative w-full rounded-lg border bg-white dark:bg-[#1C1917] flex items-center transition-all shadow-xs min-h-[48px] px-3.5 cursor-pointer ${
           error 
-            ? 'border-red-500 ring-1 ring-red-500' 
+            ? 'border-2 border-red-500 bg-red-50/10 dark:bg-red-950/20' 
             : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/60 dark:hover:border-[#D4AF37]/60 focus-within:ring-2 focus-within:ring-[#9E2A2B] dark:focus-within:ring-[#D4AF37] focus-within:border-transparent'
         } ${disabled ? 'opacity-50 cursor-not-allowed bg-[#F6F5F3] dark:bg-[#14110F]' : ''}`}
       >
@@ -60,7 +60,8 @@ const SimpleDatePicker = ({
           onChange={handleNativeChange}
           disabled={disabled}
           required={required}
-          className="w-full bg-transparent text-[#1F1D1B] dark:text-[#EAE7E1] font-medium text-sm sm:text-base outline-none cursor-pointer placeholder-transparent"
+          className="w-full bg-transparent text-[#1F1D1B] dark:text-[#EAE7E1] font-medium text-sm sm:text-base border-0 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 shadow-none ring-0 cursor-pointer placeholder-transparent !outline-none !ring-0 !border-0"
+          style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
         />
 
         {cleanValue && !disabled && (
@@ -75,14 +76,14 @@ const SimpleDatePicker = ({
         )}
       </div>
 
-      {helperText && (
+      {helperText && !error && (
         <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
           {helperText}
         </p>
       )}
 
       {error && (
-        <p className="text-[11px] text-red-500 font-medium">
+        <p className="text-xs text-red-600 dark:text-red-400 font-semibold leading-relaxed">
           {error}
         </p>
       )}

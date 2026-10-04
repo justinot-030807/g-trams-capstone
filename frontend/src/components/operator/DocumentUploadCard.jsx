@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Camera, Upload, X, ZoomIn, FileCheck, CheckCircle2, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
 
 const DocumentUploadCard = ({ 
@@ -98,11 +98,11 @@ const DocumentUploadCard = ({
                 </span>
               ) : isScanning ? (
                 <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold flex items-center gap-1">
-                  <Sparkles size={13} className="animate-spin" /> Scanning details...
+                  <Loader2 size={13} className="animate-spin" /> Scanning details...
                 </span>
               ) : scanSuccess ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
-                  <Sparkles size={13} /> Auto-filled from document
+                  <CheckCircle2 size={13} /> Auto-filled from document
                 </span>
               ) : hasFile ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
@@ -203,12 +203,12 @@ const DocumentUploadCard = ({
                     disabled={isScanning}
                     onClick={() => onRescan(id)}
                     className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs disabled:opacity-50"
-                    title="Re-run AI OCR extraction on this document"
+                    title="Re-scan document"
                   >
                     {isScanning ? (
                       <Loader2 size={12} className="animate-spin" />
                     ) : (
-                      <Sparkles size={12} />
+                      <RotateCcw size={12} />
                     )}
                     <span>{isScanning ? 'Scanning...' : 'Re-scan'}</span>
                   </button>

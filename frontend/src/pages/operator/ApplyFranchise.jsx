@@ -10,7 +10,7 @@ import {
   UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
-  Save, XCircle, CheckCircle2, Clock, Sparkles, User, Eye, Receipt,
+  Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
   Compass, MapPin, ExternalLink
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
@@ -1997,8 +1997,8 @@ const ApplyFranchise = () => {
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Driver's License Photo
                     </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={14} /> Real-time AI OCR
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-fill details
                     </span>
                   </div>
 
@@ -2021,7 +2021,7 @@ const ApplyFranchise = () => {
                   <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        License Details {aiSuccess.license && <span className="text-emerald-600 font-semibold">(Verified via AI)</span>}
+                        License Details {aiSuccess.license && <span className="text-emerald-600 font-semibold">(Verified from Document)</span>}
                       </span>
                     </div>
 
@@ -2110,8 +2110,8 @@ const ApplyFranchise = () => {
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       LTO Official Receipt / Certificate of Registration (OR / CR)
                     </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={14} /> Auto-reads Plate & Chassis
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-reads Plate & Chassis
                     </span>
                   </div>
 
@@ -2131,11 +2131,11 @@ const ApplyFranchise = () => {
                   />
                 </div>
 
-                {/* AI Detection Banner */}
+                {/* Document Detection Banner */}
                 {aiSuccess.orCrDocument && (
                   <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg flex items-center gap-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                    <Sparkles size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    <span>AI scanned your OR/CR! Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
+                    <CheckCircle2 size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>Document details detected: Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
                   </div>
                 )}
 
@@ -2457,8 +2457,8 @@ const ApplyFranchise = () => {
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       TODA Endorsement Certificate
                     </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={14} /> AI Scanner
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
                     </span>
                   </div>
 
@@ -2510,8 +2510,8 @@ const ApplyFranchise = () => {
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Barangay Clearance
                     </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={14} /> AI Scanner
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
                     </span>
                   </div>
 
@@ -2605,8 +2605,8 @@ const ApplyFranchise = () => {
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Community Tax Certificate (Cedula / CTC)
                     </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
-                      <Sparkles size={14} /> AI Scanner
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
                     </span>
                   </div>
 
@@ -2661,79 +2661,37 @@ const ApplyFranchise = () => {
                   </div>
                 </div>
 
-                {/* Application Review & Verification Card */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                    <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
-                      <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <span>Application Summary Verification</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsSummaryModalOpen(true)}
-                      className="text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Full Details
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg space-y-1">
-                      <p className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase">Operator &amp; Driver</p>
-                      <p className="font-bold text-base text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || 'N/A'}</p>
-                      <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm">{formData.address || 'N/A'}</p>
-                      <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm">
-                        License: <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseNo || 'N/A'}</span>
-                      </p>
+                {/* Minimized Application Summary Card */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                      <FileText size={20} />
                     </div>
-
-                    <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg space-y-1">
-                      <p className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase">Vehicle &amp; Route</p>
-                      <p className="font-bold text-base text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.plateNo || 'No Plate'} • {formData.make || 'Tricycle'}</p>
-                      <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm">Route: {formatZoneLabel(formData.zone)} • {formData.todaName || 'NON-TODA'}</p>
-                      <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm">
-                        Chassis: <span className="font-mono text-xs sm:text-sm">{formData.chassisNo || 'N/A'}</span>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        Application Summary
+                      </h3>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 truncate">
+                        {formData.fullName || 'Operator'} &bull; {formData.plateNo || 'Vehicle'} &bull; {formatZoneLabel(formData.zone)}
                       </p>
                     </div>
                   </div>
 
-                  {/* Document Thumbnails Preview Strip */}
-                  <div className="pt-2">
-                    <p className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">Attached Documents (Click to preview):</p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { id: 'license', label: "Driver's License", url: filePreviews.license || formData.licenseUrl },
-                        { id: 'orCrDocument', label: 'LTO OR / CR', url: filePreviews.orCrDocument || formData.orCrUrl },
-                        { id: 'todaEndorsement', label: 'TODA Endorsement', url: filePreviews.todaEndorsement || formData.todaEndorsementUrl },
-                        { id: 'brgyClearance', label: 'Barangay Clearance', url: filePreviews.brgyClearance || formData.brgyClearanceUrl },
-                        { id: 'cedula', label: 'Cedula (CTC)', url: filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl }
-                      ].map((item, idx) => (
-                        item.url ? (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setFullPreview({
-                              url: item.url,
-                              title: `${item.label} Document`,
-                              isPdf: item.url?.toLowerCase().includes('.pdf') || (uploadedDocs[item.id] && uploadedDocs[item.id].type === 'application/pdf')
-                            })}
-                            className="px-3 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-2 hover:border-[#9E2A2B] cursor-pointer shadow-xs active:scale-95 min-h-[44px]"
-                          >
-                            <CheckCircle2 size={14} className="text-emerald-600" />
-                            <span>{item.label}</span>
-                            <ZoomIn size={13} className="text-[#6B6761] dark:text-[#A8A29E]" />
-                          </button>
-                        ) : null
-                      ))}
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsSummaryModalOpen(true)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 min-h-[44px]"
+                  >
+                    <Eye size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    <span>See Summary</span>
+                  </button>
+                </div>
 
-                  {/* LGU Treasury Fee Notice */}
-                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
-                    <Receipt size={18} className="shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
-                    <div className="leading-snug">
-                      <strong className="font-bold">Franchise Fee:</strong> Standard fee of <strong className="font-bold underline">₱500.00</strong> is payable at the Municipal Cashier window upon application approval.
-                    </div>
+                {/* LGU Treasury Fee Notice */}
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                  <Receipt size={18} className="shrink-0 text-amber-700 dark:text-amber-400" />
+                  <div className="leading-snug">
+                    <strong className="font-bold">Franchise Fee:</strong> Standard fee of <strong className="font-bold underline">₱500.00</strong> is payable at the Municipal Cashier window upon application approval.
                   </div>
                 </div>
 

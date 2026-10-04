@@ -160,6 +160,19 @@
     outline: 2px solid #D4AF37;
     outline-offset: 2px;
   }
+
+  /* Prevent nested double outlines on date and file inputs inside custom pickers */
+  input[type="date"],
+  input[type="date"]:focus,
+  input[type="date"]:focus-visible,
+  input[type="file"],
+  input[type="file"]:focus,
+  input[type="file"]:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* Skeleton Shimmer Loading (Functional & Low Contrast) */

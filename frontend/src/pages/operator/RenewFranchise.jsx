@@ -7,7 +7,7 @@ import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal
 import SimpleDatePicker from '../../components/common/SimpleDatePicker';
 import { 
   RefreshCw, ArrowLeft, CheckCircle2, AlertCircle, Loader2, 
-  X, FileCheck, ShieldCheck, Calendar, CalendarDays, MapPin, Hash, Sparkles,
+  X, FileCheck, ShieldCheck, Calendar, CalendarDays, MapPin, Hash,
   FileText, User
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';

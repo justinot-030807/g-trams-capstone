@@ -550,8 +550,8 @@ const OperatorDashboard = () => {
         className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 mb-6 text-[#1F1D1B] dark:text-[#F6F5F3] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 border-l-[#9E2A2B] relative transition-all"
       >
         {/* Top Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Interactive Rounded Avatar with Profile Popover */}
             <div className="relative" id="tour-profile-menu">
               <button
@@ -570,26 +570,26 @@ const OperatorDashboard = () => {
               </button>
             </div>
 
-            {/* Greeting & Bold User Name */}
+            {/* Greeting & Bold User Name (No truncate - let name display fully) */}
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
                 {opGreeting.text},
               </span>
-              <span className="text-base sm:text-xl font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight truncate">
-                {loggedInUserName}!
+              <span className="text-base sm:text-xl font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight leading-snug break-words">
+                {loggedInUserName}
               </span>
             </div>
           </div>
 
           {/* Micro Action Buttons (Text Size, Guide, Theme & Bell) */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {/* Quick Text Size Accessibility Button */}
             <button
               type="button"
               onClick={cycleTextScale}
               title={`Text Size: ${scaleLabel} (Click to toggle A / A+ / A++)`}
               aria-label={`Text Size: ${scaleLabel}`}
-              className="px-2.5 py-1.5 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs font-mono flex items-center justify-center active:scale-95 cursor-pointer shadow-xs select-none"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs font-mono flex items-center justify-center active:scale-95 cursor-pointer shadow-xs select-none"
             >
               <span>{textScale === 'xlarge' ? 'A++' : textScale === 'large' ? 'A+' : 'A'}</span>
             </button>
@@ -599,9 +599,9 @@ const OperatorDashboard = () => {
               type="button"
               onClick={() => setIsTourOpen(true)}
               title="Operator Quick Guide & FAQs"
-              className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
             >
-              <HelpCircle size={17} />
+              <HelpCircle size={16} />
             </button>
 
             {/* Quick Theme Toggle */}
@@ -609,12 +609,12 @@ const OperatorDashboard = () => {
               type="button"
               onClick={toggleTheme}
               title={isDark ? "Theme: Dark Mode (Click for Light Mode)" : "Theme: Light Mode (Click for Dark Mode)"}
-              className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
             >
               {isDark ? (
-                <Moon size={17} className="text-amber-300" />
+                <Moon size={16} className="text-amber-300" />
               ) : (
-                <Sun size={17} className="text-amber-500" />
+                <Sun size={16} className="text-amber-500" />
               )}
             </button>
 
@@ -623,9 +623,9 @@ const OperatorDashboard = () => {
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="relative w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
+                className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
               >
-                <Bell size={17} />
+                <Bell size={16} />
                 {unreadNotifCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-xs">
                     {unreadNotifCount}
@@ -637,12 +637,12 @@ const OperatorDashboard = () => {
         </div>
 
         {/* Hero Title & Subtitle */}
-        <div className="pt-4 pb-2">
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight mb-1 text-[#1F1D1B] dark:text-[#F6F5F3] uppercase">
+        <div className="pt-3 pb-1">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight mb-0.5 text-[#1F1D1B] dark:text-[#F6F5F3] uppercase">
             Operator Portal
           </h1>
           <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm max-w-xl leading-relaxed">
-            {getOperatorSubtext()}
+            Manage your franchise applications and registered tricycle units.
           </p>
         </div>
 
@@ -664,10 +664,10 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold truncate text-[#92400E] dark:text-[#FDE68A]">
-                    Ready for Municipal Cashier Payment
+                    {t('dashboard.approvedPaymentTitle', 'Ready for Cashier Payment')}
                   </h4>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                    Amount Payable: <strong className="text-[#9E2A2B] dark:text-[#D4AF37] font-mono">₱500.00</strong> • Settle at Treasury window with Plate No.
+                    Pay ₱500 at the Municipal Cashier window with your Plate Number to claim your permit.
                   </p>
                 </div>
               </div>
@@ -693,10 +693,10 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold truncate text-[#92400E] dark:text-[#FDE68A]">
-                    {t('dashboard.signingTitle', 'Application Approved — Signing in Progress')}
+                    {t('dashboard.signingTitle', 'Approved — Routing for Signature')}
                   </h4>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 leading-snug">
-                    {t('dashboard.signingDesc', 'Approved. Documents are being signed. We will notify you when ready for payment.')}
+                    {t('dashboard.signingDesc', 'Documents are routing for municipal signatures. Please wait for the pickup notice.')}
                   </p>
                 </div>
               </div>
@@ -879,7 +879,7 @@ const OperatorDashboard = () => {
           {/* Tricycle Icon Container */}
           <div className="relative mb-3">
             <div className="relative w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-xs">
-              <TricycleIcon size={42} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+              <TricycleIcon raw size={48} className="dark:brightness-125" />
             </div>
           </div>
 
@@ -929,12 +929,9 @@ const OperatorDashboard = () => {
                   className="p-3 sm:p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] mb-3.5 flex items-center justify-between relative overflow-hidden"
                 >
                   <div className="min-w-0 pr-2">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] whitespace-nowrap">
-                        MUNICIPALITY OF GASAN &bull; MTOP
-                      </p>
-                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] mb-0.5">
+                      Plate Number
+                    </p>
                     <h3 className="font-mono text-lg sm:text-xl font-bold tracking-wider text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
                       {unit?.plateNo || t('dashboard.pendingPlate', 'PENDING')}
                     </h3>
@@ -944,9 +941,11 @@ const OperatorDashboard = () => {
                     <span className="inline-block px-2.5 py-0.5 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-tight shadow-xs">
                       {unit?.make || 'Tricycle'}
                     </span>
-                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5 uppercase">
-                      {unit?.made || 'Model'}
-                    </p>
+                    {unit?.made && (
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5 uppercase">
+                        {unit?.made}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1015,10 +1014,10 @@ const OperatorDashboard = () => {
                                 isOverdue ? 'text-[#B91C1C]' : isExpiringSoon ? 'text-[#B45309]' : 'text-[#15803D] dark:text-[#4ADE80]'
                               }`}>
                                 {isOverdue 
-                                  ? `⚠️ Overdue by ${Math.abs(daysRemaining)} days` 
+                                  ? `Overdue by ${Math.abs(daysRemaining)} days` 
                                   : isExpiringSoon 
-                                  ? `⏳ Renewal Window Open • ${daysRemaining} days left` 
-                                  : `✓ Active • ${daysRemaining} days remaining`}
+                                  ? `Renewal Window Open • ${daysRemaining} days left` 
+                                  : `Active • ${daysRemaining} days remaining`}
                               </span>
                             </div>
 
@@ -1084,14 +1083,17 @@ const OperatorDashboard = () => {
                         <div className="flex items-start gap-2.5">
                           <FileText className="text-[#B45309] dark:text-[#FBBF24] shrink-0 mt-0.5" size={16} />
                           <div>
-                            <h4 className="text-[#92400E] dark:text-[#FDE68A] font-bold text-xs uppercase mb-0.5">{t('dashboard.signingTitle', 'Application Approved — Routing for Signature')}</h4>
-                            <p className="text-xs font-normal text-[#92400E]/90 dark:text-[#FDE68A]/90 leading-snug">{t('dashboard.signingDesc', 'MTOP is currently being printed and routed for official municipal signatures. Please wait for pickup notice.')}</p>
+                            <h4 className="text-[#92400E] dark:text-[#FDE68A] font-bold text-xs uppercase mb-0.5">{t('dashboard.signingTitle', 'Approved — Routing for Signature')}</h4>
+                            <p className="text-xs font-normal text-[#92400E]/90 dark:text-[#FDE68A]/90 leading-snug">{t('dashboard.signingDesc', 'Documents are routing for municipal signatures. Please wait for the pickup notice.')}</p>
                           </div>
                         </div>
                         {info && (
                           <div className="flex justify-between items-center text-[11px] font-semibold text-[#92400E] dark:text-[#FDE68A] pt-1 border-t border-[#F59E0B]/30">
                             <span>Processing Window: {info.filingDateStr} → {info.deadlineStr}</span>
-                            <span>⏳ {info.diffDays > 0 ? `${info.diffDays} days left` : 'Finalizing'}</span>
+                            <span className="flex items-center gap-1">
+                              <Clock size={11} />
+                              <span>{info.diffDays > 0 ? `${info.diffDays} days left` : 'Finalizing'}</span>
+                            </span>
                           </div>
                         )}
                       </div>
