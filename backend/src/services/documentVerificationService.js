@@ -116,55 +116,56 @@ async function extractWithGemini(base64Data, mimeType, docType) {
 
         let prompt = '';
         if (docType === 'orCr') {
-            prompt = `You are a Philippine Land Transportation Office (LTO) document specialist.
-Carefully inspect this image. First determine if this image is genuinely an Official Receipt (OR) or Certificate of Registration (CR) from LTO.
-Extract the following vehicle details and return ONLY a valid JSON object with these keys:
+            prompt = `You are an expert OCR specialist for Philippine vehicle registration documents (LTO OR / CR, Certificate of Registration, Official Receipt).
+Extract all visible tricycle / motorcycle vehicle information from this document image.
+Even if the document is a photocopy, laminated, captured from an angle, or partially faded, extract as much text as possible.
+Return ONLY valid JSON with these keys:
 {
-  "isExpectedDocumentType": true/false (false if this is NOT an LTO OR or CR, e.g. selfie, wrong doc, receipt, blurred non-document),
-  "detectedDocumentType": "LTO Official Receipt / Certificate of Registration" or description of what the image actually is,
+  "isExpectedDocumentType": true,
+  "detectedDocumentType": "LTO Official Receipt / Certificate of Registration",
   "plateNo": "extracted plate number or MV file number, or null if unreadable",
-  "chassisNo": "extracted chassis or frame number, or null if unreadable",
+  "chassisNo": "extracted chassis or frame number (VIN), or null if unreadable",
   "motorNo": "extracted engine or motor number, or null if unreadable",
   "orCrNo": "extracted OR number or CR number, or null if unreadable",
   "make": "extracted vehicle make / brand (e.g. Honda, Kawasaki, Yamaha, Bajaj), or null",
-  "year": "extracted model year or year of manufacture (e.g. 2024), or null",
+  "year": "extracted model year (e.g. 2024), or null",
   "ownerName": "extracted registered owner full name, or null if unreadable",
   "expiryDate": "extracted expiration or registration date (YYYY-MM-DD), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'license') {
-            prompt = `You are a Philippine Land Transportation Office (LTO) driver's license specialist.
-Carefully inspect this image. First determine if this image is genuinely a Philippine Driver's License card.
-Extract the following details and return ONLY a valid JSON object with these keys:
+            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses.
+Extract the driver and license details from this image. Even if the license is plastic, paper, photocopy, or slightly blurry, extract all visible text.
+Return ONLY valid JSON with these keys:
 {
-  "isExpectedDocumentType": true/false (false if this is NOT a Driver's License),
-  "detectedDocumentType": "Driver's License" or description of what the image actually is,
-  "licenseNo": "extracted driver license number, or null if unreadable",
-  "driverName": "extracted full name of driver/licensee, or null if unreadable",
-  "expiryDate": "extracted expiration date (YYYY-MM-DD), or null if unreadable"
+  "isExpectedDocumentType": true,
+  "detectedDocumentType": "Driver's License",
+  "licenseNo": "extracted driver license number (e.g. D01-23-456789), or null",
+  "driverName": "extracted full name of driver/licensee, or null",
+  "expiryDate": "extracted expiration date (YYYY-MM-DD), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'cedula') {
-            prompt = `You are a Philippine Municipal Treasury specialist.
-Carefully inspect this image. First determine if this image is genuinely a Community Tax Certificate (Cedula / CTC).
-Extract the following details and return ONLY a valid JSON object with these keys:
+            prompt = `You are an expert OCR specialist for Philippine Community Tax Certificates (Cedula / CTC).
+Extract the CTC details from this document image.
+Return ONLY valid JSON with these keys:
 {
-  "isExpectedDocumentType": true/false (false if this is NOT a Community Tax Certificate / Cedula),
-  "detectedDocumentType": "Community Tax Certificate (Cedula)" or description of what the image actually is,
-  "serialNo": "extracted CTC / Cedula serial or receipt number, or null if unreadable",
-  "fullName": "extracted taxpayer full name, or null if unreadable",
-  "year": "extracted tax year (e.g. 2026), or null if unreadable",
-  "dateIssued": "extracted date issued (YYYY-MM-DD), or null if unreadable",
+  "isExpectedDocumentType": true,
+  "detectedDocumentType": "Community Tax Certificate (Cedula)",
+  "serialNo": "extracted CTC / Cedula serial number or receipt number, or null",
+  "fullName": "extracted taxpayer full name, or null",
+  "year": "extracted tax year (e.g. 2026), or null",
+  "dateIssued": "extracted date issued (YYYY-MM-DD), or null",
   "placeIssued": "extracted place issued (e.g. Gasan, Marinduque), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'todaEndorsement') {
-            prompt = `You are a Tricycle Operators and Drivers Association (TODA) endorsement inspector.
-Carefully inspect this image. First determine if this image is genuinely a TODA Endorsement or Certificate of Membership.
-Extract the following details and return ONLY a valid JSON object with these keys:
+            prompt = `You are an expert OCR specialist for Tricycle Operators and Drivers Association (TODA) Endorsement Certificates.
+Extract the TODA details from this document image.
+Return ONLY valid JSON with these keys:
 {
-  "isExpectedDocumentType": true/false (false if this is NOT a TODA Endorsement),
-  "detectedDocumentType": "TODA Endorsement Certificate" or description of what the image actually is,
+  "isExpectedDocumentType": true,
+  "detectedDocumentType": "TODA Endorsement Certificate",
   "certNo": "extracted certificate or clearance number, or null",
   "memberName": "extracted member/driver/operator name, or null",
   "todaName": "extracted TODA association name (e.g. BATODA, GT TODA), or null",
@@ -173,23 +174,23 @@ Extract the following details and return ONLY a valid JSON object with these key
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'brgyClearance') {
-            prompt = `You are a Philippine Barangay clearance inspector.
-Carefully inspect this image. First determine if this image is genuinely a Barangay Clearance.
-Extract the following details and return ONLY a valid JSON object with these keys:
+            prompt = `You are an expert OCR specialist for Philippine Barangay Clearances.
+Extract the clearance details from this document image.
+Return ONLY valid JSON with these keys:
 {
-  "isExpectedDocumentType": true/false (false if this is NOT a Barangay Clearance),
-  "detectedDocumentType": "Barangay Clearance" or description of what the image actually is,
+  "isExpectedDocumentType": true,
+  "detectedDocumentType": "Barangay Clearance",
   "clearanceNo": "extracted clearance or control number, or null",
   "residentName": "extracted resident/applicant name, or null",
-  "barangay": "extracted barangay name, or null",
+  "barangay": "extracted barangay name (e.g. Pinggan, Bacong-Bacong, Bahi, Bangbang), or null",
   "dateIssued": "extracted date issued (YYYY-MM-DD), or null",
   "issuer": "extracted punong barangay / secretary name, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Try models in order: gemini-2.5-flash -> gemini-2.0-flash -> gemini-1.5-flash
-        const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+        // Try fast multimodal models in order: gemini-2.0-flash -> gemini-2.0-flash-lite -> gemini-1.5-flash
+        const modelsToTry = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'];
         let responseText = null;
 
         for (const modelName of modelsToTry) {
@@ -227,6 +228,8 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         if (firstBrace !== -1 && lastBrace !== -1) {
             cleaned = cleaned.substring(firstBrace, lastBrace + 1);
         }
+        // Remove trailing commas before closing braces/brackets for JSON compatibility
+        cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
         return JSON.parse(cleaned);
     } catch (err) {
         console.error(`[DocVerify] Gemini OCR error for ${docType}:`, err.message);

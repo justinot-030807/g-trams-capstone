@@ -766,63 +766,88 @@ const ApplyFranchise = () => {
           }
 
           if (docType === 'license') {
-            setFormData(prev => ({
-              ...prev,
-              driverLicenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : prev.driverLicenseNo,
-              driverLicenseExpiryDate: d.expiryDate || prev.driverLicenseExpiryDate,
-              driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : prev.driverName
-            }));
-            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ AI Scan: Driver's License details detected!", 'success');
-          } else if (docType === 'orCr') {
-            setFormData(prev => ({
-              ...prev,
-              plateNo: d.plateNo ? d.plateNo.toUpperCase() : prev.plateNo,
-              motorNo: d.motorNo ? d.motorNo.toUpperCase() : prev.motorNo,
-              chassisNo: d.chassisNo ? d.chassisNo.toUpperCase() : prev.chassisNo,
-              make: d.make || prev.make,
-              made: d.year ? String(d.year) : prev.made,
-              orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : prev.orCrNo,
-              orCrExpiryDate: d.expiryDate || prev.orCrExpiryDate
-            }));
-            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ AI Scan: Plate, Motor, and Chassis details auto-filled!", 'success');
-          } else if (docType === 'todaEndorsement') {
-            setFormData(prev => ({
-              ...prev,
-              todaCertNo: d.certNo ? d.certNo.toUpperCase() : prev.todaCertNo,
-              todaSignatory: d.signatory || prev.todaSignatory,
-              todaCertDate: d.dateIssued || prev.todaCertDate
-            }));
-            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ AI Scan: TODA Certificate details detected!", 'success');
-          } else if (docType === 'brgyClearance') {
-            setFormData(prev => {
-              const detectedBrgy = d.barangay ? normalizeBarangayName(d.barangay) : prev.address;
-              const autoZone = detectedBrgy ? getZoneForBarangay(detectedBrgy) : prev.zone;
-              return {
+            const hasData = d.licenseNo || d.driverName || d.expiryDate;
+            if (hasData) {
+              setFormData(prev => ({
                 ...prev,
-                address: detectedBrgy || prev.address,
-                zone: autoZone || prev.zone,
-                brgyClearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : prev.brgyClearanceNo,
-                brgyClearanceDate: d.dateIssued || prev.brgyClearanceDate,
-                brgyIssuer: d.issuer || prev.brgyIssuer
-              };
-            });
-            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ AI Scan: Barangay Clearance details detected!", 'success');
+                driverLicenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : prev.driverLicenseNo,
+                driverLicenseExpiryDate: d.expiryDate || prev.driverLicenseExpiryDate,
+                driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : prev.driverName
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("✨ AI Scan: Driver's License details detected!", 'success');
+            } else {
+              showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
+            }
+          } else if (docType === 'orCr') {
+            const hasData = d.plateNo || d.motorNo || d.chassisNo || d.make || d.year || d.orCrNo;
+            if (hasData) {
+              setFormData(prev => ({
+                ...prev,
+                plateNo: d.plateNo ? d.plateNo.toUpperCase() : prev.plateNo,
+                motorNo: d.motorNo ? d.motorNo.toUpperCase() : prev.motorNo,
+                chassisNo: d.chassisNo ? d.chassisNo.toUpperCase() : prev.chassisNo,
+                make: d.make || prev.make,
+                made: d.year ? String(d.year) : prev.made,
+                orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : prev.orCrNo,
+                orCrExpiryDate: d.expiryDate || prev.orCrExpiryDate
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("✨ AI Scan: Vehicle details auto-filled from OR/CR!", 'success');
+            } else {
+              showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
+            }
+          } else if (docType === 'todaEndorsement') {
+            const hasData = d.certNo || d.signatory || d.todaName || d.dateIssued;
+            if (hasData) {
+              setFormData(prev => ({
+                ...prev,
+                todaCertNo: d.certNo ? d.certNo.toUpperCase() : prev.todaCertNo,
+                todaSignatory: d.signatory || prev.todaSignatory,
+                todaCertDate: d.dateIssued || prev.todaCertDate
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("✨ AI Scan: TODA Certificate details detected!", 'success');
+            } else {
+              showToast("Document attached. Please verify TODA Certificate No manually.", 'info');
+            }
+          } else if (docType === 'brgyClearance') {
+            const hasData = d.barangay || d.clearanceNo || d.issuer || d.dateIssued;
+            if (hasData) {
+              setFormData(prev => {
+                const detectedBrgy = d.barangay ? normalizeBarangayName(d.barangay) : prev.address;
+                const autoZone = detectedBrgy ? getZoneForBarangay(detectedBrgy) : prev.zone;
+                return {
+                  ...prev,
+                  address: detectedBrgy || prev.address,
+                  zone: autoZone || prev.zone,
+                  brgyClearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : prev.brgyClearanceNo,
+                  brgyClearanceDate: d.dateIssued || prev.brgyClearanceDate,
+                  brgyIssuer: d.issuer || prev.brgyIssuer
+                };
+              });
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("✨ AI Scan: Barangay Clearance details detected!", 'success');
+            } else {
+              showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
+            }
           } else if (docType === 'cedula') {
-            setFormData(prev => ({
-              ...prev,
-              cedulaSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.cedulaSerialNo,
-              cedulaDate: d.dateIssued || prev.cedulaDate,
-              cedulaAddress: d.placeIssued || prev.cedulaAddress
-            }));
-            setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-            showToast("✨ AI Scan: Cedula (CTC) details detected!", 'success');
+            const hasData = d.serialNo || d.dateIssued || d.placeIssued;
+            if (hasData) {
+              setFormData(prev => ({
+                ...prev,
+                cedulaSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.cedulaSerialNo,
+                cedulaDate: d.dateIssued || prev.cedulaDate,
+                cedulaAddress: d.placeIssued || prev.cedulaAddress
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("✨ AI Scan: Cedula (CTC) details detected!", 'success');
+            } else {
+              showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
+            }
           }
         } else if (json.noKey) {
-          showToast(json.message, 'warning');
+          showToast(json.message || 'Notice: GEMINI_API_KEY is not configured on the server. AI auto-fill is disabled.', 'warning');
         } else if (json.message) {
           showToast(json.message, 'info');
         }

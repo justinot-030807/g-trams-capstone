@@ -757,7 +757,7 @@ const scanDocument = async (req, res) => {
         console.error('Error in scanDocument:', error);
         return res.status(200).json({
             success: false,
-            message: 'Kasalukuyang hindi maabot ang AI scanning service.'
+            message: 'AI document scanning service is temporarily unavailable. You can enter details manually.'
         });
     }
 };
