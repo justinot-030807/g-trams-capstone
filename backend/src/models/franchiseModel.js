@@ -91,7 +91,11 @@ const franchiseSchema = new mongoose.Schema({
             cedula: { type: mongoose.Schema.Types.Mixed, default: null }
         },
         overallNotes: { type: String, default: '' }
-    }
+    },
+
+    // Tracks raw AI OCR extractions and applicant overrides
+    aiScannedData: { type: mongoose.Schema.Types.Mixed, default: null },
+    aiDiscrepancies: { type: mongoose.Schema.Types.Mixed, default: [] }
 
 }, { timestamps: true });
 

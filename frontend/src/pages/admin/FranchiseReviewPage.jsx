@@ -14,6 +14,7 @@ import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
 
 const REJECT_REASONS = [
+  'Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)',
   'Missing or Expired LTO Official Receipt / Certificate of Registration (OR/CR)',
   'Chassis Serial Number mismatch between application form and OR/CR document',
   'Motor / Engine Serial Number mismatch between application form and OR/CR document',
@@ -308,6 +309,14 @@ const FranchiseReviewPage = () => {
   ];
 
   const currentDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
+
+  const orCrDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
+    d.docType === 'orCr' || d.field?.includes('orCr') || d.field === 'plateNo' || d.field === 'motorNo' || d.field === 'chassisNo'
+  );
+
+  const licenseDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
+    d.docType === 'license' || d.field?.includes('driverLicense')
+  );
 
   const handleSelectDoc = (key) => {
     if (key === activeDocKey) return;
@@ -649,6 +658,16 @@ const FranchiseReviewPage = () => {
             <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/15 shrink-0">
               {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? 'Needs Review' : currentApp.status}
             </span>
+
+            {currentApp.aiDiscrepancies && currentApp.aiDiscrepancies.length > 0 && (
+              <span 
+                className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-200 border border-amber-400/40 flex items-center gap-1 shrink-0" 
+                title="AI detected discrepancy with applicant entered dates or serials"
+              >
+                <AlertTriangle size={12} className="text-amber-300" />
+                <span>Discrepancy Flagged</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -888,6 +907,49 @@ const FranchiseReviewPage = () => {
                 {/* OR/CR Details */}
                 {activeDocKey === 'orCrDocument' && (
                   <div className="space-y-1.5 text-xs">
+                    {/* Discrepancy Alert */}
+                    {orCrDiscrepancies.length > 0 && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span>Document Discrepancy Flagged</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectField('orCrDocument');
+                              setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
+                              setIsRejecting(true);
+                            }}
+                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 underline cursor-pointer"
+                          >
+                            Quick Reject
+                          </button>
+                        </div>
+                        {orCrDiscrepancies.map((d, i) => (
+                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                            <div className="grid grid-cols-2 gap-1 text-[11px]">
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
+                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                              </div>
+                            </div>
+                            {d.reason && (
+                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                {d.reason}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Plate No.</span>
@@ -941,6 +1003,48 @@ const FranchiseReviewPage = () => {
                 {/* Driver's License Details */}
                 {activeDocKey === 'license' && (
                   <div className="space-y-1.5 text-xs">
+                    {/* Discrepancy Alert */}
+                    {licenseDiscrepancies.length > 0 && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span>Document Discrepancy Flagged</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectField('license');
+                              setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
+                              setIsRejecting(true);
+                            }}
+                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 underline cursor-pointer"
+                          >
+                            Quick Reject
+                          </button>
+                        </div>
+                        {licenseDiscrepancies.map((d, i) => (
+                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                            <div className="grid grid-cols-2 gap-1 text-[11px]">
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
+                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                              </div>
+                            </div>
+                            {d.reason && (
+                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                {d.reason}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Driver &amp; Designation</span>
                       <div className="flex items-center justify-between gap-1 mt-0.5">
@@ -1084,6 +1188,11 @@ const FranchiseReviewPage = () => {
               {docTabs.map((tab, idx) => {
                 const isActive = tab.key === activeDocKey;
                 const hasFile = Boolean(tab.url);
+                const hasDiscrepancy = (currentApp?.aiDiscrepancies || []).some(d => {
+                  if (tab.key === 'orCrDocument') return d.docType === 'orCr' || d.field?.includes('orCr') || d.field === 'plateNo';
+                  if (tab.key === 'license') return d.docType === 'license' || d.field?.includes('driverLicense');
+                  return false;
+                });
 
                 return (
                   <button
@@ -1093,11 +1202,16 @@ const FranchiseReviewPage = () => {
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                       isActive
                         ? 'bg-[#9E2A2B] text-white shadow-xs'
+                        : hasDiscrepancy
+                        ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
+                    title={hasDiscrepancy ? 'Document discrepancy detected' : ''}
                   >
                     <span>{idx + 1}. {tab.short}</span>
-                    {hasFile ? (
+                    {hasDiscrepancy ? (
+                      <AlertTriangle size={12} className={isActive ? 'text-amber-200' : 'text-amber-600 dark:text-amber-400 stroke-[2.5]'} />
+                    ) : hasFile ? (
                       <Check size={12} className={isActive ? 'text-white' : 'text-emerald-600 dark:text-emerald-400 stroke-[3]'} />
                     ) : (
                       <AlertCircle size={12} className={isActive ? 'text-white' : 'text-rose-500'} />

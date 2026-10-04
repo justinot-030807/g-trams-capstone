@@ -55,6 +55,13 @@ const createFranchise = async (req, res) => {
             cedulaUrl: findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']) || req.body.cedulaUrl || ''
         };
         
+        if (typeof data.aiScannedData === 'string') {
+            try { data.aiScannedData = JSON.parse(data.aiScannedData); } catch {}
+        }
+        if (typeof data.aiDiscrepancies === 'string') {
+            try { data.aiDiscrepancies = JSON.parse(data.aiDiscrepancies); } catch {}
+        }
+
         const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'administrator');
         const franchiseOwner = (isAdmin && req.body.operator) ? req.body.operator : req.user._id;
         if (!isAdmin || !data.status) {
@@ -161,6 +168,13 @@ const updateFranchise = async (req, res) => {
         }
         if (updateData.isOperatorDriver !== undefined) {
             updateData.isOperatorDriver = updateData.isOperatorDriver === true || updateData.isOperatorDriver === 'true';
+        }
+
+        if (typeof updateData.aiScannedData === 'string') {
+            try { updateData.aiScannedData = JSON.parse(updateData.aiScannedData); } catch {}
+        }
+        if (typeof updateData.aiDiscrepancies === 'string') {
+            try { updateData.aiDiscrepancies = JSON.parse(updateData.aiDiscrepancies); } catch {}
         }
 
         const files = req.files || {};

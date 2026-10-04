@@ -147,6 +147,13 @@ const ApplyFranchise = () => {
     cedulaDoc: false
   });
 
+  // Raw AI Scanned data tracker & discrepancy confirmation modal
+  const [aiScannedData, setAiScannedData] = useState({});
+  const [discrepancyModal, setDiscrepancyModal] = useState({
+    isOpen: false,
+    discrepancies: []
+  });
+
   // Real-time uniqueness checker state
   const [duplicateStatus, setDuplicateStatus] = useState({
     plateNo: { checking: false, duplicate: false, message: '' },
@@ -416,6 +423,7 @@ const ApplyFranchise = () => {
     try {
       localforage.setItem(key, {
         formData,
+        aiScannedData,
         currentStep,
         savedAt: now.toISOString(),
         timeFormatted: timeStr,
@@ -445,19 +453,21 @@ const ApplyFranchise = () => {
     if (formMode === 'New' || formMode === 'Renewal') {
       const timer = setTimeout(() => {
         handleSaveProgress(false);
-      }, 800);
+      }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [formData, currentStep, formMode, selectedId]);
+  }, [formData, aiScannedData, currentStep, formMode, selectedId]);
 
   // Keep references for immediate auto-save on navigation / back / unload
   const formDataRef = useRef(formData);
   const currentStepRef = useRef(currentStep);
   const formModeRef = useRef(formMode);
+  const aiScannedDataRef = useRef(aiScannedData);
 
   useEffect(() => { formDataRef.current = formData; }, [formData]);
   useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
   useEffect(() => { formModeRef.current = formMode; }, [formMode]);
+  useEffect(() => { aiScannedDataRef.current = aiScannedData; }, [aiScannedData]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -465,6 +475,7 @@ const ApplyFranchise = () => {
         const key = getDraftKey();
         const dataToSave = formDataRef.current;
         const stepToSave = currentStepRef.current;
+        const aiToSave = aiScannedDataRef.current;
         const hasContent = (
           stepToSave > 1 ||
           Boolean(dataToSave.plateNo?.trim()) ||
@@ -480,6 +491,7 @@ const ApplyFranchise = () => {
           const now = new Date();
           localforage.setItem(key, {
             formData: dataToSave,
+            aiScannedData: aiToSave,
             currentStep: stepToSave,
             savedAt: now.toISOString(),
             timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -536,6 +548,7 @@ const ApplyFranchise = () => {
     setHasDraftRestored(false);
     setUploadedDocs({});
     setFilePreviews({});
+    setAiScannedData({});
 
     setFormData({ 
       fullName: loggedInUserName, 
@@ -611,7 +624,7 @@ const ApplyFranchise = () => {
 
   const handleConfirmResumeDraft = () => {
     if (!draftResumeModal.draftData) return;
-    const { formData: savedForm, currentStep: savedStep } = draftResumeModal.draftData;
+    const { formData: savedForm, currentStep: savedStep, aiScannedData: savedAiData } = draftResumeModal.draftData;
 
     setFormData({
       ...savedForm,
@@ -620,6 +633,10 @@ const ApplyFranchise = () => {
       zone: savedForm.zone ? normalizeZone(savedForm.zone) : (loggedInAddress ? getZoneForBarangay(loggedInAddress) : ''),
       todaName: loggedInToda || savedForm.todaName
     });
+
+    if (savedAiData && typeof savedAiData === 'object') {
+      setAiScannedData(savedAiData);
+    }
 
     const previews = {};
     if (savedForm.orCrUrl) previews.orCrDocument = savedForm.orCrUrl;
@@ -659,6 +676,7 @@ const ApplyFranchise = () => {
       await localforage.removeItem('gtrams_apply_draft');
       localStorage.removeItem('gtrams_apply_draft');
       setHasDraftRestored(false);
+      setAiScannedData({});
       initFreshForm();
       showToast('Draft has been reset.', 'info');
     } catch (err) {
@@ -734,6 +752,12 @@ const ApplyFranchise = () => {
       brgyClearanceUrl: franchise.brgyClearanceUrl || '',
       cedulaUrl: franchise.cedulaUrl || ''
     });
+
+    if (franchise.aiScannedData && typeof franchise.aiScannedData === 'object') {
+      setAiScannedData(franchise.aiScannedData);
+    } else {
+      setAiScannedData({});
+    }
 
     const previews = {};
     if (franchise.orCrUrl) previews.orCrDocument = franchise.orCrUrl;
@@ -870,6 +894,17 @@ const ApplyFranchise = () => {
               const today = new Date().toISOString().split('T')[0];
               const isExpired = normExpiry && normExpiry < today;
 
+              setAiScannedData(prev => ({
+                ...prev,
+                license: {
+                  licenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : '',
+                  expiryDate: normExpiry || '',
+                  driverName: d.driverName || '',
+                  isExpired: Boolean(isExpired),
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+
               setFormData(prev => ({
                 ...prev,
                 fullName: (!prev.fullName && d.driverName) ? d.driverName : prev.fullName,
@@ -886,7 +921,7 @@ const ApplyFranchise = () => {
                   `The scanned Driver's License has expired (validity ended on ${normExpiry}). An active, unexpired license is required by the Sangguniang Bayan Franchising Office. Please verify or update the license.`
                 );
               } else {
-                showToast("✨ AI Scan: Driver's License details detected!", 'success');
+                showToast("AI Scan: Driver's License details detected.", 'success');
               }
             } else {
               showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
@@ -897,6 +932,21 @@ const ApplyFranchise = () => {
               const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
               const today = new Date().toISOString().split('T')[0];
               const isExpired = normExpiry && normExpiry < today;
+
+              setAiScannedData(prev => ({
+                ...prev,
+                orCr: {
+                  plateNo: d.plateNo ? d.plateNo.toUpperCase() : '',
+                  motorNo: d.motorNo ? d.motorNo.toUpperCase() : '',
+                  chassisNo: d.chassisNo ? d.chassisNo.toUpperCase() : '',
+                  make: d.make || '',
+                  year: d.year ? String(d.year) : '',
+                  orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : '',
+                  expiryDate: normExpiry || '',
+                  isExpired: Boolean(isExpired),
+                  scannedAt: new Date().toISOString()
+                }
+              }));
 
               setFormData(prev => ({
                 ...prev,
@@ -917,7 +967,7 @@ const ApplyFranchise = () => {
                   `The scanned vehicle registration has expired (validity ended on ${normExpiry}). Please renew with the LTO before applying for a franchise.`
                 );
               } else {
-                showToast("✨ AI Scan: Vehicle details auto-filled from OR/CR!", 'success');
+                showToast("AI Scan: Vehicle details auto-filled from OR/CR.", 'success');
               }
             } else {
               showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
@@ -925,6 +975,16 @@ const ApplyFranchise = () => {
           } else if (docType === 'todaEndorsement') {
             const hasData = d.certNo || d.signatory || d.todaName || d.dateIssued;
             if (hasData) {
+              setAiScannedData(prev => ({
+                ...prev,
+                todaEndorsement: {
+                  certNo: d.certNo ? d.certNo.toUpperCase() : '',
+                  signatory: d.signatory || '',
+                  todaName: d.todaName || '',
+                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
               setFormData(prev => ({
                 ...prev,
                 todaCertNo: d.certNo ? d.certNo.toUpperCase() : prev.todaCertNo,
@@ -932,13 +992,23 @@ const ApplyFranchise = () => {
                 todaCertDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.todaCertDate
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("✨ AI Scan: TODA Certificate details detected!", 'success');
+              showToast("AI Scan: TODA Certificate details detected.", 'success');
             } else {
               showToast("Document attached. Please verify TODA Certificate No manually.", 'info');
             }
           } else if (docType === 'brgyClearance') {
             const hasData = d.barangay || d.clearanceNo || d.issuer || d.dateIssued;
             if (hasData) {
+              setAiScannedData(prev => ({
+                ...prev,
+                brgyClearance: {
+                  clearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : '',
+                  barangay: d.barangay || '',
+                  issuer: d.issuer || '',
+                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
               setFormData(prev => {
                 const detectedBrgy = d.barangay ? normalizeBarangayName(d.barangay) : prev.address;
                 const autoZone = detectedBrgy ? getZoneForBarangay(detectedBrgy) : prev.zone;
@@ -952,13 +1022,22 @@ const ApplyFranchise = () => {
                 };
               });
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("✨ AI Scan: Barangay Clearance details detected!", 'success');
+              showToast("AI Scan: Barangay Clearance details detected.", 'success');
             } else {
               showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
             }
           } else if (docType === 'cedula') {
             const hasData = d.serialNo || d.dateIssued || d.placeIssued;
             if (hasData) {
+              setAiScannedData(prev => ({
+                ...prev,
+                cedula: {
+                  serialNo: d.serialNo ? d.serialNo.toUpperCase() : '',
+                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
+                  placeIssued: d.placeIssued || '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
               setFormData(prev => ({
                 ...prev,
                 cedulaSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.cedulaSerialNo,
@@ -966,7 +1045,7 @@ const ApplyFranchise = () => {
                 cedulaAddress: d.placeIssued || prev.cedulaAddress
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("✨ AI Scan: Cedula (CTC) details detected!", 'success');
+              showToast("AI Scan: Cedula (CTC) details detected.", 'success');
             } else {
               showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
             }
@@ -1251,8 +1330,152 @@ const ApplyFranchise = () => {
     }
   };
 
+  // AI OCR Discrepancy Analysis (Detects if applicant edited scanned data or expired dates)
+  const getAiDiscrepancies = (currForm = formData, currAi = aiScannedData) => {
+    const discrepancies = [];
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. License Expiry Discrepancy
+    if (currAi?.license?.expiryDate) {
+      const aiExp = currAi.license.expiryDate;
+      const userExp = currForm.driverLicenseExpiryDate || '';
+      const wasScannedExpired = aiExp < today;
+      const isEnteredValid = userExp >= today;
+
+      if (wasScannedExpired && isEnteredValid) {
+        discrepancies.push({
+          field: 'driverLicenseExpiryDate',
+          docType: 'license',
+          step: 1,
+          label: "Driver's License Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'critical',
+          reason: `Scanned Driver's License indicates expired date (${aiExp}), but entered date was modified to an unexpired date (${userExp}).`
+        });
+      } else if (userExp && userExp !== aiExp) {
+        discrepancies.push({
+          field: 'driverLicenseExpiryDate',
+          docType: 'license',
+          step: 1,
+          label: "Driver's License Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'warning',
+          reason: `Scanned expiry date (${aiExp}) differs from entered date (${userExp}).`
+        });
+      }
+    }
+
+    // 2. OR/CR Expiry Discrepancy
+    if (currAi?.orCr?.expiryDate) {
+      const aiExp = currAi.orCr.expiryDate;
+      const userExp = currForm.orCrExpiryDate || '';
+      const wasScannedExpired = aiExp < today;
+      const isEnteredValid = userExp >= today;
+
+      if (wasScannedExpired && isEnteredValid) {
+        discrepancies.push({
+          field: 'orCrExpiryDate',
+          docType: 'orCr',
+          step: 2,
+          label: "LTO OR/CR Registration Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'critical',
+          reason: `Scanned LTO OR/CR indicates expired registration date (${aiExp}), but entered date was modified to an unexpired date (${userExp}).`
+        });
+      } else if (userExp && userExp !== aiExp) {
+        discrepancies.push({
+          field: 'orCrExpiryDate',
+          docType: 'orCr',
+          step: 2,
+          label: "LTO OR/CR Registration Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'warning',
+          reason: `Scanned registration expiry date (${aiExp}) differs from entered date (${userExp}).`
+        });
+      }
+    }
+
+    // 3. Plate No Discrepancy
+    if (currAi?.orCr?.plateNo && currForm.plateNo) {
+      const cleanAi = currAi.orCr.plateNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = currForm.plateNo.replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'plateNo',
+          docType: 'orCr',
+          step: 2,
+          label: "Vehicle Plate / MV File Number",
+          scannedValue: currAi.orCr.plateNo,
+          enteredValue: currForm.plateNo,
+          severity: 'warning',
+          reason: `Scanned plate/MV number (${currAi.orCr.plateNo}) differs from entered value (${currForm.plateNo}).`
+        });
+      }
+    }
+
+    // 4. Chassis No Discrepancy
+    if (currAi?.orCr?.chassisNo && currForm.chassisNo) {
+      const cleanAi = currAi.orCr.chassisNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = currForm.chassisNo.replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'chassisNo',
+          docType: 'orCr',
+          step: 2,
+          label: "Chassis Serial Number",
+          scannedValue: currAi.orCr.chassisNo,
+          enteredValue: currForm.chassisNo,
+          severity: 'warning',
+          reason: `Scanned chassis serial number (${currAi.orCr.chassisNo}) differs from entered value (${currForm.chassisNo}).`
+        });
+      }
+    }
+
+    // 5. Motor No Discrepancy
+    if (currAi?.orCr?.motorNo && currForm.motorNo) {
+      const cleanAi = currAi.orCr.motorNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = currForm.motorNo.replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'motorNo',
+          docType: 'orCr',
+          step: 2,
+          label: "Motor / Engine Number",
+          scannedValue: currAi.orCr.motorNo,
+          enteredValue: currForm.motorNo,
+          severity: 'warning',
+          reason: `Scanned motor number (${currAi.orCr.motorNo}) differs from entered value (${currForm.motorNo}).`
+        });
+      }
+    }
+
+    // 6. Driver License No Discrepancy
+    if (currAi?.license?.licenseNo && currForm.driverLicenseNo) {
+      const cleanAi = currAi.license.licenseNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = currForm.driverLicenseNo.replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'driverLicenseNo',
+          docType: 'license',
+          step: 1,
+          label: "Driver's License Number",
+          scannedValue: currAi.license.licenseNo,
+          enteredValue: currForm.driverLicenseNo,
+          severity: 'warning',
+          reason: `Scanned driver license number (${currAi.license.licenseNo}) differs from entered value (${currForm.driverLicenseNo}).`
+        });
+      }
+    }
+
+    return discrepancies;
+  };
+
   // Submit Handler
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, bypassDiscrepancyCheck = false) => {
     if (e?.preventDefault) e.preventDefault();
     if (isSubmitting) return;
 
@@ -1282,6 +1505,17 @@ const ApplyFranchise = () => {
       }
     }
 
+    const discrepancies = getAiDiscrepancies(formData, aiScannedData);
+    const criticalDiscrepancies = discrepancies.filter(d => d.severity === 'critical');
+
+    if (!bypassDiscrepancyCheck && criticalDiscrepancies.length > 0) {
+      setDiscrepancyModal({
+        isOpen: true,
+        discrepancies: criticalDiscrepancies
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setUploadPhase('Preparing application submission...');
 
@@ -1299,6 +1533,10 @@ const ApplyFranchise = () => {
       if (!formData.dateApplied) {
         submitData.append('dateApplied', new Date().toISOString().substring(0, 10));
       }
+
+      // Attach raw AI OCR scan data and discrepancy audit log
+      submitData.append('aiScannedData', JSON.stringify(aiScannedData || {}));
+      submitData.append('aiDiscrepancies', JSON.stringify(discrepancies || []));
 
       setUploadPhase('Uploading documents and attachments...');
 
@@ -2610,6 +2848,93 @@ const ApplyFranchise = () => {
           onConfirm={handleConfirmCancel}
           isSubmitting={cancelModal.isSubmitting}
         />
+      )}
+
+      {/* AI OCR Discrepancy Confirmation Modal */}
+      {discrepancyModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-400">
+              <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
+            </div>
+
+            <h3 className="text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-1">
+              Document Verification Notice
+            </h3>
+
+            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-4 leading-relaxed">
+              The system detected differences between your uploaded document image and the validity date entered in your application.
+            </p>
+
+            {/* Discrepancy comparison cards */}
+            <div className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-1">
+              {discrepancyModal.discrepancies.map((disc, idx) => (
+                <div key={idx} className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-xs space-y-1.5">
+                  <div className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                    {disc.label}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-red-200 dark:border-red-900/50">
+                      <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold block">Detected from Image:</span>
+                      <span className="font-mono font-bold text-red-700 dark:text-red-300">
+                        {disc.scannedValue || 'None'} (Expired)
+                      </span>
+                    </div>
+                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-slate-200 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Entered in Application:</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                        {disc.enteredValue || 'None'}
+                      </span>
+                    </div>
+                  </div>
+                  {disc.reason && (
+                    <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] leading-normal pt-0.5">
+                      {disc.reason}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Municipal Warning Box */}
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs mb-5 leading-relaxed">
+              <span className="font-bold block mb-0.5">Official Sangguniang Bayan Reminder:</span>
+              Municipal evaluators personally examine all uploaded document images. Submitting expired or non-matching attachments will result in the immediate rejection of your application.
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const firstDisc = discrepancyModal.discrepancies[0];
+                  setDiscrepancyModal({ isOpen: false, discrepancies: [] });
+                  if (firstDisc?.step) {
+                    setCurrentStep(firstDisc.step);
+                    navigate(`?mode=${(formMode || 'New').toLowerCase()}&step=${firstDisc.step}`);
+                  }
+                  if (firstDisc?.field) {
+                    setTimeout(() => scrollToField(firstDisc.field), 150);
+                  }
+                }}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                <span>Review &amp; Edit Details</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDiscrepancyModal({ isOpen: false, discrepancies: [] });
+                  handleSubmit(null, true);
+                }}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                <span>Proceed &amp; Submit Anyway</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Draft Resume Confirmation Modal */}
