@@ -1233,10 +1233,10 @@ const ApplyFranchise = () => {
   const disabledClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] text-base min-h-[48px] cursor-not-allowed font-medium";
 
   const steps = [
-    { num: 1, title: 'Operator & Driver' },
-    { num: 2, title: 'Vehicle (OR/CR)' },
-    { num: 3, title: 'Clearances' },
-    { num: 4, title: 'Cedula & Review' }
+    { num: 1, title: 'Operator', fullTitle: 'Operator & Driver' },
+    { num: 2, title: 'Vehicle', fullTitle: 'Vehicle & LTO OR/CR' },
+    { num: 3, title: 'Clearances', fullTitle: 'Barangay & TODA Clearances' },
+    { num: 4, title: 'Review', fullTitle: 'Cedula & Final Review' }
   ];
 
   const activeOrPendingUnits = myFranchises.filter(f => !['Cancelled', 'Revoked'].includes(f.status));
@@ -1335,15 +1335,15 @@ const ApplyFranchise = () => {
             {/* Form Title in Banner */}
             <div className="text-center pt-1 pb-3 flex flex-col items-center">
               <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white uppercase">
-                {formMode === 'New' ? 'New Franchise Application' : formMode === 'Renewal' ? 'Franchise Renewal' : 'Update Application Details'}
+                {formMode === 'Renewal' ? 'RENEW APPLICATION' : 'NEW APPLICATION'}
               </h1>
               <p className="text-xs sm:text-sm text-white/90 font-medium mt-0.5">
                 Municipality of Gasan • Sangguniang Bayan Franchising Office
               </p>
             </div>
 
-            {/* Stepper Navigation */}
-            <div className="flex items-start w-full px-1 sm:px-6 pt-1 select-none">
+            {/* Stepper Navigation - Equal 4-column grid, 100% balanced and aligned */}
+            <div className="grid grid-cols-4 w-full px-1 sm:px-4 pt-1 select-none">
               {steps.map((step, idx) => {
                 const isCompleted = currentStep > step.num;
                 const isCurrent = currentStep === step.num;
@@ -1360,7 +1360,7 @@ const ApplyFranchise = () => {
                         navigate(`?mode=${currentMode}&step=${step.num}`);
                       }
                     }}
-                    className={`relative flex-1 flex flex-col items-center select-none ${
+                    className={`relative flex flex-col items-center text-center select-none ${
                       step.num < currentStep ? 'cursor-pointer group' : ''
                     }`}
                   >
@@ -1390,7 +1390,7 @@ const ApplyFranchise = () => {
                       )}
                     </div>
                     
-                    <span className={`text-xs sm:text-sm font-semibold mt-1.5 text-center tracking-tight transition-colors px-1 truncate max-w-full ${
+                    <span className={`text-[11px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-0.5 truncate w-full ${
                       isCurrent ? 'text-white font-bold' : isCompleted ? 'text-[#D4AF37]' : 'text-white/70'
                     }`}>
                       {step.title}
@@ -1401,15 +1401,15 @@ const ApplyFranchise = () => {
             </div>
 
             {/* Gold Progress Bar */}
-            <div className="w-full bg-black/25 h-1.5 rounded-full overflow-hidden mt-4">
+            <div className="w-full bg-black/25 h-1.5 rounded-full overflow-hidden mt-3">
               <div 
                 className="bg-[#D4AF37] h-full rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${calculateProgress().percentage}%` }}
               />
             </div>
-            <div className="flex justify-between items-center text-xs text-white/80 mt-1.5 font-medium px-1">
-              <span>Progress: {calculateProgress().percentage}% Completed</span>
-              <span>Step {currentStep} of 4</span>
+            <div className="flex justify-between items-center text-xs text-white/90 mt-1.5 font-medium px-1">
+              <span>Step {currentStep} of 4: <strong className="font-bold text-white">{steps[currentStep - 1]?.fullTitle || steps[currentStep - 1]?.title}</strong></span>
+              <span className="font-bold text-[#D4AF37]">{calculateProgress().percentage}%</span>
             </div>
           </div>
         </div>
@@ -1451,7 +1451,7 @@ const ApplyFranchise = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Operator Full Name <span className="text-red-500">*</span>
+                        Operator Full Name
                       </label>
                       <input 
                         type="text" 
@@ -1467,7 +1467,7 @@ const ApplyFranchise = () => {
                     <div>
                       <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                          Barangay Residency / Address <span className="text-red-500">*</span>
+                          Barangay Residency / Address
                         </label>
                         {formData.address && getZoneForBarangay(formData.address) && (
                           <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
@@ -1496,7 +1496,7 @@ const ApplyFranchise = () => {
                   {/* Driver Designation Choice */}
                   <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
-                      Who will drive the tricycle? <span className="text-red-500">*</span>
+                      Who will drive the tricycle?
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -1555,7 +1555,7 @@ const ApplyFranchise = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driver's Full Name <span className="text-red-500">*</span>
+                          Driver's Full Name
                         </label>
                         <input 
                           type="text" 
@@ -1569,7 +1569,7 @@ const ApplyFranchise = () => {
                       </div>
                       <div>
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driver Contact No. <span className="text-red-500">*</span>
+                          Driver Contact No.
                         </label>
                         <input 
                           type="tel" 
@@ -1589,7 +1589,7 @@ const ApplyFranchise = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Driver's License Photo <span className="text-red-500">*</span>
+                      Driver's License Photo
                     </label>
                     <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
                       <Sparkles size={14} /> Real-time AI OCR
@@ -1621,7 +1621,7 @@ const ApplyFranchise = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driver's License Number <span className="text-red-500">*</span>
+                          Driver's License Number
                         </label>
                         <input 
                           type="text" 
@@ -1694,7 +1694,7 @@ const ApplyFranchise = () => {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      LTO Official Receipt / Certificate of Registration (OR / CR) <span className="text-red-500">*</span>
+                      LTO Official Receipt / Certificate of Registration (OR / CR)
                     </label>
                     <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
                       <Sparkles size={14} /> Auto-reads Plate & Chassis
@@ -1735,7 +1735,7 @@ const ApplyFranchise = () => {
                     {/* Make / Brand */}
                     <div id="field-make">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Make / Brand <span className="text-red-500">*</span>
+                        Make / Brand
                       </label>
                       <input 
                         type="text" 
@@ -1771,7 +1771,7 @@ const ApplyFranchise = () => {
                     {/* Model Year */}
                     <div id="field-made">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Model Year <span className="text-red-500">*</span>
+                        Model Year
                       </label>
                       <input 
                         type="text" 
@@ -1791,7 +1791,7 @@ const ApplyFranchise = () => {
                       <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                            Route / Municipal Zone <span className="text-red-500">*</span>
+                            Route / Municipal Zone
                           </label>
                           {formData.address && getZoneForBarangay(formData.address) && (
                             <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
@@ -1847,7 +1847,7 @@ const ApplyFranchise = () => {
                     {/* Plate Number */}
                     <div id="field-plateNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Plate Number <span className="text-red-500">*</span>
+                        Plate Number
                       </label>
                       <input 
                         type="text" 
@@ -1879,7 +1879,7 @@ const ApplyFranchise = () => {
                     {/* Engine / Motor Number */}
                     <div id="field-motorNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Engine / Motor No. <span className="text-red-500">*</span>
+                        Engine / Motor No.
                       </label>
                       <input 
                         type="text" 
@@ -1906,7 +1906,7 @@ const ApplyFranchise = () => {
                     {/* Chassis Serial Number */}
                     <div id="field-chassisNo" className="sm:col-span-2">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Chassis Serial No. <span className="text-red-500">*</span>
+                        Chassis Serial No.
                       </label>
                       <input 
                         type="text" 
@@ -2006,7 +2006,7 @@ const ApplyFranchise = () => {
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      TODA Endorsement Certificate <span className="text-red-500">*</span>
+                      TODA Endorsement Certificate
                     </label>
                     <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
                       <Sparkles size={14} /> AI Scanner
@@ -2058,7 +2058,7 @@ const ApplyFranchise = () => {
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Barangay Clearance <span className="text-red-500">*</span>
+                      Barangay Clearance
                     </label>
                     <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
                       <Sparkles size={14} /> AI Scanner
@@ -2152,7 +2152,7 @@ const ApplyFranchise = () => {
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Community Tax Certificate (Cedula / CTC) <span className="text-red-500">*</span>
+                      Community Tax Certificate (Cedula / CTC)
                     </label>
                     <span className="text-xs sm:text-sm font-semibold text-[#9E2A2B] dark:text-[#D4AF37] flex items-center gap-1">
                       <Sparkles size={14} /> AI Scanner
@@ -2176,7 +2176,7 @@ const ApplyFranchise = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Cedula Serial Number <span className="text-red-500">*</span>
+                        Cedula Serial Number
                       </label>
                       <input 
                         type="text" 

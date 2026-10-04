@@ -82,7 +82,7 @@ const DocumentUploadCard = ({
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
             <p className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate leading-snug">
-              {label} {required && <span className="text-[#B91C1C] dark:text-[#EF4444]">*</span>}
+              {label}
             </p>
             <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
               {isCompressing ? (

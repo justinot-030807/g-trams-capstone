@@ -23,8 +23,13 @@ const {
     scanDocument
 } = require('../controllers/franchiseController');
 
-// AI document scanning for operator form auto-fill
-router.post('/scan-document', protect, upload.single('file'), scanDocument);
+const memoryUpload = require('multer')({
+    storage: require('multer').memoryStorage(),
+    limits: { fileSize: 15 * 1024 * 1024 }
+});
+
+// AI document scanning for operator form auto-fill (instant memory buffer, zero Cloudinary latency)
+router.post('/scan-document', protect, memoryUpload.single('file'), scanDocument);
 
 // Check unique plateNo / motorNo / chassisNo in real-time
 router.get('/check-unique', protect, checkUniqueFranchiseField);

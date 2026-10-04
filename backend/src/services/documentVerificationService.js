@@ -195,27 +195,47 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
 
         for (const modelName of modelsToTry) {
             try {
+                // Official @google/genai standard multimodal contents format
                 const interaction = await ai.models.generateContent({
                     model: modelName,
                     contents: [
                         {
-                            role: 'user',
-                            parts: [
-                                { text: prompt },
-                                {
-                                    inlineData: {
-                                        mimeType: mimeType || 'image/jpeg',
-                                        data: base64Data
-                                    }
-                                }
-                            ]
-                        }
+                            inlineData: {
+                                mimeType: mimeType || 'image/jpeg',
+                                data: base64Data
+                            }
+                        },
+                        prompt
                     ]
                 });
                 responseText = interaction.text || (interaction.candidates?.[0]?.content?.parts?.[0]?.text);
                 if (responseText) break;
             } catch (callErr) {
-                console.warn(`[DocVerify] Model ${modelName} call failed:`, callErr.message);
+                console.warn(`[DocVerify] Model ${modelName} standard format failed:`, callErr.message);
+                try {
+                    // Fallback to nested parts format
+                    const fallbackInteraction = await ai.models.generateContent({
+                        model: modelName,
+                        contents: [
+                            {
+                                role: 'user',
+                                parts: [
+                                    { text: prompt },
+                                    {
+                                        inlineData: {
+                                            mimeType: mimeType || 'image/jpeg',
+                                            data: base64Data
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    });
+                    responseText = fallbackInteraction.text || (fallbackInteraction.candidates?.[0]?.content?.parts?.[0]?.text);
+                    if (responseText) break;
+                } catch (fallbackErr) {
+                    console.warn(`[DocVerify] Model ${modelName} fallback format failed:`, fallbackErr.message);
+                }
             }
         }
 

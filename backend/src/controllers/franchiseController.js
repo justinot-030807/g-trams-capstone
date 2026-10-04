@@ -710,6 +710,12 @@ const scanDocument = async (req, res) => {
             base64Data = parts[1];
         }
 
+        // Direct memory buffer from memoryUpload
+        if (!base64Data && file && file.buffer) {
+            base64Data = file.buffer.toString('base64');
+            mimeType = file.mimetype || 'image/jpeg';
+        }
+
         if (!process.env.GEMINI_API_KEY) {
             return res.status(200).json({
                 success: false,
