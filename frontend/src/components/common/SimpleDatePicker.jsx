@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Calendar, X, Sparkles } from 'lucide-react';
+import { Calendar, X } from 'lucide-react';
 
 const SimpleDatePicker = ({
   name,
@@ -7,7 +7,6 @@ const SimpleDatePicker = ({
   onChange,
   label,
   required = false,
-  mode = 'general', // 'issuance' | 'expiry' | 'general'
   helperText,
   disabled = false,
   error
@@ -27,36 +26,6 @@ const SimpleDatePicker = ({
     e.stopPropagation();
     if (onChange) {
       onChange({ target: { name, value: '' } });
-    }
-  };
-
-  const setToday = (e) => {
-    e.stopPropagation();
-    const today = new Date();
-    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    if (onChange) {
-      onChange({ target: { name, value: iso } });
-    }
-  };
-
-  const addYears = (numYears, e) => {
-    e.stopPropagation();
-    let base = new Date();
-    if (cleanValue) {
-      const parts = cleanValue.split('-');
-      if (parts.length >= 3) {
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const d = parseInt(parts[2], 10);
-        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
-          base = new Date(y, m, d);
-        }
-      }
-    }
-    const target = new Date(base.getFullYear() + numYears, base.getMonth(), base.getDate());
-    const iso = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
-    if (onChange) {
-      onChange({ target: { name, value: iso } });
     }
   };
 
@@ -106,56 +75,17 @@ const SimpleDatePicker = ({
         )}
       </div>
 
-      {/* Quick Preset Buttons neatly placed below the input */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
-        {mode === 'expiry' && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium mr-0.5">Quick add:</span>
-            <button
-              type="button"
-              onClick={(e) => addYears(1, e)}
-              disabled={disabled}
-              className="text-[11px] font-semibold px-2 py-1 rounded-md bg-[#F6F5F3] dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer min-h-[28px]"
-            >
-              +1 Year
-            </button>
-            <button
-              type="button"
-              onClick={(e) => addYears(3, e)}
-              disabled={disabled}
-              className="text-[11px] font-semibold px-2 py-1 rounded-md bg-[#F6F5F3] dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer min-h-[28px]"
-            >
-              +3 Years
-            </button>
-            <button
-              type="button"
-              onClick={(e) => addYears(5, e)}
-              disabled={disabled}
-              className="text-[11px] font-bold px-2.5 py-1 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 hover:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/30 dark:border-[#D4AF37]/30 transition-all cursor-pointer min-h-[28px]"
-            >
-              +5 Years
-            </button>
-          </div>
-        )}
+      {helperText && (
+        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+          {helperText}
+        </p>
+      )}
 
-        {mode === 'issuance' && (
-          <button
-            type="button"
-            onClick={setToday}
-            disabled={disabled}
-            className="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-[#F6F5F3] dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] transition-all flex items-center gap-1 cursor-pointer min-h-[28px]"
-          >
-            <Sparkles size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-            <span>Today</span>
-          </button>
-        )}
-
-        {helperText && (
-          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] ml-auto">
-            {helperText}
-          </p>
-        )}
-      </div>
+      {error && (
+        <p className="text-[11px] text-red-500 font-medium">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
