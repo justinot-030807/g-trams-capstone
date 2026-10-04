@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
   User, Users, LogOut, FileText, Menu, PanelLeftOpen, Settings,
-  Moon, Sun, Laptop, HelpCircle, ArrowLeft
+  Moon, Sun, HelpCircle, ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -418,12 +418,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             <button
               type="button"
               onClick={toggleTheme}
-              title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
+              title={isDark ? "Theme: Dark Mode (Click for Light Mode)" : "Theme: Light Mode (Click for Dark Mode)"}
               className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-xs"
             >
-              {theme === 'system' ? (
-                <Laptop size={17} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-              ) : isDark ? (
+              {isDark ? (
                 <Moon size={17} className="text-[#D4AF37]" />
               ) : (
                 <Sun size={17} className="text-[#B45309]" />
@@ -593,12 +591,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         {/* 1-Click Quick Theme Toggle */}
         <button
           onClick={toggleTheme}
-          title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
+          title={isDark ? "Theme: Dark Mode (Click for Light Mode)" : "Theme: Light Mode (Click for Dark Mode)"}
           className="p-2 h-[38px] w-[38px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] flex items-center justify-center transition-colors focus:outline-none shrink-0 cursor-pointer shadow-xs"
         >
-          {theme === 'system' ? (
-            <Laptop size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-          ) : isDark ? (
+          {isDark ? (
             <Moon size={18} className="text-[#D4AF37]" />
           ) : (
             <Sun size={18} className="text-[#B45309]" />

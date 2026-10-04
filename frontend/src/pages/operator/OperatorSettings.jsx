@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
   User, Lock, Camera, Save, Loader2, Phone, Mail,
-  CheckCircle2, AlertCircle, Moon, Sun, Laptop, Globe, 
+  CheckCircle2, AlertCircle, Moon, Sun, Globe, 
   ShieldCheck, Shield, Check, LogOut,
   Eye, EyeOff, FileText, Bell, Smartphone, Send, RefreshCw,
   Info, ShieldAlert, Printer, Download, ExternalLink,
@@ -534,14 +534,13 @@ const OperatorSettings = () => {
 
   // Theme Switcher
   const handleThemeToggle = (newTheme) => {
-    setTheme(newTheme);
-    setPreferences(prev => ({ ...prev, theme: newTheme }));
+    const valid = newTheme === 'dark' ? 'dark' : 'light';
+    setTheme(valid);
+    setPreferences(prev => ({ ...prev, theme: valid }));
     showToast(
-      newTheme === 'dark' 
+      valid === 'dark' 
         ? 'Dark mode enabled' 
-        : newTheme === 'system' 
-          ? 'System mode enabled (matches phone settings)' 
-          : 'Light mode enabled', 
+        : 'Light mode enabled', 
       'success'
     );
   };
@@ -854,7 +853,7 @@ const OperatorSettings = () => {
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                      {theme === 'system' ? <Laptop size={20} /> : isDark ? <Moon size={20} /> : <Sun size={20} />}
+                      {isDark ? <Moon size={20} /> : <Sun size={20} />}
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                       Theme
@@ -862,7 +861,7 @@ const OperatorSettings = () => {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs sm:text-sm font-medium text-[#6B6761] dark:text-[#A8A29E] capitalize">
-                      {theme === 'system' ? 'System' : theme === 'dark' ? 'Dark' : 'Light'}
+                      {isDark ? 'Dark' : 'Light'}
                     </span>
                     <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -1673,7 +1672,7 @@ const OperatorSettings = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">Display Theme</h3>
-                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Light, Dark, or System mode</p>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Light or Dark mode</p>
                 </div>
               </div>
               <button
@@ -1739,35 +1738,6 @@ const OperatorSettings = () => {
                 </div>
                 {theme === 'dark' && (
                   <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-[#14110F] flex items-center justify-center shrink-0">
-                    <Check size={12} className="stroke-[3]" />
-                  </div>
-                )}
-              </button>
-
-              {/* System Mode */}
-              <button
-                type="button"
-                onClick={() => {
-                  handleThemeToggle('system');
-                  setIsThemeModalOpen(false);
-                }}
-                className={`w-full flex items-center justify-between p-3.5 rounded-lg border transition-all text-left cursor-pointer min-h-[44px] ${
-                  theme === 'system'
-                    ? 'bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 border-[#9E2A2B] dark:border-[#D4AF37]'
-                    : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#E4E1DC] dark:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center justify-center">
-                    <Laptop size={16} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">System (Auto)</p>
-                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Match phone settings</p>
-                  </div>
-                </div>
-                {theme === 'system' && (
-                  <div className="w-5 h-5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-[#14110F] flex items-center justify-center shrink-0">
                     <Check size={12} className="stroke-[3]" />
                   </div>
                 )}

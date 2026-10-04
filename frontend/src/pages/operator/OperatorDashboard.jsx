@@ -5,7 +5,7 @@ import {
   RefreshCw, AlertCircle, CheckCircle, CheckCircle2, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle, Banknote,
-  Sun, Moon, SunMedium, Laptop, ArrowRight, Users, Sparkles, HelpCircle,
+  Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
   Bell, Settings, ChevronRight, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -608,12 +608,10 @@ const OperatorDashboard = () => {
             <button
               type="button"
               onClick={toggleTheme}
-              title={theme === 'system' ? "Theme: System (Follows device)" : isDark ? "Theme: Dark Mode" : "Theme: Light Mode"}
+              title={isDark ? "Theme: Dark Mode (Click for Light Mode)" : "Theme: Light Mode (Click for Dark Mode)"}
               className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
             >
-              {theme === 'system' ? (
-                <Laptop size={17} className="text-blue-500" />
-              ) : isDark ? (
+              {isDark ? (
                 <Moon size={17} className="text-amber-300" />
               ) : (
                 <Sun size={17} className="text-amber-500" />

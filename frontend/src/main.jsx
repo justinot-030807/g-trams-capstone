@@ -7,8 +7,7 @@ import './index.css';
 
 // Pre-mount theme enforcement to prevent flashing
 const savedTheme = localStorage.getItem('theme');
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-if (savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark)) {
+if (savedTheme === 'dark') {
   document.documentElement.classList.add('dark');
 } else {
   document.documentElement.classList.remove('dark');

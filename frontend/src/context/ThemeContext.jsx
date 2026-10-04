@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext({
-  theme: 'system',
+  theme: 'light',
   resolvedTheme: 'light',
   isDark: false,
   setTheme: () => {},
@@ -9,75 +9,41 @@ const ThemeContext = createContext({
 });
 
 export const ThemeProvider = ({ children }) => {
-  // theme can be: 'light', 'dark', 'system'
+  // theme can be strictly: 'light' or 'dark'
   const [theme, setThemeState] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
-      if (saved === 'dark' || saved === 'light' || saved === 'system') {
+      if (saved === 'dark' || saved === 'light') {
         return saved;
       }
     }
-    return 'system';
+    return 'light';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
       if (saved === 'dark') return 'dark';
-      if (saved === 'light') return 'light';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     return 'light';
   });
 
-  // Apply theme to document element and listen for OS/Phone preference changes
+  // Apply theme to document element
   useEffect(() => {
     const root = document.documentElement;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const active = theme === 'dark' ? 'dark' : 'light';
 
-    const updateTheme = () => {
-      let active = 'light';
-      if (theme === 'system') {
-        active = mediaQuery.matches ? 'dark' : 'light';
-      } else {
-        active = theme === 'dark' ? 'dark' : 'light';
-      }
+    setResolvedTheme(active);
 
-      setResolvedTheme(active);
-
-      if (active === 'dark') {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    };
-
-    updateTheme();
-
-    // Listen for phone/OS preference changes in real-time
-    const handleSystemChange = () => {
-      if (theme === 'system') {
-        updateTheme();
-      }
-    };
-
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleSystemChange);
+    if (active === 'dark') {
+      root.classList.add('dark');
     } else {
-      mediaQuery.addListener(handleSystemChange);
+      root.classList.remove('dark');
     }
-
-    return () => {
-      if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener('change', handleSystemChange);
-      } else {
-        mediaQuery.removeListener(handleSystemChange);
-      }
-    };
   }, [theme]);
 
   const setTheme = async (newTheme) => {
-    const valid = ['light', 'dark', 'system'].includes(newTheme) ? newTheme : 'system';
+    const valid = newTheme === 'dark' ? 'dark' : 'light';
     setThemeState(valid);
     localStorage.setItem('theme', valid);
 
@@ -99,15 +65,9 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  // Toggle cycles through: light -> dark -> system -> light
+  // Direct toggle between light <-> dark
   const toggleTheme = () => {
-    if (theme === 'light') {
-      setTheme('dark');
-    } else if (theme === 'dark') {
-      setTheme('system');
-    } else {
-      setTheme('light');
-    }
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (

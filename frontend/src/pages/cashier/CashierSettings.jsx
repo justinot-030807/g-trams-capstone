@@ -5,7 +5,7 @@ import {
   User, Settings as SettingsIcon, Archive, ArrowLeft, 
   Check, Save, RefreshCw, Search, Printer, 
   CheckCircle2, Clock, DollarSign, ShieldCheck, 
-  FileText, Sun, Moon, Laptop, Volume2, VolumeX,
+  FileText, Sun, Moon, Volume2, VolumeX,
   CreditCard, Banknote, Sparkles, Filter, X, Eye, Hash
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
