@@ -135,14 +135,18 @@ Return ONLY valid JSON with these keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'license') {
             prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses.
-Extract the driver and license details from this image. Even if the license is plastic, paper, photocopy, or slightly blurry, extract all visible text.
-Return ONLY valid JSON with these keys:
+Carefully inspect this driver's license document image and extract all visible details.
+Look for:
+- License Number (usually format like D01-12-345678, N01-12-345678, or any alphanumeric license/ID number)
+- Expiration date or Valid Until date (convert to YYYY-MM-DD if possible)
+- Name of the driver / licensee (full name or Last, First, Middle)
+Return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Driver's License",
-  "licenseNo": "extracted driver license number (e.g. D01-23-456789), or null",
-  "driverName": "extracted full name of driver/licensee, or null",
-  "expiryDate": "extracted expiration date (YYYY-MM-DD), or null"
+  "licenseNo": "extracted license number, or null",
+  "driverName": "extracted driver full name, or null",
+  "expiryDate": "extracted expiration date in YYYY-MM-DD, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'cedula') {
@@ -189,13 +193,22 @@ Return ONLY valid JSON with these keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Try fast multimodal models in order: gemini-2.0-flash -> gemini-2.0-flash-lite -> gemini-1.5-flash
-        const modelsToTry = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'];
+        // Prioritize gemini-3.8-flash (user's active tier) followed by resilient fallbacks
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+        const modelsToTry = [
+            preferredModel,
+            'gemini-3.8-flash',
+            'gemini-2.5-flash',
+            'gemini-3.5-flash-lite',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash'
+        ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
+
         let responseText = null;
 
         for (const modelName of modelsToTry) {
             try {
-                // Official @google/genai standard multimodal contents format
+                console.log(`[DocVerify] Invoking model ${modelName} for ${docType}...`);
                 const interaction = await ai.models.generateContent({
                     model: modelName,
                     contents: [
@@ -206,40 +219,47 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
                             }
                         },
                         prompt
-                    ]
+                    ],
+                    config: {
+                        responseMimeType: 'application/json'
+                    }
                 });
                 responseText = interaction.text || (interaction.candidates?.[0]?.content?.parts?.[0]?.text);
-                if (responseText) break;
+                if (responseText) {
+                    console.log(`[DocVerify] Model ${modelName} succeeded with structured JSON for ${docType}`);
+                    break;
+                }
             } catch (callErr) {
-                console.warn(`[DocVerify] Model ${modelName} standard format failed:`, callErr.message);
+                console.warn(`[DocVerify] Model ${modelName} with json config failed:`, callErr.message);
                 try {
-                    // Fallback to nested parts format
+                    // Fallback to standard request without responseMimeType in case older models reject it
                     const fallbackInteraction = await ai.models.generateContent({
                         model: modelName,
                         contents: [
                             {
-                                role: 'user',
-                                parts: [
-                                    { text: prompt },
-                                    {
-                                        inlineData: {
-                                            mimeType: mimeType || 'image/jpeg',
-                                            data: base64Data
-                                        }
-                                    }
-                                ]
-                            }
+                                inlineData: {
+                                    mimeType: mimeType || 'image/jpeg',
+                                    data: base64Data
+                                }
+                            },
+                            prompt
                         ]
                     });
                     responseText = fallbackInteraction.text || (fallbackInteraction.candidates?.[0]?.content?.parts?.[0]?.text);
-                    if (responseText) break;
+                    if (responseText) {
+                        console.log(`[DocVerify] Model ${modelName} fallback format succeeded for ${docType}`);
+                        break;
+                    }
                 } catch (fallbackErr) {
                     console.warn(`[DocVerify] Model ${modelName} fallback format failed:`, fallbackErr.message);
                 }
             }
         }
 
-        if (!responseText) return null;
+        if (!responseText) {
+            console.warn(`[DocVerify] No text returned by any Gemini model for ${docType}`);
+            return null;
+        }
 
         // Clean any code fences or extra wrapping
         let cleaned = responseText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
@@ -250,7 +270,9 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
         // Remove trailing commas before closing braces/brackets for JSON compatibility
         cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
-        return JSON.parse(cleaned);
+        const parsed = JSON.parse(cleaned);
+        console.log(`[DocVerify] Parsed extraction data for ${docType}:`, parsed);
+        return parsed;
     } catch (err) {
         console.error(`[DocVerify] Gemini OCR error for ${docType}:`, err.message);
         return null;

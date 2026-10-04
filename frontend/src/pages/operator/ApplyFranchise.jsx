@@ -28,6 +28,32 @@ const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
 const STANDARD_DOC_IDS = ['orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
 
+const normalizeDateStr = (raw) => {
+  if (!raw || typeof raw !== 'string') return '';
+  const trimmed = raw.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const parts = trimmed.split(/[/.-]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    }
+    if (parts[2].length === 4) {
+      const p1 = parseInt(parts[0], 10);
+      const p2 = parseInt(parts[1], 10);
+      const year = parts[2];
+      if (p1 > 12) {
+        return `${year}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+      }
+      return `${year}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
+    }
+  }
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().substring(0, 10);
+  }
+  return trimmed;
+};
+
 const DEFAULT_REQUIREMENTS = [
   { id: 'orCrDocument', label: 'Tricycle OR / CR Document', fieldUrl: 'orCrUrl' },
   { id: 'license', label: "Driver's License", fieldUrl: 'licenseUrl' },
@@ -788,9 +814,10 @@ const ApplyFranchise = () => {
             if (hasData) {
               setFormData(prev => ({
                 ...prev,
+                fullName: (!prev.fullName && d.driverName) ? d.driverName : prev.fullName,
                 driverLicenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : prev.driverLicenseNo,
-                driverLicenseExpiryDate: d.expiryDate || prev.driverLicenseExpiryDate,
-                driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : prev.driverName
+                driverLicenseExpiryDate: d.expiryDate ? normalizeDateStr(d.expiryDate) : prev.driverLicenseExpiryDate,
+                driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : (prev.driverName || d.driverName)
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("✨ AI Scan: Driver's License details detected!", 'success');
@@ -808,7 +835,7 @@ const ApplyFranchise = () => {
                 make: d.make || prev.make,
                 made: d.year ? String(d.year) : prev.made,
                 orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : prev.orCrNo,
-                orCrExpiryDate: d.expiryDate || prev.orCrExpiryDate
+                orCrExpiryDate: d.expiryDate ? normalizeDateStr(d.expiryDate) : prev.orCrExpiryDate
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("✨ AI Scan: Vehicle details auto-filled from OR/CR!", 'success');
@@ -822,7 +849,7 @@ const ApplyFranchise = () => {
                 ...prev,
                 todaCertNo: d.certNo ? d.certNo.toUpperCase() : prev.todaCertNo,
                 todaSignatory: d.signatory || prev.todaSignatory,
-                todaCertDate: d.dateIssued || prev.todaCertDate
+                todaCertDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.todaCertDate
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("✨ AI Scan: TODA Certificate details detected!", 'success');
@@ -840,7 +867,7 @@ const ApplyFranchise = () => {
                   address: detectedBrgy || prev.address,
                   zone: autoZone || prev.zone,
                   brgyClearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : prev.brgyClearanceNo,
-                  brgyClearanceDate: d.dateIssued || prev.brgyClearanceDate,
+                  brgyClearanceDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.brgyClearanceDate,
                   brgyIssuer: d.issuer || prev.brgyIssuer
                 };
               });
@@ -855,7 +882,7 @@ const ApplyFranchise = () => {
               setFormData(prev => ({
                 ...prev,
                 cedulaSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.cedulaSerialNo,
-                cedulaDate: d.dateIssued || prev.cedulaDate,
+                cedulaDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.cedulaDate,
                 cedulaAddress: d.placeIssued || prev.cedulaAddress
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
@@ -869,9 +896,14 @@ const ApplyFranchise = () => {
         } else if (json.message) {
           showToast(json.message, 'info');
         }
+      } else {
+        const errText = await res.text().catch(() => '');
+        console.warn('AI Scan server responded with status:', res.status, errText);
+        showToast('Document attached. (Server AI scan is taking longer than expected — you can continue typing manually.)', 'info');
       }
     } catch (err) {
-      console.warn('AI Scan non-fatal notice:', err);
+      console.warn('AI Scan network notice:', err);
+      showToast('Document attached. AI scan timed out — please type details manually.', 'info');
     } finally {
       setAiScanning(prev => ({ ...prev, [reqId]: false }));
     }

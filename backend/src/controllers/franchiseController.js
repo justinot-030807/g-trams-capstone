@@ -700,34 +700,25 @@ const scanDocument = async (req, res) => {
         }
 
         const fileUrl = file ? (file.path || file.secure_url || file.url) : req.body.fileUrl;
-        let base64Data = req.body.base64 || null;
+        let base64Data = null;
         let mimeType = (file && file.mimetype) || req.body.mimeType || 'image/jpeg';
 
-        if (base64Data && typeof base64Data === 'string' && base64Data.includes(',')) {
-            const parts = base64Data.split(',');
-            const match = parts[0].match(/:(.*?);/);
-            if (match) mimeType = match[1];
-            base64Data = parts[1];
-        }
-
-        // Direct memory buffer from memoryUpload
-        if (!base64Data && file && file.buffer) {
+        // Direct memory buffer from memoryUpload has highest fidelity
+        if (file && file.buffer) {
             base64Data = file.buffer.toString('base64');
             mimeType = file.mimetype || 'image/jpeg';
+        } else if (req.body.base64 && typeof req.body.base64 === 'string') {
+            base64Data = req.body.base64;
+            if (base64Data.includes(',')) {
+                const parts = base64Data.split(',');
+                const match = parts[0].match(/:(.*?);/);
+                if (match) mimeType = match[1];
+                base64Data = parts[1];
+            }
         }
-
-        if (!process.env.GEMINI_API_KEY) {
-            return res.status(200).json({
-                success: false,
-                noKey: true,
-                fileUrl,
-                message: 'Document attached! (Notice: GEMINI_API_KEY must be configured in environment variables for AI auto-fill to activate.)'
-            });
-        }
-
-        const { fetchImageAsBase64, extractWithGemini } = require('../services/documentVerificationService');
 
         if (!base64Data && fileUrl) {
+            const { fetchImageAsBase64 } = require('../services/documentVerificationService');
             const fetched = await fetchImageAsBase64(fileUrl);
             if (fetched) {
                 base64Data = fetched.base64Data;
@@ -736,6 +727,7 @@ const scanDocument = async (req, res) => {
         }
 
         if (!base64Data) {
+            console.warn('[scanDocument] No readable base64 data could be extracted for docType:', docType);
             return res.status(200).json({
                 success: false,
                 fileUrl,
@@ -743,7 +735,21 @@ const scanDocument = async (req, res) => {
             });
         }
 
+        console.log(`[scanDocument] Received scan request for "${docType}" (bytes: ${base64Data.length}, mime: ${mimeType})`);
+
+        if (!process.env.GEMINI_API_KEY) {
+            console.warn('[scanDocument] GEMINI_API_KEY is not defined in environment variables.');
+            return res.status(200).json({
+                success: false,
+                noKey: true,
+                fileUrl,
+                message: 'Document attached! (Notice: GEMINI_API_KEY must be configured in environment variables for AI auto-fill to activate.)'
+            });
+        }
+
+        const { extractWithGemini } = require('../services/documentVerificationService');
         const extracted = await extractWithGemini(base64Data, mimeType, docType);
+        console.log(`[scanDocument] Extraction result for ${docType}:`, extracted);
 
         if (!extracted) {
             return res.status(200).json({
