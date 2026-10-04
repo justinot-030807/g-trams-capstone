@@ -22,6 +22,7 @@ import CancelApplicationModal from '../../components/operator/CancelApplicationM
 import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
 import SimpleDatePicker from '../../components/common/SimpleDatePicker';
+import { useLanguage } from '../../context/LanguageContext';
 
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
@@ -45,7 +46,7 @@ const ApplyFranchise = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { language } = useLanguage();
+  const { language } = useLanguage() || { language: 'en' };
 
   const modeParam = searchParams.get('mode');
   const stepParam = parseInt(searchParams.get('step') || '1', 10);
@@ -355,10 +356,8 @@ const ApplyFranchise = () => {
         setFeedbackModal({
           isOpen: true,
           type: 'success',
-          title: language === 'fil' ? 'Nai-save ang Draft' : 'Draft Saved',
-          message: language === 'fil'
-            ? `Nai-save ang draft application noong ${timeStr}. Maaari mong balikan ito anumang oras.`
-            : `Application draft saved at ${timeStr}. You can safely return and finish anytime.`,
+          title: 'Draft Saved',
+          message: `Application draft saved at ${timeStr}. You can safely return and finish anytime.`,
           confirmText: 'OK',
           onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
         });
