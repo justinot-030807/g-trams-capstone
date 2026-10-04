@@ -15,6 +15,7 @@ import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal'
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
+import TricycleIcon from '../../components/common/TricycleIcon';
 import { evaluateDocumentValidity, triageApplication, getTimeWaiting } from '../../utils/dateValidity';
 import { GASAN_BARANGAYS, formatZoneLabel } from '../../utils/constants';
 
@@ -1123,7 +1124,11 @@ const FranchiseApproval = () => {
         <QueueListSkeleton count={4} baseDelay={50} stepDelay={70} />
       ) : filteredApps.length === 0 ? (
         <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-12 text-center text-[#6B6761] dark:text-[#A8A29E] transition-colors">
-          <CheckCircle size={40} className="mx-auto mb-3 text-[#6B6761] dark:text-[#A8A29E] opacity-40" />
+          <div className="relative mb-3 flex justify-center">
+            <div className="w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-xs">
+              <TricycleIcon size={46} />
+            </div>
+          </div>
           <p className="font-semibold text-base text-[#1F1D1B] dark:text-[#F6F5F3]">No applications found</p>
           <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 max-w-md mx-auto">
             {hasActiveFilters

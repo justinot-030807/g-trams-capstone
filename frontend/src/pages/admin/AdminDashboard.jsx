@@ -9,6 +9,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { StatsCardsSkeleton } from '../../components/skeleton';
+import TricycleIcon from '../../components/common/TricycleIcon';
 import { ArrowRight, Clock } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -603,6 +604,7 @@ const AdminDashboard = () => {
             columns={pendingColumns}
             data={recentApps}
             isLoading={isLoading}
+            emptyIcon={<TricycleIcon size={34} />}
             emptyTitle={t('admin.allCaughtUp', 'All caught up! No pending applications.')}
             emptySubtitle={t(
               'admin.queueClean',

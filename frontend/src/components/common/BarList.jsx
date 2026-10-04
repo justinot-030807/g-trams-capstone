@@ -15,7 +15,7 @@ const BarList = ({
   data = [], // Array of { name, value, percentage }
   initialLimit = 5,
   title = 'TODA Distribution',
-  subtitle = 'Bilang ng rehistradong yunit bawat asosasyon',
+  subtitle = 'Registered units per association',
   className = '',
 }) => {
   const { t } = useLanguage() || { t: (_, def) => def };
@@ -52,14 +52,14 @@ const BarList = ({
           )}
         </div>
         <span className="text-xs font-mono font-medium text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
-          {sortedData.length} {t('common.associations', 'asosasyon')}
+          {sortedData.length} {t('common.associations', 'associations')}
         </span>
       </div>
 
       {/* Bar List */}
       {sortedData.length === 0 ? (
         <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] text-center py-6">
-          {t('common.noData', 'Walang datos na maipakita.')}
+          {t('common.noData', 'No data available to display.')}
         </p>
       ) : (
         <div className="space-y-3" role="list" aria-label={title}>
@@ -118,8 +118,8 @@ const BarList = ({
           >
             <span>
               {showAll
-                ? t('common.showLess', 'Ipakita nang kaunti')
-                : `${t('common.showAll', 'Ipakita lahat')} (${sortedData.length})`}
+                ? t('common.showLess', 'Show less')
+                : `${t('common.showAll', 'Show all')} (${sortedData.length})`}
             </span>
             {showAll ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>

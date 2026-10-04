@@ -879,7 +879,7 @@ const OperatorDashboard = () => {
           {/* Tricycle Icon Container */}
           <div className="relative mb-3">
             <div className="relative w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-xs">
-              <TricycleIcon raw size={48} className="dark:brightness-125" />
+              <TricycleIcon size={46} />
             </div>
           </div>
 

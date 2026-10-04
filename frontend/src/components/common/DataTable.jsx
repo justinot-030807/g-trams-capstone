@@ -17,8 +17,9 @@ const DataTable = ({
   columns = [],
   data = [],
   isLoading = false,
-  emptyTitle = 'Walang talaan',
-  emptySubtitle = 'Kasalukuyang walang laman ang listahang ito.',
+  emptyIcon = null,
+  emptyTitle = 'No records found',
+  emptySubtitle = 'This list is currently empty.',
   rowKey = '_id',
   onRowClick = null,
   className = '',
@@ -93,7 +94,13 @@ const DataTable = ({
               <tr>
                 <td colSpan={columns.length} className="py-10 px-4 text-center">
                   <div className="flex flex-col items-center justify-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <Inbox size={26} className="mb-2 stroke-1 opacity-70" aria-hidden="true" />
+                    {emptyIcon ? (
+                      <div className="mb-2.5 flex items-center justify-center">
+                        {emptyIcon}
+                      </div>
+                    ) : (
+                      <Inbox size={26} className="mb-2 stroke-1 opacity-70" aria-hidden="true" />
+                    )}
                     <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{emptyTitle}</p>
                     <p className="text-xs mt-0.5 max-w-sm">{emptySubtitle}</p>
                   </div>

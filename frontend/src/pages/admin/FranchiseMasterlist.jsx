@@ -709,7 +709,13 @@ const FranchiseMasterlist = () => {
                 <tr>
                   <td colSpan="5" className="p-10 text-center text-[#6B6761] dark:text-[#A8A29E] print-hide">
                     <div className="flex flex-col items-center justify-center">
-                      {activeTab === 'archived' ? <Archive size={36} className="text-[#6B6761] dark:text-[#A8A29E] mb-2 opacity-50"/> : <FileText size={36} className="text-[#6B6761] dark:text-[#A8A29E] mb-2 opacity-50"/>}
+                      {activeTab === 'archived' ? (
+                        <Archive size={36} className="text-[#6B6761] dark:text-[#A8A29E] mb-2 opacity-50"/>
+                      ) : (
+                        <div className="w-14 h-14 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2 mb-2 shadow-xs">
+                          <TricycleIcon size={40} />
+                        </div>
+                      )}
                       <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">No records found</p>
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Try changing search keywords or remove some filter tags.</p>
                     </div>

@@ -588,7 +588,9 @@ const SubmitMembers = () => {
 
                         {(!member.units || member.units.length === 0) ? (
                           <div className="flex flex-col items-center justify-center p-6 border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg bg-[#F6F5F3] dark:bg-[#14110F]">
-                            <AlertCircle className="w-6 h-6 text-[#6B6761] dark:text-[#A8A29E] mb-2" />
+                            <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center mb-2 shadow-xs">
+                              <TricycleIcon size={26} />
+                            </div>
                             <p className="text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">No active tricycle units</p>
                             <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">This member needs an approved franchise</p>
                           </div>

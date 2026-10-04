@@ -1,6 +1,7 @@
 import React from 'react';
 import { XCircle, X, AlertCircle, Loader2 } from 'lucide-react';
 import { CANCEL_REASONS } from '../../utils/constants';
+import TricycleIcon from '../common/TricycleIcon';
 
 const CancelApplicationModal = ({ 
   cancelModal, 
@@ -23,7 +24,10 @@ const CancelApplicationModal = ({
             </div>
             <div>
               <h3 className="font-bold text-base text-[#1F1D1B] dark:text-[#F6F5F3]">Cancel Application</h3>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium flex items-center gap-1.5 mt-0.5">
+                <TricycleIcon size={14} />
+                <span>Unit: {cancelModal.unit?.plateNo || 'PENDING PLATE'}</span>
+              </p>
             </div>
           </div>
           <button 
