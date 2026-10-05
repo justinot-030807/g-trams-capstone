@@ -281,7 +281,15 @@ const renewFranchise = async (req, res) => {
             cancelReason: '',
             rejectedField: '',
             isArchived: false,
-            applicationType: 'Renewal'
+            applicationType: 'Renewal',
+            paymentStatus: 'Unpaid',
+            officialReceiptNo: '',
+            paymentDate: null,
+            paidByCashier: null,
+            cashierName: '',
+            paymentRemarks: '',
+            eSigned: false,
+            releaseDate: ''
         };
 
         if (orCrNo) updateData.orCrNo = orCrNo;
@@ -339,6 +347,14 @@ const updateFranchiseStatus = async (req, res) => {
             eSigned: eSigned || false, 
             releaseDate: releaseDate || '' 
         };
+
+        if (status === 'Cancelled') {
+            updateData.isArchived = true;
+            updateData.archivedAt = new Date();
+        } else if (existingFranchise.status === 'Cancelled' && status !== 'Cancelled') {
+            updateData.isArchived = false;
+            updateData.archivedAt = null;
+        }
 
         if (['For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.approvalDate) {
             updateData.approvalDate = new Date();

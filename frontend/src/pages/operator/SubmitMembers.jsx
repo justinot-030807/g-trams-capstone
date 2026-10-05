@@ -7,14 +7,12 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SubmissionCardsSkeleton } from '../../components/skeleton';
-import { useLanguage } from '../../context/LanguageContext';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import StatusBadge from '../../components/common/StatusBadge';
 import { formatZoneLabel } from '../../utils/constants';
 
 const SubmitMembers = () => {
-  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   // Tab State: 'roster' (Member Group Directory) or 'upload' (Document Submission)
@@ -42,11 +40,6 @@ const SubmitMembers = () => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
-
-  useEffect(() => {
-    fetchMyMembers();
-    fetchMySubmissions();
-  }, []);
 
   const fetchMyMembers = async () => {
     setIsLoadingMembers(true);
@@ -85,6 +78,11 @@ const SubmitMembers = () => {
       setIsLoadingHistory(false);
     }
   };
+
+  useEffect(() => {
+    fetchMyMembers();
+    fetchMySubmissions();
+  }, []);
 
   const [isDragging, setIsDragging] = useState(false);
 

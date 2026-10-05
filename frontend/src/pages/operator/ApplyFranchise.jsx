@@ -213,38 +213,6 @@ const ApplyFranchise = () => {
   const [uploadedDocs, setUploadedDocs] = useState({});
   const [filePreviews, setFilePreviews] = useState({});
 
-  useEffect(() => {
-    fetchMyFranchises();
-
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.data?.maxUnitsPerOperator !== undefined && json?.data?.maxUnitsPerOperator !== null) {
-            const numUnits = Number(json.data.maxUnitsPerOperator) || 2;
-            setMaxAllowedUnits(numUnits);
-            localStorage.setItem('max_units_per_operator', numUnits);
-          }
-        }
-      } catch (e) {
-        console.error('Error fetching settings:', e);
-      }
-    };
-    fetchSettings();
-
-    const reapplyData = localStorage.getItem('reapply_target');
-    if (reapplyData) {
-      try {
-        const parsed = JSON.parse(reapplyData);
-        handleReapplyClick(parsed);
-        localStorage.removeItem('reapply_target');
-      } catch (e) { console.error(e); }
-    } else if (modeParam === 'new') {
-      handleStartNewApplication();
-    }
-  }, []);
-
   // Sync step and formMode from searchParams
   useEffect(() => {
     const s = parseInt(searchParams.get('step') || '1', 10);
@@ -768,6 +736,83 @@ const ApplyFranchise = () => {
     setFilePreviews(previews);
     setUploadedDocs({});
   };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelModal.unit) return;
+    setCancelModal(prev => ({ ...prev, isSubmitting: true }));
+    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)')
+      ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
+      : cancelModal.reason;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${cancelModal.unit._id}/cancel`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cancelReason: finalReason })
+      });
+
+      if (res.ok) {
+        setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false });
+        fetchMyFranchises();
+      } else {
+        const d = await res.json();
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Cancellation Failed',
+          message: d.message || "Unable to cancel application.",
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
+        setCancelModal(prev => ({ ...prev, isSubmitting: false }));
+      }
+    } catch {
+      setFeedbackModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'A network error occurred while processing cancellation.',
+        confirmText: 'OK',
+        onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+      });
+      setCancelModal(prev => ({ ...prev, isSubmitting: false }));
+    }
+  };
+
+  useEffect(() => {
+    fetchMyFranchises();
+
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data?.maxUnitsPerOperator !== undefined && json?.data?.maxUnitsPerOperator !== null) {
+            const numUnits = Number(json.data.maxUnitsPerOperator) || 2;
+            setMaxAllowedUnits(numUnits);
+            localStorage.setItem('max_units_per_operator', numUnits);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching settings:', e);
+      }
+    };
+    fetchSettings();
+
+    const reapplyData = localStorage.getItem('reapply_target');
+    if (reapplyData) {
+      try {
+        const parsed = JSON.parse(reapplyData);
+        handleReapplyClick(parsed);
+        localStorage.removeItem('reapply_target');
+      } catch (e) { console.error(e); }
+    } else if (modeParam === 'new') {
+      handleStartNewApplication();
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

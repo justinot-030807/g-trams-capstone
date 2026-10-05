@@ -29,10 +29,6 @@ const ManageRevocations = () => {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
   };
 
-  useEffect(() => {
-    fetchFranchises();
-  }, []);
-
   const fetchFranchises = async () => {
     setIsLoading(true);
     try {
@@ -49,6 +45,10 @@ const ManageRevocations = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchFranchises();
+  }, []);
 
   const handleRevokeSubmit = async (e) => {
     e.preventDefault();
@@ -74,7 +74,7 @@ const ManageRevocations = () => {
       } else {
         showToast("Failed to revoke franchise.", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Network Error occurred while revoking franchise.", "error");
     } finally {
       setIsSubmitting(false);

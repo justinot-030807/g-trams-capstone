@@ -19,21 +19,6 @@ const AdminReports = () => {
     barangay: ''
   });
 
-  useEffect(() => {
-    fetchReports();
-  }, [filters]);
-
-  useEffect(() => {
-    const handleAfterPrint = () => {
-      document.body.classList.remove('printing-reports');
-    };
-    window.addEventListener('afterprint', handleAfterPrint);
-    return () => {
-      window.removeEventListener('afterprint', handleAfterPrint);
-      document.body.classList.remove('printing-reports');
-    };
-  }, []);
-
   const fetchReports = async () => {
     setIsLoading(true);
     try {
@@ -59,6 +44,21 @@ const AdminReports = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchReports();
+  }, [filters]);
+
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      document.body.classList.remove('printing-reports');
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('afterprint', handleAfterPrint);
+      document.body.classList.remove('printing-reports');
+    };
+  }, []);
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });

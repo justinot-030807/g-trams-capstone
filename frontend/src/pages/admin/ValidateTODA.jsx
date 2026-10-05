@@ -29,23 +29,6 @@ const ValidateTODA = () => {
   // Accordion state for directory
   const [expandedToda, setExpandedToda] = useState(null);
 
-  useEffect(() => {
-    fetchAllData();
-  }, []);
-
-  const fetchAllData = async () => {
-    setIsLoading(true);
-    try {
-      await Promise.allSettled([
-        fetchSubmissions(),
-        fetchUsers(),
-        fetchFranchises()
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const fetchSubmissions = async () => {
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/toda/submissions', { 
@@ -89,6 +72,23 @@ const ValidateTODA = () => {
       console.error('Error fetching franchises:', error);
     }
   };
+
+  const fetchAllData = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.allSettled([
+        fetchSubmissions(),
+        fetchUsers(),
+        fetchFranchises()
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
 
   const handleApprove = async (id) => {
     try {

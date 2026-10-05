@@ -1,27 +1,26 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate, Link, Navigate } from 'react-router-dom';
+import { useLocation, Link, Navigate } from 'react-router-dom';
 import { AlertCircle, Lock, Loader2, MessageSquare, ArrowLeft, ShieldAlert } from 'lucide-react';
 import FeedbackModal from '../components/common/FeedbackModal';
-import { useLanguage } from '../context/LanguageContext';
 
 const AccountDeactivated = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-  
   const state = location.state;
   
-  // If no state is passed, redirect to login
-  if (!state || !state.contact) {
-    return <Navigate to="/login" replace />;
-  }
+  const contact = state?.contact || '';
+  const reason = state?.reason || '';
+  const initialAppealStatus = state?.appealStatus || 'none';
 
-  const { contact, reason, appealStatus: initialAppealStatus } = state;
   const [appealStatus, setAppealStatus] = useState(initialAppealStatus);
   const [message, setMessage] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  // If no state is passed, redirect to login
+  if (!state || !state.contact) {
+    return <Navigate to="/login" replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,7 +56,7 @@ const AccountDeactivated = () => {
           message: data.message || 'Failed to submit appeal. Please check your password.' 
         });
       }
-    } catch (err) {
+    } catch {
       setFeedback({ type: 'error', message: 'Cannot connect to the server.' });
     } finally {
       setIsLoading(false);

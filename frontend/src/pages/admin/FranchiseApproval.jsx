@@ -16,7 +16,7 @@ import AdminApplicationSummaryModal from '../../components/admin/AdminApplicatio
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import TricycleIcon from '../../components/common/TricycleIcon';
-import { evaluateDocumentValidity, triageApplication, getTimeWaiting } from '../../utils/dateValidity';
+import { triageApplication } from '../../utils/dateValidity';
 import { GASAN_BARANGAYS, formatZoneLabel } from '../../utils/constants';
 
 const REJECT_REASONS = [
@@ -99,21 +99,6 @@ const FranchiseApproval = () => {
     setSearchParams(next, { replace: true });
   };
 
-  useEffect(() => {
-    setSelectedIds([]);
-  }, [activeTab, selectedToda, selectedType, selectedBarangay, flaggedOnly, searchQuery]);
-
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
-  // Cleanup undo countdown on unmount
-  useEffect(() => {
-    return () => {
-      if (undoState?.timer) clearInterval(undoState.timer);
-    };
-  }, [undoState]);
-
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
@@ -134,6 +119,21 @@ const FranchiseApproval = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [activeTab, selectedToda, selectedType, selectedBarangay, flaggedOnly, searchQuery]);
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  // Cleanup undo countdown on unmount
+  useEffect(() => {
+    return () => {
+      if (undoState?.timer) clearInterval(undoState.timer);
+    };
+  }, [undoState]);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -334,15 +334,6 @@ const FranchiseApproval = () => {
   // Navigate to dedicated full-screen review workstation (persists origin tab!)
   const handleOpenWorkstation = (app) => {
     navigate(`/franchise-approval/review/${app._id}?tab=${activeTab}`);
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
   };
 
   // Unified Status Counts
@@ -564,7 +555,7 @@ const FranchiseApproval = () => {
         onApprove={() => { 
           const unit = dossierTargetUnit; 
           setDossierTargetUnit(null); 
-          handleQuickApprove(unit); 
+          setQuickApproveTarget(unit); 
         }} 
         onReject={() => { 
           const unit = dossierTargetUnit; 

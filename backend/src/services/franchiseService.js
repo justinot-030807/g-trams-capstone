@@ -137,7 +137,8 @@ class FranchiseService {
         
         const existingTricycle = await Franchise.findOne({ 
             $or: [{ motorNo }, { chassisNo }, { plateNo }],
-            isArchived: { $ne: true }
+            isArchived: { $ne: true },
+            status: { $nin: ['Cancelled'] }
         });
                 
         if (existingTricycle) {

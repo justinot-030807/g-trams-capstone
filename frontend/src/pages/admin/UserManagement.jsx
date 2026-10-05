@@ -138,28 +138,6 @@ const UserManagement = () => {
     };
   };
 
-  useEffect(() => {
-    fetchUsers(true);
-    // Fast real-time polling every 6 seconds
-    const interval = setInterval(() => {
-      fetchUsers(false);
-    }, 6000);
-
-    const onFocus = () => fetchUsers(false);
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchUsers(false);
-    };
-
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, []);
-
   const fetchUsers = async (showSkeleton = true) => {
     if (showSkeleton) setIsLoading(true);
     setIsRefreshing(true);
@@ -206,6 +184,28 @@ const UserManagement = () => {
       setIsRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers(true);
+    // Fast real-time polling every 6 seconds
+    const interval = setInterval(() => {
+      fetchUsers(false);
+    }, 6000);
+
+    const onFocus = () => fetchUsers(false);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchUsers(false);
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
 
   // Role management
   const initiateRoleChange = (user, newRole) => {

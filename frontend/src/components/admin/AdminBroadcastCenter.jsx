@@ -61,7 +61,7 @@ export const renderFormattedAnnouncement = (text) => {
 
         // Bullet point item
         if (trimmed.startsWith('•') || trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-          const content = trimmed.replace(/^[•\-\*]\s*/, '');
+          const content = trimmed.replace(/^[•\-*]\s*/, '');
           return (
             <div key={idx} className="flex items-start gap-2 pl-2">
               <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-black text-sm shrink-0 leading-none mt-0.5">•</span>

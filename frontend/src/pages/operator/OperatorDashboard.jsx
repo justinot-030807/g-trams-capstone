@@ -129,21 +129,6 @@ const OperatorDashboard = () => {
     markAllRead();
   };
 
-  // Re-fetch franchises if we get a status_change notification
-  useEffect(() => {
-    if (notifications.length > 0) {
-      const latest = notifications[0];
-      if (latest.type === 'status_change' && !latest.isRead) {
-        fetchMyFranchises();
-      }
-    }
-  }, [notifications]);
-
-  useEffect(() => {
-    fetchMyFranchises();
-    fetchSystemSettings();
-  }, []);
-
   const fetchSystemSettings = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
@@ -179,7 +164,9 @@ const OperatorDashboard = () => {
         setFranchises(list);
         try {
           localStorage.setItem('gtrams_cached_franchises', JSON.stringify(list));
-        } catch (e) {}
+        } catch {
+          // Ignore local storage error
+        }
       } else if (response.status === 401 || response.status === 403) {
         setFranchises([]);
       }
@@ -190,11 +177,28 @@ const OperatorDashboard = () => {
         if (cached) {
           setFranchises(JSON.parse(cached));
         }
-      } catch (e) {}
+      } catch {
+        // Ignore parse error
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Re-fetch franchises if we get a status_change notification
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const latest = notifications[0];
+      if (latest.type === 'status_change' && !latest.isRead) {
+        fetchMyFranchises();
+      }
+    }
+  }, [notifications]);
+
+  useEffect(() => {
+    fetchMyFranchises();
+    fetchSystemSettings();
+  }, []);
 
   const getCurrentUserId = () => {
     try {

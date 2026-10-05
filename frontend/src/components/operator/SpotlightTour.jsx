@@ -66,6 +66,29 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
     };
   }, [isOpen, currentStepIndex, updateTargetRect]);
 
+  const isFirstStep = currentStepIndex === 0;
+  const isLastStep = currentStepIndex === steps.length - 1;
+
+  const handleFinish = () => {
+    localStorage.setItem('gtrams_operator_tour_done', 'true');
+    localStorage.setItem('gtrams_operator_tour_done_global', 'true');
+    onClose();
+  };
+
+  const handleNext = () => {
+    if (isLastStep) {
+      handleFinish();
+    } else {
+      setCurrentStepIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (!isFirstStep) {
+      setCurrentStepIndex(prev => prev - 1);
+    }
+  };
+
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -82,32 +105,9 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentStepIndex, steps.length]);
+  }, [isOpen, currentStepIndex, steps.length, isLastStep, isFirstStep]);
 
   if (!isOpen || !currentStep) return null;
-
-  const isFirstStep = currentStepIndex === 0;
-  const isLastStep = currentStepIndex === steps.length - 1;
-
-  const handleNext = () => {
-    if (isLastStep) {
-      handleFinish();
-    } else {
-      setCurrentStepIndex(prev => prev + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (!isFirstStep) {
-      setCurrentStepIndex(prev => prev - 1);
-    }
-  };
-
-  const handleFinish = () => {
-    localStorage.setItem('gtrams_operator_tour_done', 'true');
-    localStorage.setItem('gtrams_operator_tour_done_global', 'true');
-    onClose();
-  };
 
   const StepIcon = currentStep.icon || Sparkles;
 
