@@ -240,6 +240,50 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
           {/* Dossier Grid */}
           <div className="space-y-5 text-xs">
 
+            {/* AI Document Discrepancy & Modification Notice */}
+            {franchise.aiDiscrepancies && franchise.aiDiscrepancies.length > 0 && (
+              <div className="border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/40 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                    <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>AI Flagged Document Modifications ({franchise.aiDiscrepancies.length})</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+                    Audit Alert
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                  The applicant modified the following field(s) differing from the values detected on uploaded document images:
+                </p>
+                <div className="space-y-1.5">
+                  {franchise.aiDiscrepancies.map((d, i) => (
+                    <div key={i} className="bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1 text-xs">
+                      <div className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">{d.label || d.field}</div>
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div className="p-1.5 rounded bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/40">
+                          <span className="text-[9px] text-red-600 dark:text-red-400 font-bold block uppercase">Detected from Image</span>
+                          <span className="font-mono font-bold text-red-700 dark:text-red-300 truncate block">
+                            {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}
+                          </span>
+                        </div>
+                        <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                          <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold block uppercase">Entered by Applicant</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-slate-100 truncate block">
+                            {d.enteredValue || '—'}
+                          </span>
+                        </div>
+                      </div>
+                      {d.reason && (
+                        <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug pt-0.5">
+                          {d.reason}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* SECTION 1: APPLICANT OPERATOR PROFILE */}
             <div className="border border-slate-200 rounded-xl overflow-hidden">
               <div className="bg-[#7A1B22] text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">

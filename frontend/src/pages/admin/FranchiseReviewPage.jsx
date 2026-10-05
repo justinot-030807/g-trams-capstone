@@ -315,8 +315,29 @@ const FranchiseReviewPage = () => {
   );
 
   const licenseDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
-    d.docType === 'license' || d.field?.includes('driverLicense')
+    d.docType === 'license' || d.field?.includes('driverLicense') || d.field?.includes('license')
   );
+
+  const cedulaDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
+    d.docType === 'cedula' || d.field?.includes('cedula')
+  );
+
+  const todaDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
+    d.docType === 'toda' || d.field?.includes('toda')
+  );
+
+  const brgyDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
+    d.docType === 'brgy' || d.field?.includes('brgy')
+  );
+
+  const getDocKeyForDiscrepancy = (d) => {
+    if (d?.docType === 'license' || d?.field?.includes('driverLicense') || d?.field?.includes('license')) return 'license';
+    if (d?.docType === 'orCr' || d?.field?.includes('orCr') || d?.field === 'plateNo' || d?.field === 'motorNo' || d?.field === 'chassisNo') return 'orCrDocument';
+    if (d?.docType === 'cedula' || d?.field?.includes('cedula')) return 'cedulaDoc';
+    if (d?.docType === 'toda' || d?.field?.includes('toda')) return 'todaEndorsement';
+    if (d?.docType === 'brgy' || d?.field?.includes('brgy')) return 'brgyClearance';
+    return 'orCrDocument';
+  };
 
   const handleSelectDoc = (key) => {
     if (key === activeDocKey) return;
@@ -884,6 +905,76 @@ const FranchiseReviewPage = () => {
               </div>
             )}
 
+            {/* Global AI Discrepancies & Modifications Notice */}
+            {currentApp?.aiDiscrepancies && currentApp.aiDiscrepancies.length > 0 && (
+              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                    <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span>AI Flagged Modifications ({currentApp.aiDiscrepancies.length})</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+                    Attention
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800 dark:text-amber-300/90 leading-tight">
+                  The applicant modified the following field(s) differing from values detected on uploaded document images:
+                </p>
+                <div className="space-y-1.5 pt-0.5">
+                  {currentApp.aiDiscrepancies.map((d, i) => {
+                    const targetTabKey = getDocKeyForDiscrepancy(d);
+                    return (
+                      <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1.5 shadow-2xs">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">{d.label || d.field}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectDoc(targetTabKey)}
+                            className="text-[10px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-0.5"
+                          >
+                            <span>View Document</span>
+                            <span>&rarr;</span>
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                          <div className="p-1.5 rounded bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/40">
+                            <span className="text-[9px] text-red-600 dark:text-red-400 block font-bold uppercase">Detected from Image</span>
+                            <span className="font-mono font-bold text-red-700 dark:text-red-300 truncate block">
+                              {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}
+                            </span>
+                          </div>
+                          <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                            <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-bold uppercase">Entered by Applicant</span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-slate-100 truncate block">
+                              {d.enteredValue || '—'}
+                            </span>
+                          </div>
+                        </div>
+                        {d.reason && (
+                          <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug pt-0.5">
+                            {d.reason}
+                          </p>
+                        )}
+                        <div className="pt-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectField(targetTabKey);
+                              setRejectReason(d.reason || `Document Discrepancy (${d.label || d.field})`);
+                              setIsRejecting(true);
+                            }}
+                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                          >
+                            Quick Reject for this Discrepancy
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* 3. DOCUMENT SPECIFICATIONS (DYNAMIC TO ACTIVE DOCUMENT) */}
             <div className="space-y-2 flex-1">
               <div className="flex items-center justify-between px-0.5">
@@ -1093,6 +1184,48 @@ const FranchiseReviewPage = () => {
                 {/* Cedula Details */}
                 {activeDocKey === 'cedulaDoc' && (
                   <div className="space-y-1.5 text-xs">
+                    {/* Cedula Discrepancy Alert */}
+                    {cedulaDiscrepancies.length > 0 && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span>Cedula Discrepancy Flagged</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectField('cedulaDoc');
+                              setRejectReason('Cedula Details Discrepancy (Uploaded document differs from entered information)');
+                              setIsRejecting(true);
+                            }}
+                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                          >
+                            Quick Reject
+                          </button>
+                        </div>
+                        {cedulaDiscrepancies.map((d, i) => (
+                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                            <div className="grid grid-cols-2 gap-1 text-[11px]">
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
+                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                              </div>
+                            </div>
+                            {d.reason && (
+                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                {d.reason}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">CTC Serial No.</span>
@@ -1119,6 +1252,48 @@ const FranchiseReviewPage = () => {
                 {/* TODA Endorsement Details */}
                 {activeDocKey === 'todaEndorsement' && (
                   <div className="space-y-1.5 text-xs">
+                    {/* TODA Discrepancy Alert */}
+                    {todaDiscrepancies.length > 0 && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span>TODA Certificate Discrepancy Flagged</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectField('todaEndorsement');
+                              setRejectReason('TODA Certificate Discrepancy (Uploaded document differs from entered information)');
+                              setIsRejecting(true);
+                            }}
+                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                          >
+                            Quick Reject
+                          </button>
+                        </div>
+                        {todaDiscrepancies.map((d, i) => (
+                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                            <div className="grid grid-cols-2 gap-1 text-[11px]">
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
+                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                              </div>
+                            </div>
+                            {d.reason && (
+                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                {d.reason}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">TODA Association</span>
@@ -1148,6 +1323,48 @@ const FranchiseReviewPage = () => {
                 {/* Barangay Clearance Details */}
                 {activeDocKey === 'brgyClearance' && (
                   <div className="space-y-1.5 text-xs">
+                    {/* Barangay Discrepancy Alert */}
+                    {brgyDiscrepancies.length > 0 && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span>Barangay Clearance Discrepancy Flagged</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectField('brgyClearance');
+                              setRejectReason('Barangay Clearance Discrepancy (Uploaded document differs from entered information)');
+                              setIsRejecting(true);
+                            }}
+                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                          >
+                            Quick Reject
+                          </button>
+                        </div>
+                        {brgyDiscrepancies.map((d, i) => (
+                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                            <div className="grid grid-cols-2 gap-1 text-[11px]">
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
+                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                              </div>
+                            </div>
+                            {d.reason && (
+                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                {d.reason}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Barangay of Residence</span>
                       <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || '—'}</span>
@@ -1189,9 +1406,7 @@ const FranchiseReviewPage = () => {
                 const isActive = tab.key === activeDocKey;
                 const hasFile = Boolean(tab.url);
                 const hasDiscrepancy = (currentApp?.aiDiscrepancies || []).some(d => {
-                  if (tab.key === 'orCrDocument') return d.docType === 'orCr' || d.field?.includes('orCr') || d.field === 'plateNo';
-                  if (tab.key === 'license') return d.docType === 'license' || d.field?.includes('driverLicense');
-                  return false;
+                  return getDocKeyForDiscrepancy(d) === tab.key;
                 });
 
                 return (

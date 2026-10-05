@@ -194,7 +194,10 @@ class FranchiseService {
                 hasLicense: !!data.licenseUrl,
                 hasTodaEndorsement: !!data.todaEndorsementUrl,
                 hasBrgyClearance: !!data.brgyClearanceUrl
-            }
+            },
+
+            aiScannedData: data.aiScannedData || null,
+            aiDiscrepancies: data.aiDiscrepancies || []
         });
 
         return await franchise.populate('operator', 'name address contact');

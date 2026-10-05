@@ -1186,6 +1186,15 @@ const FranchiseApproval = () => {
                             Corrected
                           </span>
                         )}
+                        {app.aiDiscrepancies && app.aiDiscrepancies.length > 0 && (
+                          <span 
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 shrink-0 flex items-center gap-1"
+                            title={`${app.aiDiscrepancies.length} modified/discrepant field(s) detected between image and application`}
+                          >
+                            <AlertTriangle size={11} className="text-rose-600 dark:text-rose-400" />
+                            <span>Modified ({app.aiDiscrepancies.length})</span>
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 truncate">
                         <span className="font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{app.plateNo || 'No Plate'}</span>
@@ -1242,6 +1251,25 @@ const FranchiseApproval = () => {
                         <CheckCircle2 size={13} />
                         <span>Release</span>
                       </button>
+                    ) : app.status === 'For Signing' ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => setQuickApproveTarget(app)}
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          title="Mark signed and route to Municipal Cashier"
+                        >
+                          <CheckCircle2 size={13} />
+                          <span>Send to Cashier</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenWorkstation(app)}
+                          className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-2.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
+                          title="Open full review workstation"
+                        >
+                          <Eye size={13} />
+                          <span className="hidden sm:inline">Review</span>
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => handleOpenWorkstation(app)}
@@ -1276,6 +1304,19 @@ const FranchiseApproval = () => {
                             <FileText size={14} />
                             <span>View Summary</span>
                           </button>
+
+                          {app.status === 'For Signing' && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                setQuickApproveTarget(app);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer"
+                            >
+                              <CheckCircle2 size={14} />
+                              <span>Send to Cashier</span>
+                            </button>
+                          )}
 
                           {app.status === 'Ready for Pickup' && (
                             <button
