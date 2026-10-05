@@ -133,7 +133,9 @@ class FranchiseService {
      * Create a new franchise application
      */
     static async createFranchise(data, operatorId) {
-        const { motorNo, chassisNo, plateNo } = data;
+        const motorNo = (data.motorNo || '').trim();
+        const chassisNo = (data.chassisNo || '').trim();
+        const plateNo = (data.plateNo || '').trim().toUpperCase();
         
         const existingTricycle = await Franchise.findOne({ 
             $or: [{ motorNo }, { chassisNo }, { plateNo }],
