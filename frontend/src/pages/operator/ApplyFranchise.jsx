@@ -11,7 +11,7 @@ import {
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
   Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
-  Compass, MapPin, ExternalLink
+  Compass, MapPin, ExternalLink, AlertTriangle
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -2828,13 +2828,20 @@ const ApplyFranchise = () => {
       {isSummaryModalOpen && (
         <ApplicationSummaryModal
           isOpen={isSummaryModalOpen}
+          isSummaryModalOpen={isSummaryModalOpen}
           onClose={() => setIsSummaryModalOpen(false)}
+          setIsSummaryModalOpen={setIsSummaryModalOpen}
+          formData={formData}
           application={{
             ...formData,
             status: 'Draft',
             applicationType: formMode === 'Renewal' ? 'Renewal' : 'New',
             createdAt: formData.dateApplied
           }}
+          requirementsList={DEFAULT_REQUIREMENTS}
+          uploadedDocs={uploadedDocs}
+          filePreviews={filePreviews}
+          loggedInToda={formData.todaName}
         />
       )}
 

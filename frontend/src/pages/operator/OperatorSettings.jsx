@@ -558,9 +558,9 @@ const OperatorSettings = () => {
     setIsClearingCache(true);
     try {
       // 1. Clear CacheStorage
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        const cacheNames = await window.caches.keys();
+        await Promise.all(cacheNames.map(name => window.caches.delete(name)));
       }
 
       // 2. Clear IndexedDB

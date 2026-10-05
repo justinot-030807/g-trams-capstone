@@ -1,33 +1,66 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, FileText, User, Receipt, ShieldCheck, FileCheck } from 'lucide-react';
 import { formatZoneLabel } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
 
+const DEFAULT_MODAL_REQUIREMENTS = [
+  { id: 'orCrDocument', label: 'Tricycle OR / CR Document', fieldUrl: 'orCrUrl' },
+  { id: 'license', label: "Driver's License", fieldUrl: 'licenseUrl' },
+  { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
+  { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
+];
+
 const ApplicationSummaryModal = ({
+  isOpen,
   isSummaryModalOpen,
+  onClose,
   setIsSummaryModalOpen,
-  formData,
-  loggedInToda,
+  formData = {},
+  application = {},
+  loggedInToda = '',
   requirementsList,
-  uploadedDocs,
-  filePreviews
+  uploadedDocs = {},
+  filePreviews = {}
 }) => {
-  if (!isSummaryModalOpen) return null;
+  const visible = isOpen !== undefined ? Boolean(isOpen) : Boolean(isSummaryModalOpen);
+
+  const handleClose = () => {
+    if (onClose) onClose();
+    if (setIsSummaryModalOpen) setIsSummaryModalOpen(false);
+  };
+
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const data = (formData && Object.keys(formData).length > 0) ? formData : (application || {});
+  const reqList = (Array.isArray(requirementsList) && requirementsList.length > 0)
+    ? requirementsList
+    : DEFAULT_MODAL_REQUIREMENTS;
 
   return (
     <div 
       className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 animate-in fade-in duration-200"
-      onClick={() => setIsSummaryModalOpen(false)}
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
     >
       <div 
-        className="relative max-w-xl w-full bg-white dark:bg-[#1C1917] rounded-lg overflow-hidden shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 max-h-[85vh] flex flex-col animate-spring-in"
+        className="relative max-w-xl w-full bg-white dark:bg-[#1C1917] rounded-xl overflow-hidden shadow-2xl border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 max-h-[88vh] flex flex-col animate-spring-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-              <FileText size={18} />
+            <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+              <FileText size={19} />
             </div>
             <div>
               <h3 className="font-bold text-base text-[#1F1D1B] dark:text-[#F6F5F3]">Application Summary</h3>
@@ -36,15 +69,16 @@ const ApplicationSummaryModal = ({
           </div>
           <button 
             type="button"
-            onClick={() => setIsSummaryModalOpen(false)}
+            onClick={handleClose}
             className="p-1.5 rounded-lg text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors cursor-pointer"
+            aria-label="Close modal"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
+        <div className="overflow-y-auto py-4 space-y-5 flex-1 pr-1 text-[#1F1D1B] dark:text-[#EAE7E1]">
           {/* 1. Operator Information */}
           <div>
             <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -53,19 +87,19 @@ const ApplicationSummaryModal = ({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Full Name</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.fullName || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.fullName || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Barangay Address</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.address || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.address || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Route Zone</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.zone ? formatZoneLabel(formData.zone) : '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.zone ? formatZoneLabel(data.zone) : '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">TODA Association</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.todaName || loggedInToda || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.todaName || loggedInToda || '—'}</span>
               </div>
             </div>
           </div>
@@ -78,23 +112,23 @@ const ApplicationSummaryModal = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Make & Model</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.make || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.make || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Model Year</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.made || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.made || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Plate Number</span>
-                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.plateNo || '—'}</span>
+                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.plateNo || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Motor Number</span>
-                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formData.motorNo || '—'}</span>
+                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.motorNo || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] sm:col-span-2">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Chassis Number</span>
-                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formData.chassisNo || '—'}</span>
+                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.chassisNo || '—'}</span>
               </div>
             </div>
           </div>
@@ -107,19 +141,19 @@ const ApplicationSummaryModal = ({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Cedula Serial No.</span>
-                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.cedulaSerialNo || '—'}</span>
+                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaSerialNo || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Issued</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.cedulaDate || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaDate || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Place Issued</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.cedulaAddress || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaAddress || '—'}</span>
               </div>
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Applied</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.dateApplied || '—'}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.dateApplied || '—'}</span>
               </div>
             </div>
           </div>
@@ -139,11 +173,11 @@ const ApplicationSummaryModal = ({
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">OR / CR No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.orCrNo || '—'}</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.orCrNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Expiration Date</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.orCrExpiryDate || '—'}</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.orCrExpiryDate || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -157,28 +191,28 @@ const ApplicationSummaryModal = ({
                   <div className="col-span-2">
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Driver Designation</span>
                     <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      {formData.isOperatorDriver ? 'Operator is Driver (Self)' : 'Designated Driver (Boundary)'}
+                      {data?.isOperatorDriver ? 'Operator is Driver (Self)' : 'Designated Driver (Boundary)'}
                     </span>
                   </div>
-                  {!formData.isOperatorDriver && (
+                  {!data?.isOperatorDriver && (
                     <>
                       <div>
                         <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Driver Name</span>
-                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.driverName || '—'}</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.driverName || '—'}</span>
                       </div>
                       <div>
                         <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Driver Contact</span>
-                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.driverContact || '—'}</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.driverContact || '—'}</span>
                       </div>
                     </>
                   )}
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">License No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.driverLicenseNo || '—'}</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.driverLicenseNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">License Expiry Date</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.driverLicenseExpiryDate || '—'}</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.driverLicenseExpiryDate || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -191,15 +225,15 @@ const ApplicationSummaryModal = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Certificate No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formData.todaCertNo || '—'}</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.todaCertNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Issued</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.todaCertDate || '—'}</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.todaCertDate || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Signatory</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formData.todaSignatory || '—'}</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.todaSignatory || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -212,15 +246,15 @@ const ApplicationSummaryModal = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Clearance No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formData.brgyClearanceNo || '—'}</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.brgyClearanceNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Issued</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.brgyClearanceDate || '—'}</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.brgyClearanceDate || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Issuing Official</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formData.brgyIssuer || '—'}</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.brgyIssuer || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -233,8 +267,12 @@ const ApplicationSummaryModal = ({
               <ShieldCheck size={13} /> 5. Attached Documents
             </h4>
             <div className="space-y-1.5">
-              {requirementsList.map((req) => {
-                const isAttached = !!(uploadedDocs[req.id] || filePreviews[req.id]);
+              {reqList.map((req) => {
+                const isAttached = !!(
+                  (uploadedDocs && (uploadedDocs[req.id] || (req.fieldUrl && uploadedDocs[req.fieldUrl]))) ||
+                  (filePreviews && (filePreviews[req.id] || (req.fieldUrl && filePreviews[req.fieldUrl]))) ||
+                  (data && (data[req.id] || (req.fieldUrl && data[req.fieldUrl])))
+                );
                 return (
                   <div key={req.id} className="flex items-center justify-between p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
                     <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{req.label}</span>
@@ -254,7 +292,7 @@ const ApplicationSummaryModal = ({
         <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex justify-end">
           <button
             type="button"
-            onClick={() => setIsSummaryModalOpen(false)}
+            onClick={handleClose}
             className="px-5 py-2.5 min-h-[44px] rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
           >
             Close Summary
