@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
+import React, { useState, useEffect, useMemo } from 'react';
+import { GASAN_BARANGAYS, TODA_LIST, getTodasForBarangay } from '../utils/constants';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   UserPlus, 
@@ -95,9 +95,23 @@ const Register = () => {
   ];
   const isPasswordQualified = passwordRules.every(r => r.met);
 
+  // Dynamic TODA list filtered strictly by applicant's Barangay Residence
+  const availableTodas = useMemo(() => {
+    return getTodasForBarangay(formData.address);
+  }, [formData.address]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'address') {
+      const validTodas = getTodasForBarangay(value);
+      setFormData(prev => ({ 
+        ...prev, 
+        address: value,
+        todaAssociation: validTodas.includes(prev.todaAssociation) ? prev.todaAssociation : ''
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     if (error) setError('');
   };
 
@@ -457,12 +471,15 @@ const Register = () => {
                             value={formData.todaAssociation} 
                             onChange={handleChange} 
                             required 
-                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer ${
+                            disabled={!formData.address}
+                            className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${
                               !formData.todaAssociation ? 'text-[#6B6761] dark:text-[#A8A29E]' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'
                             }`}
                           >
-                            <option value="" disabled className="text-[#6B6761]">Select TODA</option>
-                            {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => (
+                            <option value="" disabled className="text-[#6B6761]">
+                              {!formData.address ? 'Select Barangay first' : `Select TODA (${availableTodas.length} available)`}
+                            </option>
+                            {availableTodas.map((toda) => (
                               <option key={toda} value={toda} className="text-[#1F1D1B] dark:text-[#F6F5F3]">
                                 {toda}
                               </option>

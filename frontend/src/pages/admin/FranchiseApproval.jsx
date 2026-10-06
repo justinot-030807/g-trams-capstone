@@ -36,7 +36,8 @@ const FranchiseApproval = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // URL-Persisted State
-  const activeTab = searchParams.get('tab') || 'pending'; // 'pending' | 'signing' | 'ready' | 'all'
+  const activeTab = searchParams.get('tab') || 'pending'; // 'pending' | 'payment' | 'signing' | 'ready' | 'all' | 'approved' | 'rejected'
+  const isHistoryTab = activeTab === 'approved' || activeTab === 'rejected';
   const selectedToda = searchParams.get('toda') || 'all';
   const selectedType = searchParams.get('type') || 'all';
   const selectedBarangay = searchParams.get('barangay') || 'all';
@@ -49,6 +50,7 @@ const FranchiseApproval = () => {
   const endDate = searchParams.get('endDate') || '';
 
   const [applications, setApplications] = useState([]);
+  const [historyApps, setHistoryApps] = useState([]); // Active (approved) + Cancelled (rejected)
   const [isLoading, setIsLoading] = useState(true);
 
   // Batch selection state
@@ -102,9 +104,11 @@ const FranchiseApproval = () => {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Pending%20for%20Approval,For%20Signing,Ready%20for%20Pickup&limit=2000&sort=oldest`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+      const [response, historyRes] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Pending%20for%20Approval,For%20Payment,For%20Signing,Ready%20for%20Pickup&limit=2000&sort=oldest`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active,Cancelled&limit=500`, { headers })
+      ]);
       if (response.ok) {
         const data = await response.json();
         // Server already sorted, ensure FIFO queue (oldest date applied first)
@@ -112,6 +116,13 @@ const FranchiseApproval = () => {
           .sort((a, b) => new Date(a.dateApplied || a.createdAt || 0) - new Date(b.dateApplied || b.createdAt || 0));
         
         setApplications(queue);
+      }
+      if (historyRes.ok) {
+        const hData = await historyRes.json();
+        // History: most recently decided first
+        const list = (Array.isArray(hData) ? hData : (hData.data || []))
+          .sort((a, b) => new Date(b.updatedAt || b.approvalDate || 0) - new Date(a.updatedAt || a.approvalDate || 0));
+        setHistoryApps(list);
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
@@ -244,12 +255,12 @@ const FranchiseApproval = () => {
     if (selectedIds.length === 0) return;
     setIsBatchProcessing(true);
 
-    const targetStatus = activeTab === 'signing' ? 'Ready for Pickup' : 'For Signing';
+    const targetStatus = activeTab === 'signing' ? 'Ready for Pickup' : 'For Payment';
     const sourceStatus = activeTab === 'signing' ? 'For Signing' : 'Pending';
 
     try {
       const eligibleUnits = applications.filter(a => 
-        selectedIds.includes(a._id) && (a.status === sourceStatus || a.status === 'Pending for Approval' || activeTab === 'all')
+        selectedIds.includes(a._id) && (a.status === sourceStatus || (sourceStatus === 'Pending' && a.status === 'Pending for Approval'))
       );
       if (eligibleUnits.length === 0) {
         showToast('No eligible units found for batch approval.', 'error');
@@ -278,8 +289,8 @@ const FranchiseApproval = () => {
       triggerUndoCountdown(
         affected,
         targetStatus === 'Ready for Pickup'
-          ? `Marked ${eligibleUnits.length} units as Signed & Ready for Pickup.`
-          : `Approved ${eligibleUnits.length} units for Municipal Signatures.`
+          ? `Marked ${eligibleUnits.length} units as signed and ready for pickup.`
+          : `Sent ${eligibleUnits.length} units to the cashier for payment.`
       );
     } catch (error) {
       console.error('Error in batch action:', error);
@@ -339,20 +350,27 @@ const FranchiseApproval = () => {
   // Unified Status Counts
   const isPendingStatus = (s) => s === 'Pending' || s === 'Pending for Approval';
   const pendingCount = applications.filter(a => isPendingStatus(a.status)).length;
+  const paymentCount = applications.filter(a => a.status === 'For Payment').length;
   const signingCount = applications.filter(a => a.status === 'For Signing').length;
   const readyCount = applications.filter(a => a.status === 'Ready for Pickup').length;
   const allCount = applications.length;
+  const approvedCount = historyApps.filter(a => a.status === 'Active').length;
+  const rejectedCount = historyApps.filter(a => a.status === 'Cancelled').length;
 
   // Extract unique TODAs for filter dropdown
-  const uniqueTodas = Array.from(new Set(applications.map(a => a.todaName || 'NON-TODA').filter(Boolean))).sort();
+  const uniqueTodas = Array.from(new Set([...applications, ...historyApps].map(a => a.todaName || 'NON-TODA').filter(Boolean))).sort();
 
   // Multi-Stage Filter Pipeline
   const filteredApps = useMemo(() => {
-    return applications.filter(app => {
+    const source = isHistoryTab ? historyApps : applications;
+    return source.filter(app => {
       // 1. Tab Filter
       if (activeTab === 'pending' && !isPendingStatus(app.status)) return false;
+      if (activeTab === 'payment' && app.status !== 'For Payment') return false;
       if (activeTab === 'signing' && app.status !== 'For Signing') return false;
       if (activeTab === 'ready' && app.status !== 'Ready for Pickup') return false;
+      if (activeTab === 'approved' && app.status !== 'Active') return false;
+      if (activeTab === 'rejected' && app.status !== 'Cancelled') return false;
 
       // 2. TODA Filter
       if (selectedToda !== 'all' && (app.todaName || 'NON-TODA').toLowerCase() !== selectedToda.toLowerCase()) {
@@ -401,7 +419,7 @@ const FranchiseApproval = () => {
 
       return true;
     });
-  }, [applications, activeTab, selectedToda, selectedType, selectedBarangay, startDate, endDate, flaggedOnly, searchQuery]);
+  }, [applications, historyApps, isHistoryTab, activeTab, selectedToda, selectedType, selectedBarangay, startDate, endDate, flaggedOnly, searchQuery]);
 
   // Active filter state check & reset helper
   const hasActiveFilters = Boolean(
@@ -583,17 +601,17 @@ const FranchiseApproval = () => {
               <div>
                 <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-white">
                   {isPendingStatus(quickApproveTarget.status) 
-                    ? 'Approve for Municipal Signatures?' 
+                    ? 'Send to the cashier for payment?' 
                     : quickApproveTarget.status === 'For Signing'
-                    ? 'Mark Signed & Route to Cashier?'
-                    : 'Acknowledge Payment & Release?'}
+                    ? 'Mark the MTOP as signed?'
+                    : 'Release the franchise?'}
                 </h3>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
                   {isPendingStatus(quickApproveTarget.status) 
-                    ? 'Queue for Mayor and Licensing Official signatures' 
+                    ? 'Requirements are complete. The Treasury cashier will collect the fee and record the OR number.' 
                     : quickApproveTarget.status === 'For Signing'
-                    ? 'Route to Municipal Cashier / Treasury Window for payment collection'
-                    : 'Set status to Active road-authorized franchise'}
+                    ? 'The Mayor and Licensing Officer have signed. The operator will be told to pick it up.'
+                    : 'The operator has claimed the signed MTOP. The franchise becomes active.'}
                 </p>
               </div>
             </div>
@@ -642,7 +660,7 @@ const FranchiseApproval = () => {
               <button
                 onClick={() => handleUpdateStatus(
                   isPendingStatus(quickApproveTarget.status)
-                    ? 'For Signing' 
+                    ? 'For Payment' 
                     : quickApproveTarget.status === 'For Signing'
                     ? 'Ready for Pickup'
                     : 'Active', 
@@ -653,7 +671,7 @@ const FranchiseApproval = () => {
               >
                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
                 <span>
-                  Confirm {isPendingStatus(quickApproveTarget.status) ? 'Approval' : quickApproveTarget.status === 'For Signing' ? 'Signing' : 'Release'}
+                  {isPendingStatus(quickApproveTarget.status) ? 'Send to cashier' : quickApproveTarget.status === 'For Signing' ? 'Mark signed' : 'Release franchise'}
                 </span>
               </button>
             </div>
@@ -768,7 +786,7 @@ const FranchiseApproval = () => {
               {activeTab === 'signing' ? (
                 <>All selected applications will transition to <strong className="text-amber-700 dark:text-amber-400">Ready for Pickup</strong>.</>
               ) : (
-                <>All selected applications will transition to <strong className="text-amber-700 dark:text-amber-400">For Signing</strong>. A 10-second undo window will be available.</>
+                <>All selected applications will transition to <strong className="text-emerald-700 dark:text-emerald-400">For Payment</strong> (Cashier Queue). A 10-second undo window will be available.</>
               )}
             </p>
 
@@ -969,72 +987,43 @@ const FranchiseApproval = () => {
       <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#1C1917] p-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
         {/* Status Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto">
-          <button
-            onClick={() => updateParams({ tab: 'pending', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'pending'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
-                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <FileText size={14} />
-            <span>Needs Review</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-              activeTab === 'pending' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-            }`}>
-              {pendingCount}
-            </span>
-          </button>
-
-          <button
-            onClick={() => updateParams({ tab: 'signing', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'signing'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
-                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <ShieldCheck size={14} />
-            <span>For Signing</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-              activeTab === 'signing' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-            }`}>
-              {signingCount}
-            </span>
-          </button>
-
-          <button
-            onClick={() => updateParams({ tab: 'ready', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'ready'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
-                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Printer size={14} />
-            <span>Ready for Pickup</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-              activeTab === 'ready' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-            }`}>
-              {readyCount}
-            </span>
-          </button>
-
-          <button
-            onClick={() => updateParams({ tab: 'all', page: 1 })}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'all'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
-                : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <span>All in Queue</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-              activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-            }`}>
-              {allCount}
-            </span>
-          </button>
+          {[
+            { key: 'pending', label: 'Needs Review', icon: FileText, count: pendingCount },
+            { key: 'payment', label: 'For Payment', icon: Clock, count: paymentCount },
+            { key: 'signing', label: 'For Signing', icon: ShieldCheck, count: signingCount },
+            { key: 'ready', label: 'Ready for Pickup', icon: Printer, count: readyCount },
+            { key: 'all', label: 'All in Queue', icon: null, count: allCount },
+            { divider: true },
+            { key: 'approved', label: 'Approved', icon: CheckCircle2, count: approvedCount, history: true },
+            { key: 'rejected', label: 'Rejected', icon: XCircle, count: rejectedCount, history: true }
+          ].map((t, i) => {
+            if (t.divider) {
+              return <span key={`d${i}`} aria-hidden="true" className="mx-1 h-5 w-px bg-[#E4E1DC] dark:bg-[#2E2A27] shrink-0" />;
+            }
+            const isActive = activeTab === t.key;
+            const Icon = t.icon;
+            const activeClass = t.history
+              ? 'bg-[#1F1D1B] dark:bg-[#EAE7E1] text-white dark:text-[#1F1D1B] shadow-xs'
+              : 'bg-[#9E2A2B] text-white shadow-xs';
+            return (
+              <button
+                key={t.key}
+                onClick={() => updateParams({ tab: t.key, page: 1 })}
+                aria-pressed={isActive}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                  isActive ? activeClass : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {Icon && <Icon size={14} />}
+                <span>{t.label}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+                  isActive ? 'bg-white/20 dark:bg-black/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                }`}>
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Triage Controls: Select All Clean + Batch Action */}
@@ -1051,7 +1040,7 @@ const FranchiseApproval = () => {
             </button>
           )}
 
-          {paginatedApps.length > 0 && (
+          {paginatedApps.length > 0 && !isHistoryTab && activeTab !== 'payment' && (
             <>
               {/* Select All Clean */}
               <button
@@ -1078,8 +1067,14 @@ const FranchiseApproval = () => {
             </>
           )}
 
+          {activeTab === 'payment' && (
+            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] px-2">
+              The Treasury cashier records payment. Paid applications move to For Signing on their own.
+            </span>
+          )}
+
           {/* Batch Actions Trigger */}
-          {selectedIds.length > 0 && (
+          {selectedIds.length > 0 && !isHistoryTab && activeTab !== 'payment' && (
             <div className="flex items-center gap-1.5 pl-2 border-l border-[#E4E1DC] dark:border-[#2E2A27]">
               {activeTab === 'ready' ? (
                 <button
@@ -1094,7 +1089,7 @@ const FranchiseApproval = () => {
                   className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
                 >
                   <CheckCircle2 size={13} />
-                  <span>Send to Cashier ({selectedIds.length})</span>
+                  <span>Mark signed ({selectedIds.length})</span>
                 </button>
               ) : (
                 <button
@@ -1102,7 +1097,7 @@ const FranchiseApproval = () => {
                   className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
                 >
                   <CheckCircle2 size={13} />
-                  <span>Batch Approve ({selectedIds.length})</span>
+                  <span>Send to cashier ({selectedIds.length})</span>
                 </button>
               )}
             </div>
@@ -1255,11 +1250,11 @@ const FranchiseApproval = () => {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => setQuickApproveTarget(app)}
-                          className="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                          title="Mark signed and route to Municipal Cashier"
+                          className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          title="Mark MTOP signed by Mayor and route to Ready for Pickup"
                         >
                           <CheckCircle2 size={13} />
-                          <span>Send to Cashier</span>
+                          <span>Mark Signed</span>
                         </button>
                         <button
                           onClick={() => handleOpenWorkstation(app)}
@@ -1270,6 +1265,29 @@ const FranchiseApproval = () => {
                           <span className="hidden sm:inline">Review</span>
                         </button>
                       </div>
+                    ) : app.status === 'For Payment' ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-md">
+                          At Treasury
+                        </span>
+                        <button
+                          onClick={() => handleOpenWorkstation(app)}
+                          className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-2.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
+                          title="Open review details"
+                        >
+                          <Eye size={13} />
+                          <span>Review</span>
+                        </button>
+                      </div>
+                    ) : isHistoryTab ? (
+                      <button
+                        onClick={() => handleOpenWorkstation(app)}
+                        className="bg-slate-700 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        title="View completed application details"
+                      >
+                        <Eye size={13} />
+                        <span>View</span>
+                      </button>
                     ) : (
                       <button
                         onClick={() => handleOpenWorkstation(app)}
@@ -1305,7 +1323,7 @@ const FranchiseApproval = () => {
                             <span>View Summary</span>
                           </button>
 
-                          {app.status === 'For Signing' && (
+                          {isPendingStatus(app.status) && (
                             <button
                               onClick={() => {
                                 setActiveMenuId(null);
@@ -1315,6 +1333,19 @@ const FranchiseApproval = () => {
                             >
                               <CheckCircle2 size={14} />
                               <span>Send to Cashier</span>
+                            </button>
+                          )}
+
+                          {app.status === 'For Signing' && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                setQuickApproveTarget(app);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-2 cursor-pointer"
+                            >
+                              <CheckCircle2 size={14} />
+                              <span>Mark Signed</span>
                             </button>
                           )}
 
@@ -1344,7 +1375,7 @@ const FranchiseApproval = () => {
                             </button>
                           )}
 
-                          {(isPendingStatus(app.status) || app.status === 'For Signing') && (
+                          {(isPendingStatus(app.status) || app.status === 'For Payment') && (
                             <button
                               onClick={() => {
                                 setActiveMenuId(null);

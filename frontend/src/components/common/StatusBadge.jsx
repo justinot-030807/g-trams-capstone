@@ -24,13 +24,16 @@ const StatusBadge = ({ status = '', customLabel = null, className = '' }) => {
     normalized === 'pending' ||
     normalized === 'pending for approval' ||
     normalized === 'for review' ||
+    normalized === 'for payment' ||
     normalized === 'for signing' ||
     normalized === 'ready for pickup' ||
     normalized === 'payment pending' ||
     normalized === 'in review'
   ) {
     state = 'progress';
-    if (normalized === 'for signing') {
+    if (normalized === 'for payment') {
+      defaultLabel = t('status.forPayment', 'For Payment');
+    } else if (normalized === 'for signing') {
       defaultLabel = t('status.forSigning', 'For Signing');
     } else if (normalized === 'ready for pickup') {
       defaultLabel = t('status.readyForPickup', 'Ready for Pickup');

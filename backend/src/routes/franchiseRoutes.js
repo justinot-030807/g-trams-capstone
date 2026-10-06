@@ -8,6 +8,7 @@ const {
     getAllFranchises, 
     getMyFranchises, 
     getFranchiseById,
+    getFranchiseRecordCheck,
     updateFranchise, 
     deleteFranchise, 
     renewFranchise,
@@ -81,6 +82,7 @@ router.get('/reports', protect, authorize('admin'), getFranchiseReports);
 router.put('/:id/archive', protect, authorize('admin'), toggleArchiveFranchise);
 router.put('/:id/revoke', protect, authorize('admin'), upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
 router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
+router.get('/:id/record-check', protect, authorize('admin', 'cashier'), getFranchiseRecordCheck);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);

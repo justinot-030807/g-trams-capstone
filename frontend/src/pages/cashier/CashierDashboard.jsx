@@ -22,6 +22,7 @@ const CashierDashboard = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [payFormData, setPayFormData] = useState({
     officialReceiptNo: '',
+    payerName: '',
     amountPaid: 500,
     paymentMethod: 'Cash',
     remarks: ''
@@ -51,7 +52,7 @@ const CashierDashboard = () => {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
-          setQueue(data.filter(f => f.paymentStatus !== 'Paid' && f.status === 'Ready for Pickup'));
+          setQueue(data.filter(f => f.paymentStatus !== 'Paid' && (f.status === 'For Payment' || f.status === 'Ready for Pickup')));
           setPaidList(data.filter(f => f.paymentStatus === 'Paid'));
         } else {
           setQueue(data.pendingQueue || []);
@@ -74,13 +75,6 @@ const CashierDashboard = () => {
     const interval = setInterval(fetchQueue, 20000);
     return () => clearInterval(interval);
   }, [fetchQueue]);
-
-  // Generate suggested OR number: OR-YYYY-XXXX
-  const generateSuggestedOrNo = () => {
-    const year = new Date().getFullYear();
-    const rand = Math.floor(10000 + Math.random() * 90000);
-    return `OR-${year}-${rand}`;
-  };
 
   // Format exact date and exact time (HH:MM:SS AM/PM)
   const formatExactDateTime = (dateStr) => {
@@ -107,7 +101,8 @@ const CashierDashboard = () => {
   const handleOpenPayment = (franchise) => {
     setSelectedFranchise(franchise);
     setPayFormData({
-      officialReceiptNo: generateSuggestedOrNo(),
+      officialReceiptNo: '',
+      payerName: franchise.fullName || '',
       amountPaid: franchise.amountPaid || 500,
       paymentMethod: 'Cash',
       remarks: 'Payment settled at Municipal Treasury Window'
@@ -120,7 +115,7 @@ const CashierDashboard = () => {
     if (!selectedFranchise || isProcessing) return;
 
     if (!payFormData.officialReceiptNo.trim()) {
-      showToast('Please enter the Official Receipt (OR) Number.', 'error');
+      showToast('Please enter the Official Receipt (OR) Number from the receipt booklet.', 'error');
       return;
     }
 
@@ -135,6 +130,7 @@ const CashierDashboard = () => {
         },
         body: JSON.stringify({
           officialReceiptNo: payFormData.officialReceiptNo.trim().toUpperCase(),
+          payerName: payFormData.payerName.trim() || selectedFranchise.fullName,
           amountPaid: Number(payFormData.amountPaid) || 500,
           paymentMethod: payFormData.paymentMethod,
           paymentRemarks: payFormData.remarks
@@ -150,6 +146,7 @@ const CashierDashboard = () => {
         setReceiptData({
           ...data.franchise,
           officialReceiptNo: payFormData.officialReceiptNo.trim().toUpperCase(),
+          payerName: payFormData.payerName.trim() || selectedFranchise.fullName,
           amountPaid: Number(payFormData.amountPaid) || 500,
           paymentMethod: payFormData.paymentMethod,
           paymentDate: new Date(),
@@ -581,19 +578,36 @@ const CashierDashboard = () => {
 
             {/* Form */}
             <form onSubmit={handleProcessPayment} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
-                  Official Receipt (OR) Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={payFormData.officialReceiptNo}
-                  onChange={(e) => setPayFormData(prev => ({ ...prev, officialReceiptNo: e.target.value.toUpperCase() }))}
-                  placeholder="e.g. OR-2026-004123"
-                  className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-all uppercase min-h-[44px]"
-                />
-                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">Serial number from physical government receipt stub.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
+                    Official Receipt (OR) Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={payFormData.officialReceiptNo}
+                    onChange={(e) => setPayFormData(prev => ({ ...prev, officialReceiptNo: e.target.value.toUpperCase() }))}
+                    placeholder="Enter Official O.R. Number"
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-all uppercase min-h-[44px]"
+                  />
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">Serial number from physical government receipt stub.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
+                    Payer Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={payFormData.payerName}
+                    onChange={(e) => setPayFormData(prev => ({ ...prev, payerName: e.target.value }))}
+                    placeholder="Operator or Representative Name"
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-bold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-all min-h-[44px]"
+                  />
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">Name of the person who presented payment at the counter.</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

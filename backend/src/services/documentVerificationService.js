@@ -115,44 +115,77 @@ async function extractWithGemini(base64Data, mimeType, docType) {
         const ai = new GoogleGenAI({ apiKey });
 
         let prompt = '';
-        if (docType === 'orCr') {
-            prompt = `You are an expert OCR specialist for Philippine vehicle registration documents (LTO OR / CR, Certificate of Registration, Official Receipt).
+        if (docType === 'orCr' || docType === 'crFile' || docType === 'orFile') {
+            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) Certificate of Registration (CR) and Official Receipt (OR) documents.
 Extract all visible tricycle / motorcycle vehicle information from this document image.
-Even if the document is a photocopy, laminated, captured from an angle, or partially faded, extract as much text as possible.
-Return ONLY valid JSON with these keys:
+EXCLUSION RULES (CRITICAL):
+- DO NOT extract any payment amounts, registration fees, or total paid amounts (e.g. PHP 1,068.00).
+- DO NOT extract any signatures, registrant's signatures, or authorized official signatories (e.g. Assistant Secretary, Cashier, Registrar names).
+
+Extract and return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
-  "detectedDocumentType": "LTO Official Receipt / Certificate of Registration",
-  "plateNo": "extracted plate number or MV file number, or null if unreadable",
-  "chassisNo": "extracted chassis or frame number (VIN), or null if unreadable",
-  "motorNo": "extracted engine or motor number, or null if unreadable",
-  "orCrNo": "extracted OR number or CR number, or null if unreadable",
-  "make": "extracted vehicle make / brand (e.g. Honda, Kawasaki, Yamaha, Bajaj), or null",
-  "year": "extracted model year (e.g. 2024), or null",
-  "ownerName": "extracted registered owner full name, or null if unreadable",
-  "expiryDate": "extracted expiration or registration date (YYYY-MM-DD), or null"
+  "detectedDocumentType": "LTO Certificate of Registration / Official Receipt",
+  "plateNo": "extracted plate number (e.g. L154JX), or null",
+  "engineNo": "extracted engine number / motor number (e.g. KF51E7041285), or null",
+  "motorNo": "extracted engine number / motor number (same as engineNo), or null",
+  "chassisNo": "extracted chassis number / VIN (e.g. MH1KF5172PK041058), or null",
+  "fileNo": "extracted MV file number (e.g. 110123000632095), or null",
+  "crNo": "extracted CR number at bottom next to barcode (e.g. 0016563887), or null",
+  "crDate": "extracted Date on CR at top right (YYYY-MM-DD), or null",
+  "make": "extracted vehicle make / brand (e.g. HONDA, KAWASAKI, YAMAHA), or null",
+  "series": "extracted model series (e.g. ADV160AP, TMX 125), or null",
+  "yearModel": "extracted year model (e.g. 2023), or null",
+  "year": "extracted year model, or null",
+  "color": "extracted vehicle color (e.g. RED/BLACK), or null",
+  "vehicleType": "extracted vehicle type (e.g. MOTORCYCLE / MOPED / TRICYCLE), or null",
+  "vehicleCategory": "extracted vehicle category (e.g. L3), or null",
+  "classification": "extracted classification (e.g. PRIVATE - (PVT)), or null",
+  "bodyType": "extracted body type (e.g. MOTORCYCLE WITHOUT SIDECAR), or null",
+  "passengerCapacity": "extracted passenger capacity (e.g. 2), or null",
+  "fuelType": "extracted type of fuel (e.g. GAS), or null",
+  "grossWeight": "extracted gross weight (e.g. 265), or null",
+  "pistonDisplacement": "extracted piston displacement / engine displacement (e.g. 157), or null",
+  "ownerName": "extracted registered owner full name (e.g. RICHIE JULS BACALSO), or null",
+  "ownerAddress": "extracted registered owner address, or null",
+  "orNo": "extracted O.R. NO. from DETAILS OF FIRST REGISTRATION or latest registration (e.g. 1101-000000012124), or null",
+  "orDate": "extracted O.R. DATE (YYYY-MM-DD), or null",
+  "fieldOffice": "extracted field office (e.g. NEW MV REGISTRATION UNIT), or null",
+  "officeCode": "extracted office code (e.g. 1101), or null",
+  "expiryDate": "extracted registration expiration date if visible (YYYY-MM-DD), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
-        } else if (docType === 'license') {
-            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses.
+        } else if (docType === 'license' || docType === 'licenseBack') {
+            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses (front and back).
 Carefully inspect this driver's license document image and extract all visible details.
-Look for:
-- License Number (usually format like D01-12-345678, N01-12-345678, or any alphanumeric license/ID number)
-- Expiration date or Valid Until date (convert to YYYY-MM-DD if possible)
-- Name of the driver / licensee (full name or Last, First, Middle)
-Return ONLY a valid JSON object with these exact keys:
+EXCLUSION RULES (CRITICAL):
+- DO NOT extract blood type (Blood type must NOT be extracted).
+- DO NOT extract any payment amounts or fees.
+- DO NOT extract signatures or signing government officials.
+
+Extract and return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Driver's License",
-  "licenseNo": "extracted license number, or null",
-  "driverName": "extracted driver full name, or null",
-  "expiryDate": "extracted expiration date in YYYY-MM-DD, or null"
+  "licenseNo": "extracted license number (format like D01-12-345678, N01-12-345678), or null",
+  "driverName": "extracted driver full name (Last, First, Middle), or null",
+  "dateOfBirth": "extracted date of birth in YYYY-MM-DD, or null",
+  "dlCodes": "extracted restriction / DL driving codes (e.g. A, A1, B or 1, 2), or null",
+  "conditions": "extracted conditions (e.g. None, 1, 2), or null",
+  "expiryDate": "extracted expiration date / valid until in YYYY-MM-DD, or null",
+  "address": "extracted residential address, or null",
+  "nationality": "extracted nationality (e.g. Filipino), or null",
+  "sex": "extracted sex / gender (M/F), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'cedula') {
             prompt = `You are an expert OCR specialist for Philippine Community Tax Certificates (Cedula / CTC).
 Extract the CTC details from this document image.
-Return ONLY valid JSON with these keys:
+EXCLUSION RULES (CRITICAL):
+- DO NOT extract tax payment amounts, basic tax, or total fees paid.
+- DO NOT extract municipal treasurer / collector signatures.
+
+Return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Community Tax Certificate (Cedula)",
@@ -160,27 +193,35 @@ Return ONLY valid JSON with these keys:
   "fullName": "extracted taxpayer full name, or null",
   "year": "extracted tax year (e.g. 2026), or null",
   "dateIssued": "extracted date issued (YYYY-MM-DD), or null",
-  "placeIssued": "extracted place issued (e.g. Gasan, Marinduque), or null"
+  "placeIssued": "extracted place issued (e.g. Gasan, Marinduque), or null",
+  "address": "extracted taxpayer address, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'todaEndorsement') {
             prompt = `You are an expert OCR specialist for Tricycle Operators and Drivers Association (TODA) Endorsement Certificates.
 Extract the TODA details from this document image.
-Return ONLY valid JSON with these keys:
+EXCLUSION RULES (CRITICAL):
+- DO NOT extract membership dues, fees, or payment amounts.
+- DO NOT extract president or secretary signatures.
+
+Return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
   "detectedDocumentType": "TODA Endorsement Certificate",
   "certNo": "extracted certificate or clearance number, or null",
   "memberName": "extracted member/driver/operator name, or null",
   "todaName": "extracted TODA association name (e.g. BATODA, GT TODA), or null",
-  "dateIssued": "extracted issuance date (YYYY-MM-DD), or null",
-  "signatory": "extracted president or signatory name, or null"
+  "dateIssued": "extracted issuance date (YYYY-MM-DD), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'brgyClearance') {
             prompt = `You are an expert OCR specialist for Philippine Barangay Clearances.
 Extract the clearance details from this document image.
-Return ONLY valid JSON with these keys:
+EXCLUSION RULES (CRITICAL):
+- DO NOT extract clearance fees or payment amounts.
+- DO NOT extract Punong Barangay / Secretary signatures.
+
+Return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Barangay Clearance",
@@ -188,7 +229,7 @@ Return ONLY valid JSON with these keys:
   "residentName": "extracted resident/applicant name, or null",
   "barangay": "extracted barangay name (e.g. Pinggan, Bacong-Bacong, Bahi, Bangbang), or null",
   "dateIssued": "extracted date issued (YYYY-MM-DD), or null",
-  "issuer": "extracted punong barangay / secretary name, or null"
+  "purpose": "extracted stated purpose, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
@@ -337,6 +378,10 @@ async function verifyFranchiseDocuments(franchise) {
                 if (franchise.orCrNo) {
                     comparisons.push(compareField(franchise.orCrNo, extracted.orCrNo, 'LTO OR/CR Number', 'orCrNo'));
                 }
+
+                if (extracted.ownerName) {
+                    comparisons.push(compareField(franchise.fullName, extracted.ownerName, 'Registered Owner (Operator Ownership Check)', 'ownerName'));
+                }
             }
 
             const hasMismatch = comparisons.some(c => c.status === 'mismatch');
@@ -364,7 +409,7 @@ async function verifyFranchiseDocuments(franchise) {
         if (!extracted) {
             results.documents.license = {
                 hasDocument: true,
-                extracted: null,
+                extracted,
                 comparisons: [],
                 status: 'unverified',
                 ocrNotes: 'OCR scan unavailable or rate-limited. Manual verification required.'
@@ -388,6 +433,25 @@ async function verifyFranchiseDocuments(franchise) {
                     compareField(franchise.driverLicenseNo, extracted.licenseNo, "Driver's License Number", 'driverLicenseNo'),
                     compareField(targetDriverName, extracted.driverName, 'Authorized Driver Name', 'driverName')
                 );
+
+                if (extracted.dlCodes) {
+                    const dlClean = String(extracted.dlCodes).toUpperCase();
+                    const isTricycleAuthorized = dlClean.includes('A') || dlClean.includes('1') || dlClean.includes('2');
+                    comparisons.push({
+                        field: 'dlCodes',
+                        label: 'DL Tricycle Authorization (Code A / A1)',
+                        inputValue: 'Authorized for Motorcycle/Tricycle (Code A/A1)',
+                        extractedValue: extracted.dlCodes,
+                        status: isTricycleAuthorized ? 'match' : 'mismatch',
+                        confidence: 0.95,
+                        notes: isTricycleAuthorized ? 'Driver license authorizes motorcycle/tricycle operation.' : 'Warning: License may lack Code A/A1 tricycle authorization.'
+                    });
+                }
+
+                if (franchise.driverDob && extracted.dateOfBirth) {
+                    const dobStr = new Date(franchise.driverDob).toISOString().substring(0, 10);
+                    comparisons.push(compareField(dobStr, extracted.dateOfBirth, 'Driver Date of Birth (LTO Birthday Rule)', 'driverDob'));
+                }
             }
 
             const hasMismatch = comparisons.some(c => c.status === 'mismatch');
@@ -485,6 +549,9 @@ async function verifyFranchiseDocuments(franchise) {
                 if (franchise.todaCertNo) {
                     comparisons.push(compareField(franchise.todaCertNo, extracted.certNo, 'TODA Certificate No', 'todaCertNo'));
                 }
+                if (extracted.memberName) {
+                    comparisons.push(compareField(franchise.fullName, extracted.memberName, 'TODA Member Name', 'fullName'));
+                }
             }
 
             const hasMismatch = comparisons.some(c => c.status === 'mismatch');
@@ -530,8 +597,16 @@ async function verifyFranchiseDocuments(franchise) {
                     confidence: 0.95,
                     notes: 'Uploaded image does not appear to be a valid Barangay Clearance document.'
                 });
-            } else if (franchise.brgyClearanceNo) {
-                comparisons.push(compareField(franchise.brgyClearanceNo, extracted.clearanceNo, 'Barangay Clearance No', 'brgyClearanceNo'));
+            } else {
+                if (franchise.brgyClearanceNo) {
+                    comparisons.push(compareField(franchise.brgyClearanceNo, extracted.clearanceNo, 'Barangay Clearance No', 'brgyClearanceNo'));
+                }
+                if (franchise.address && extracted.barangay) {
+                    comparisons.push(compareField(franchise.address, extracted.barangay, 'Resident Barangay vs Issuing Barangay', 'barangayJurisdiction'));
+                }
+                if (extracted.residentName) {
+                    comparisons.push(compareField(franchise.fullName, extracted.residentName, 'Clearance Resident Applicant Name', 'residentName'));
+                }
             }
 
             const hasMismatch = comparisons.some(c => c.status === 'mismatch');

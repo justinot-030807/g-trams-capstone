@@ -128,8 +128,11 @@ const FranchiseReviewPage = () => {
   const fetchQueue = useCallback(async () => {
     try {
       let statusQuery = 'Pending,Pending for Approval';
-      if (currentTab === 'signing') statusQuery = 'For Signing';
+      if (currentTab === 'payment') statusQuery = 'For Payment';
+      else if (currentTab === 'signing') statusQuery = 'For Signing';
       else if (currentTab === 'ready') statusQuery = 'Ready for Pickup';
+      else if (currentTab === 'approved') statusQuery = 'Active';
+      else if (currentTab === 'rejected') statusQuery = 'Cancelled';
       else if (currentTab === 'all') statusQuery = 'All';
 
       const url = statusQuery === 'All'
@@ -159,6 +162,21 @@ const FranchiseReviewPage = () => {
     fetchCurrentApp(id);
     fetchQueue();
   }, [id, fetchCurrentApp, fetchQueue]);
+
+  // Pre-payment record check (violations, prior franchises, New vs Renewal)
+  const [recordCheck, setRecordCheck] = useState({ loading: true, data: null });
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setRecordCheck({ loading: true, data: null });
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/record-check`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => { if (!cancelled) setRecordCheck({ loading: false, data }); })
+      .catch(() => { if (!cancelled) setRecordCheck({ loading: false, data: null }); });
+    return () => { cancelled = true; };
+  }, [id]);
 
   // Concurrency: Socket Review Locking
   useEffect(() => {
@@ -739,7 +757,8 @@ const FranchiseReviewPage = () => {
             <span className="hidden md:inline">View Summary</span>
           </button>
 
-          {/* Reject Trigger */}
+          {/* Reject Trigger: only before payment is collected */}
+          {['Pending', 'Pending for Approval', 'For Payment'].includes(currentApp.status) && (
           <button
             onClick={() => setIsRejecting(prev => !prev)}
             disabled={isProcessing || reviewLock.isLocked}
@@ -753,19 +772,32 @@ const FranchiseReviewPage = () => {
             <XCircle size={14} />
             <span>Reject</span>
           </button>
+          )}
 
           {/* Primary Action Button */}
           {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? (
             <button
-              onClick={() => handleUpdateStatus('For Signing', null, true)}
+              onClick={() => {
+                const v = recordCheck.data?.violations?.length || 0;
+                if (v > 0 && !window.confirm(`${currentApp.fullName} has ${v} revoked franchise${v > 1 ? 's' : ''} on record. Send to the cashier anyway?`)) return;
+                handleUpdateStatus('For Payment', null, true);
+              }}
               disabled={isProcessing || reviewLock.isLocked}
               className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Approve requirements and route for municipal signature"
+              title="Requirements are complete. Send to the Treasury cashier for payment."
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              <span>Approve for Signing</span>
+              <span>Send to cashier</span>
               <ChevronRight size={14} />
             </button>
+          ) : currentApp.status === 'For Payment' ? (
+            <div
+              className="px-4 py-1.5 bg-amber-500/15 text-amber-100 border border-amber-400/30 font-semibold text-xs rounded-xl flex items-center gap-1.5"
+              title="The cashier records the official receipt. This moves to signing automatically once paid."
+            >
+              <Loader2 size={14} className="animate-spin opacity-70" />
+              <span>Waiting for payment at the Treasury</span>
+            </div>
           ) : currentApp.status === 'For Signing' ? (
             <button
               onClick={() => handleUpdateStatus('Ready for Pickup', null, true)}
@@ -777,18 +809,18 @@ const FranchiseReviewPage = () => {
               <span>Mark Signed &amp; Ready</span>
               <ChevronRight size={14} />
             </button>
-          ) : (
+          ) : currentApp.status === 'Ready for Pickup' ? (
             <button
               onClick={() => handleUpdateStatus('Active', null, true)}
               disabled={isProcessing || reviewLock.isLocked}
               className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Acknowledge payment, release franchise, and advance"
+              title="Operator has claimed the signed MTOP. Mark the franchise active."
             >
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               <span>Release Franchise</span>
               <ChevronRight size={14} />
             </button>
-          )}
+          ) : null}
         </div>
       </header>
 
@@ -834,6 +866,83 @@ const FranchiseReviewPage = () => {
                 </div>
               </div>
             </div>
+
+            {/* 1b. RECORD CHECK — violations & history before cashier */}
+            {(() => {
+              const rc = recordCheck.data;
+              const hasViolations = rc?.hasViolations;
+              const accent = recordCheck.loading || !rc
+                ? 'border-l-[#E4E1DC] dark:border-l-[#2E2A27]'
+                : hasViolations ? 'border-l-red-600' : 'border-l-emerald-600';
+              return (
+                <div className={`bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 ${accent} rounded-lg p-3 space-y-2`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
+                      <ShieldCheck size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      Record check
+                    </span>
+                    {rc && (
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
+                        rc.applicationType === 'Renewal'
+                          ? 'bg-[#D4AF37]/15 text-[#7A5E10] dark:text-[#D4AF37] border-[#D4AF37]/40'
+                          : 'bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#E8A0A0] border-[#9E2A2B]/30'
+                      }`}>
+                        {rc.applicationType === 'Renewal' ? 'Renewal' : 'New application'}
+                      </span>
+                    )}
+                  </div>
+
+                  {recordCheck.loading ? (
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                      <Loader2 size={12} className="animate-spin" /> Checking past records…
+                    </div>
+                  ) : !rc ? (
+                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                      Past records could not be loaded. Check the masterlist manually before sending to the cashier.
+                    </p>
+                  ) : (
+                    <>
+                      {hasViolations ? (
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] font-semibold text-red-700 dark:text-red-300 flex items-center gap-1">
+                            <AlertTriangle size={12} />
+                            {rc.violations.length} revoked franchise{rc.violations.length > 1 ? 's' : ''} on record
+                          </p>
+                          {rc.violations.slice(0, 3).map(v => (
+                            <div key={v._id} className="text-[11px] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-md px-2 py-1.5">
+                              <div className="flex justify-between gap-2 font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                <span className="truncate">{v.plateNo || v.mtopNo || 'Unit'}</span>
+                                <span className="text-[#6B6761] dark:text-[#A8A29E] font-normal shrink-0">{formatDate(v.updatedAt)}</span>
+                              </div>
+                              <p className="text-red-800 dark:text-red-300 leading-snug">{v.cancelReason || 'No reason recorded'}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                          <CheckCircle2 size={12} /> No violations or revocations on record
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
+                        <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
+                          <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.activeUnitsCount}</span>
+                          <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Active units</span>
+                        </div>
+                        <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
+                          <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.pastFranchises.length}</span>
+                          <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Past franchises</span>
+                        </div>
+                        <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
+                          <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.rejected.length}</span>
+                          <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Rejected before</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* 2. REJECTION ACCORDION (If Admin clicked Reject) */}
             {isRejecting && (
@@ -1047,27 +1156,63 @@ const FranchiseReviewPage = () => {
                         <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || 'Pending'}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">OR/CR No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">{currentApp.orCrNo || '—'}</span>
+                        <span className="text-[10px] text-slate-400 block font-medium">CR No.</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">{currentApp.crNo || currentApp.orCrNo || '—'}</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Motor / Engine</span>
+                        <span className="text-[10px] text-slate-400 block font-medium">Motor / Engine No.</span>
                         <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.motorNo || '—'}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Chassis No.</span>
+                        <span className="text-[10px] text-slate-400 block font-medium">Chassis No. (VIN)</span>
                         <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.chassisNo || '—'}</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Make &amp; Year</span>
+                        <span className="text-[10px] text-slate-400 block font-medium">Make, Series &amp; Year</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.make || '—'} {currentApp.made ? `(${currentApp.made})` : ''}
+                          {currentApp.make || '—'} {currentApp.series ? `${currentApp.series} ` : ''}({currentApp.yearModel || currentApp.made || '—'})
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Vehicle Color</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 uppercase truncate block">
+                          {currentApp.color || '—'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Registered Owner on CR verification */}
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 block font-medium">Registered Owner on CR</span>
+                        {currentApp.registeredOwner && currentApp.fullName && (
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                            currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                          }`}>
+                            {currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
+                              ? 'Owner Matches Applicant'
+                              : 'Owner Name Differs'}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-bold text-xs text-slate-800 dark:text-slate-100 block mt-0.5">
+                        {currentApp.registeredOwner || currentApp.fullName || '—'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">OR No. &amp; Date</span>
+                        <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.orCrNo || '—'} {currentApp.orDate ? `(${formatDate(currentApp.orDate)})` : ''}
                         </span>
                       </div>
                       <div>
@@ -1627,7 +1772,7 @@ const FranchiseReviewPage = () => {
         franchise={currentApp} 
         onApprove={() => { 
           setIsDossierOpen(false); 
-          handleUpdateStatus('For Signing', null, true); 
+          handleUpdateStatus('For Payment', null, true); 
         }} 
         onReject={() => { 
           setIsDossierOpen(false); 

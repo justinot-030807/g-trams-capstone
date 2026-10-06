@@ -3,7 +3,7 @@ import { MUNICIPAL_SIGNATORY, formatZoneLabel } from '../../utils/constants';
 import { Printer, X, Award, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
-const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
+const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const certRef = useRef(null);
@@ -100,9 +100,11 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
             </div>
             <div>
               <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
-                Official MTOP Certificate
+                {isECopy ? 'Electronic Copy (Approved MTOP)' : 'Official MTOP Certificate'}
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
-                  unit.status === 'Active' 
+                  isECopy
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    : unit.status === 'Active' 
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
                     : unit.status === 'For Signing'
                     ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
@@ -110,10 +112,12 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
                     : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                 }`}>
-                  {unit.status || 'Active Franchise'}
+                  {isECopy ? 'Approved E-Copy' : (unit.status || 'Active Franchise')}
                 </span>
               </h3>
-              <p className="text-xs text-white/60">Municipality of Gasan &bull; Appendix C Format</p>
+              <p className="text-xs text-white/60">
+                {isECopy ? 'Electronic Reference Copy with Watermark • Municipality of Gasan' : 'Municipality of Gasan • Appendix C Format'}
+              </p>
             </div>
           </div>
 
@@ -267,6 +271,23 @@ const MtopCertificateModal = ({ isOpen, onClose, unit }) => {
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.035] pointer-events-none select-none">
             <img src="/gasan-logo.png" alt="Gasan Seal" className="w-[360px] h-[360px] object-contain grayscale" />
           </div>
+
+          {/* Approved E-Copy Watermark Stamp */}
+          {isECopy && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-30 overflow-hidden">
+              <div className="transform -rotate-25 border-4 sm:border-8 border-emerald-600/30 rounded-2xl sm:rounded-3xl px-8 sm:px-14 py-4 sm:py-6 text-center bg-emerald-500/[0.04] backdrop-blur-[0.5px]">
+                <span className="text-4xl sm:text-6xl md:text-7xl font-black font-sans tracking-widest text-emerald-600/35 uppercase block">
+                  APPROVED
+                </span>
+                <span className="text-[10px] sm:text-xs md:text-sm font-bold font-sans tracking-widest text-emerald-700/40 uppercase mt-1 block">
+                  ELECTRONIC COPY &bull; VALID ISSUANCE
+                </span>
+                <span className="text-[8px] sm:text-[9.5px] font-mono tracking-wider text-emerald-800/35 uppercase mt-0.5 block">
+                  GASAN LGU MOTORIZED TRICYCLE FRANCHISING
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* TOP SECTION: Header, Preamble, Grantee Box */}
           <div>

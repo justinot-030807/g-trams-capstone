@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { GASAN_BARANGAYS, TODA_LIST } from '../utils/constants';
+import React, { useState, useEffect, useMemo } from 'react';
+import { GASAN_BARANGAYS, TODA_LIST, getTodasForBarangay } from '../utils/constants';
 import TermsPolicyModal from './common/TermsPolicyModal';
 import { Loader2, X, User, Mail, Phone, MapPin, Building2, ShieldCheck, ChevronDown } from 'lucide-react';
 
@@ -268,7 +268,12 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
               <select
                 value={selectedBarangay}
                 onChange={(e) => {
-                  setSelectedBarangay(e.target.value);
+                  const newBrgy = e.target.value;
+                  setSelectedBarangay(newBrgy);
+                  const valid = getTodasForBarangay(newBrgy);
+                  if (!valid.includes(selectedToda)) {
+                    setSelectedToda('');
+                  }
                   if (error) setError('');
                 }}
                 required
@@ -305,12 +310,15 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   if (error) setError('');
                 }}
                 required
-                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer ${
+                disabled={!selectedBarangay}
+                className={`w-full pl-10 pr-9 h-[46px] sm:h-[48px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-base sm:text-sm outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium appearance-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${
                   !selectedToda ? 'text-[#6B6761] dark:text-[#A8A29E]' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'
                 }`}
               >
-                <option value="" disabled className="text-[#6B6761]">Select TODA</option>
-                {TODA_LIST.filter(toda => toda !== 'NON-TODA').map((toda) => (
+                <option value="" disabled className="text-[#6B6761]">
+                  {!selectedBarangay ? 'Select Barangay first' : `Select TODA (${getTodasForBarangay(selectedBarangay).length} available)`}
+                </option>
+                {getTodasForBarangay(selectedBarangay).map((toda) => (
                   <option key={toda} value={toda} className="text-[#1F1D1B] dark:text-[#F6F5F3]">
                     {toda}
                   </option>

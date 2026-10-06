@@ -1,4 +1,5 @@
 const Franchise = require('../models/franchiseModel');
+const User = require('../models/userModel');
 const cron = require('node-cron');
 const { logAudit } = require('../utils/auditLogger');
 const Notification = require('../models/notificationModel');
@@ -49,7 +50,10 @@ const createFranchise = async (req, res) => {
         const data = {
             ...req.body,
             orCrUrl: findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']) || req.body.orCrUrl || '',
+            crUrl: findFilePath(['crDocument', 'crFile', 'crUrl']) || req.body.crUrl || '',
+            orUrl: findFilePath(['orDocument', 'orFile', 'orUrl']) || req.body.orUrl || '',
             licenseUrl: findFilePath(['license', 'licenseUrl', 'doc_1']) || req.body.licenseUrl || '',
+            licenseBackUrl: findFilePath(['licenseBack', 'licenseBackUrl', 'doc_license_back']) || req.body.licenseBackUrl || '',
             todaEndorsementUrl: findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']) || req.body.todaEndorsementUrl || '',
             brgyClearanceUrl: findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']) || req.body.brgyClearanceUrl || '',
             cedulaUrl: findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']) || req.body.cedulaUrl || ''
@@ -190,13 +194,19 @@ const updateFranchise = async (req, res) => {
         };
 
         const orCr = findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']);
+        const cr = findFilePath(['crDocument', 'crFile', 'crUrl']);
+        const or = findFilePath(['orDocument', 'orFile', 'orUrl']);
         const lic = findFilePath(['license', 'licenseUrl', 'doc_1']);
+        const licBack = findFilePath(['licenseBack', 'licenseBackUrl', 'doc_license_back']);
         const toda = findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']);
         const brgy = findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']);
         const cedula = findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']);
 
         if (orCr) updateData.orCrUrl = orCr;
+        if (cr) updateData.crUrl = cr;
+        if (or) updateData.orUrl = or;
         if (lic) updateData.licenseUrl = lic;
+        if (licBack) updateData.licenseBackUrl = licBack;
         if (toda) updateData.todaEndorsementUrl = toda;
         if (brgy) updateData.brgyClearanceUrl = brgy;
         if (cedula) updateData.cedulaUrl = cedula;
@@ -356,7 +366,7 @@ const updateFranchiseStatus = async (req, res) => {
             updateData.archivedAt = null;
         }
 
-        if (['For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.approvalDate) {
+        if (['For Payment', 'For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.approvalDate) {
             updateData.approvalDate = new Date();
         }
 
@@ -370,9 +380,12 @@ const updateFranchiseStatus = async (req, res) => {
             let notifTitle = `Franchise ${status}`;
             let notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has been updated to: ${status}`;
 
-            if (status === 'For Signing') {
-                notifTitle = 'Franchise Approved - For Signing';
-                notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has passed technical verification and is now routed for municipal official signatures.`;
+            if (status === 'For Payment') {
+                notifTitle = 'Requirements Approved - For Payment';
+                notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has passed technical review! Please proceed to the Municipal Treasury / Cashier to settle your fee.`;
+            } else if (status === 'For Signing') {
+                notifTitle = 'Payment Confirmed - For Official Signing';
+                notifMessage = `Your payment for ${updatedFranchise.plateNo} has been recorded. Your application is now queued for municipal executive signatures.`;
             } else if (status === 'Ready for Pickup') {
                 notifTitle = 'Franchise Signed - Ready for Pickup!';
                 notifMessage = `Your official MTOP Certificate for ${updatedFranchise.plateNo} has been signed! Please present your Claim Stub to the Municipal Cashier to pay and claim.`;
@@ -599,6 +612,74 @@ const getFranchiseById = async (req, res) => {
     }
 };
 
+/**
+ * Pre-payment record check: violations (revocations), prior franchises and
+ * rejected applications tied to the same operator account, name, or unit.
+ * Shown to the admin before the application is sent to the cashier.
+ */
+const getFranchiseRecordCheck = async (req, res) => {
+    try {
+        const franchise = await Franchise.findById(req.params.id)
+            .select('operator fullName plateNo chassisNo motorNo applicationType todaName');
+        if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const exact = (v) => ({ $regex: new RegExp('^' + escapeRegex(String(v).trim()) + '$', 'i') });
+
+        const matchers = [];
+        if (franchise.operator) matchers.push({ operator: franchise.operator });
+        if (franchise.fullName) matchers.push({ fullName: exact(franchise.fullName) });
+        if (franchise.plateNo) matchers.push({ plateNo: exact(franchise.plateNo) });
+        if (franchise.chassisNo) matchers.push({ chassisNo: exact(franchise.chassisNo) });
+        if (franchise.motorNo) matchers.push({ motorNo: exact(franchise.motorNo) });
+
+        const related = matchers.length
+            ? await Franchise.find({ _id: { $ne: franchise._id }, $or: matchers })
+                .select('fullName plateNo mtopNo status cancelReason applicationType dateApplied approvalDate updatedAt evidenceUrl')
+                .sort({ updatedAt: -1 })
+                .limit(50)
+                .lean()
+            : [];
+
+        const violations = related.filter(f => f.status === 'Revoked');
+        const rejected = related.filter(f => f.status === 'Cancelled');
+        const pastFranchises = related.filter(f => ['Active', 'Expired', 'Revoked'].includes(f.status));
+        const activeUnits = related.filter(f => f.status === 'Active');
+
+        const appType = String(franchise.applicationType || 'New');
+        const isRenewal = /renew/i.test(appType) || pastFranchises.length > 0;
+
+        // Verify applicant against TODA association roster
+        let todaStatus = 'non_toda';
+        if (franchise.todaName && franchise.todaName !== 'NON-TODA') {
+            const todaRegex = new RegExp(`^${escapeRegex(franchise.todaName)}$`, 'i');
+            const userOrCriteria = [];
+            if (franchise.operator) userOrCriteria.push({ _id: franchise.operator });
+            if (franchise.fullName) userOrCriteria.push({ name: exact(franchise.fullName) });
+
+            const userMatch = userOrCriteria.length > 0
+                ? await User.findOne({ todaAssociation: todaRegex, $or: userOrCriteria }).select('name todaAssociation')
+                : null;
+
+            todaStatus = userMatch ? 'verified_member' : 'not_in_roster';
+        }
+
+        res.status(200).json({
+            applicationType: isRenewal ? 'Renewal' : 'New',
+            hasViolations: violations.length > 0,
+            violations,
+            rejected,
+            pastFranchises,
+            activeUnitsCount: activeUnits.length,
+            todaStatus,
+            todaName: franchise.todaName || 'NON-TODA'
+        });
+    } catch (error) {
+        console.error('Record check error:', error);
+        res.status(500).json({ error: 'An internal server error occurred' });
+    }
+};
+
 const getCashierQueue = async (req, res) => {
     try {
         const { q, status } = req.query;
@@ -607,7 +688,7 @@ const getCashierQueue = async (req, res) => {
         if (status) {
             query.status = status;
         } else {
-            query.status = { $in: ['Ready for Pickup', 'Active', 'For Payment'] };
+            query.status = { $in: ['For Payment', 'Ready for Pickup', 'Active'] };
         }
 
         let franchises = await Franchise.find(query)
@@ -619,6 +700,7 @@ const getCashierQueue = async (req, res) => {
             franchises = franchises.filter(f => 
                 (f.plateNo && f.plateNo.toLowerCase().includes(search)) ||
                 (f.fullName && f.fullName.toLowerCase().includes(search)) ||
+                (f.payerName && f.payerName.toLowerCase().includes(search)) ||
                 (f.chassisNo && f.chassisNo.toLowerCase().includes(search)) ||
                 (f.motorNo && f.motorNo.toLowerCase().includes(search)) ||
                 (f.officialReceiptNo && f.officialReceiptNo.toLowerCase().includes(search)) ||
@@ -626,7 +708,7 @@ const getCashierQueue = async (req, res) => {
             );
         }
 
-        const pendingQueue = franchises.filter(f => f.paymentStatus !== 'Paid' && f.status === 'Ready for Pickup');
+        const pendingQueue = franchises.filter(f => f.paymentStatus !== 'Paid' && (f.status === 'For Payment' || f.status === 'Ready for Pickup'));
         const recentlyPaid = franchises.filter(f => f.paymentStatus === 'Paid');
 
         res.status(200).json({
@@ -642,7 +724,7 @@ const getCashierQueue = async (req, res) => {
 
 const processCashierPayment = async (req, res) => {
     try {
-        const { officialReceiptNo, amountPaid, paymentMethod, paymentRemarks } = req.body;
+        const { officialReceiptNo, payerName, amountPaid, paymentMethod, paymentRemarks } = req.body;
         if (!officialReceiptNo || !officialReceiptNo.trim()) {
             return res.status(400).json({ message: 'Official Receipt (OR) Number is required.' });
         }
@@ -664,6 +746,7 @@ const processCashierPayment = async (req, res) => {
         const now = new Date();
         franchise.paymentStatus = 'Paid';
         franchise.officialReceiptNo = officialReceiptNo.trim().toUpperCase();
+        franchise.payerName = (payerName && payerName.trim()) ? payerName.trim().toUpperCase() : franchise.fullName;
         franchise.amountPaid = validAmount;
         franchise.paymentMethod = paymentMethod || 'Cash';
         franchise.paymentDate = now;
@@ -671,15 +754,15 @@ const processCashierPayment = async (req, res) => {
         franchise.cashierName = req.user.name || 'Municipal Cashier';
         franchise.paymentRemarks = paymentRemarks || '';
 
-        // Status remains 'Ready for Pickup' so that Admin can officially release/activate it in the queue
-        franchise.status = 'Ready for Pickup';
+        // Status advances to 'For Signing' so Municipal Admin and Mayor can sign the official permit
+        franchise.status = 'For Signing';
 
         await franchise.save();
 
         // Notify operator of official receipt
         if (franchise.operator) {
             const notifTitle = 'Payment Confirmed by Municipal Cashier!';
-            const notifMessage = `Your payment of ₱${franchise.amountPaid} has been confirmed under Official Receipt No. ${franchise.officialReceiptNo}. Your application is now marked as Paid and ready for final release by the Municipal Admin.`;
+            const notifMessage = `Your payment of ₱${franchise.amountPaid} has been confirmed under Official Receipt No. ${franchise.officialReceiptNo} (Payer: ${franchise.payerName}). Your application is now marked as Paid and queued For Signing by Municipal Officials.`;
 
             const notification = await Notification.create({
                 recipient: franchise.operator._id,
@@ -810,6 +893,7 @@ module.exports = {
     getAllFranchises, 
     getMyFranchises, 
     getFranchiseById,
+    getFranchiseRecordCheck,
     updateFranchise, 
     deleteFranchise,
     renewFranchise,

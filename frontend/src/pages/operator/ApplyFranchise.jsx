@@ -56,7 +56,8 @@ const normalizeDateStr = (raw) => {
 
 const DEFAULT_REQUIREMENTS = [
   { id: 'orCrDocument', label: 'Tricycle OR / CR Document', fieldUrl: 'orCrUrl' },
-  { id: 'license', label: "Driver's License", fieldUrl: 'licenseUrl' },
+  { id: 'license', label: "Driver's License (Front)", fieldUrl: 'licenseUrl' },
+  { id: 'licenseBack', label: "Driver's License (Back / DL Codes)", fieldUrl: 'licenseBackUrl' },
   { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
   { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
 ];
@@ -192,11 +193,32 @@ const ApplyFranchise = () => {
     cedulaSerialNo: '',
     orCrNo: '',
     orCrExpiryDate: '',
+    crNo: '',
+    orDate: '',
+    crDate: '',
+    color: '',
+    series: '',
+    yearModel: '',
+    fileNo: '',
+    vehicleType: '',
+    vehicleCategory: '',
+    classification: '',
+    bodyType: '',
+    displacement: '',
+    registeredOwner: '',
+    ownerAddress: '',
+    numberOfUnits: 1,
     isOperatorDriver: true,
     driverName: '',
     driverContact: '',
     driverLicenseNo: '',
     driverLicenseExpiryDate: '',
+    driverDob: '',
+    driverDlCodes: '',
+    driverConditions: 'None',
+    driverAddress: '',
+    driverNationality: 'Filipino',
+    driverSex: '',
     todaCertNo: '',
     todaCertDate: '',
     todaSignatory: '',
@@ -204,7 +226,10 @@ const ApplyFranchise = () => {
     brgyClearanceDate: '',
     brgyIssuer: '',
     orCrUrl: '',
+    crUrl: '',
+    orUrl: '',
     licenseUrl: '',
+    licenseBackUrl: '',
     todaEndorsementUrl: '',
     brgyClearanceUrl: '',
     cedulaUrl: ''
@@ -530,11 +555,16 @@ const ApplyFranchise = () => {
       cedulaSerialNo: '',
       orCrNo: '',
       orCrExpiryDate: '',
+      crNo: '',
+      orDate: '',
+      numberOfUnits: 1,
       isOperatorDriver: true,
       driverName: '',
       driverContact: '',
       driverLicenseNo: '',
       driverLicenseExpiryDate: '',
+      driverDob: '',
+      driverDlCodes: '',
       todaCertNo: '',
       todaCertDate: '',
       todaSignatory: '',
@@ -542,7 +572,10 @@ const ApplyFranchise = () => {
       brgyClearanceDate: '',
       brgyIssuer: '',
       orCrUrl: '',
+      crUrl: '',
+      orUrl: '',
       licenseUrl: '',
+      licenseBackUrl: '',
       todaEndorsementUrl: '',
       brgyClearanceUrl: '',
       cedulaUrl: ''
@@ -858,7 +891,7 @@ const ApplyFranchise = () => {
     let docType = '';
     const lower = (reqId || '').toLowerCase();
     if (lower === 'license' || lower.includes('license')) docType = 'license';
-    else if (lower === 'orcrdocument' || lower.includes('orcr')) docType = 'orCr';
+    else if (lower === 'orcrdocument' || lower.includes('orcr') || lower.includes('crfile') || lower.includes('orfile') || lower === 'cr' || lower === 'or') docType = 'orCr';
     else if (lower === 'todaendorsement' || lower.includes('toda')) docType = 'todaEndorsement';
     else if (lower === 'brgyclearance' || lower.includes('brgy')) docType = 'brgyClearance';
     else if (lower === 'ceduladoc' || lower.includes('cedula') || lower === 'cedula') docType = 'cedula';
@@ -922,7 +955,10 @@ const ApplyFranchise = () => {
           if (json.fileUrl) {
             const urlKeyMap = {
               orCr: 'orCrUrl',
+              crFile: 'crUrl',
+              orFile: 'orUrl',
               license: 'licenseUrl',
+              licenseBack: 'licenseBackUrl',
               todaEndorsement: 'todaEndorsementUrl',
               brgyClearance: 'brgyClearanceUrl',
               cedula: 'cedulaUrl'
@@ -932,19 +968,22 @@ const ApplyFranchise = () => {
             }
           }
 
-          if (docType === 'license') {
-            const hasData = d.licenseNo || d.driverName || d.expiryDate;
+          if (docType === 'license' || docType === 'licenseBack') {
+            const hasData = d.licenseNo || d.driverName || d.expiryDate || d.dateOfBirth || d.dlCodes;
             if (hasData) {
               const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
+              const normDob = d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '';
               const today = new Date().toISOString().split('T')[0];
               const isExpired = normExpiry && normExpiry < today;
 
               setAiScannedData(prev => ({
                 ...prev,
                 license: {
-                  licenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : '',
-                  expiryDate: normExpiry || '',
-                  driverName: d.driverName || '',
+                  licenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : (prev.license?.licenseNo || ''),
+                  expiryDate: normExpiry || (prev.license?.expiryDate || ''),
+                  dateOfBirth: normDob || (prev.license?.dateOfBirth || ''),
+                  dlCodes: d.dlCodes || (prev.license?.dlCodes || ''),
+                  driverName: d.driverName || (prev.license?.driverName || ''),
                   isExpired: Boolean(isExpired),
                   scannedAt: new Date().toISOString()
                 }
@@ -955,6 +994,12 @@ const ApplyFranchise = () => {
                 fullName: (!prev.fullName && d.driverName) ? d.driverName : prev.fullName,
                 driverLicenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : prev.driverLicenseNo,
                 driverLicenseExpiryDate: normExpiry || prev.driverLicenseExpiryDate,
+                driverDob: normDob || prev.driverDob,
+                driverDlCodes: d.dlCodes || prev.driverDlCodes,
+                driverConditions: d.conditions || prev.driverConditions || 'None',
+                driverAddress: d.address || prev.driverAddress || '',
+                driverNationality: d.nationality || prev.driverNationality || 'Filipino',
+                driverSex: d.sex || prev.driverSex || '',
                 driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : (prev.driverName || d.driverName)
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
@@ -972,21 +1017,43 @@ const ApplyFranchise = () => {
               showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
             }
           } else if (docType === 'orCr') {
-            const hasData = d.plateNo || d.motorNo || d.chassisNo || d.make || d.year || d.orCrNo || d.expiryDate;
+            const hasData = d.plateNo || d.motorNo || d.engineNo || d.chassisNo || d.make || d.year || d.yearModel || d.orCrNo || d.crNo || d.orNo || d.ownerName;
             if (hasData) {
               const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
+              const normOrDate = d.orDate ? normalizeDateStr(d.orDate) : '';
+              const normCrDate = d.crDate ? normalizeDateStr(d.crDate) : '';
               const today = new Date().toISOString().split('T')[0];
               const isExpired = normExpiry && normExpiry < today;
+
+              const finalPlate = d.plateNo ? d.plateNo.toUpperCase() : '';
+              const finalMotor = (d.motorNo || d.engineNo) ? (d.motorNo || d.engineNo).toUpperCase() : '';
+              const finalChassis = d.chassisNo ? d.chassisNo.toUpperCase() : '';
+              const finalMake = d.make ? d.make.toUpperCase() : '';
+              const finalSeries = d.series ? d.series.toUpperCase() : '';
+              const finalYear = d.yearModel || d.year ? String(d.yearModel || d.year) : '';
+              const finalCrNo = d.crNo ? d.crNo.toUpperCase() : '';
+              const finalOrNo = (d.orNo || d.orCrNo) ? (d.orNo || d.orCrNo).toUpperCase() : '';
+              const finalColor = d.color ? d.color.toUpperCase() : '';
+              const finalOwner = d.ownerName ? d.ownerName.toUpperCase() : '';
+              const finalOwnerAddress = d.ownerAddress || '';
 
               setAiScannedData(prev => ({
                 ...prev,
                 orCr: {
-                  plateNo: d.plateNo ? d.plateNo.toUpperCase() : '',
-                  motorNo: d.motorNo ? d.motorNo.toUpperCase() : '',
-                  chassisNo: d.chassisNo ? d.chassisNo.toUpperCase() : '',
-                  make: d.make || '',
-                  year: d.year ? String(d.year) : '',
-                  orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : '',
+                  plateNo: finalPlate,
+                  motorNo: finalMotor,
+                  chassisNo: finalChassis,
+                  make: finalMake,
+                  series: finalSeries,
+                  year: finalYear,
+                  orCrNo: finalOrNo,
+                  crNo: finalCrNo,
+                  crDate: normCrDate,
+                  orDate: normOrDate,
+                  color: finalColor,
+                  fileNo: d.fileNo || '',
+                  ownerName: finalOwner,
+                  ownerAddress: finalOwnerAddress,
                   expiryDate: normExpiry || '',
                   isExpired: Boolean(isExpired),
                   scannedAt: new Date().toISOString()
@@ -995,15 +1062,38 @@ const ApplyFranchise = () => {
 
               setFormData(prev => ({
                 ...prev,
-                plateNo: d.plateNo ? d.plateNo.toUpperCase() : prev.plateNo,
-                motorNo: d.motorNo ? d.motorNo.toUpperCase() : prev.motorNo,
-                chassisNo: d.chassisNo ? d.chassisNo.toUpperCase() : prev.chassisNo,
-                make: d.make || prev.make,
-                made: d.year ? String(d.year) : prev.made,
-                orCrNo: d.orCrNo ? d.orCrNo.toUpperCase() : prev.orCrNo,
+                plateNo: finalPlate || prev.plateNo,
+                motorNo: finalMotor || prev.motorNo,
+                chassisNo: finalChassis || prev.chassisNo,
+                make: finalMake || prev.make,
+                made: finalYear || prev.made,
+                series: finalSeries || prev.series,
+                yearModel: finalYear || prev.yearModel,
+                orCrNo: finalOrNo || prev.orCrNo,
+                crNo: finalCrNo || prev.crNo,
+                crDate: normCrDate || prev.crDate,
+                orDate: normOrDate || prev.orDate,
+                color: finalColor || prev.color,
+                fileNo: d.fileNo || prev.fileNo,
+                vehicleType: d.vehicleType || prev.vehicleType,
+                vehicleCategory: d.vehicleCategory || prev.vehicleCategory,
+                classification: d.classification || prev.classification,
+                bodyType: d.bodyType || prev.bodyType,
+                displacement: d.pistonDisplacement || prev.displacement,
+                registeredOwner: finalOwner || prev.registeredOwner,
+                ownerAddress: finalOwnerAddress || prev.ownerAddress,
                 orCrExpiryDate: normExpiry || prev.orCrExpiryDate
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+
+              // Check if CR owner name matches applicant name
+              if (finalOwner && formData.fullName) {
+                const cleanOwner = finalOwner.replace(/[^A-Z]/g, '');
+                const cleanApplicant = formData.fullName.toUpperCase().replace(/[^A-Z]/g, '');
+                if (cleanOwner && cleanApplicant && !cleanOwner.includes(cleanApplicant) && !cleanApplicant.includes(cleanOwner)) {
+                  showToast(`Paunawa: Ang may-ari sa CR (${finalOwner}) ay hindi eksaktong tugma sa pangalan ng aplikante (${formData.fullName}).`, 'warning');
+                }
+              }
 
               if (isExpired) {
                 showValidationModal(
@@ -1012,7 +1102,7 @@ const ApplyFranchise = () => {
                   `The scanned vehicle registration has expired (validity ended on ${normExpiry}). Please renew with the LTO before applying for a franchise.`
                 );
               } else {
-                showToast("AI Scan: Vehicle details auto-filled from OR/CR.", 'success');
+                showToast("AI Scan: Kumpletong detalye mula sa LTO CR/OR ay matagumpay na nakuha.", 'success');
               }
             } else {
               showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
@@ -1587,7 +1677,10 @@ const ApplyFranchise = () => {
 
       // Append documents
       if (uploadedDocs.orCrDocument) submitData.append('orCrDocument', uploadedDocs.orCrDocument);
+      if (uploadedDocs.crFile) submitData.append('crFile', uploadedDocs.crFile);
+      if (uploadedDocs.orFile) submitData.append('orFile', uploadedDocs.orFile);
       if (uploadedDocs.license) submitData.append('license', uploadedDocs.license);
+      if (uploadedDocs.licenseBack) submitData.append('licenseBack', uploadedDocs.licenseBack);
       if (uploadedDocs.todaEndorsement) submitData.append('todaEndorsement', uploadedDocs.todaEndorsement);
       if (uploadedDocs.brgyClearance) submitData.append('brgyClearance', uploadedDocs.brgyClearance);
       if (uploadedDocs.cedulaDoc) submitData.append('cedulaDoc', uploadedDocs.cedulaDoc);
@@ -1932,6 +2025,37 @@ const ApplyFranchise = () => {
                     </div>
                   </div>
 
+                  {/* Number of Units Under Franchise */}
+                  <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        Number of Tricycle Units to Register
+                      </label>
+                      <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        (Units under this operator)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[1, 2, 3].map(num => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, numberOfUnits: num }))}
+                          className={`py-2 px-3 rounded-lg border text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                            (formData.numberOfUnits || 1) === num
+                              ? 'bg-[#9E2A2B] text-white border-[#7A1B22] shadow-xs'
+                              : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                          }`}
+                        >
+                          {num} {num === 1 ? 'Unit' : 'Units'}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                      Operators may register multiple units with dedicated drivers under municipal franchising guidelines.
+                    </p>
+                  </div>
+
                   {/* Driver Designation Choice */}
                   <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
@@ -2036,31 +2160,53 @@ const ApplyFranchise = () => {
                   )}
                 </div>
 
-                {/* Driver's License Document & Smart AI Scan Card */}
-                <div className="space-y-2">
+                {/* Driver's License Documents & Smart AI Scan Cards (Back-to-Back) */}
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Driver's License Photo
-                    </label>
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        Driver's License Photos (Back-to-Back)
+                      </label>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        Upload front and back photos to verify personal identity, date of birth, and authorized DL codes.
+                      </p>
+                    </div>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
                       <CheckCircle2 size={14} className="text-emerald-600" /> Auto-fill details
                     </span>
                   </div>
 
-                  <DocumentUploadCard
-                    id="license"
-                    label="Driver's License"
-                    file={uploadedDocs.license}
-                    previewUrl={filePreviews.license || formData.licenseUrl}
-                    onFileSelect={handleFileChange}
-                    onFileRemove={handleRemoveFile}
-                    onPreviewZoom={setFullPreview}
-                    onRescan={handleRescan}
-                    required={true}
-                    isScanning={aiScanning.license}
-                    scanSuccess={aiSuccess.license}
-                    error={formErrors.license}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <DocumentUploadCard
+                      id="license"
+                      label="Driver's License (Front)"
+                      file={uploadedDocs.license}
+                      previewUrl={filePreviews.license || formData.licenseUrl}
+                      onFileSelect={handleFileChange}
+                      onFileRemove={handleRemoveFile}
+                      onPreviewZoom={setFullPreview}
+                      onRescan={handleRescan}
+                      required={true}
+                      isScanning={aiScanning.license}
+                      scanSuccess={aiSuccess.license}
+                      error={formErrors.license}
+                    />
+
+                    <DocumentUploadCard
+                      id="licenseBack"
+                      label="Driver's License (Back / DL Codes)"
+                      file={uploadedDocs.licenseBack}
+                      previewUrl={filePreviews.licenseBack || formData.licenseBackUrl}
+                      onFileSelect={handleFileChange}
+                      onFileRemove={handleRemoveFile}
+                      onPreviewZoom={setFullPreview}
+                      onRescan={handleRescan}
+                      required={false}
+                      isScanning={aiScanning.licenseBack}
+                      scanSuccess={aiSuccess.licenseBack}
+                      error={formErrors.licenseBack}
+                    />
+                  </div>
 
                   {/* Auto-filled License Details Grid */}
                   <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
@@ -2102,6 +2248,40 @@ const ApplyFranchise = () => {
                           helperText="Driver's license expiration date."
                           error={formErrors.driverLicenseExpiryDate}
                         />
+                      </div>
+
+                      <div id="field-driverDob">
+                        <SimpleDatePicker
+                          name="driverDob"
+                          value={formData.driverDob}
+                          onChange={handleInputChange}
+                          label="Date of Birth"
+                          helperText="LTO driver's license renewal date coincides with birthday."
+                          error={formErrors.driverDob}
+                        />
+                      </div>
+
+                      <div id="field-driverDlCodes">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Authorized DL Codes
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverDlCodes" 
+                          value={formData.driverDlCodes} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverDlCodes')} 
+                          placeholder="e.g. A, A1 (Tricycle authorization)" 
+                        />
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                          LTO DL Code A or A1 is required to operate motorized tricycles.
+                        </p>
+                        {formErrors.driverDlCodes && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverDlCodes}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -2433,31 +2613,74 @@ const ApplyFranchise = () => {
                       )}
                     </div>
 
-                    {/* LTO Document Metadata */}
-                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          LTO OR / CR Number
-                        </label>
-                        <input 
-                          type="text" 
-                          name="orCrNo" 
-                          value={formData.orCrNo} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          placeholder="e.g. OR-98765432" 
-                        />
+                    {/* LTO Document Metadata (Separate OR and CR) */}
+                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          LTO Registration Details (Official Receipt &amp; Certificate of Registration)
+                        </span>
+                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                          Ownership must match applicant name
+                        </span>
                       </div>
-                      <div id="field-orCrExpiryDate">
-                        <SimpleDatePicker
-                          name="orCrExpiryDate"
-                          value={formData.orCrExpiryDate}
-                          onChange={handleInputChange}
-                          label="LTO Expiry / Registration Date"
-                          mode="expiry"
-                          helperText="LTO registration expiration date."
-                          error={formErrors.orCrExpiryDate}
-                        />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div id="field-orCrNo">
+                          <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                            Official Receipt (OR) Number
+                          </label>
+                          <input 
+                            type="text" 
+                            name="orCrNo" 
+                            value={formData.orCrNo} 
+                            onChange={handleInputChange} 
+                            className={inputClasses} 
+                            placeholder="e.g. OR-98765432" 
+                          />
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            Proof of LTO annual registration renewal.
+                          </p>
+                        </div>
+
+                        <div id="field-crNo">
+                          <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                            Certificate of Registration (CR) No.
+                          </label>
+                          <input 
+                            type="text" 
+                            name="crNo" 
+                            value={formData.crNo} 
+                            onChange={handleInputChange} 
+                            className={inputClasses} 
+                            placeholder="e.g. CR-12345678" 
+                          />
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            Proof of vehicle ownership under applicant's name.
+                          </p>
+                        </div>
+
+                        <div id="field-orDate">
+                          <SimpleDatePicker
+                            name="orDate"
+                            value={formData.orDate}
+                            onChange={handleInputChange}
+                            label="OR Payment Date"
+                            helperText="Date of LTO Official Receipt payment."
+                            error={formErrors.orDate}
+                          />
+                        </div>
+
+                        <div id="field-orCrExpiryDate">
+                          <SimpleDatePicker
+                            name="orCrExpiryDate"
+                            value={formData.orCrExpiryDate}
+                            onChange={handleInputChange}
+                            label="LTO Expiration Date"
+                            mode="expiry"
+                            helperText="Valid registration end date on LTO sticker/OR."
+                            error={formErrors.orCrExpiryDate}
+                          />
+                        </div>
                       </div>
                     </div>
 

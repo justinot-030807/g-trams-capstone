@@ -4,7 +4,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, CheckCircle, CheckCircle2, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
-  Check, FileText, User, ShieldAlert, Receipt, XCircle, Banknote,
+  Check, FileText, User, ShieldAlert, Receipt, XCircle, Banknote, Award,
   Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
   Bell, Settings, ChevronRight, LogOut
 } from 'lucide-react';
@@ -16,6 +16,7 @@ import TricycleIcon from '../../components/common/TricycleIcon';
 import StatusBadge from '../../components/common/StatusBadge';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
 import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
+import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import OperatorGuideModal from '../../components/operator/OperatorGuideModal';
 import LanguagePreferenceModal from '../../components/operator/LanguagePreferenceModal';
 import FeedbackModal from '../../components/common/FeedbackModal';
@@ -57,6 +58,8 @@ const OperatorDashboard = () => {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isECopyModalOpen, setIsECopyModalOpen] = useState(false);
+  const [eCopyUnit, setECopyUnit] = useState(null);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -413,16 +416,18 @@ const OperatorDashboard = () => {
     const steps = [
       { id: 1, label: 'Submit' },
       { id: 2, label: 'Review' },
-      { id: 3, label: 'Sign' },
-      { id: 4, label: 'Pay' },
-      { id: 5, label: 'Active' }
+      { id: 3, label: 'Pay' },
+      { id: 4, label: 'Sign' },
+      { id: 5, label: 'Pickup' },
+      { id: 6, label: 'Active' }
     ];
 
     let currentStepNum = 1;
     if (status === 'Pending') currentStepNum = 2;
-    else if (status === 'For Signing') currentStepNum = 3;
-    else if (status === 'Ready for Pickup') currentStepNum = 4;
-    else if (status === 'Active') currentStepNum = 5;
+    else if (status === 'For Payment') currentStepNum = 3;
+    else if (status === 'For Signing') currentStepNum = 4;
+    else if (status === 'Ready for Pickup') currentStepNum = 5;
+    else if (status === 'Active') currentStepNum = 6;
 
     return (
       <div className="mb-4 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4">
@@ -433,7 +438,7 @@ const OperatorDashboard = () => {
         {/* Seamless Step progress track & nodes */}
         <div className="flex items-start w-full px-1">
           {steps.map((step, idx) => {
-            const isCompleted = currentStepNum > step.id || (status === 'Active' && step.id === 5);
+            const isCompleted = currentStepNum > step.id || (status === 'Active' && step.id === 6);
             const isCurrent = currentStepNum === step.id && status !== 'Active';
 
             return (
@@ -520,11 +525,13 @@ const OperatorDashboard = () => {
   const getOperatorSubtext = () => {
     const hasReady = franchises.some(f => f.status === 'Ready for Pickup');
     const hasSigning = franchises.some(f => f.status === 'For Signing');
+    const hasForPayment = franchises.some(f => f.status === 'For Payment');
     const hasPending = franchises.some(f => f.status === 'Pending');
     const hasActive = franchises.some(f => f.status === 'Active');
 
-    if (hasReady) return t('greeting.subReady', 'Welcome back! Your MTOP Certificate is ready for pickup at the Municipal Cashier.');
-    if (hasSigning) return t('greeting.subSigning', 'Welcome back! Your application is approved and is currently routing for municipal signatures.');
+    if (hasReady) return t('greeting.subReady', 'Welcome back! Your MTOP Certificate is signed and ready for pickup at the Licensing Office (BPLO).');
+    if (hasSigning) return t('greeting.subSigning', 'Welcome back! Payment has been recorded. Documents are routing for municipal signatures.');
+    if (hasForPayment) return t('greeting.subForPayment', 'Welcome back! Your application is approved. Please pay the franchise fee at the Municipal Cashier / Treasury.');
     if (hasPending) return t('greeting.subPending', 'Welcome back! Your franchise application is currently under municipal review.');
     if (hasActive) return t('greeting.subActive', 'Welcome back! Your registered tricycle franchise is active and road-authorized.');
     return t('dashboard.welcomeSub', 'Welcome back! Manage your active and pending franchises securely.');
@@ -660,7 +667,7 @@ const OperatorDashboard = () => {
               </div>
               <div className="h-8 w-24 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-lg shrink-0" />
             </div>
-          ) : franchises.some(f => f.status === 'Ready for Pickup') ? (
+          ) : franchises.some(f => f.status === 'For Payment') ? (
             <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#F59E0B]/15 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
@@ -668,16 +675,16 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold truncate text-[#92400E] dark:text-[#FDE68A]">
-                    {t('dashboard.approvedPaymentTitle', 'Ready for Cashier Payment')}
+                    {t('dashboard.forPaymentTitle', 'Awaiting Municipal Cashier Payment')}
                   </h4>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                    Pay ₱500 at the Municipal Cashier window with your Plate Number to claim your permit.
+                    Your application passed review! Please pay ₱{systemFranchiseFee} at the Municipal Cashier / Treasury window to route for official signatures.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => {
-                  const target = franchises.find(f => f.status === 'Ready for Pickup');
+                  const target = franchises.find(f => f.status === 'For Payment');
                   if (target) {
                     setSelectedUnit(target);
                     setIsDetailsOpen(true);
@@ -689,6 +696,35 @@ const OperatorDashboard = () => {
                 <span>View Payment Details</span>
               </button>
             </div>
+          ) : franchises.some(f => f.status === 'Ready for Pickup') ? (
+            <div className="bg-[#F0FDF4]/70 dark:bg-[#052E16]/30 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#BBF7D0] dark:border-[#166534] shadow-xs">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-[#15803D]/15 text-[#15803D] dark:text-[#4ADE80] flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs sm:text-sm font-bold truncate text-[#15803D] dark:text-[#4ADE80]">
+                    {t('dashboard.readyPickupTitle', 'MTOP Signed — Ready for Pickup')}
+                  </h4>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                    Your franchise has been signed by the Sangguniang Bayan! Claim your official printed MTOP certificate and stickers at the Licensing Office (BPLO).
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const target = franchises.find(f => f.status === 'Ready for Pickup');
+                  if (target) {
+                    setSelectedUnit(target);
+                    setIsDetailsOpen(true);
+                  }
+                }}
+                className="w-full sm:w-auto bg-[#15803D] hover:bg-[#166534] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <CheckCircle2 size={15} />
+                <span>View Pickup Details</span>
+              </button>
+            </div>
           ) : franchises.some(f => f.status === 'For Signing') ? (
             <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
@@ -697,10 +733,10 @@ const OperatorDashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold truncate text-[#92400E] dark:text-[#FDE68A]">
-                    {t('dashboard.signingTitle', 'Approved — Routing for Signature')}
+                    {t('dashboard.signingTitle', 'Payment Recorded — Routing for Signatures')}
                   </h4>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 leading-snug">
-                    {t('dashboard.signingDesc', 'Documents are routing for municipal signatures. Please wait for the pickup notice.')}
+                    {t('dashboard.signingDesc', 'Official Receipt has been recorded by Treasury. Documents are routing for municipal signatures. Please wait for the pickup notice.')}
                   </p>
                 </div>
               </div>
@@ -1173,26 +1209,57 @@ const OperatorDashboard = () => {
                 {unit?.status === 'Expired' ? (
                   <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : unit?.status === 'Active' ? (
-                  <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                  <div className="flex flex-col sm:flex-row w-full gap-2">
+                    <button 
+                      onClick={() => { setECopyUnit(unit); setIsECopyModalOpen(true); }} 
+                      className="flex-1 bg-[#15803D]/10 hover:bg-[#15803D]/20 text-[#15803D] dark:text-[#4ADE80] border border-[#15803D]/30 px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs"
+                      title="View Approved MTOP Certificate with Watermark"
+                    >
+                      <Award size={15} /> 
+                      <span>View E-Copy (Approved MTOP)</span>
+                    </button>
+                    <button 
+                      onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                    >
+                      {t('dashboard.btnViewDetails', 'Details')}
+                    </button>
+                  </div>
+                ) : unit?.status === 'For Payment' ? (
+                  <div className="flex flex-col sm:flex-row w-full gap-2">
+                    <button 
+                      onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                      className="flex-1 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm py-2.5 px-3.5 min-h-[44px] rounded-lg flex items-center justify-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
+                    >
+                      <Banknote size={15} /> 
+                      <span>Pay ₱{systemFranchiseFee} at Cashier</span>
+                    </button>
+                    <button 
+                      onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                    >
+                      {t('dashboard.btnViewDetails', 'Details')}
+                    </button>
+                  </div>
+                ) : unit?.status === 'For Signing' ? (
+                  <div className="flex flex-col sm:flex-row w-full gap-2">
+                    <div className="flex-1 bg-[#FFFBEB] dark:bg-[#451A03]/40 border border-[#FDE68A] dark:border-[#92400E] text-[#B45309] dark:text-[#FBBF24] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs select-none">
+                      <FileText size={15} /> 
+                      <span>Paid • Routing for Signatures</span>
+                    </div>
+                    <button 
+                      onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                    >
+                      {t('dashboard.btnViewDetails', 'Details')}
+                    </button>
+                  </div>
                 ) : unit?.status === 'Ready for Pickup' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
-                    {unit.paymentStatus === 'Paid' ? (
-                      <button 
-                        onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                        className="flex-1 bg-[#F0FDF4] dark:bg-[#052E16]/40 text-[#15803D] dark:text-[#4ADE80] border border-[#BBF7D0] dark:border-[#166534] font-bold text-xs sm:text-sm py-2.5 px-3.5 min-h-[44px] rounded-lg flex items-center justify-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-                      >
-                        <CheckCircle2 size={14} /> 
-                        <span>Paid • Awaiting Release</span>
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                        className="flex-1 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm py-2.5 px-3.5 min-h-[44px] rounded-lg flex items-center justify-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-                      >
-                        <Banknote size={14} /> 
-                        <span>Pay ₱500 at Cashier (Plate: {unit.plateNo})</span>
-                      </button>
-                    )}
+                    <div className="flex-1 bg-[#F0FDF4] dark:bg-[#052E16]/40 border border-[#BBF7D0] dark:border-[#166534] text-[#15803D] dark:text-[#4ADE80] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs select-none">
+                      <CheckCircle2 size={15} /> 
+                      <span>Signed • Claim at BPLO</span>
+                    </div>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
                       className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
@@ -1270,10 +1337,34 @@ const OperatorDashboard = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-5 py-2.5 min-h-[44px] bg-[#1F1D1B] hover:bg-black dark:bg-[#2E2A27] dark:hover:bg-[#3E3835] text-white font-bold rounded-lg text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
+            {selectedUnit?.status === 'Active' && (
+              <button 
+                onClick={() => {
+                  setECopyUnit(selectedUnit);
+                  setIsECopyModalOpen(true);
+                  setIsDetailsOpen(false);
+                }} 
+                className="w-full mt-3 py-2.5 min-h-[44px] bg-[#15803D] hover:bg-[#166534] text-white font-bold rounded-lg text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs active:scale-95"
+              >
+                <Award size={16} />
+                <span>View E-Copy (Approved MTOP Certificate)</span>
+              </button>
+            )}
+            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-2.5 py-2.5 min-h-[44px] bg-[#1F1D1B] hover:bg-black dark:bg-[#2E2A27] dark:hover:bg-[#3E3835] text-white font-bold rounded-lg text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
           </div>
         </div>
       )}
+
+      {/* Official MTOP E-Copy Modal with Approved Watermark */}
+      <MtopCertificateModal 
+        isOpen={isECopyModalOpen} 
+        onClose={() => {
+          setIsECopyModalOpen(false);
+          setECopyUnit(null);
+        }} 
+        unit={eCopyUnit} 
+        isECopy={true} 
+      />
 
       {/* Official Voucher Claim Stub (NO QR or Barcode) */}
       {isPrintOpen && (

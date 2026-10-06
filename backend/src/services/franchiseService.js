@@ -33,6 +33,7 @@ class FranchiseService {
             total: reports.length,
             active: reports.filter(r => r.status === 'Active').length,
             pending: reports.filter(r => r.status === 'Pending' || r.status === 'Pending for Approval').length,
+            forPayment: reports.filter(r => r.status === 'For Payment').length,
             forSigning: reports.filter(r => r.status === 'For Signing').length,
             readyForPickup: reports.filter(r => r.status === 'Ready for Pickup').length,
             revoked: reports.filter(r => r.status === 'Revoked').length,
@@ -116,7 +117,7 @@ class FranchiseService {
             }, {}),
             
             recentApps: reports
-                .filter(r => ['Pending', 'Pending for Approval', 'For Signing', 'Ready for Pickup'].includes(r.status))
+                .filter(r => ['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup'].includes(r.status))
                 .slice(0, 5),
                 
             historyLogs: [...reports]
@@ -169,7 +170,10 @@ class FranchiseService {
             status: data.status || 'Pending',
             dateApplied: parsedDateApplied,
             orCrUrl: data.orCrUrl, 
+            crUrl: data.crUrl || '',
+            orUrl: data.orUrl || '',
             licenseUrl: data.licenseUrl, 
+            licenseBackUrl: data.licenseBackUrl || '',
             todaEndorsementUrl: data.todaEndorsementUrl, 
             brgyClearanceUrl: data.brgyClearanceUrl,
             cedulaUrl: data.cedulaUrl || '',
@@ -177,11 +181,33 @@ class FranchiseService {
             // Structured document metadata fields
             orCrNo: data.orCrNo || '',
             orCrExpiryDate: data.orCrExpiryDate && !isNaN(new Date(data.orCrExpiryDate).getTime()) ? new Date(data.orCrExpiryDate) : undefined,
+            crNo: data.crNo || '',
+            orDate: data.orDate && !isNaN(new Date(data.orDate).getTime()) ? new Date(data.orDate) : undefined,
+            crDate: data.crDate && !isNaN(new Date(data.crDate).getTime()) ? new Date(data.crDate) : undefined,
+            color: data.color || '',
+            series: data.series || '',
+            yearModel: data.yearModel || '',
+            fileNo: data.fileNo || '',
+            vehicleType: data.vehicleType || '',
+            vehicleCategory: data.vehicleCategory || '',
+            classification: data.classification || '',
+            bodyType: data.bodyType || '',
+            displacement: data.displacement || '',
+            registeredOwner: data.registeredOwner || '',
+            ownerAddress: data.ownerAddress || '',
+
             isOperatorDriver: data.isOperatorDriver !== undefined ? (data.isOperatorDriver === true || data.isOperatorDriver === 'true') : true,
+            numberOfUnits: Number(data.numberOfUnits) || 1,
             driverName: data.driverName || '',
             driverContact: data.driverContact || '',
             driverLicenseNo: data.driverLicenseNo || '',
             driverLicenseExpiryDate: data.driverLicenseExpiryDate && !isNaN(new Date(data.driverLicenseExpiryDate).getTime()) ? new Date(data.driverLicenseExpiryDate) : undefined,
+            driverDob: data.driverDob && !isNaN(new Date(data.driverDob).getTime()) ? new Date(data.driverDob) : undefined,
+            driverDlCodes: data.driverDlCodes || 'A, A1',
+            driverConditions: data.driverConditions || 'None',
+            driverAddress: data.driverAddress || '',
+            driverNationality: data.driverNationality || 'Filipino',
+            driverSex: data.driverSex || '',
             todaCertNo: data.todaCertNo || '',
             todaCertDate: data.todaCertDate && !isNaN(new Date(data.todaCertDate).getTime()) ? new Date(data.todaCertDate) : undefined,
             todaSignatory: data.todaSignatory || '',
@@ -190,8 +216,8 @@ class FranchiseService {
             brgyIssuer: data.brgyIssuer || '',
 
             deficiencies: {
-                hasOrcr: !!data.orCrUrl,
-                hasLicense: !!data.licenseUrl,
+                hasOrcr: !!(data.orCrUrl || data.crUrl || data.orUrl),
+                hasLicense: !!(data.licenseUrl || data.licenseBackUrl),
                 hasTodaEndorsement: !!data.todaEndorsementUrl,
                 hasBrgyClearance: !!data.brgyClearanceUrl
             },
