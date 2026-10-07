@@ -58,6 +58,7 @@ const createFranchise = async (req, res) => {
             brgyClearanceUrl: findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']) || req.body.brgyClearanceUrl || '',
             cedulaUrl: findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']) || req.body.cedulaUrl || ''
         };
+        data.orCrUrl = data.orCrUrl || data.crUrl || data.orUrl || '';
         
         if (typeof data.aiScannedData === 'string') {
             try { data.aiScannedData = JSON.parse(data.aiScannedData); } catch {}
@@ -200,8 +201,8 @@ const updateFranchise = async (req, res) => {
         const cedula = findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']);
 
         if (orCr) updateData.orCrUrl = orCr;
-        if (cr) updateData.crUrl = cr;
-        if (or) updateData.orUrl = or;
+        if (cr) { updateData.crUrl = cr; if (!updateData.orCrUrl) updateData.orCrUrl = cr; }
+        if (or) { updateData.orUrl = or; if (!updateData.orCrUrl && !updateData.crUrl) updateData.orCrUrl = or; }
         if (lic) updateData.licenseUrl = lic;
         if (licBack) updateData.licenseBackUrl = licBack;
         if (toda) updateData.todaEndorsementUrl = toda;

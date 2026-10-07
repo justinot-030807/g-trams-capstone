@@ -26,7 +26,7 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
-const STANDARD_DOC_IDS = ['orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
+const STANDARD_DOC_IDS = ['crDocument', 'orDocument', 'orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
 
 const normalizeDateStr = (raw) => {
   if (!raw || typeof raw !== 'string') return '';
@@ -55,7 +55,8 @@ const normalizeDateStr = (raw) => {
 };
 
 const DEFAULT_REQUIREMENTS = [
-  { id: 'orCrDocument', label: 'Tricycle OR / CR Document', fieldUrl: 'orCrUrl' },
+  { id: 'crDocument', label: 'Certificate of Registration (CR)', fieldUrl: 'crUrl' },
+  { id: 'orDocument', label: 'Official Receipt (OR)', fieldUrl: 'orUrl' },
   { id: 'license', label: "Driver's License (Front)", fieldUrl: 'licenseUrl' },
   { id: 'licenseBack', label: "Driver's License (Back / DL Codes)", fieldUrl: 'licenseBackUrl' },
   { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
@@ -140,6 +141,9 @@ const ApplyFranchise = () => {
   // AI Scanning state per document
   const [aiScanning, setAiScanning] = useState({
     license: false,
+    licenseBack: false,
+    crDocument: false,
+    orDocument: false,
     orCrDocument: false,
     todaEndorsement: false,
     brgyClearance: false,
@@ -148,6 +152,9 @@ const ApplyFranchise = () => {
 
   const [aiSuccess, setAiSuccess] = useState({
     license: false,
+    licenseBack: false,
+    crDocument: false,
+    orDocument: false,
     orCrDocument: false,
     todaEndorsement: false,
     brgyClearance: false,
@@ -377,7 +384,7 @@ const ApplyFranchise = () => {
     if (formData.driverLicenseNo?.trim()) completed++;
 
     // Step 2 items (6)
-    if (uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl) completed++;
+    if (uploadedDocs.crDocument || filePreviews.crDocument || formData.crUrl || uploadedDocs.orDocument || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl) completed++;
     if (formData.make?.trim()) completed++;
     if (formData.made?.trim()) completed++;
     if (formData.zone?.trim()) completed++;
@@ -650,8 +657,11 @@ const ApplyFranchise = () => {
     }
 
     const previews = {};
-    if (savedForm.orCrUrl) previews.orCrDocument = savedForm.orCrUrl;
+    if (savedForm.crUrl) previews.crDocument = savedForm.crUrl;
+    if (savedForm.orUrl) previews.orDocument = savedForm.orUrl;
+    if (savedForm.orCrUrl && !savedForm.crUrl) previews.crDocument = savedForm.orCrUrl;
     if (savedForm.licenseUrl) previews.license = savedForm.licenseUrl;
+    if (savedForm.licenseBackUrl) previews.licenseBack = savedForm.licenseBackUrl;
     if (savedForm.todaEndorsementUrl) previews.todaEndorsement = savedForm.todaEndorsementUrl;
     if (savedForm.brgyClearanceUrl) previews.brgyClearance = savedForm.brgyClearanceUrl;
     if (savedForm.cedulaUrl) previews.cedulaDoc = savedForm.cedulaUrl;
@@ -771,8 +781,11 @@ const ApplyFranchise = () => {
     }
 
     const previews = {};
-    if (franchise.orCrUrl) previews.orCrDocument = franchise.orCrUrl;
+    if (franchise.crUrl) previews.crDocument = franchise.crUrl;
+    if (franchise.orUrl) previews.orDocument = franchise.orUrl;
+    if (franchise.orCrUrl && !franchise.crUrl) previews.crDocument = franchise.orCrUrl;
     if (franchise.licenseUrl) previews.license = franchise.licenseUrl;
+    if (franchise.licenseBackUrl) previews.licenseBack = franchise.licenseBackUrl;
     if (franchise.todaEndorsementUrl) previews.todaEndorsement = franchise.todaEndorsementUrl;
     if (franchise.brgyClearanceUrl) previews.brgyClearance = franchise.brgyClearanceUrl;
     if (franchise.cedulaUrl) previews.cedulaDoc = franchise.cedulaUrl;
@@ -901,7 +914,7 @@ const ApplyFranchise = () => {
     let docType = '';
     const lower = (reqId || '').toLowerCase();
     if (lower === 'license' || lower.includes('license')) docType = 'license';
-    else if (lower === 'orcrdocument' || lower.includes('orcr') || lower.includes('crfile') || lower.includes('orfile') || lower === 'cr' || lower === 'or') docType = 'orCr';
+    else if (lower === 'orcrdocument' || lower.includes('orcr') || lower.includes('crfile') || lower.includes('orfile') || lower === 'cr' || lower === 'or' || lower.includes('crdocument') || lower.includes('ordocument')) docType = 'orCr';
     else if (lower === 'todaendorsement' || lower.includes('toda')) docType = 'todaEndorsement';
     else if (lower === 'brgyclearance' || lower.includes('brgy')) docType = 'brgyClearance';
     else if (lower === 'ceduladoc' || lower.includes('cedula') || lower === 'cedula') docType = 'cedula';
@@ -967,15 +980,20 @@ const ApplyFranchise = () => {
               orCr: 'orCrUrl',
               crFile: 'crUrl',
               orFile: 'orUrl',
+              crDocument: 'crUrl',
+              orDocument: 'orUrl',
               license: 'licenseUrl',
               licenseBack: 'licenseBackUrl',
               todaEndorsement: 'todaEndorsementUrl',
               brgyClearance: 'brgyClearanceUrl',
               cedula: 'cedulaUrl'
             };
-            if (urlKeyMap[docType]) {
-              setFormData(prev => ({ ...prev, [urlKeyMap[docType]]: json.fileUrl }));
-            }
+            const targetField = urlKeyMap[reqId] || urlKeyMap[docType] || 'orCrUrl';
+            setFormData(prev => ({ 
+              ...prev, 
+              [targetField]: json.fileUrl,
+              orCrUrl: prev.orCrUrl || json.fileUrl 
+            }));
           }
 
           if (docType === 'license' || docType === 'licenseBack') {
@@ -1384,9 +1402,14 @@ const ApplyFranchise = () => {
 
     if (currentStep === 2) {
       if (formMode === 'New') {
-        const hasOrCr = uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
-        if (!hasOrCr) {
-          showValidationModal('orCrDocument', 'LTO OR/CR Document Required', 'Please upload a photo of your LTO Official Receipt / Certificate of Registration (OR/CR).');
+        const hasCr = uploadedDocs.crDocument || uploadedDocs.crFile || filePreviews.crDocument || formData.crUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
+        const hasOr = uploadedDocs.orDocument || uploadedDocs.orFile || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
+        if (!hasCr) {
+          showValidationModal('crDocument', 'LTO Certificate of Registration (CR) Required', 'Please upload your LTO Certificate of Registration (CR) to verify vehicle ownership and specifications.');
+          return false;
+        }
+        if (!hasOr) {
+          showValidationModal('orDocument', 'LTO Official Receipt (OR) Required', 'Please upload your latest LTO Official Receipt (OR) to verify registration validity.');
           return false;
         }
         if (!formData.make?.trim()) {
@@ -1686,9 +1709,18 @@ const ApplyFranchise = () => {
       setUploadPhase('Uploading documents and attachments...');
 
       // Append documents
+      if (uploadedDocs.crDocument) {
+        submitData.append('crDocument', uploadedDocs.crDocument);
+        submitData.append('crFile', uploadedDocs.crDocument);
+      }
+      if (uploadedDocs.orDocument) {
+        submitData.append('orDocument', uploadedDocs.orDocument);
+        submitData.append('orFile', uploadedDocs.orDocument);
+      }
       if (uploadedDocs.orCrDocument) submitData.append('orCrDocument', uploadedDocs.orCrDocument);
-      if (uploadedDocs.crFile) submitData.append('crFile', uploadedDocs.crFile);
-      if (uploadedDocs.orFile) submitData.append('orFile', uploadedDocs.orFile);
+      else if (uploadedDocs.crDocument) submitData.append('orCrDocument', uploadedDocs.crDocument);
+      if (uploadedDocs.crFile && !uploadedDocs.crDocument) submitData.append('crFile', uploadedDocs.crFile);
+      if (uploadedDocs.orFile && !uploadedDocs.orDocument) submitData.append('orFile', uploadedDocs.orFile);
       if (uploadedDocs.license) submitData.append('license', uploadedDocs.license);
       if (uploadedDocs.licenseBack) submitData.append('licenseBack', uploadedDocs.licenseBack);
       if (uploadedDocs.todaEndorsement) submitData.append('todaEndorsement', uploadedDocs.todaEndorsement);
@@ -2443,38 +2475,80 @@ const ApplyFranchise = () => {
                   </div>
                 </div>
 
-                {/* Document Upload for OR/CR */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      LTO Official Receipt / Certificate of Registration (OR / CR)
-                    </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-reads Plate & Chassis
+                {/* Separate Document Upload for LTO CR & LTO OR */}
+                <div className="space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        LTO Documents (Certificate of Registration &amp; Official Receipt)
+                      </label>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        Magkahiwalay na i-upload ang LTO CR (Katibayan ng Rehistro) at LTO OR (Taunang Bayad / Validity).
+                      </p>
+                    </div>
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 shrink-0">
+                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-reads Plate &amp; Chassis
                     </span>
                   </div>
 
-                  <DocumentUploadCard
-                    id="orCrDocument"
-                    label="LTO OR / CR Document"
-                    file={uploadedDocs.orCrDocument}
-                    previewUrl={filePreviews.orCrDocument || formData.orCrUrl}
-                    onFileSelect={handleFileChange}
-                    onFileRemove={handleRemoveFile}
-                    onPreviewZoom={setFullPreview}
-                    onRescan={handleRescan}
-                    required={formMode === 'New'}
-                    isScanning={aiScanning.orCrDocument}
-                    scanSuccess={aiSuccess.orCrDocument}
-                    error={formErrors.orCrDocument}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* 1. LTO Certificate of Registration (CR) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Certificate of Registration (CR)</span>
+                          <span className="text-red-600">*</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Vehicle Specs &amp; Owner</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="crDocument"
+                        label="LTO CR Document"
+                        file={uploadedDocs.crDocument || uploadedDocs.crFile}
+                        previewUrl={filePreviews.crDocument || formData.crUrl || filePreviews.crFile || filePreviews.orCrDocument || formData.orCrUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={formMode === 'New'}
+                        isScanning={aiScanning.crDocument}
+                        scanSuccess={aiSuccess.crDocument}
+                        error={formErrors.crDocument}
+                      />
+                    </div>
+
+                    {/* 2. LTO Official Receipt (OR) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Official Receipt (OR)</span>
+                          <span className="text-red-600">*</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Proof of Annual Payment</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="orDocument"
+                        label="LTO OR Document"
+                        file={uploadedDocs.orDocument || uploadedDocs.orFile}
+                        previewUrl={filePreviews.orDocument || formData.orUrl || filePreviews.orFile}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={formMode === 'New'}
+                        isScanning={aiScanning.orDocument}
+                        scanSuccess={aiSuccess.orDocument}
+                        error={formErrors.orDocument}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Document Detection Banner */}
-                {aiSuccess.orCrDocument && (
+                {(aiSuccess.crDocument || aiSuccess.orDocument || aiSuccess.orCrDocument) && (
                   <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg flex items-center gap-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                     <CheckCircle2 size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    <span>Document details detected: Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
+                    <span>LTO document details detected: Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
                   </div>
                 )}
 

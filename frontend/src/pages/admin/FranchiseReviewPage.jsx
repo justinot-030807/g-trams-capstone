@@ -290,11 +290,18 @@ const FranchiseReviewPage = () => {
   // Document Tabs List Definition
   const docTabs = [
     { 
-      key: 'orCrDocument', 
-      label: 'Tricycle OR / CR Document (LTO)', 
-      short: 'OR / CR (LTO)', 
-      sub: 'Official Receipt & Registration',
-      url: currentApp?.orCrUrl 
+      key: 'crDocument', 
+      label: 'Certificate of Registration (CR)', 
+      short: 'LTO CR', 
+      sub: 'Vehicle Ownership & Specs',
+      url: currentApp?.crUrl || currentApp?.orCrUrl 
+    },
+    { 
+      key: 'orDocument', 
+      label: 'Official Receipt (OR)', 
+      short: 'LTO OR', 
+      sub: 'Annual Registration Payment',
+      url: currentApp?.orUrl || (currentApp?.crUrl ? null : currentApp?.orCrUrl)
     },
     { 
       key: 'license', 

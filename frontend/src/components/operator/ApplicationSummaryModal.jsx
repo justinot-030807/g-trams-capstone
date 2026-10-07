@@ -4,10 +4,13 @@ import { formatZoneLabel } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
 
 const DEFAULT_MODAL_REQUIREMENTS = [
-  { id: 'orCrDocument', label: 'Tricycle OR / CR Document', fieldUrl: 'orCrUrl' },
-  { id: 'license', label: "Driver's License", fieldUrl: 'licenseUrl' },
+  { id: 'crDocument', label: 'Certificate of Registration (CR)', fieldUrl: 'crUrl' },
+  { id: 'orDocument', label: 'Official Receipt (OR)', fieldUrl: 'orUrl' },
+  { id: 'license', label: "Driver's License (Front)", fieldUrl: 'licenseUrl' },
+  { id: 'licenseBack', label: "Driver's License (Back / DL Codes)", fieldUrl: 'licenseBackUrl' },
   { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
-  { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
+  { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' },
+  { id: 'cedulaDoc', label: 'Community Tax Certificate (Cedula)', fieldUrl: 'cedulaUrl' }
 ];
 
 const ApplicationSummaryModal = ({

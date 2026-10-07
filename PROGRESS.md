@@ -61,6 +61,13 @@
   - Naayos ang initial state upang agad na basahin ang cached franchises mula sa storage para walang flash ng form habang naglo-load.
   - Nilagyan ng backend clamp sa `franchiseService.js` upang hindi makapagsumite ng higit sa 2 units.
 
+- **Hiwalay na Upload Slots para sa LTO CR at LTO OR (`/apply-franchise`)**:
+  - Hiniwalay ang attachment slots sa Step 2 sa dalawang magkabukod na upload cards:
+    1. **Certificate of Registration (CR)** - para sa katibayan ng rehistro at specifications ng traysikel (Plate, Engine, Chassis, Owner).
+    2. **Official Receipt (OR)** - para sa katibayan ng taunang bayad sa rehistro ng LTO (OR No, Validity / Expiry Date).
+  - In-update ang AI scanner (`triggerAiScan`) at document validation upang i-validate at i-auto fill ang mga detalye mula sa parehong dokumento.
+  - In-update ang `ApplicationSummaryModal` at `FranchiseReviewPage` upang magkaroon ng hiwalay na tabs/preview para sa `LTO CR` at `LTO OR`.
+
 ## 2. Ginagawa ngayon (In Progress)
 - Handa para sa pagsusuri ng gumagamit at verification sa browser.
 
