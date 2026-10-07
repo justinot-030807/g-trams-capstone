@@ -129,7 +129,7 @@ const Sequence1: React.FC<{ localFrame: number; fps: number }> = ({ localFrame, 
           {[
             { title: 'Digital Requirements Upload', desc: 'Secure OR/CR, License & Barangay clearance processing' },
             { title: 'Live Milestone Tracking', desc: 'Real-time SMS & web status from review to signing' },
-            { title: 'Printable Claim Stub & QR', desc: 'Instant voucher generation for treasury payment & pickup' },
+            { title: 'Cashier & Treasury Integration', desc: 'Direct over-the-counter payment processing & receipt logging' },
           ].map((item, idx) => {
             const itemSpring = spring({
               frame: localFrame - 15 - idx * 8,

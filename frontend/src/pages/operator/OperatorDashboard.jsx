@@ -15,7 +15,6 @@ import { useTextSize } from '../../context/TextSizeContext';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import StatusBadge from '../../components/common/StatusBadge';
 import { GarageGridSkeleton, SkeletonElement } from '../../components/skeleton';
-import ClaimStubVoucher from '../../components/operator/ClaimStubVoucher';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import OperatorGuideModal from '../../components/operator/OperatorGuideModal';
 import LanguagePreferenceModal from '../../components/operator/LanguagePreferenceModal';
@@ -57,7 +56,6 @@ const OperatorDashboard = () => {
 
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isECopyModalOpen, setIsECopyModalOpen] = useState(false);
   const [eCopyUnit, setECopyUnit] = useState(null);
   const [isTourOpen, setIsTourOpen] = useState(false);
@@ -332,14 +330,6 @@ const OperatorDashboard = () => {
     return null;
   };
 
-  const handleDirectDownload = (unit) => {
-    setSelectedUnit(unit);
-    setIsPrintOpen(true);
-    setTimeout(() => {
-      window.print();
-    }, 500);
-  };
-
   const handleConfirmCancel = async () => {
     if (!cancelModal.unit) return;
     setCancelModal(prev => ({ ...prev, isSubmitting: true }));
@@ -547,12 +537,6 @@ const OperatorDashboard = () => {
         @keyframes floatSlow { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(15px, -15px) scale(1.1); } }
         .animate-dashboard-card { opacity: 0; animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-banner-orb { animation: floatSlow 8s ease-in-out infinite alternate; }
-        @media print {
-          body:not(.printing-claim-stub) * { visibility: hidden; }
-          body:not(.printing-claim-stub) #printable-document, 
-          body:not(.printing-claim-stub) #printable-document * { visibility: visible; }
-          body:not(.printing-claim-stub) #printable-document { position: absolute; left: 0; top: 0; width: 100%; }
-        }
       `}</style>
 
       {/* 1. ELEVATED GOVERNMENT OPERATOR HERO CARD */}
@@ -1365,16 +1349,6 @@ const OperatorDashboard = () => {
         unit={eCopyUnit} 
         isECopy={true} 
       />
-
-      {/* Official Voucher Claim Stub (NO QR or Barcode) */}
-      {isPrintOpen && (
-        <ClaimStubVoucher 
-          isOpen={isPrintOpen} 
-          onClose={() => setIsPrintOpen(false)} 
-          unit={selectedUnit} 
-          systemFranchiseFee={systemFranchiseFee} 
-        />
-      )}
 
       {/* Operator Application Cancellation Modal */}
       {cancelModal.isOpen && (

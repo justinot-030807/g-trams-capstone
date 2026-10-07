@@ -27,9 +27,9 @@ const FAQS_DATA = {
     },
     {
       id: 3,
-      question: "How do I download or print my Motorized Tricycle Operator's Permit / Claim Stub?",
-      answer: "Navigate to your Operator Dashboard, locate your Approved or Active tricycle unit card, and click the 'Print' or 'View Stub' button to open and save your official printable document.",
-      tags: ["print", "permit", "download", "mtop", "claim stub"],
+      question: "How do I view my Motorized Tricycle Operator's Permit (MTOP) E-Copy?",
+      answer: "Navigate to your Operator Dashboard, locate your Active tricycle unit card, and click the 'View E-Copy' button to view your approved electronic copy of the MTOP Certificate with official security watermark.",
+      tags: ["permit", "ecopy", "mtop", "certificate", "view"],
       defaultViews: 15
     },
     {
@@ -64,9 +64,9 @@ const FAQS_DATA = {
     },
     {
       id: 3,
-      question: "Paano i-download o i-print ang aking Permit o Claim Stub?",
-      answer: "Pumunta sa Dashboard, hanapin ang iyong Active o Aprubadong unit card, at i-click ang 'Print' o 'View Stub' button upang lumabas ang opisyal na printable permit.",
-      tags: ["print", "permit", "download", "mtop", "claim stub"],
+      question: "Paano makita ang aking Permit (MTOP) E-Copy?",
+      answer: "Pumunta sa Dashboard, hanapin ang iyong Active unit card, at i-click ang 'View E-Copy' button upang makita ang aprubadong elektronikong kopya ng MTOP Certificate na may opisyal na watermark.",
+      tags: ["permit", "ecopy", "mtop", "certificate", "tingnan"],
       defaultViews: 15
     },
     {
@@ -500,7 +500,7 @@ const HelpSupport = () => {
                   >
                     <option>{currentLang === 'fil' ? 'Isyu sa Franchise Application' : 'Franchise Application Issue'}</option>
                     <option>{currentLang === 'fil' ? 'Account Access' : 'Account Access'}</option>
-                    <option>{currentLang === 'fil' ? 'Tanong sa Payment/Claim Stub' : 'Payment/Claim Stub Inquiry'}</option>
+                    <option>{currentLang === 'fil' ? 'Tanong sa Pagbabayad sa Cashier' : 'Cashier Payment Inquiry'}</option>
                     <option>{currentLang === 'fil' ? 'Iba pa' : 'Other'}</option>
                   </select>
                 </div>

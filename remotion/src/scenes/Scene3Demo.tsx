@@ -129,7 +129,7 @@ export const Scene3Demo: React.FC = () => {
             {[
               { num: '01', title: 'One-Click Permit Renewal' },
               { num: '02', title: 'Instant Document Attachment' },
-              { num: '03', title: 'Digital Printable Claim Stub' },
+              { num: '03', title: 'Direct Cashier Payment & MTOP' },
             ].map((step, idx) => {
               const stepSpring = spring({
                 frame: frame - 25 - idx * 6,

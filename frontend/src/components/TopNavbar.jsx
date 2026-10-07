@@ -204,7 +204,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   notifs.push({
                     id: `op_ready_${item._id}`,
                     title: 'Franchise Approved - Ready for Pickup!',
-                    desc: `Your franchise for unit ${item.plateNo || ''} is approved. Proceed to Office of the Vice Mayor Extension for payment & claim stub.`,
+                    desc: `Your franchise for unit ${item.plateNo || ''} is signed and ready! Proceed to the BPLO / Licensing Office to claim your official MTOP certificate and sticker.`,
                     time: 'Action Required',
                     type: 'success',
                     link: '/operator-dashboard'

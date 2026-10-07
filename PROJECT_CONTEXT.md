@@ -44,6 +44,7 @@
 - **CR Owner Verification**: Sinusuri kung ang registered owner sa LTO CR ay tumutugma sa aplikanteng operator.
 - **OCR Exclusion Rules**: Mahigpit na bawal kunin ang payment amounts at signatories sa documents; bawal kunin ang blood type sa driver's license.
 - **Unit Allocation**: May limitasyon base sa `max_units_per_operator` (default 2 units).
+- **Walang Claim Stub**: Walang claim stub voucher dahil may Cashier module para sa direct over-the-counter payments at physical LGU Official Receipt; kukunin ang MTOP direkta sa BPLO.
 
 ### 8. Mga Alam na Bug at Susunod na Gagawin
 - Pagsasaayos ng real-time Web Push notification payload delivery sa ilang mobile browsers (PWA).
@@ -54,3 +55,4 @@
 - HUWAG baguhin ang Mongoose schemas o database fields nang walang pahintulot.
 - HUWAG maglagay ng generic AI styling o lumihis sa opisyal na kulay ng Munisipyo ng Gasan.
 - HUWAG baguhin ang pipeline order (hindi pwedeng mauna ang pirma bago ang bayad).
+- HUWAG ibalik ang claim stub voucher (may Cashier module na para sa pagbabayad at resibo).

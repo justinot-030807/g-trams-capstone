@@ -31,6 +31,9 @@
   - Hinati ang admin approval queue sa `Needs Review`, `For Payment`, `For Signing`, `Ready for Pickup`, `Approved`, at `Rejected`.
   - 6-step progress tracker sa Operator Dashboard.
   - May "View E-Copy (Approved MTOP)" sa Operator Dashboard na may diagonal **"APPROVED - ELECTRONIC COPY"** watermark stamp.
+- **Pagtanggal sa Lumang Claim Stub**:
+  - Lubos nang tinanggal ang Claim Stub Voucher sa frontend at backend pabor sa Cashier / Treasury workflow.
+  - Direktang over-the-counter ang bayad sa Municipal Cashier gamit ang Plate No, at may physical LGU OR logging.
 - **Dokumentasyon**:
   - Nilikha ang `PROJECT_CONTEXT.md` sa root para sa mga external AI tools.
 
@@ -40,5 +43,5 @@
 
 ## 3. Susunod (Next Steps)
 - End-to-end user acceptance testing sa production environment kasama ang capstone adviser ("Ma'am").
-- Live test ng mobile PWA camera scanner para sa physical MTOP claim stubs.
+- Live test ng mobile PWA camera scanner para sa physical MTOP QR verification.
 - Pagsasaayos ng deployment server environment variables para sa produksyon.

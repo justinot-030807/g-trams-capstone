@@ -234,7 +234,7 @@ export const InteractiveCodeMockup: React.FC<InteractiveCodeMockupProps> = ({ lo
           </div>
         </div>
 
-        {/* Generated Claim Stub Voucher Pop */}
+        {/* Generated Payment Notice Pop */}
         {localFrame >= 135 && (
           <div
             style={{
@@ -270,13 +270,13 @@ export const InteractiveCodeMockup: React.FC<InteractiveCodeMockupProps> = ({ lo
 
               <div>
                 <div style={{ fontSize: 11, color: COLORS.accent, fontWeight: FONTS.weightBold }}>
-                  OFFICIAL MUNICIPAL CLAIM STUB
+                  OFFICIAL MUNICIPAL PAYMENT NOTICE
                 </div>
                 <div style={{ fontSize: 16, fontWeight: FONTS.weightBold, color: COLORS.text, marginTop: 2 }}>
-                  GASAN-CLAIM-2026-8812
+                  GASAN-MTOP-2026-8812
                 </div>
                 <div style={{ fontSize: 12, color: COLORS.muted }}>
-                  Assessed Fee: ₱500.00 • Status: Ready for Treasury Pickup
+                  Assessed Fee: ₱500.00 • Status: For Payment at Treasury
                 </div>
               </div>
             </div>

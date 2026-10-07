@@ -388,7 +388,7 @@ const updateFranchiseStatus = async (req, res) => {
                 notifMessage = `Your payment for ${updatedFranchise.plateNo} has been recorded. Your application is now queued for municipal executive signatures.`;
             } else if (status === 'Ready for Pickup') {
                 notifTitle = 'Franchise Signed - Ready for Pickup!';
-                notifMessage = `Your official MTOP Certificate for ${updatedFranchise.plateNo} has been signed! Please present your Claim Stub to the Municipal Cashier to pay and claim.`;
+                notifMessage = `Your official MTOP Certificate for ${updatedFranchise.plateNo} has been signed! Please claim your official MTOP Certificate and franchise sticker at the BPLO / Licensing Office.`;
             } else if (status === 'Active') {
                 notifTitle = 'Franchise Activated!';
                 notifMessage = `Your franchise permit for ${updatedFranchise.plateNo} is now officially active and released.`;

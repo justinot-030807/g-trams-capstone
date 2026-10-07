@@ -283,7 +283,7 @@ async function seed() {
         isArchived: false
       },
 
-      // 11. READY FOR PICKUP - Approved, waiting for cashier payment & claim stub voucher
+      // 11. READY FOR PICKUP - Approved and signed, ready for pickup at BPLO / Licensing Office
       {
         operator: kyla._id,
         fullName: kyla.name,

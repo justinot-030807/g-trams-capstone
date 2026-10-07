@@ -586,7 +586,7 @@ const ChatWidget = ({ inline = false }) => {
                 </p>
                 {!isBroadcast && !isCurrentUserAdmin && (
                   <div className="w-full max-w-md space-y-2 mt-2">
-                    {['Paano mag-renew ng prangkisa?', 'Ano ang requirements para sa bagong prangkisa?', 'Saan kukunin ang Claim Stub?'].map((q, i) => (
+                    {['Paano mag-renew ng prangkisa?', 'Ano ang requirements para sa bagong prangkisa?', 'Saan magbabayad at kukunin ang MTOP?'].map((q, i) => (
                       <button
                         key={i}
                         onClick={() => { setInput(q); }}
@@ -695,7 +695,7 @@ const ChatWidget = ({ inline = false }) => {
                     'Magkano ang babayarang renewal fee?',
                     'Ano ang requirements para sa renewal?',
                     'Paano kung nawala ang aking OR/CR?',
-                    'Saan kukunin ang Claim Stub?',
+                    'Saan magbabayad at kukunin ang MTOP?',
                     'Kailan ang schedule ng inspeksyon?',
                     'Paano mag-renew ng prangkisa?'
                   ].map((faq, i) => (

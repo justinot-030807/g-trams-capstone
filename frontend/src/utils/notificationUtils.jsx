@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   Bell,
   CheckCircle2,
@@ -60,11 +60,10 @@ export const getNotificationVisuals = (notif) => {
   const type = (notif?.type || '').toLowerCase();
   const text = `${title} ${message} ${type}`;
 
-  // 1. Ready for pickup / Claim stub / Approved
+  // 1. Ready for pickup / Approved
   if (
     text.includes('ready for pickup') ||
     text.includes('handa nang kunin') ||
-    text.includes('claim stub') ||
     text.includes('approved') ||
     text.includes('naaprubahan') ||
     type === 'approval'

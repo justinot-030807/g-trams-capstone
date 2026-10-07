@@ -25,8 +25,8 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
       a: "Kailangan lamang ng pinakabagong Community Tax Certificate (Cedula) para sa kasalukuyang taon at ang pinakahuling resibo ng rehistro ng motorsiklo (LTO OR/CR)."
     },
     {
-      q: "Ano ang Claim Stub Voucher at saan ito gagamitin?",
-      a: "Ang Claim Stub Voucher ay opisyal na katibayan na naaprubahan na ang inyong aplikasyon o renewal. Ipakita ito kasama ang fee breakdown sa Municipal Treasury para sa bayarin at pagkuha ng opisyal na sticker at MTOP certificate."
+      q: "Paano magbayad at kailan makukuha ang MTOP?",
+      a: "Kapag naaprubahan ang inyong requirements sa review, magtungo sa Municipal Treasury / Cashier upang bayaran ang franchise fee gamit ang inyong Plate Number o pangalan. Kapag napirmahan na ng Punong Bayan, kunin ang inyong opisyal na MTOP Certificate at sticker sa BPLO / Licensing Office."
     },
     {
       q: "Ilang tricycle ang pinapayagang maiparehistro ng isang operator?",
@@ -42,8 +42,8 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
       a: "You only need your Community Tax Certificate (CTC / Cedula) for the current calendar year and the latest LTO Official Receipt / Certificate of Registration (OR/CR)."
     },
     {
-      q: "What is the Claim Stub Voucher and where is it used?",
-      a: "The Claim Stub Voucher is your official verification notice once approved. Present it along with your fee payment at the Municipal Cashier window to claim your official MTOP certificate and sticker."
+      q: "How do I pay and when do I claim my MTOP?",
+      a: "Once your application passes technical review, proceed to the Municipal Treasury / Cashier window to pay the franchise fee using your Plate Number or Name. Once signed by municipal officials, claim your official MTOP Certificate and franchise sticker at the BPLO / Licensing Office."
     },
     {
       q: "How many tricycles can a single operator register?",
@@ -257,12 +257,12 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                   </div>
                   <div className="space-y-1">
                     <h4 className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-white">
-                      {isFilipino ? 'Kumuha ng Claim Stub Voucher' : 'Download Claim Stub Voucher'}
+                      {isFilipino ? 'Magbayad sa Cashier at Kunin ang MTOP' : 'Pay at Cashier & Claim MTOP'}
                     </h4>
                     <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] leading-relaxed font-normal">
                       {isFilipino 
-                        ? 'Kapag naaprubahan na ng tanggapan, i-download o i-print ang Claim Stub at dalhin sa Ingat-Yaman para sa bayarin at opisyal na sticker.'
-                        : 'Once approved, download or print the official Claim Stub and present it at the Municipal Treasury to pay and receive your renewed MTOP.'}
+                        ? 'Kapag naaprubahan ang requirements, magbayad sa Municipal Treasury / Cashier window gamit ang iyong Plate Number. Matapos mapirmahan ng mga opisyal, kunin ang inyong opisyal na MTOP Certificate at sticker sa BPLO.'
+                        : 'Once approved, pay the franchise fee at the Municipal Cashier window using your Plate Number. After executive signatures, claim your official dry-sealed MTOP certificate and sticker at the BPLO.'}
                     </p>
                   </div>
                 </div>
@@ -305,25 +305,25 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] flex items-center justify-center text-xs font-bold shrink-0">3</span>
+                  <span className="w-6 h-6 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 flex items-center justify-center text-xs font-bold shrink-0">3</span>
                   <div>
                     <h5 className="text-xs font-bold text-[#1F1D1B] dark:text-white">
-                      {isFilipino ? 'Sign (Para sa Pirma)' : 'For Signing'}
+                      {isFilipino ? 'For Payment (Pagbabayad sa Cashier)' : 'For Payment'}
                     </h5>
                     <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                      {isFilipino ? 'Nasa opisina na ng Punong Bayan / Bise Alkalde para sa e-signature ng MTOP.' : 'Documents routed for official municipal executive endorsement and signatures.'}
+                      {isFilipino ? 'Aprubado na ang mga papeles. Magtungo sa Municipal Cashier upang bayaran ang standard fee.' : 'Technical review passed. Proceed to Municipal Cashier to settle standard fee.'}
                     </p>
                   </div>
                 </div>
 
                 <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 flex items-center justify-center text-xs font-bold shrink-0">4</span>
+                  <span className="w-6 h-6 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] flex items-center justify-center text-xs font-bold shrink-0">4</span>
                   <div>
                     <h5 className="text-xs font-bold text-[#1F1D1B] dark:text-white">
-                      {isFilipino ? 'Pay (Para sa Pagbabayad)' : 'Ready for Payment'}
+                      {isFilipino ? 'For Signing & Pickup (Pirma at Pagkuha sa BPLO)' : 'Signing & Pickup'}
                     </h5>
                     <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                      {isFilipino ? 'Maaari nang i-download ang inyong Claim Stub para sa bayaran sa Municipal Treasury.' : 'Claim Stub Voucher ready. Pay standard fee at the Municipal Cashier window.'}
+                      {isFilipino ? 'Kumpirmado na ang bayad. Pipirmahan ng Punong Bayan at kukunin ang opisyal na MTOP at sticker sa BPLO.' : 'Payment confirmed. Routes for Mayor/SB signature, then claimed at BPLO.'}
                     </p>
                   </div>
                 </div>

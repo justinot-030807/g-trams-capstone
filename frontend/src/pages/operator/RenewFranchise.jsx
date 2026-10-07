@@ -651,7 +651,7 @@ const RenewFranchise = () => {
                 )}
               </div>
 
-              {/* Claim Stub Notice */}
+              {/* Payment & Collection Notice */}
               <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg p-4 sm:p-5 flex items-start gap-3">
                 <ShieldCheck size={22} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>

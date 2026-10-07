@@ -1942,7 +1942,7 @@ const OperatorSettings = () => {
             {supportTab === 'hotlines' ? (
               <div className="p-5 space-y-4 overflow-y-auto flex-1">
                 <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
-                  For questions regarding franchise approvals, claim stubs, inspection schedules, or Toda reassignment, reach out to municipal officers:
+                  For questions regarding franchise approvals, cashier payments, inspection schedules, or Toda reassignment, reach out to municipal officers:
                 </p>
 
                 <div className="space-y-2.5">

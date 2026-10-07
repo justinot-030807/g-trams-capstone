@@ -9,7 +9,7 @@
  *  Module 3: Manage Account Profile
  *  Module 4: Submit TODA Records
  *  Module 5: Apply and Renew Franchise Applications
- *  Module 6: Generate and Download Franchise Claim Stub
+ *  Module 6: Retrieve Franchise & MTOP Certificate Details
  *  Module 7: Generate System Reports
  *  Module 8: Manage Franchise Cancellation and Revocation
  *
@@ -717,12 +717,12 @@ describe('Module 5: Apply and Renew Franchise Applications', () => {
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  MODULE 6: GENERATE AND DOWNLOAD FRANCHISE CLAIM STUB
+//  MODULE 6: RETRIEVE FRANCHISE & MTOP CERTIFICATE DETAILS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('Module 6: Generate and Download Franchise Claim Stub', () => {
+describe('Module 6: Retrieve Franchise & MTOP Certificate Details', () => {
 
-    it('M6-01: Should retrieve franchise details for claim stub when status is Ready for Pickup', async () => {
+    it('M6-01: Should retrieve franchise details when status is Ready for Pickup', async () => {
         const franchise = await createTestFranchise({
             status: 'Ready for Pickup',
             plateNo: 'STUB-001',
@@ -764,7 +764,7 @@ describe('Module 6: Generate and Download Franchise Claim Stub', () => {
         expect(res.status).toBe(404);
     });
 
-    it('M6-04: Claim stub notification is sent when status transitions to Ready for Pickup', async () => {
+    it('M6-04: Pickup notification is sent when status transitions to Ready for Pickup', async () => {
         const franchise = await createTestFranchise({
             status: 'For Signing',
             plateNo: 'NOTIF-STUB-001',

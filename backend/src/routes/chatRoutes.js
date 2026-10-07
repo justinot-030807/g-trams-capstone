@@ -244,8 +244,8 @@ router.post('/messages', async (req, res) => {
         autoReply = "Automated Reply: Para mag-renew, kailangan ng latest OR/CR, lumang prangkisa, at barangay clearance. Pumunta sa 'Apply Franchise' at piliin ang Renewal.";
       } else if (lowerMsg.includes('requirements') && (lowerMsg.includes('bago') || lowerMsg.includes('prangkisa'))) {
         autoReply = "Automated Reply: Ang requirements para sa bagong prangkisa: 1. OR/CR, 2. Driver's License, 3. Barangay Clearance, 4. TODA Certificate, 5. Sedula.";
-      } else if (lowerMsg.includes('saan') && lowerMsg.includes('claim')) {
-        autoReply = "Automated Reply: Ang Claim Stub ay makukuha sa Mayor's Office pagkatapos ma-approve ang application.";
+      } else if ((lowerMsg.includes('saan') || lowerMsg.includes('paano')) && (lowerMsg.includes('claim') || lowerMsg.includes('kunin') || lowerMsg.includes('bayad') || lowerMsg.includes('cashier') || lowerMsg.includes('stub'))) {
+        autoReply = "Automated Reply: Magbayad sa Municipal Cashier / Treasury pagkatapos maaprubahan ang inyong requirements. Kapag napirmahan na ang permit, kunin ang inyong opisyal na MTOP Certificate at sticker sa BPLO / Licensing Office.";
       }
 
       if (autoReply && recipients.length > 0) {
