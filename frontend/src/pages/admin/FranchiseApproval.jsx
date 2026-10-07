@@ -6,7 +6,7 @@ import {
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
   CalendarDays, User, Clock, ExternalLink, RefreshCw, ChevronRight, ChevronLeft, Shield,
   CheckSquare, Square, Filter, Users, Layers, FileSpreadsheet, Copy, Check,
-  MoreVertical, SlidersHorizontal, Sparkles, Undo2, ArrowUpDown, CheckCheck, AlertTriangle
+  MoreVertical, SlidersHorizontal, Sparkles, Undo2, ArrowUpDown, CheckCheck, AlertTriangle, Receipt
 } from 'lucide-react';
 import { QueueListSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
@@ -1267,47 +1267,27 @@ const FranchiseApproval = () => {
                         <span>Release</span>
                       </button>
                     ) : app.status === 'For Signing' ? (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => setQuickApproveTarget(app)}
-                          className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                          title="Mark MTOP signed by Mayor and route to Ready for Pickup"
-                        >
-                          <CheckCircle2 size={13} />
-                          <span>Mark Signed</span>
-                        </button>
-                        <button
-                          onClick={() => handleOpenWorkstation(app)}
-                          className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-2.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
-                          title="Open full review workstation"
-                        >
-                          <Eye size={13} />
-                          <span className="hidden sm:inline">Review</span>
-                        </button>
-                      </div>
-                    ) : app.status === 'For Payment' ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-md">
-                          At Treasury
-                        </span>
-                        <button
-                          onClick={() => handleOpenWorkstation(app)}
-                          className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-2.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
-                          title="Open review details"
-                        >
-                          <Eye size={13} />
-                          <span>Review</span>
-                        </button>
-                      </div>
-                    ) : isHistoryTab ? (
                       <button
-                        onClick={() => handleOpenWorkstation(app)}
-                        className="bg-slate-700 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                        title="View completed application details"
+                        onClick={() => setQuickApproveTarget(app)}
+                        className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        title="Mark MTOP signed by Mayor and route to Ready for Pickup"
                       >
-                        <Eye size={13} />
-                        <span>View</span>
+                        <CheckCircle2 size={13} />
+                        <span>Mark Signed</span>
                       </button>
+                    ) : app.status === 'For Payment' ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate('/cashier-dashboard')}
+                        className="px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        title="Application is at Treasury Cashier. Click to view Cashier Terminal."
+                      >
+                        <Clock size={12} />
+                        <span>At Treasury</span>
+                        <ChevronRight size={12} />
+                      </button>
+                    ) : isHistoryTab ? (
+                      null
                     ) : (
                       <button
                         onClick={() => handleOpenWorkstation(app)}
@@ -1331,7 +1311,7 @@ const FranchiseApproval = () => {
                       </button>
 
                       {isMenuOpen && (
-                        <div className="absolute right-0 top-full mt-1 z-30 w-44 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-lg rounded-lg py-1">
+                        <div className="absolute right-0 top-full mt-1 z-30 w-48 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-lg rounded-lg py-1">
                           <button
                             onClick={() => {
                               setActiveMenuId(null);
@@ -1341,6 +1321,18 @@ const FranchiseApproval = () => {
                           >
                             <FileText size={14} />
                             <span>View Summary</span>
+                          </button>
+
+                          {/* Optional Review Details for all statuses */}
+                          <button
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              handleOpenWorkstation(app);
+                            }}
+                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
+                          >
+                            <Eye size={14} />
+                            <span>Review Details</span>
                           </button>
 
                           {isPendingStatus(app.status) && (
@@ -1353,6 +1345,19 @@ const FranchiseApproval = () => {
                             >
                               <CheckCircle2 size={14} />
                               <span>Send to Cashier</span>
+                            </button>
+                          )}
+
+                          {app.status === 'For Payment' && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                navigate('/cashier-dashboard');
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-center gap-2 cursor-pointer"
+                            >
+                              <Receipt size={14} />
+                              <span>Go to Cashier Terminal</span>
                             </button>
                           )}
 
@@ -1373,12 +1378,12 @@ const FranchiseApproval = () => {
                             <button
                               onClick={() => {
                                 setActiveMenuId(null);
-                                handleOpenWorkstation(app);
+                                setQuickApproveTarget(app);
                               }}
-                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer"
                             >
-                              <Eye size={14} />
-                              <span>Review Documents</span>
+                              <CheckCircle2 size={14} />
+                              <span>Release</span>
                             </button>
                           )}
 

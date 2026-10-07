@@ -203,6 +203,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             icon: <FileCheck size={16} />, 
             badge: pendingCount > 0 ? pendingCount : null 
           },
+          { name: 'Cashier Terminal', path: '/cashier-dashboard', icon: <Receipt size={16} /> },
           { name: 'Revocations', path: '/manage-revocations', icon: <ShieldAlert size={16} /> }
         ]
       },
