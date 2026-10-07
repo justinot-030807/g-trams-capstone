@@ -204,6 +204,7 @@ const ApplyFranchise = () => {
     cedulaDate: '', 
     cedulaAddress: 'Gasan, Marinduque', 
     cedulaSerialNo: '',
+    cedulaAmount: '',
     orCrNo: '',
     orCrExpiryDate: '',
     crNo: '',
@@ -570,6 +571,7 @@ const ApplyFranchise = () => {
       cedulaDate: '', 
       cedulaAddress: 'Gasan, Marinduque', 
       cedulaSerialNo: '',
+      cedulaAmount: '',
       orCrNo: '',
       orCrExpiryDate: '',
       crNo: '',
@@ -754,6 +756,7 @@ const ApplyFranchise = () => {
       cedulaDate: franchise.cedulaDate ? String(franchise.cedulaDate).substring(0, 10) : '',
       cedulaAddress: franchise.cedulaAddress || 'Gasan, Marinduque',
       cedulaSerialNo: franchise.cedulaSerialNo || '',
+      cedulaAmount: franchise.cedulaAmount || '',
       orCrNo: franchise.orCrNo || '',
       orCrExpiryDate: franchise.orCrExpiryDate ? String(franchise.orCrExpiryDate).substring(0, 10) : '',
       isOperatorDriver: franchise.isOperatorDriver !== undefined ? Boolean(franchise.isOperatorDriver) : true,
@@ -3122,6 +3125,34 @@ const ApplyFranchise = () => {
                         mode="issuance"
                         helperText="Date CTC / Cedula was issued."
                         error={formErrors.cedulaDate}
+                      />
+                    </div>
+                    <div id="field-cedulaAddress">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Place / Barangay Issued
+                      </label>
+                      <input 
+                        type="text" 
+                        name="cedulaAddress" 
+                        value={formData.cedulaAddress} 
+                        onChange={handleInputChange} 
+                        className={getInputClasses('cedulaAddress')} 
+                        placeholder="e.g. Libtangin, Gasan, Marinduque" 
+                      />
+                    </div>
+                    <div id="field-cedulaAmount">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Cedula Amount Paid (₱)
+                      </label>
+                      <input 
+                        type="number" 
+                        name="cedulaAmount" 
+                        value={formData.cedulaAmount || ''} 
+                        onChange={handleInputChange} 
+                        className={getInputClasses('cedulaAmount')} 
+                        placeholder="e.g. 55.00" 
+                        step="0.01"
+                        min="0"
                       />
                     </div>
                   </div>

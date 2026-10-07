@@ -64,6 +64,7 @@ const franchiseSchema = new mongoose.Schema({
     cedulaDate: { type: Date, required: true },
     cedulaAddress: { type: String, required: true },
     cedulaSerialNo: { type: String, required: true },
+    cedulaAmount: { type: Number, default: 0 },
     
     status: { type: String, enum: ['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup', 'Active', 'Expired', 'Cancelled', 'Revoked'], default: 'Pending' },
     applicationType: { type: String, default: 'New' },

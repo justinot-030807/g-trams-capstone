@@ -617,12 +617,10 @@ const CashierDashboard = () => {
                   </label>
                   <select
                     value={payFormData.paymentMethod}
-                    onChange={(e) => setPayFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] min-h-[44px]"
+                    disabled
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-white outline-none cursor-not-allowed opacity-90 min-h-[44px]"
                   >
                     <option value="Cash">Cash (Over-the-Counter)</option>
-                    <option value="GCash">GCash Official LGU</option>
-                    <option value="Landbank">Landbank Link.BizPortal</option>
                   </select>
                 </div>
 

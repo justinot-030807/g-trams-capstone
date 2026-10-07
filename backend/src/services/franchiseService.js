@@ -166,6 +166,7 @@ class FranchiseService {
             cedulaDate: parsedCedulaDate,
             cedulaAddress: data.cedulaAddress || 'Gasan, Marinduque',
             cedulaSerialNo: data.cedulaSerialNo || '000000',
+            cedulaAmount: Number(data.cedulaAmount) || 0,
             applicationType: data.applicationType || 'New',
             status: data.status || 'Pending',
             dateApplied: parsedDateApplied,
