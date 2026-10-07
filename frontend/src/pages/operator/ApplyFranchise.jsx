@@ -80,13 +80,19 @@ const ApplyFranchise = () => {
   const focusParam = searchParams.get('focus');
   const initialStep = (stepParam >= 1 && stepParam <= 4) ? stepParam : 1;
 
-  const [myFranchises, setMyFranchises] = useState([]);
+  const [myFranchises, setMyFranchises] = useState(() => {
+    try {
+      const cached = localStorage.getItem('gtrams_cached_franchises');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [formMode, setFormMode] = useState(() => {
     if (modeParam === 'reapply') return 'Re-apply';
     if (modeParam === 'renewal') return 'Renewal';
-    if (modeParam === 'new') return 'New';
-    return null;
+    return 'New';
   }); 
   const [selectedId, setSelectedId] = useState(null); 
   const [reapplyTarget, setReapplyTarget] = useState(null);
@@ -526,7 +532,11 @@ const ApplyFranchise = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setMyFranchises(data);
+        const list = Array.isArray(data) ? data : [];
+        setMyFranchises(list);
+        try {
+          localStorage.setItem('gtrams_cached_franchises', JSON.stringify(list));
+        } catch {}
       }
     } catch (error) {
       console.error('Error fetching units:', error);
@@ -1759,29 +1769,133 @@ const ApplyFranchise = () => {
     { num: 4, title: 'Review', fullTitle: 'Cedula & Final Review' }
   ];
 
+  const isRenewing = formMode === 'Renewal' || modeParam === 'renewal';
+  const isReapplying = formMode === 'Re-apply' || modeParam === 'reapply';
   const activeOrPendingUnits = myFranchises.filter(f => !['Cancelled', 'Revoked'].includes(f.status));
-  if (!isLoading && activeOrPendingUnits.length >= maxAllowedUnits && formMode === 'New') {
+  const isCapacityFull = activeOrPendingUnits.length >= maxAllowedUnits;
+  const availableSlots = Math.max(0, maxAllowedUnits - activeOrPendingUnits.length);
+
+  // Loading state guard when cached list is not yet populated
+  if (isLoading && myFranchises.length === 0) {
     return (
       <MainLayout hideNav={true}>
-        <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center p-4 sm:p-6 transition-colors">
-          <div className="max-w-md w-full bg-white dark:bg-[#1C1917] rounded-lg p-6 sm:p-8 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs text-center">
-            <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60">
-              <AlertCircle size={24} />
-            </div>
-            <h3 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-              Maximum Fleet Capacity Reached
-            </h3>
-            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-6 leading-relaxed">
-              You have already registered the maximum allowed limit of {maxAllowedUnits} tricycle units for your operator account in Gasan, Marinduque.
+        <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center p-4">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-9 h-9 border-3 border-[#9E2A2B] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+              Verifying operator franchise quota...
             </p>
-            <button
-              type="button"
-              onClick={handleBackToDashboard}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs cursor-pointer active:scale-95 min-h-[44px]"
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Dashboard</span>
-            </button>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // Automatic Full Capacity Blocking:
+  // If the operator already reached max quota (2/2 units) and is not renewing or reapplying,
+  // do NOT render the form at all — display the official LGU Maximum Unit Capacity Reached notice.
+  if (isCapacityFull && !isRenewing && !isReapplying) {
+    return (
+      <MainLayout hideNav={true}>
+        <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
+          {/* Top Hero Banner */}
+          <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
+            <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
+              <img 
+                src="/gasan-logo.png" 
+                alt="Seal of Gasan" 
+                className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-20 drop-shadow-md" 
+              />
+            </div>
+            <div className="max-w-2xl mx-auto relative z-10 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handleBackToDashboard}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
+              >
+                <ArrowLeft size={18} />
+                <span>Back to Dashboard</span>
+              </button>
+              <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#D4AF37] text-[#1F1D1B] uppercase tracking-wider">
+                Capacity: {activeOrPendingUnits.length} / {maxAllowedUnits} Units Full
+              </span>
+            </div>
+          </div>
+
+          {/* Centered Notice Container */}
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+            <div className="max-w-lg w-full bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-8 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm text-center">
+              
+              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60 shadow-xs">
+                <AlertCircle size={32} />
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold mb-3 border border-amber-300/60 dark:border-amber-800/60">
+                <span>Maximum Fleet Limit Reached</span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2 tracking-tight">
+                Unit Quota Reached ({activeOrPendingUnits.length} / {maxAllowedUnits})
+              </h2>
+
+              <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-6 leading-relaxed">
+                Under Section 4 of the Gasan Municipal Tricycle Franchising Ordinance, an individual operator is strictly limited to a maximum of <strong>{maxAllowedUnits} motorized tricycle units</strong>. You have already registered all allowed units.
+              </p>
+
+              {/* Registered Units Card List */}
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3.5 sm:p-4 mb-6 border border-[#E4E1DC] dark:border-[#2E2A27] text-left">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                    Your Registered Units
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                    {activeOrPendingUnits.length} of {maxAllowedUnits} slots filled
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {activeOrPendingUnits.map((u, i) => (
+                    <div 
+                      key={u._id || i}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                            {u.plateNo || 'NO PLATE'}
+                          </span>
+                          <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                            • {u.make || 'Tricycle'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] truncate mt-0.5">
+                          TODA: {u.todaName || 'Non-TODA'} | Zone: {u.zone || 'N/A'}
+                        </p>
+                      </div>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                        u.status === 'Active' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60'
+                          : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60'
+                      }`}>
+                        {u.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleBackToDashboard}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs cursor-pointer active:scale-95 min-h-[46px] transition-all"
+                >
+                  <ArrowLeft size={16} />
+                  <span>Return to Dashboard</span>
+                </button>
+              </div>
+
+            </div>
           </div>
         </div>
       </MainLayout>
@@ -2032,11 +2146,11 @@ const ApplyFranchise = () => {
                         Number of Tricycle Units to Register
                       </label>
                       <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        (Units under this operator)
+                        (Max 2 units per operator)
                       </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[1, 2, 3].map(num => (
+                    <div className="grid grid-cols-2 gap-2">
+                      {[1, 2].filter(num => num <= Math.max(1, availableSlots)).map(num => (
                         <button
                           key={num}
                           type="button"
@@ -2052,7 +2166,7 @@ const ApplyFranchise = () => {
                       ))}
                     </div>
                     <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                      Operators may register multiple units with dedicated drivers under municipal franchising guidelines.
+                      Under Section 4 of Gasan municipal franchising guidelines, operators are allowed a maximum of 2 motorized tricycle units.
                     </p>
                   </div>
 

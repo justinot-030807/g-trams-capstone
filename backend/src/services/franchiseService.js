@@ -197,7 +197,7 @@ class FranchiseService {
             ownerAddress: data.ownerAddress || '',
 
             isOperatorDriver: data.isOperatorDriver !== undefined ? (data.isOperatorDriver === true || data.isOperatorDriver === 'true') : true,
-            numberOfUnits: Number(data.numberOfUnits) || 1,
+            numberOfUnits: Math.min(2, Math.max(1, Number(data.numberOfUnits) || 1)),
             driverName: data.driverName || '',
             driverContact: data.driverContact || '',
             driverLicenseNo: data.driverLicenseNo || '',

@@ -55,8 +55,14 @@
   - Pinatatag ang date `.substring()` sa `ApplyFranchise.jsx`, member roster array mappings sa `ValidateTODA.jsx`, at receipt field trimming sa `CashierDashboard.jsx`.
   - Napatunayang matatag ang seguridad laban sa NoSQL injection, IDOR, brute force rate limiting, at privilege escalation.
 
+- **Maximum 2 Units Cap & Awtomatikong Capacity Blocking (`/apply-franchise`)**:
+  - Tinanggal ang "3 Units" option sa unit selector; mahigpit nang naka-cap sa maximum 2 units (`[ 1 Unit ]`, `[ 2 Units ]`) ayon sa Municipal Franchising Ordinance ng Gasan.
+  - Awtomatikong bina-block ang form sa `/apply-franchise` kapag ang operator ay mayroon nang 2 units (full capacity). Sa halip na form, ipinapakita ang official LGU "Maximum Fleet Limit Reached" screen kasama ang listahan ng kanilang mga rehistradong traysikel at status.
+  - Naayos ang initial state upang agad na basahin ang cached franchises mula sa storage para walang flash ng form habang naglo-load.
+  - Nilagyan ng backend clamp sa `franchiseService.js` upang hindi makapagsumite ng higit sa 2 units.
+
 ## 2. Ginagawa ngayon (In Progress)
-- Pag-commit at pag-push ng mga pagbabago sa remote git repository (`main` branch).
+- Handa para sa pagsusuri ng gumagamit at verification sa browser.
 
 ## 3. Susunod (Next Steps)
 - End-to-end user acceptance testing sa production environment kasama ang capstone adviser ("Ma'am").
