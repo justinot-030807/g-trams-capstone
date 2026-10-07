@@ -22,7 +22,7 @@ const AccountDeactivated = lazyRetry(() => import('./pages/AccountDeactivated'),
 const VerifyOperator = lazyRetry(() => import('./pages/shared/VerifyOperator'), 'VerifyOperator');
 const About = lazyRetry(() => import('./pages/shared/About'), 'About');
 const NotFound = lazyRetry(() => import('./pages/shared/NotFound'), 'NotFound');
-const SubmitMembers = lazyRetry(() => import('./pages/operator/SubmitMembers'), 'SubmitMembers');
+const SubmitMembers = lazyRetry(() => import('./pages/toda/SubmitMembers'), 'SubmitMembers');
 const HelpSupport = lazyRetry(() => import('./pages/operator/HelpSupport'), 'HelpSupport');
 
 // Admin Pages (Code-split to isolate large administrative bundles from operator devices)

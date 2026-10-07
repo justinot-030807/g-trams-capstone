@@ -11,10 +11,10 @@
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 const mongoose = require('mongoose');
-require('dotenv').config({ path: __dirname + '/.env' });
+require('dotenv').config({ path: __dirname + '/../.env' });
 
-const Franchise = require('./src/models/franchiseModel');
-const User = require('./src/models/userModel');
+const Franchise = require('../src/models/franchiseModel');
+const User = require('../src/models/userModel');
 
 // Strict environment guard
 if (process.env.NODE_ENV === 'production') {

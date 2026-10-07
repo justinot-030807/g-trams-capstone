@@ -15,8 +15,9 @@
 - `backend/src/models/`: Mongoose data schemas (`franchiseModel.js`, `userModel.js`, `auditLogModel.js`, `ticketModel.js`, etc.).
 - `backend/src/controllers/`: Business logic handlers (`franchiseController.js`, `authController.js`, `adminController.js`, etc.).
 - `backend/src/services/`: Core engines (`franchiseService.js`, `documentVerificationService.js`).
-- `backend/src/routes/`: Express API route definitions (`franchiseRoutes.js`, `authRoutes.js`, etc.).
 - `backend/src/middleware/`: Auth tokens, role protection (RBAC), file upload pipeline.
+- `backend/scripts/`: Seed at test utility scripts (`seed_test_franchises.js`, etc.).
+- `docs/`: Mga test plans, deliverables, at technical deployment guides.
 - `frontend/src/pages/`: Role-based route pages (`operator/`, `admin/`, `cashier/`, `toda/`).
 - `frontend/src/components/`: Modular UI (`admin/`, `operator/`, `common/`, `skeleton/`, layout).
 - `frontend/src/utils/`: Constants (`constants.js` may 17 TODA directory at zones), notification helpers.

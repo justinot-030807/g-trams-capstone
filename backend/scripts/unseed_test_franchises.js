@@ -1,7 +1,7 @@
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 const mongoose = require('mongoose');
-require('dotenv').config({ path: __dirname + '/.env' });
+require('dotenv').config({ path: __dirname + '/../.env' });
 
 const seededPlates = [
   '0401-CS01', '0401-CS02', '0401-EXP01', '0401-EXP02',

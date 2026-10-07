@@ -1,9 +1,9 @@
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 const mongoose = require('mongoose');
-require('dotenv').config({ path: __dirname + '/.env' });
+require('dotenv').config({ path: __dirname + '/../.env' });
 
-const User = require('./src/models/userModel');
+const User = require('../src/models/userModel');
 
 const accountsToSeed = [
   {

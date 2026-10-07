@@ -36,6 +36,11 @@
   - Direktang over-the-counter ang bayad sa Municipal Cashier gamit ang Plate No, at may physical LGU OR logging.
 - **Dokumentasyon**:
   - Nilikha ang `PROJECT_CONTEXT.md` sa root para sa mga external AI tools.
+- **Database at Folder Reorganization**:
+  - Na-drop ang dead legacy prototype collections (`calendars` at `reports`) na may safe backup sa `backend/backups/`.
+  - In-archive ang 3 orphaned franchises at tinanggal ang 1 orphaned notification.
+  - Na-normalize ang user roles sa `toda_president` at inalis ang duplicate enum types.
+  - Inilipat ang seed scripts sa `backend/scripts/`, TODA page sa `frontend/src/pages/toda/`, audio scripts sa `remotion/scripts/`, at documents/reports sa `docs/`.
 
 ## 2. Ginagawa ngayon (In Progress)
 - Pagsusuri at pag-verify ng buong build (frontend production bundle at backend syntax).
