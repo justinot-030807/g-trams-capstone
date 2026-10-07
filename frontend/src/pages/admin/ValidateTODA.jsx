@@ -167,10 +167,10 @@ const ValidateTODA = () => {
         complianceRate,
         members: matchingMembers
       };
-    }).filter(toda => toda.members.length > 0);
+    }).filter(toda => (toda.members || []).length > 0);
   }, [users, franchises, query, isSearching]);
 
-  const filteredSubmissions = submissions.filter(sub => 
+  const filteredSubmissions = (submissions || []).filter(sub => 
     (sub.presidentName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
     (sub.fileName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -336,15 +336,15 @@ const ValidateTODA = () => {
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-8 h-8 bg-[#9E2A2B] text-white font-semibold rounded-lg flex items-center justify-center text-xs shrink-0">
-                              {toda.name.substring(0, 3)}
+                              {(toda.name || '').substring(0, 3)}
                             </div>
                             <div className="min-w-0">
                               <h3 className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate">
                                 {toda.name}
                               </h3>
                               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                                {toda.members.length} {toda.members.length === 1 ? 'Driver' : 'Drivers'} 
-                                {toda.totalCount !== toda.members.length && ` (filtered from ${toda.totalCount})`}
+                                {(toda.members || []).length} {(toda.members || []).length === 1 ? 'Driver' : 'Drivers'} 
+                                {toda.totalCount !== (toda.members || []).length && ` (filtered from ${toda.totalCount})`}
                               </p>
                             </div>
                           </div>
@@ -365,7 +365,7 @@ const ValidateTODA = () => {
                               </span>
                             )}
                             <span className="text-xs font-semibold bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] px-2.5 py-0.5 rounded-lg text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
-                              {toda.members.length}
+                              {(toda.members || []).length}
                             </span>
                             <div className={`p-1 text-[#6B6761] dark:text-[#A8A29E] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
                               <ChevronDown size={16} />
@@ -386,7 +386,7 @@ const ValidateTODA = () => {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                                {toda.members.map(member => {
+                                {(toda.members || []).map(member => {
                                   const franchise = getMemberFranchise(member);
 
                                   return (

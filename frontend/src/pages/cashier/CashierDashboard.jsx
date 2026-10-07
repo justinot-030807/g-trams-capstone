@@ -114,7 +114,7 @@ const CashierDashboard = () => {
     e.preventDefault();
     if (!selectedFranchise || isProcessing) return;
 
-    if (!payFormData.officialReceiptNo.trim()) {
+    if (!(payFormData.officialReceiptNo || '').trim()) {
       showToast('Please enter the Official Receipt (OR) Number from the receipt booklet.', 'error');
       return;
     }
@@ -129,8 +129,8 @@ const CashierDashboard = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          officialReceiptNo: payFormData.officialReceiptNo.trim().toUpperCase(),
-          payerName: payFormData.payerName.trim() || selectedFranchise.fullName,
+          officialReceiptNo: (payFormData.officialReceiptNo || '').trim().toUpperCase(),
+          payerName: (payFormData.payerName || '').trim() || selectedFranchise.fullName,
           amountPaid: Number(payFormData.amountPaid) || 500,
           paymentMethod: payFormData.paymentMethod,
           paymentRemarks: payFormData.remarks
@@ -145,8 +145,8 @@ const CashierDashboard = () => {
         // Open printable Official Receipt
         setReceiptData({
           ...data.franchise,
-          officialReceiptNo: payFormData.officialReceiptNo.trim().toUpperCase(),
-          payerName: payFormData.payerName.trim() || selectedFranchise.fullName,
+          officialReceiptNo: (payFormData.officialReceiptNo || '').trim().toUpperCase(),
+          payerName: (payFormData.payerName || '').trim() || selectedFranchise.fullName,
           amountPaid: Number(payFormData.amountPaid) || 500,
           paymentMethod: payFormData.paymentMethod,
           paymentDate: new Date(),

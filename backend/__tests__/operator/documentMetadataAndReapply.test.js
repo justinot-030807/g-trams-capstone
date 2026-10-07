@@ -293,7 +293,7 @@ describe('Document Metadata Persistence & Re-application Workflow Test Suite', (
             n => n.title === 'Franchise Application Re-submitted'
         );
         expect(resubmitNotif).toBeDefined();
-        expect(resubmitNotif.type).toBe('INFO');
+        expect(resubmitNotif.type.toLowerCase()).toBe('info');
         expect(resubmitNotif.message).toContain(operatorUser.name);
         expect(resubmitNotif.message).toContain(franchise.plateNo);
     });

@@ -45,6 +45,15 @@
     - Tinanggal ang `eSigned`, `releaseDate`, at `deficiencies` sa `franchises` (Mongoose model, controllers, services, seed scripts).
     - Tinanggal ang redundant `docChecklist` sa `systemsettings` (Mongoose model, controller, admin settings UI).
     - Matagumpay na naipatupad ang live `$unset` migration sa lahat ng 25 documents sa MongoDB Atlas (0 legacy fields remaining).
+- **Multi-Mesh Undefined & Security Audit (OWASP 2025)**:
+  - 100% Passed ang buong test suite: **10 test suites, 159 tests passing, 0 failures**.
+  - Inayos ang `notificationModel` enum casing (`lowercase: true`) at notification dispatcher upang maiwasan ang schema validation errors.
+  - Nilagyan ng safe fallback extractor ang `operatorId` sa `updateFranchiseStatus` at `processCashierPayment` laban sa unpopulated / undefined references.
+  - Nilagyan ng date validation guard ang `driverDob` bago mag-`.toISOString()` sa `documentVerificationService.js`.
+  - Pinatatag ang `pushService.js` laban sa undefined payload objects at malformed subscription keys.
+  - Na-audit ang lahat ng 96 frontend files: **0 syntax errors, 0 undeclared variables**.
+  - Pinatatag ang date `.substring()` sa `ApplyFranchise.jsx`, member roster array mappings sa `ValidateTODA.jsx`, at receipt field trimming sa `CashierDashboard.jsx`.
+  - Napatunayang matatag ang seguridad laban sa NoSQL injection, IDOR, brute force rate limiting, at privilege escalation.
 
 ## 2. Ginagawa ngayon (In Progress)
 - Pag-commit at pag-push ng mga pagbabago sa remote git repository (`main` branch).

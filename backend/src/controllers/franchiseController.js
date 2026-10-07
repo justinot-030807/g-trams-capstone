@@ -225,7 +225,7 @@ const updateFranchise = async (req, res) => {
                 for (const adm of admins) {
                     await Notification.create({
                         recipient: adm._id,
-                        type: 'INFO',
+                        type: 'info',
                         title: 'Franchise Application Re-submitted',
                         message: `Operator ${updatedFranchise.fullName || 'User'} has updated and re-submitted their franchise application for ${updatedFranchise.plateNo}.`,
                         relatedFranchise: updatedFranchise._id
@@ -387,22 +387,25 @@ const updateFranchiseStatus = async (req, res) => {
                 notifMessage = `Your franchise permit for ${updatedFranchise.plateNo} is now officially active and released.`;
             }
 
-            const notification = await Notification.create({
-                recipient: updatedFranchise.operator._id,
-                type: 'status_change',
-                title: notifTitle,
-                message: notifMessage,
-                relatedFranchise: updatedFranchise._id
-            });
-            emitToUser(String(updatedFranchise.operator._id), 'notification', notification);
-            
-            // Send background push notification to operator's mobile device
-            sendPushToUser(updatedFranchise.operator._id, {
-                title: notifTitle,
-                message: notifMessage,
-                url: '/operator-dashboard',
-                type: String(status).toLowerCase().includes('approv') || status === 'For Signing' ? 'approval' : 'status_change'
-            }).catch(err => console.error('Push alert delivery failed:', err.message));
+            const operatorId = updatedFranchise.operator?._id || updatedFranchise.operator;
+            if (operatorId) {
+                const notification = await Notification.create({
+                    recipient: operatorId,
+                    type: 'status_change',
+                    title: notifTitle,
+                    message: notifMessage,
+                    relatedFranchise: updatedFranchise._id
+                });
+                emitToUser(String(operatorId), 'notification', notification);
+                
+                // Send background push notification to operator's mobile device
+                sendPushToUser(operatorId, {
+                    title: notifTitle,
+                    message: notifMessage,
+                    url: '/operator-dashboard',
+                    type: String(status).toLowerCase().includes('approv') || status === 'For Signing' ? 'approval' : 'status_change'
+                }).catch(err => console.error('Push alert delivery failed:', err.message));
+            }
         }
 
         logAudit(req, {
@@ -754,19 +757,20 @@ const processCashierPayment = async (req, res) => {
 
         // Notify operator of official receipt
         if (franchise.operator) {
+            const operatorId = franchise.operator._id || franchise.operator;
             const notifTitle = 'Payment Confirmed by Municipal Cashier!';
             const notifMessage = `Your payment of ₱${franchise.amountPaid} has been confirmed under Official Receipt No. ${franchise.officialReceiptNo} (Payer: ${franchise.payerName}). Your application is now marked as Paid and queued For Signing by Municipal Officials.`;
 
             const notification = await Notification.create({
-                recipient: franchise.operator._id,
+                recipient: operatorId,
                 type: 'status_change',
                 title: notifTitle,
                 message: notifMessage,
                 relatedFranchise: franchise._id
             });
-            emitToUser(String(franchise.operator._id), 'notification', notification);
+            emitToUser(String(operatorId), 'notification', notification);
 
-            sendPushToUser(franchise.operator._id, {
+            sendPushToUser(operatorId, {
                 title: notifTitle,
                 message: notifMessage,
                 url: '/operator-dashboard',

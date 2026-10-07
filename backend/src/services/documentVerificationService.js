@@ -449,8 +449,11 @@ async function verifyFranchiseDocuments(franchise) {
                 }
 
                 if (franchise.driverDob && extracted.dateOfBirth) {
-                    const dobStr = new Date(franchise.driverDob).toISOString().substring(0, 10);
-                    comparisons.push(compareField(dobStr, extracted.dateOfBirth, 'Driver Date of Birth (LTO Birthday Rule)', 'driverDob'));
+                    const d = new Date(franchise.driverDob);
+                    if (!isNaN(d.getTime())) {
+                        const dobStr = d.toISOString().substring(0, 10);
+                        comparisons.push(compareField(dobStr, extracted.dateOfBirth, 'Driver Date of Birth (LTO Birthday Rule)', 'driverDob'));
+                    }
                 }
             }
 

@@ -23,7 +23,7 @@ const sendPushToUser = async (userId, notificationData) => {
       type = 'general',
       icon = '/icons/icon-192x192.png',
       badge = '/icons/favicon-32x32.png'
-    } = notificationData;
+    } = notificationData || {};
 
     const payload = JSON.stringify({
       title,
@@ -36,6 +36,8 @@ const sendPushToUser = async (userId, notificationData) => {
     });
 
     const sendPromises = subscriptions.map(async (sub) => {
+      if (!sub || !sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) return null;
+
       // Check user preferences
       if (type === 'status_change' || type === 'approval') {
         if (sub.preferences && sub.preferences.statusUpdates === false) return null;

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
   recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  type: { type: String, enum: ['status_change', 'approval', 'renewal_reminder', 'system', 'chat', 'general', 'info'], default: 'general' },
+  type: { type: String, enum: ['status_change', 'approval', 'renewal_reminder', 'system', 'chat', 'general', 'info'], default: 'general', lowercase: true },
   title: { type: String, required: true },
   message: { type: String, required: true },
   relatedFranchise: { type: mongoose.Schema.Types.ObjectId, ref: 'Franchise' },

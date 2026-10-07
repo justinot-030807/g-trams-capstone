@@ -17,7 +17,7 @@ exports.getAuditLogs = async (req, res) => {
             filter.targetType = req.query.targetType;
         }
 
-        if (req.query.search && req.query.search.trim() !== '') {
+        if (typeof req.query.search === 'string' && req.query.search.trim() !== '') {
             const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const searchRegex = new RegExp(escapeRegex(req.query.search.trim()), 'i');
             filter.$or = [
