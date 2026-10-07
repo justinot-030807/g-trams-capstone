@@ -58,12 +58,6 @@ const franchiseSchema = new mongoose.Schema({
     brgyClearanceDate: { type: Date },
     brgyIssuer: { type: String, default: '' },
 
-    deficiencies: {
-        hasOrcr: { type: Boolean, default: false },
-        hasLicense: { type: Boolean, default: false },
-        hasTodaEndorsement: { type: Boolean, default: false },
-        hasBrgyClearance: { type: Boolean, default: false }
-    },
     
     dateApplied: { type: Date, default: Date.now },
     approvalDate: { type: Date },
@@ -94,8 +88,6 @@ const franchiseSchema = new mongoose.Schema({
     cashierName: { type: String, default: '' },
     paymentRemarks: { type: String, default: '' },
 
-    eSigned: { type: Boolean, default: false },
-    releaseDate: { type: String, default: '' },
     isArchived: { type: Boolean, default: false },
     archivedAt: { type: Date },
 

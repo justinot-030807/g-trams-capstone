@@ -52,13 +52,10 @@ async function seed() {
         todaName: 'POB-TODA',
         status: 'Active',
         applicationType: 'New',
-        eSigned: true,
-        releaseDate: '2026-02-15',
         dateApplied: twoMonthsAgo,
         cedulaDate: twoMonthsAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-99120',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
       // 2. ACTIVE - Christian Seda (Unit 2 - Reaches MAX capacity 2/2)
@@ -75,13 +72,10 @@ async function seed() {
         todaName: 'POB-TODA',
         status: 'Active',
         applicationType: 'New',
-        eSigned: true,
-        releaseDate: '2026-03-01',
         dateApplied: oneMonthAgo,
         cedulaDate: oneMonthAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-99121',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -99,13 +93,10 @@ async function seed() {
         todaName: 'BAP-TODA',
         status: 'Expired',
         applicationType: 'Renew',
-        eSigned: true,
-        releaseDate: '2024-01-10',
         dateApplied: twoYearsAgo,
         cedulaDate: twoYearsAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2024-44123',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -123,13 +114,10 @@ async function seed() {
         todaName: 'MAT-TODA',
         status: 'Expired',
         applicationType: 'New',
-        eSigned: true,
-        releaseDate: '2024-06-20',
         dateApplied: oneYearAgo,
         cedulaDate: oneYearAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2024-88712',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -148,13 +136,10 @@ async function seed() {
         status: 'Revoked',
         applicationType: 'New',
         cancelReason: 'Violation of Municipal Ordinance No. 2024-08: Repeated fare overcharging and operating outside designated TODA route without permit.',
-        eSigned: true,
-        releaseDate: '2025-08-12',
         dateApplied: oneYearAgo,
         cedulaDate: oneYearAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2025-11029',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -173,13 +158,10 @@ async function seed() {
         status: 'Revoked',
         applicationType: 'New',
         cancelReason: 'Revoked due to unauthorized sub-leasing and illegal transfer of franchise plate to an unregistered third-party unit.',
-        eSigned: false,
-        releaseDate: '2025-11-04',
         dateApplied: oneYearAgo,
         cedulaDate: oneYearAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2025-44910',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -198,13 +180,10 @@ async function seed() {
         status: 'Cancelled',
         applicationType: 'New',
         cancelReason: 'Voluntary surrender of franchise: Sold the tricycle unit to relocate outside the municipality.',
-        eSigned: false,
-        releaseDate: '',
         dateApplied: twoMonthsAgo,
         cedulaDate: twoMonthsAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-33819',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -223,13 +202,10 @@ async function seed() {
         status: 'Cancelled',
         applicationType: 'New',
         cancelReason: 'Cancelled by operator: Duplicate application submitted in error.',
-        eSigned: false,
-        releaseDate: '',
         dateApplied: oneWeekAgo,
         cedulaDate: oneWeekAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-88192',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: false, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -248,13 +224,10 @@ async function seed() {
         status: 'Pending',
         applicationType: 'New',
         cancelReason: '',
-        eSigned: false,
-        releaseDate: '',
         dateApplied: oneWeekAgo,
         cedulaDate: oneWeekAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-55190',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -273,13 +246,10 @@ async function seed() {
         status: 'Pending',
         applicationType: 'Renew',
         cancelReason: '',
-        eSigned: false,
-        releaseDate: '',
         dateApplied: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         cedulaDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-66291',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: false, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -297,13 +267,10 @@ async function seed() {
         todaName: 'MAT-TODA',
         status: 'Ready for Pickup',
         applicationType: 'New',
-        eSigned: true,
-        releaseDate: '',
         dateApplied: twoMonthsAgo,
         cedulaDate: twoMonthsAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-77821',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -321,13 +288,10 @@ async function seed() {
         todaName: 'POB-TODA',
         status: 'Ready for Pickup',
         applicationType: 'Renew',
-        eSigned: true,
-        releaseDate: '',
         dateApplied: oneMonthAgo,
         cedulaDate: oneMonthAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-11928',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -345,13 +309,10 @@ async function seed() {
         todaName: 'PIN-TODA',
         status: 'Active',
         applicationType: 'New',
-        eSigned: true,
-        releaseDate: '2026-01-20',
         dateApplied: twoMonthsAgo,
         cedulaDate: twoMonthsAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2026-12901',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: false
       },
 
@@ -369,13 +330,10 @@ async function seed() {
         todaName: 'BAP-TODA',
         status: 'Expired',
         applicationType: 'New',
-        eSigned: true,
-        releaseDate: '2022-04-10',
         dateApplied: twoYearsAgo,
         cedulaDate: twoYearsAgo,
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: 'CCI2022-00918',
-        deficiencies: { hasOrcr: true, hasLicense: true, hasTodaEndorsement: true, hasBrgyClearance: true },
         isArchived: true,
         archivedAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
       }

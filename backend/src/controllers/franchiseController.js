@@ -135,9 +135,6 @@ const updateFranchise = async (req, res) => {
         if (!isAdmin) {
             delete updateData.operator;
             delete updateData.isArchived;
-            delete updateData.eSigned;
-            delete updateData.releaseDate;
-            delete updateData.deficiencies;
 
             // When an operator re-submits a cancelled/rejected application to fix issues,
             // transition it back to Pending (Pending for Approval) and clear previous rejection remarks.
@@ -297,9 +294,7 @@ const renewFranchise = async (req, res) => {
             paymentDate: null,
             paidByCashier: null,
             cashierName: '',
-            paymentRemarks: '',
-            eSigned: false,
-            releaseDate: ''
+            paymentRemarks: ''
         };
 
         if (orCrNo) updateData.orCrNo = orCrNo;
@@ -328,7 +323,7 @@ const renewFranchise = async (req, res) => {
 
 const updateFranchiseStatus = async (req, res) => {
     try {
-        const { status, cancelReason, rejectedField, eSigned, releaseDate } = req.body;
+        const { status, cancelReason, rejectedField } = req.body;
         const existingFranchise = await Franchise.findById(req.params.id);
         if (!existingFranchise) return res.status(404).json({ message: 'Franchise not found' });
         
@@ -353,9 +348,7 @@ const updateFranchiseStatus = async (req, res) => {
         const updateData = { 
             status: status, 
             cancelReason: cancelReason || '', 
-            rejectedField: targetField,
-            eSigned: eSigned || false, 
-            releaseDate: releaseDate || '' 
+            rejectedField: targetField
         };
 
         if (status === 'Cancelled') {

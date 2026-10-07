@@ -17,7 +17,6 @@ const getSettings = async (req, res) => {
         farePerKm: 2.5,
         maxUnitsPerOperator: 2,
         requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
-        docChecklist: 'Barangay Clearance, Driver\'s License, OR/CR, TODA Endorsement',
         maintenanceMode: false,
         maintenanceMessage: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.'
       });
@@ -48,7 +47,6 @@ const updateSettings = async (req, res) => {
       farePerKm,
       maxUnitsPerOperator,
       requiredDocs,
-      docChecklist,
       maintenanceMode,
       maintenanceMessage
     } = req.body;
@@ -69,7 +67,6 @@ const updateSettings = async (req, res) => {
     if (farePerKm !== undefined) settings.farePerKm = farePerKm;
     if (maxUnitsPerOperator !== undefined) settings.maxUnitsPerOperator = Number(maxUnitsPerOperator);
     if (requiredDocs !== undefined && Array.isArray(requiredDocs)) settings.requiredDocs = requiredDocs;
-    if (docChecklist !== undefined) settings.docChecklist = docChecklist;
     if (maintenanceMode !== undefined) settings.maintenanceMode = Boolean(maintenanceMode);
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
 

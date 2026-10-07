@@ -350,7 +350,6 @@ const AdminSettings = () => {
             expiryWarningDays: Number(systemConfig.expiryWarningDays),
             maxUnitsPerOperator: Number(systemConfig.maxUnitsPerOperator) || 2,
             requiredDocs: docsArray,
-            docChecklist: docsArray.join(', '),
             maintenanceMode: Boolean(systemConfig.maintenanceMode)
           })
         });

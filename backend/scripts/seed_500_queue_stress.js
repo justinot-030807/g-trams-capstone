@@ -177,12 +177,6 @@ async function run() {
         isResubmitted,
         resubmittedAt,
         cancelReason: status === 'Cancelled' ? 'Expired LTO Official Receipt / Blurry Scan' : '',
-        deficiencies: {
-          hasOrcr: true,
-          hasLicense: true,
-          hasTodaEndorsement: isClean || i % 8 !== 0,
-          hasBrgyClearance: isClean || i % 12 !== 0
-        },
         aiVerification: {
           status: isClean ? 'verified' : 'flagged',
           verifiedAt: appliedDate,

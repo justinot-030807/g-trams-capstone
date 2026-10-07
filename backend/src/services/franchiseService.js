@@ -215,12 +215,6 @@ class FranchiseService {
             brgyClearanceDate: data.brgyClearanceDate && !isNaN(new Date(data.brgyClearanceDate).getTime()) ? new Date(data.brgyClearanceDate) : undefined,
             brgyIssuer: data.brgyIssuer || '',
 
-            deficiencies: {
-                hasOrcr: !!(data.orCrUrl || data.crUrl || data.orUrl),
-                hasLicense: !!(data.licenseUrl || data.licenseBackUrl),
-                hasTodaEndorsement: !!data.todaEndorsementUrl,
-                hasBrgyClearance: !!data.brgyClearanceUrl
-            },
 
             aiScannedData: data.aiScannedData || null,
             aiDiscrepancies: data.aiDiscrepancies || []

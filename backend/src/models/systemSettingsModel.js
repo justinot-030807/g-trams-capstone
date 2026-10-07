@@ -14,7 +14,6 @@ const systemSettingsSchema = new mongoose.Schema({
     type: [String], 
     default: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'] 
   },
-  docChecklist: { type: String, default: 'Barangay Clearance, Driver\'s License, OR/CR, TODA Endorsement' },
   maintenanceMode: { type: Boolean, default: false },
   maintenanceMessage: { type: String, default: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.' }
 }, { timestamps: true });

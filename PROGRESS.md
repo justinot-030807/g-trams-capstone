@@ -41,10 +41,13 @@
   - In-archive ang 3 orphaned franchises at tinanggal ang 1 orphaned notification.
   - Na-normalize ang user roles sa `toda_president` at inalis ang duplicate enum types.
   - Inilipat ang seed scripts sa `backend/scripts/`, TODA page sa `frontend/src/pages/toda/`, audio scripts sa `remotion/scripts/`, at documents/reports sa `docs/`.
+  - **Pagtanggal ng Obsolete Fields sa Database at Code**:
+    - Tinanggal ang `eSigned`, `releaseDate`, at `deficiencies` sa `franchises` (Mongoose model, controllers, services, seed scripts).
+    - Tinanggal ang redundant `docChecklist` sa `systemsettings` (Mongoose model, controller, admin settings UI).
+    - Matagumpay na naipatupad ang live `$unset` migration sa lahat ng 25 documents sa MongoDB Atlas (0 legacy fields remaining).
 
 ## 2. Ginagawa ngayon (In Progress)
-- Pagsusuri at pag-verify ng buong build (frontend production bundle at backend syntax).
-- Pag-commit at pag-push ng lahat ng pagbabago sa remote git repository (`main` branch).
+- Pag-commit at pag-push ng mga pagbabago sa remote git repository (`main` branch).
 
 ## 3. Susunod (Next Steps)
 - End-to-end user acceptance testing sa production environment kasama ang capstone adviser ("Ma'am").
