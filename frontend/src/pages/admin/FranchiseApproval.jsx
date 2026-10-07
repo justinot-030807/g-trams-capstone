@@ -984,9 +984,9 @@ const FranchiseApproval = () => {
       </div>
 
       {/* 3. STATUS TABS BAR & TRIAGE ACTIONS */}
-      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#1C1917] p-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
-        {/* Status Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+      <div className="mb-4 bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-2.5">
+        {/* Status Tabs - Full width with flex-wrap so all tabs including Approved and Rejected are visible without horizontal scrolling */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2" role="tablist" aria-label="Franchise approval status queues">
           {[
             { key: 'pending', label: 'Needs Review', icon: FileText, count: pendingCount },
             { key: 'payment', label: 'For Payment', icon: Clock, count: paymentCount },
@@ -1008,9 +1008,11 @@ const FranchiseApproval = () => {
             return (
               <button
                 key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
                 onClick={() => updateParams({ tab: t.key, page: 1 })}
-                aria-pressed={isActive}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer whitespace-nowrap ${
                   isActive ? activeClass : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
@@ -1026,83 +1028,101 @@ const FranchiseApproval = () => {
           })}
         </div>
 
-        {/* Triage Controls: Select All Clean + Batch Action */}
-        <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
-          {activeTab === 'signing' && (
-            <button
-              type="button"
-              onClick={() => setIsBatchPrintOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs transition-all cursor-pointer"
-              title="Batch print MTOP certificates for mayor/licensing official signature"
-            >
-              <Printer size={14} />
-              <span>Batch Print MTOP {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}</span>
-            </button>
-          )}
-
-          {paginatedApps.length > 0 && !isHistoryTab && activeTab !== 'payment' && (
-            <>
-              {/* Select All Clean */}
-              <button
-                onClick={selectAllClean}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
-                title="Select all verified clean applications on current page"
-              >
-                <CheckCheck size={14} />
-                <span>Select Clean</span>
-              </button>
-
-              {/* Standard Select All */}
-              <button
-                onClick={toggleSelectAll}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer"
-              >
-                {isAllSelected ? (
-                  <CheckSquare size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                ) : (
-                  <Square size={15} className="text-slate-400" />
-                )}
-                <span>All ({paginatedApps.length})</span>
-              </button>
-            </>
-          )}
-
-          {activeTab === 'payment' && (
-            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] px-2">
-              The Treasury cashier records payment. Paid applications move to For Signing on their own.
-            </span>
-          )}
-
-          {/* Batch Actions Trigger */}
-          {selectedIds.length > 0 && !isHistoryTab && activeTab !== 'payment' && (
-            <div className="flex items-center gap-1.5 pl-2 border-l border-[#E4E1DC] dark:border-[#2E2A27]">
-              {activeTab === 'ready' ? (
-                <button
-                  onClick={() => setBatchReleaseModal(true)}
-                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
-                >
-                  Release ({selectedIds.length})
-                </button>
-              ) : activeTab === 'signing' ? (
-                <button
-                  onClick={() => setBatchApproveModal(true)}
-                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
-                >
-                  <CheckCircle2 size={13} />
-                  <span>Mark signed ({selectedIds.length})</span>
-                </button>
+        {/* Triage Controls Sub-Bar: Dedicated row so it never squeezes or hides status tabs */}
+        {(activeTab === 'signing' || (paginatedApps.length > 0 && !isHistoryTab && activeTab !== 'payment') || activeTab === 'payment' || (selectedIds.length > 0 && !isHistoryTab && activeTab !== 'payment')) && (
+          <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+            {/* Status & selection hint on the left */}
+            <div className="flex items-center gap-2 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+              {selectedIds.length > 0 ? (
+                <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
+                  <span>{selectedIds.length} of {paginatedApps.length} selected</span>
+                </span>
+              ) : activeTab === 'payment' ? (
+                <span>The Treasury cashier records payment. Paid applications move to For Signing automatically.</span>
               ) : (
-                <button
-                  onClick={() => setBatchApproveModal(true)}
-                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
-                >
-                  <CheckCircle2 size={13} />
-                  <span>Send to cashier ({selectedIds.length})</span>
-                </button>
+                <span className="hidden sm:inline">Queue triage and batch processing tools</span>
               )}
             </div>
-          )}
-        </div>
+
+            {/* Triage actions on the right */}
+            <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+              {activeTab === 'signing' && (
+                <button
+                  type="button"
+                  onClick={() => setIsBatchPrintOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs transition-all cursor-pointer"
+                  title="Batch print MTOP certificates for mayor/licensing official signature"
+                >
+                  <Printer size={14} />
+                  <span>Batch Print MTOP {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}</span>
+                </button>
+              )}
+
+              {paginatedApps.length > 0 && !isHistoryTab && activeTab !== 'payment' && (
+                <>
+                  {/* Select All Clean */}
+                  <button
+                    type="button"
+                    onClick={selectAllClean}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition-all cursor-pointer"
+                    title="Select all verified clean applications on current page"
+                  >
+                    <CheckCheck size={14} />
+                    <span>Select Clean</span>
+                  </button>
+
+                  {/* Standard Select All */}
+                  <button
+                    type="button"
+                    onClick={toggleSelectAll}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer"
+                  >
+                    {isAllSelected ? (
+                      <CheckSquare size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    ) : (
+                      <Square size={15} className="text-slate-400" />
+                    )}
+                    <span>All ({paginatedApps.length})</span>
+                  </button>
+                </>
+              )}
+
+              {/* Batch Actions Trigger */}
+              {selectedIds.length > 0 && !isHistoryTab && activeTab !== 'payment' && (
+                <div className="flex items-center gap-1.5 pl-2 border-l border-[#E4E1DC] dark:border-[#2E2A27]">
+                  {activeTab === 'ready' ? (
+                    <button
+                      type="button"
+                      onClick={() => setBatchReleaseModal(true)}
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
+                    >
+                      Release ({selectedIds.length})
+                    </button>
+                  ) : activeTab === 'signing' ? (
+                    <button
+                      type="button"
+                      onClick={() => setBatchApproveModal(true)}
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      <CheckCircle2 size={13} />
+                      <span>Mark signed ({selectedIds.length})</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setBatchApproveModal(true)}
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      <CheckCircle2 size={13} />
+                      <span>Send to cashier ({selectedIds.length})</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4. APPLICATIONS LIST */}
