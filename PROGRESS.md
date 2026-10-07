@@ -66,7 +66,10 @@
     1. **Certificate of Registration (CR)** - para sa katibayan ng rehistro at specifications ng traysikel (Plate, Engine, Chassis, Owner).
     2. **Official Receipt (OR)** - para sa katibayan ng taunang bayad sa rehistro ng LTO (OR No, Validity / Expiry Date).
   - In-update ang AI scanner (`triggerAiScan`) at document validation upang i-validate at i-auto fill ang mga detalye mula sa parehong dokumento.
-  - In-update ang `ApplicationSummaryModal` at `FranchiseReviewPage` upang magkaroon ng hiwalay na tabs/preview para sa `LTO CR` at `LTO OR`.
+- **Pagsasaayos ng Status Tabs sa Admin Franchise Approval (`/franchise-approval`)**:
+  - Inayos ang status tabs (`Needs Review`, `For Payment`, `For Signing`, `Ready for Pickup`, `All in Queue`, `Approved`, `Rejected`) upang magamit ang buong lapad ng container gamit ang `flex-wrap`.
+  - Inilipat ang triage controls (`Select Clean`, `All`, `Batch Actions`) sa sarili nitong sub-bar upang hindi ipitin o itago ang tabs.
+  - Tinanggal ang horizontal scrollbar (`overflow-x-auto`) kaya direktang nakikita at napipindot agad ang `Approved` at `Rejected` tabs sa anumang screen resolution.
 
 ## 2. Ginagawa ngayon (In Progress)
 - Handa para sa pagsusuri ng gumagamit at verification sa browser.
