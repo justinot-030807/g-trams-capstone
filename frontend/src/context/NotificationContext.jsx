@@ -77,11 +77,11 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [API_URL]);
 
-  // Mark all notifications as read
+  // Mark all notifications as read & auto-delete/clear
   const markAllRead = useCallback(async () => {
     try {
-      // Optimistic state update: mark all current notifications as read
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      // Optimistic state update: clear all notifications
+      setNotifications([]);
       setUnreadCount(0);
 
       // Broadcast event across components and tabs
@@ -96,12 +96,27 @@ export const NotificationProvider = ({ children }) => {
       });
 
       if (!res.ok) {
-        // Fallback to DELETE for legacy backends
+        // Fallback to DELETE
         await fetch(`${API_URL}/api/v1/notifications/read-all`, {
           method: 'DELETE',
           headers: getHeaders(),
         });
       }
+    } catch (err) {
+      // Silent fail
+    }
+  }, [API_URL]);
+
+  // Delete individual notification
+  const deleteNotification = useCallback(async (notificationId) => {
+    try {
+      setNotifications(prev => prev.filter(n => n._id !== notificationId));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+
+      await fetch(`${API_URL}/api/v1/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
     } catch (err) {
       // Silent fail
     }
@@ -132,18 +147,27 @@ export const NotificationProvider = ({ children }) => {
       }
     };
 
+    const handleNotificationDeleted = (data) => {
+      if (data?.id) {
+        setNotifications(prev => prev.filter(n => n._id !== data.id));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    };
+
     const handleNotificationsReadAll = () => {
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setNotifications([]);
       setUnreadCount(0);
     };
 
     socket.on('notification', handleNotification);
     socket.on('notification_read', handleNotificationRead);
+    socket.on('notification_deleted', handleNotificationDeleted);
     socket.on('notifications_read_all', handleNotificationsReadAll);
 
     return () => {
       socket.off('notification', handleNotification);
       socket.off('notification_read', handleNotificationRead);
+      socket.off('notification_deleted', handleNotificationDeleted);
       socket.off('notifications_read_all', handleNotificationsReadAll);
     };
   }, [socket]);
@@ -154,6 +178,7 @@ export const NotificationProvider = ({ children }) => {
     isLoading,
     markAsRead,
     markAllRead,
+    deleteNotification,
     fetchNotifications,
     fetchUnreadCount,
   };

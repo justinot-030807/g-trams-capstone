@@ -73,6 +73,26 @@ const createFranchise = async (req, res) => {
             data.status = 'Pending';
         }
         const franchise = await FranchiseService.createFranchise(data, franchiseOwner);
+
+        // Notify admins of new franchise submission
+        if (!isAdmin) {
+            try {
+                const User = require('../models/userModel');
+                const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+                for (const adm of admins) {
+                    const notif = await Notification.create({
+                        recipient: adm._id,
+                        type: 'info',
+                        title: 'New Franchise Application',
+                        message: `Operator ${franchise.fullName || req.user.name} submitted a new application for unit ${franchise.plateNo} (${franchise.todaName || 'TODA'}).`,
+                        relatedFranchise: franchise._id
+                    });
+                    emitToUser(adm._id.toString(), 'notification', notif);
+                }
+            } catch (notifErr) {
+                console.error('Error notifying admins of new franchise:', notifErr);
+            }
+        }
         
         res.status(201).json(franchise);
     } catch (error) {
@@ -222,19 +242,16 @@ const updateFranchise = async (req, res) => {
             // Notify admins of re-submitted corrected application
             try {
                 const User = require('../models/userModel');
-                const admins = await User.find({ role: { $in: ['admin', 'Administrator'] } });
+                const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
                 for (const adm of admins) {
-                    await Notification.create({
+                    const notif = await Notification.create({
                         recipient: adm._id,
                         type: 'info',
                         title: 'Franchise Application Re-submitted',
                         message: `Operator ${updatedFranchise.fullName || 'User'} has updated and re-submitted their franchise application for ${updatedFranchise.plateNo}.`,
                         relatedFranchise: updatedFranchise._id
                     });
-                    emitToUser(adm._id.toString(), 'new_notification', {
-                        title: 'Franchise Application Re-submitted',
-                        message: `Operator ${updatedFranchise.fullName || 'User'} has updated and re-submitted their franchise application for ${updatedFranchise.plateNo}.`
-                    });
+                    emitToUser(adm._id.toString(), 'notification', notif);
                 }
             } catch (notifyErr) {
                 console.error('Error notifying admins on re-submission:', notifyErr);

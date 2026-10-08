@@ -36,7 +36,7 @@ export const formatRelativeTime = (timestamp, lang = 'en') => {
     return isFil ? `${diffMin}m ang nakalipas` : `${diffMin}m ago`;
   }
   if (diffHr < 24) {
-    return isFil ? `${diffHr}o ang nakalipas` : `${diffHr}h ago`;
+    return isFil ? `${diffHr}h ang nakalipas` : `${diffHr}h ago`;
   }
   if (diffDay === 1) {
     return isFil ? 'Kahapon' : 'Yesterday';

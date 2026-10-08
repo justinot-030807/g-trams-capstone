@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bell, ChevronDown, CheckCircle2, Clock, AlertTriangle, 
   User, Users, LogOut, FileText, Menu, PanelLeftOpen, Settings,
-  Moon, Sun, HelpCircle, ArrowLeft
+  Moon, Sun, HelpCircle, ArrowLeft, X
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -12,8 +12,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { useTextSize } from '../context/TextSizeContext';
 import { 
   getNotificationVisuals, 
-  formatRelativeTime, 
-  renderRichNotificationMessage 
+  formatRelativeTime 
 } from '../utils/notificationUtils';
 
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
@@ -22,8 +21,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const { textScale, cycleTextScale, scaleLabel } = useTextSize();
   const { 
     notifications: ctxNotifs, 
+    unreadCount: ctxUnreadCount,
     markAsRead: ctxMarkRead, 
-    markAllRead: ctxMarkAllRead 
+    markAllRead: ctxMarkAllRead,
+    deleteNotification: ctxDeleteNotification 
   } = useNotifications();
   
   const navigate = useNavigate();
@@ -38,40 +39,30 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
-  const storageKey = 'gtrams_read_notification_ids';
-  const [localNotifications, setLocalNotifications] = useState([]);
-  const [readIds, setReadIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(storageKey)) || [];
-    } catch {
-      return [];
-    }
-  });
+  // Notifications sourced solely from database via context
+  const allNotifs = useMemo(() => {
+    const isRoleAdmin = String(role || '').toLowerCase().includes('admin');
+    const isRoleCashier = String(role || '').toLowerCase().includes('cashier');
+    return (Array.isArray(ctxNotifs) ? ctxNotifs : []).map((n) => {
+      let defaultLink = '/operator-dashboard';
+      if (isRoleAdmin) defaultLink = '/franchise-masterlist';
+      if (isRoleCashier) defaultLink = '/cashier-dashboard';
+      if (n?.type === 'chat') defaultLink = isRoleAdmin ? '/admin/tickets' : '/operator-dashboard';
 
-  // Map context notifications to the shape TopNavbar expects (memoized to prevent re-mapping on every render)
-  const safeCtxNotifs = useMemo(() => Array.isArray(ctxNotifs) ? ctxNotifs : [], [ctxNotifs]);
-  const activeCtxNotifs = useMemo(() => {
-    const isRoleAdmin = String(role || '').includes('admin');
-    return safeCtxNotifs.map((n, idx) => ({
-      id: n?._id || `ctx_notif_${idx}`,
-      isCtx: true,
-      isRead: Boolean(n?.isRead),
-      title: n?.title || 'Notification',
-      desc: n?.message || '',
-      rawTime: n?.createdAt,
-      time: n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
-      type: n?.type === 'status_change' ? 'pending' : n?.type === 'approval' ? 'success' : 'info',
-      link: isRoleAdmin ? '/franchise-masterlist' : '/operator-dashboard'
-    }));
-  }, [safeCtxNotifs, role]);
+      return {
+        id: n?._id,
+        isRead: Boolean(n?.isRead),
+        title: n?.title || 'Notification',
+        desc: n?.message || '',
+        rawTime: n?.createdAt,
+        time: n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
+        type: n?.type || 'info',
+        link: n?.link || defaultLink
+      };
+    });
+  }, [ctxNotifs, role]);
 
-  const activeLocalNotifs = useMemo(() => Array.isArray(localNotifications) ? localNotifications : [], [localNotifications]);
-  const allNotifs = useMemo(() => [...activeCtxNotifs, ...activeLocalNotifs], [activeCtxNotifs, activeLocalNotifs]);
-  
-  // Count unread:
-  const unreadCount = useMemo(() => {
-    return allNotifs.filter(n => n.isCtx ? !n.isRead : !readIds.includes(n.id)).length;
-  }, [allNotifs, readIds]);
+  const unreadCount = ctxUnreadCount ?? allNotifs.filter(n => !n.isRead).length;
 
   const [isMaintenanceActive, setIsMaintenanceActive] = useState(() => localStorage.getItem('maintenance_mode') === 'true');
 
@@ -121,160 +112,35 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
     fetchFreshUser();
 
-    // Fetch notifications periodically
-    const fetchNotifications = async () => {
-      const token = localStorage.getItem('token');
-      const storedRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
-      if (!token) return;
-
+    // Live system settings sync (maintenance mode, fiscal year, fees)
+    const fetchSystemSettings = async () => {
       try {
-        const notifs = [];
-
-        if (storedRole === 'admin' || storedRole === 'administrator') {
-          // Fetch pending applications for admin
-          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Expired&limit=15`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (fRes.ok) {
-            const fRaw = await fRes.json();
-            const fList = Array.isArray(fRaw) ? fRaw : (fRaw?.data || []);
-            fList.filter(item => item.status === 'Pending').slice(0, 10).forEach(item => {
-              notifs.push({
-                id: `admin_pending_${item._id}`,
-                title: 'New Franchise Application',
-                desc: `${item.fullName} submitted a new application (${item.plateNo || 'Pending Plate'}) for ${item.todaName || 'TODA'}.`,
-                time: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent',
-                type: 'pending',
-                link: '/franchise-approval'
-              });
-            });
-
-            fList.filter(item => item.status === 'Expired').slice(0, 5).forEach(item => {
-              notifs.push({
-                id: `admin_expired_${item._id}`,
-                title: 'Expired Franchise Alert',
-                desc: `Unit ${item.plateNo || 'N/A'} of ${item.fullName} has expired and needs renewal.`,
-                time: 'Notice',
-                type: 'reminder',
-                link: '/franchise-masterlist'
-              });
-            });
-          }
-
-          // Fetch TODA submissions for admin
-          try {
-            const tRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/submissions`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (tRes.ok) {
-              const tList = await tRes.json();
-              if (Array.isArray(tList)) {
-                tList.filter(t => t.status === 'Pending').slice(0, 5).forEach(t => {
-                  notifs.push({
-                    id: `admin_toda_${t._id}`,
-                    title: 'TODA Masterlist Submitted',
-                    desc: `${t.todaName || 'TODA'} submitted their official member roster for review.`,
-                    time: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recent',
-                    type: 'info',
-                    link: '/validate-toda'
-                  });
-                });
-              }
-            }
-          } catch {}
-        } else {
-          // Fetch notifications for operator or TODA president
-          const fRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/my-franchises`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (fRes.ok) {
-            const fList = await fRes.json();
-            if (Array.isArray(fList)) {
-              fList.forEach(item => {
-                if (item.status === 'For Signing') {
-                  notifs.push({
-                    id: `op_signing_${item._id}`,
-                    title: 'Franchise Verified - Routing for Signatures',
-                    desc: `Documents verified for ${item.plateNo || 'unit'}. MTOP certificate is now being routed for official municipal signatures.`,
-                    time: 'For Signing',
-                    type: 'info',
-                    link: '/operator-dashboard'
-                  });
-                } else if (item.status === 'Ready for Pickup') {
-                  notifs.push({
-                    id: `op_ready_${item._id}`,
-                    title: 'Franchise Approved - Ready for Pickup!',
-                    desc: `Your franchise for unit ${item.plateNo || ''} is signed and ready! Proceed to the BPLO / Licensing Office to claim your official MTOP certificate and sticker.`,
-                    time: 'Action Required',
-                    type: 'success',
-                    link: '/operator-dashboard'
-                  });
-                } else if (item.status === 'Active') {
-                  notifs.push({
-                    id: `op_active_${item._id}`,
-                    title: 'Permit Active',
-                    desc: `Franchise permit for unit ${item.plateNo || ''} is active with ${item.todaName}.`,
-                    time: 'Active',
-                    type: 'success',
-                    link: '/apply-franchise'
-                  });
-                } else if (item.status === 'Cancelled') {
-                  notifs.push({
-                    id: `op_cancelled_${item._id}`,
-                    title: 'Application Returned / Needs Revision',
-                    desc: item.cancelReason ? `LGU Note: ${item.cancelReason}` : 'Your application was returned for correction. Click to fix.',
-                    time: 'Attention',
-                    type: 'reminder',
-                    link: '/apply-franchise'
-                  });
-                } else if (item.status === 'Pending') {
-                  notifs.push({
-                    id: `op_pending_${item._id}`,
-                    title: 'Application In Review',
-                    desc: `Your application for ${item.plateNo || 'unit'} is currently in queue at Office of the Vice Mayor Extension.`,
-                    time: 'Pending',
-                    type: 'pending',
-                    link: '/apply-franchise'
-                  });
-                }
-              });
+        const setRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
+        if (setRes.ok) {
+          const setJson = await setRes.json();
+          if (setJson.data) {
+            const d = setJson.data;
+            const isMaint = d.maintenanceMode === true;
+            setIsMaintenanceActive(isMaint);
+            localStorage.setItem('maintenance_mode', isMaint ? 'true' : 'false');
+            if (d.fiscalYear) localStorage.setItem('fiscal_year', d.fiscalYear);
+            if (d.franchiseFee) localStorage.setItem('franchise_fee', d.franchiseFee);
+            if (d.validityNew) localStorage.setItem('validity_new', d.validityNew);
+            if (d.validityRenew) localStorage.setItem('validity_renew', d.validityRenew);
+            
+            const currentRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+            if (isMaint && currentRole !== 'admin' && currentRole !== 'administrator') {
+              navigate('/maintenance');
             }
           }
         }
-
-        setLocalNotifications(notifs);
-
-        // Live system settings sync
-        try {
-          const setRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
-          if (setRes.ok) {
-            const setJson = await setRes.json();
-            if (setJson.data) {
-              const d = setJson.data;
-              const isMaint = d.maintenanceMode === true;
-              setIsMaintenanceActive(isMaint);
-              localStorage.setItem('maintenance_mode', isMaint ? 'true' : 'false');
-              if (d.fiscalYear) localStorage.setItem('fiscal_year', d.fiscalYear);
-              if (d.franchiseFee) localStorage.setItem('franchise_fee', d.franchiseFee);
-              if (d.validityNew) localStorage.setItem('validity_new', d.validityNew);
-              if (d.validityRenew) localStorage.setItem('validity_renew', d.validityRenew);
-              
-              if (isMaint && storedRole !== 'admin' && storedRole !== 'administrator') {
-                navigate('/maintenance');
-              }
-            }
-          }
-        } catch (setErr) {
-          console.error('Failed to sync live settings:', setErr);
-        }
-
-      } catch (err) {
-        console.error('Error fetching notifications:', err);
+      } catch (setErr) {
+        // Silent fail
       }
     };
 
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000); // Poll every 10 seconds
+    fetchSystemSettings();
+    const interval = setInterval(fetchSystemSettings, 30000);
 
     const handleSettingsUpdate = () => {
       const isMaint = localStorage.getItem('maintenance_mode') === 'true';
@@ -287,20 +153,6 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     window.addEventListener('gtrams_settings_updated', handleSettingsUpdate);
     window.addEventListener('storage', handleSettingsUpdate);
 
-    const handleAllReadEvent = () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem(storageKey)) || [];
-        setLocalNotifications(prev => {
-          const allIds = prev.map(n => n.id);
-          const updated = Array.from(new Set([...stored, ...allIds]));
-          setReadIds(updated);
-          localStorage.setItem(storageKey, JSON.stringify(updated));
-          return prev;
-        });
-      } catch {}
-    };
-    window.addEventListener('gtrams_all_notifs_read', handleAllReadEvent);
-
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setIsNotifOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileOpen(false);
@@ -310,35 +162,25 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('gtrams_settings_updated', handleSettingsUpdate);
       window.removeEventListener('storage', handleSettingsUpdate);
-      window.removeEventListener('gtrams_all_notifs_read', handleAllReadEvent);
       clearInterval(interval);
     };
-  }, []);
+  }, [navigate]);
 
   const markAllAsRead = () => {
-    // Clear context ones
     ctxMarkAllRead();
-    // Clear local ones
-    const allIds = localNotifications.map(n => n.id);
-    const updated = Array.from(new Set([...readIds, ...allIds]));
-    setReadIds(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-    try {
-      localStorage.setItem('gtrams_all_notifs_read_at', Date.now().toString());
-      window.dispatchEvent(new Event('gtrams_all_notifs_read'));
-    } catch {}
   };
 
   const handleNotificationClick = (notif) => {
-    if (notif.isCtx) {
+    if (notif?.id) {
       ctxMarkRead(notif.id);
-    } else if (!readIds.includes(notif.id)) {
-      const updated = [...readIds, notif.id];
-      setReadIds(updated);
-      localStorage.setItem(storageKey, JSON.stringify(updated));
     }
     setIsNotifOpen(false);
     if (notif.link) navigate(notif.link);
+  };
+
+  const handleDeleteNotification = (e, notifId) => {
+    e.stopPropagation();
+    ctxDeleteNotification(notifId);
   };
 
   const getRoleBadge = () => {
@@ -457,11 +299,11 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   <div className="px-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-xs text-[#1F1D1B] dark:text-[#F6F5F3]">{t('nav.notifications', 'Notifications')}</h3>
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
                         {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'unread update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
                       </p>
                     </div>
-                    {unreadCount > 0 && (
+                    {allNotifs.length > 0 && (
                       <button 
                         onClick={markAllAsRead} 
                         className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
@@ -471,16 +313,17 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     )}
                   </div>
 
-                  <div className="max-h-72 overflow-y-auto divide-y divide-[#E4E1DC]/50 dark:divide-[#2E2A27]/50">
+                  <div className="max-h-72 overflow-y-auto divide-y divide-[#E4E1DC]/40 dark:divide-[#2E2A27]/40">
                     {allNotifs.length === 0 ? (
                       <div className="p-8 text-center flex flex-col items-center justify-center">
-                        <Bell size={24} className="text-[#6B6761] dark:text-[#A8A29E] mb-2" />
+                        <div className="w-10 h-10 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-full flex items-center justify-center mb-2.5">
+                          <Bell size={18} className="text-[#8C827A]" />
+                        </div>
                         <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{t('nav.noNotifications', 'No new notifications')}</p>
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">{t('nav.noNotificationsDesc', 'System updates and approval notices will appear here.')}</p>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">{t('nav.allCaughtUp', 'All caught up')}</p>
                       </div>
                     ) : (
                       allNotifs.map((notif) => {
-                        const isRead = notif.isCtx ? notif.isRead : readIds.includes(notif.id);
                         const visuals = getNotificationVisuals(notif);
                         const IconComponent = visuals.icon;
                         const timeStr = formatRelativeTime(notif.rawTime || notif.time, language);
@@ -489,34 +332,37 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                           <div
                             key={notif.id}
                             onClick={() => handleNotificationClick(notif)}
-                            className={`p-3.5 flex items-start gap-3 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/50 transition-colors cursor-pointer border-b border-[#E4E1DC]/50 dark:border-[#2E2A27]/50 last:border-b-0 ${
-                              !isRead ? 'bg-[#9E2A2B]/5 dark:bg-[#9E2A2B]/10 border-l-4 border-l-[#9E2A2B]' : 'border-l-4 border-l-transparent'
+                            className={`group p-3 flex items-start gap-2.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/50 transition-colors cursor-pointer relative ${
+                              !notif.isRead ? 'bg-[#9E2A2B]/5 dark:bg-[#9E2A2B]/10' : 'bg-transparent'
                             }`}
                           >
                             <div className="mt-0.5 shrink-0">
-                              <div className={`w-8 h-8 rounded-md flex items-center justify-center ${visuals.iconBg}`}>
-                                <IconComponent size={16} />
+                              <div className={`w-7 h-7 rounded-md flex items-center justify-center ${visuals.iconBg}`}>
+                                <IconComponent size={14} />
                               </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1.5 mb-1">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <span className={`px-2 py-0.5 text-[10px] font-semibold rounded border shrink-0 ${visuals.badgeClass}`}>
-                                    {visuals.badgeText}
-                                  </span>
-                                  <p className={`text-xs truncate ${!isRead ? 'font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
-                                    {notif?.title || 'Notification'}
-                                  </p>
-                                </div>
-                                {!isRead && <span className="w-2 h-2 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0" />}
+                            <div className="flex-1 min-w-0 pr-6">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <h4 className={`text-xs ${!notif.isRead ? 'font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]' : 'font-medium text-[#6B6761] dark:text-[#A8A29E]'}`}>
+                                  {notif.title}
+                                </h4>
+                                {!notif.isRead && <span className="w-1.5 h-1.5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0" />}
                               </div>
-                              <p className={`text-xs line-clamp-2 leading-relaxed ${!isRead ? 'text-[#1F1D1B] dark:text-[#F6F5F3]' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
-                                {renderRichNotificationMessage(notif?.desc || notif?.message)}
+                              <p className="text-[11px] text-[#57534E] dark:text-[#D6D3D1] leading-snug break-words">
+                                {notif.desc}
                               </p>
-                              <span className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E] mt-1.5 block tabular-nums">
-                                {timeStr || notif?.time}
+                              <span className="text-[10px] font-mono text-[#8C827A] mt-1 block">
+                                {timeStr}
                               </span>
                             </div>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteNotification(e, notif.id)}
+                              className="absolute top-2.5 right-2 p-1 text-[#8C827A] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-opacity cursor-pointer rounded"
+                              title="Dismiss"
+                            >
+                              <X size={13} />
+                            </button>
                           </div>
                         );
                       })
@@ -642,13 +488,13 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                         {t('nav.notifications', 'Notifications')}
                       </h4>
                     </div>
-                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5">
+                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5">
                       {unreadCount > 0 ? `${unreadCount} ${t('nav.unreadUpdates', 'unread update(s)')}` : t('nav.allCaughtUp', 'All caught up')}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {unreadCount > 0 && (
+                    {allNotifs.length > 0 && (
                       <button 
                         type="button"
                         onClick={markAllAsRead} 
@@ -661,68 +507,68 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                 </div>
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto px-2 py-2 pb-8 sm:pb-2">
+                <div className="flex-1 overflow-y-auto px-2 py-2 pb-8 sm:pb-2 divide-y divide-[#E4E1DC]/40 dark:divide-[#2E2A27]/40">
                   {allNotifs.length === 0 ? (
                     <div className="p-8 text-center flex flex-col items-center justify-center h-48">
                       <div className="w-12 h-12 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-full flex items-center justify-center mb-3">
-                        <Bell size={22} className="text-[#6B6761] dark:text-[#A8A29E]" />
+                        <Bell size={22} className="text-[#8C827A]" />
                       </div>
                       <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                         {t('nav.noNotifications', 'No new notifications')}
                       </p>
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 max-w-[200px] leading-relaxed">
-                        {t('nav.noNotificationsDesc', 'System updates and notices will appear here.')}
+                      <p className="text-[11px] text-[#8C827A] dark:text-[#A8A29E] mt-0.5 max-w-[200px] leading-relaxed">
+                        {t('nav.allCaughtUp', 'All caught up')}
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-1">
-                      {allNotifs.map((notif) => {
-                        const isRead = notif.isCtx ? notif.isRead : readIds.includes(notif.id);
-                        const visuals = getNotificationVisuals(notif);
-                        const IconComponent = visuals.icon;
-                        const timeStr = formatRelativeTime(notif.rawTime || notif.time, language);
+                    allNotifs.map((notif) => {
+                      const visuals = getNotificationVisuals(notif);
+                      const IconComponent = visuals.icon;
+                      const timeStr = formatRelativeTime(notif.rawTime || notif.time, language);
 
-                        return (
-                          <div
-                            key={notif.id}
-                            onClick={() => {
-                              setIsNotifOpen(false);
-                              handleNotificationClick(notif);
-                            }}
-                            className={`p-3 rounded-md flex items-start gap-3 transition-colors cursor-pointer group border ${
-                              !isRead 
-                                ? 'bg-[#9E2A2B]/5 dark:bg-[#9E2A2B]/10 border-l-4 border-l-[#9E2A2B] border-transparent' 
-                                : 'border-transparent hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/50'
-                            }`}
-                          >
-                            <div className="mt-0.5 shrink-0">
-                              <div className={`w-8 h-8 rounded-md flex items-center justify-center shadow-xs ${visuals.iconBg}`}>
-                                <IconComponent size={16} />
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0 pr-1">
-                              <div className="flex items-center justify-between gap-1.5 mb-1">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <span className={`px-2 py-0.5 text-[10px] font-semibold rounded border shrink-0 ${visuals.badgeClass}`}>
-                                    {visuals.badgeText}
-                                  </span>
-                                  <p className={`text-xs truncate ${!isRead ? 'font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
-                                    {notif?.title || 'Notification'}
-                                  </p>
-                                </div>
-                                {!isRead && <span className="w-2 h-2 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0 shadow-xs" />}
-                              </div>
-                              <p className={`text-xs line-clamp-2 leading-relaxed ${!isRead ? 'text-[#1F1D1B] dark:text-[#F6F5F3]' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
-                                {renderRichNotificationMessage(notif?.desc || notif?.message)}
-                              </p>
-                              <span className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E] mt-1 block tabular-nums">
-                                {timeStr || notif?.time}
-                              </span>
+                      return (
+                        <div
+                          key={notif.id}
+                          onClick={() => {
+                            setIsNotifOpen(false);
+                            handleNotificationClick(notif);
+                          }}
+                          className={`group p-3 rounded-md flex items-start gap-2.5 transition-colors cursor-pointer relative hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/50 ${
+                            !notif.isRead 
+                              ? 'bg-[#9E2A2B]/5 dark:bg-[#9E2A2B]/10' 
+                              : 'bg-transparent'
+                          }`}
+                        >
+                          <div className="mt-0.5 shrink-0">
+                            <div className={`w-7 h-7 rounded-md flex items-center justify-center shadow-xs ${visuals.iconBg}`}>
+                              <IconComponent size={14} />
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div className="flex-1 min-w-0 pr-6">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <h5 className={`text-xs ${!notif.isRead ? 'font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]' : 'font-medium text-[#6B6761] dark:text-[#A8A29E]'}`}>
+                                {notif?.title || 'Notification'}
+                              </h5>
+                              {!notif.isRead && <span className="w-1.5 h-1.5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0 shadow-xs" />}
+                            </div>
+                            <p className="text-[11px] text-[#57534E] dark:text-[#D6D3D1] leading-snug break-words">
+                              {notif.desc}
+                            </p>
+                            <span className="text-[10px] font-mono text-[#8C827A] mt-1 block">
+                              {timeStr || notif?.time}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteNotification(e, notif.id)}
+                            className="absolute top-2.5 right-2 p-1 text-[#8C827A] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-opacity cursor-pointer rounded"
+                            title="Dismiss"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>

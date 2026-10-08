@@ -28,18 +28,15 @@ router.get('/unread-count', async (req, res) => {
   }
 });
 
-// Mark all as read (must be defined BEFORE /:id/read to prevent CastError)
+// Mark all as read & auto-delete notifications
 router.put(['/read-all', '/mark-all-read'], async (req, res) => {
   try {
-    await Notification.updateMany(
-      { recipient: req.user._id, isRead: false },
-      { isRead: true }
-    );
+    await Notification.deleteMany({ recipient: req.user._id });
     const { emitToUser } = require('../config/socket');
     emitToUser(req.user._id.toString(), 'notifications_read_all');
-    res.json({ message: 'All notifications marked as read' });
+    res.json({ message: 'All notifications cleared and marked as read' });
   } catch (error) {
-    res.status(500).json({ message: 'Error marking all notifications as read'});
+    res.status(500).json({ message: 'Error clearing all notifications'});
   }
 });
 
@@ -73,6 +70,27 @@ router.put('/:id/read', async (req, res) => {
     res.json(notification);
   } catch (error) {
     res.status(500).json({ message: 'Error marking notification as read'});
+  }
+});
+
+// Delete individual notification
+router.delete('/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid notification ID' });
+    }
+    const deleted = await Notification.findOneAndDelete({
+      _id: req.params.id,
+      recipient: req.user._id
+    });
+    if (!deleted) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    const { emitToUser } = require('../config/socket');
+    emitToUser(req.user._id.toString(), 'notification_deleted', { id: req.params.id });
+    res.json({ message: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting notification' });
   }
 });
 
