@@ -11,7 +11,7 @@ import {
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
   Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
-  Compass, MapPin, ExternalLink, AlertTriangle
+  Compass, MapPin, ExternalLink, AlertTriangle, Zap
 } from 'lucide-react';
 import { GarageGridSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -58,7 +58,6 @@ const DEFAULT_REQUIREMENTS = [
   { id: 'crDocument', label: 'Certificate of Registration (CR)', fieldUrl: 'crUrl' },
   { id: 'orDocument', label: 'Official Receipt (OR)', fieldUrl: 'orUrl' },
   { id: 'license', label: "Driver's License (Front)", fieldUrl: 'licenseUrl' },
-  { id: 'licenseBack', label: "Driver's License (Back / DL Codes)", fieldUrl: 'licenseBackUrl' },
   { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
   { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
 ];
@@ -206,6 +205,7 @@ const ApplyFranchise = () => {
     cedulaSerialNo: '',
     cedulaAmount: '',
     orCrNo: '',
+    orNo: '',
     orCrExpiryDate: '',
     crNo: '',
     orDate: '',
@@ -219,6 +219,9 @@ const ApplyFranchise = () => {
     classification: '',
     bodyType: '',
     displacement: '',
+    grossWeight: '',
+    fuelType: '',
+    passengerCapacity: '',
     registeredOwner: '',
     ownerAddress: '',
     numberOfUnits: 1,
@@ -1101,6 +1104,7 @@ const ApplyFranchise = () => {
                 series: finalSeries || prev.series,
                 yearModel: finalYear || prev.yearModel,
                 orCrNo: finalOrNo || prev.orCrNo,
+                orNo: finalOrNo || prev.orNo,
                 crNo: finalCrNo || prev.crNo,
                 crDate: normCrDate || prev.crDate,
                 orDate: normOrDate || prev.orDate,
@@ -1111,6 +1115,9 @@ const ApplyFranchise = () => {
                 classification: d.classification || prev.classification,
                 bodyType: d.bodyType || prev.bodyType,
                 displacement: d.pistonDisplacement || prev.displacement,
+                grossWeight: d.grossWeight || prev.grossWeight,
+                fuelType: d.fuelType || prev.fuelType,
+                passengerCapacity: d.passengerCapacity || prev.passengerCapacity,
                 registeredOwner: finalOwner || prev.registeredOwner,
                 ownerAddress: finalOwnerAddress || prev.ownerAddress,
                 orCrExpiryDate: normExpiry || prev.orCrExpiryDate
@@ -2174,41 +2181,69 @@ const ApplyFranchise = () => {
                     </div>
                   </div>
 
-                  {/* Number of Units Under Franchise */}
+                  {/* Municipal Unit Allocation & Fast-Track Option */}
                   <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        Number of Tricycle Units to Register
+                        Franchise Unit Allocation
                       </label>
-                      <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        (Max 2 units per operator)
+                      <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37]">
+                        Max 2 Units per Operator
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[1, 2].filter(num => num <= Math.max(1, availableSlots)).map(num => (
+
+                    <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                            {activeOrPendingUnits.length === 0 ? 'Registering Unit 1 of 2' : 'Registering Unit 2 of 2'}
+                          </span>
+                          <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                            {availableSlots} {availableSlots === 1 ? 'Slot Remaining' : 'Slots Remaining'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1.5">
+                          {activeOrPendingUnits.length === 0
+                            ? 'Registering your first motorized tricycle unit under Gasan franchising ordinances.'
+                            : `Unit 1 (${activeOrPendingUnits[0]?.plateNo || 'First Unit'}) is already registered. This application is for your 2nd and final unit.`}
+                        </p>
+                      </div>
+
+                      {activeOrPendingUnits.length === 1 && (
                         <button
-                          key={num}
                           type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, numberOfUnits: num }))}
-                          className={`py-2 px-3 rounded-lg border text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                            (formData.numberOfUnits || 1) === num
-                              ? 'bg-[#9E2A2B] text-white border-[#7A1B22] shadow-xs'
-                              : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                          }`}
+                          onClick={() => {
+                            const u1 = activeOrPendingUnits[0];
+                            if (u1) {
+                              setFormData(prev => ({
+                                ...prev,
+                                fullName: u1.fullName || prev.fullName,
+                                address: u1.address || prev.address,
+                                zone: u1.zone || prev.zone,
+                                todaName: u1.todaName || prev.todaName,
+                                cedulaDate: u1.cedulaDate ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
+                                cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
+                                cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
+                                cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,
+                                todaCertNo: u1.todaCertNo || prev.todaCertNo,
+                                todaSignatory: u1.todaSignatory || prev.todaSignatory
+                              }));
+                              showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
+                            }
+                          }}
+                          className="shrink-0 px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                         >
-                          {num} {num === 1 ? 'Unit' : 'Units'}
+                          <Zap size={14} className="text-amber-300" />
+                          <span>Fast-Track: Copy from Unit 1</span>
                         </button>
-                      ))}
+                      )}
                     </div>
-                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                      Under Section 4 of Gasan municipal franchising guidelines, operators are allowed a maximum of 2 motorized tricycle units.
-                    </p>
                   </div>
 
                   {/* Driver Designation Choice */}
                   <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
-                      Who will drive the tricycle?
+                      Driver Designation
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -2227,11 +2262,11 @@ const ApplyFranchise = () => {
                           {formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         <div>
-                          <p className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
-                            I am the Driver (Operator-Driver)
+                          <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
+                            Operator-Driver
                           </p>
-                          <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            You hold the driver's license
+                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            I am the owner-operator and I will personally drive the tricycle unit
                           </p>
                         </div>
                       </button>
@@ -2251,11 +2286,11 @@ const ApplyFranchise = () => {
                           {!formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         <div>
-                          <p className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
-                            Hired Driver
+                          <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
+                            Operator Only (Hired / Designated Driver)
                           </p>
-                          <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            A designated driver operates the tricycle
+                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            A designated hired driver will operate the tricycle unit
                           </p>
                         </div>
                       </button>
@@ -2309,15 +2344,15 @@ const ApplyFranchise = () => {
                   )}
                 </div>
 
-                {/* Driver's License Documents & Smart AI Scan Cards (Back-to-Back) */}
+                {/* Driver's License Document (Front Only) */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        Driver's License Photos (Back-to-Back)
+                        Driver's License Photo (Front)
                       </label>
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Upload front and back photos to verify personal identity, date of birth, and authorized DL codes.
+                        Upload the front of the driver's license to verify identity, birthdate, and authorized DL codes.
                       </p>
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
@@ -2325,7 +2360,7 @@ const ApplyFranchise = () => {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="w-full">
                     <DocumentUploadCard
                       id="license"
                       label="Driver's License (Front)"
@@ -2340,28 +2375,13 @@ const ApplyFranchise = () => {
                       scanSuccess={aiSuccess.license}
                       error={formErrors.license}
                     />
-
-                    <DocumentUploadCard
-                      id="licenseBack"
-                      label="Driver's License (Back / DL Codes)"
-                      file={uploadedDocs.licenseBack}
-                      previewUrl={filePreviews.licenseBack || formData.licenseBackUrl}
-                      onFileSelect={handleFileChange}
-                      onFileRemove={handleRemoveFile}
-                      onPreviewZoom={setFullPreview}
-                      onRescan={handleRescan}
-                      required={false}
-                      isScanning={aiScanning.licenseBack}
-                      scanSuccess={aiSuccess.licenseBack}
-                      error={formErrors.licenseBack}
-                    />
                   </div>
 
                   {/* Auto-filled License Details Grid */}
                   <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        License Details {aiSuccess.license && <span className="text-emerald-600 font-semibold">(Verified from Document)</span>}
+                        License Credentials {aiSuccess.license && <span className="text-emerald-600 font-semibold">(Verified from Document)</span>}
                       </span>
                     </div>
 
@@ -2405,7 +2425,7 @@ const ApplyFranchise = () => {
                           value={formData.driverDob}
                           onChange={handleInputChange}
                           label="Date of Birth"
-                          helperText="LTO driver's license renewal date coincides with birthday."
+                          helperText="LTO license renewal date coincides with birthdate."
                           error={formErrors.driverDob}
                         />
                       </div>
@@ -2431,6 +2451,20 @@ const ApplyFranchise = () => {
                             <span>{formErrors.driverDlCodes}</span>
                           </p>
                         )}
+                      </div>
+
+                      <div id="field-driverConditions" className="sm:col-span-2">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Driving Conditions
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverConditions" 
+                          value={formData.driverConditions} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverConditions')} 
+                          placeholder="e.g. None or 1 (Corrective lenses)" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -2486,11 +2520,11 @@ const ApplyFranchise = () => {
                         LTO Documents (Certificate of Registration &amp; Official Receipt)
                       </label>
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Magkahiwalay na i-upload ang LTO CR (Katibayan ng Rehistro) at LTO OR (Taunang Bayad / Validity).
+                        Upload official LTO CR (proof of vehicle registration) and LTO OR (annual renewal &amp; validity) separately.
                       </p>
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 shrink-0">
-                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-reads Plate &amp; Chassis
+                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-extracts Vehicle Specs
                     </span>
                   </div>
 
@@ -2804,50 +2838,153 @@ const ApplyFranchise = () => {
                       )}
                     </div>
 
-                    {/* LTO Document Metadata (Separate OR and CR) */}
-                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
+                    {/* Section B: Vehicle Specifications (from LTO CR) */}
+                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                          LTO Registration Details (Official Receipt &amp; Certificate of Registration)
+                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                          Vehicle Specifications (from LTO CR)
                         </span>
                         <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                          Ownership must match applicant name
+                          Auto-filled from CR
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div id="field-series">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Model Series
+                          </label>
+                          <input
+                            type="text"
+                            name="series"
+                            value={formData.series}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. TMX 125, Barako II"
+                          />
+                        </div>
+
+                        <div id="field-color">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Color
+                          </label>
+                          <input
+                            type="text"
+                            name="color"
+                            value={formData.color}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. BLACK / RED"
+                          />
+                        </div>
+
+                        <div id="field-fuelType">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Fuel Type
+                          </label>
+                          <input
+                            type="text"
+                            name="fuelType"
+                            value={formData.fuelType}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. GAS"
+                          />
+                        </div>
+
+                        <div id="field-displacement">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Displacement (cc)
+                          </label>
+                          <input
+                            type="text"
+                            name="displacement"
+                            value={formData.displacement}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. 125, 150"
+                          />
+                        </div>
+
+                        <div id="field-grossWeight">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Gross Weight (kg)
+                          </label>
+                          <input
+                            type="text"
+                            name="grossWeight"
+                            value={formData.grossWeight}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. 265"
+                          />
+                        </div>
+
+                        <div id="field-bodyType">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Body Type
+                          </label>
+                          <input
+                            type="text"
+                            name="bodyType"
+                            value={formData.bodyType}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. MOTORCYCLE W/ SIDECAR"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section C: LTO Registration & Ownership */}
+                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                          LTO Registration &amp; Ownership Details
+                        </span>
+                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                          Must correspond with applicant
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div id="field-orCrNo">
-                          <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                            Official Receipt (OR) Number
-                          </label>
-                          <input 
-                            type="text" 
-                            name="orCrNo" 
-                            value={formData.orCrNo} 
-                            onChange={handleInputChange} 
-                            className={inputClasses} 
-                            placeholder="e.g. OR-98765432" 
-                          />
-                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            Proof of LTO annual registration renewal.
-                          </p>
-                        </div>
-
                         <div id="field-crNo">
-                          <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
                             Certificate of Registration (CR) No.
                           </label>
-                          <input 
-                            type="text" 
-                            name="crNo" 
-                            value={formData.crNo} 
-                            onChange={handleInputChange} 
-                            className={inputClasses} 
-                            placeholder="e.g. CR-12345678" 
+                          <input
+                            type="text"
+                            name="crNo"
+                            value={formData.crNo}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. CR-12345678"
                           />
-                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            Proof of vehicle ownership under applicant's name.
-                          </p>
+                        </div>
+
+                        <div id="field-crDate">
+                          <SimpleDatePicker
+                            name="crDate"
+                            value={formData.crDate}
+                            onChange={handleInputChange}
+                            label="CR Registration Date"
+                            helperText="Date of vehicle registration."
+                            error={formErrors.crDate}
+                          />
+                        </div>
+
+                        <div id="field-orCrNo">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Official Receipt (OR) Number
+                          </label>
+                          <input
+                            type="text"
+                            name="orCrNo"
+                            value={formData.orCrNo}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. OR-98765432"
+                          />
                         </div>
 
                         <div id="field-orDate">
@@ -2856,7 +2993,7 @@ const ApplyFranchise = () => {
                             value={formData.orDate}
                             onChange={handleInputChange}
                             label="OR Payment Date"
-                            helperText="Date of LTO Official Receipt payment."
+                            helperText="Date of annual LTO renewal."
                             error={formErrors.orDate}
                           />
                         </div>
@@ -2868,9 +3005,40 @@ const ApplyFranchise = () => {
                             onChange={handleInputChange}
                             label="LTO Expiration Date"
                             mode="expiry"
-                            helperText="Valid registration end date on LTO sticker/OR."
+                            helperText="Valid registration end date on LTO OR."
                             error={formErrors.orCrExpiryDate}
                           />
+                        </div>
+
+                        <div id="field-fileNo">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            MV File Number
+                          </label>
+                          <input
+                            type="text"
+                            name="fileNo"
+                            value={formData.fileNo}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="e.g. 110123000632095"
+                          />
+                        </div>
+
+                        <div id="field-registeredOwner" className="sm:col-span-2">
+                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                            Registered Owner Name (from CR)
+                          </label>
+                          <input
+                            type="text"
+                            name="registeredOwner"
+                            value={formData.registeredOwner}
+                            onChange={handleInputChange}
+                            className={inputClasses}
+                            placeholder="Full Name of Registered Owner"
+                          />
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            Must correspond with applicant's identity or authorization.
+                          </p>
                         </div>
                       </div>
                     </div>

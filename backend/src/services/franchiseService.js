@@ -181,6 +181,7 @@ class FranchiseService {
 
             // Structured document metadata fields
             orCrNo: data.orCrNo || '',
+            orNo: data.orNo || '',
             orCrExpiryDate: data.orCrExpiryDate && !isNaN(new Date(data.orCrExpiryDate).getTime()) ? new Date(data.orCrExpiryDate) : undefined,
             crNo: data.crNo || '',
             orDate: data.orDate && !isNaN(new Date(data.orDate).getTime()) ? new Date(data.orDate) : undefined,
@@ -194,6 +195,9 @@ class FranchiseService {
             classification: data.classification || '',
             bodyType: data.bodyType || '',
             displacement: data.displacement || '',
+            grossWeight: data.grossWeight || '',
+            fuelType: data.fuelType || '',
+            passengerCapacity: data.passengerCapacity || '',
             registeredOwner: data.registeredOwner || '',
             ownerAddress: data.ownerAddress || '',
 

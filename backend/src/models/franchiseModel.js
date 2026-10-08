@@ -23,6 +23,7 @@ const franchiseSchema = new mongoose.Schema({
     
     // Structured document metadata fields
     orCrNo: { type: String, default: '' },
+    orNo: { type: String, default: '' },
     orCrExpiryDate: { type: Date },
     crNo: { type: String, default: '' },
     orDate: { type: Date },
@@ -36,6 +37,9 @@ const franchiseSchema = new mongoose.Schema({
     classification: { type: String, default: '' },
     bodyType: { type: String, default: '' },
     displacement: { type: String, default: '' },
+    grossWeight: { type: String, default: '' },
+    fuelType: { type: String, default: '' },
+    passengerCapacity: { type: String, default: '' },
     registeredOwner: { type: String, default: '' },
     ownerAddress: { type: String, default: '' },
 

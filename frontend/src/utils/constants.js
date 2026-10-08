@@ -65,8 +65,8 @@ export const BARANGAY_TO_ZONE = {
 export const GASAN_ZONES = [
   {
     id: "Central",
-    name: "Central Zone (Poblacion)",
-    label: "Central Zone",
+    name: "Central",
+    label: "Central",
     description: "Poblacion Town Proper Loop",
     terminal: "Gasan Municipal Plaza & Central Market Terminal",
     coverage: "Poblacion town center, municipal hall, public market, schools, and banks loop",
@@ -78,8 +78,8 @@ export const GASAN_ZONES = [
   },
   {
     id: "North",
-    name: "North Zone",
-    label: "North Zone",
+    name: "North",
+    label: "North",
     description: "Northern Coastal & Upland Route",
     terminal: "Bangbang Outpost & Northern Crossing Outposts",
     coverage: "Northern highway, agricultural communities, and coastal routes",
@@ -95,8 +95,8 @@ export const GASAN_ZONES = [
   },
   {
     id: "South",
-    name: "South Zone",
-    label: "South Zone",
+    name: "South",
+    label: "South",
     description: "Southern Coastal & Interior Route",
     terminal: "Tabionan Junction & Bachao Crossing Terminals",
     coverage: "Southern coastal shoreline, port terminals, and upland farm-to-market roads",
@@ -190,18 +190,17 @@ export const normalizeZone = (zone) => {
   return String(zone).trim();
 };
 
-// Formats zone into official display label (e.g. 'Central Zone (Poblacion)', 'North Zone', 'South Zone')
+// Formats zone into clean official display label ('Central', 'North', 'South')
 export const formatZoneLabel = (zone) => {
   if (!zone) return 'N/A';
   const str = String(zone).trim();
   if (!str) return 'N/A';
   const normalized = normalizeZone(str);
-  if (normalized === 'Central') return 'Central Zone (Poblacion)';
-  if (normalized === 'North') return 'North Zone';
-  if (normalized === 'South') return 'South Zone';
-  if (str.toLowerCase().includes('zone')) return str;
-  if (/^\d+$/.test(str)) return `Zone ${str}`;
-  return `${str} Zone`;
+  if (normalized === 'Central') return 'Central';
+  if (normalized === 'North') return 'North';
+  if (normalized === 'South') return 'South';
+  const cleaned = str.replace(/\bzone\b/gi, '').trim();
+  return cleaned || str;
 };
 
 export const TODA_LIST = [
@@ -218,7 +217,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'BATODA',
     name: 'BATODA (Bachao TODA)',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-blue-500',
     terminal: 'Bachao Ibaba Junction / Poblacion Market',
     barangays: ['Bachao Ibaba', 'Bachao Ilaya', 'Antipolo', 'Barangay I (Poblacion)'],
@@ -227,7 +226,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'POB TODA',
     name: 'POB TODA (Poblacion Central)',
-    zone: 'Central Zone',
+    zone: 'Central',
     color: 'bg-emerald-500',
     terminal: 'Gasan Municipal Plaza / Town Terminal',
     barangays: ['Barangay I (Poblacion)', 'Barangay II (Poblacion)', 'Barangay III (Poblacion)'],
@@ -236,7 +235,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'GT TODA',
     name: 'GT TODA (Gasan-Tapuyan)',
-    zone: 'North Zone',
+    zone: 'North',
     color: 'bg-amber-500',
     terminal: 'Tapuyan Crossing / Highway Outpost',
     barangays: ['Tapuyan', 'Dili', 'Libtangin', 'Barangay II (Poblacion)'],
@@ -245,7 +244,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'LUG TODA',
     name: 'LUG TODA (Libtangin Transport)',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-amber-600',
     terminal: 'Libtangin Barangay Outpost',
     barangays: ['Libtangin', 'Dili'],
@@ -254,7 +253,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'NBI TODA',
     name: 'NBI TODA (North Bay Interstate)',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-purple-500',
     terminal: 'Bognuyan Port Terminal',
     barangays: ['Bognuyan', 'Cabugao', 'Dawis', 'Mangiliol'],
@@ -263,7 +262,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'BANGBANG IPIL TODA',
     name: 'BANGBANG IPIL TODA',
-    zone: 'North Zone',
+    zone: 'North',
     color: 'bg-rose-500',
     terminal: 'Bangbang Barangay Hall Outpost',
     barangays: ['Bangbang', 'Banot', 'Banuyo', 'Pangi'],
@@ -272,7 +271,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'TAB TODA',
     name: 'TAB TODA (Tabionan Transport)',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-teal-500',
     terminal: 'Tabionan Junction Terminal',
     barangays: ['Tabionan', 'Tiguion', 'Masiga', 'Matandang Gasan'],
@@ -281,7 +280,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'TIGUION TODA',
     name: 'TIGUION TODA',
-    zone: 'North Zone',
+    zone: 'North',
     color: 'bg-emerald-600',
     terminal: 'Tiguion Proper Terminal',
     barangays: ['Tiguion'],
@@ -290,7 +289,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'MASIGA TODA',
     name: 'MASIGA TODA',
-    zone: 'North Zone',
+    zone: 'North',
     color: 'bg-orange-500',
     terminal: 'Masiga Crossing Outpost',
     barangays: ['Masiga'],
@@ -299,7 +298,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'MAT TODA',
     name: 'MAT TODA (Matandang Gasan)',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-lime-600',
     terminal: 'Matandang Gasan Outpost',
     barangays: ['Matandang Gasan'],
@@ -308,7 +307,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'PG TODA',
     name: 'PG TODA (Pinggan)',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-sky-500',
     terminal: 'Pinggan Seashore Terminal',
     barangays: ['Pinggan'],
@@ -317,7 +316,7 @@ export const TODA_DIRECTORY = [
   {
     id: '4B TODA',
     name: '4B TODA',
-    zone: 'North Zone',
+    zone: 'North',
     color: 'bg-indigo-600',
     terminal: 'Northern Four Barangays Crossing',
     barangays: ['Bahi', 'Bangbang', 'Banot', 'Banuyo'],
@@ -326,7 +325,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'DPAB TODA',
     name: 'DPAB TODA',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-pink-600',
     terminal: 'South Quadrant Junction',
     barangays: ['Dawis', 'Pangi', 'Antipolo', 'Bognuyan'],
@@ -335,7 +334,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'ILAYA TODA',
     name: 'ILAYA TODA',
-    zone: 'South Zone',
+    zone: 'South',
     color: 'bg-cyan-600',
     terminal: 'Bachao Ilaya Terminal',
     barangays: ['Bachao Ilaya'],
@@ -344,7 +343,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'GASAN CENTRAL TODA',
     name: 'GASAN CENTRAL TODA',
-    zone: 'Central Zone',
+    zone: 'Central',
     color: 'bg-indigo-500',
     terminal: 'Gasan Central Integrated Terminal',
     barangays: ['Barangay I (Poblacion)', 'Barangay II (Poblacion)', 'Barangay III (Poblacion)', 'Mahunig'],
@@ -353,7 +352,7 @@ export const TODA_DIRECTORY = [
   {
     id: 'BAHI TODA',
     name: 'BAHI TODA',
-    zone: 'North Zone',
+    zone: 'North',
     color: 'bg-cyan-500',
     terminal: 'Bahi Seashore Terminal',
     barangays: ['Bahi', 'Pinggan', 'Bacong-Bacong'],

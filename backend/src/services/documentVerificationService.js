@@ -156,10 +156,11 @@ Extract and return ONLY a valid JSON object with these exact keys:
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'license' || docType === 'licenseBack') {
-            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses (front and back).
-Carefully inspect this driver's license document image and extract all visible details.
+            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses.
+Carefully inspect this driver's license document image and extract all essential driving credentials.
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract blood type (Blood type must NOT be extracted).
+- DO NOT extract height or weight (Too personal / biometrics must NOT be extracted).
 - DO NOT extract any payment amounts or fees.
 - DO NOT extract signatures or signing government officials.
 
@@ -234,14 +235,14 @@ Return ONLY a valid JSON object with these exact keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Prioritize gemini-3.8-flash (user's active tier) followed by resilient fallbacks
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+        // Multi-model auto-failover cascade: If a model is overloaded (503), rate-limited (429), or unavailable,
+        // automatically switch to the next available tier without blocking user requests.
+        const preferredModel = process.env.GEMINI_MODEL;
         const modelsToTry = [
             preferredModel,
-            'gemini-3.8-flash',
             'gemini-2.5-flash',
-            'gemini-3.5-flash-lite',
             'gemini-2.0-flash',
+            'gemini-2.5-flash-lite',
             'gemini-1.5-flash'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
@@ -271,9 +272,18 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
                     break;
                 }
             } catch (callErr) {
-                console.warn(`[DocVerify] Model ${modelName} with json config failed:`, callErr.message);
+                const errMsg = callErr.message || '';
+                console.warn(`[DocVerify] Model ${modelName} failed:`, errMsg);
+
+                // If model is overloaded (503 Service Unavailable), quota exhausted (429), or model not found (404),
+                // do NOT waste time retrying the exact same overloaded model — immediately cascade to next model.
+                if (errMsg.includes('503') || errMsg.includes('overloaded') || errMsg.includes('429') || errMsg.includes('404')) {
+                    console.log(`[DocVerify] Service busy on ${modelName}. Auto-switching to next available model in cascade...`);
+                    continue;
+                }
+
                 try {
-                    // Fallback to standard request without responseMimeType in case older models reject it
+                    // Fallback to standard request without responseMimeType in case older models reject JSON responseMimeType
                     const fallbackInteraction = await ai.models.generateContent({
                         model: modelName,
                         contents: [

@@ -3,93 +3,9 @@ import {
   MapPin, Search, X, Compass, CheckCircle2, Shield, Info, 
   Navigation, Users, Layers, ExternalLink 
 } from 'lucide-react';
-import { GASAN_ZONES, GASAN_BARANGAYS } from '../../utils/constants';
+import { GASAN_ZONES, GASAN_BARANGAYS, TODA_DIRECTORY } from '../../utils/constants';
 
-export { GASAN_ZONES };
-
-export const TODA_DIRECTORY = [
-  {
-    id: 'BATODA',
-    name: 'BATODA (Bachao TODA)',
-    zone: 'South Zone',
-    color: 'bg-blue-500',
-    terminal: 'Bachao Ibaba Junction / Poblacion Market',
-    barangays: ['Bachao Ibaba', 'Bachao Ilaya', 'Antipolo', 'Barangay I (Poblacion)'],
-    description: 'Servicing Bachao coastal and interior routes connecting to Gasan Public Market.'
-  },
-  {
-    id: 'POB TODA',
-    name: 'POB TODA (Poblacion Central)',
-    zone: 'Central Zone',
-    color: 'bg-emerald-500',
-    terminal: 'Gasan Municipal Plaza / Town Terminal',
-    barangays: ['Barangay I (Poblacion)', 'Barangay II (Poblacion)', 'Barangay III (Poblacion)'],
-    description: 'Town proper internal loop connecting banks, municipal hall, churches, and central schools.'
-  },
-  {
-    id: 'GT TODA',
-    name: 'GT TODA (Gasan-Tapuyan)',
-    zone: 'North Zone',
-    color: 'bg-amber-500',
-    terminal: 'Tapuyan Crossing / Highway Outpost',
-    barangays: ['Tapuyan', 'Dili', 'Libtangin', 'Barangay II (Poblacion)'],
-    description: 'Main highway arterial route connecting northern coastal barangays to downtown Gasan.'
-  },
-  {
-    id: 'NBI TODA',
-    name: 'NBI TODA (North Bay Interstate)',
-    zone: 'South Zone',
-    color: 'bg-purple-500',
-    terminal: 'Bognuyan Port Terminal',
-    barangays: ['Bognuyan', 'Cabugao', 'Dawis', 'Mangiliol'],
-    description: 'Port and coastal connectivity covering fishing and agricultural communities.'
-  },
-  {
-    id: 'BANGBANG IPIL TODA',
-    name: 'BANGBANG IPIL TODA',
-    zone: 'North Zone',
-    color: 'bg-rose-500',
-    terminal: 'Bangbang Barangay Hall Outpost',
-    barangays: ['Bangbang', 'Banot', 'Banuyo', 'Pangi'],
-    description: 'Vital farm-to-market interior feeder route across scenic upland barangays.'
-  },
-  {
-    id: 'TAB TODA',
-    name: 'TAB TODA (Tabionan Transport)',
-    zone: 'South Zone',
-    color: 'bg-teal-500',
-    terminal: 'Tabionan Junction Terminal',
-    barangays: ['Tabionan', 'Tiguion', 'Masiga', 'Matandang Gasan'],
-    description: 'Southern mountain perimeter connection transporting local farmers and residents.'
-  },
-  {
-    id: 'GASAN CENTRAL TODA',
-    name: 'GASAN CENTRAL TODA',
-    zone: 'Central Zone',
-    color: 'bg-indigo-500',
-    terminal: 'Gasan Central Integrated Terminal',
-    barangays: ['Barangay I (Poblacion)', 'Barangay II (Poblacion)', 'Barangay III (Poblacion)', 'Mahunig'],
-    description: 'Inter-barangay shuttle terminal servicing general public passenger transit.'
-  },
-  {
-    id: 'BAHI TODA',
-    name: 'BAHI TODA',
-    zone: 'North Zone',
-    color: 'bg-cyan-500',
-    terminal: 'Bahi Seashore Terminal',
-    barangays: ['Bahi', 'Pinggan', 'Bacong-Bacong'],
-    description: 'Coastal shoreline route linking shoreline barangays to downtown markets.'
-  },
-  {
-    id: 'NON-TODA',
-    name: 'NON-TODA (Independent Franchise)',
-    zone: 'All Authorized Municipal Routes',
-    color: 'bg-slate-500',
-    terminal: 'Operator Residence Base',
-    barangays: ['All Gasan Barangays'],
-    description: 'Independent operators authorized to operate within their designated residency zone.'
-  }
-];
+export { GASAN_ZONES, TODA_DIRECTORY };
 
 const TodaZoneGuideModal = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('zones'); // 'zones' | 'toda'
