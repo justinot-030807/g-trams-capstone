@@ -330,6 +330,11 @@ const updateFranchiseStatus = async (req, res) => {
         
         const previousStatus = existingFranchise.status;
 
+        // Paid franchises cannot be rejected or cancelled
+        if (status === 'Cancelled' && existingFranchise.paymentStatus === 'Paid') {
+            return res.status(400).json({ message: 'Cannot reject or cancel an application that has already been paid.' });
+        }
+
         let targetField = rejectedField || '';
         if (!targetField && cancelReason) {
             const lowerReason = cancelReason.toLowerCase();
@@ -726,13 +731,13 @@ const processCashierPayment = async (req, res) => {
             return res.status(400).json({ message: 'Official Receipt (OR) Number is required.' });
         }
 
-        const franchise = await Franchise.findById(req.params.id).populate('operator', 'name contact');
-        if (!franchise) {
+        const existing = await Franchise.findById(req.params.id);
+        if (!existing) {
             return res.status(404).json({ message: 'Franchise record not found.' });
         }
 
-        if (franchise.paymentStatus === 'Paid') {
-            return res.status(400).json({ message: 'Franchise payment has already been recorded and processed.' });
+        if (existing.paymentStatus === 'Paid') {
+            return res.status(409).json({ message: 'Franchise payment has already been recorded and processed.' });
         }
 
         const validAmount = amountPaid !== undefined ? Number(amountPaid) : 500;
@@ -741,20 +746,31 @@ const processCashierPayment = async (req, res) => {
         }
 
         const now = new Date();
-        franchise.paymentStatus = 'Paid';
-        franchise.officialReceiptNo = officialReceiptNo.trim().toUpperCase();
-        franchise.payerName = (payerName && payerName.trim()) ? payerName.trim().toUpperCase() : franchise.fullName;
-        franchise.amountPaid = validAmount;
-        franchise.paymentMethod = paymentMethod || 'Cash';
-        franchise.paymentDate = now;
-        franchise.paidByCashier = req.user._id;
-        franchise.cashierName = req.user.name || 'Municipal Cashier';
-        franchise.paymentRemarks = paymentRemarks || '';
+        const resolvedPayerName = (payerName && payerName.trim()) ? payerName.trim().toUpperCase() : existing.fullName;
 
-        // Status advances to 'For Signing' so Municipal Admin and Mayor can sign the official permit
-        franchise.status = 'For Signing';
+        // Atomic update guard against concurrent double-processing
+        const franchise = await Franchise.findOneAndUpdate(
+            { _id: req.params.id, paymentStatus: { $ne: 'Paid' } },
+            {
+                $set: {
+                    paymentStatus: 'Paid',
+                    officialReceiptNo: officialReceiptNo.trim().toUpperCase(),
+                    payerName: resolvedPayerName,
+                    amountPaid: validAmount,
+                    paymentMethod: paymentMethod || 'Cash',
+                    paymentDate: now,
+                    paidByCashier: req.user._id,
+                    cashierName: req.user.name || 'Municipal Cashier',
+                    paymentRemarks: paymentRemarks || '',
+                    status: 'For Signing'
+                }
+            },
+            { returnDocument: 'after' }
+        ).populate('operator', 'name contact');
 
-        await franchise.save();
+        if (!franchise) {
+            return res.status(409).json({ message: 'Franchise payment has already been recorded and processed.' });
+        }
 
         // Notify operator of official receipt
         if (franchise.operator) {

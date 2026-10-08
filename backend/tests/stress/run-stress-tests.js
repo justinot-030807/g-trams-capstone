@@ -23,6 +23,7 @@ const { runAuthRateLimitTest } = require('./scenarios/auth-ratelimit');
 const { runFranchiseRaceConditionTest } = require('./scenarios/franchise-race');
 const { runMasterlistLoadTest } = require('./scenarios/masterlist-load');
 const { runSocketStressTest } = require('./scenarios/socket-stress');
+const { runCashierPaymentRaceTest } = require('./scenarios/cashier-race');
 
 async function main() {
     printConsoleHeader();
@@ -36,7 +37,9 @@ async function main() {
     let baseUrl = externalTarget;
     let operatorToken = null;
     let adminToken = null;
+    let cashierToken = null;
     let operatorId = null;
+    let paymentFranchiseId = null;
 
     const memoryProfiler = new MemoryProfiler();
 
@@ -81,10 +84,41 @@ async function main() {
             });
             operatorId = operator._id;
 
+            // Seed Cashier User
+            const cashier = await User.create({
+                name: 'Stress Test Cashier',
+                email: 'cashier.stress@gtrams.gov.ph',
+                password: 'Password123!',
+                role: 'cashier',
+                contact: '09112233445',
+                address: 'Municipal Hall, Gasan, Marinduque'
+            });
+
+            // Seed Target Franchise for Concurrent Payment Testing
+            const paymentFranchise = await Franchise.create({
+                operator: operator._id,
+                fullName: 'Stress Test Payee',
+                address: 'Barangay Libtangin, Gasan',
+                zone: 'Zone 1',
+                made: '2024',
+                make: 'Honda TMX 125',
+                motorNo: 'MOT-PAY-STRESS-1',
+                chassisNo: 'CHAS-PAY-STRESS-1',
+                plateNo: 'PAY-STRESS-01',
+                todaName: 'GASAN CENTRAL',
+                cedulaDate: new Date(),
+                cedulaAddress: 'Gasan',
+                cedulaSerialNo: 'CTC-PAY-1',
+                status: 'For Payment',
+                paymentStatus: 'Unpaid'
+            });
+            paymentFranchiseId = paymentFranchise._id;
+
             // Generate JWT Tokens
             const secret = process.env.JWT_SECRET || 'gtrams_stress_jwt_secret_key';
             adminToken = jwt.sign({ id: admin._id, role: admin.role }, secret, { expiresIn: '2h' });
             operatorToken = jwt.sign({ id: operator._id, role: operator.role }, secret, { expiresIn: '2h' });
+            cashierToken = jwt.sign({ id: cashier._id, role: cashier.role }, secret, { expiresIn: '2h' });
 
             // Seed Sample Franchise Records for Masterlist Query Load
             const sampleFranchises = [];
@@ -123,6 +157,7 @@ async function main() {
             const secret = process.env.JWT_SECRET || 'gtrams_stress_jwt_secret_key';
             adminToken = jwt.sign({ id: new mongoose.Types.ObjectId(), role: 'admin' }, secret, { expiresIn: '2h' });
             operatorToken = jwt.sign({ id: new mongoose.Types.ObjectId(), role: 'operator' }, secret, { expiresIn: '2h' });
+            cashierToken = jwt.sign({ id: new mongoose.Types.ObjectId(), role: 'cashier' }, secret, { expiresIn: '2h' });
             operatorId = new mongoose.Types.ObjectId();
         }
 
@@ -167,7 +202,19 @@ async function main() {
         printScenarioResult(s5.name, s5.metrics, s5.description);
         scenarios.push(s5);
 
-        // Scenario 6: Memory Profiler Finalization
+        // Scenario 6: Cashier Payment Race Condition & Rejection Guard
+        if (paymentFranchiseId) {
+            console.log('\n⏳ Running Scenario 6: Cashier Payment Atomic Concurrency & Rejection Immunity Guard...');
+            const origConsoleError = console.error;
+            console.error = () => {};
+            const s6 = await runCashierPaymentRaceTest(baseUrl, { cashierToken, adminToken, franchiseId: paymentFranchiseId, concurrency: 20 });
+            console.error = origConsoleError;
+            memoryProfiler.recordPeak();
+            printScenarioResult(s6.name, s6.metrics, s6.description);
+            scenarios.push(s6);
+        }
+
+        // Memory Profiler Finalization
         await new Promise(r => setTimeout(r, 1000));
         const memoryProfile = memoryProfiler.finalize();
 
