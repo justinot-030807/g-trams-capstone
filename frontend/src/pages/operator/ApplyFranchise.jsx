@@ -13,7 +13,7 @@ import {
   Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
   Compass, MapPin, ExternalLink, AlertTriangle, Zap
 } from 'lucide-react';
-import { GarageGridSkeleton } from '../../components/skeleton';
+import { GarageGridSkeleton, ApplyFranchiseSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import TricycleIcon from '../../components/common/TricycleIcon';
@@ -1821,14 +1821,7 @@ const ApplyFranchise = () => {
   if (isLoading && myFranchises.length === 0) {
     return (
       <MainLayout hideNav={true}>
-        <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center p-4">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-9 h-9 border-3 border-[#9E2A2B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
-              Verifying operator franchise quota...
-            </p>
-          </div>
-        </div>
+        <ApplyFranchiseSkeleton isRenewal={isRenewing} />
       </MainLayout>
     );
   }

@@ -5,6 +5,7 @@ import AdminLiveChat from '../../components/admin/AdminLiveChat';
 import AdminBroadcastCenter from '../../components/admin/AdminBroadcastCenter';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
+import { TableRowsSkeleton } from '../../components/skeleton';
 
 const AdminTickets = () => {
   const [activeTab, setActiveTab] = useState('chat');
@@ -154,7 +155,22 @@ const AdminTickets = () => {
         {activeTab === 'tickets' && (
           <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
             {isLoading ? (
-              <div className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">Loading tickets...</div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Date</th>
+                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Operator</th>
+                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Subject</th>
+                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Status</th>
+                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                    <TableRowsSkeleton rows={5} columns={5} baseDelay={30} stepDelay={40} />
+                  </tbody>
+                </table>
+              </div>
             ) : filteredTickets.length === 0 ? (
               <div className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">No tickets found.</div>
             ) : (

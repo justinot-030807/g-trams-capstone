@@ -12,6 +12,7 @@ import AdminApplicationSummaryModal from '../../components/admin/AdminApplicatio
 import { useSocket } from '../../context/SocketContext';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
+import { FranchiseReviewSkeleton } from '../../components/skeleton';
 
 const REJECT_REASONS = [
   'Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)',
@@ -591,13 +592,7 @@ const FranchiseReviewPage = () => {
   const hasExpiringSoonDoc = (orCrValidity?.isExpiringSoon) || (licenseValidity?.isExpiringSoon);
 
   if (isLoading) {
-    return (
-      <div className="fixed inset-0 w-full h-full bg-slate-50 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center z-50">
-        <Loader2 size={36} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37] mb-3" />
-        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Loading Franchise Review Workbench...</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Preparing documents and records...</p>
-      </div>
-    );
+    return <FranchiseReviewSkeleton />;
   }
 
   if (!currentApp) {

@@ -216,6 +216,12 @@
   );
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    animation: none;
+  }
+}
+
 /* Clean, non-distracting step animations for multi-step modal forms */
 @keyframes slideInFromRight {
   from { opacity: 0; transform: translateX(16px); }

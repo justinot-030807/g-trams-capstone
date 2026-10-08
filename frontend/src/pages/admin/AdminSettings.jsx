@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { SettingsSkeleton } from '../../components/skeleton';
+import { SettingsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 
 const AdminSettings = () => {
@@ -1161,12 +1161,7 @@ const AdminSettings = () => {
                     </thead>
                     <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
                       {auditLoading ? (
-                        <tr>
-                          <td colSpan="4" className="py-12 text-center text-[#6B6761] dark:text-[#A8A29E]">
-                            <Loader2 className="animate-spin mx-auto mb-2 text-[#9E2A2B] dark:text-[#D4AF37]" size={20} />
-                            <p className="font-semibold text-xs">Loading audit ledger...</p>
-                          </td>
-                        </tr>
+                        <TableRowsSkeleton rows={6} columns={4} baseDelay={30} stepDelay={40} />
                       ) : auditLogs.length === 0 ? (
                         <tr>
                           <td colSpan="4" className="py-12 text-center text-[#6B6761] dark:text-[#A8A29E]">

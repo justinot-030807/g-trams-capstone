@@ -11,6 +11,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatZoneLabel } from '../../utils/constants';
+import { TableRowsSkeleton } from '../../components/skeleton';
 
 const CashierSettings = () => {
   const navigate = useNavigate();
@@ -704,9 +705,23 @@ const CashierSettings = () => {
           {/* Archive Records Table */}
           <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden">
             {isLoadingArchive ? (
-              <div className="p-12 text-center text-[#6B6761] dark:text-[#A8A29E]">
-                <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <p className="text-xs font-semibold">Loading payment archive...</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[10px] tracking-wider border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <th className="py-3 px-4">OR Number</th>
+                      <th className="py-3 px-4">Operator / Payor</th>
+                      <th className="py-3 px-4">Plate No.</th>
+                      <th className="py-3 px-4">TODA / Zone</th>
+                      <th className="py-3 px-4">Amount Paid</th>
+                      <th className="py-3 px-4">Date Settled</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                    <TableRowsSkeleton rows={5} columns={7} baseDelay={30} stepDelay={40} />
+                  </tbody>
+                </table>
               </div>
             ) : filteredArchive.length === 0 ? (
               <div className="p-12 text-center text-[#6B6761] dark:text-[#A8A29E]">

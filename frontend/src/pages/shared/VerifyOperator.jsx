@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShieldCheck, User, MapPin, Award, AlertTriangle, Loader2 } from 'lucide-react';
+import { VerifyOperatorSkeleton } from '../../components/skeleton';
 
 const VerifyOperator = () => {
   const { id } = useParams();
@@ -49,12 +50,7 @@ const VerifyOperator = () => {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-[100dvh] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center p-4">
-        <Loader2 size={40} className="text-[#9E2A2B] dark:text-[#D4AF37] animate-spin mb-3" />
-        <p className="text-[#6B6761] dark:text-[#A8A29E] font-medium text-xs uppercase tracking-wider">Verifying LGU Credentials...</p>
-      </div>
-    );
+    return <VerifyOperatorSkeleton />;
   }
 
   if (error || !operator) {

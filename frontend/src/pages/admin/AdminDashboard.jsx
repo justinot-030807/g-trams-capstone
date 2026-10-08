@@ -8,7 +8,7 @@ import DataTable from '../../components/common/DataTable';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
-import { StatsCardsSkeleton } from '../../components/skeleton';
+import { StatsCardsSkeleton, DashboardHealthSkeleton } from '../../components/skeleton';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import { ArrowRight, Clock } from 'lucide-react';
 
@@ -317,7 +317,9 @@ const AdminDashboard = () => {
       )}
 
       {/* 2.5 PEAK READINESS & REGULATORY THROUGHPUT (January surge metrics) */}
-      {!isLoading && (
+      {isLoading ? (
+        <StatsCardsSkeleton count={4} gridClassName="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" baseDelay={100} stepDelay={30} />
+      ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
             label={t('admin.renewalsDue30', 'Renewals Due (30d)')}
@@ -358,7 +360,10 @@ const AdminDashboard = () => {
       )}
 
       {/* 3. FRANCHISE HEALTH OVERVIEW & BUOD (SIDE BY SIDE) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      {isLoading ? (
+        <DashboardHealthSkeleton baseDelay={160} />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Franchise Health Overview (Segmented bar + 4 status breakdown) */}
         <div className="lg:col-span-2 bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between">
           <div>
@@ -561,6 +566,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+    )}
 
       {/* 4. TODA DISTRIBUTION (Single-color horizontal BarList replacing 11-color donut) */}
       <div className="mb-6">

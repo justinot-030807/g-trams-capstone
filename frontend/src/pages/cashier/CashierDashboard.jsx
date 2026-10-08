@@ -7,6 +7,7 @@ import {
   FileText, ShieldCheck, User, Calendar, CreditCard, Banknote, Sparkles, Filter, X, Settings
 } from 'lucide-react';
 import { formatZoneLabel } from '../../utils/constants';
+import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 
 const CashierDashboard = () => {
   const navigate = useNavigate();
@@ -255,46 +256,50 @@ const CashierDashboard = () => {
         </div>
 
         {/* 3 Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Awaiting Collection</span>
-              <div className="w-8 h-8 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
-                <Clock size={16} />
+        {isLoading && queue.length === 0 ? (
+          <StatsCardsSkeleton count={3} gridClassName="grid grid-cols-1 sm:grid-cols-3 gap-4" baseDelay={30} stepDelay={40} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Awaiting Collection</span>
+                <div className="w-8 h-8 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
+                  <Clock size={16} />
+                </div>
               </div>
+              <p className="text-2xl sm:text-3xl font-bold text-[#1F1D1B] dark:text-white mt-2">
+                {queue.length}
+              </p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Ready for pickup & fee settlement</p>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold text-[#1F1D1B] dark:text-white mt-2">
-              {queue.length}
-            </p>
-            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Ready for pickup & fee settlement</p>
-          </div>
 
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Today's Collections</span>
-              <div className="w-8 h-8 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-                <Banknote size={16} />
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Today's Collections</span>
+                <div className="w-8 h-8 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+                  <Banknote size={16} />
+                </div>
               </div>
+              <p className="text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-2 font-mono">
+                ₱{totalTodayCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Official Municipal Treasury receipts</p>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-2 font-mono">
-              ₱{totalTodayCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Official Municipal Treasury receipts</p>
-          </div>
 
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Processed</span>
-              <div className="w-8 h-8 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center">
-                <ShieldCheck size={16} />
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Processed</span>
+                <div className="w-8 h-8 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center">
+                  <ShieldCheck size={16} />
+                </div>
               </div>
+              <p className="text-2xl sm:text-3xl font-bold text-[#1F1D1B] dark:text-white mt-2">
+                {paidList.length}
+              </p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Permits officially released to date</p>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold text-[#1F1D1B] dark:text-white mt-2">
-              {paidList.length}
-            </p>
-            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Permits officially released to date</p>
           </div>
-        </div>
+        )}
 
         {/* Search Bar & Tabs */}
         <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs space-y-4">
@@ -360,10 +365,31 @@ const CashierDashboard = () => {
           {/* Table Container */}
           <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
             {isLoading && queue.length === 0 ? (
-              <div className="py-16 text-center">
-                <Loader2 size={32} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37] mx-auto mb-2" />
-                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-semibold">Loading Treasury Queue...</p>
-              </div>
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase text-[10px] sm:text-xs font-bold tracking-wider">
+                  {activeTab === 'pending' ? (
+                    <tr>
+                      <th className="py-3 px-4">Plate No. &amp; MTOP</th>
+                      <th className="py-3 px-4">Operator Details</th>
+                      <th className="py-3 px-4">TODA &amp; Zone</th>
+                      <th className="py-3 px-4">Amount Due</th>
+                      <th className="py-3 px-4 text-right">Action</th>
+                    </tr>
+                  ) : (
+                    <tr>
+                      <th className="py-3 px-4">Official Receipt (OR#)</th>
+                      <th className="py-3 px-4">Operator &amp; Plate</th>
+                      <th className="py-3 px-4">TODA &amp; Zone</th>
+                      <th className="py-3 px-4">Amount Paid</th>
+                      <th className="py-3 px-4">Exact Date &amp; Time Paid</th>
+                      <th className="py-3 px-4 text-right">Receipt</th>
+                    </tr>
+                  )}
+                </thead>
+                <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                  <TableRowsSkeleton rows={5} columns={activeTab === 'pending' ? 5 : 6} baseDelay={30} stepDelay={40} />
+                </tbody>
+              </table>
             ) : filteredQueue.length === 0 ? (
               <div className="py-16 text-center space-y-2">
                 <Receipt size={36} className="mx-auto text-[#6B6761] dark:text-[#A8A29E]" />

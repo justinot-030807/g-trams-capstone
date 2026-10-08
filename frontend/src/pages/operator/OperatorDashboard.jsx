@@ -810,17 +810,17 @@ const OperatorDashboard = () => {
         className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 sm:p-4 shadow-xs mb-5 transition-all"
       >
         {isLoading ? (
-          <div className="space-y-2 animate-pulse">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="h-3.5 w-28 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-md" />
-              <div className="h-3 w-24 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-sm" />
+              <SkeletonElement height="14px" className="w-28" rounded="rounded-xs" delay={30} />
+              <SkeletonElement height="12px" className="w-24" rounded="rounded-xs" delay={45} />
             </div>
             <div 
               className="grid gap-2"
               style={{ gridTemplateColumns: `repeat(${maxUnits}, minmax(0, 1fr))` }}
             >
               {Array.from({ length: maxUnits }).map((_, idx) => (
-                <div key={idx} className="h-2 rounded-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]" />
+                <SkeletonElement key={idx} height="8px" className="w-full" rounded="rounded-full" delay={60 + idx * 20} />
               ))}
             </div>
           </div>
@@ -883,7 +883,7 @@ const OperatorDashboard = () => {
 
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
           {isLoading ? (
-            <div className="w-24 h-6 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-lg animate-pulse" />
+            <SkeletonElement height="24px" className="w-24" rounded="rounded-lg" delay={40} />
           ) : (
             <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] px-2.5 py-1 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
               {franchises.length} Registered

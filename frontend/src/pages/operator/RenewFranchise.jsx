@@ -13,6 +13,7 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import { formatZoneLabel } from '../../utils/constants';
+import { SkeletonElement } from '../../components/skeleton';
 
 const RenewFranchise = () => {
   const navigate = useNavigate();
@@ -322,9 +323,52 @@ const RenewFranchise = () => {
 
           {/* Loading Skeleton */}
           {loadingFranchise && (
-            <div className="p-6 sm:p-8 space-y-4">
-              <div className="h-28 bg-[#E4E1DC]/60 dark:bg-[#2E2A27] rounded-lg animate-pulse" />
-              <div className="h-44 bg-[#E4E1DC]/60 dark:bg-[#2E2A27] rounded-lg animate-pulse" />
+            <div className="space-y-6">
+              {/* Transport Pass Skeleton */}
+              <div className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-4">
+                <div className="flex justify-between items-center">
+                  <SkeletonElement height="14px" className="w-48" rounded="rounded-xs" delay={30} />
+                  <SkeletonElement height="20px" className="w-18" rounded="rounded-md" delay={45} />
+                </div>
+                <div className="rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] p-4 space-y-3">
+                  <div className="flex justify-between items-center pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <SkeletonElement height="16px" className="w-36" rounded="rounded-xs" delay={60} />
+                    <SkeletonElement height="16px" className="w-24" rounded="rounded-xs" delay={75} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <SkeletonElement height="10px" className="w-24" rounded="rounded-xs" delay={90} />
+                      <SkeletonElement height="36px" className="w-48" rounded="rounded-lg" delay={105} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <SkeletonElement height="10px" className="w-20" rounded="rounded-xs" delay={120} />
+                      <SkeletonElement height="24px" className="w-32" rounded="rounded-md" delay={135} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Renewal Form Card Skeleton */}
+              <div className="p-5 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <SkeletonElement rounded="rounded-md" className="w-6 h-6" delay={150} />
+                  <SkeletonElement height="16px" className="w-40" rounded="rounded-xs" delay={165} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <SkeletonElement height="11px" className="w-24" rounded="rounded-xs" delay={180} />
+                    <SkeletonElement height="40px" className="w-full" rounded="rounded-lg" delay={195} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <SkeletonElement height="11px" className="w-28" rounded="rounded-xs" delay={210} />
+                    <SkeletonElement height="40px" className="w-full" rounded="rounded-lg" delay={225} />
+                  </div>
+                </div>
+                <div className="h-32 rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 flex flex-col items-center justify-center space-y-2">
+                  <SkeletonElement rounded="rounded-lg" className="w-8 h-8" delay={240} />
+                  <SkeletonElement height="12px" className="w-36" rounded="rounded-xs" delay={255} />
+                </div>
+              </div>
             </div>
           )}
 

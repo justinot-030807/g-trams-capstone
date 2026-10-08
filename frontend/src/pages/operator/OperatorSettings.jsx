@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { SettingsSkeleton } from '../../components/skeleton';
+import { SettingsSkeleton, DocumentVaultSkeleton } from '../../components/skeleton';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import OperatorIdCard from '../../components/operator/OperatorIdCard';
 import TermsPolicyModal from '../../components/common/TermsPolicyModal';
@@ -1236,10 +1236,7 @@ const OperatorSettings = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {isVaultLoading ? (
-                <div className="py-12 flex flex-col items-center justify-center">
-                  <Loader2 size={32} className="text-[#9E2A2B] dark:text-[#D4AF37] animate-spin mb-3" />
-                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">Loading documents...</p>
-                </div>
+                <DocumentVaultSkeleton count={4} />
               ) : vaultDocuments.length === 0 ? (
                 <div className="py-10 text-center flex flex-col items-center justify-center">
                   <div className="w-14 h-14 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-center text-[#6B6761] dark:text-[#A8A29E] mb-3 border border-[#E4E1DC] dark:border-[#2E2A27]">
