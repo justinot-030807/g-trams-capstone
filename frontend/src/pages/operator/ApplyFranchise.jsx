@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
   GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS, 
-  getZoneForBarangay, normalizeZone, normalizeBarangayName, formatZoneLabel 
+  getZoneForBarangay, normalizeZone, normalizeBarangayName, formatZoneLabel, getTodasForBarangay 
 } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -2216,6 +2216,34 @@ const ApplyFranchise = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Affiliated TODA within Barangay Jurisdiction */}
+                  {(() => {
+                    const currentToda = formData.todaName || loggedInToda;
+                    if (!currentToda || currentToda === 'NON-TODA') return null;
+                    const validTodas = formData.address ? getTodasForBarangay(formData.address) : [];
+                    const isJurisdictionMatch = validTodas.length > 0 ? validTodas.includes(currentToda) : true;
+                    return (
+                      <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">Affiliated TODA:</span>
+                          <span className="font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">{currentToda}</span>
+                        </div>
+                        {formData.address && (
+                          <span className={`text-[11px] font-semibold flex items-center gap-1 ${
+                            isJurisdictionMatch
+                              ? 'text-emerald-700 dark:text-emerald-400'
+                              : 'text-amber-700 dark:text-amber-400'
+                          }`}>
+                            {isJurisdictionMatch ? <CheckCircle2 size={13} className="shrink-0" /> : <AlertTriangle size={13} className="shrink-0" />}
+                            {isJurisdictionMatch 
+                              ? `TODA operates within ${formData.address} jurisdiction` 
+                              : `Note: ${currentToda} primarily operates in other barangays for ${formData.address}`}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Municipal Unit Allocation & Fast-Track Option */}
                   <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">

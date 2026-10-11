@@ -1,5 +1,6 @@
 const Franchise = require('../models/franchiseModel');
 const User = require('../models/userModel');
+const TodaSubmission = require('../models/todaSubmission');
 const cron = require('node-cron');
 const { logAudit } = require('../utils/auditLogger');
 const Notification = require('../models/notificationModel');
@@ -685,7 +686,7 @@ const getFranchiseRecordCheck = async (req, res) => {
         const appType = String(franchise.applicationType || 'New');
         const isRenewal = /renew/i.test(appType) || pastFranchises.length > 0;
 
-        // Verify applicant against TODA association roster
+        // Verify applicant against TODA association roster (User accounts + Approved Scanned OCR Rosters)
         let todaStatus = 'non_toda';
         if (franchise.todaName && franchise.todaName !== 'NON-TODA') {
             const todaRegex = new RegExp(`^${escapeRegex(franchise.todaName)}$`, 'i');
@@ -697,7 +698,32 @@ const getFranchiseRecordCheck = async (req, res) => {
                 ? await User.findOne({ todaAssociation: todaRegex, $or: userOrCriteria }).select('name todaAssociation')
                 : null;
 
-            todaStatus = userMatch ? 'verified_member' : 'not_in_roster';
+            // Also cross-verify against officially approved scanned OCR rosters
+            let docMatch = false;
+            if (!userMatch) {
+                const approvedRosters = await TodaSubmission.find({
+                    status: 'Approved',
+                    $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+                }).select('extractedMembers');
+
+                const applicantClean = (franchise.fullName || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
+                if (applicantClean.length >= 3) {
+                    for (const r of approvedRosters) {
+                        if (Array.isArray(r.extractedMembers)) {
+                            const found = r.extractedMembers.some(m => {
+                                const mClean = (m.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
+                                return mClean && (mClean.includes(applicantClean) || applicantClean.includes(mClean));
+                            });
+                            if (found) {
+                                docMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            todaStatus = (userMatch || docMatch) ? 'verified_member' : 'not_in_roster';
         }
 
         res.status(200).json({

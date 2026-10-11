@@ -677,10 +677,99 @@ async function verifyFranchiseDocuments(franchise) {
     return results;
 }
 
+/**
+ * Extracts members and metadata from an uploaded TODA official roster sheet/document
+ */
+async function extractTodaRosterFromDocument(imageUrl) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return null;
+
+    const img = await fetchImageAsBase64(imageUrl);
+    if (!img) return null;
+
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `You are an expert OCR specialist for Philippine Tricycle Operators and Drivers Association (TODA) official masterlists, member rosters, and endorsement sheets.
+Analyze this document image and extract all listed members, operators, or drivers along with any associated unit numbers or plate numbers.
+
+EXCLUSION RULES:
+- DO NOT extract any monetary fees, dues, or payment figures.
+- DO NOT extract general signatures.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "todaAssociation": "detected TODA Association name (e.g. BATODA, GT TODA, POB TODA, etc.), or null",
+  "documentTitle": "detected title/heading on the sheet, or null",
+  "totalMembersDetected": 0,
+  "members": [
+    {
+      "name": "Full name of the member/operator",
+      "unitNo": "Unit number or Body number if listed, or empty string",
+      "plateNo": "Plate number or Motor number if listed, or empty string"
+    }
+  ],
+  "notes": "Short observation regarding image clarity and list format"
+}
+Return raw JSON only, no markdown, no surrounding text.`;
+
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+        const modelsToTry = [
+            preferredModel,
+            'gemini-3.8-flash',
+            'gemini-3.6-flash',
+            'gemini-2.5-flash',
+            'gemini-2.0-flash'
+        ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
+
+        let responseText = null;
+        for (const modelName of modelsToTry) {
+            try {
+                console.log(`[TodaRosterOCR] Trying model ${modelName}...`);
+                const interaction = await ai.models.generateContent({
+                    model: modelName,
+                    contents: [
+                        {
+                            inlineData: {
+                                mimeType: img.mimeType || 'image/jpeg',
+                                data: img.base64Data
+                            }
+                        },
+                        prompt
+                    ]
+                });
+                if (interaction && interaction.text) {
+                    responseText = interaction.text.trim();
+                    break;
+                }
+            } catch (mErr) {
+                console.warn(`[TodaRosterOCR] Model ${modelName} failed:`, mErr.message);
+            }
+        }
+
+        if (!responseText) return null;
+
+        const cleanJson = responseText
+            .replace(/^```json\s*/i, '')
+            .replace(/^```\s*/i, '')
+            .replace(/```\s*$/i, '')
+            .trim();
+
+        const parsed = JSON.parse(cleanJson);
+        if (parsed && Array.isArray(parsed.members)) {
+            parsed.totalMembersDetected = parsed.members.length;
+        }
+        return parsed;
+    } catch (err) {
+        console.error('[TodaRosterOCR] Extraction error:', err.message);
+        return null;
+    }
+}
+
 module.exports = {
     normalizeString,
     compareField,
     extractWithGemini,
     verifyFranchiseDocuments,
-    fetchImageAsBase64
+    fetchImageAsBase64,
+    extractTodaRosterFromDocument
 };

@@ -4,14 +4,14 @@ import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileText, CheckCircle, CheckCircle2, Search, Eye, FolderTree,
   Building2, ShieldCheck, AlertCircle, AlertTriangle, Clock, ChevronDown,
-  X
+  X, UserMinus, Sparkles, Check, CheckCheck, Loader2
 } from 'lucide-react';
 import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 
 const ValidateTODA = () => {
-  const [activeTab, setActiveTab] = useState('directory');
+  const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'validations' | 'removals'
   const [isLoading, setIsLoading] = useState(true);
   
   // States
@@ -19,6 +19,8 @@ const ValidateTODA = () => {
   const [submissions, setSubmissions] = useState([]);
   const [users, setUsers] = useState([]);
   const [franchises, setFranchises] = useState([]);
+  const [removals, setRemovals] = useState([]);
+  const [selectedSubmissionOCR, setSelectedSubmissionOCR] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const showToast = (message, type = 'success') => {
@@ -68,8 +70,21 @@ const ValidateTODA = () => {
         const queue = records.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
         setFranchises(queue);
       }
-    } catch (error) {
-      console.error('Error fetching franchises:', error);
+    } catch (error) { 
+      console.error('Error fetching franchises:', error); 
+    }
+  };
+
+  const fetchRemovals = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/removal-requests`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (response.ok) {
+        setRemovals(await response.json());
+      }
+    } catch (err) {
+      console.error('Error fetching removal requests:', err);
     }
   };
 
@@ -79,7 +94,8 @@ const ValidateTODA = () => {
       await Promise.allSettled([
         fetchSubmissions(),
         fetchUsers(),
-        fetchFranchises()
+        fetchFranchises(),
+        fetchRemovals()
       ]);
     } finally {
       setIsLoading(false);
@@ -97,12 +113,63 @@ const ValidateTODA = () => {
       });
       if (response.ok) {
         setSubmissions(submissions.map(sub => sub._id === id ? { ...sub, status: 'Approved' } : sub));
-        showToast('TODA member list approved successfully!', 'success');
+        showToast('TODA member list approved successfully! Active OCR roster ingested.', 'success');
       } else { 
         showToast('Failed to approve list.', 'error'); 
       }
     } catch (error) { 
       showToast('Cannot connect to server.', 'error'); 
+    }
+  };
+
+  const handleApproveRemoval = async (id, memberName, todaName) => {
+    if (!window.confirm(`Are you sure you want to approve the disaffiliation of ${memberName} from ${todaName}? This operator will be reset to NON-TODA.`)) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/removal-requests/${id}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ adminRemarks: 'Approved by Municipal Administrator.' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Member disaffiliated successfully.', 'success');
+        fetchRemovals();
+        fetchUsers();
+        fetchFranchises();
+      } else {
+        showToast(data.message || 'Failed to approve removal request.', 'error');
+      }
+    } catch (e) {
+      showToast('Cannot connect to server.', 'error');
+    }
+  };
+
+  const handleRejectRemoval = async (id) => {
+    const remarks = window.prompt('Enter reason for rejecting this removal request (optional):', 'Disapproved by Administrator');
+    if (remarks === null) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/removal-requests/${id}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ adminRemarks: remarks.trim() || 'Disapproved by Administrator' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Removal request disapproved.', 'success');
+        fetchRemovals();
+      } else {
+        showToast(data.message || 'Failed to reject removal request.', 'error');
+      }
+    } catch (e) {
+      showToast('Cannot connect to server.', 'error');
     }
   };
 
@@ -123,8 +190,8 @@ const ValidateTODA = () => {
   const totalRecognizedTodas = TODA_LIST.filter(t => t !== 'NON-TODA').length;
   const totalOperatorsCount = users.length;
   const activeMtopCount = franchises.filter(f => f.status === 'Active').length;
-  const pendingValidationCount = submissions.filter(s => s.status !== 'Approved').length + 
-    franchises.filter(f => f.status === 'Pending' || f.status === 'For Signing' || f.status === 'Ready for Pickup').length;
+  const pendingRemovalsCount = removals.filter(r => r.status === 'Pending').length;
+  const pendingValidationCount = submissions.filter(s => s.status !== 'Approved').length + pendingRemovalsCount;
 
   // Unified Smart Search & TODA Grouping
   const query = searchQuery.trim().toLowerCase();
@@ -139,70 +206,88 @@ const ValidateTODA = () => {
       const matchingMembers = allMembersInToda.filter(member => {
         if (!isSearching) return true;
         if (todaMatchesQuery) return true;
-        
+
         const nameMatch = (member.name || '').toLowerCase().includes(query);
-        const addressMatch = (member.address || '').toLowerCase().includes(query);
         const contactMatch = (member.contact || '').toLowerCase().includes(query);
-        
+        const addressMatch = (member.address || '').toLowerCase().includes(query);
+
         const franchise = getMemberFranchise(member);
-        const plateMatch = franchise?.plateNo?.toLowerCase().includes(query);
-        const motorMatch = franchise?.motorNo?.toLowerCase().includes(query);
-        
-        return nameMatch || addressMatch || contactMatch || plateMatch || motorMatch;
+        const plateMatch = (franchise?.plateNo || '').toLowerCase().includes(query);
+        const motorMatch = (franchise?.motorNo || '').toLowerCase().includes(query);
+        const chassisMatch = (franchise?.chassisNo || '').toLowerCase().includes(query);
+
+        return nameMatch || contactMatch || addressMatch || plateMatch || motorMatch || chassisMatch;
       });
 
-      const totalCount = allMembersInToda.length;
-      const activeCount = allMembersInToda.filter(m => getMemberFranchise(m)?.status === 'Active').length;
-      const colorumCount = allMembersInToda.filter(m => {
+      const compliantCount = allMembersInToda.filter(m => {
         const f = getMemberFranchise(m);
-        return !f || f.status === 'Expired' || f.status === 'Cancelled' || f.status === 'Revoked';
+        return f && f.status === 'Active';
       }).length;
-      const complianceRate = totalCount > 0 ? Math.round((activeCount / totalCount) * 100) : 0;
+
+      const totalCount = allMembersInToda.length;
+      const complianceRate = totalCount > 0 ? Math.round((compliantCount / totalCount) * 100) : 0;
+      const colorumCount = totalCount - compliantCount;
 
       return {
         name: todaName,
+        members: matchingMembers,
         totalCount,
-        activeCount,
-        colorumCount,
         complianceRate,
-        members: matchingMembers
+        colorumCount
       };
-    }).filter(toda => (toda.members || []).length > 0);
-  }, [users, franchises, query, isSearching]);
+    }).filter(toda => !isSearching || toda.members.length > 0);
+  }, [users, franchises, searchQuery, isSearching]);
 
-  const filteredSubmissions = (submissions || []).filter(sub => 
-    (sub.presidentName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (sub.fileName || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSubmissions = useMemo(() => {
+    return submissions.filter(sub => {
+      if (!query) return true;
+      const nameMatch = (sub.presidentName || '').toLowerCase().includes(query);
+      const fileMatch = (sub.fileName || '').toLowerCase().includes(query);
+      const todaMatch = (sub.todaAssociation || '').toLowerCase().includes(query);
+      return nameMatch || fileMatch || todaMatch;
+    });
+  }, [submissions, query]);
+
+  const filteredRemovals = useMemo(() => {
+    return removals.filter(rem => {
+      if (!query) return true;
+      const mName = (rem.memberName || '').toLowerCase().includes(query);
+      const pName = (rem.presidentName || '').toLowerCase().includes(query);
+      const tName = (rem.todaName || '').toLowerCase().includes(query);
+      const reason = (rem.reason || '').toLowerCase().includes(query);
+      return mName || pName || tName || reason;
+    });
+  }, [removals, query]);
 
   return (
     <MainLayout>
-      <div className="w-full space-y-6 pb-24">
+      <div className="pb-28 sm:pb-24 space-y-4 sm:space-y-6">
         {/* Page Header */}
         <PageHeader 
-          title="TODA Management"
-          subtitle="Manage recognized TODA directories, member rosters, and masterlist submissions."
+          badge="LGU Municipal Association Roster"
+          title="TODA Association & Masterlist Registry"
+          description="Validate association endorsements, monitor street-legal active franchises, inspect AI OCR digitized masterlists, and review member disaffiliation requests."
         />
 
-        {/* TODA Ecosystem Stats Strip */}
+        {/* Analytics & Metrics Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Total TODAs */}
+          {/* Recognized TODAs */}
           <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
               <Building2 size={18} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Recognized TODAs</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Active TODAs</p>
               <h3 className="text-xl sm:text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
-                {totalRecognizedTodas} <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 font-sans">Gasan</span>
+                {totalRecognizedTodas}
               </h3>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Official Associations</p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Gasan Jurisdictions</p>
             </div>
           </div>
 
-          {/* Total Members */}
+          {/* Registered Operators */}
           <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#F6F5F3] dark:bg-[#2E2A27] flex items-center justify-center text-[#1F1D1B] dark:text-[#F6F5F3] shrink-0 border border-[#E4E1DC] dark:border-[#3D3834]">
+            <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-700 dark:text-blue-400 shrink-0 border border-blue-200 dark:border-blue-800/40">
               <Users size={18} />
             </div>
             <div className="min-w-0">
@@ -210,17 +295,17 @@ const ValidateTODA = () => {
               <h3 className="text-xl sm:text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
                 {totalOperatorsCount}
               </h3>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Registered in Directory</p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Affiliated Drivers</p>
             </div>
           </div>
 
-          {/* Active MTOP & Compliance */}
+          {/* Active MTOP */}
           <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800/40">
               <ShieldCheck size={18} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Active & Compliant</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">Active &amp; Compliant</p>
               <h3 className="text-xl sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-400 font-mono tabular-nums">
                 {activeMtopCount} <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] font-sans">({totalOperatorsCount > 0 ? Math.round((activeMtopCount / totalOperatorsCount) * 100) : 0}%)</span>
               </h3>
@@ -228,7 +313,7 @@ const ValidateTODA = () => {
             </div>
           </div>
 
-          {/* Pending Validations */}
+          {/* Pending Actions */}
           <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0 border border-amber-200 dark:border-amber-800/40">
               <Clock size={18} />
@@ -238,14 +323,14 @@ const ValidateTODA = () => {
               <h3 className="text-xl sm:text-2xl font-semibold text-amber-700 dark:text-amber-400 font-mono tabular-nums">
                 {pendingValidationCount}
               </h3>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Submissions & Reviews</p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">Rosters &amp; Disaffiliations</p>
             </div>
           </div>
         </div>
 
         {/* Content Tabs & Main Card */}
         <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors">
-          {/* Tabs */}
+          {/* 3-Tab Header */}
           <div className="flex border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F]">
             <button 
               onClick={() => { setActiveTab('directory'); setSearchQuery(''); }}
@@ -257,6 +342,7 @@ const ValidateTODA = () => {
             >
               <FolderTree size={16} /> Live Members Directory
             </button>
+
             <button 
               onClick={() => { setActiveTab('validations'); setSearchQuery(''); }}
               className={`flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
@@ -265,17 +351,37 @@ const ValidateTODA = () => {
                   : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
               }`}
             >
-              <FileText size={16} /> Document Validations
+              <FileText size={16} /> Document Validations &amp; OCR
+              {submissions.filter(s => s.status !== 'Approved').length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                  {submissions.filter(s => s.status !== 'Approved').length}
+                </span>
+              )}
+            </button>
+
+            <button 
+              onClick={() => { setActiveTab('removals'); setSearchQuery(''); }}
+              className={`flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                activeTab === 'removals' 
+                  ? 'text-[#9E2A2B] dark:text-[#D4AF37] border-b-2 border-[#9E2A2B] dark:border-[#D4AF37] bg-white dark:bg-[#1C1917]' 
+                  : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+              }`}
+            >
+              <UserMinus size={16} /> Disaffiliation Requests
+              {pendingRemovalsCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-red-600 text-white animate-pulse">
+                  {pendingRemovalsCount}
+                </span>
+              )}
             </button>
           </div>
 
-          {/* Live directory content */}
+          {/* TAB 1: DIRECTORY CONTENT */}
           {activeTab === 'directory' && (
-            <div className="p-4 sm:p-6">
-              {/* Search Bar */}
-              <div className="mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-                <div className="relative flex-1 max-w-xl">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={16} />
+            <div className="p-4 sm:p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div className="relative w-full sm:w-96">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
                   <input 
                     type="text" 
                     placeholder="Search by driver name, plate no., barangay, motor no., or TODA..." 
@@ -378,65 +484,59 @@ const ValidateTODA = () => {
                           <div className="bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27] overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[650px]">
                               <thead>
-                                <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold bg-[#F6F5F3] dark:bg-[#14110F]">
-                                  <th className="py-2.5 px-4">Operator / Driver</th>
-                                  <th className="py-2.5 px-4">Barangay Address</th>
-                                  <th className="py-2.5 px-4">Role</th>
-                                  <th className="py-2.5 px-4">Tricycle & Franchise Status</th>
+                                <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
+                                  <th className="p-3 pl-5">Operator Name</th>
+                                  <th className="p-3">Barangay Residence</th>
+                                  <th className="p-3">Plate No</th>
+                                  <th className="p-3">Motor / Chassis No</th>
+                                  <th className="p-3 pr-5">Compliance Status</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                                {(toda.members || []).map(member => {
-                                  const franchise = getMemberFranchise(member);
+                              <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
+                                {toda.members.length === 0 ? (
+                                  <tr>
+                                    <td colSpan="5" className="p-6 text-center text-[#6B6761] dark:text-[#A8A29E]">
+                                      No members found in this association.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  toda.members.map((member) => {
+                                    const franchise = getMemberFranchise(member);
+                                    const isCompliant = franchise && franchise.status === 'Active';
 
-                                  return (
-                                    <tr key={member._id} className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                                      {/* Name & Contact */}
-                                      <td className="py-3 px-4">
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                          <span className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                            {member.name}
-                                          </span>
-                                        </div>
-                                        <div className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono mt-0.5">
-                                          {member.contact || 'No contact'}
-                                        </div>
-                                      </td>
-
-                                      {/* Barangay */}
-                                      <td className="py-3 px-4 text-[#6B6761] dark:text-[#A8A29E]">
-                                        {member.address || 'Gasan, Marinduque'}
-                                      </td>
-
-                                      {/* Role */}
-                                      <td className="py-3 px-4">
-                                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider border ${
-                                          member.role === 'toda_president' 
-                                            ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' 
-                                            : 'bg-[#F6F5F3] dark:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#3D3834]'
-                                        }`}>
-                                          {member.role === 'toda_president' ? 'TODA President' : 'Operator'}
-                                        </span>
-                                      </td>
-
-                                      {/* Franchise Status Badge per Member */}
-                                      <td className="py-3 px-4">
-                                        {franchise ? (
-                                          <div className="flex flex-col gap-1 items-start">
-                                            <StatusBadge status={franchise.status} />
-                                            <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">
-                                              Plate: {franchise.plateNo || 'PENDING'} &bull; {franchise.make || 'Tricycle'}
+                                    return (
+                                      <tr key={member._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                                        <td className="p-3 pl-5 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                          {member.name}
+                                          {member.contact && (
+                                            <span className="block text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
+                                              {member.contact}
                                             </span>
-                                          </div>
-                                        ) : (
-                                          <span className="inline-flex items-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                                            No Franchise Record
-                                          </span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
+                                          )}
+                                        </td>
+                                        <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
+                                          {member.address || 'N/A'}
+                                        </td>
+                                        <td className="p-3 font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                          {franchise?.plateNo || 'NO RECORD'}
+                                        </td>
+                                        <td className="p-3 text-[#6B6761] dark:text-[#A8A29E] font-mono text-[11px]">
+                                          <div>{franchise?.motorNo ? `M: ${franchise.motorNo}` : '—'}</div>
+                                          <div>{franchise?.chassisNo ? `C: ${franchise.chassisNo}` : '—'}</div>
+                                        </td>
+                                        <td className="p-3 pr-5">
+                                          {franchise ? (
+                                            <StatusBadge status={franchise.status} />
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
+                                              No Franchise Application
+                                            </span>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })
+                                )}
                               </tbody>
                             </table>
                           </div>
@@ -449,7 +549,7 @@ const ValidateTODA = () => {
             </div>
           )}
 
-          {/* Document validations content */}
+          {/* TAB 2: DOCUMENT VALIDATIONS & OCR */}
           {activeTab === 'validations' && (
             <>
               <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F]">
@@ -470,7 +570,7 @@ const ValidateTODA = () => {
                   <thead>
                     <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
                       <th className="p-3.5 pl-5">Submitted By</th>
-                      <th className="p-3.5">Document</th>
+                      <th className="p-3.5">Document &amp; AI OCR Scan</th>
                       <th className="p-3.5">Date Submitted</th>
                       <th className="p-3.5">Status</th>
                       <th className="p-3.5 text-center pr-5">Action</th>
@@ -487,8 +587,34 @@ const ValidateTODA = () => {
                           key={sub._id} 
                           className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors"
                         >
-                          <td className="p-3.5 pl-5"><p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{sub.presidentName}</p></td>
-                          <td className="p-3.5"><div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]"><FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> {sub.fileName}</div></td>
+                          <td className="p-3.5 pl-5">
+                            <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{sub.presidentName}</p>
+                            {sub.todaAssociation && (
+                              <span className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                                {sub.todaAssociation}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3.5">
+                            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" /> 
+                              <span className="truncate max-w-xs">{sub.fileName}</span>
+                            </div>
+                            {sub.extractedCount > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedSubmissionOCR(sub)}
+                                className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer transition-colors"
+                              >
+                                <Sparkles size={11} />
+                                <span>{sub.extractedCount} members extracted via OCR • View List</span>
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic block mt-0.5">
+                                Physical document attached
+                              </span>
+                            )}
+                          </td>
                           <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{new Date(sub.createdAt).toLocaleDateString()}</td>
                           <td className="p-3.5">
                             <StatusBadge status={sub.status === 'Approved' ? 'Active' : 'Pending'} label={sub.status} />
@@ -503,7 +629,7 @@ const ValidateTODA = () => {
                                   rel="noopener noreferrer" 
                                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27]"
                                 >
-                                  <Eye size={13} /> View
+                                  <Eye size={13} /> View File
                                 </a>
                               );
                             })()}
@@ -516,8 +642,122 @@ const ValidateTODA = () => {
                                   : 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-700 cursor-pointer'
                               }`}
                             >
-                              <CheckCircle size={13} /> {sub.status === 'Approved' ? 'Approved' : 'Approve'}
+                              <CheckCircle size={13} /> {sub.status === 'Approved' ? 'Approved' : 'Approve & Ingest'}
                             </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* TAB 3: DISAFFILIATION / REMOVAL REQUESTS */}
+          {activeTab === 'removals' && (
+            <>
+              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F]">
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    Member Disaffiliation &amp; Removal Petitions
+                  </h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    Review requests filed by TODA Presidents to remove non-compliant, inactive, or unauthorized operators.
+                  </p>
+                </div>
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
+                  <input 
+                    type="text" 
+                    placeholder="Search by operator, president, or TODA..." 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-1.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[760px]">
+                  <thead>
+                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
+                      <th className="p-3.5 pl-5">TODA Association</th>
+                      <th className="p-3.5">Operator Member</th>
+                      <th className="p-3.5">Reason &amp; Explanation</th>
+                      <th className="p-3.5">Date Filed</th>
+                      <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-center pr-5">Admin Decision</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
+                    {filteredRemovals.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="p-12 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                          No member removal requests filed yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRemovals.map((rem) => (
+                        <tr key={rem._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                          <td className="p-3.5 pl-5">
+                            <span className="font-bold text-sm text-[#9E2A2B] dark:text-[#D4AF37] block">
+                              {rem.todaName}
+                            </span>
+                            <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                              Pres: {rem.presidentName}
+                            </span>
+                          </td>
+                          <td className="p-3.5">
+                            <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              {rem.memberName}
+                            </p>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                              {rem.memberAddress || rem.memberContact || 'No contact'}
+                            </p>
+                          </td>
+                          <td className="p-3.5 max-w-sm">
+                            <span className="font-semibold text-red-700 dark:text-red-400 block text-xs">
+                              {rem.reason}
+                            </span>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] line-clamp-2 mt-0.5" title={rem.details}>
+                              {rem.details}
+                            </p>
+                          </td>
+                          <td className="p-3.5 font-mono text-[#6B6761] dark:text-[#A8A29E]">
+                            {new Date(rem.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="p-3.5">
+                            <StatusBadge 
+                              status={rem.status === 'Approved' ? 'Active' : (rem.status === 'Rejected' ? 'Expired' : 'Pending')} 
+                              label={rem.status} 
+                            />
+                          </td>
+                          <td className="p-3.5 pr-5 text-center">
+                            {rem.status === 'Pending' ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveRemoval(rem._id, rem.memberName, rem.todaName)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                                >
+                                  <Check size={12} />
+                                  <span>Approve Kick</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectRemoval(rem._id)}
+                                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] hover:text-red-600 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                                >
+                                  <X size={12} />
+                                  <span>Reject</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
+                                {rem.adminRemarks || `Request ${rem.status}`}
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -529,6 +769,70 @@ const ValidateTODA = () => {
           )}
         </div>
       </div>
+
+      {/* OCR EXTRACTED MEMBERS MODAL */}
+      {selectedSubmissionOCR && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-xl w-full p-5 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm sm:text-base">
+                <Sparkles size={18} />
+                <span>AI OCR Extracted Roster Members</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedSubmissionOCR(null)}
+                className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white p-1 rounded cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between text-xs bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div>
+                <p className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedSubmissionOCR.fileName}</p>
+                <p className="text-[#6B6761] dark:text-[#A8A29E]">Submitted by: {selectedSubmissionOCR.presidentName} ({selectedSubmissionOCR.todaAssociation || 'TODA'})</p>
+              </div>
+              <span className="font-bold px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                {selectedSubmissionOCR.extractedCount || selectedSubmissionOCR.extractedMembers?.length || 0} Members Detected
+              </span>
+            </div>
+
+            <div className="max-h-72 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] font-bold uppercase">
+                  <tr>
+                    <th className="p-2.5 pl-3">#</th>
+                    <th className="p-2.5">Extracted Member Name</th>
+                    <th className="p-2.5">Unit / Body #</th>
+                    <th className="p-2.5 pr-3">Plate No</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                  {(selectedSubmissionOCR.extractedMembers || []).map((m, idx) => (
+                    <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
+                      <td className="p-2.5 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
+                      <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
+                      <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
+                      <td className="p-2.5 pr-3 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedSubmissionOCR(null)}
+                className="px-4 py-2 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white text-xs font-bold cursor-pointer"
+              >
+                Close Viewer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Toast Notification */}
       {toast.show && (

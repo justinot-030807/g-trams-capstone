@@ -22,6 +22,24 @@ const todaSubmissionSchema = new mongoose.Schema({
         type: String,
         enum: ['Pending', 'Approved', 'Rejected'],
         default: 'Pending'
+    },
+    todaAssociation: {
+        type: String,
+        default: ''
+    },
+    extractedCount: {
+        type: Number,
+        default: 0
+    },
+    extractedMembers: [{
+        name: { type: String, trim: true },
+        unitNo: { type: String, default: '' },
+        plateNo: { type: String, default: '' },
+        confidence: { type: Number, default: 0.95 }
+    }],
+    ocrNotes: {
+        type: String,
+        default: ''
     }
 }, { timestamps: true });
 

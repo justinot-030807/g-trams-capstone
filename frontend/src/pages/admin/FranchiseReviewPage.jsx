@@ -926,6 +926,27 @@ const FranchiseReviewPage = () => {
                         </p>
                       )}
 
+                      {/* TODA Association Roster Verification Badge */}
+                      {rc.todaName && rc.todaName !== 'NON-TODA' && (
+                        <div className={`text-[11px] px-2.5 py-1.5 rounded-md border flex items-center justify-between gap-1.5 font-bold ${
+                          rc.todaStatus === 'verified_member'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'
+                            : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300'
+                        }`}>
+                          <span className="font-semibold flex items-center gap-1.5">
+                            {rc.todaStatus === 'verified_member' ? (
+                              <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            ) : (
+                              <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            )}
+                            TODA Roster:
+                          </span>
+                          <span className="truncate">
+                            {rc.todaStatus === 'verified_member' ? '✓ Verified in Official TODA Roster' : '⚠ Flagged: Not in Official TODA Roster'}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
                         <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
                           <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.activeUnitsCount}</span>

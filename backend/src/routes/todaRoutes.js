@@ -4,25 +4,60 @@ const multer = require('multer');
 const path = require('path');
 
 const TodaSubmission = require('../models/todaSubmission'); 
+const TodaRemovalRequest = require('../models/todaRemovalRequest');
 const User = require('../models/userModel');
 const Franchise = require('../models/franchiseModel');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { extractTodaRosterFromDocument } = require('../services/documentVerificationService');
 
 const upload = require('../config/cloudinary');
 
-// Upload member list (TODA President)
+// Upload member list (TODA President) with AI OCR Roster Parsing
 router.post('/upload', protect, authorize('admin', 'toda president', 'toda_president'), upload.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
+        let extractedMembers = [];
+        let extractedCount = 0;
+        let ocrNotes = '';
+        let todaAssociation = req.user.todaAssociation || '';
+
+        try {
+            const ocr = await extractTodaRosterFromDocument(req.file.path);
+            if (ocr && Array.isArray(ocr.members)) {
+                extractedMembers = ocr.members.map(m => ({
+                    name: (m.name || '').trim(),
+                    unitNo: (m.unitNo || '').trim(),
+                    plateNo: (m.plateNo || '').trim(),
+                    confidence: 0.95
+                })).filter(m => Boolean(m.name));
+                extractedCount = extractedMembers.length;
+                ocrNotes = ocr.notes || '';
+                if (ocr.todaAssociation && (!todaAssociation || todaAssociation === 'NON-TODA')) {
+                    todaAssociation = ocr.todaAssociation;
+                }
+            }
+        } catch (ocrErr) {
+            console.warn('[TodaRoster] OCR extraction failed non-critically:', ocrErr.message);
+        }
+
         const newSubmission = await TodaSubmission.create({
             submittedBy: req.user._id,
             presidentName: req.user.name,
+            todaAssociation,
             fileName: req.file.originalname,
-            filePath: req.file.path // Cloudinary URL
+            filePath: req.file.path, // Cloudinary URL
+            extractedMembers,
+            extractedCount,
+            ocrNotes
         });
 
-        res.status(201).json({ message: 'List submitted successfully', submission: newSubmission });
+        res.status(201).json({ 
+            message: extractedCount > 0 
+                ? `Roster submitted successfully! AI OCR extracted ${extractedCount} members.`
+                : 'List submitted successfully.', 
+            submission: newSubmission 
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error uploading file' });
@@ -55,6 +90,130 @@ router.put('/approve/:id', protect, authorize('admin'), async (req, res) => {
         res.status(200).json({ message: 'Approved successfully', submission: updatedSubmission });
     } catch (error) {
         res.status(500).json({ message: 'Error updating submission status' });
+    }
+});
+
+// Submit member removal / kick request (TODA President)
+router.post('/removal-requests', protect, authorize('admin', 'toda president', 'toda_president'), async (req, res) => {
+    try {
+        const { memberId, reason, details } = req.body;
+        if (!memberId || !reason || !details) {
+            return res.status(400).json({ message: 'Member ID, reason, and detailed explanation are required.' });
+        }
+
+        const member = await User.findById(memberId);
+        if (!member) {
+            return res.status(404).json({ message: 'Operator member not found.' });
+        }
+
+        // Determine president's TODA
+        const presidentToda = (req.user.todaAssociation || '').trim();
+        if (!presidentToda || presidentToda === 'NON-TODA') {
+            return res.status(400).json({ message: 'You must have a registered TODA Association to submit removal requests.' });
+        }
+
+        // Verify member is in that TODA
+        if ((member.todaAssociation || '').trim().toUpperCase() !== presidentToda.toUpperCase()) {
+            return res.status(400).json({ message: `Operator is not currently affiliated with ${presidentToda}.` });
+        }
+
+        const removalReq = await TodaRemovalRequest.create({
+            todaName: presidentToda,
+            president: req.user._id,
+            presidentName: req.user.name,
+            member: member._id,
+            memberName: member.name,
+            memberContact: member.contact || '',
+            memberAddress: member.address || '',
+            reason,
+            details: details.trim(),
+            status: 'Pending'
+        });
+
+        res.status(201).json({ message: 'Removal request filed successfully and routed to Admin for approval.', request: removalReq });
+    } catch (error) {
+        console.error('Error filing removal request:', error);
+        res.status(500).json({ message: 'Failed to file removal request.' });
+    }
+});
+
+// Get removal requests (Admin sees all; Toda President sees for their TODA)
+router.get('/removal-requests', protect, authorize('admin', 'toda president', 'toda_president'), async (req, res) => {
+    try {
+        const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const isAdmin = userRole === 'admin' || userRole === 'administrator';
+
+        let query = {};
+        if (!isAdmin) {
+            const presidentToda = (req.user.todaAssociation || '').trim();
+            query.todaName = new RegExp(`^${presidentToda}$`, 'i');
+        }
+
+        const requests = await TodaRemovalRequest.find(query)
+            .populate('member', 'name contact address role')
+            .populate('president', 'name email')
+            .populate('reviewedBy', 'name')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(requests);
+    } catch (error) {
+        console.error('Error fetching removal requests:', error);
+        res.status(500).json({ message: 'Failed to fetch removal requests.' });
+    }
+});
+
+// Approve removal request (Admin only)
+router.put('/removal-requests/:id/approve', protect, authorize('admin'), async (req, res) => {
+    try {
+        const { adminRemarks = '' } = req.body;
+        const request = await TodaRemovalRequest.findById(req.params.id);
+        if (!request) return res.status(404).json({ message: 'Removal request not found.' });
+        if (request.status !== 'Pending') {
+            return res.status(400).json({ message: `Request has already been ${request.status.toLowerCase()}.` });
+        }
+
+        request.status = 'Approved';
+        request.adminRemarks = adminRemarks.trim();
+        request.reviewedBy = req.user._id;
+        request.reviewedAt = new Date();
+        await request.save();
+
+        // Disaffiliate member: reset todaAssociation to 'NON-TODA'
+        await User.findByIdAndUpdate(request.member, { todaAssociation: 'NON-TODA' });
+
+        // Update active franchises under this operator
+        await Franchise.updateMany(
+            { operator: request.member, todaName: new RegExp(`^${request.todaName}$`, 'i') },
+            { $set: { todaName: 'NON-TODA' } }
+        );
+
+        res.status(200).json({ message: `Member ${request.memberName} officially disaffiliated from ${request.todaName}.`, request });
+    } catch (error) {
+        console.error('Error approving removal request:', error);
+        res.status(500).json({ message: 'Failed to approve removal request.' });
+    }
+});
+
+// Reject removal request (Admin only)
+router.put('/removal-requests/:id/reject', protect, authorize('admin'), async (req, res) => {
+    try {
+        const { adminRemarks = '' } = req.body;
+        const request = await TodaRemovalRequest.findById(req.params.id);
+        if (!request) return res.status(404).json({ message: 'Removal request not found.' });
+        if (request.status !== 'Pending') {
+            return res.status(400).json({ message: `Request has already been ${request.status.toLowerCase()}.` });
+        }
+
+        request.status = 'Rejected';
+        request.adminRemarks = adminRemarks.trim() || 'Request disapproved by municipal administrator.';
+        request.reviewedBy = req.user._id;
+        request.reviewedAt = new Date();
+        await request.save();
+
+        res.status(200).json({ message: 'Removal request has been rejected.', request });
+    } catch (error) {
+        console.error('Error rejecting removal request:', error);
+        res.status(500).json({ message: 'Failed to reject removal request.' });
     }
 });
 
