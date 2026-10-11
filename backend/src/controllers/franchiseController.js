@@ -130,7 +130,13 @@ const getAllFranchises = async (req, res) => {
 
 const getMyFranchises = async (req, res) => {
     try {
-        const franchises = await Franchise.find({ operator: req.user._id, isArchived: { $ne: true } }).populate('operator', 'name address contact');
+        const franchises = await Franchise.find({ 
+            operator: req.user._id, 
+            $or: [
+                { isArchived: { $ne: true } },
+                { status: 'Cancelled' }
+            ]
+        }).populate('operator', 'name address contact');
         res.status(200).json(franchises);
     } catch (error) {
         res.status(500).json({ error: 'An internal server error occurred' });
@@ -392,10 +398,10 @@ const updateFranchiseStatus = async (req, res) => {
             rejectedField: targetField
         };
 
-        if (status === 'Cancelled') {
-            updateData.isArchived = true;
-            updateData.archivedAt = new Date();
-        } else if (existingFranchise.status === 'Cancelled' && status !== 'Cancelled') {
+        // NOTE: Do NOT auto-archive cancelled/rejected applications!
+        // The operator must see rejection remarks to fix and resubmit their application,
+        // and admin must see them in the Rejected queue. Only explicit archiving moves them.
+        if (existingFranchise.status === 'Cancelled' && status !== 'Cancelled') {
             updateData.isArchived = false;
             updateData.archivedAt = null;
         }
@@ -480,8 +486,6 @@ const cancelMyFranchise = async (req, res) => {
 
         const reason = (req.body.cancelReason || 'Cancelled by operator').trim();
         franchise.status = 'Cancelled';
-        franchise.isArchived = true;
-        franchise.archivedAt = new Date();
         franchise.cancelReason = reason;
         await franchise.save();
 

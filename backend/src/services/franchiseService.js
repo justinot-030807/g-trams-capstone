@@ -262,7 +262,11 @@ class FranchiseService {
         const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
         const skip = (pageNum - 1) * limitNum;
 
-        let queryCondition = archived === 'true' ? { isArchived: true } : { isArchived: { $ne: true } };
+        let queryCondition = archived === 'true' 
+            ? { isArchived: true } 
+            : (status && (status === 'Cancelled' || status.includes('Cancelled')))
+                ? {} 
+                : { isArchived: { $ne: true } };
 
         if (status && status !== 'All') {
             const rawList = status.split(',').map(s => s.trim()).filter(Boolean);

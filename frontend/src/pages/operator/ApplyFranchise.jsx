@@ -11,7 +11,8 @@ import {
   ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
   ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
   Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
-  Compass, MapPin, ExternalLink, AlertTriangle, Zap
+  Compass, MapPin, ExternalLink, AlertTriangle, Zap,
+  HelpCircle, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { GarageGridSkeleton, ApplyFranchiseSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -69,6 +70,30 @@ const POPULAR_MAKES = [
   'Yamaha YTX 125'
 ];
 
+const InfoTooltip = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-block ml-1 align-middle">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); }}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer inline-flex items-center"
+        aria-label="Information"
+        title={text}
+      >
+        <Info size={13} className="shrink-0" />
+      </button>
+      {open && (
+        <span className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-52 sm:w-60 p-2 bg-[#1C1917] text-[#F6F5F3] text-[11px] rounded-md shadow-xl border border-[#3E3A36] text-center leading-normal animate-fadeIn pointer-events-none">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+};
+
 const ApplyFranchise = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,6 +128,8 @@ const ApplyFranchise = () => {
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [slideDirection, setSlideDirection] = useState('forward');
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
+  const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
+  const [showAdvancedSpecs, setShowAdvancedSpecs] = useState(false);
 
   // Cancellation modal state
   const [cancelModal, setCancelModal] = useState({
@@ -292,7 +319,7 @@ const ApplyFranchise = () => {
 
   const isFieldFocused = (field) => focusField === field;
 
-  // Smooth scroll and focus helper for error fields
+  // Smooth scroll and focus helper for error fields and AI auto-filled fields
   const scrollToField = (fieldName) => {
     setTimeout(() => {
       const target = 
@@ -304,13 +331,18 @@ const ApplyFranchise = () => {
 
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('ring-2', 'ring-emerald-500', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          target.classList.remove('ring-2', 'ring-emerald-500');
+        }, 2500);
+
         const inputToFocus = 
           ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) 
             ? target 
             : target.querySelector('input, select, textarea, button');
         inputToFocus?.focus?.();
       }
-    }, 120);
+    }, 150);
   };
 
   // Center modal popup for validation errors with auto-scroll and red highlight
@@ -1031,6 +1063,7 @@ const ApplyFranchise = () => {
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("AI Scan: Driver's License Back Serial Number detected.", 'success');
+              scrollToField('driverLicenseSerialNo');
             } else {
               showToast("Document attached. Back serial number was unclear — please enter manually if visible.", 'info');
             }
@@ -1090,6 +1123,7 @@ const ApplyFranchise = () => {
               } else {
                 showToast("AI Scan: Driver's License details detected.", 'success');
               }
+              scrollToField('driverLicenseNo');
             } else {
               showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
             }
@@ -1185,6 +1219,7 @@ const ApplyFranchise = () => {
               } else {
                 showToast("AI Scan: Kumpletong detalye mula sa LTO CR/OR ay matagumpay na nakuha.", 'success');
               }
+              scrollToField('plateNo');
             } else {
               showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
             }
@@ -1209,6 +1244,7 @@ const ApplyFranchise = () => {
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("AI Scan: TODA Certificate details detected.", 'success');
+              scrollToField('todaCertNo');
             } else {
               showToast("Document attached. Please verify TODA Certificate No manually.", 'info');
             }
@@ -1239,6 +1275,7 @@ const ApplyFranchise = () => {
               });
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("AI Scan: Barangay Clearance details detected.", 'success');
+              scrollToField('brgyClearanceNo');
             } else {
               showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
             }
@@ -1262,6 +1299,7 @@ const ApplyFranchise = () => {
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("AI Scan: Cedula (CTC) details detected.", 'success');
+              scrollToField('cedulaSerialNo');
             } else {
               showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
             }
@@ -1693,6 +1731,50 @@ const ApplyFranchise = () => {
     }
 
     return discrepancies;
+  };
+
+  // Pre-submit validation and Confirmation Prompt (Prevents accidental misclicks)
+  const handlePreSubmit = (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (isSubmitting) return;
+
+    // Cedula validation
+    const currentYear = new Date().getFullYear();
+    if (!formData.cedulaSerialNo?.trim()) {
+      showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
+      return;
+    }
+    if (!formData.cedulaDate) {
+      showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
+      return;
+    }
+    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+    if (cedulaYear < currentYear) {
+      showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
+      return;
+    }
+
+    if (formMode === 'New') {
+      const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
+      if (!hasCedula) {
+        showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) upload is required.');
+        return;
+      }
+    }
+
+    // Check critical AI discrepancies
+    const discrepancies = getAiDiscrepancies(formData, aiScannedData);
+    const criticalDiscrepancies = discrepancies.filter(d => d.severity === 'critical');
+    if (criticalDiscrepancies.length > 0) {
+      setDiscrepancyModal({
+        isOpen: true,
+        discrepancies: criticalDiscrepancies
+      });
+      return;
+    }
+
+    // Open confirmation modal
+    setIsSubmitConfirmOpen(true);
   };
 
   // Submit Handler
@@ -2128,7 +2210,7 @@ const ApplyFranchise = () => {
 
         {/* Form Container */}
         <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-5 pb-16 flex-1 flex flex-col relative z-10">
-          <form onSubmit={currentStep === 4 ? handleSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
+          <form onSubmit={currentStep === 4 ? handlePreSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
             
             {/* STEP 1: OPERATOR & DRIVER INFO */}
             {currentStep === 1 && (
@@ -2184,8 +2266,9 @@ const ApplyFranchise = () => {
 
                     <div id="field-address">
                       <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                          Barangay Residency / Address
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
+                          <span>Barangay Residency / Address</span>
+                          <InfoTooltip text="Ang Route Zone ng traysikel ay awtomatikong nakadepende sa iyong opisyal na Barangay residency." />
                         </label>
                         {formData.address && getZoneForBarangay(formData.address) && (
                           <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20">
@@ -2211,9 +2294,6 @@ const ApplyFranchise = () => {
                           <span>{formErrors.address}</span>
                         </p>
                       )}
-                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                        Zoning is assigned based on Barangay residency. Selecting your barangay automatically pre-fills your designated Route Zone.
-                      </p>
                     </div>
                   </div>
 
@@ -2422,7 +2502,7 @@ const ApplyFranchise = () => {
                         Driver's License Documents (Front &amp; Back)
                       </label>
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Upload front to verify credentials &amp; birthdate, and back to extract the card serial number.
+                        Front: Identity &amp; Credentials &bull; Back: Card Serial Number
                       </p>
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
@@ -2436,7 +2516,6 @@ const ApplyFranchise = () => {
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
                           <span>Driver's License (Front)</span>
-                          <span className="text-red-600">*</span>
                         </span>
                         <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Identity &amp; Codes</span>
                       </div>
@@ -2532,8 +2611,9 @@ const ApplyFranchise = () => {
                       </div>
 
                       <div id="field-driverLicenseSerialNo">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          License Back Serial Number
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
+                          <span>License Back Serial Number</span>
+                          <InfoTooltip text="Serial number na nakatatak sa likod ng opisyal na LTO Driver's License card." />
                         </label>
                         <input 
                           type="text" 
@@ -2543,9 +2623,6 @@ const ApplyFranchise = () => {
                           className={getInputClasses('driverLicenseSerialNo')} 
                           placeholder="e.g. SN-0987654321" 
                         />
-                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                          Serial number printed on the back of the physical LTO card.
-                        </p>
                       </div>
 
                       <div id="field-driverLicenseExpiryDate">
@@ -2572,8 +2649,9 @@ const ApplyFranchise = () => {
                       </div>
 
                       <div id="field-driverDlCodes">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Authorized DL Codes
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
+                          <span>Authorized DL Codes</span>
+                          <InfoTooltip text="LTO code A o A1 ang kinakailangan upang legal na makapagpatakbo ng pampasadang traysikel." />
                         </label>
                         <input 
                           type="text" 
@@ -2583,9 +2661,6 @@ const ApplyFranchise = () => {
                           className={getInputClasses('driverDlCodes')} 
                           placeholder="e.g. A, A1 (Tricycle authorization)" 
                         />
-                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                          LTO DL Code A or A1 is required to operate motorized tricycles.
-                        </p>
                         {formErrors.driverDlCodes && (
                           <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
                             <AlertCircle size={13} className="shrink-0" />
@@ -2671,11 +2746,12 @@ const ApplyFranchise = () => {
                 <div className="space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <div>
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        LTO Documents (Certificate of Registration &amp; Official Receipt)
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
+                        <span>LTO Documents (Certificate of Registration &amp; Official Receipt)</span>
+                        <InfoTooltip text="I-upload ang Certificate of Registration (CR) para sa specs ng sasakyan at ang pinakabagong Official Receipt (OR) para sa taunang rehistro." />
                       </label>
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Upload official LTO CR (proof of vehicle registration) and LTO OR (annual renewal &amp; validity) separately.
+                        I-upload ang opisyal na LTO CR at pinakabagong LTO OR.
                       </p>
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 shrink-0">
@@ -2689,7 +2765,6 @@ const ApplyFranchise = () => {
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
                           <span>Certificate of Registration (CR)</span>
-                          <span className="text-red-600">*</span>
                         </span>
                         <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Vehicle Specs &amp; Owner</span>
                       </div>
@@ -2714,7 +2789,6 @@ const ApplyFranchise = () => {
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
                           <span>Official Receipt (OR)</span>
-                          <span className="text-red-600">*</span>
                         </span>
                         <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Proof of Annual Payment</span>
                       </div>
@@ -2924,9 +2998,9 @@ const ApplyFranchise = () => {
                     </div>
 
                     {/* Chassis Serial Number */}
-                    <div id="field-chassisNo" className="sm:col-span-2">
+                    <div id="field-chassisNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Chassis Serial No.
+                        Chassis Serial No. (VIN)
                       </label>
                       <input 
                         type="text" 
@@ -2936,7 +3010,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={`${getInputClasses('chassisNo')} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                         required 
-                        placeholder="17-Digit Vehicle Identification Number (VIN)" 
+                        placeholder="17-Digit Chassis / VIN" 
                       />
                       {formErrors.chassisNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
@@ -2960,209 +3034,211 @@ const ApplyFranchise = () => {
                       )}
                     </div>
 
-                    {/* Section B: Vehicle Specifications (from LTO CR) */}
-                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-                          Vehicle Specifications (from LTO CR)
-                        </span>
-                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                          Auto-filled from CR
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        <div id="field-series">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Model Series
-                          </label>
-                          <input
-                            type="text"
-                            name="series"
-                            value={formData.series}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. TMX 125, Barako II"
-                          />
-                        </div>
-
-                        <div id="field-color">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Color
-                          </label>
-                          <input
-                            type="text"
-                            name="color"
-                            value={formData.color}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. BLACK / RED"
-                          />
-                        </div>
-
-                        <div id="field-fuelType">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Fuel Type
-                          </label>
-                          <input
-                            type="text"
-                            name="fuelType"
-                            value={formData.fuelType}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. GAS"
-                          />
-                        </div>
-
-                        <div id="field-displacement">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Displacement (cc)
-                          </label>
-                          <input
-                            type="text"
-                            name="displacement"
-                            value={formData.displacement}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. 125, 150"
-                          />
-                        </div>
-
-                        <div id="field-grossWeight">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Gross Weight (kg)
-                          </label>
-                          <input
-                            type="text"
-                            name="grossWeight"
-                            value={formData.grossWeight}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. 265"
-                          />
-                        </div>
-
-                        <div id="field-bodyType">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Body Type
-                          </label>
-                          <input
-                            type="text"
-                            name="bodyType"
-                            value={formData.bodyType}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. MOTORCYCLE W/ SIDECAR"
-                          />
-                        </div>
-                      </div>
+                    {/* Color */}
+                    <div id="field-color">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Tricycle Color
+                      </label>
+                      <input
+                        type="text"
+                        name="color"
+                        value={formData.color}
+                        onChange={handleInputChange}
+                        className={inputClasses}
+                        placeholder="e.g. BLACK / RED"
+                      />
                     </div>
 
-                    {/* Section C: LTO Registration & Ownership */}
-                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-                          LTO Registration &amp; Ownership Details
-                        </span>
-                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                          Must correspond with applicant
-                        </span>
-                      </div>
+                    {/* Fuel Type */}
+                    <div id="field-fuelType">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Fuel Type
+                      </label>
+                      <input
+                        type="text"
+                        name="fuelType"
+                        value={formData.fuelType}
+                        onChange={handleInputChange}
+                        className={inputClasses}
+                        placeholder="e.g. GASOLINE"
+                      />
+                    </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div id="field-crNo">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Certificate of Registration (CR) No.
-                          </label>
-                          <input
-                            type="text"
-                            name="crNo"
-                            value={formData.crNo}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. CR-12345678"
-                          />
-                        </div>
+                    {/* LTO Registration Expiry Date */}
+                    <div id="field-orCrExpiryDate">
+                      <SimpleDatePicker
+                        name="orCrExpiryDate"
+                        value={formData.orCrExpiryDate}
+                        onChange={handleInputChange}
+                        label="LTO Expiration Date"
+                        mode="expiry"
+                        helperText="Valid registration end date on LTO OR."
+                        error={formErrors.orCrExpiryDate}
+                      />
+                    </div>
 
-                        <div id="field-crDate">
-                          <SimpleDatePicker
-                            name="crDate"
-                            value={formData.crDate}
-                            onChange={handleInputChange}
-                            label="CR Registration Date"
-                            helperText="Date of vehicle registration."
-                            error={formErrors.crDate}
-                          />
+                    {/* Collapsible Secondary Technical LTO Details (Accordion) */}
+                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedSpecs(!showAdvancedSpecs)}
+                        className="w-full flex items-center justify-between p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] text-left cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                          <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                            Additional LTO Specifications &amp; Numbers
+                          </span>
+                          <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] hidden sm:inline">
+                            (Auto-filled &bull; Optional review)
+                          </span>
                         </div>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
+                          <span>{showAdvancedSpecs ? 'Hide' : 'Show Details'}</span>
+                          {showAdvancedSpecs ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </div>
+                      </button>
 
-                        <div id="field-orCrNo">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Official Receipt (OR) Number
-                          </label>
-                          <input
-                            type="text"
-                            name="orCrNo"
-                            value={formData.orCrNo}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. OR-98765432"
-                          />
-                        </div>
+                      {showAdvancedSpecs && (
+                        <div className="mt-3 p-3.5 bg-neutral-50/50 dark:bg-[#181513] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 animate-fadeIn">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div id="field-series">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Model Series
+                              </label>
+                              <input
+                                type="text"
+                                name="series"
+                                value={formData.series}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="e.g. TMX 125, Barako II"
+                              />
+                            </div>
 
-                        <div id="field-orDate">
-                          <SimpleDatePicker
-                            name="orDate"
-                            value={formData.orDate}
-                            onChange={handleInputChange}
-                            label="OR Payment Date"
-                            helperText="Date of annual LTO renewal."
-                            error={formErrors.orDate}
-                          />
-                        </div>
+                            <div id="field-displacement">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Displacement (cc)
+                              </label>
+                              <input
+                                type="text"
+                                name="displacement"
+                                value={formData.displacement}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="e.g. 125, 150"
+                              />
+                            </div>
 
-                        <div id="field-orCrExpiryDate">
-                          <SimpleDatePicker
-                            name="orCrExpiryDate"
-                            value={formData.orCrExpiryDate}
-                            onChange={handleInputChange}
-                            label="LTO Expiration Date"
-                            mode="expiry"
-                            helperText="Valid registration end date on LTO OR."
-                            error={formErrors.orCrExpiryDate}
-                          />
-                        </div>
+                            <div id="field-grossWeight">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Gross Weight (kg)
+                              </label>
+                              <input
+                                type="text"
+                                name="grossWeight"
+                                value={formData.grossWeight}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="e.g. 265"
+                              />
+                            </div>
 
-                        <div id="field-fileNo">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            MV File Number
-                          </label>
-                          <input
-                            type="text"
-                            name="fileNo"
-                            value={formData.fileNo}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="e.g. 110123000632095"
-                          />
-                        </div>
+                            <div id="field-bodyType">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Body Type
+                              </label>
+                              <input
+                                type="text"
+                                name="bodyType"
+                                value={formData.bodyType}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="e.g. MOTORCYCLE W/ SIDECAR"
+                              />
+                            </div>
 
-                        <div id="field-registeredOwner" className="sm:col-span-2">
-                          <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                            Registered Owner Name (from CR)
-                          </label>
-                          <input
-                            type="text"
-                            name="registeredOwner"
-                            value={formData.registeredOwner}
-                            onChange={handleInputChange}
-                            className={inputClasses}
-                            placeholder="Full Name of Registered Owner"
-                          />
-                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            Must correspond with applicant's identity or authorization.
-                          </p>
+                            <div id="field-crNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                CR Number
+                              </label>
+                              <input
+                                type="text"
+                                name="crNo"
+                                value={formData.crNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="e.g. CR-12345678"
+                              />
+                            </div>
+
+                            <div id="field-crDate">
+                              <SimpleDatePicker
+                                name="crDate"
+                                value={formData.crDate}
+                                onChange={handleInputChange}
+                                label="CR Registration Date"
+                                helperText="Date of vehicle registration."
+                                error={formErrors.crDate}
+                              />
+                            </div>
+
+                            <div id="field-orCrNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                OR Number
+                              </label>
+                              <input
+                                type="text"
+                                name="orCrNo"
+                                value={formData.orCrNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="e.g. OR-98765432"
+                              />
+                            </div>
+
+                            <div id="field-orDate">
+                              <SimpleDatePicker
+                                name="orDate"
+                                value={formData.orDate}
+                                onChange={handleInputChange}
+                                label="OR Payment Date"
+                                helperText="Date of annual LTO renewal."
+                                error={formErrors.orDate}
+                              />
+                            </div>
+
+                            <div id="field-fileNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                MV File Number
+                              </label>
+                              <input
+                                type="text"
+                                name="fileNo"
+                                value={formData.fileNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="e.g. 110123000632095"
+                              />
+                            </div>
+
+                            <div id="field-registeredOwner" className="sm:col-span-3">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1 flex items-center justify-between">
+                                <span>Registered Owner Name (from CR)</span>
+                                <span className="text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">Only required if different from applicant</span>
+                              </label>
+                              <input
+                                type="text"
+                                name="registeredOwner"
+                                value={formData.registeredOwner}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                placeholder="Full Name as printed on Certificate of Registration"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                   </div>
@@ -3237,7 +3313,7 @@ const ApplyFranchise = () => {
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div>
+                    <div id="field-todaCertNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Certificate / Control No.
                       </label>
@@ -3250,7 +3326,7 @@ const ApplyFranchise = () => {
                         placeholder="e.g. TODA-2026-089" 
                       />
                     </div>
-                    <div>
+                    <div id="field-todaCertDate">
                       <SimpleDatePicker
                         name="todaCertDate"
                         value={formData.todaCertDate}
@@ -3290,7 +3366,7 @@ const ApplyFranchise = () => {
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                    <div>
+                    <div id="field-brgyClearanceNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Barangay Clearance No.
                       </label>
@@ -3303,7 +3379,7 @@ const ApplyFranchise = () => {
                         placeholder="e.g. BC-2026-104" 
                       />
                     </div>
-                    <div>
+                    <div id="field-brgyClearanceDate">
                       <SimpleDatePicker
                         name="brgyClearanceDate"
                         value={formData.brgyClearanceDate}
@@ -3313,7 +3389,7 @@ const ApplyFranchise = () => {
                         helperText="Date Barangay clearance was issued."
                       />
                     </div>
-                    <div>
+                    <div id="field-brgyIssuer">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Issuing Official / Punong Barangay
                       </label>
@@ -3512,6 +3588,7 @@ const ApplyFranchise = () => {
 
                     <button 
                       type="submit" 
+                      onClick={handlePreSubmit}
                       disabled={isSubmitting}
                       className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] ${
                         isSubmitting 
@@ -3616,6 +3693,77 @@ const ApplyFranchise = () => {
           onConfirm={handleConfirmCancel}
           isSubmitting={cancelModal.isSubmitting}
         />
+      )}
+
+      {/* Submit Application Confirmation Modal */}
+      {isSubmitConfirmOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-1">
+              Are you sure you want to submit?
+            </h3>
+
+            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-4 leading-relaxed">
+              Pakisuri po ang inyong mga impormasyon bago tuluyang isumite upang maiwasan ang anumang pagkakamali o pagka-antala.
+            </p>
+
+            {/* Application Overview Summary */}
+            <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 text-xs space-y-2 mb-4">
+              <div className="flex justify-between items-center pb-1.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Aplikante / Operator:</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || loggedInUserName}</span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Tricycle Unit:</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.make || 'Tricycle'} ({formData.made || 'N/A'}) &bull; {formData.plateNo || 'No Plate'}</span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">TODA &bull; Route Zone:</span>
+                <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{formData.todaName || 'NON-TODA'} &bull; {formatZoneLabel(formData.zone)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Motor &amp; Chassis:</span>
+                <span className="font-mono text-[11px] text-[#1F1D1B] dark:text-[#EAE7E1] truncate max-w-[210px]">
+                  M: {formData.motorNo || 'N/A'} | C: {formData.chassisNo || 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            {/* Treasury reminder */}
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs mb-5 leading-relaxed">
+              <span className="font-bold block mb-0.5">Paunawa sa Pagbabayad:</span>
+              Ang franchise filing fee (₱500.00) ay babayaran lamang sa Municipal Cashier kapag na-aprubahan na ang inyong aplikasyon ng Franchising Office.
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsSubmitConfirmOpen(false)}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                <span>Bumalik at Suriin (Review)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  setIsSubmitConfirmOpen(false);
+                  handleSubmit(e, true);
+                }}
+                disabled={isSubmitting}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                <span>Oo, Isumite Na (Confirm)</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* AI OCR Discrepancy Confirmation Modal */}
