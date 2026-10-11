@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   X, FileText, User, Receipt, ShieldCheck, FileCheck, 
   CheckCircle2, XCircle, ExternalLink, Loader2, AlertTriangle, Check,
-  ChevronLeft, ChevronRight, Eye
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Eye
 } from 'lucide-react';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
@@ -22,6 +22,7 @@ const AdminApplicationSummaryModal = ({
   isProcessing = false
 }) => {
   const [previewDoc, setPreviewDoc] = useState(null); // { label, url }
+  const [isAiNoticeOpen, setIsAiNoticeOpen] = useState(false);
 
   if (!isOpen || !franchise) return null;
 
@@ -126,25 +127,40 @@ const AdminApplicationSummaryModal = ({
 
         {/* Modal Scrollable Body */}
         <div className="overflow-y-auto py-4 space-y-4 flex-1 pr-1">
-          {/* AI Discrepancy Banner */}
+          {/* AI Discrepancy Banner Accordion */}
           {franchise.aiDiscrepancies && franchise.aiDiscrepancies.length > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
-              <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                <span>Document Discrepancy Flagged</span>
-              </div>
-              <div className="space-y-1">
-                {franchise.aiDiscrepancies.map((d, i) => (
-                  <div key={i} className="text-[11px] flex items-center justify-between gap-2 border-b border-amber-200/60 dark:border-amber-900/40 pb-1 last:border-0 last:pb-0">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">{d.label || d.field}:</span>
-                    <span className="text-right">
-                      <span className="text-red-600 dark:text-red-400 font-mono font-bold mr-1">Image: {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
-                      <span className="text-slate-400">|</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-mono font-bold ml-1">Entered: {d.enteredValue || '—'}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl text-xs text-amber-900 dark:text-amber-200 overflow-hidden shadow-xs">
+              <button
+                type="button"
+                onClick={() => setIsAiNoticeOpen(prev => !prev)}
+                className="w-full p-2.5 flex items-center justify-between gap-2 hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors text-left cursor-pointer select-none"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span className="font-bold text-amber-800 dark:text-amber-300 truncate">
+                    AI Discrepancy Flagged ({franchise.aiDiscrepancies.length})
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300 shrink-0">
+                  <span>{isAiNoticeOpen ? 'Itago' : 'Ipakita'}</span>
+                  {isAiNoticeOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </div>
+              </button>
+
+              {isAiNoticeOpen && (
+                <div className="p-3 pt-0 border-t border-amber-200 dark:border-amber-900/40 space-y-1 mt-1">
+                  {franchise.aiDiscrepancies.map((d, i) => (
+                    <div key={i} className="text-[11px] flex items-center justify-between gap-2 border-b border-amber-200/60 dark:border-amber-900/40 pb-1 last:border-0 last:pb-0">
+                      <span className="font-medium text-slate-700 dark:text-slate-300">{d.label || d.field}:</span>
+                      <span className="text-right">
+                        <span className="text-red-600 dark:text-red-400 font-mono font-bold mr-1">Image: {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                        <span className="text-slate-400">|</span>
+                        <span className="text-slate-800 dark:text-slate-200 font-mono font-bold ml-1">Entered: {d.enteredValue || '—'}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

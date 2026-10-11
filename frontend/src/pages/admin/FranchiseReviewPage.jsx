@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { 
-  ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, 
+  ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   ZoomIn, ZoomOut, RotateCw, RotateCcw, RefreshCw, ExternalLink, 
   FileText, AlertCircle, Loader2, Printer, Check, AlertTriangle,
   Copy, ShieldCheck, User, FileCheck, Layers, FileSpreadsheet, Sparkles,
@@ -83,6 +83,11 @@ const FranchiseReviewPage = () => {
   // Modals
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
+
+  // Accordion Toggle States
+  const [isAiNoticeOpen, setIsAiNoticeOpen] = useState(false);
+  const [isRecordCheckOpen, setIsRecordCheckOpen] = useState(false);
+  const [isDocDiscrepancyOpen, setIsDocDiscrepancyOpen] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -834,38 +839,73 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* LEFT REVIEW SHEET: DOCUMENT CHECKLIST & TABBED METADATA INSPECTOR       */}
         {/* ======================================================================= */}
-        <aside className="w-full md:w-[340px] lg:w-[380px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
+        <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
           
           <div className="p-3.5 space-y-3 flex-1 flex flex-col">
             
             {/* 1. APPLICANT SUMMARY */}
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 space-y-2">
-              <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
-                <User size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                Applicant Information
-              </span>
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
+                  <User size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  Applicant Information
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                  currentApp.applicationType === 'Renewal'
+                    ? 'bg-[#D4AF37]/15 text-[#7A5E10] dark:text-[#D4AF37] border-[#D4AF37]/40'
+                    : currentApp.applicationType === 'Re-apply'
+                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200'
+                    : 'bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#E8A0A0] border-[#9E2A2B]/30'
+                }`}>
+                  {currentApp.applicationType || 'New Application'}
+                </span>
+              </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Name</span>
-                  <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{currentApp.fullName}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Contact</span>
-                  <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] block">{currentApp.contact || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">TODA / Zone</span>
-                  <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">
-                    {currentApp.todaName || 'NON-TODA'} {currentApp.zone ? `(${formatZoneLabel(currentApp.zone)})` : ''}
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Full Name</span>
+                  <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] truncate block" title={currentApp.fullName}>
+                    {currentApp.fullName}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Barangay</span>
-                  <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">
-                    {currentApp.barangay || currentApp.address || '—'}
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Contact Number</span>
+                  <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] block">
+                    {currentApp.contact || currentApp.operator?.contact || '—'}
                   </span>
                 </div>
+                <div>
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">TODA Association</span>
+                  <span className="font-semibold text-[#9E2A2B] dark:text-[#D4AF37] truncate block" title={currentApp.todaName}>
+                    {currentApp.todaName || 'NON-TODA'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Zone Assignment</span>
+                  <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">
+                    {currentApp.zone ? formatZoneLabel(currentApp.zone) : '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Barangay / Address</span>
+                  <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] truncate block" title={currentApp.barangay || currentApp.address}>
+                    {currentApp.barangay || currentApp.address || currentApp.operator?.address || '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Application Date</span>
+                  <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1] block">
+                    {formatDate(currentApp.dateApplied || currentApp.createdAt)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Driver Designation Pill */}
+              <div className="pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between text-[11px]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E]">Driver Designation:</span>
+                <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                  {currentApp.isOperatorDriver ? 'Operator (Self-Drive)' : `Employed: ${currentApp.driverName || 'Designated Driver'}`}
+                </span>
               </div>
             </div>
 
@@ -877,91 +917,124 @@ const FranchiseReviewPage = () => {
                 ? 'border-l-[#E4E1DC] dark:border-l-[#2E2A27]'
                 : hasViolations ? 'border-l-red-600' : 'border-l-emerald-600';
               return (
-                <div className={`bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 ${accent} rounded-lg p-3 space-y-2`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
-                      <ShieldCheck size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      Record check
-                    </span>
-                    {rc && (
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
-                        rc.applicationType === 'Renewal'
-                          ? 'bg-[#D4AF37]/15 text-[#7A5E10] dark:text-[#D4AF37] border-[#D4AF37]/40'
-                          : 'bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#E8A0A0] border-[#9E2A2B]/30'
-                      }`}>
-                        {rc.applicationType === 'Renewal' ? 'Renewal' : 'New application'}
-                      </span>
-                    )}
+                <div className={`bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 ${accent} rounded-lg p-2.5 space-y-1.5`}>
+                  <div 
+                    onClick={() => setIsRecordCheckOpen(prev => !prev)}
+                    className="flex items-center justify-between gap-2 cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <ShieldCheck size={13} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                      <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] truncate">Record Check</span>
+                      {hasViolations ? (
+                        <span className="text-[10px] font-bold text-red-600 dark:text-red-400">
+                          ({rc.violations.length} Revoked)
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                          (✓ Clean)
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {rc?.todaName && rc.todaName !== 'NON-TODA' && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                          rc.todaStatus === 'verified_member'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200'
+                            : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200'
+                        }`}>
+                          {rc.todaStatus === 'verified_member' ? '✓ Roster' : '⚠ Flagged'}
+                        </span>
+                      )}
+                      <button type="button" className="text-[#6B6761] dark:text-[#A8A29E] p-0.5">
+                        {isRecordCheckOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+                    </div>
                   </div>
 
-                  {recordCheck.loading ? (
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                      <Loader2 size={12} className="animate-spin" /> Checking past records…
+                  {/* Summary row when collapsed */}
+                  {!isRecordCheckOpen && rc && rc.todaName && rc.todaName !== 'NON-TODA' && (
+                    <div className={`text-[10px] px-2 py-0.5 rounded border flex items-center justify-between font-bold ${
+                      rc.todaStatus === 'verified_member'
+                        ? 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300'
+                        : 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/40 text-amber-800 dark:text-amber-300'
+                    }`}>
+                      <span className="truncate">TODA Roster:</span>
+                      <span>{rc.todaStatus === 'verified_member' ? '✓ Verified in Official Roster' : '⚠ Not in Official Roster'}</span>
                     </div>
-                  ) : !rc ? (
-                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                      Past records could not be loaded. Check the masterlist manually before sending to the cashier.
-                    </p>
-                  ) : (
-                    <>
-                      {hasViolations ? (
-                        <div className="space-y-1.5">
-                          <p className="text-[11px] font-semibold text-red-700 dark:text-red-300 flex items-center gap-1">
-                            <AlertTriangle size={12} />
-                            {rc.violations.length} revoked franchise{rc.violations.length > 1 ? 's' : ''} on record
-                          </p>
-                          {rc.violations.slice(0, 3).map(v => (
-                            <div key={v._id} className="text-[11px] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-md px-2 py-1.5">
-                              <div className="flex justify-between gap-2 font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                <span className="truncate">{v.plateNo || v.mtopNo || 'Unit'}</span>
-                                <span className="text-[#6B6761] dark:text-[#A8A29E] font-normal shrink-0">{formatDate(v.updatedAt)}</span>
-                              </div>
-                              <p className="text-red-800 dark:text-red-300 leading-snug">{v.cancelReason || 'No reason recorded'}</p>
-                            </div>
-                          ))}
+                  )}
+
+                  {isRecordCheckOpen && (
+                    <div className="space-y-2 pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                      {recordCheck.loading ? (
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                          <Loader2 size={12} className="animate-spin" /> Checking past records…
                         </div>
-                      ) : (
-                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 size={12} /> No violations or revocations on record
+                      ) : !rc ? (
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                          Past records could not be loaded.
                         </p>
-                      )}
+                      ) : (
+                        <>
+                          {hasViolations ? (
+                            <div className="space-y-1.5">
+                              <p className="text-[11px] font-semibold text-red-700 dark:text-red-300 flex items-center gap-1">
+                                <AlertTriangle size={12} />
+                                {rc.violations.length} revoked franchise{rc.violations.length > 1 ? 's' : ''} on record
+                              </p>
+                              {rc.violations.slice(0, 3).map(v => (
+                                <div key={v._id} className="text-[11px] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-md px-2 py-1.5">
+                                  <div className="flex justify-between gap-2 font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                    <span className="truncate">{v.plateNo || v.mtopNo || 'Unit'}</span>
+                                    <span className="text-[#6B6761] dark:text-[#A8A29E] font-normal shrink-0">{formatDate(v.updatedAt)}</span>
+                                  </div>
+                                  <p className="text-red-800 dark:text-red-300 leading-snug">{v.cancelReason || 'No reason recorded'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 size={12} /> No violations or revocations on record
+                            </p>
+                          )}
 
-                      {/* TODA Association Roster Verification Badge */}
-                      {rc.todaName && rc.todaName !== 'NON-TODA' && (
-                        <div className={`text-[11px] px-2.5 py-1.5 rounded-md border flex items-center justify-between gap-1.5 font-bold ${
-                          rc.todaStatus === 'verified_member'
-                            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'
-                            : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300'
-                        }`}>
-                          <span className="font-semibold flex items-center gap-1.5">
-                            {rc.todaStatus === 'verified_member' ? (
-                              <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            ) : (
-                              <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                            )}
-                            TODA Roster:
-                          </span>
-                          <span className="truncate">
-                            {rc.todaStatus === 'verified_member' ? '✓ Verified in Official TODA Roster' : '⚠ Flagged: Not in Official TODA Roster'}
-                          </span>
-                        </div>
-                      )}
+                          {/* TODA Association Roster Verification Badge */}
+                          {rc.todaName && rc.todaName !== 'NON-TODA' && (
+                            <div className={`text-[11px] px-2.5 py-1.5 rounded-md border flex items-center justify-between gap-1.5 font-bold ${
+                              rc.todaStatus === 'verified_member'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'
+                                : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300'
+                            }`}>
+                              <span className="font-semibold flex items-center gap-1.5">
+                                {rc.todaStatus === 'verified_member' ? (
+                                  <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                ) : (
+                                  <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                                )}
+                                TODA Roster:
+                              </span>
+                              <span className="truncate">
+                                {rc.todaStatus === 'verified_member' ? '✓ Verified in Official TODA Roster' : '⚠ Flagged: Not in Official TODA Roster'}
+                              </span>
+                            </div>
+                          )}
 
-                      <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
-                        <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
-                          <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.activeUnitsCount}</span>
-                          <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Active units</span>
-                        </div>
-                        <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
-                          <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.pastFranchises.length}</span>
-                          <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Past franchises</span>
-                        </div>
-                        <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
-                          <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.rejected.length}</span>
-                          <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Rejected before</span>
-                        </div>
-                      </div>
-                    </>
+                          <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
+                            <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
+                              <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.activeUnitsCount}</span>
+                              <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Active units</span>
+                            </div>
+                            <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
+                              <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.pastFranchises.length}</span>
+                              <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Past franchises</span>
+                            </div>
+                            <div className="rounded-md bg-[#F6F5F3] dark:bg-[#14110F] py-1.5">
+                              <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{rc.rejected.length}</span>
+                              <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Rejected before</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               );
@@ -1037,73 +1110,89 @@ const FranchiseReviewPage = () => {
               </div>
             )}
 
-            {/* Global AI Discrepancies & Modifications Notice */}
+            {/* Global AI Discrepancies & Modifications Notice Accordion */}
             {currentApp?.aiDiscrepancies && currentApp.aiDiscrepancies.length > 0 && (
-              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+              <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden shadow-xs transition-all">
+                <button
+                  type="button"
+                  onClick={() => setIsAiNoticeOpen(prev => !prev)}
+                  className="w-full p-2.5 flex items-center justify-between gap-2 hover:bg-amber-100/80 dark:hover:bg-amber-900/50 transition-colors text-left cursor-pointer select-none"
+                  title="Toggle AI Discrepancy details"
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                    <span>AI Flagged Modifications ({currentApp.aiDiscrepancies.length})</span>
+                    <span className="font-bold text-amber-900 dark:text-amber-200 truncate">
+                      AI Flagged Modifications ({currentApp.aiDiscrepancies.length})
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900/70 text-amber-900 dark:text-amber-200 shrink-0">
+                      May Pagkakaiba
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
-                    Attention
-                  </span>
-                </div>
-                <p className="text-[11px] text-amber-800 dark:text-amber-300/90 leading-tight">
-                  The applicant modified the following field(s) differing from values detected on uploaded document images:
-                </p>
-                <div className="space-y-1.5 pt-0.5">
-                  {currentApp.aiDiscrepancies.map((d, i) => {
-                    const targetTabKey = getDocKeyForDiscrepancy(d);
-                    return (
-                      <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1.5 shadow-2xs">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">{d.label || d.field}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectDoc(targetTabKey)}
-                            className="text-[10px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-0.5"
-                          >
-                            <span>View Document</span>
-                            <span>&rarr;</span>
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                          <div className="p-1.5 rounded bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/40">
-                            <span className="text-[9px] text-red-600 dark:text-red-400 block font-bold uppercase">Detected from Image</span>
-                            <span className="font-mono font-bold text-red-700 dark:text-red-300 truncate block">
-                              {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}
-                            </span>
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300 shrink-0">
+                    <span className="hidden sm:inline">{isAiNoticeOpen ? 'Itago' : 'Ipakita'}</span>
+                    {isAiNoticeOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  </div>
+                </button>
+
+                {isAiNoticeOpen && (
+                  <div className="p-3 pt-1 border-t border-amber-200 dark:border-amber-900/50 space-y-2">
+                    <p className="text-[11px] text-amber-800 dark:text-amber-300/90 leading-tight">
+                      The applicant modified the following field(s) differing from values detected on uploaded document images:
+                    </p>
+                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                      {currentApp.aiDiscrepancies.map((d, i) => {
+                        const targetTabKey = getDocKeyForDiscrepancy(d);
+                        return (
+                          <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1.5 shadow-2xs">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">{d.label || d.field}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectDoc(targetTabKey)}
+                                className="text-[10px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-0.5"
+                              >
+                                <span>View Document</span>
+                                <span>&rarr;</span>
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                              <div className="p-1.5 rounded bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/40">
+                                <span className="text-[9px] text-red-600 dark:text-red-400 block font-bold uppercase">Detected from Image</span>
+                                <span className="font-mono font-bold text-red-700 dark:text-red-300 truncate block">
+                                  {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}
+                                </span>
+                              </div>
+                              <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                                <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-bold uppercase">Entered by Applicant</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 truncate block">
+                                  {d.enteredValue || '—'}
+                                </span>
+                              </div>
+                            </div>
+                            {d.reason && (
+                              <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug pt-0.5">
+                                {d.reason}
+                              </p>
+                            )}
+                            <div className="pt-1 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectField(targetTabKey);
+                                  setRejectReason(d.reason || `Document Discrepancy (${d.label || d.field})`);
+                                  setIsRejecting(true);
+                                }}
+                                className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                              >
+                                Quick Reject for this Discrepancy
+                              </button>
+                            </div>
                           </div>
-                          <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-                            <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-bold uppercase">Entered by Applicant</span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-slate-100 truncate block">
-                              {d.enteredValue || '—'}
-                            </span>
-                          </div>
-                        </div>
-                        {d.reason && (
-                          <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug pt-0.5">
-                            {d.reason}
-                          </p>
-                        )}
-                        <div className="pt-1 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRejectField(targetTabKey);
-                              setRejectReason(d.reason || `Document Discrepancy (${d.label || d.field})`);
-                              setIsRejecting(true);
-                            }}
-                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
-                          >
-                            Quick Reject for this Discrepancy
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1130,60 +1219,76 @@ const FranchiseReviewPage = () => {
                 {/* OR/CR Details */}
                 {activeDocKey === 'orCrDocument' && (
                   <div className="space-y-1.5 text-xs">
-                    {/* Discrepancy Alert */}
+                    {/* Discrepancy Alert Accordion */}
                     {orCrDiscrepancies.length > 0 && (
-                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span>Document Discrepancy Flagged</span>
+                      <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden mb-2">
+                        <div 
+                          onClick={() => setIsDocDiscrepancyOpen(prev => !prev)}
+                          className="p-2 flex items-center justify-between gap-1.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300 select-none hover:bg-amber-100/70 dark:hover:bg-amber-900/40"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span className="truncate">OR/CR Discrepancy Flagged ({orCrDiscrepancies.length})</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRejectField('orCrDocument');
-                              setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
-                              setIsRejecting(true);
-                            }}
-                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 underline cursor-pointer"
-                          >
-                            Quick Reject
-                          </button>
+                          <div className="flex items-center gap-1 text-[10px] shrink-0">
+                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          </div>
                         </div>
-                        {orCrDiscrepancies.map((d, i) => (
-                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
-                            <div className="grid grid-cols-2 gap-1 text-[11px]">
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
-                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+
+                        {isDocDiscrepancyOpen && (
+                          <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
+                            {orCrDiscrepancies.map((d, i) => (
+                              <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                  </div>
+                                </div>
+                                {d.reason && (
+                                  <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                    {d.reason}
+                                  </p>
+                                )}
                               </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
-                              </div>
+                            ))}
+                            <div className="pt-0.5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectField('orCrDocument');
+                                  setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
+                                  setIsRejecting(true);
+                                }}
+                                className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                              >
+                                Quick Reject OR/CR
+                              </button>
                             </div>
-                            {d.reason && (
-                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
-                                {d.reason}
-                              </p>
-                            )}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
 
+                    {/* Plate No & MV File No */}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Plate No.</span>
                         <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || 'Pending'}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">CR No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">{currentApp.crNo || currentApp.orCrNo || '—'}</span>
+                        <span className="text-[10px] text-slate-400 block font-medium">MV File No.</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fileNo || '—'}</span>
                       </div>
                     </div>
 
+                    {/* Motor & Chassis Serial Numbers */}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Motor / Engine No.</span>
@@ -1195,6 +1300,23 @@ const FranchiseReviewPage = () => {
                       </div>
                     </div>
 
+                    {/* CR No & Date, OR No & Date */}
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">CR No. &amp; Date</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.crNo || currentApp.orCrNo || '—'} {currentApp.crDate ? `(${formatDate(currentApp.crDate)})` : ''}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">OR No. &amp; Date</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.orNo || currentApp.orCrNo || '—'} {currentApp.orDate ? `(${formatDate(currentApp.orDate)})` : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Make, Series, Year Model & Color */}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Make, Series &amp; Year</span>
@@ -1210,32 +1332,50 @@ const FranchiseReviewPage = () => {
                       </div>
                     </div>
 
-                    {/* Registered Owner on CR verification */}
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-slate-400 block font-medium">Registered Owner on CR</span>
-                        {currentApp.registeredOwner && currentApp.fullName && (
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                            currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                          }`}>
-                            {currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
-                              ? 'Owner Matches Applicant'
-                              : 'Owner Name Differs'}
-                          </span>
-                        )}
-                      </div>
-                      <span className="font-bold text-xs text-slate-800 dark:text-slate-100 block mt-0.5">
-                        {currentApp.registeredOwner || currentApp.fullName || '—'}
-                      </span>
-                    </div>
-
+                    {/* Type, Classification & Body Type */}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">OR No. &amp; Date</span>
-                        <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.orCrNo || '—'} {currentApp.orDate ? `(${formatDate(currentApp.orDate)})` : ''}
+                        <span className="text-[10px] text-slate-400 block font-medium">Type &amp; Classification</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.vehicleType || 'Tricycle'} {currentApp.classification || currentApp.vehicleCategory ? `• ${currentApp.classification || currentApp.vehicleCategory}` : ''}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Body Type</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.bodyType || 'Semi-Cabin'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Displacement, Fuel Type & Gross Weight */}
+                    <div className="grid grid-cols-3 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Displacement</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.displacement ? `${currentApp.displacement} cc` : '—'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Fuel Type</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.fuelType || 'Gasoline'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Gross Weight</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.grossWeight ? `${currentApp.grossWeight} kg` : '—'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Passenger Capacity & Registration Expiry */}
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Passenger Capacity</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                          {currentApp.passengerCapacity ? `${currentApp.passengerCapacity} Persons` : '4-5 Persons'}
                         </span>
                       </div>
                       <div>
@@ -1256,54 +1396,99 @@ const FranchiseReviewPage = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Registered Owner on CR verification */}
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 block font-medium">Registered Owner on CR</span>
+                        {currentApp.registeredOwner && currentApp.fullName && (
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                            currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                          }`}>
+                            {currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
+                              ? 'Owner Matches Applicant'
+                              : 'Owner Name Differs'}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-bold text-xs text-slate-800 dark:text-slate-100 block">
+                        {currentApp.registeredOwner || currentApp.fullName || '—'}
+                      </span>
+                      {currentApp.ownerAddress && (
+                        <div className="pt-0.5 border-t border-slate-100 dark:border-slate-800/80">
+                          <span className="text-[10px] text-slate-400 block font-medium">Owner Address</span>
+                          <span className="text-xs text-slate-700 dark:text-slate-300 block truncate">
+                            {currentApp.ownerAddress}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* Driver's License Details */}
                 {activeDocKey === 'license' && (
                   <div className="space-y-1.5 text-xs">
-                    {/* Discrepancy Alert */}
+                    {/* Discrepancy Alert Accordion */}
                     {licenseDiscrepancies.length > 0 && (
-                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span>Document Discrepancy Flagged</span>
+                      <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden mb-2">
+                        <div 
+                          onClick={() => setIsDocDiscrepancyOpen(prev => !prev)}
+                          className="p-2 flex items-center justify-between gap-1.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300 select-none hover:bg-amber-100/70 dark:hover:bg-amber-900/40"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span className="truncate">License Discrepancy Flagged ({licenseDiscrepancies.length})</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRejectField('license');
-                              setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
-                              setIsRejecting(true);
-                            }}
-                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 underline cursor-pointer"
-                          >
-                            Quick Reject
-                          </button>
+                          <div className="flex items-center gap-1 text-[10px] shrink-0">
+                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          </div>
                         </div>
-                        {licenseDiscrepancies.map((d, i) => (
-                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
-                            <div className="grid grid-cols-2 gap-1 text-[11px]">
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
-                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+
+                        {isDocDiscrepancyOpen && (
+                          <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
+                            {licenseDiscrepancies.map((d, i) => (
+                              <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                  </div>
+                                </div>
+                                {d.reason && (
+                                  <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                    {d.reason}
+                                  </p>
+                                )}
                               </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
-                              </div>
+                            ))}
+                            <div className="pt-0.5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectField('license');
+                                  setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
+                                  setIsRejecting(true);
+                                }}
+                                className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                              >
+                                Quick Reject License
+                              </button>
                             </div>
-                            {d.reason && (
-                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
-                                {d.reason}
-                              </p>
-                            )}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
+
+                    {/* Driver & Designation */}
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Driver &amp; Designation</span>
                       <div className="flex items-center justify-between gap-1 mt-0.5">
@@ -1311,16 +1496,25 @@ const FranchiseReviewPage = () => {
                           {currentApp.isOperatorDriver ? currentApp.fullName : (currentApp.driverName || '—')}
                         </span>
                         <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
-                          {currentApp.isOperatorDriver ? 'Self-Drive' : 'Employed'}
+                          {currentApp.isOperatorDriver ? 'Self-Drive (Operator)' : 'Employed Driver'}
                         </span>
                       </div>
                     </div>
 
+                    {/* License No & Card Serial No */}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">License No.</span>
                         <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.driverLicenseNo || '—'}</span>
                       </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Card Serial No. (Back)</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.driverLicenseSerialNo || '—'}</span>
+                      </div>
+                    </div>
+
+                    {/* License Expiry & DL Codes */}
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">License Expiry</span>
                         <div className="flex items-center gap-1 flex-wrap">
@@ -1338,12 +1532,45 @@ const FranchiseReviewPage = () => {
                           )}
                         </div>
                       </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">DL Authority Codes</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.driverDlCodes || 'A, A1'}</span>
+                      </div>
                     </div>
 
+                    {/* Driving Conditions & Date of Birth */}
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Conditions</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.driverConditions || 'None'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Date of Birth</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.driverDob)}</span>
+                      </div>
+                    </div>
+
+                    {/* Sex / Nationality & Driver Contact */}
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Sex / Nationality</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                          {currentApp.driverSex || '—'} • {currentApp.driverNationality || 'Filipino'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Driver Contact</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                          {currentApp.isOperatorDriver ? (currentApp.contact || currentApp.operator?.contact || '—') : (currentApp.driverContact || '—')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Driver Address */}
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Driver Contact</span>
-                      <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
-                        {currentApp.isOperatorDriver ? (currentApp.contact || '—') : (currentApp.driverContact || '—')}
+                      <span className="text-[10px] text-slate-400 block font-medium">Driver Address</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">
+                        {currentApp.isOperatorDriver ? (currentApp.barangay || currentApp.address || currentApp.operator?.address || '—') : (currentApp.driverAddress || '—')}
                       </span>
                     </div>
                   </div>
@@ -1352,48 +1579,63 @@ const FranchiseReviewPage = () => {
                 {/* Cedula Details */}
                 {activeDocKey === 'cedulaDoc' && (
                   <div className="space-y-1.5 text-xs">
-                    {/* Cedula Discrepancy Alert */}
+                    {/* Cedula Discrepancy Alert Accordion */}
                     {cedulaDiscrepancies.length > 0 && (
-                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span>Cedula Discrepancy Flagged</span>
+                      <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden mb-2">
+                        <div 
+                          onClick={() => setIsDocDiscrepancyOpen(prev => !prev)}
+                          className="p-2 flex items-center justify-between gap-1.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300 select-none hover:bg-amber-100/70 dark:hover:bg-amber-900/40"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span className="truncate">Cedula Discrepancy Flagged ({cedulaDiscrepancies.length})</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRejectField('cedulaDoc');
-                              setRejectReason('Cedula Details Discrepancy (Uploaded document differs from entered information)');
-                              setIsRejecting(true);
-                            }}
-                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
-                          >
-                            Quick Reject
-                          </button>
+                          <div className="flex items-center gap-1 text-[10px] shrink-0">
+                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          </div>
                         </div>
-                        {cedulaDiscrepancies.map((d, i) => (
-                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
-                            <div className="grid grid-cols-2 gap-1 text-[11px]">
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
-                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+
+                        {isDocDiscrepancyOpen && (
+                          <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
+                            {cedulaDiscrepancies.map((d, i) => (
+                              <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                  </div>
+                                </div>
+                                {d.reason && (
+                                  <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                    {d.reason}
+                                  </p>
+                                )}
                               </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
-                              </div>
+                            ))}
+                            <div className="pt-0.5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectField('cedulaDoc');
+                                  setRejectReason('Cedula Details Discrepancy (Uploaded document differs from entered information)');
+                                  setIsRejecting(true);
+                                }}
+                                className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                              >
+                                Quick Reject Cedula
+                              </button>
                             </div>
-                            {d.reason && (
-                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
-                                {d.reason}
-                              </p>
-                            )}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
+
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">CTC Serial No.</span>
@@ -1405,13 +1647,21 @@ const FranchiseReviewPage = () => {
                       </div>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Place Issued</span>
-                      <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Place Issued</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Amount Paid</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                          {currentApp.cedulaAmount ? `₱${Number(currentApp.cedulaAmount).toFixed(2)}` : '₱55.00'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Taxpayer</span>
+                      <span className="text-[10px] text-slate-400 block font-medium">Taxpayer Name</span>
                       <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
                     </div>
                   </div>
@@ -1420,48 +1670,63 @@ const FranchiseReviewPage = () => {
                 {/* TODA Endorsement Details */}
                 {activeDocKey === 'todaEndorsement' && (
                   <div className="space-y-1.5 text-xs">
-                    {/* TODA Discrepancy Alert */}
+                    {/* TODA Discrepancy Alert Accordion */}
                     {todaDiscrepancies.length > 0 && (
-                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span>TODA Certificate Discrepancy Flagged</span>
+                      <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden mb-2">
+                        <div 
+                          onClick={() => setIsDocDiscrepancyOpen(prev => !prev)}
+                          className="p-2 flex items-center justify-between gap-1.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300 select-none hover:bg-amber-100/70 dark:hover:bg-amber-900/40"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span className="truncate">TODA Discrepancy Flagged ({todaDiscrepancies.length})</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRejectField('todaEndorsement');
-                              setRejectReason('TODA Certificate Discrepancy (Uploaded document differs from entered information)');
-                              setIsRejecting(true);
-                            }}
-                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
-                          >
-                            Quick Reject
-                          </button>
+                          <div className="flex items-center gap-1 text-[10px] shrink-0">
+                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          </div>
                         </div>
-                        {todaDiscrepancies.map((d, i) => (
-                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
-                            <div className="grid grid-cols-2 gap-1 text-[11px]">
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
-                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
+
+                        {isDocDiscrepancyOpen && (
+                          <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
+                            {todaDiscrepancies.map((d, i) => (
+                              <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                  </div>
+                                </div>
+                                {d.reason && (
+                                  <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                    {d.reason}
+                                  </p>
+                                )}
                               </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
-                              </div>
+                            ))}
+                            <div className="pt-0.5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectField('todaEndorsement');
+                                  setRejectReason('TODA Certificate Discrepancy (Uploaded document differs from entered information)');
+                                  setIsRejecting(true);
+                                }}
+                                className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                              >
+                                Quick Reject TODA
+                              </button>
                             </div>
-                            {d.reason && (
-                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
-                                {d.reason}
-                              </p>
-                            )}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
+
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">TODA Association</span>
@@ -1485,57 +1750,77 @@ const FranchiseReviewPage = () => {
                         <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.todaCertDate)}</span>
                       </div>
                     </div>
+
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Authorized TODA Signatory</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.todaSignatory || 'TODA President'}</span>
+                    </div>
                   </div>
                 )}
 
                 {/* Barangay Clearance Details */}
                 {activeDocKey === 'brgyClearance' && (
                   <div className="space-y-1.5 text-xs">
-                    {/* Barangay Discrepancy Alert */}
+                    {/* Barangay Discrepancy Alert Accordion */}
                     {brgyDiscrepancies.length > 0 && (
-                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 mb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                            <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span>Barangay Clearance Discrepancy Flagged</span>
+                      <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden mb-2">
+                        <div 
+                          onClick={() => setIsDocDiscrepancyOpen(prev => !prev)}
+                          className="p-2 flex items-center justify-between gap-1.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300 select-none hover:bg-amber-100/70 dark:hover:bg-amber-900/40"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span className="truncate">Barangay Clearance Discrepancy ({brgyDiscrepancies.length})</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRejectField('brgyClearance');
-                              setRejectReason('Barangay Clearance Discrepancy (Uploaded document differs from entered information)');
-                              setIsRejecting(true);
-                            }}
-                            className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
-                          >
-                            Quick Reject
-                          </button>
+                          <div className="flex items-center gap-1 text-[10px] shrink-0">
+                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          </div>
                         </div>
-                        {brgyDiscrepancies.map((d, i) => (
-                          <div key={i} className="bg-white/80 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                            <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
-                            <div className="grid grid-cols-2 gap-1 text-[11px]">
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned from Image</span>
-                                <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
+
+                        {isDocDiscrepancyOpen && (
+                          <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
+                            {brgyDiscrepancies.map((d, i) => (
+                              <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                  </div>
+                                </div>
+                                {d.reason && (
+                                  <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                    {d.reason}
+                                  </p>
+                                )}
                               </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered by Applicant</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
-                              </div>
+                            ))}
+                            <div className="pt-0.5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectField('brgyClearance');
+                                  setRejectReason('Barangay Clearance Discrepancy (Uploaded document differs from entered information)');
+                                  setIsRejecting(true);
+                                }}
+                                className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                              >
+                                Quick Reject Brgy Clearance
+                              </button>
                             </div>
-                            {d.reason && (
-                              <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
-                                {d.reason}
-                              </p>
-                            )}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
+
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Barangay of Residence</span>
-                      <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || '—'}</span>
+                      <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || currentApp.operator?.address || '—'}</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
@@ -1549,9 +1834,15 @@ const FranchiseReviewPage = () => {
                       </div>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Resident</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Resident Name</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fullName || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Punong Barangay / Issuer</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.brgyIssuer || 'Punong Barangay'}</span>
+                      </div>
                     </div>
                   </div>
                 )}

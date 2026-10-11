@@ -106,6 +106,19 @@ exports.register = async (req, res) => {
             if (!normalizedToda || normalizedToda === 'NON-TODA') {
                 return res.status(400).json({ message: 'TODA President must select a valid TODA Association.' });
             }
+
+            // Enforce strictly 1 TODA President per association
+            const escaped = normalizedToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const existingPresident = await User.findOne({
+                role: { $in: ['toda_president', 'toda president'] },
+                todaAssociation: { $regex: new RegExp(`^${escaped}$`, 'i') },
+                isVerified: true
+            });
+            if (existingPresident) {
+                return res.status(400).json({ 
+                    message: `May nakatalaga nang TODA President para sa ${normalizedToda} (${existingPresident.name}). Tanging 1 TODA President lamang ang pinapayagan bawat asosasyon.` 
+                });
+            }
         }
         
         // Case-insensitive check for existing user by contact or email
@@ -523,12 +536,40 @@ exports.verifyAdminPassword = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
     try {
+        const existingUser = await User.findById(req.params.id);
+        if (!existingUser) return res.status(404).json({ message: 'User not found' });
+
+        const newRole = req.body.role ? String(req.body.role).toLowerCase().trim().replace(/_/g, ' ') : '';
+        const currentRole = String(existingUser.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const willBeTodaPresident = newRole === 'toda president' || (!newRole && currentRole === 'toda president');
+
+        if (willBeTodaPresident) {
+            const targetToda = (req.body.todaAssociation !== undefined ? req.body.todaAssociation : existingUser.todaAssociation || '').trim();
+            if (!targetToda || targetToda.toUpperCase() === 'NON-TODA') {
+                return res.status(400).json({ 
+                    message: 'A TODA President must be assigned to an active TODA Association (cannot be NON-TODA).' 
+                });
+            }
+
+            const escaped = targetToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const existingPresident = await User.findOne({
+                _id: { $ne: req.params.id },
+                role: { $in: ['toda_president', 'toda president'] },
+                todaAssociation: { $regex: new RegExp(`^${escaped}$`, 'i') },
+                isActive: true
+            });
+            if (existingPresident) {
+                return res.status(400).json({
+                    message: `May nakatalaga nang TODA President para sa ${targetToda} (${existingPresident.name}). Tanging 1 TODA President lamang ang pinapayagan bawat asosasyon.`
+                });
+            }
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id, 
             req.body, 
             { new: true }
         ).select('-password');
-        if (!updatedUser) return res.status(404).json({ message: 'User not found' });
 
         logAudit(req, {
             action: 'USER_UPDATED',
@@ -539,7 +580,7 @@ exports.updateUser = async (req, res) => {
 
         res.status(200).json(updatedUser);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating user' });
+        res.status(500).json({ message: error.message || 'Error updating user' });
     }
 };
 
@@ -568,6 +609,29 @@ exports.updateProfile = async (req, res) => {
         const userId = req.user.id; 
         const { name, address, contact, todaAssociation, language, theme } = req.body;
         
+        // Enforce 1 TODA President per TODA if current user is TODA President
+        const currentUserRole = String(req.user.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        if (currentUserRole === 'toda president' && todaAssociation !== undefined) {
+            const cleanToda = String(todaAssociation).trim();
+            if (!cleanToda || cleanToda.toUpperCase() === 'NON-TODA') {
+                return res.status(400).json({ message: 'A TODA President must be assigned to an active TODA Association.' });
+            }
+            if (cleanToda.toUpperCase() !== (req.user.todaAssociation || '').toUpperCase()) {
+                const escaped = cleanToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const existingPresident = await User.findOne({
+                    _id: { $ne: userId },
+                    role: { $in: ['toda_president', 'toda president'] },
+                    todaAssociation: { $regex: new RegExp(`^${escaped}$`, 'i') },
+                    isActive: true
+                });
+                if (existingPresident) {
+                    return res.status(400).json({
+                        message: `May nakatalaga nang TODA President para sa ${cleanToda} (${existingPresident.name}). Tanging 1 TODA President lamang ang pinapayagan bawat asosasyon.`
+                    });
+                }
+            }
+        }
+
         let updateData = {};
         if (name !== undefined) updateData.name = name;
         if (address !== undefined) updateData.address = address;

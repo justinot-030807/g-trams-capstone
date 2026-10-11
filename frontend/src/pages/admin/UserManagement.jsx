@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
-import { formatZoneLabel } from '../../utils/constants';
+import { formatZoneLabel, TODA_LIST } from '../../utils/constants';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -210,27 +210,53 @@ const UserManagement = () => {
   // Role management
   const initiateRoleChange = (user, newRole) => {
     if (user.role === newRole) return; 
-    setPendingRoleChange({ userId: user._id, userName: user.name, oldRole: user.role, newRole: newRole });
+    const defaultToda = (user.todaAssociation && user.todaAssociation !== 'NON-TODA') 
+      ? user.todaAssociation 
+      : 'GASAN CENTRAL TODA';
+
+    setPendingRoleChange({ 
+      userId: user._id, 
+      userName: user.name, 
+      oldRole: user.role, 
+      newRole: newRole,
+      todaAssociation: defaultToda,
+      currentToda: user.todaAssociation || 'NON-TODA'
+    });
     setIsConfirmOpen(true);
   };
 
   const confirmAndSaveRole = async () => {
     if (!pendingRoleChange) return;
-    const { userId, newRole } = pendingRoleChange;
+    const { userId, newRole, todaAssociation } = pendingRoleChange;
+
+    const payload = { role: newRole };
+    if (newRole === 'toda_president') {
+      if (!todaAssociation || todaAssociation === 'NON-TODA') {
+        alert('Please assign an accredited TODA association for this TODA President.');
+        return;
+      }
+      payload.todaAssociation = todaAssociation;
+    }
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ role: newRole })
+        body: JSON.stringify(payload)
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
-        setIsConfirmOpen(false); setPendingRoleChange(null);
+        setUsers(users.map(u => u._id === userId ? { 
+          ...u, 
+          role: newRole,
+          ...(newRole === 'toda_president' ? { todaAssociation } : {})
+        } : u));
+        setIsConfirmOpen(false); 
+        setPendingRoleChange(null);
       } else {
-        alert('Failed to update role. Try logging in again.');
-        setIsConfirmOpen(false);
+        alert(data.message || 'Failed to update role. Try logging in again.');
       }
     } catch (error) {
       alert('Cannot connect to the server.');
@@ -811,27 +837,72 @@ const UserManagement = () => {
       )}
 
       {/* Role change confirmation modal */}
-      {isConfirmOpen && pendingRoleChange && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={() => setIsConfirmOpen(false)}></div>
-          <div className="relative bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
-            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle size={22} />
-            </div>
-            <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Change User Role?</h3>
-            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
-              Are you sure you want to change <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{pendingRoleChange.userName}</strong>'s role from <br/>
-              <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] uppercase tracking-wider">{pendingRoleChange.oldRole}</span> 
-              <span className="mx-2 text-[#6B6761]">➔</span> 
-              <span className="inline-block px-2 py-0.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] font-semibold text-xs rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 uppercase tracking-wider">{pendingRoleChange.newRole}</span> ?
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setIsConfirmOpen(false)} className="flex-1 py-2 rounded-lg font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3E3834] transition-colors text-xs cursor-pointer">Cancel</button>
-              <button onClick={confirmAndSaveRole} className="flex-1 py-2 rounded-lg font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-colors text-xs shadow-xs cursor-pointer">Yes, Change It</button>
+      {isConfirmOpen && pendingRoleChange && (() => {
+        const isPromotingToTodaPres = pendingRoleChange.newRole === 'toda_president';
+        const conflictingPres = isPromotingToTodaPres ? users.find(u => 
+          u._id !== pendingRoleChange.userId &&
+          (u.role === 'toda_president' || u.role === 'toda president') &&
+          u.todaAssociation?.toUpperCase() === pendingRoleChange.todaAssociation?.toUpperCase()
+        ) : null;
+
+        return (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={() => setIsConfirmOpen(false)}></div>
+            <div className="relative bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
+              <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <AlertTriangle size={22} />
+              </div>
+              <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Change User Role?</h3>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-3 leading-relaxed">
+                Are you sure you want to change <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{pendingRoleChange.userName}</strong>'s role from <br/>
+                <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] uppercase tracking-wider">{pendingRoleChange.oldRole}</span> 
+                <span className="mx-2 text-[#6B6761]">➔</span> 
+                <span className="inline-block px-2 py-0.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] font-semibold text-xs rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 uppercase tracking-wider">{pendingRoleChange.newRole}</span> ?
+              </p>
+
+              {isPromotingToTodaPres && (
+                <div className="mb-4 text-left p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                    Assign TODA Association:
+                  </label>
+                  <select
+                    value={pendingRoleChange.todaAssociation}
+                    onChange={(e) => setPendingRoleChange(prev => ({ ...prev, todaAssociation: e.target.value }))}
+                    className="w-full p-2 border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg outline-none cursor-pointer"
+                  >
+                    {TODA_LIST.filter(t => t !== 'NON-TODA').map(toda => (
+                      <option key={toda} value={toda}>{toda}</option>
+                    ))}
+                  </select>
+
+                  {conflictingPres ? (
+                    <div className="p-2 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-400 text-[11px] leading-tight">
+                      <strong>Bawal:</strong> May nakatalaga nang TODA President para sa <strong>{pendingRoleChange.todaAssociation}</strong> ({conflictingPres.name}). Tanging 1 TODA President lamang ang pinapayagan bawat TODA.
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                      ✓ Bakante ang presidency para sa {pendingRoleChange.todaAssociation}.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button onClick={() => setIsConfirmOpen(false)} className="flex-1 py-2 rounded-lg font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3E3834] transition-colors text-xs cursor-pointer">Cancel</button>
+                <button 
+                  onClick={confirmAndSaveRole} 
+                  disabled={Boolean(conflictingPres)}
+                  className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-xs cursor-pointer ${
+                    conflictingPres ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
+                  }`}
+                >
+                  Yes, Change It
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* User details modal */}
       {isDetailsModalOpen && selectedUser && (
