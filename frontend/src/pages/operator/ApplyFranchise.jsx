@@ -201,7 +201,7 @@ const ApplyFranchise = () => {
     todaName: loggedInToda,
     dateApplied: new Date().toISOString().split('T')[0], 
     cedulaDate: '', 
-    cedulaAddress: 'Gasan, Marinduque', 
+    cedulaAddress: '', 
     cedulaSerialNo: '',
     cedulaAmount: '',
     orCrNo: '',
@@ -229,6 +229,7 @@ const ApplyFranchise = () => {
     driverName: '',
     driverContact: '',
     driverLicenseNo: '',
+    driverLicenseSerialNo: '',
     driverLicenseExpiryDate: '',
     driverDob: '',
     driverDlCodes: '',
@@ -572,7 +573,7 @@ const ApplyFranchise = () => {
       todaName: loggedInToda, 
       dateApplied: new Date().toISOString().split('T')[0], 
       cedulaDate: '', 
-      cedulaAddress: 'Gasan, Marinduque', 
+      cedulaAddress: '', 
       cedulaSerialNo: '',
       cedulaAmount: '',
       orCrNo: '',
@@ -584,6 +585,7 @@ const ApplyFranchise = () => {
       driverName: '',
       driverContact: '',
       driverLicenseNo: '',
+      driverLicenseSerialNo: '',
       driverLicenseExpiryDate: '',
       driverDob: '',
       driverDlCodes: '',
@@ -757,7 +759,7 @@ const ApplyFranchise = () => {
       todaName: franchise.todaName || loggedInToda,
       dateApplied: franchise.dateApplied ? String(franchise.dateApplied).substring(0, 10) : '',
       cedulaDate: franchise.cedulaDate ? String(franchise.cedulaDate).substring(0, 10) : '',
-      cedulaAddress: franchise.cedulaAddress || 'Gasan, Marinduque',
+      cedulaAddress: franchise.cedulaAddress || '',
       cedulaSerialNo: franchise.cedulaSerialNo || '',
       cedulaAmount: franchise.cedulaAmount || '',
       orCrNo: franchise.orCrNo || '',
@@ -766,7 +768,12 @@ const ApplyFranchise = () => {
       driverName: franchise.driverName || '',
       driverContact: franchise.driverContact || '',
       driverLicenseNo: franchise.driverLicenseNo || '',
+      driverLicenseSerialNo: franchise.driverLicenseSerialNo || '',
       driverLicenseExpiryDate: franchise.driverLicenseExpiryDate ? String(franchise.driverLicenseExpiryDate).substring(0, 10) : '',
+      driverDob: franchise.driverDob ? String(franchise.driverDob).substring(0, 10) : '',
+      driverDlCodes: franchise.driverDlCodes || '',
+      driverConditions: franchise.driverConditions || 'None',
+      driverAddress: franchise.driverAddress || '',
       todaCertNo: franchise.todaCertNo || '',
       todaCertDate: franchise.todaCertDate ? String(franchise.todaCertDate).substring(0, 10) : '',
       todaSignatory: franchise.todaSignatory || '',
@@ -919,7 +926,8 @@ const ApplyFranchise = () => {
   const triggerAiScan = async (reqId, fileArg = null) => {
     let docType = '';
     const lower = (reqId || '').toLowerCase();
-    if (lower === 'license' || lower.includes('license')) docType = 'license';
+    if (lower === 'licenseback' || lower.includes('licenseback') || lower.includes('back')) docType = 'licenseBack';
+    else if (lower === 'license' || lower.includes('license')) docType = 'license';
     else if (lower === 'orcrdocument' || lower.includes('orcr') || lower.includes('crfile') || lower.includes('orfile') || lower === 'cr' || lower === 'or' || lower.includes('crdocument') || lower.includes('ordocument')) docType = 'orCr';
     else if (lower === 'todaendorsement' || lower.includes('toda')) docType = 'todaEndorsement';
     else if (lower === 'brgyclearance' || lower.includes('brgy')) docType = 'brgyClearance';
@@ -1002,8 +1010,32 @@ const ApplyFranchise = () => {
             }));
           }
 
-          if (docType === 'license' || docType === 'licenseBack') {
-            const hasData = d.licenseNo || d.driverName || d.expiryDate || d.dateOfBirth || d.dlCodes;
+          if (docType === 'licenseBack') {
+            const hasData = d.serialNo || d.conditions || d.dlCodes;
+            if (hasData) {
+              setAiScannedData(prev => ({
+                ...prev,
+                licenseBack: {
+                  serialNo: d.serialNo ? d.serialNo.toUpperCase() : '',
+                  conditions: d.conditions || '',
+                  dlCodes: d.dlCodes || '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+
+              setFormData(prev => ({
+                ...prev,
+                driverLicenseSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.driverLicenseSerialNo,
+                driverConditions: d.conditions || prev.driverConditions,
+                driverDlCodes: d.dlCodes || prev.driverDlCodes
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("AI Scan: Driver's License Back Serial Number detected.", 'success');
+            } else {
+              showToast("Document attached. Back serial number was unclear — please enter manually if visible.", 'info');
+            }
+          } else if (docType === 'license') {
+            const hasData = d.licenseNo || d.driverName || d.expiryDate || d.dateOfBirth || d.dlCodes || d.address;
             if (hasData) {
               const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
               const normDob = d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '';
@@ -1018,6 +1050,7 @@ const ApplyFranchise = () => {
                   dateOfBirth: normDob || (prev.license?.dateOfBirth || ''),
                   dlCodes: d.dlCodes || (prev.license?.dlCodes || ''),
                   driverName: d.driverName || (prev.license?.driverName || ''),
+                  address: d.address || (prev.license?.address || ''),
                   isExpired: Boolean(isExpired),
                   scannedAt: new Date().toISOString()
                 }
@@ -1037,6 +1070,16 @@ const ApplyFranchise = () => {
                 driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : (prev.driverName || d.driverName)
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+
+              // Validate name match between license and applicant / designated driver
+              const targetName = formData.isOperatorDriver ? formData.fullName : formData.driverName;
+              if (d.driverName && targetName) {
+                const cleanScanned = d.driverName.toUpperCase().replace(/[^A-Z]/g, '');
+                const cleanTarget = targetName.toUpperCase().replace(/[^A-Z]/g, '');
+                if (cleanScanned && cleanTarget && !cleanScanned.includes(cleanTarget) && !cleanTarget.includes(cleanScanned)) {
+                  showToast(`Paunawa: Pangalan sa lisensya (${d.driverName}) ay may kaibahan sa ${formData.isOperatorDriver ? 'aplikante' : 'tsuper'} (${targetName}).`, 'warning');
+                }
+              }
 
               if (isExpired) {
                 showValidationModal(
@@ -2145,8 +2188,8 @@ const ApplyFranchise = () => {
                           Barangay Residency / Address
                         </label>
                         {formData.address && getZoneForBarangay(formData.address) && (
-                          <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
-                            Zone: <strong className="text-[#9E2A2B] dark:text-[#D4AF37]">{getZoneForBarangay(formData.address)} Zone</strong>
+                          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20">
+                            Zone: {getZoneForBarangay(formData.address)}
                           </span>
                         )}
                       </div>
@@ -2159,7 +2202,7 @@ const ApplyFranchise = () => {
                       >
                         <option value="" disabled>-- Select Official Barangay --</option>
                         {GASAN_BARANGAYS.map((b) => (
-                          <option key={b} value={b}>{b}</option>
+                          <option key={b} value={b}>{b} — {getZoneForBarangay(b)}</option>
                         ))}
                       </select>
                       {formErrors.address && (
@@ -2203,32 +2246,38 @@ const ApplyFranchise = () => {
                       </div>
 
                       {activeOrPendingUnits.length === 1 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const u1 = activeOrPendingUnits[0];
-                            if (u1) {
-                              setFormData(prev => ({
-                                ...prev,
-                                fullName: u1.fullName || prev.fullName,
-                                address: u1.address || prev.address,
-                                zone: u1.zone || prev.zone,
-                                todaName: u1.todaName || prev.todaName,
-                                cedulaDate: u1.cedulaDate ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
-                                cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
-                                cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
-                                cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,
-                                todaCertNo: u1.todaCertNo || prev.todaCertNo,
-                                todaSignatory: u1.todaSignatory || prev.todaSignatory
-                              }));
-                              showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
-                            }
-                          }}
-                          className="shrink-0 px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-                        >
-                          <Zap size={14} className="text-amber-300" />
-                          <span>Fast-Track: Copy from Unit 1</span>
-                        </button>
+                        <div className="shrink-0 flex flex-col items-start sm:items-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const u1 = activeOrPendingUnits[0];
+                              if (u1) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  fullName: u1.fullName || prev.fullName,
+                                  address: u1.address || prev.address,
+                                  zone: u1.zone || prev.zone,
+                                  todaName: u1.todaName || prev.todaName,
+                                  cedulaDate: u1.cedulaDate ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
+                                  cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
+                                  cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
+                                  cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,
+                                  todaCertNo: u1.todaCertNo || prev.todaCertNo,
+                                  todaSignatory: u1.todaSignatory || prev.todaSignatory
+                                }));
+                                showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
+                              }
+                            }}
+                            className="px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                            title="Fast-Track: Automatically reuses your verified operator residency, zone, and TODA credentials from Unit 1"
+                          >
+                            <Zap size={14} className="text-amber-300" />
+                            <span>Fast-Track: Copy from Unit 1</span>
+                          </button>
+                          <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            Reuses verified profile &amp; clearances from Unit 1
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -2337,15 +2386,15 @@ const ApplyFranchise = () => {
                   )}
                 </div>
 
-                {/* Driver's License Document (Front Only) */}
+                {/* Driver's License Documents (Front & Back) */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        Driver's License Photo (Front)
+                        Driver's License Documents (Front &amp; Back)
                       </label>
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Upload the front of the driver's license to verify identity, birthdate, and authorized DL codes.
+                        Upload front to verify credentials &amp; birthdate, and back to extract the card serial number.
                       </p>
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
@@ -2353,29 +2402,83 @@ const ApplyFranchise = () => {
                     </span>
                   </div>
 
-                  <div className="w-full">
-                    <DocumentUploadCard
-                      id="license"
-                      label="Driver's License (Front)"
-                      file={uploadedDocs.license}
-                      previewUrl={filePreviews.license || formData.licenseUrl}
-                      onFileSelect={handleFileChange}
-                      onFileRemove={handleRemoveFile}
-                      onPreviewZoom={setFullPreview}
-                      onRescan={handleRescan}
-                      required={true}
-                      isScanning={aiScanning.license}
-                      scanSuccess={aiSuccess.license}
-                      error={formErrors.license}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Front License Card */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Driver's License (Front)</span>
+                          <span className="text-red-600">*</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Identity &amp; Codes</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="license"
+                        label="Driver's License (Front)"
+                        file={uploadedDocs.license}
+                        previewUrl={filePreviews.license || formData.licenseUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={true}
+                        isScanning={aiScanning.license}
+                        scanSuccess={aiSuccess.license}
+                        error={formErrors.license}
+                      />
+                    </div>
+
+                    {/* Back License Card */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Driver's License (Back)</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Card Serial Number</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="licenseBack"
+                        label="Driver's License (Back)"
+                        file={uploadedDocs.licenseBack}
+                        previewUrl={filePreviews.licenseBack || formData.licenseBackUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={false}
+                        isScanning={aiScanning.licenseBack}
+                        scanSuccess={aiSuccess.licenseBack}
+                        error={formErrors.licenseBack}
+                      />
+                    </div>
                   </div>
 
                   {/* Auto-filled License Details Grid */}
-                  <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5">
-                    <div className="flex items-center justify-between">
+                  <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                       <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        License Credentials {aiSuccess.license && <span className="text-emerald-600 font-semibold">(Verified from Document)</span>}
+                        License Credentials {(aiSuccess.license || aiSuccess.licenseBack) && <span className="text-emerald-600 font-semibold">(Verified from Document)</span>}
                       </span>
+
+                      {/* Name Match Indicator */}
+                      {(() => {
+                        const scannedName = aiScannedData.license?.driverName;
+                        const targetName = formData.isOperatorDriver ? formData.fullName : formData.driverName;
+                        if (!scannedName || !targetName) return null;
+                        const cleanS = scannedName.toUpperCase().replace(/[^A-Z]/g, '');
+                        const cleanT = targetName.toUpperCase().replace(/[^A-Z]/g, '');
+                        const isMatch = cleanS && cleanT && (cleanS.includes(cleanT) || cleanT.includes(cleanS));
+                        return (
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded flex items-center gap-1 ${
+                            isMatch 
+                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' 
+                              : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                          }`}>
+                            {isMatch ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                            <span>{isMatch ? 'Pangalan: Tugma sa Lisensya' : `May kaibahan: ${scannedName}`}</span>
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -2398,6 +2501,23 @@ const ApplyFranchise = () => {
                             <span>{formErrors.driverLicenseNo}</span>
                           </p>
                         )}
+                      </div>
+
+                      <div id="field-driverLicenseSerialNo">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          License Back Serial Number
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverLicenseSerialNo" 
+                          value={formData.driverLicenseSerialNo || ''} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverLicenseSerialNo')} 
+                          placeholder="e.g. SN-0987654321" 
+                        />
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                          Serial number printed on the back of the physical LTO card.
+                        </p>
                       </div>
 
                       <div id="field-driverLicenseExpiryDate">
@@ -2444,6 +2564,20 @@ const ApplyFranchise = () => {
                             <span>{formErrors.driverDlCodes}</span>
                           </p>
                         )}
+                      </div>
+
+                      <div id="field-driverAddress">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Driver's Residential Address
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverAddress" 
+                          value={formData.driverAddress || ''} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverAddress')} 
+                          placeholder="Barangay / Municipality" 
+                        />
                       </div>
 
                       <div id="field-driverConditions" className="sm:col-span-2">
@@ -2656,68 +2790,35 @@ const ApplyFranchise = () => {
                       )}
                     </div>
 
-                    {/* Route / Zone Selection */}
+                    {/* Designated Route Zone (Auto-assigned from Barangay) */}
                     <div id="field-zone" className="sm:col-span-2">
-                      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                            Route / Municipal Zone
-                          </label>
-                          {formData.address && getZoneForBarangay(formData.address) && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
-                              Auto-filled from Barangay
+                      <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Compass size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                              Designated Route Zone
                             </span>
-                          )}
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                              Auto-assigned
+                            </span>
+                          </div>
+                          <p className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">
+                            {formatZoneLabel(formData.zone || getZoneForBarangay(formData.address) || 'Central')}
+                          </p>
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                            Zoned based on Barangay residency ({formData.address || 'Gasan'}).
+                          </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => setShowTodaGuide(true)}
-                          className="text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-center"
                         >
                           <Compass size={14} />
                           <span>View Route Guide</span>
                         </button>
                       </div>
-
-                      <select
-                        name="zone"
-                        value={normalizeZone(formData.zone)}
-                        onChange={handleInputChange}
-                        className={`${getInputClasses('zone')} cursor-pointer font-medium`}
-                        required
-                      >
-                        <option value="" disabled>-- Select Municipal Route &amp; Zone --</option>
-                        {GASAN_ZONES.map(z => (
-                          <option key={z.id} value={z.id}>{z.name}</option>
-                        ))}
-                      </select>
-                      {formErrors.zone && (
-                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>{formErrors.zone}</span>
-                        </p>
-                      )}
-                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                        Pre-filled based on your Barangay residency, but you can change it if you operate on another authorized zone.
-                      </p>
-
-                      {/* Route Coverage Preview Card */}
-                      {(() => {
-                        const currentZ = normalizeZone(formData.zone);
-                        const zInfo = GASAN_ZONES.find(z => z.id === currentZ);
-                        if (!zInfo) return null;
-                        return (
-                          <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-left space-y-1.5 mt-2.5 shadow-xs">
-                            <div className="flex items-center gap-1.5 text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                              <Compass size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-                              <span>{zInfo.name}</span>
-                            </div>
-                            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
-                              <strong>Coverage:</strong> {zInfo.coverage}
-                            </p>
-                          </div>
-                        );
-                      })()}
                     </div>
 
                     {/* Plate Number */}
@@ -3160,7 +3261,7 @@ const ApplyFranchise = () => {
                     error={formErrors.brgyClearance}
                   />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     <div>
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Barangay Clearance No.
@@ -3182,6 +3283,19 @@ const ApplyFranchise = () => {
                         label="Date Issued"
                         mode="issuance"
                         helperText="Date Barangay clearance was issued."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Issuing Official / Punong Barangay
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brgyIssuer" 
+                        value={formData.brgyIssuer} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        placeholder="e.g. Hon. Juan Dela Cruz" 
                       />
                     </div>
                   </div>
@@ -3268,6 +3382,7 @@ const ApplyFranchise = () => {
                         className={getInputClasses('cedulaSerialNo')} 
                         required 
                         placeholder="e.g. 08123456" 
+                        autoComplete="off"
                       />
                       {formErrors.cedulaSerialNo && (
                         <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -3299,6 +3414,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={getInputClasses('cedulaAddress')} 
                         placeholder="e.g. Libtangin, Gasan, Marinduque" 
+                        autoComplete="off"
                       />
                     </div>
                     <div id="field-cedulaAmount">
@@ -3314,6 +3430,7 @@ const ApplyFranchise = () => {
                         placeholder="e.g. 55.00" 
                         step="0.01"
                         min="0"
+                        autoComplete="off"
                       />
                     </div>
                   </div>

@@ -206,6 +206,7 @@ class FranchiseService {
             driverName: data.driverName || '',
             driverContact: data.driverContact || '',
             driverLicenseNo: data.driverLicenseNo || '',
+            driverLicenseSerialNo: data.driverLicenseSerialNo || '',
             driverLicenseExpiryDate: data.driverLicenseExpiryDate && !isNaN(new Date(data.driverLicenseExpiryDate).getTime()) ? new Date(data.driverLicenseExpiryDate) : undefined,
             driverDob: data.driverDob && !isNaN(new Date(data.driverDob).getTime()) ? new Date(data.driverDob) : undefined,
             driverDlCodes: data.driverDlCodes || 'A, A1',

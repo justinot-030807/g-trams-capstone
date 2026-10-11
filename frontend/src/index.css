@@ -57,6 +57,12 @@
     min-height: 100%;
   }
 
+  /* Clean input interaction: vanish placeholder on focus/click */
+  input:focus::placeholder,
+  textarea:focus::placeholder {
+    color: transparent !important;
+  }
+
   @media print {
     html, body {
       zoom: 1 !important;

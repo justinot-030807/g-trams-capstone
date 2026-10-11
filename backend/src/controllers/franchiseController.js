@@ -296,12 +296,19 @@ const renewFranchise = async (req, res) => {
             return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to renew this franchise record.' });
         }
 
-        const { dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo, ctcNo, dateIssued, placeIssued, orCrNo, orCrExpiryDate, driverLicenseNo, driverLicenseExpiryDate } = req.body;
+        const { 
+            dateApplied, cedulaDate, cedulaAddress, cedulaSerialNo, cedulaAmount, ctcNo, 
+            dateIssued, placeIssued, orCrNo, orCrExpiryDate, crNo, orNo,
+            driverLicenseNo, driverLicenseSerialNo, driverLicenseExpiryDate,
+            brgyClearanceNo, brgyClearanceDate, brgyIssuer
+        } = req.body;
+
         const updateData = {
             dateApplied: dateApplied || new Date().toISOString(),
             cedulaDate: cedulaDate || dateIssued || existingFranchise.cedulaDate,
-            cedulaAddress: cedulaAddress || placeIssued || existingFranchise.cedulaAddress || 'Gasan, Marinduque',
+            cedulaAddress: cedulaAddress || placeIssued || existingFranchise.cedulaAddress || '',
             cedulaSerialNo: cedulaSerialNo || ctcNo || existingFranchise.cedulaSerialNo,
+            cedulaAmount: cedulaAmount !== undefined ? Number(cedulaAmount) : (existingFranchise.cedulaAmount || 0),
             status: 'Pending',
             cancelReason: '',
             rejectedField: '',
@@ -316,15 +323,25 @@ const renewFranchise = async (req, res) => {
         };
 
         if (orCrNo) updateData.orCrNo = orCrNo;
+        if (crNo) updateData.crNo = crNo;
+        if (orNo) updateData.orNo = orNo;
         if (orCrExpiryDate && !isNaN(new Date(orCrExpiryDate).getTime())) updateData.orCrExpiryDate = new Date(orCrExpiryDate);
         if (driverLicenseNo) updateData.driverLicenseNo = driverLicenseNo;
+        if (driverLicenseSerialNo) updateData.driverLicenseSerialNo = driverLicenseSerialNo;
         if (driverLicenseExpiryDate && !isNaN(new Date(driverLicenseExpiryDate).getTime())) updateData.driverLicenseExpiryDate = new Date(driverLicenseExpiryDate);
+        if (brgyClearanceNo) updateData.brgyClearanceNo = brgyClearanceNo;
+        if (brgyClearanceDate && !isNaN(new Date(brgyClearanceDate).getTime())) updateData.brgyClearanceDate = new Date(brgyClearanceDate);
+        if (brgyIssuer) updateData.brgyIssuer = brgyIssuer;
 
-        if (req.files && req.files['orcrFile'] && req.files['orcrFile'][0]) {
-            updateData.orCrUrl = req.files['orcrFile'][0].path;
-        }
-        if (req.files && req.files['cedulaDoc'] && req.files['cedulaDoc'][0]) {
-            updateData.cedulaUrl = req.files['cedulaDoc'][0].path;
+        if (req.files) {
+            if (req.files['orcrFile'] && req.files['orcrFile'][0]) updateData.orCrUrl = req.files['orcrFile'][0].path;
+            if (req.files['orCrDocument'] && req.files['orCrDocument'][0]) updateData.orCrUrl = req.files['orCrDocument'][0].path;
+            if (req.files['crDocument'] && req.files['crDocument'][0]) updateData.crUrl = req.files['crDocument'][0].path;
+            if (req.files['orDocument'] && req.files['orDocument'][0]) updateData.orUrl = req.files['orDocument'][0].path;
+            if (req.files['cedulaDoc'] && req.files['cedulaDoc'][0]) updateData.cedulaUrl = req.files['cedulaDoc'][0].path;
+            if (req.files['license'] && req.files['license'][0]) updateData.licenseUrl = req.files['license'][0].path;
+            if (req.files['licenseBack'] && req.files['licenseBack'][0]) updateData.licenseBackUrl = req.files['licenseBack'][0].path;
+            if (req.files['brgyClearance'] && req.files['brgyClearance'][0]) updateData.brgyClearanceUrl = req.files['brgyClearance'][0].path;
         }
 
         const updatedFranchise = await Franchise.findByIdAndUpdate(

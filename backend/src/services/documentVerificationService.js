@@ -155,8 +155,8 @@ Extract and return ONLY a valid JSON object with these exact keys:
   "expiryDate": "extracted registration expiration date if visible (YYYY-MM-DD), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
-        } else if (docType === 'license' || docType === 'licenseBack') {
-            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses.
+        } else if (docType === 'license') {
+            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses (Front).
 Carefully inspect this driver's license document image and extract all essential driving credentials.
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract blood type (Blood type must NOT be extracted).
@@ -167,7 +167,7 @@ EXCLUSION RULES (CRITICAL):
 Extract and return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
-  "detectedDocumentType": "Driver's License",
+  "detectedDocumentType": "Driver's License (Front)",
   "licenseNo": "extracted license number (format like D01-12-345678, N01-12-345678), or null",
   "driverName": "extracted driver full name (Last, First, Middle), or null",
   "dateOfBirth": "extracted date of birth in YYYY-MM-DD, or null",
@@ -177,6 +177,22 @@ Extract and return ONLY a valid JSON object with these exact keys:
   "address": "extracted residential address, or null",
   "nationality": "extracted nationality (e.g. Filipino), or null",
   "sex": "extracted sex / gender (M/F), or null"
+}
+Return raw JSON only, no markdown codeblocks, no explanations.`;
+        } else if (docType === 'licenseBack') {
+            prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses (Back).
+Carefully inspect the back of this driver's license document image and extract the card serial number.
+EXCLUSION RULES (CRITICAL):
+- DO NOT extract signatures or signing government officials.
+- DO NOT extract blood type or biometrics.
+
+Extract and return ONLY a valid JSON object with these exact keys:
+{
+  "isExpectedDocumentType": true,
+  "detectedDocumentType": "Driver's License (Back)",
+  "serialNo": "extracted card serial number or barcode serial number on the back of the license, or null",
+  "conditions": "extracted driving conditions if printed on back, or null",
+  "dlCodes": "extracted DL codes if printed on back, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'cedula') {
@@ -220,7 +236,7 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
 Extract the clearance details from this document image.
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract clearance fees or payment amounts.
-- DO NOT extract Punong Barangay / Secretary signatures.
+- DO NOT extract signatures.
 
 Return ONLY a valid JSON object with these exact keys:
 {
@@ -229,21 +245,22 @@ Return ONLY a valid JSON object with these exact keys:
   "clearanceNo": "extracted clearance or control number, or null",
   "residentName": "extracted resident/applicant name, or null",
   "barangay": "extracted barangay name (e.g. Pinggan, Bacong-Bacong, Bahi, Bangbang), or null",
+  "issuer": "extracted Punong Barangay / Barangay Captain / issuing official full name, or null",
   "dateIssued": "extracted date issued (YYYY-MM-DD), or null",
   "purpose": "extracted stated purpose, or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Multi-model auto-failover cascade: If a model is overloaded (503), rate-limited (429), or unavailable,
-        // automatically switch to the next available tier without blocking user requests.
-        const preferredModel = process.env.GEMINI_MODEL;
+        // Multi-model auto-failover cascade: Gemini 3.8 Flash is primary main model.
+        // If overloaded (503), rate-limited (429), or unavailable, immediately cascade to next tier.
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
         const modelsToTry = [
             preferredModel,
+            'gemini-3.8-flash',
+            'gemini-3.6-flash',
             'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-1.5-flash'
+            'gemini-2.0-flash'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
         let responseText = null;
@@ -273,37 +290,9 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
                 }
             } catch (callErr) {
                 const errMsg = callErr.message || '';
-                console.warn(`[DocVerify] Model ${modelName} failed:`, errMsg);
-
-                // If model is overloaded (503 Service Unavailable), quota exhausted (429), or model not found (404),
-                // do NOT waste time retrying the exact same overloaded model — immediately cascade to next model.
-                if (errMsg.includes('503') || errMsg.includes('overloaded') || errMsg.includes('429') || errMsg.includes('404')) {
-                    console.log(`[DocVerify] Service busy on ${modelName}. Auto-switching to next available model in cascade...`);
-                    continue;
-                }
-
-                try {
-                    // Fallback to standard request without responseMimeType in case older models reject JSON responseMimeType
-                    const fallbackInteraction = await ai.models.generateContent({
-                        model: modelName,
-                        contents: [
-                            {
-                                inlineData: {
-                                    mimeType: mimeType || 'image/jpeg',
-                                    data: base64Data
-                                }
-                            },
-                            prompt
-                        ]
-                    });
-                    responseText = fallbackInteraction.text || (fallbackInteraction.candidates?.[0]?.content?.parts?.[0]?.text);
-                    if (responseText) {
-                        console.log(`[DocVerify] Model ${modelName} fallback format succeeded for ${docType}`);
-                        break;
-                    }
-                } catch (fallbackErr) {
-                    console.warn(`[DocVerify] Model ${modelName} fallback format failed:`, fallbackErr.message);
-                }
+                console.warn(`[DocVerify] Model ${modelName} failed (${errMsg}). Cascading to next model...`);
+                // Fast failover to next model in cascade without redundant retries
+                continue;
             }
         }
 

@@ -48,6 +48,7 @@ const franchiseSchema = new mongoose.Schema({
     driverName: { type: String, default: '' },
     driverContact: { type: String, default: '' },
     driverLicenseNo: { type: String, default: '' },
+    driverLicenseSerialNo: { type: String, default: '' },
     driverLicenseExpiryDate: { type: Date },
     driverDob: { type: Date },
     driverDlCodes: { type: String, default: 'A, A1' },

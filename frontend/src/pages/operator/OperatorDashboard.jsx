@@ -19,6 +19,7 @@ import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import OperatorGuideModal from '../../components/operator/OperatorGuideModal';
 import LanguagePreferenceModal from '../../components/operator/LanguagePreferenceModal';
 import FeedbackModal from '../../components/common/FeedbackModal';
+import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
 import { useNotifications } from '../../context/NotificationContext';
 import { 
   getNotificationVisuals, 
@@ -1282,61 +1283,16 @@ const OperatorDashboard = () => {
 
       {/* Details Modal */}
       {isDetailsOpen && selectedUnit && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 animate-in fade-in duration-200" onClick={() => setIsDetailsOpen(false)} />
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-lg rounded-lg shadow-xl relative z-10 p-5 sm:p-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-              <h2 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{t('dashboard.modalSpecsTitle', 'Unit Specifications')}</h2>
-              <button onClick={() => setIsDetailsOpen(false)} className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#B91C1C] p-1.5 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] cursor-pointer"><X size={18} /></button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
-              <div className="sm:col-span-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]">
-                <p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.operator', 'Operator')}</p>
-                <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.fullName}</p>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.toda', 'TODA')}</p><p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.todaName}</p></div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.routeZone', 'Route Zone')}</p><p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.zone ? formatZoneLabel(selectedUnit.zone) : 'N/A'}</p></div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.plateNo', 'Plate No.')}</p><p className="font-mono font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.plateNo || 'N/A'}</p></div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.makeModel', 'Make & Model')}</p><p className="font-medium text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.make} ({selectedUnit?.made})</p></div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.motorNumber', 'Motor Number')}</p><p className="font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.motorNo}</p></div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]"><p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">{t('dashboard.chassisNumber', 'Chassis Number')}</p><p className="font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.chassisNo}</p></div>
-              {selectedUnit?.cedulaSerialNo && (
-                <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]">
-                  <p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs">Cedula / CTC No.</p>
-                  <p className="font-mono font-medium text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{selectedUnit?.cedulaSerialNo}</p>
-                </div>
-              )}
-              {selectedUnit?.officialReceiptNo && (
-                <div className="bg-[#F0FDF4] dark:bg-[#052E16]/40 p-3 rounded-lg border border-[#BBF7D0] dark:border-[#166534]">
-                  <p className="text-[#15803D] dark:text-[#4ADE80] font-semibold uppercase text-xs">Official Receipt (OR) No.</p>
-                  <p className="font-mono font-bold text-xs sm:text-sm text-[#15803D] dark:text-[#4ADE80] mt-0.5">{selectedUnit?.officialReceiptNo} (₱{selectedUnit?.amountPaid || 500})</p>
-                </div>
-              )}
-              {selectedUnit?.cedulaUrl && (
-                <div className="sm:col-span-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC]/60 dark:border-[#2E2A27]">
-                  <p className="text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs mb-1.5">Cedula / CTC Document</p>
-                  <a href={selectedUnit.cedulaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline">
-                    <FileText size={14} /> View Uploaded Cedula
-                  </a>
-                </div>
-              )}
-            </div>
-            {selectedUnit?.status === 'Active' && (
-              <button 
-                onClick={() => {
-                  setECopyUnit(selectedUnit);
-                  setIsECopyModalOpen(true);
-                  setIsDetailsOpen(false);
-                }} 
-                className="w-full mt-3 py-2.5 min-h-[44px] bg-[#15803D] hover:bg-[#166534] text-white font-bold rounded-lg text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs active:scale-95"
-              >
-                <Award size={16} />
-                <span>View E-Copy (Approved MTOP Certificate)</span>
-              </button>
-            )}
-            <button onClick={() => setIsDetailsOpen(false)} className="w-full mt-2.5 py-2.5 min-h-[44px] bg-[#1F1D1B] hover:bg-black dark:bg-[#2E2A27] dark:hover:bg-[#3E3835] text-white font-bold rounded-lg text-xs sm:text-sm transition-colors cursor-pointer">{t('dashboard.btnClose', 'Close')}</button>
-          </div>
-        </div>
+        <ApplicationSummaryModal
+          isOpen={isDetailsOpen}
+          onClose={() => setIsDetailsOpen(false)}
+          application={selectedUnit}
+          title={t('dashboard.modalSpecsTitle', 'Unit Specifications')}
+          onViewECopy={(unit) => {
+            setECopyUnit(unit);
+            setIsECopyModalOpen(true);
+          }}
+        />
       )}
 
       {/* Official MTOP E-Copy Modal with Approved Watermark */}

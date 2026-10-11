@@ -218,7 +218,7 @@ const AdminApplicationSummaryModal = ({
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Place Issued</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.cedulaAddress || 'Gasan, Marinduque'}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.cedulaAddress || '—'}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Date Applied</span>
@@ -249,7 +249,7 @@ const AdminApplicationSummaryModal = ({
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">OR / CR No.</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.orCrNo || '—'}</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.orCrNo || franchise.crNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Registration Expiry</span>
@@ -270,23 +270,27 @@ const AdminApplicationSummaryModal = ({
                     </span>
                   )}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Designation</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
                       {franchise.isOperatorDriver ? 'Operator (Self)' : 'Designated Driver'}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">License No.</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.driverLicenseNo || '—'}</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.driverLicenseNo || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Card Serial No. (Back)</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.driverLicenseSerialNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">License Expiry</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.driverLicenseExpiryDate)}</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formatDate(franchise.driverLicenseExpiryDate)}</span>
                   </div>
                   {!franchise.isOperatorDriver && franchise.driverName && (
-                    <div className="col-span-2 sm:col-span-3">
+                    <div className="col-span-2 sm:col-span-4">
                       <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Driver Name &amp; Contact</span>
                       <span className="font-bold text-slate-800 dark:text-slate-200">
                         {franchise.driverName} {franchise.driverContact ? `(${franchise.driverContact})` : ''}
@@ -311,6 +315,12 @@ const AdminApplicationSummaryModal = ({
                   </span>
                   <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Clearance No:</span>
                   <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.brgyClearanceNo || '—'}</span>
+                  {franchise.brgyIssuer && (
+                    <>
+                      <span className="text-slate-400 dark:text-slate-500 block text-[10px] mt-1">Issuing Official:</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.brgyIssuer}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -323,8 +333,9 @@ const AdminApplicationSummaryModal = ({
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { label: 'OR / CR', url: franchise.orCrUrl },
-                { label: "Driver's License", url: franchise.licenseUrl },
+                { label: 'OR / CR', url: franchise.orCrUrl || franchise.crUrl },
+                { label: "Driver's License (Front)", url: franchise.licenseUrl },
+                { label: "Driver's License (Back)", url: franchise.licenseBackUrl },
                 { label: 'Cedula (CTC)', url: franchise.cedulaUrl },
                 { label: 'TODA Endorsement', url: franchise.todaEndorsementUrl },
                 { label: 'Brgy Clearance', url: franchise.brgyClearanceUrl }
