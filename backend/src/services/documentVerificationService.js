@@ -756,9 +756,10 @@ async function extractTodaRosterFromDocument(input) {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const prompt = `You are an expert OCR specialist for Philippine Tricycle Operators and Drivers Association (TODA) official masterlists, member rosters, and endorsement sheets.
-Analyze this document image or PDF carefully and extract all listed members, operators, or drivers along with any associated unit numbers, body numbers, or plate numbers.
+Analyze this document image or PDF carefully and extract ONLY the full clean names of each listed member, operator, or driver.
 
-EXCLUSION RULES:
+EXCLUSION RULES (CRITICAL):
+- DO NOT extract unit numbers, body numbers, motor numbers, or plate numbers. Focus ONLY on member names.
 - DO NOT extract any monetary fees, dues, or payment figures.
 - DO NOT extract general signatures or municipal officer names.
 
@@ -769,9 +770,7 @@ Return ONLY a valid JSON object matching this schema:
   "totalMembersDetected": 0,
   "members": [
     {
-      "name": "Full name of the member/operator",
-      "unitNo": "Unit number or Body number if listed, or empty string",
-      "plateNo": "Plate number or Motor number if listed, or empty string"
+      "name": "Full clean name of the member/operator/driver (e.g. JUAN M. DELA CRUZ)"
     }
   ],
   "notes": "Short observation regarding image clarity and list format"
@@ -824,6 +823,10 @@ Return raw JSON only, no markdown, no surrounding text.`;
 
         const parsed = JSON.parse(cleanJson);
         if (parsed && Array.isArray(parsed.members)) {
+            parsed.members = parsed.members.map(m => {
+                const nameStr = (typeof m === 'string' ? m : (m && m.name ? m.name : '')).trim();
+                return { name: nameStr };
+            }).filter(m => Boolean(m.name));
             parsed.totalMembersDetected = parsed.members.length;
         }
         return parsed;

@@ -637,18 +637,16 @@ const ValidateTODA = () => {
                                     <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                                       <table className="w-full text-left border-collapse text-xs min-w-[620px]">
                                         <thead>
-                                          <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase">
-                                            <th className="p-2.5 pl-4 w-10">#</th>
-                                            <th className="p-2.5">Extracted Member Name</th>
-                                            <th className="p-2.5">Body / Unit #</th>
-                                            <th className="p-2.5">Plate No</th>
-                                            <th className="p-2.5 pr-4">App Registered Status</th>
+                                          <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase tracking-wider">
+                                            <th className="p-2.5 pl-4 w-12 text-center">#</th>
+                                            <th className="p-2.5">Certified Member Name</th>
+                                            <th className="p-2.5 pr-4 text-right">App Registration Status</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                                           {(!toda.latestSubmission.extractedMembers || toda.latestSubmission.extractedMembers.length === 0) ? (
                                             <tr>
-                                              <td colSpan="5" className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                                              <td colSpan="3" className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
                                                 <p className="font-semibold text-sm mb-1 text-[#1F1D1B] dark:text-[#EAE7E1]">0 member records digitized from this file.</p>
                                                 <p className="text-[11px] mb-3">This file was uploaded as a document attachment without digitized rows.</p>
                                                 <button
@@ -675,13 +673,16 @@ const ValidateTODA = () => {
                                                 <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
                                                   <td className="p-2.5 pl-4 font-mono text-[#6B6761]">{idx + 1}</td>
                                                   <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                                    {m.name}
+                                                    <div className="flex items-center gap-2">
+                                                      <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#EAE7E1] flex items-center justify-center text-[10px] font-bold shrink-0">
+                                                        {(m.name || 'M').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
+                                                      </span>
+                                                      <span>{m.name}</span>
+                                                    </div>
                                                   </td>
-                                                  <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
-                                                  <td className="p-2.5 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
-                                                  <td className="p-2.5 pr-4">
+                                                  <td className="p-2.5 pr-4 text-right">
                                                     {matchedUser ? (
-                                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                                      <div className="inline-flex items-center gap-1.5 flex-wrap justify-end">
                                                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                                                           <CheckCircle2 size={11} />
                                                           <span>Registered User</span>
@@ -1031,93 +1032,163 @@ const ValidateTODA = () => {
 
       {/* OCR EXTRACTED MEMBERS MODAL */}
       {selectedSubmissionOCR && (() => {
-        const modalMembers = (selectedSubmissionOCR.extractedMembers || []).filter(m => {
+        const rawMembers = selectedSubmissionOCR.extractedMembers || [];
+        const modalMembers = rawMembers.filter(m => {
           if (!ocrModalSearch.trim()) return true;
           const q = ocrModalSearch.toLowerCase().trim();
-          return (m.name || '').toLowerCase().includes(q) ||
-                 (m.unitNo || '').toLowerCase().includes(q) ||
-                 (m.plateNo || '').toLowerCase().includes(q);
+          return (m.name || '').toLowerCase().includes(q);
         });
 
         return (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-2xl w-full p-5 space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm sm:text-base">
-                  <Sparkles size={18} />
-                  <span>AI OCR Digitized Masterlist Members</span>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-2xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center border border-[#9E2A2B]/20">
+                    <Sparkles size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
+                      TODA Masterlist — AI Digitized Members
+                    </h3>
+                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                      Certified driver &amp; operator roster extracted from official documentation
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => { setSelectedSubmissionOCR(null); setOcrModalSearch(''); }}
-                  className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white p-1 rounded cursor-pointer"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                  title="Close modal"
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] gap-2">
-                <div>
-                  <p className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedSubmissionOCR.fileName}</p>
-                  <p className="text-[#6B6761] dark:text-[#A8A29E]">
-                    Submitted by: <strong>{selectedSubmissionOCR.presidentName}</strong> ({selectedSubmissionOCR.todaAssociation || 'TODA'}) on {new Date(selectedSubmissionOCR.createdAt).toLocaleDateString()}
-                  </p>
+              {/* Document Overview Card */}
+              <div className="bg-gradient-to-br from-[#F6F5F3] via-white to-[#F6F5F3] dark:from-[#14110F] dark:via-[#1A1816] dark:to-[#14110F] p-3 sm:p-3.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
+                <div className="flex items-start sm:items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                    <span className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1] truncate">
+                      {selectedSubmissionOCR.fileName}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#9E2A2B]/25 dark:text-[#EAE7E1] border border-[#9E2A2B]/20">
+                      {selectedSubmissionOCR.todaAssociation || 'TODA'}
+                    </span>
+                    <StatusBadge status={selectedSubmissionOCR.status === 'Approved' ? 'Active' : 'Pending'} label={selectedSubmissionOCR.status} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={selectedSubmissionOCR.status === 'Approved' ? 'Active' : 'Pending'} label={selectedSubmissionOCR.status} />
-                  <span className="font-bold px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                    {selectedSubmissionOCR.extractedCount || selectedSubmissionOCR.extractedMembers?.length || 0} Members
+
+                <div className="flex items-center justify-between gap-2 text-[11px] text-[#6B6761] dark:text-[#A8A29E] pt-1 border-t border-[#E4E1DC]/60 dark:border-[#2E2A27]/60 flex-wrap">
+                  <div>
+                    Endorsed by: <strong className="text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedSubmissionOCR.presidentName}</strong> • {new Date(selectedSubmissionOCR.createdAt).toLocaleDateString()}
+                  </div>
+                  <span className="font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px]">
+                    {selectedSubmissionOCR.extractedCount || rawMembers.length || 0} Total Certified
                   </span>
                 </div>
               </div>
 
-              {/* Search in modal */}
+              {/* Search Filter */}
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761]" />
                 <input
                   type="text"
-                  placeholder="Filter extracted members by name, unit #, or plate #..."
+                  placeholder="Filter certified members by name..."
                   value={ocrModalSearch}
                   onChange={(e) => setOcrModalSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
+                  className="w-full pl-8 pr-20 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] transition-colors"
                 />
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] bg-white dark:bg-[#1C1917] px-1.5 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
+                  {modalMembers.length} {modalMembers.length === 1 ? 'member' : 'members'}
+                </span>
               </div>
 
-              <div className="max-h-72 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              {/* Table */}
+              <div className="max-h-72 overflow-y-auto rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] font-bold uppercase">
+                  <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[11px] tracking-wider z-10">
                     <tr>
                       <th className="p-2.5 pl-3 w-10">#</th>
-                      <th className="p-2.5">Extracted Member Name</th>
-                      <th className="p-2.5">Unit / Body #</th>
-                      <th className="p-2.5 pr-3">Plate No</th>
+                      <th className="p-2.5">Certified Member Name</th>
+                      <th className="p-2.5 pr-3 text-right">App Registration Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                     {modalMembers.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="p-6 text-center text-xs text-[#6B6761]">
-                          {selectedSubmissionOCR.extractedMembers?.length === 0
-                            ? 'No member records digitized from this file yet.'
-                            : 'No members match the search filter.'}
+                        <td colSpan="3" className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                          <FileText size={24} className="mx-auto mb-2 opacity-30 text-[#6B6761]" />
+                          <p className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                            {rawMembers.length === 0
+                              ? 'No member records digitized from this file yet.'
+                              : 'No members match the search query.'}
+                          </p>
+                          <p className="text-[11px] mt-0.5">
+                            {rawMembers.length === 0
+                              ? 'You can trigger an AI OCR re-scan below.'
+                              : 'Try searching with a different name spelling.'}
+                          </p>
                         </td>
                       </tr>
                     ) : (
-                      modalMembers.map((m, idx) => (
-                        <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
-                          <td className="p-2.5 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
-                          <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
-                          <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
-                          <td className="p-2.5 pr-3 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
-                        </tr>
-                      ))
+                      modalMembers.map((m, idx) => {
+                        const cleanMName = (m.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
+                        const matchedUser = users.find(u => {
+                          const cleanUName = (u.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
+                          return cleanUName && (cleanUName.includes(cleanMName) || cleanMName.includes(cleanUName));
+                        });
+                        const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
+                        const initials = (m.name || 'M')
+                          .split(' ')
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map(w => w[0])
+                          .join('')
+                          .toUpperCase();
+
+                        return (
+                          <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                            <td className="p-2.5 pl-3 font-mono text-[#6B6761] dark:text-[#A8A29E]">{idx + 1}</td>
+                            <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center text-[10px] font-bold shrink-0">
+                                  {initials}
+                                </span>
+                                <span>{m.name}</span>
+                              </div>
+                            </td>
+                            <td className="p-2.5 pr-3 text-right">
+                              {matchedUser ? (
+                                <div className="inline-flex items-center gap-1.5 flex-wrap justify-end">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                                    <CheckCircle2 size={11} />
+                                    <span>Registered User</span>
+                                  </span>
+                                  {franchise && <StatusBadge status={franchise.status} />}
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
+                                  Not Registered in App
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2">
-                <div className="flex items-center gap-2">
+              {/* Actions Footer */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                <div className="flex items-center gap-3">
                   {selectedSubmissionOCR.filePath && (
                     <a
                       href={selectedSubmissionOCR.filePath.startsWith('http') ? selectedSubmissionOCR.filePath : `${import.meta.env.VITE_API_URL}/${selectedSubmissionOCR.filePath}`}
@@ -1133,7 +1204,7 @@ const ValidateTODA = () => {
                     type="button"
                     onClick={() => handleRescan(selectedSubmissionOCR._id)}
                     disabled={isRescanning}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#6B6761] hover:text-[#1F1D1B] cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white cursor-pointer"
                   >
                     <RefreshCw size={12} className={isRescanning ? 'animate-spin' : ''} />
                     <span>Re-scan AI OCR</span>
@@ -1148,7 +1219,7 @@ const ValidateTODA = () => {
                         handleApprove(selectedSubmissionOCR._id);
                         setSelectedSubmissionOCR(prev => ({ ...prev, status: 'Approved' }));
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer transition-colors"
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
                     >
                       Approve &amp; Ingest
                     </button>
@@ -1156,7 +1227,7 @@ const ValidateTODA = () => {
                   <button
                     type="button"
                     onClick={() => { setSelectedSubmissionOCR(null); setOcrModalSearch(''); }}
-                    className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white text-xs font-bold cursor-pointer"
+                    className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:hover:bg-white dark:text-[#14110F] text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
                   >
                     Close Viewer
                   </button>

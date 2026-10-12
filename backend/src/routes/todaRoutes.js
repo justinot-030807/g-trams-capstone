@@ -71,9 +71,7 @@ router.post('/scan-roster', protect, authorize('admin', 'toda president', 'toda_
         }
 
         const members = ocr.members.map(m => ({
-            name: (m.name || '').trim(),
-            unitNo: (m.unitNo || '').trim(),
-            plateNo: (m.plateNo || '').trim(),
+            name: (m.name || (typeof m === 'string' ? m : '')).trim(),
             confidence: 0.95
         })).filter(m => Boolean(m.name));
 
@@ -109,9 +107,7 @@ router.post('/upload', protect, authorize('admin', 'toda president', 'toda_presi
                     : req.body.extractedMembers;
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     extractedMembers = parsed.map(m => ({
-                        name: (m.name || '').trim(),
-                        unitNo: (m.unitNo || '').trim(),
-                        plateNo: (m.plateNo || '').trim(),
+                        name: (m.name || (typeof m === 'string' ? m : '')).trim(),
                         confidence: m.confidence || 0.95
                     })).filter(m => Boolean(m.name));
                     extractedCount = extractedMembers.length;
@@ -199,9 +195,7 @@ router.put('/submissions/:id/rescan', protect, authorize('admin'), async (req, r
         }
 
         const extractedMembers = ocr.members.map(m => ({
-            name: (m.name || '').trim(),
-            unitNo: (m.unitNo || '').trim(),
-            plateNo: (m.plateNo || '').trim(),
+            name: (m.name || (typeof m === 'string' ? m : '')).trim(),
             confidence: 0.95
         })).filter(m => Boolean(m.name));
 

@@ -45,7 +45,7 @@ const SubmitMembers = () => {
   const [detectedToda, setDetectedToda] = useState('');
   const [ocrNotes, setOcrNotes] = useState('');
   const [scanWarning, setScanWarning] = useState('');
-  const [newMemberInput, setNewMemberInput] = useState({ name: '', unitNo: '', plateNo: '' });
+  const [newMemberInput, setNewMemberInput] = useState({ name: '' });
   const [showAddMemberRow, setShowAddMemberRow] = useState(false);
   const [selectedHistoryOCR, setSelectedHistoryOCR] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -207,19 +207,17 @@ const SubmitMembers = () => {
 
   const handleAddExtractedMember = () => {
     if (!newMemberInput.name.trim()) {
-      showToast('Please enter member name.', 'error');
+      showToast('Please enter member full name.', 'error');
       return;
     }
     setExtractedRoster(prev => [
       ...prev,
       {
         name: newMemberInput.name.trim(),
-        unitNo: newMemberInput.unitNo.trim(),
-        plateNo: newMemberInput.plateNo.trim(),
         confidence: 1.0
       }
     ]);
-    setNewMemberInput({ name: '', unitNo: '', plateNo: '' });
+    setNewMemberInput({ name: '' });
     setShowAddMemberRow(false);
     showToast('Member added to roster list.', 'success');
   };
@@ -981,54 +979,69 @@ const SubmitMembers = () => {
 
                     {/* Digitized Members Live Preview */}
                     {extractedRoster.length > 0 && !isScanning && (
-                      <div className="mt-5 border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-lg p-3.5 sm:p-4 text-left space-y-3">
+                      <div className="mt-5 border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 bg-gradient-to-br from-[#9E2A2B]/5 via-amber-500/5 to-transparent dark:from-[#9E2A2B]/10 dark:via-[#1A1816] dark:to-transparent rounded-xl p-3.5 sm:p-4 text-left space-y-3 shadow-xs">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div className="flex items-center gap-2">
-                            <Sparkles size={16} className="text-emerald-600 dark:text-emerald-400" />
-                            <h3 className="text-xs sm:text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                            <div className="w-7 h-7 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center border border-[#9E2A2B]/20">
+                              <Sparkles size={14} />
+                            </div>
+                            <h3 className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                               Digitized Masterlist Preview ({extractedRoster.length} Members Detected)
                             </h3>
                           </div>
                           {detectedToda && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 px-2.5 py-0.5 rounded-full border border-[#9E2A2B]/20">
                               {detectedToda}
                             </span>
                           )}
                         </div>
                         <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                          Review the detected members below. You may add or remove entries before submitting to LGU Admin.
+                          Review the detected members below. You may manually add or remove names before submitting to LGU Admin.
                         </p>
 
-                        <div className="max-h-60 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917]">
+                        <div className="max-h-60 overflow-y-auto rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917]">
                           <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                              <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase">
+                            <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[11px] tracking-wider z-10">
+                              <tr>
                                 <th className="p-2.5 pl-3 w-10">#</th>
                                 <th className="p-2.5">Member Full Name</th>
-                                <th className="p-2.5">Body / Unit #</th>
-                                <th className="p-2.5">Plate No</th>
-                                <th className="p-2.5 pr-3 text-right">Action</th>
+                                <th className="p-2.5 pr-3 text-right w-16">Action</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                              {extractedRoster.map((m, idx) => (
-                                <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
-                                  <td className="p-2 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
-                                  <td className="p-2 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
-                                  <td className="p-2 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
-                                  <td className="p-2 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
-                                  <td className="p-2 pr-3 text-right">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveExtractedMember(idx)}
-                                      className="text-[#6B6761] hover:text-red-500 p-1 cursor-pointer"
-                                      title="Remove from list"
-                                    >
-                                      <X size={13} />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
+                              {extractedRoster.map((m, idx) => {
+                                const initials = (m.name || 'M')
+                                  .split(' ')
+                                  .filter(Boolean)
+                                  .slice(0, 2)
+                                  .map(w => w[0])
+                                  .join('')
+                                  .toUpperCase();
+
+                                return (
+                                  <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                                    <td className="p-2.5 pl-3 font-mono text-[#6B6761] dark:text-[#A8A29E]">{idx + 1}</td>
+                                    <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center text-[10px] font-bold shrink-0">
+                                          {initials}
+                                        </span>
+                                        <span>{m.name}</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-2.5 pr-3 text-right">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveExtractedMember(idx)}
+                                        className="text-[#6B6761] hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                                        title="Remove from list"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -1038,41 +1051,33 @@ const SubmitMembers = () => {
                           <button
                             type="button"
                             onClick={() => setShowAddMemberRow(prev => !prev)}
-                            className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                            className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-1"
                           >
-                            {showAddMemberRow ? '– Cancel adding entry' : '+ Add missing member manually'}
+                            <span>{showAddMemberRow ? '– Cancel manual entry' : '+ Add missing member name manually'}</span>
                           </button>
                         </div>
 
                         {showAddMemberRow && (
-                          <div className="flex items-center gap-2 pt-1 flex-wrap bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                          <div className="flex items-center gap-2 pt-1 bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <input
                               type="text"
-                              placeholder="Full Name (e.g. Juan Dela Cruz)"
+                              placeholder="Full Name (e.g. Dela Cruz, Juan A.)"
                               value={newMemberInput.name}
-                              onChange={(e) => setNewMemberInput(p => ({ ...p, name: e.target.value }))}
-                              className="flex-1 min-w-[140px] px-2.5 py-1.5 text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Unit/Body #"
-                              value={newMemberInput.unitNo}
-                              onChange={(e) => setNewMemberInput(p => ({ ...p, unitNo: e.target.value }))}
-                              className="w-24 px-2.5 py-1.5 text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Plate #"
-                              value={newMemberInput.plateNo}
-                              onChange={(e) => setNewMemberInput(p => ({ ...p, plateNo: e.target.value }))}
-                              className="w-24 px-2.5 py-1.5 text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
+                              onChange={(e) => setNewMemberInput({ name: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddExtractedMember();
+                                }
+                              }}
+                              className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
                             />
                             <button
                               type="button"
                               onClick={handleAddExtractedMember}
-                              className="px-3 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded text-xs font-bold cursor-pointer"
+                              className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-xs"
                             >
-                              Add
+                              Add to List
                             </button>
                           </div>
                         )}
@@ -1352,58 +1357,81 @@ const SubmitMembers = () => {
 
       {/* DIGITIZED MEMBERS HISTORY VIEWER MODAL */}
       {selectedHistoryOCR && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-xl w-full p-5 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm sm:text-base">
-                <Sparkles size={18} />
-                <span>Digitized Masterlist Members</span>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center border border-[#9E2A2B]/20">
+                  <Sparkles size={16} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
+                    Digitized Masterlist Members
+                  </h3>
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                    Endorsed roster records from submitted document
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedHistoryOCR(null)}
-                className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white p-1 rounded cursor-pointer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                title="Close modal"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="flex items-center justify-between text-xs bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs bg-gradient-to-br from-[#F6F5F3] via-white to-[#F6F5F3] dark:from-[#14110F] dark:via-[#1A1816] dark:to-[#14110F] p-3 sm:p-3.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] gap-2">
               <div>
                 <p className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedHistoryOCR.fileName}</p>
-                <p className="text-[#6B6761] dark:text-[#A8A29E]">
+                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
                   Submitted on {new Date(selectedHistoryOCR.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <span className="font-bold px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                {selectedHistoryOCR.extractedCount || selectedHistoryOCR.extractedMembers?.length || 0} Members
+              <span className="font-bold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[11px]">
+                {selectedHistoryOCR.extractedCount || selectedHistoryOCR.extractedMembers?.length || 0} Certified Members
               </span>
             </div>
 
-            <div className="max-h-72 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <div className="max-h-72 overflow-y-auto rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
               <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] font-semibold">
+                <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[11px] tracking-wider z-10">
+                  <tr>
                     <th className="p-2.5 pl-3 w-10">#</th>
-                    <th className="p-2.5">Member Full Name</th>
-                    <th className="p-2.5">Unit #</th>
-                    <th className="p-2.5 pr-3">Plate No</th>
+                    <th className="p-2.5">Certified Member Name</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                  {(selectedHistoryOCR.extractedMembers || []).map((m, idx) => (
-                    <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
-                      <td className="p-2.5 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
-                      <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
-                      <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
-                      <td className="p-2.5 pr-3 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
-                    </tr>
-                  ))}
+                  {(selectedHistoryOCR.extractedMembers || []).map((m, idx) => {
+                    const initials = (m.name || 'M')
+                      .split(' ')
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map(w => w[0])
+                      .join('')
+                      .toUpperCase();
+
+                    return (
+                      <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                        <td className="p-2.5 pl-3 font-mono text-[#6B6761] dark:text-[#A8A29E]">{idx + 1}</td>
+                        <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {initials}
+                            </span>
+                            <span>{m.name}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
               {selectedHistoryOCR.filePath && (
                 <a
                   href={selectedHistoryOCR.filePath.startsWith('http') ? selectedHistoryOCR.filePath : `${import.meta.env.VITE_API_URL}/${selectedHistoryOCR.filePath}`}
@@ -1418,7 +1446,7 @@ const SubmitMembers = () => {
               <button
                 type="button"
                 onClick={() => setSelectedHistoryOCR(null)}
-                className="px-4 py-2 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white text-xs font-bold cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:hover:bg-white dark:text-[#14110F] text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
               >
                 Close Viewer
               </button>
@@ -1426,6 +1454,7 @@ const SubmitMembers = () => {
           </div>
         </div>
       )}
+
 
       {/* Centered Feedback Modal */}
       <FeedbackModal
