@@ -17,9 +17,12 @@ import { FranchiseReviewSkeleton } from '../../components/skeleton';
 
 const REJECT_REASONS = [
   'Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)',
-  'Missing or Expired LTO Official Receipt / Certificate of Registration (OR/CR)',
-  'Chassis Serial Number mismatch between application form and OR/CR document',
-  'Motor / Engine Serial Number mismatch between application form and OR/CR document',
+  'Missing or Expired LTO Official Receipt (OR)',
+  'Missing or Invalid LTO Certificate of Registration (CR)',
+  'TODA and Barangay Jurisdiction Mismatch (Applicant address is outside TODA operational routes)',
+  'Certificate of Registration (CR) is in third-party name without Deed of Sale / Lease Agreement',
+  'Chassis Serial Number mismatch between application form and CR/OR document',
+  'Motor / Engine Serial Number mismatch between application form and CR/OR document',
   'Blurry or unreadable document photo / scan',
   'Expired or invalid Professional Driver\'s License',
   'Missing or Expired TODA Endorsement Certificate for specified zone',
@@ -60,7 +63,7 @@ const FranchiseReviewPage = () => {
   const [reviewLock, setReviewLock] = useState({ isLocked: false, reviewerName: '' });
 
   // Document Viewer State
-  const [activeDocKey, setActiveDocKey] = useState('orCrDocument');
+  const [activeDocKey, setActiveDocKey] = useState('crDocument');
   const [isDocLoading, setIsDocLoading] = useState(true);
   const [docError, setDocError] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
@@ -342,8 +345,16 @@ const FranchiseReviewPage = () => {
 
   const currentDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
 
+  const crDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
+    d.docType === 'cr' || d.field === 'plateNo' || d.field === 'motorNo' || d.field === 'chassisNo' || d.field === 'registeredOwner' || d.field?.includes('crNo') || d.field?.includes('crDate')
+  );
+
+  const orDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
+    d.docType === 'or' || d.field === 'orCrExpiryDate' || d.field?.includes('orNo') || d.field?.includes('orDate') || d.field === 'amountPaid'
+  );
+
   const orCrDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
-    d.docType === 'orCr' || d.field?.includes('orCr') || d.field === 'plateNo' || d.field === 'motorNo' || d.field === 'chassisNo'
+    d.docType === 'orCr' || d.docType === 'cr' || d.docType === 'or' || d.field?.includes('orCr') || d.field === 'plateNo' || d.field === 'motorNo' || d.field === 'chassisNo' || d.field === 'registeredOwner'
   );
 
   const licenseDiscrepancies = (currentApp?.aiDiscrepancies || []).filter(d => 
@@ -364,11 +375,13 @@ const FranchiseReviewPage = () => {
 
   const getDocKeyForDiscrepancy = (d) => {
     if (d?.docType === 'license' || d?.field?.includes('driverLicense') || d?.field?.includes('license')) return 'license';
-    if (d?.docType === 'orCr' || d?.field?.includes('orCr') || d?.field === 'plateNo' || d?.field === 'motorNo' || d?.field === 'chassisNo') return 'orCrDocument';
+    if (d?.docType === 'or' || d?.field === 'orCrExpiryDate' || d?.field?.includes('orNo') || d?.field?.includes('orDate')) return 'orDocument';
+    if (d?.docType === 'cr' || d?.field === 'plateNo' || d?.field === 'motorNo' || d?.field === 'chassisNo' || d?.field === 'registeredOwner' || d?.field?.includes('cr')) return 'crDocument';
+    if (d?.docType === 'orCr') return 'crDocument';
     if (d?.docType === 'cedula' || d?.field?.includes('cedula')) return 'cedulaDoc';
     if (d?.docType === 'toda' || d?.field?.includes('toda')) return 'todaEndorsement';
     if (d?.docType === 'brgy' || d?.field?.includes('brgy')) return 'brgyClearance';
-    return 'orCrDocument';
+    return 'crDocument';
   };
 
   const handleSelectDoc = (key) => {
@@ -998,24 +1011,76 @@ const FranchiseReviewPage = () => {
                             </p>
                           )}
 
-                          {/* TODA Association Roster Verification Badge */}
+                          {/* TODA Association Roster Verification Badge (3 States) */}
                           {rc.todaName && rc.todaName !== 'NON-TODA' && (
                             <div className={`text-[11px] px-2.5 py-1.5 rounded-md border flex items-center justify-between gap-1.5 font-bold ${
                               rc.todaStatus === 'verified_member'
                                 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'
-                                : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300'
-                            }`}>
-                              <span className="font-semibold flex items-center gap-1.5">
+                                : rc.todaStatus === 'no_roster_on_file'
+                                ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                                : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300'
+                            }`}
+                            title={rc.todaRosterMessage || ''}
+                            >
+                              <span className="font-semibold flex items-center gap-1.5 shrink-0">
                                 {rc.todaStatus === 'verified_member' ? (
                                   <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                ) : rc.todaStatus === 'no_roster_on_file' ? (
+                                  <Info size={13} className="text-slate-500 dark:text-slate-400 shrink-0" />
                                 ) : (
-                                  <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                                  <AlertTriangle size={13} className="text-rose-600 dark:text-rose-400 shrink-0" />
                                 )}
                                 TODA Roster:
                               </span>
                               <span className="truncate">
-                                {rc.todaStatus === 'verified_member' ? '✓ Verified in Official TODA Roster' : '⚠ Flagged: Not in Official TODA Roster'}
+                                {rc.todaStatus === 'verified_member' 
+                                  ? '✓ Verified in Official TODA Roster' 
+                                  : rc.todaStatus === 'no_roster_on_file'
+                                  ? `ℹ No Roster on File (${rc.todaName})`
+                                  : '⚠ Flagged: Not in Official TODA Roster'}
                               </span>
+                            </div>
+                          )}
+
+                          {/* TODA Association Jurisdiction Route Validation Badge */}
+                          {rc.todaName && rc.todaName !== 'NON-TODA' && (
+                            <div className={`text-[11px] px-2.5 py-1.5 rounded-md border flex items-center justify-between gap-1.5 font-bold ${
+                              rc.jurisdictionStatus === 'match'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'
+                                : rc.jurisdictionStatus === 'mismatch'
+                                ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300'
+                                : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                            }`}
+                            title={rc.jurisdictionWarning || ''}
+                            >
+                              <span className="font-semibold flex items-center gap-1.5 shrink-0">
+                                {rc.jurisdictionStatus === 'match' ? (
+                                  <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                ) : rc.jurisdictionStatus === 'mismatch' ? (
+                                  <AlertTriangle size={13} className="text-rose-600 dark:text-rose-400 shrink-0" />
+                                ) : (
+                                  <Info size={13} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                                )}
+                                Jurisdiction:
+                              </span>
+                              <span className="truncate">
+                                {rc.jurisdictionStatus === 'match'
+                                  ? `✓ Valid (${currentApp?.barangay || currentApp?.address || 'Barangay'})`
+                                  : rc.jurisdictionStatus === 'mismatch'
+                                  ? `⚠ Outside ${rc.todaName} Routes`
+                                  : 'Standard Route'}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Jurisdiction Mismatch Warning Callout */}
+                          {rc.jurisdictionStatus === 'mismatch' && rc.jurisdictionWarning && (
+                            <div className="p-2 rounded-md bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-[11px] text-rose-800 dark:text-rose-300 flex items-start gap-1.5 animate-fadeIn">
+                              <AlertCircle size={13} className="shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                              <div>
+                                <span className="font-bold">Barangay Jurisdiction Mismatch:</span>
+                                <p className="mt-0.5 leading-snug">{rc.jurisdictionWarning}</p>
+                              </div>
                             </div>
                           )}
 
@@ -1066,7 +1131,10 @@ const FranchiseReviewPage = () => {
                   <option value="motorNo">Motor / Engine Number</option>
                   <option value="plateNo">Plate Number</option>
                   <option value="cedulaDoc">Community Tax Certificate (Cedula) Document</option>
+                  <option value="crDocument">Certificate of Registration (CR)</option>
+                  <option value="orDocument">Official Receipt (OR)</option>
                   <option value="orCrDocument">Tricycle OR/CR Document (LTO)</option>
+                  <option value="jurisdiction">TODA / Barangay Jurisdiction Mismatch</option>
                   <option value="license">Driver's License</option>
                   <option value="todaEndorsement">TODA Endorsement Certificate</option>
                   <option value="brgyClearance">Barangay Clearance</option>
@@ -1217,11 +1285,11 @@ const FranchiseReviewPage = () => {
                   </div>
                 )}
 
-                {/* OR/CR Details */}
-                {activeDocKey === 'orCrDocument' && (
+                {/* 1. LTO Certificate of Registration (CR) Details */}
+                {(activeDocKey === 'crDocument' || activeDocKey === 'orCrDocument') && (
                   <div className="space-y-1.5 text-xs">
-                    {/* Discrepancy Alert Accordion */}
-                    {orCrDiscrepancies.length > 0 && (
+                    {/* CR Discrepancy Alert Accordion */}
+                    {crDiscrepancies.length > 0 && (
                       <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden mb-2">
                         <div 
                           onClick={() => setIsDocDiscrepancyOpen(prev => !prev)}
@@ -1229,7 +1297,7 @@ const FranchiseReviewPage = () => {
                         >
                           <div className="flex items-center gap-1.5 min-w-0">
                             <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span className="truncate">OR/CR Discrepancy Flagged ({orCrDiscrepancies.length})</span>
+                            <span className="truncate">CR Discrepancy Flagged ({crDiscrepancies.length})</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] shrink-0">
                             <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
@@ -1239,7 +1307,7 @@ const FranchiseReviewPage = () => {
 
                         {isDocDiscrepancyOpen && (
                           <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
-                            {orCrDiscrepancies.map((d, i) => (
+                            {crDiscrepancies.map((d, i) => (
                               <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
                                 <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
@@ -1263,13 +1331,13 @@ const FranchiseReviewPage = () => {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setRejectField('orCrDocument');
-                                  setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
+                                  setRejectField('crDocument');
+                                  setRejectReason('Chassis Serial Number mismatch between application form and CR/OR document');
                                   setIsRejecting(true);
                                 }}
                                 className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
                               >
-                                Quick Reject OR/CR
+                                Quick Reject CR
                               </button>
                             </div>
                           </div>
@@ -1301,18 +1369,18 @@ const FranchiseReviewPage = () => {
                       </div>
                     </div>
 
-                    {/* CR No & Date, OR No & Date */}
+                    {/* CR No & Date */}
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">CR No. &amp; Date</span>
+                        <span className="text-[10px] text-slate-400 block font-medium">CR Number</span>
                         <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.crNo || currentApp.orCrNo || '—'} {currentApp.crDate ? `(${formatDate(currentApp.crDate)})` : ''}
+                          {currentApp.crNo || currentApp.orCrNo || '—'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">OR No. &amp; Date</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.orNo || currentApp.orCrNo || '—'} {currentApp.orDate ? `(${formatDate(currentApp.orDate)})` : ''}
+                        <span className="text-[10px] text-slate-400 block font-medium">CR Date Issued</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {formatDate(currentApp.crDate)}
                         </span>
                       </div>
                     </div>
@@ -1371,31 +1439,12 @@ const FranchiseReviewPage = () => {
                       </div>
                     </div>
 
-                    {/* Passenger Capacity & Registration Expiry */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Passenger Capacity</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
-                          {currentApp.passengerCapacity ? `${currentApp.passengerCapacity} Persons` : '4-5 Persons'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Registration Expiry</span>
-                        <div className="flex items-center gap-1 flex-wrap">
-                          <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.orCrExpiryDate)}</span>
-                          {currentApp.orCrExpiryDate && (
-                            <span className={`text-[10px] font-bold px-1 py-0.2 rounded border ${
-                              orCrValidity.isExpired
-                                ? 'bg-rose-50 text-rose-600 border-rose-200'
-                                : orCrValidity.isExpiringSoon
-                                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                            }`}>
-                              {orCrValidity.isExpired ? 'Expired' : orCrValidity.isExpiringSoon ? `${orCrValidity.daysUntilExpiry}d` : 'Valid'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                    {/* Passenger Capacity */}
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-medium">Passenger Capacity</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-100">
+                        {currentApp.passengerCapacity ? `${currentApp.passengerCapacity} Persons` : '4-5 Persons'}
+                      </span>
                     </div>
 
                     {/* Registered Owner on CR verification */}
@@ -1427,6 +1476,161 @@ const FranchiseReviewPage = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Third-Party Unit Advisory (If Owner != Applicant) */}
+                    {currentApp.registeredOwner && currentApp.fullName && !isNameMatch(currentApp.registeredOwner, currentApp.fullName) && (
+                      <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-900 dark:text-amber-200 space-y-0.5 animate-fadeIn">
+                        <div className="flex items-center gap-1 font-bold">
+                          <AlertTriangle size={12} className="text-amber-600 shrink-0" />
+                          <span>Unit Registered in Another Person's Name</span>
+                        </div>
+                        <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-tight">
+                          Ang rehistro ay nakapangalan kay <strong>{currentApp.registeredOwner}</strong>. Tiyakin na may kalakip na <strong>Notarized Deed of Absolute Sale</strong>, <strong>Lease Agreement</strong>, o <strong>Special Power of Attorney (SPA)</strong> bago aprubahan.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. LTO Official Receipt (OR) Details */}
+                {activeDocKey === 'orDocument' && (
+                  <div className="space-y-1.5 text-xs">
+                    {/* OR Discrepancy Alert Accordion */}
+                    {orDiscrepancies.length > 0 && (
+                      <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden mb-2">
+                        <div 
+                          onClick={() => setIsDocDiscrepancyOpen(prev => !prev)}
+                          className="p-2 flex items-center justify-between gap-1.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300 select-none hover:bg-amber-100/70 dark:hover:bg-amber-900/40"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span className="truncate">OR Discrepancy Flagged ({orDiscrepancies.length})</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] shrink-0">
+                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          </div>
+                        </div>
+
+                        {isDocDiscrepancyOpen && (
+                          <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
+                            {orDiscrepancies.map((d, i) => (
+                              <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
+                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                  </div>
+                                </div>
+                                {d.reason && (
+                                  <p className="text-[10px] text-amber-800 dark:text-amber-300 pt-0.5 leading-tight">
+                                    {d.reason}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                            <div className="pt-0.5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectField('orDocument');
+                                  setRejectReason('Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)');
+                                  setIsRejecting(true);
+                                }}
+                                className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 underline cursor-pointer"
+                              >
+                                Quick Reject OR
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(() => {
+                      const orExt = currentApp.aiScannedData?.or || currentApp.aiScannedData?.orCr || currentApp.aiVerification?.documents?.orCr?.extracted || {};
+                      const orNum = currentApp.orNo || orExt.orNo || currentApp.orCrNo || '—';
+                      const orDt = currentApp.orDate || orExt.orDate;
+                      const expDt = currentApp.orCrExpiryDate || orExt.expiryDate;
+                      const payer = orExt.ownerName || currentApp.registeredOwner || currentApp.fullName || '—';
+                      const payerAddr = orExt.ownerAddress || currentApp.ownerAddress || currentApp.address || '—';
+                      const fieldOffice = orExt.fieldOffice || 'LTO Extension Office';
+                      const officeCode = orExt.officeCode || '';
+                      const isPayerApplicant = isNameMatch(payer, currentApp.fullName);
+
+                      return (
+                        <div className="space-y-1.5">
+                          {/* Official Receipt No & Date */}
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Official Receipt No. (OR)</span>
+                              <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37] truncate block">{orNum}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">OR Payment Date</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{formatDate(orDt)}</span>
+                            </div>
+                          </div>
+
+                          {/* Registration Expiry Date */}
+                          <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Registration Validity / Expiry</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(expDt)}</span>
+                            </div>
+                            {expDt && (
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                orCrValidity.isExpired
+                                  ? 'bg-rose-50 text-rose-600 border-rose-200'
+                                  : orCrValidity.isExpiringSoon
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                              }`}>
+                                {orCrValidity.isExpired ? 'Expired' : orCrValidity.isExpiringSoon ? `${orCrValidity.daysUntilExpiry}d Remaining` : 'Valid'}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Received From (Payer Name) & Match Status */}
+                          <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-slate-400 block font-medium">Received From (Payer Name)</span>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                isPayerApplicant
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                              }`}>
+                                {isPayerApplicant ? 'Payer Matches Applicant' : 'Payer Name Differs'}
+                              </span>
+                            </div>
+                            <span className="font-bold text-xs text-slate-800 dark:text-slate-100 block">{payer}</span>
+                            {payerAddr && payerAddr !== '—' && (
+                              <div className="pt-0.5 border-t border-slate-100 dark:border-slate-800/80">
+                                <span className="text-[10px] text-slate-400 block font-medium">Payer Address</span>
+                                <span className="text-xs text-slate-700 dark:text-slate-300 block truncate">{payerAddr}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Field Office & Office Code */}
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">LTO Field Office</span>
+                              <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">{fieldOffice}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Office Code</span>
+                              <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{officeCode || '—'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 

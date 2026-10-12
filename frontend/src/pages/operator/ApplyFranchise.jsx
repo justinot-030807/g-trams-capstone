@@ -24,6 +24,7 @@ import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
 import SimpleDatePicker from '../../components/common/SimpleDatePicker';
 import { useLanguage } from '../../context/LanguageContext';
+import { isNameMatch } from '../../utils/nameMatcher';
 
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
@@ -1783,6 +1784,40 @@ const ApplyFranchise = () => {
       }
     }
 
+    // 7. CR Registered Owner vs Applicant Name
+    const scannedOwner = currAi?.orCr?.ownerName || currAi?.cr?.ownerName || '';
+    if (scannedOwner && currForm.fullName) {
+      if (!isNameMatch(scannedOwner, currForm.fullName)) {
+        discrepancies.push({
+          field: 'registeredOwner',
+          docType: 'cr',
+          step: 2,
+          label: "CR Registered Owner",
+          scannedValue: scannedOwner,
+          enteredValue: currForm.fullName,
+          severity: 'warning',
+          reason: `Vehicle registration is in the name of ${scannedOwner}. Ensure a notarized Deed of Sale or Lease/Authorization is attached.`
+        });
+      }
+    }
+
+    // 8. TODA Jurisdiction vs Barangay Address
+    if (currForm.todaName && currForm.todaName !== 'NON-TODA' && currForm.address) {
+      const validTodas = getTodasForBarangay(currForm.address);
+      if (validTodas.length > 0 && !validTodas.includes(currForm.todaName)) {
+        discrepancies.push({
+          field: 'jurisdiction',
+          docType: 'toda',
+          step: 1,
+          label: "TODA Operational Jurisdiction",
+          scannedValue: currForm.todaName,
+          enteredValue: currForm.address,
+          severity: 'warning',
+          reason: `Barangay "${currForm.address}" is outside the official operational routes of ${currForm.todaName}. (Authorized: ${validTodas.join(', ')})`
+        });
+      }
+    }
+
     return discrepancies;
   };
 
@@ -2342,29 +2377,59 @@ const ApplyFranchise = () => {
                     </div>
                   </div>
 
-                  {/* Affiliated TODA - Clean Inline Indicator */}
+                  {/* Affiliated TODA - Clean Inline Indicator & Jurisdiction Alert */}
                   {(() => {
                     const currentToda = formData.todaName || loggedInToda;
                     if (!currentToda || currentToda === 'NON-TODA') return null;
                     const validTodas = formData.address ? getTodasForBarangay(formData.address) : [];
                     const isJurisdictionMatch = validTodas.length > 0 ? validTodas.includes(currentToda) : true;
                     return (
-                      <div className="flex items-center justify-between flex-wrap gap-2 pt-0.5 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium">Affiliated TODA:</span>
-                          <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentToda}</span>
+                      <div className="space-y-1.5 pt-0.5">
+                        <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium">Affiliated TODA:</span>
+                            <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentToda}</span>
+                          </div>
+                          {formData.address && (
+                            <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
+                              isJurisdictionMatch
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
+                            }`}>
+                              {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
+                              {isJurisdictionMatch 
+                                ? `Sakop ang ${formData.address}` 
+                                : `Mali ang Hurisdiksyon para sa ${formData.address}`}
+                            </span>
+                          )}
                         </div>
-                        {formData.address && (
-                          <span className={`text-[11px] font-medium flex items-center gap-1 ${
-                            isJurisdictionMatch
-                              ? 'text-emerald-700 dark:text-emerald-400'
-                              : 'text-amber-700 dark:text-amber-400'
-                          }`}>
-                            {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
-                            {isJurisdictionMatch 
-                              ? `Operates in ${formData.address}` 
-                              : `Note: Primarily operates in other barangays`}
-                          </span>
+
+                        {!isJurisdictionMatch && validTodas.length > 0 && (
+                          <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1.5 animate-fadeIn">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <AlertCircle size={13} className="shrink-0 text-rose-600 dark:text-rose-400" />
+                              <span>Paalala sa Hurisdiksyon ng TODA</span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed">
+                              Ang iyong napiling TODA (<strong>{currentToda}</strong>) ay hindi opisyal na bumibiyahe sa <strong>{formData.address}</strong>. Ang mga awtorisadong TODA para sa inyong barangay ay:
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 pt-0.5">
+                              {validTodas.map(t => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => setFormData(prev => ({ ...prev, todaName: t }))}
+                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
+                                    formData.todaName === t
+                                      ? 'bg-[#9E2A2B] text-white border-[#9E2A2B]'
+                                      : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border-rose-200 dark:border-rose-800/60 hover:bg-rose-100'
+                                  }`}
+                                >
+                                  Piliin ang {t}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
                     );

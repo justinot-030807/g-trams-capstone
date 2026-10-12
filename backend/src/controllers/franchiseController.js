@@ -8,6 +8,7 @@ const { emitToUser } = require('../config/socket');
 const { sendPushToUser } = require('../services/pushService');
 const FranchiseService = require('../services/franchiseService');
 const { isNameMatch } = require('../utils/nameMatcher');
+const { validateTodaJurisdiction } = require('../utils/todaDirectory');
 
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -705,42 +706,83 @@ const getFranchiseRecordCheck = async (req, res) => {
         const appType = String(franchise.applicationType || 'New');
         const isRenewal = /renew/i.test(appType) || pastFranchises.length > 0;
 
-        // Verify applicant against TODA association roster (User accounts + Approved Scanned OCR Rosters)
+        // 1. Verify applicant against official TODA association roster (ONLY approved TodaSubmission masterlists)
         let todaStatus = 'non_toda';
+        let todaRosterMessage = '';
+        let todaMatchedMember = null;
+        let todaApprovedCount = 0;
+
         if (franchise.todaName && franchise.todaName !== 'NON-TODA') {
             const todaRegex = new RegExp(`^${escapeRegex(franchise.todaName)}$`, 'i');
-            const userOrCriteria = [];
-            if (franchise.operator) userOrCriteria.push({ _id: franchise.operator });
-            if (isValidIdentifier(franchise.fullName)) userOrCriteria.push({ name: exact(franchise.fullName) });
+            
+            // Query only Approved masterlists for this TODA
+            const approvedRosters = await TodaSubmission.find({
+                status: 'Approved',
+                $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+            }).select('extractedMembers todaAssociation fileName createdAt');
 
-            const userMatch = userOrCriteria.length > 0
-                ? await User.findOne({ todaAssociation: todaRegex, $or: userOrCriteria }).select('name todaAssociation')
-                : null;
+            todaApprovedCount = approvedRosters.length;
 
-            // Cross-verify against officially approved scanned OCR rosters using intelligent token matching
-            let docMatch = false;
-            if (!userMatch) {
-                const approvedRosters = await TodaSubmission.find({
-                    status: 'Approved',
-                    $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
-                }).select('extractedMembers');
-
+            if (approvedRosters.length === 0) {
+                // No approved roster has been uploaded by the TODA President yet
+                todaStatus = 'no_roster_on_file';
+                todaRosterMessage = `No approved roster on file for ${franchise.todaName}. (Awaiting President masterlist submission)`;
+            } else {
                 const applicantName = (franchise.fullName || '').trim();
+                let docMatch = false;
+
                 if (applicantName) {
                     for (const r of approvedRosters) {
                         if (Array.isArray(r.extractedMembers)) {
-                            const found = r.extractedMembers.some(m => isNameMatch(applicantName, m?.name));
+                            const found = r.extractedMembers.find(m => isNameMatch(applicantName, m?.name));
                             if (found) {
                                 docMatch = true;
+                                todaMatchedMember = found.name;
                                 break;
                             }
                         }
                     }
                 }
-            }
 
-            todaStatus = (userMatch || docMatch) ? 'verified_member' : 'not_in_roster';
+                if (docMatch) {
+                    todaStatus = 'verified_member';
+                    todaRosterMessage = `Verified in official ${franchise.todaName} roster (Matched: ${todaMatchedMember})`;
+                } else {
+                    todaStatus = 'not_in_roster';
+                    todaRosterMessage = `Not found in official ${franchise.todaName} roster (${approvedRosters.length} masterlist file/s on record)`;
+                }
+            }
         }
+
+        // 2. Validate TODA Jurisdiction against Applicant Barangay / Address
+        const applicantBarangay = franchise.barangay || franchise.address || '';
+        const jurisdictionCheck = validateTodaJurisdiction(franchise.todaName, applicantBarangay);
+        const jurisdictionStatus = (!franchise.todaName || franchise.todaName === 'NON-TODA')
+            ? 'non_toda'
+            : (jurisdictionCheck.isMatch ? 'match' : 'mismatch');
+
+        // 3. Document Name Cross-Match Analysis
+        const applicantClean = (franchise.fullName || '').trim();
+        const crOwner = (franchise.registeredOwner || '').trim();
+        const isCrOwnerMatch = crOwner ? isNameMatch(applicantClean, crOwner) : true;
+
+        const expectedDriverName = (franchise.isOperatorDriver ? applicantClean : (franchise.driverName || '')).trim();
+        const driverLicenseScannedName = franchise.aiScannedData?.license?.driverName || franchise.aiVerification?.documents?.license?.extracted?.driverName || '';
+        const isDriverLicenseMatch = driverLicenseScannedName ? isNameMatch(expectedDriverName, driverLicenseScannedName) : true;
+
+        const cedulaTaxpayer = franchise.cedulaFullName || franchise.aiScannedData?.cedula?.fullName || '';
+        const isCedulaMatch = cedulaTaxpayer ? isNameMatch(applicantClean, cedulaTaxpayer) : true;
+
+        const nameCrossMatch = {
+            applicantName: applicantClean,
+            crOwner: crOwner || null,
+            isCrOwnerMatch,
+            expectedDriverName,
+            driverLicenseScannedName: driverLicenseScannedName || null,
+            isDriverLicenseMatch,
+            cedulaTaxpayer: cedulaTaxpayer || null,
+            isCedulaMatch
+        };
 
         res.status(200).json({
             applicationType: isRenewal ? 'Renewal' : 'New',
@@ -750,7 +792,14 @@ const getFranchiseRecordCheck = async (req, res) => {
             pastFranchises,
             activeUnitsCount: activeUnits.length,
             todaStatus,
-            todaName: franchise.todaName || 'NON-TODA'
+            todaName: franchise.todaName || 'NON-TODA',
+            todaRosterMessage,
+            todaMatchedMember,
+            todaApprovedCount,
+            jurisdictionStatus,
+            authorizedBarangays: jurisdictionCheck.authorizedBarangays || [],
+            jurisdictionWarning: jurisdictionCheck.warning,
+            nameCrossMatch
         });
     } catch (error) {
         console.error('Record check error:', error);
