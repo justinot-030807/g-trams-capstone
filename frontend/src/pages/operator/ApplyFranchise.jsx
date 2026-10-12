@@ -12,7 +12,7 @@ import {
   ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
   Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
   Compass, MapPin, ExternalLink, AlertTriangle, Zap,
-  HelpCircle, ChevronDown, ChevronUp
+  HelpCircle, ChevronDown, ChevronUp, Lock
 } from 'lucide-react';
 import { GarageGridSkeleton, ApplyFranchiseSkeleton } from '../../components/skeleton';
 import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
@@ -1904,7 +1904,7 @@ const ApplyFranchise = () => {
           showValidationModal(
             'todaEndorsement',
             'Application Blocked: Missing TODA Certificate',
-            `Hindi maaaring isumite ang aplikasyon: Ang operator na si "${formData.fullName}" ay wala sa opisyal na masterlist ng ${currentToda} at walang naipakitang TODA Endorsement Certificate. Mangyaring mag-upload ng lehitimong Certificate sa Step 3.`
+            `Cannot submit application: Operator "${formData.fullName}" is not in the official masterlist of ${currentToda} and has not uploaded a TODA Endorsement Certificate. Please upload a valid certificate in Step 3.`
           );
           return;
         }
@@ -2069,7 +2069,7 @@ const ApplyFranchise = () => {
   };
 
   const inputClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-xs font-medium";
-  const disabledClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] text-base min-h-[48px] cursor-not-allowed font-medium";
+  const disabledClasses = "w-full pl-3.5 pr-36 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] text-base min-h-[48px] cursor-not-allowed font-semibold select-none";
 
   const getInputClasses = (fieldName) => {
     if (formErrors[fieldName]) {
@@ -2414,7 +2414,7 @@ const ApplyFranchise = () => {
                       <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
                           <span>Barangay Residency / Address</span>
-                          <InfoTooltip text="Ang Route Zone ng traysikel ay awtomatikong nakadepende sa iyong opisyal na Barangay residency." />
+                          <InfoTooltip text="Tricycle Route Zone is automatically determined by your official Barangay residency." />
                         </label>
                       </div>
                       <select 
@@ -2438,88 +2438,139 @@ const ApplyFranchise = () => {
                     </div>
                   </div>
 
-                  {/* Affiliated TODA - Clean Inline Indicator & Jurisdiction Alert */}
+                  {/* Affiliated TODA and Assigned Route Zone (Read-only inputs) */}
                   {(() => {
-                    const currentToda = formData.todaName || loggedInToda;
-                    if (!currentToda || currentToda === 'NON-TODA') return null;
+                    const currentToda = formData.todaName || loggedInToda || 'NON-TODA';
+                    const isNonToda = currentToda === 'NON-TODA';
                     const validTodas = formData.address ? getTodasForBarangay(formData.address) : [];
-                    const isJurisdictionMatch = validTodas.length > 0 ? validTodas.includes(currentToda) : true;
-                    return (
-                      <div className="space-y-1.5 pt-0.5">
-                        <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-medium">Affiliated TODA:</span>
-                            <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentToda}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {formData.address && (
-                              <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
-                                isJurisdictionMatch
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
-                              }`}>
-                                {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
-                                {isJurisdictionMatch 
-                                  ? `Sakop ang ${formData.address}` 
-                                  : `Mali ang Hurisdiksyon para sa ${formData.address}`}
-                              </span>
-                            )}
+                    const isJurisdictionMatch = (!formData.address || isNonToda || validTodas.length === 0) 
+                      ? true 
+                      : validTodas.includes(currentToda);
+                    const assignedZone = formData.address 
+                      ? `${getZoneForBarangay(formData.address)} (${formData.address})` 
+                      : 'Pending Barangay selection';
 
-                            {/* TODA Roster Membership Status Badge */}
-                            {isCheckingTodaMembership ? (
-                              <span className="text-[11px] text-slate-500 flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
-                                <Loader2 size={11} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
-                                <span>Verifying roster...</span>
-                              </span>
-                            ) : todaMembershipStatus ? (
-                              <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
-                                todaMembershipStatus.todaStatus === 'verified_member'
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                                  : todaMembershipStatus.todaStatus === 'not_in_roster'
-                                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                              }`}
-                              title={todaMembershipStatus.message || ''}
-                              >
-                                {todaMembershipStatus.todaStatus === 'verified_member' ? (
-                                  <CheckCircle2 size={12} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                                ) : todaMembershipStatus.todaStatus === 'not_in_roster' ? (
-                                  <AlertTriangle size={12} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                    return (
+                      <div className="space-y-3 pt-0.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          {/* Affiliated TODA (Read-only Input) */}
+                          <div id="field-toda">
+                            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                              <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
+                                <span>Affiliated TODA</span>
+                                <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] bg-[#F0EDE6] dark:bg-[#252220] px-2 py-0.5 rounded flex items-center gap-1">
+                                  <Lock size={10} className="shrink-0" />
+                                  <span>Read-only</span>
+                                </span>
+                              </label>
+                            </div>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                readOnly
+                                disabled
+                                value={currentToda}
+                                className={disabledClasses}
+                              />
+                              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                                {isCheckingTodaMembership ? (
+                                  <span className="text-[11px] text-slate-500 flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1C1917]">
+                                    <Loader2 size={11} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                    <span>Checking...</span>
+                                  </span>
+                                ) : todaMembershipStatus && !isNonToda ? (
+                                  <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
+                                    todaMembershipStatus.todaStatus === 'verified_member'
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                                      : todaMembershipStatus.todaStatus === 'not_in_roster'
+                                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                                  }`}
+                                  title={todaMembershipStatus.message || ''}
+                                  >
+                                    {todaMembershipStatus.todaStatus === 'verified_member' ? (
+                                      <CheckCircle2 size={12} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                    ) : todaMembershipStatus.todaStatus === 'not_in_roster' ? (
+                                      <AlertTriangle size={12} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                                    ) : (
+                                      <Info size={12} className="shrink-0 text-slate-500" />
+                                    )}
+                                    <span>
+                                      {todaMembershipStatus.todaStatus === 'verified_member'
+                                        ? 'Verified in Roster'
+                                        : todaMembershipStatus.todaStatus === 'not_in_roster'
+                                        ? 'Not in Roster'
+                                        : 'No Roster File'}
+                                    </span>
+                                  </span>
                                 ) : (
-                                  <Info size={12} className="shrink-0 text-slate-500" />
+                                  <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 bg-[#EAE7E1] dark:bg-[#252220] px-2 py-0.5 rounded">
+                                    <Lock size={11} /> Locked
+                                  </span>
                                 )}
-                                {todaMembershipStatus.todaStatus === 'verified_member'
-                                  ? '✓ Verified in Roster'
-                                  : todaMembershipStatus.todaStatus === 'not_in_roster'
-                                  ? '⚠ Wala sa Roster (Cert Required)'
-                                  : 'ℹ No Roster on File'}
-                              </span>
-                            ) : null}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Assigned Route Zone (Read-only Input) */}
+                          <div id="field-zone">
+                            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                              <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
+                                <span>Assigned Route Zone</span>
+                                <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] bg-[#F0EDE6] dark:bg-[#252220] px-2 py-0.5 rounded flex items-center gap-1">
+                                  <Compass size={10} className="shrink-0" />
+                                  <span>Auto-assigned</span>
+                                </span>
+                              </label>
+                            </div>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                readOnly
+                                disabled
+                                value={assignedZone}
+                                className={disabledClasses}
+                              />
+                              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                                {formData.address && !isNonToda && (
+                                  <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
+                                    isJurisdictionMatch
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
+                                  }`}>
+                                    {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
+                                    <span>{isJurisdictionMatch ? 'Route Authorized' : 'Route Mismatch'}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
 
                         {/* Banner warning if not in roster */}
-                        {todaMembershipStatus?.todaStatus === 'not_in_roster' && (
-                          <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 space-y-1 animate-fadeIn">
+                        {todaMembershipStatus?.todaStatus === 'not_in_roster' && !isNonToda && (
+                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 space-y-1 animate-fadeIn">
                             <div className="flex items-center gap-1.5 font-bold">
-                              <AlertCircle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                              <span>Obligadong Dokumento: TODA Endorsement Certificate</span>
+                              <AlertCircle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                              <span>Notice: Official TODA Certificate Required</span>
                             </div>
-                            <p className="text-[11px] leading-relaxed">
-                              Hindi nakalista ang iyong pangalan sa online masterlist ng <strong>{currentToda}</strong>. 
-                              <strong> Mahigpit na kinakailangan ang pag-upload ng lehitimong TODA Endorsement Certificate</strong> sa Step 3 na nilagdaan ng TODA President upang maaprubahan ang prangkisa.
+                            <p className="text-[11px] sm:text-xs leading-relaxed text-amber-800 dark:text-amber-300">
+                              Your name is not currently listed in the official approved roster for <strong>{currentToda}</strong>. 
+                              You must upload an official <strong>TODA Endorsement Certificate signed by your TODA President</strong> in Step 3 to proceed with approval.
                             </p>
                           </div>
                         )}
 
-                        {!isJurisdictionMatch && validTodas.length > 0 && (
-                          <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1.5 animate-fadeIn">
+                        {/* Banner warning if jurisdiction mismatch */}
+                        {!isJurisdictionMatch && validTodas.length > 0 && !isNonToda && (
+                          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1.5 animate-fadeIn">
                             <div className="flex items-center gap-1.5 font-bold">
-                              <AlertCircle size={13} className="shrink-0 text-rose-600 dark:text-rose-400" />
-                              <span>Paalala sa Hurisdiksyon ng TODA</span>
+                              <AlertCircle size={14} className="shrink-0 text-rose-600 dark:text-rose-400" />
+                              <span>Route Notice: TODA Jurisdiction Mismatch</span>
                             </div>
-                            <p className="text-[11px] leading-relaxed">
-                              Ang iyong napiling TODA (<strong>{currentToda}</strong>) ay hindi opisyal na bumibiyahe sa <strong>{formData.address}</strong>. Ang mga awtorisadong TODA para sa inyong barangay ay:
+                            <p className="text-[11px] sm:text-xs leading-relaxed">
+                              Your affiliated TODA (<strong>{currentToda}</strong>) does not officially operate in <strong>{formData.address}</strong>. 
+                              Authorized TODAs for your barangay:
                             </p>
                             <div className="flex flex-wrap gap-1.5 pt-0.5">
                               {validTodas.map(t => (
@@ -2527,13 +2578,13 @@ const ApplyFranchise = () => {
                                   key={t}
                                   type="button"
                                   onClick={() => setFormData(prev => ({ ...prev, todaName: t }))}
-                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
+                                  className={`text-[11px] font-bold px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
                                     formData.todaName === t
                                       ? 'bg-[#9E2A2B] text-white border-[#9E2A2B]'
-                                      : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border-rose-200 dark:border-rose-800/60 hover:bg-rose-100'
+                                      : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-[#252220]'
                                   }`}
                                 >
-                                  Piliin ang {t}
+                                  Select {t}
                                 </button>
                               ))}
                             </div>
@@ -3510,8 +3561,8 @@ const ApplyFranchise = () => {
                     <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 animate-fadeIn">
                       <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                       <div>
-                        <span className="font-bold">MAHIGPIT NA KINAKAILANGAN: </span>
-                        <span>Dahil hindi nakalista ang iyong pangalan sa online masterlist ng <strong>{formData.todaName || loggedInToda}</strong>, obligado kang mag-upload ng opisyal na TODA Certificate na may pirma ng TODA President. Bawal mag-submit kung wala ito.</span>
+                        <span className="font-bold">MANDATORY REQUIREMENT: </span>
+                        <span>Because your name is not listed in the digital masterlist for <strong>{formData.todaName || loggedInToda}</strong>, you must upload an official TODA Certificate signed by the TODA President to submit your application.</span>
                       </div>
                     </div>
                   )}

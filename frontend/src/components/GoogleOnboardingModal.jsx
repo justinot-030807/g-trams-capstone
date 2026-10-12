@@ -393,8 +393,8 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                     <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50">
                       <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                       <div>
-                        <span className="font-bold">Paalala sa Ruta: </span>
-                        <span>{todaCheckResult.jurisdictionWarning || `Ang Barangay "${selectedBarangay}" ay nasa labas ng opisyal na rota ng ${selectedToda}.`}</span>
+                        <span className="font-bold">Route Notice: </span>
+                        <span>{todaCheckResult.jurisdictionWarning || `Barangay "${selectedBarangay}" is outside the official operational routes of ${selectedToda}.`}</span>
                       </div>
                     </div>
                   )}
@@ -403,32 +403,32 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                     <div className="flex items-start gap-2 text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
                       <CheckCircle2 size={14} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
                       <div>
-                        <span className="font-bold">✓ Kumpirmadong Miyembro: </span>
-                        <span>Nakapaloob ang pangalang <strong>"{todaCheckResult.matchedMember || editableName}"</strong> sa opisyal na approved masterlist ng {selectedToda}.</span>
+                        <span className="font-bold">Verified Member: </span>
+                        <span>Name <strong>"{todaCheckResult.matchedMember || editableName}"</strong> is on the official approved roster of {selectedToda}.</span>
                       </div>
                     </div>
                   ) : todaCheckResult.todaStatus === 'not_in_roster' ? (
                     <div className="flex items-start gap-2 text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 p-2.5 rounded-lg border border-blue-200 dark:border-blue-900/50">
                       <Info size={14} className="shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
                       <div>
-                        <span className="font-bold">ℹ Paalala sa Pag-apply: </span>
-                        <span>Ang pangalan mo ay hindi pa kabilang sa kasalukuyang digital roster ng {selectedToda}. Maaari kang magpatuloy sa Google registration, ngunit <strong>kailangan mong mag-upload ng TODA Endorsement Certificate</strong> kapag nag-apply ng prangkisa.</span>
+                        <span className="font-bold">Notice: </span>
+                        <span>Your name is not currently in the digital roster of {selectedToda}. You can continue registration, but you will need to upload a <strong>TODA Endorsement Certificate</strong> when applying for a franchise.</span>
                       </div>
                     </div>
                   ) : todaCheckResult.todaStatus === 'pending_name' ? (
                     <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
                       <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
                       <div>
-                        <span className="font-bold">ℹ May Digital Masterlist: </span>
-                        <span>May opisyal na approved masterlist ang {selectedToda}. Pakitiyak ang iyong legal name sa itaas upang ma-verify ang membership.</span>
+                        <span className="font-bold">Digital Roster on File: </span>
+                        <span>{selectedToda} has an approved masterlist. Make sure your full name above is correct to verify membership.</span>
                       </div>
                     </div>
                   ) : (
                     <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
                       <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
                       <div>
-                        <span className="font-bold">ℹ Status: </span>
-                        <span>Wala pang online masterlist on record para sa {selectedToda}. Maaari kang magpatuloy sa pagrehistro.</span>
+                        <span className="font-bold">Status: </span>
+                        <span>No digital roster on file for {selectedToda}. You can proceed with registration.</span>
                       </div>
                     </div>
                   )}
