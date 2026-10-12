@@ -10,6 +10,8 @@ const FranchiseService = require('../services/franchiseService');
 const { isNameMatch } = require('../utils/nameMatcher');
 const { validateTodaJurisdiction } = require('../utils/todaDirectory');
 
+const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
     try {
@@ -75,6 +77,38 @@ const createFranchise = async (req, res) => {
         if (!isAdmin || !data.status) {
             data.status = 'Pending';
         }
+
+        // Strict TODA Gatekeeping: If applicant is not in official approved roster, TODA Certificate is strictly required
+        if (!isAdmin && data.todaName && data.todaName !== 'NON-TODA') {
+            const applicantName = (data.fullName || (req.user && req.user.name) || '').trim();
+            const todaName = data.todaName.trim();
+            const todaRegex = new RegExp(`^${escapeRegex(todaName)}$`, 'i');
+
+            const approvedRosters = await TodaSubmission.find({
+                status: 'Approved',
+                $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+            }).select('extractedMembers todaAssociation fileName').lean();
+
+            let isMemberInRoster = false;
+            for (const r of approvedRosters) {
+                if (Array.isArray(r.extractedMembers)) {
+                    const found = r.extractedMembers.some(m => isNameMatch(applicantName, m?.name));
+                    if (found) {
+                        isMemberInRoster = true;
+                        break;
+                    }
+                }
+            }
+
+            // If not found in approved roster and no TODA certificate was uploaded
+            const hasTodaCert = Boolean(data.todaEndorsementUrl);
+            if (!isMemberInRoster && !hasTodaCert) {
+                return res.status(400).json({
+                    message: `Application blocked: Operator "${applicantName}" is not listed in the official approved roster for ${todaName}, and no TODA Endorsement Certificate was provided. Please upload an official TODA Certificate signed by your TODA President.`
+                });
+            }
+        }
+
         const franchise = await FranchiseService.createFranchise(data, franchiseOwner);
 
         // Notify admins of new franchise submission
@@ -1026,6 +1060,102 @@ const scanDocument = async (req, res) => {
     }
 };
 
+const checkTodaMemberStatus = async (req, res) => {
+    try {
+        const todaName = (req.query.todaName || req.query.toda || '').trim();
+        const applicantName = (req.query.name || req.query.fullName || '').trim();
+        const barangay = (req.query.barangay || req.query.address || '').trim();
+
+        if (!todaName || todaName === 'NON-TODA') {
+            return res.json({
+                todaStatus: 'non_toda',
+                isVerified: false,
+                todaName: todaName || 'NON-TODA',
+                jurisdictionStatus: 'non_toda',
+                jurisdictionWarning: '',
+                authorizedTodas: [],
+                message: 'Non-TODA association selected.'
+            });
+        }
+
+        // Validate jurisdiction against applicant barangay
+        const jurisdictionCheck = validateTodaJurisdiction(todaName, barangay);
+        const jurisdictionStatus = !barangay ? 'unspecified' : (jurisdictionCheck.isMatch ? 'match' : 'mismatch');
+        const jurisdictionWarning = jurisdictionCheck.warning || '';
+
+        const todaRegex = new RegExp(`^${escapeRegex(todaName)}$`, 'i');
+
+        const approvedRosters = await TodaSubmission.find({
+            status: 'Approved',
+            $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+        }).select('extractedMembers todaAssociation fileName createdAt').lean();
+
+        if (approvedRosters.length === 0) {
+            return res.json({
+                todaStatus: 'no_roster_on_file',
+                isVerified: false,
+                todaName,
+                jurisdictionStatus,
+                jurisdictionWarning,
+                authorizedTodas: jurisdictionCheck.authorizedTodas || [],
+                message: `No approved roster on file for ${todaName}. (Awaiting President masterlist submission)`
+            });
+        }
+
+        if (!applicantName) {
+            return res.json({
+                todaStatus: 'pending_name',
+                isVerified: false,
+                todaName,
+                jurisdictionStatus,
+                jurisdictionWarning,
+                authorizedTodas: jurisdictionCheck.authorizedTodas || [],
+                message: `Approved masterlist on file for ${todaName}. Enter full name to verify membership.`
+            });
+        }
+
+        let docMatch = false;
+        let matchedMember = null;
+
+        for (const r of approvedRosters) {
+            if (Array.isArray(r.extractedMembers)) {
+                const found = r.extractedMembers.find(m => isNameMatch(applicantName, m?.name));
+                if (found) {
+                    docMatch = true;
+                    matchedMember = found.name;
+                    break;
+                }
+            }
+        }
+
+        if (docMatch) {
+            return res.json({
+                todaStatus: 'verified_member',
+                isVerified: true,
+                todaName,
+                matchedMember,
+                jurisdictionStatus,
+                jurisdictionWarning,
+                authorizedTodas: jurisdictionCheck.authorizedTodas || [],
+                message: `Verified in official ${todaName} roster (Matched: ${matchedMember}).`
+            });
+        } else {
+            return res.json({
+                todaStatus: 'not_in_roster',
+                isVerified: false,
+                todaName,
+                jurisdictionStatus,
+                jurisdictionWarning,
+                authorizedTodas: jurisdictionCheck.authorizedTodas || [],
+                message: `Name not found in official ${todaName} roster (${approvedRosters.length} approved masterlist file/s on record).`
+            });
+        }
+    } catch (error) {
+        console.error('Error in checkTodaMemberStatus:', error);
+        return res.status(500).json({ error: 'Server error checking TODA membership.' });
+    }
+};
+
 module.exports = { 
     createFranchise, 
     searchHistoricalFranchise,
@@ -1044,6 +1174,7 @@ module.exports = {
     checkUniqueFranchiseField,
     getCashierQueue,
     processCashierPayment,
-    scanDocument
+    scanDocument,
+    checkTodaMemberStatus
 };
 

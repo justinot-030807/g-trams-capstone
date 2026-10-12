@@ -16,7 +16,9 @@ import {
   Building2, 
   Mail, 
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
@@ -59,6 +61,39 @@ const Register = () => {
   // Google Sign-In Streamlined Onboarding
   const [googleOnboardingProfile, setGoogleOnboardingProfile] = useState(incomingGoogle || null);
   const [showGoogleOnboarding, setShowGoogleOnboarding] = useState(Boolean(incomingGoogle));
+
+  // Live TODA Roster Membership Status Check
+  const [todaCheckResult, setTodaCheckResult] = useState(null);
+  const [isCheckingToda, setIsCheckingToda] = useState(false);
+
+  useEffect(() => {
+    if (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA' || !formData.address) {
+      setTodaCheckResult(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingToda(true);
+      try {
+        const query = new URLSearchParams({
+          todaName: formData.todaAssociation,
+          name: formData.name || '',
+          barangay: formData.address || ''
+        });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchise/check-toda-member?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTodaCheckResult(data);
+        }
+      } catch (e) {
+        console.error('TODA check error:', e);
+      } finally {
+        setIsCheckingToda(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [formData.todaAssociation, formData.name, formData.address]);
 
   // Ensure light canvas consistency for auth view
   useEffect(() => {
@@ -491,6 +526,56 @@ const Register = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Live TODA Roster & Jurisdiction Feedback */}
+                    {formData.todaAssociation && formData.todaAssociation !== 'NON-TODA' && (
+                      <div className="text-xs rounded-lg transition-all animate-fadeIn">
+                        {isCheckingToda ? (
+                          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <Loader2 size={13} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
+                            <span>Checking official {formData.todaAssociation} masterlist...</span>
+                          </div>
+                        ) : todaCheckResult ? (
+                          <div className="space-y-1.5">
+                            {todaCheckResult.jurisdictionStatus === 'mismatch' && (
+                              <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50">
+                                <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                                <div>
+                                  <span className="font-bold">Paalala sa Ruta: </span>
+                                  <span>{todaCheckResult.jurisdictionWarning || `Ang Barangay "${formData.address}" ay nasa labas ng opisyal na rota ng ${formData.todaAssociation}.`}</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {todaCheckResult.todaStatus === 'verified_member' ? (
+                              <div className="flex items-start gap-2 text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
+                                <CheckCircle2 size={14} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                                <div>
+                                  <span className="font-bold">✓ Kumpirmadong Miyembro: </span>
+                                  <span>Nakapaloob ang pangalang <strong>"{todaCheckResult.matchedMember || formData.name}"</strong> sa opisyal na approved masterlist ng {formData.todaAssociation}.</span>
+                                </div>
+                              </div>
+                            ) : todaCheckResult.todaStatus === 'not_in_roster' ? (
+                              <div className="flex items-start gap-2 text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 p-2.5 rounded-lg border border-blue-200 dark:border-blue-900/50">
+                                <Info size={14} className="shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+                                <div>
+                                  <span className="font-bold">ℹ Paalala sa Pag-apply: </span>
+                                  <span>Ang pangalan mo ay hindi pa kabilang sa kasalukuyang digital roster ng {formData.todaAssociation}. Maaari kang magparehistro, ngunit <strong>kailangan mong mag-upload ng TODA Endorsement Certificate</strong> kapag nag-apply ng prangkisa.</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
+                                <div>
+                                  <span className="font-bold">ℹ Status: </span>
+                                  <span>Wala pang online masterlist on record para sa {formData.todaAssociation}. Maaari kang magpatuloy sa pagrehistro.</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
 
                     {/* Email or Phone Number */}
                     <div>

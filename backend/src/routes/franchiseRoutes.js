@@ -21,13 +21,17 @@ const {
     checkUniqueFranchiseField,
     getCashierQueue,
     processCashierPayment,
-    scanDocument
+    scanDocument,
+    checkTodaMemberStatus
 } = require('../controllers/franchiseController');
 
 const memoryUpload = require('multer')({
     storage: require('multer').memoryStorage(),
     limits: { fileSize: 15 * 1024 * 1024 }
 });
+
+// Real-time check of TODA membership status and jurisdiction routing
+router.get('/check-toda-member', checkTodaMemberStatus);
 
 // AI document scanning for operator form auto-fill (instant memory buffer, zero Cloudinary latency)
 router.post('/scan-document', protect, memoryUpload.single('file'), scanDocument);

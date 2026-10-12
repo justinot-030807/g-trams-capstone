@@ -395,6 +395,40 @@ const ApplyFranchise = () => {
     }
   }, [formData.todaName]);
 
+  // Live TODA Roster Membership Status Check
+  const [todaMembershipStatus, setTodaMembershipStatus] = useState(null);
+  const [isCheckingTodaMembership, setIsCheckingTodaMembership] = useState(false);
+
+  useEffect(() => {
+    const currentToda = formData.todaName || loggedInToda;
+    if (!currentToda || currentToda === 'NON-TODA' || !formData.fullName) {
+      setTodaMembershipStatus(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingTodaMembership(true);
+      try {
+        const query = new URLSearchParams({
+          todaName: currentToda,
+          name: formData.fullName || '',
+          barangay: formData.address || ''
+        });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchise/check-toda-member?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTodaMembershipStatus(data);
+        }
+      } catch (err) {
+        console.error('Error checking TODA membership in application:', err);
+      } finally {
+        setIsCheckingTodaMembership(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [formData.todaName, formData.fullName, formData.address, loggedInToda]);
+
   const getCurrentUserId = () => {
     try {
       const u = JSON.parse(localStorage.getItem('user') || '{}');
@@ -1605,9 +1639,21 @@ const ApplyFranchise = () => {
       if (formMode === 'New') {
         const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
         const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
+        const currentToda = formData.todaName || loggedInToda;
+        const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && currentToda && currentToda !== 'NON-TODA';
+
         if (!hasToda) {
-          showValidationModal('todaEndorsement', 'TODA Endorsement Required', 'Please upload the TODA Endorsement Certificate issued by your association.');
-          return false;
+          if (isNotVerifiedInRoster) {
+            showValidationModal(
+              'todaEndorsement',
+              'TODA Endorsement Certificate Strictly Required',
+              `Operator "${formData.fullName}" is not verified in the approved digital masterlist of ${currentToda}. Dahil wala ang iyong pangalan sa online roster, mahigpit na kinakailangan ang pag-upload ng lehitimong TODA Endorsement Certificate na nilagdaan ng TODA President.`
+            );
+            return false;
+          } else {
+            showValidationModal('todaEndorsement', 'TODA Endorsement Required', 'Please upload the TODA Endorsement Certificate issued by your association.');
+            return false;
+          }
         }
         if (!hasBrgy) {
           showValidationModal('brgyClearance', 'Barangay Clearance Required', 'Please upload the Barangay Clearance document.');
@@ -1847,6 +1893,20 @@ const ApplyFranchise = () => {
       if (!hasCedula) {
         showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) upload is required.');
         return;
+      }
+
+      // Strict TODA Gatekeeper: Block submission if applicant is not in approved roster and has no TODA certificate
+      const currentToda = formData.todaName || loggedInToda;
+      const hasTodaCert = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
+      if (currentToda && currentToda !== 'NON-TODA') {
+        if (todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && !hasTodaCert) {
+          showValidationModal(
+            'todaEndorsement',
+            'Application Blocked: Missing TODA Certificate',
+            `Hindi maaaring isumite ang aplikasyon: Ang operator na si "${formData.fullName}" ay wala sa opisyal na masterlist ng ${currentToda} at walang naipakitang TODA Endorsement Certificate. Mangyaring mag-upload ng lehitimong Certificate sa Step 3.`
+          );
+          return;
+        }
       }
     }
 
@@ -2390,19 +2450,66 @@ const ApplyFranchise = () => {
                             <span className="font-medium">Affiliated TODA:</span>
                             <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentToda}</span>
                           </div>
-                          {formData.address && (
-                            <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
-                              isJurisdictionMatch
-                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
-                            }`}>
-                              {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
-                              {isJurisdictionMatch 
-                                ? `Sakop ang ${formData.address}` 
-                                : `Mali ang Hurisdiksyon para sa ${formData.address}`}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {formData.address && (
+                              <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
+                                isJurisdictionMatch
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
+                              }`}>
+                                {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
+                                {isJurisdictionMatch 
+                                  ? `Sakop ang ${formData.address}` 
+                                  : `Mali ang Hurisdiksyon para sa ${formData.address}`}
+                              </span>
+                            )}
+
+                            {/* TODA Roster Membership Status Badge */}
+                            {isCheckingTodaMembership ? (
+                              <span className="text-[11px] text-slate-500 flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
+                                <Loader2 size={11} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                <span>Verifying roster...</span>
+                              </span>
+                            ) : todaMembershipStatus ? (
+                              <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
+                                todaMembershipStatus.todaStatus === 'verified_member'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                                  : todaMembershipStatus.todaStatus === 'not_in_roster'
+                                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                              }`}
+                              title={todaMembershipStatus.message || ''}
+                              >
+                                {todaMembershipStatus.todaStatus === 'verified_member' ? (
+                                  <CheckCircle2 size={12} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                ) : todaMembershipStatus.todaStatus === 'not_in_roster' ? (
+                                  <AlertTriangle size={12} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                                ) : (
+                                  <Info size={12} className="shrink-0 text-slate-500" />
+                                )}
+                                {todaMembershipStatus.todaStatus === 'verified_member'
+                                  ? '✓ Verified in Roster'
+                                  : todaMembershipStatus.todaStatus === 'not_in_roster'
+                                  ? '⚠ Wala sa Roster (Cert Required)'
+                                  : 'ℹ No Roster on File'}
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
+
+                        {/* Banner warning if not in roster */}
+                        {todaMembershipStatus?.todaStatus === 'not_in_roster' && (
+                          <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 space-y-1 animate-fadeIn">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <AlertCircle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                              <span>Obligadong Dokumento: TODA Endorsement Certificate</span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed">
+                              Hindi nakalista ang iyong pangalan sa online masterlist ng <strong>{currentToda}</strong>. 
+                              <strong> Mahigpit na kinakailangan ang pag-upload ng lehitimong TODA Endorsement Certificate</strong> sa Step 3 na nilagdaan ng TODA President upang maaprubahan ang prangkisa.
+                            </p>
+                          </div>
+                        )}
 
                         {!isJurisdictionMatch && validTodas.length > 0 && (
                           <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1.5 animate-fadeIn">
@@ -3396,6 +3503,17 @@ const ApplyFranchise = () => {
                       <FileCheck size={14} className="text-emerald-600" /> Auto-fill
                     </span>
                   </div>
+
+                  {/* Mandatory Alert if not verified in digital roster */}
+                  {todaMembershipStatus?.todaStatus === 'not_in_roster' && (
+                    <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 animate-fadeIn">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <div>
+                        <span className="font-bold">MAHIGPIT NA KINAKAILANGAN: </span>
+                        <span>Dahil hindi nakalista ang iyong pangalan sa online masterlist ng <strong>{formData.todaName || loggedInToda}</strong>, obligado kang mag-upload ng opisyal na TODA Certificate na may pirma ng TODA President. Bawal mag-submit kung wala ito.</span>
+                      </div>
+                    </div>
+                  )}
 
                   <DocumentUploadCard
                     id="todaEndorsement"
