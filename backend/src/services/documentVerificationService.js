@@ -320,6 +320,9 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         const modelsToTry = [
             preferredModel,
             'gemini-3.8-flash',
+            'gemini-3.7-flash',
+            'gemini-3.6-flash',
+            'gemini-3.5-flash',
             'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-2.0-flash-lite',
@@ -818,6 +821,9 @@ Return raw JSON only, no markdown, no surrounding text.`;
         const modelsToTry = [
             preferredModel,
             'gemini-3.8-flash',
+            'gemini-3.7-flash',
+            'gemini-3.6-flash',
+            'gemini-3.5-flash',
             'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-2.0-flash-lite',

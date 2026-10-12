@@ -97,11 +97,11 @@ const DocumentUploadCard = ({
             <div className={`text-xs sm:text-sm ${hideHeaderLabel ? '' : 'mt-0.5'}`}>
               {isCompressing ? (
                 <span className="text-[#B45309] dark:text-[#FBBF24] font-medium flex items-center gap-1.5">
-                  <Loader2 size={13} className="animate-spin" /> Optimizing photo...
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#B45309] dark:bg-[#FBBF24] animate-pulse" /> Optimizing photo...
                 </span>
               ) : isScanning ? (
                 <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold flex items-center gap-1.5">
-                  <Loader2 size={13} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37]" /> AI Scanning details...
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] animate-pulse" /> AI Scanning details...
                 </span>
               ) : scanSuccess ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
@@ -225,11 +225,11 @@ const DocumentUploadCard = ({
 
             {/* Retake, Re-scan & Preview Bar */}
             <div className="w-full bg-emerald-500/10 dark:bg-emerald-950/40 py-2 px-3 flex items-center justify-between text-xs border-t border-emerald-500/20">
-              <span className="flex items-center gap-1 font-semibold text-emerald-800 dark:text-emerald-300 text-xs">
+              <span className="flex items-center gap-1.5 font-semibold text-emerald-800 dark:text-emerald-300 text-xs">
                 {isScanning ? (
                   <>
-                    <Loader2 size={12} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37]" />
-                    <span className="text-[#9E2A2B] dark:text-[#D4AF37]">Scanning...</span>
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] animate-pulse" />
+                    <span className="text-[#9E2A2B] dark:text-[#D4AF37]">Scanning in progress...</span>
                   </>
                 ) : (
                   <>
@@ -246,7 +246,7 @@ const DocumentUploadCard = ({
                     className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[38px] px-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Re-scan document"
                   >
-                    <RotateCcw size={12} className={isScanning ? "animate-spin" : ""} />
+                    <RotateCcw size={12} />
                     <span>Re-scan</span>
                   </button>
                 )}
