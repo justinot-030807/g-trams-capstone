@@ -89,6 +89,7 @@ app.use(`${BASE_URI}/auth`, authRoutes);
 // Franchise routes
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 app.use(`${BASE_URI}/franchises`, franchiseRoutes);
+app.use(`${BASE_URI}/franchise`, franchiseRoutes);
 
 // TODA routes
 app.use(`${BASE_URI}/toda`, todaRoutes); 

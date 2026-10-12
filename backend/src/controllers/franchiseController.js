@@ -8,9 +8,33 @@ const { emitToUser } = require('../config/socket');
 const { sendPushToUser } = require('../services/pushService');
 const FranchiseService = require('../services/franchiseService');
 const { isNameMatch } = require('../utils/nameMatcher');
-const { validateTodaJurisdiction } = require('../utils/todaDirectory');
+const { validateTodaJurisdiction, TODA_DIRECTORY } = require('../utils/todaDirectory');
 
 const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function buildTodaSearchConditions(todaName) {
+    if (!todaName || todaName === 'NON-TODA') return [];
+    const clean = String(todaName).trim();
+    const todaRegex = new RegExp(escapeRegex(clean), 'i');
+    const conditions = [
+        { todaAssociation: todaRegex },
+        { fileName: todaRegex }
+    ];
+
+    if (Array.isArray(TODA_DIRECTORY)) {
+        const entry = TODA_DIRECTORY.find(t => 
+            t.id.toUpperCase() === clean.toUpperCase() || 
+            t.name.toUpperCase().includes(clean.toUpperCase()) || 
+            clean.toUpperCase().includes(t.id.toUpperCase())
+        );
+        if (entry) {
+            conditions.push({ todaAssociation: new RegExp(escapeRegex(entry.id), 'i') });
+            conditions.push({ todaAssociation: new RegExp(escapeRegex(entry.name), 'i') });
+            conditions.push({ fileName: new RegExp(escapeRegex(entry.id), 'i') });
+        }
+    }
+    return conditions;
+}
 
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -81,12 +105,11 @@ const createFranchise = async (req, res) => {
         // Strict TODA Gatekeeping: If applicant is not in official approved roster, TODA Certificate is strictly required
         if (!isAdmin && data.todaName && data.todaName !== 'NON-TODA') {
             const applicantName = (data.fullName || (req.user && req.user.name) || '').trim();
-            const todaName = data.todaName.trim();
-            const todaRegex = new RegExp(`^${escapeRegex(todaName)}$`, 'i');
+            const todaSearch = buildTodaSearchConditions(todaName);
 
             const approvedRosters = await TodaSubmission.find({
                 status: 'Approved',
-                $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+                $or: todaSearch
             }).select('extractedMembers todaAssociation fileName').lean();
 
             let isMemberInRoster = false;
@@ -747,12 +770,12 @@ const getFranchiseRecordCheck = async (req, res) => {
         let todaApprovedCount = 0;
 
         if (franchise.todaName && franchise.todaName !== 'NON-TODA') {
-            const todaRegex = new RegExp(`^${escapeRegex(franchise.todaName)}$`, 'i');
+            const todaSearch = buildTodaSearchConditions(franchise.todaName);
             
             // Query only Approved masterlists for this TODA
             const approvedRosters = await TodaSubmission.find({
                 status: 'Approved',
-                $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+                $or: todaSearch
             }).select('extractedMembers todaAssociation fileName createdAt');
 
             todaApprovedCount = approvedRosters.length;
@@ -1083,11 +1106,11 @@ const checkTodaMemberStatus = async (req, res) => {
         const jurisdictionStatus = !barangay ? 'unspecified' : (jurisdictionCheck.isMatch ? 'match' : 'mismatch');
         const jurisdictionWarning = jurisdictionCheck.warning || '';
 
-        const todaRegex = new RegExp(`^${escapeRegex(todaName)}$`, 'i');
+        const todaSearch = buildTodaSearchConditions(todaName);
 
         const approvedRosters = await TodaSubmission.find({
             status: 'Approved',
-            $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+            $or: todaSearch
         }).select('extractedMembers todaAssociation fileName createdAt').lean();
 
         if (approvedRosters.length === 0) {

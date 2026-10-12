@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST, getTodasForBarangay } from '../utils/constants';
 import TermsPolicyModal from './common/TermsPolicyModal';
-import { Loader2, X, User, Mail, Phone, MapPin, Building2, ShieldCheck, ChevronDown } from 'lucide-react';
+import { 
+  Loader2, X, User, Mail, Phone, MapPin, Building2, ShieldCheck, ChevronDown,
+  CheckCircle2, AlertTriangle, AlertCircle, Info 
+} from 'lucide-react';
 
 const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) => {
   const [editableName, setEditableName] = useState('');
@@ -13,6 +16,10 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Live TODA Roster Membership Status Check
+  const [todaCheckResult, setTodaCheckResult] = useState(null);
+  const [isCheckingToda, setIsCheckingToda] = useState(false);
+
   useEffect(() => {
     if (isOpen && googleProfile) {
       setError('');
@@ -22,8 +29,40 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       setSelectedBarangay('');
       setSelectedToda('');
       setTermsAccepted(false);
+      setTodaCheckResult(null);
+      setIsCheckingToda(false);
     }
   }, [isOpen, googleProfile]);
+
+  useEffect(() => {
+    if (!selectedToda || selectedToda === 'NON-TODA') {
+      setTodaCheckResult(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingToda(true);
+      try {
+        const query = new URLSearchParams({
+          todaName: selectedToda,
+          name: editableName || '',
+          barangay: selectedBarangay || ''
+        });
+        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+        const res = await fetch(`${baseUrl}/api/v1/franchises/check-toda-member?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTodaCheckResult(data);
+        }
+      } catch (e) {
+        console.error('TODA check error in Google onboarding:', e);
+      } finally {
+        setIsCheckingToda(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [selectedToda, editableName, selectedBarangay]);
 
   if (!isOpen || !googleProfile) return null;
 
@@ -339,6 +378,64 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
               </div>
             </div>
           </div>
+
+          {/* Live TODA Roster & Jurisdiction Feedback */}
+          {selectedToda && selectedToda !== 'NON-TODA' && (
+            <div className="text-xs rounded-lg transition-all animate-fadeIn">
+              {isCheckingToda ? (
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <Loader2 size={13} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  <span>Checking official {selectedToda} masterlist...</span>
+                </div>
+              ) : todaCheckResult ? (
+                <div className="space-y-1.5">
+                  {todaCheckResult.jurisdictionStatus === 'mismatch' && (
+                    <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50">
+                      <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                      <div>
+                        <span className="font-bold">Paalala sa Ruta: </span>
+                        <span>{todaCheckResult.jurisdictionWarning || `Ang Barangay "${selectedBarangay}" ay nasa labas ng opisyal na rota ng ${selectedToda}.`}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {todaCheckResult.todaStatus === 'verified_member' ? (
+                    <div className="flex items-start gap-2 text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
+                      <CheckCircle2 size={14} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                      <div>
+                        <span className="font-bold">✓ Kumpirmadong Miyembro: </span>
+                        <span>Nakapaloob ang pangalang <strong>"{todaCheckResult.matchedMember || editableName}"</strong> sa opisyal na approved masterlist ng {selectedToda}.</span>
+                      </div>
+                    </div>
+                  ) : todaCheckResult.todaStatus === 'not_in_roster' ? (
+                    <div className="flex items-start gap-2 text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 p-2.5 rounded-lg border border-blue-200 dark:border-blue-900/50">
+                      <Info size={14} className="shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+                      <div>
+                        <span className="font-bold">ℹ Paalala sa Pag-apply: </span>
+                        <span>Ang pangalan mo ay hindi pa kabilang sa kasalukuyang digital roster ng {selectedToda}. Maaari kang magpatuloy sa Google registration, ngunit <strong>kailangan mong mag-upload ng TODA Endorsement Certificate</strong> kapag nag-apply ng prangkisa.</span>
+                      </div>
+                    </div>
+                  ) : todaCheckResult.todaStatus === 'pending_name' ? (
+                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                      <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
+                      <div>
+                        <span className="font-bold">ℹ May Digital Masterlist: </span>
+                        <span>May opisyal na approved masterlist ang {selectedToda}. Pakitiyak ang iyong legal name sa itaas upang ma-verify ang membership.</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                      <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
+                      <div>
+                        <span className="font-bold">ℹ Status: </span>
+                        <span>Wala pang online masterlist on record para sa {selectedToda}. Maaari kang magpatuloy sa pagrehistro.</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           {/* Terms & Privacy Policy Checkbox */}
           <div className="flex items-center gap-3 min-h-[44px] pt-1">

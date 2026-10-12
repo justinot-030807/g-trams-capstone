@@ -414,7 +414,8 @@ const ApplyFranchise = () => {
           name: formData.fullName || '',
           barangay: formData.address || ''
         });
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchise/check-toda-member?${query.toString()}`);
+        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+        const res = await fetch(`${baseUrl}/api/v1/franchises/check-toda-member?${query.toString()}`);
         if (res.ok) {
           const data = await res.json();
           setTodaMembershipStatus(data);

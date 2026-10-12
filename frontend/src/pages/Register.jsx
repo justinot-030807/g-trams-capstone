@@ -67,7 +67,7 @@ const Register = () => {
   const [isCheckingToda, setIsCheckingToda] = useState(false);
 
   useEffect(() => {
-    if (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA' || !formData.address) {
+    if (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA') {
       setTodaCheckResult(null);
       return;
     }
@@ -80,17 +80,18 @@ const Register = () => {
           name: formData.name || '',
           barangay: formData.address || ''
         });
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchise/check-toda-member?${query.toString()}`);
+        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+        const res = await fetch(`${baseUrl}/api/v1/franchises/check-toda-member?${query.toString()}`);
         if (res.ok) {
           const data = await res.json();
           setTodaCheckResult(data);
         }
       } catch (e) {
-        console.error('TODA check error:', e);
+        console.error('TODA check error in Register:', e);
       } finally {
         setIsCheckingToda(false);
       }
-    }, 450);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [formData.todaAssociation, formData.name, formData.address]);
@@ -561,6 +562,14 @@ const Register = () => {
                                 <div>
                                   <span className="font-bold">ℹ Paalala sa Pag-apply: </span>
                                   <span>Ang pangalan mo ay hindi pa kabilang sa kasalukuyang digital roster ng {formData.todaAssociation}. Maaari kang magparehistro, ngunit <strong>kailangan mong mag-upload ng TODA Endorsement Certificate</strong> kapag nag-apply ng prangkisa.</span>
+                                </div>
+                              </div>
+                            ) : todaCheckResult.todaStatus === 'pending_name' ? (
+                              <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
+                                <div>
+                                  <span className="font-bold">ℹ May Digital Masterlist: </span>
+                                  <span>May opisyal na approved masterlist ang {formData.todaAssociation}. Pakilagay ang iyong buong legal name sa itaas upang ma-verify ang membership.</span>
                                 </div>
                               </div>
                             ) : (
