@@ -249,16 +249,32 @@ const ApplicationSummaryModal = ({
                     <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaSerialNo || '—'}</span>
                   </div>
                   <div>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Tax Year</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaYear || (data?.cedulaDate ? new Date(data.cedulaDate).getFullYear() : '—')}</span>
+                  </div>
+                  <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Issued</span>
                     <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaDate || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Place Issued</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.cedulaAddress || '—'}</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.cedulaPlaceIssued || data?.cedulaAddress || '—'}</span>
                   </div>
+                  {(data?.cedulaFullName || data?.cedulaCivilStatus) && (
+                    <>
+                      <div>
+                        <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Taxpayer Name</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{data?.cedulaFullName || data?.fullName || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Civil Status</span>
+                        <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaCivilStatus || '—'}</span>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Amount Paid</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaAmount ? `₱${Number(data.cedulaAmount).toFixed(2)}` : '—'}</span>
+                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{data?.cedulaAmount ? `₱${Number(data.cedulaAmount).toFixed(2)}` : '₱55.00'}</span>
                   </div>
                 </div>
               </div>

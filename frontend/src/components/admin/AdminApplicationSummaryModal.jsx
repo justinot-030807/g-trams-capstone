@@ -223,10 +223,14 @@ const AdminApplicationSummaryModal = ({
             <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Receipt size={13} /> 3. CTC / Cedula Details
             </h4>
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Cedula Serial No.</span>
                 <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.cedulaSerialNo || '—'}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Tax Year</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.cedulaYear || (franchise.cedulaDate ? new Date(franchise.cedulaDate).getFullYear() : '—')}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Date Issued</span>
@@ -234,7 +238,19 @@ const AdminApplicationSummaryModal = ({
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Place Issued</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.cedulaAddress || '—'}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.cedulaPlaceIssued || franchise.cedulaAddress || '—'}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Cedula Taxpayer</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.cedulaFullName || franchise.fullName || '—'}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Civil Status / Citizenship</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{[franchise.cedulaCivilStatus, franchise.cedulaCitizenship || 'Filipino'].filter(Boolean).join(' • ')}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Amount Paid</span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{franchise.cedulaAmount ? `₱${Number(franchise.cedulaAmount).toFixed(2)}` : '₱55.00'}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Date Applied</span>

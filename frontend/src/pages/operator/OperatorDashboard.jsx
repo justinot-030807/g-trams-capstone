@@ -281,9 +281,7 @@ const OperatorDashboard = () => {
     let targetStep = 1;
     if (['make', 'made', 'motorNo', 'chassisNo', 'plateNo', 'zone'].includes(targetField)) {
       targetStep = 2;
-    } else if (['cedulaSerialNo', 'cedulaDate', 'cedulaAddress'].includes(targetField)) {
-      targetStep = 3;
-    } else if (['orCrDocument', 'license', 'todaEndorsement', 'brgyClearance', 'cedulaDoc'].includes(targetField)) {
+    } else if (['cedulaSerialNo', 'cedulaDate', 'cedulaAddress', 'cedulaAmount', 'orCrDocument', 'license', 'todaEndorsement', 'brgyClearance', 'cedulaDoc'].includes(targetField)) {
       targetStep = 4;
     }
 

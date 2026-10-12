@@ -4,7 +4,7 @@ import {
   UploadCloud, FileText, CheckCircle2, Clock3, ArrowLeft, X, Loader2, 
   FileSpreadsheet, Users, ShieldCheck, Phone, MapPin, Hash, Search, 
   Filter, Printer, Sparkles, RefreshCw, AlertCircle, Check, ChevronRight,
-  UserMinus, AlertTriangle, ShieldAlert, CheckCircle, ExternalLink
+  UserMinus, AlertTriangle, ShieldAlert, CheckCircle, ExternalLink, Eye
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SubmissionCardsSkeleton } from '../../components/skeleton';
@@ -38,8 +38,16 @@ const SubmitMembers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'pending' | 'expired'
 
-  // Document Upload State
+  // Document Upload & Realtime AI OCR State
   const [file, setFile] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [extractedRoster, setExtractedRoster] = useState([]);
+  const [detectedToda, setDetectedToda] = useState('');
+  const [ocrNotes, setOcrNotes] = useState('');
+  const [scanWarning, setScanWarning] = useState('');
+  const [newMemberInput, setNewMemberInput] = useState({ name: '', unitNo: '', plateNo: '' });
+  const [showAddMemberRow, setShowAddMemberRow] = useState(false);
+  const [selectedHistoryOCR, setSelectedHistoryOCR] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [submissions, setSubmissions] = useState([]); 
@@ -159,12 +167,74 @@ const SubmitMembers = () => {
     }
   };
 
+  const triggerAiScan = async (selectedFile) => {
+    setIsScanning(true);
+    setScanWarning('');
+    setExtractedRoster([]);
+    setDetectedToda('');
+    setOcrNotes('');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/scan-roster`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && Array.isArray(data.extractedMembers) && data.extractedMembers.length > 0) {
+        setExtractedRoster(data.extractedMembers);
+        setDetectedToda(data.todaAssociation || '');
+        setOcrNotes(data.ocrNotes || '');
+        showToast(`✨ AI Scan: Digitized ${data.extractedMembers.length} members from ${selectedFile.name}!`, 'success');
+      } else {
+        const warnMsg = data.message || 'No member records detected from this document. You may still submit the physical file for manual verification.';
+        setScanWarning(warnMsg);
+        showToast(warnMsg, 'info');
+      }
+    } catch (err) {
+      console.error('Scan error:', err);
+      setScanWarning('Could not complete automatic AI scan. You can still submit the file for manual LGU review.');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleAddExtractedMember = () => {
+    if (!newMemberInput.name.trim()) {
+      showToast('Please enter member name.', 'error');
+      return;
+    }
+    setExtractedRoster(prev => [
+      ...prev,
+      {
+        name: newMemberInput.name.trim(),
+        unitNo: newMemberInput.unitNo.trim(),
+        plateNo: newMemberInput.plateNo.trim(),
+        confidence: 1.0
+      }
+    ]);
+    setNewMemberInput({ name: '', unitNo: '', plateNo: '' });
+    setShowAddMemberRow(false);
+    showToast('Member added to roster list.', 'success');
+  };
+
+  const handleRemoveExtractedMember = (indexToRemove) => {
+    setExtractedRoster(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const validateAndSetFile = (selectedFile) => {
     const validExtensions = ['pdf', 'xlsx', 'csv', 'xls', 'png', 'jpg', 'jpeg'];
     const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
     
     if (validExtensions.includes(fileExtension)) {
       setFile(selectedFile);
+      triggerAiScan(selectedFile);
     } else {
       showToast('Please upload a valid document (PDF, Excel, CSV, or Image).', 'error');
     }
@@ -177,7 +247,7 @@ const SubmitMembers = () => {
       const blob = await response.blob();
       const sampleFile = new File([blob], 'BATODA_Official_Masterlist_2026.png', { type: 'image/png' });
       setFile(sampleFile);
-      showToast('Sample official BATODA masterlist loaded! Click submit to run AI OCR.', 'success');
+      triggerAiScan(sampleFile);
     } catch (err) {
       console.error(err);
       showToast('Could not load sample file.', 'error');
@@ -191,10 +261,11 @@ const SubmitMembers = () => {
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-
-    const slowNetTimer = setTimeout(() => {
-      showToast('Processing OCR scan. This may take a few moments for detailed sheets...', 'success');
-    }, 4500);
+    if (extractedRoster.length > 0) {
+      formData.append('extractedMembers', JSON.stringify(extractedRoster));
+      formData.append('extractedCount', extractedRoster.length);
+      if (ocrNotes) formData.append('ocrNotes', ocrNotes);
+    }
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/upload`, {
@@ -205,17 +276,20 @@ const SubmitMembers = () => {
         body: formData
       });
 
-      clearTimeout(slowNetTimer);
       const data = await response.json();
 
       if (response.ok) {
         setFile(null);
+        setExtractedRoster([]);
+        setDetectedToda('');
+        setOcrNotes('');
+        setScanWarning('');
         fetchMySubmissions();
         setFeedbackModal({
           isOpen: true,
           type: 'success',
-          title: 'Roster Document Submitted',
-          message: data.message || 'Your official TODA member roster document has been successfully submitted and scanned by AI OCR.'
+          title: 'Official Masterlist Submitted',
+          message: data.message || `Your official TODA masterlist has been successfully submitted to LGU Admin for review.`
         });
       } else {
         setFeedbackModal({
@@ -234,7 +308,6 @@ const SubmitMembers = () => {
         message: 'Unable to connect to the server. Please check your network connection.'
       });
     } finally {
-      clearTimeout(slowNetTimer);
       setIsUploading(false);
     }
   };
@@ -866,20 +939,152 @@ const SubmitMembers = () => {
                         <span className="truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
                         <button 
                           type="button" 
-                          onClick={() => setFile(null)} 
+                          onClick={() => {
+                            setFile(null);
+                            setExtractedRoster([]);
+                            setScanWarning('');
+                            setDetectedToda('');
+                          }} 
                           className="text-[#6B6761] dark:text-[#A8A29E] hover:text-red-500 ml-1 p-0.5 cursor-pointer rounded"
+                          title="Remove file"
                         >
                           <X size={14} />
                         </button>
+                      </div>
+                    )}
+
+                    {/* AI OCR Scanning Progress Banner */}
+                    {isScanning && (
+                      <div className="mt-4 p-3.5 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 flex items-center gap-3 animate-pulse text-left">
+                        <Loader2 size={20} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                            Scanning document with Google Gemini AI OCR...
+                          </p>
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                            Analyzing association headers, driver names, unit body numbers, and plate details...
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Scan Warning / Fallback Notice */}
+                    {scanWarning && !isScanning && (
+                      <div className="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2 text-left">
+                        <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                        <div>
+                          <p className="font-bold">AI Scan Note</p>
+                          <p className="mt-0.5 leading-snug">{scanWarning}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Digitized Members Live Preview */}
+                    {extractedRoster.length > 0 && !isScanning && (
+                      <div className="mt-5 border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-lg p-3.5 sm:p-4 text-left space-y-3">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <Sparkles size={16} className="text-emerald-600 dark:text-emerald-400" />
+                            <h3 className="text-xs sm:text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                              Digitized Masterlist Preview ({extractedRoster.length} Members Detected)
+                            </h3>
+                          </div>
+                          {detectedToda && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700">
+                              {detectedToda}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                          Review the detected members below. You may add or remove entries before submitting to LGU Admin.
+                        </p>
+
+                        <div className="max-h-60 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917]">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase">
+                                <th className="p-2.5 pl-3 w-10">#</th>
+                                <th className="p-2.5">Member Full Name</th>
+                                <th className="p-2.5">Body / Unit #</th>
+                                <th className="p-2.5">Plate No</th>
+                                <th className="p-2.5 pr-3 text-right">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                              {extractedRoster.map((m, idx) => (
+                                <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
+                                  <td className="p-2 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
+                                  <td className="p-2 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
+                                  <td className="p-2 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
+                                  <td className="p-2 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
+                                  <td className="p-2 pr-3 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveExtractedMember(idx)}
+                                      className="text-[#6B6761] hover:text-red-500 p-1 cursor-pointer"
+                                      title="Remove from list"
+                                    >
+                                      <X size={13} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Quick Add Member Option */}
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setShowAddMemberRow(prev => !prev)}
+                            className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                          >
+                            {showAddMemberRow ? '– Cancel adding entry' : '+ Add missing member manually'}
+                          </button>
+                        </div>
+
+                        {showAddMemberRow && (
+                          <div className="flex items-center gap-2 pt-1 flex-wrap bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                            <input
+                              type="text"
+                              placeholder="Full Name (e.g. Juan Dela Cruz)"
+                              value={newMemberInput.name}
+                              onChange={(e) => setNewMemberInput(p => ({ ...p, name: e.target.value }))}
+                              className="flex-1 min-w-[140px] px-2.5 py-1.5 text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Unit/Body #"
+                              value={newMemberInput.unitNo}
+                              onChange={(e) => setNewMemberInput(p => ({ ...p, unitNo: e.target.value }))}
+                              className="w-24 px-2.5 py-1.5 text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Plate #"
+                              value={newMemberInput.plateNo}
+                              onChange={(e) => setNewMemberInput(p => ({ ...p, plateNo: e.target.value }))}
+                              className="w-24 px-2.5 py-1.5 text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddExtractedMember}
+                              className="px-3 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded text-xs font-bold cursor-pointer"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
                   <button 
                     type="submit" 
-                    disabled={!file || isUploading}
+                    disabled={!file || isUploading || isScanning}
                     className={`w-full mt-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm text-white transition-all shadow-xs flex items-center justify-center gap-1.5 min-h-[44px] active:scale-95 ${
-                      !file || isUploading 
+                      !file || isUploading || isScanning
                       ? 'bg-[#6B7280] cursor-not-allowed' 
                       : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
                     }`}
@@ -887,10 +1092,17 @@ const SubmitMembers = () => {
                     {isUploading ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        <span>AI Scanning &amp; Digitizing Document...</span>
+                        <span>Submitting Masterlist to LGU Admin...</span>
                       </>
+                    ) : isScanning ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Scanning Document with AI OCR...</span>
+                      </>
+                    ) : extractedRoster.length > 0 ? (
+                      <span>Submit Masterlist with {extractedRoster.length} Digitized Members</span>
                     ) : (
-                      <span>Submit &amp; Scan with AI OCR</span>
+                      <span>Submit Official Masterlist Document</span>
                     )}
                   </button>
                 </form>
@@ -926,16 +1138,38 @@ const SubmitMembers = () => {
                           <StatusBadge status={sub.status} />
                         </div>
 
-                        {sub.extractedCount > 0 && (
-                          <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                            <Sparkles size={11} />
-                            <span>{sub.extractedCount} members extracted via AI OCR</span>
-                          </div>
+                        {sub.extractedCount > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedHistoryOCR(sub)}
+                            className="flex items-center justify-between text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer transition-colors"
+                          >
+                            <span className="flex items-center gap-1">
+                              <Sparkles size={11} />
+                              <span>{sub.extractedCount} members extracted</span>
+                            </span>
+                            <span className="text-[10px] underline">View List</span>
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
+                            Physical document attached
+                          </span>
                         )}
 
-                        <p className="text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
-                          Submitted on {new Date(sub.createdAt).toLocaleDateString()}
-                        </p>
+                        <div className="flex items-center justify-between text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E] pt-0.5">
+                          <span>{new Date(sub.createdAt).toLocaleDateString()}</span>
+                          {sub.filePath && (
+                            <a
+                              href={sub.filePath.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-0.5 font-semibold"
+                            >
+                              <Eye size={11} />
+                              <span>View File</span>
+                            </a>
+                          )}
+                        </div>
                       </div>
                     ))
                   )}
@@ -1112,6 +1346,83 @@ const SubmitMembers = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DIGITIZED MEMBERS HISTORY VIEWER MODAL */}
+      {selectedHistoryOCR && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-xl w-full p-5 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm sm:text-base">
+                <Sparkles size={18} />
+                <span>Digitized Masterlist Members</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedHistoryOCR(null)}
+                className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white p-1 rounded cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between text-xs bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div>
+                <p className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedHistoryOCR.fileName}</p>
+                <p className="text-[#6B6761] dark:text-[#A8A29E]">
+                  Submitted on {new Date(selectedHistoryOCR.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <span className="font-bold px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                {selectedHistoryOCR.extractedCount || selectedHistoryOCR.extractedMembers?.length || 0} Members
+              </span>
+            </div>
+
+            <div className="max-h-72 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] font-semibold">
+                    <th className="p-2.5 pl-3 w-10">#</th>
+                    <th className="p-2.5">Member Full Name</th>
+                    <th className="p-2.5">Unit #</th>
+                    <th className="p-2.5 pr-3">Plate No</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                  {(selectedHistoryOCR.extractedMembers || []).map((m, idx) => (
+                    <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
+                      <td className="p-2.5 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
+                      <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
+                      <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
+                      <td className="p-2.5 pr-3 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              {selectedHistoryOCR.filePath && (
+                <a
+                  href={selectedHistoryOCR.filePath.startsWith('http') ? selectedHistoryOCR.filePath : `${import.meta.env.VITE_API_URL}/${selectedHistoryOCR.filePath}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1"
+                >
+                  <Eye size={13} />
+                  <span>View Original Uploaded Document</span>
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setSelectedHistoryOCR(null)}
+                className="px-4 py-2 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white text-xs font-bold cursor-pointer"
+              >
+                Close Viewer
+              </button>
+            </div>
           </div>
         </div>
       )}

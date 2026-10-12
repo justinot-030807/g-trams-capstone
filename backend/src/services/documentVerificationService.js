@@ -86,16 +86,25 @@ async function fetchImageAsBase64(url) {
         if (!url || typeof url !== 'string') return null;
         const response = await axios.get(url, {
             responseType: 'arraybuffer',
-            timeout: 10000,
+            timeout: 15000,
             headers: {
-                'Accept': 'image/*,application/pdf'
+                'Accept': 'image/*,application/pdf,*/*'
             }
         });
 
         if (!response || !response.data) return null;
-        const contentType = (response.headers && response.headers['content-type']) || 'image/jpeg';
+        let contentType = (response.headers && response.headers['content-type']) || 'image/jpeg';
+        contentType = contentType.split(';')[0].trim().toLowerCase();
+
+        // Enforce application/pdf for PDF URLs or headers
+        if (url.toLowerCase().includes('.pdf') || contentType.includes('pdf')) {
+            contentType = 'application/pdf';
+        } else if (contentType === 'application/octet-stream') {
+            contentType = url.toLowerCase().includes('.pdf') ? 'application/pdf' : 'image/jpeg';
+        }
+
         const base64Data = Buffer.from(response.data).toString('base64');
-        return { base64Data, mimeType: contentType.split(';')[0] };
+        return { base64Data, mimeType: contentType };
     } catch (err) {
         console.warn(`[DocVerify] Could not fetch image from ${url}:`, err.message);
         return null;
@@ -196,22 +205,38 @@ Extract and return ONLY a valid JSON object with these exact keys:
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'cedula') {
-            prompt = `You are an expert OCR specialist for Philippine Community Tax Certificates (Cedula / CTC).
-Extract the CTC details from this document image.
-EXCLUSION RULES (CRITICAL):
-- DO NOT extract tax payment amounts, basic tax, or total fees paid.
-- DO NOT extract municipal treasurer / collector signatures.
+            prompt = `You are an expert OCR specialist for Philippine Community Tax Certificates (Cedula / CTC Individual or Corporate).
+Carefully read and extract all details from this Community Tax Certificate document image.
 
-Return ONLY a valid JSON object with these exact keys:
+Extract and return ONLY a valid JSON object with these exact keys:
 {
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Community Tax Certificate (Cedula)",
-  "serialNo": "extracted CTC / Cedula serial number or receipt number, or null",
-  "fullName": "extracted taxpayer full name, or null",
-  "year": "extracted tax year (e.g. 2026), or null",
-  "dateIssued": "extracted date issued (YYYY-MM-DD), or null",
-  "placeIssued": "extracted place issued (e.g. Gasan, Marinduque), or null",
-  "address": "extracted taxpayer address, or null"
+  "serialNo": "extracted CTC / Cedula complete serial or certificate number (e.g. CC12012 11793510), or null",
+  "ctcNo": "extracted numeric part of serial number if distinct (e.g. 11793510), or null",
+  "year": "extracted tax year (e.g. 2026, 2013), or null",
+  "dateIssued": "extracted issuance date formatted as YYYY-MM-DD (e.g. 2013-06-10), or null",
+  "placeIssued": "extracted place of issue (City/Municipality/Province, e.g. CITY OF BAGUIO, Gasan, Marinduque), or null",
+  "fullName": "extracted complete taxpayer full name formatted as 'LASTNAME, FIRSTNAME MIDDLENAME' (e.g. GASATAN, JOAN M), or null",
+  "lastName": "extracted taxpayer surname / last name (e.g. GASATAN), or null",
+  "firstName": "extracted taxpayer first name (e.g. JOAN), or null",
+  "middleName": "extracted taxpayer middle name or initial (e.g. M), or null",
+  "address": "extracted taxpayer residential address (e.g. P9 115 GABRIELA SILANG BC), or null",
+  "tin": "extracted Taxpayer Identification Number (TIN) if present, or null",
+  "sex": "extracted sex/gender ('Male' or 'Female'), or null",
+  "citizenship": "extracted citizenship (e.g. Filipino), or null",
+  "icrNo": "extracted ICR number if an alien, or null",
+  "placeOfBirth": "extracted place of birth (e.g. Benguet), or null",
+  "dateOfBirth": "extracted date of birth formatted as YYYY-MM-DD (e.g. 1992-02-27), or null",
+  "civilStatus": "extracted civil status ('Single', 'Married', 'Widow/Widower', 'Separated', etc.), or null",
+  "profession": "extracted profession / occupation / business, or null",
+  "height": "extracted height (e.g. 5, 5 ft, or 160 cm), or null",
+  "weight": "extracted weight (e.g. 50, 50 kg), or null",
+  "basicCommunityTax": "extracted basic community tax amount (e.g. 5.00), or null",
+  "additionalTax": "extracted additional community tax amount (e.g. 5.00), or null",
+  "interest": "extracted penalty or interest amount (e.g. 5.00), or null",
+  "totalAmountPaid": "extracted total amount paid / fee (e.g. 5.60), or null",
+  "treasurer": "extracted municipal or city treasurer / collector name (e.g. ALICIA L. ONOZA), or null"
 }
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'todaEndorsement') {
@@ -252,15 +277,17 @@ Return ONLY a valid JSON object with these exact keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Multi-model auto-failover cascade: Gemini 3.8 Flash is primary main model.
+        // Multi-model auto-failover cascade: Gemini 3.8 Flash is primary main model per user requirement.
         // If overloaded (503), rate-limited (429), or unavailable, immediately cascade to next tier.
         const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
         const modelsToTry = [
             preferredModel,
             'gemini-3.8-flash',
-            'gemini-3.6-flash',
             'gemini-2.5-flash',
-            'gemini-2.0-flash'
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-lite',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
         let responseText = null;
@@ -500,7 +527,19 @@ async function verifyFranchiseDocuments(franchise) {
                     notes: 'Uploaded image does not appear to be a valid Community Tax Certificate (Cedula).'
                 });
             } else {
-                comparisons.push(compareField(franchise.cedulaSerialNo, extracted.serialNo, 'Cedula / CTC Serial No', 'cedulaSerialNo'));
+                comparisons.push(compareField(franchise.cedulaSerialNo, extracted.serialNo || extracted.ctcNo, 'Cedula / CTC Serial No', 'cedulaSerialNo'));
+                if (franchise.fullName && extracted.fullName) {
+                    comparisons.push(compareField(franchise.fullName, extracted.fullName, 'Cedula Taxpayer Full Name', 'fullName'));
+                }
+                if (franchise.cedulaDate && extracted.dateIssued) {
+                    comparisons.push(compareField(franchise.cedulaDate, extracted.dateIssued, 'Cedula Date Issued', 'cedulaDate'));
+                }
+                if (franchise.cedulaAddress && (extracted.placeIssued || extracted.address)) {
+                    comparisons.push(compareField(franchise.cedulaAddress, extracted.placeIssued || extracted.address, 'Cedula Place / Address Issued', 'cedulaAddress'));
+                }
+                if (franchise.cedulaAmount && extracted.totalAmountPaid) {
+                    comparisons.push(compareField(franchise.cedulaAmount, extracted.totalAmountPaid, 'Cedula Amount Paid', 'cedulaAmount'));
+                }
             }
 
             const hasMismatch = comparisons.some(c => c.status === 'mismatch');
@@ -678,23 +717,50 @@ async function verifyFranchiseDocuments(franchise) {
 }
 
 /**
- * Extracts members and metadata from an uploaded TODA official roster sheet/document
+ * Extracts members and metadata from an uploaded TODA official roster sheet/document (PDF or image)
+ * Accepts a URL string, a Buffer, or an object with { base64Data, mimeType }
  */
-async function extractTodaRosterFromDocument(imageUrl) {
+async function extractTodaRosterFromDocument(input) {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return null;
+    if (!apiKey) {
+        console.warn('[TodaRosterOCR] GEMINI_API_KEY is not defined in environment variables.');
+        return null;
+    }
 
-    const img = await fetchImageAsBase64(imageUrl);
-    if (!img) return null;
+    let img = null;
+    if (typeof input === 'string') {
+        img = await fetchImageAsBase64(input);
+    } else if (input && input.base64Data) {
+        img = input;
+    } else if (Buffer.isBuffer(input)) {
+        img = {
+            base64Data: input.toString('base64'),
+            mimeType: 'application/pdf'
+        };
+    }
+
+    if (!img || !img.base64Data) {
+        console.warn('[TodaRosterOCR] Could not obtain base64 document data for OCR.');
+        return null;
+    }
+
+    let mimeType = img.mimeType || 'image/jpeg';
+    if (typeof input === 'string' && input.toLowerCase().includes('.pdf')) {
+        mimeType = 'application/pdf';
+    } else if (mimeType.includes('pdf')) {
+        mimeType = 'application/pdf';
+    } else if (mimeType === 'application/octet-stream') {
+        mimeType = (typeof input === 'string' && input.toLowerCase().includes('.pdf')) ? 'application/pdf' : 'image/jpeg';
+    }
 
     try {
         const ai = new GoogleGenAI({ apiKey });
         const prompt = `You are an expert OCR specialist for Philippine Tricycle Operators and Drivers Association (TODA) official masterlists, member rosters, and endorsement sheets.
-Analyze this document image and extract all listed members, operators, or drivers along with any associated unit numbers or plate numbers.
+Analyze this document image or PDF carefully and extract all listed members, operators, or drivers along with any associated unit numbers, body numbers, or plate numbers.
 
 EXCLUSION RULES:
 - DO NOT extract any monetary fees, dues, or payment figures.
-- DO NOT extract general signatures.
+- DO NOT extract general signatures or municipal officer names.
 
 Return ONLY a valid JSON object matching this schema:
 {
@@ -716,21 +782,23 @@ Return raw JSON only, no markdown, no surrounding text.`;
         const modelsToTry = [
             preferredModel,
             'gemini-3.8-flash',
-            'gemini-3.6-flash',
             'gemini-2.5-flash',
-            'gemini-2.0-flash'
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-lite',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
         let responseText = null;
         for (const modelName of modelsToTry) {
             try {
-                console.log(`[TodaRosterOCR] Trying model ${modelName}...`);
+                console.log(`[TodaRosterOCR] Invoking model ${modelName} (mimeType: ${mimeType}, base64 length: ${img.base64Data.length})...`);
                 const interaction = await ai.models.generateContent({
                     model: modelName,
                     contents: [
                         {
                             inlineData: {
-                                mimeType: img.mimeType || 'image/jpeg',
+                                mimeType: mimeType,
                                 data: img.base64Data
                             }
                         },

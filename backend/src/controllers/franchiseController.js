@@ -195,12 +195,18 @@ const updateFranchise = async (req, res) => {
         if (updateData.brgyClearanceDate) {
             updateData.brgyClearanceDate = !isNaN(new Date(updateData.brgyClearanceDate).getTime()) ? new Date(updateData.brgyClearanceDate) : null;
         }
+        if (updateData.cedulaDob) {
+            updateData.cedulaDob = !isNaN(new Date(updateData.cedulaDob).getTime()) ? new Date(updateData.cedulaDob) : null;
+        }
         if (updateData.isOperatorDriver !== undefined) {
             updateData.isOperatorDriver = updateData.isOperatorDriver === true || updateData.isOperatorDriver === 'true';
         }
 
         if (typeof updateData.aiScannedData === 'string') {
             try { updateData.aiScannedData = JSON.parse(updateData.aiScannedData); } catch {}
+        }
+        if (typeof updateData.cedulaDetails === 'string') {
+            try { updateData.cedulaDetails = JSON.parse(updateData.cedulaDetails); } catch {}
         }
         if (typeof updateData.aiDiscrepancies === 'string') {
             try { updateData.aiDiscrepancies = JSON.parse(updateData.aiDiscrepancies); } catch {}

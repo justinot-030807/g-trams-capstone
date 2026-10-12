@@ -12,6 +12,85 @@ const { extractTodaRosterFromDocument } = require('../services/documentVerificat
 
 const upload = require('../config/cloudinary');
 
+const memoryUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 15 * 1024 * 1024 }
+});
+
+// Real-time AI OCR scanning for roster documents (zero Cloudinary delay, memory buffer)
+router.post('/scan-roster', protect, authorize('admin', 'toda president', 'toda_president'), memoryUpload.single('file'), async (req, res) => {
+    try {
+        let input = null;
+
+        if (req.file && req.file.buffer) {
+            let mType = req.file.mimetype || 'image/jpeg';
+            if (req.file.originalname && req.file.originalname.toLowerCase().endsWith('.pdf')) {
+                mType = 'application/pdf';
+            }
+            input = {
+                base64Data: req.file.buffer.toString('base64'),
+                mimeType: mType
+            };
+        } else if (req.body.base64) {
+            let base64Data = req.body.base64;
+            let mType = req.body.mimeType || 'image/jpeg';
+            if (base64Data.includes(',')) {
+                const parts = base64Data.split(',');
+                const match = parts[0].match(/:(.*?);/);
+                if (match) mType = match[1];
+                base64Data = parts[1];
+            }
+            input = { base64Data, mimeType: mType };
+        } else if (req.body.fileUrl) {
+            input = req.body.fileUrl;
+        }
+
+        if (!input) {
+            return res.status(400).json({ success: false, message: 'No file received for document scanning.' });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(200).json({
+                success: false,
+                noKey: true,
+                message: 'Notice: GEMINI_API_KEY is not configured on the server. AI roster digitization is disabled.',
+                extractedMembers: [],
+                extractedCount: 0
+            });
+        }
+
+        const ocr = await extractTodaRosterFromDocument(input);
+        if (!ocr || !Array.isArray(ocr.members) || ocr.members.length === 0) {
+            return res.status(200).json({
+                success: false,
+                message: 'No member records detected in document. Please verify the document format or image clarity.',
+                extractedMembers: [],
+                extractedCount: 0,
+                ocrNotes: ocr?.notes || 'No members identified'
+            });
+        }
+
+        const members = ocr.members.map(m => ({
+            name: (m.name || '').trim(),
+            unitNo: (m.unitNo || '').trim(),
+            plateNo: (m.plateNo || '').trim(),
+            confidence: 0.95
+        })).filter(m => Boolean(m.name));
+
+        return res.status(200).json({
+            success: true,
+            extractedMembers: members,
+            extractedCount: members.length,
+            todaAssociation: ocr.todaAssociation || req.user.todaAssociation || '',
+            documentTitle: ocr.documentTitle || '',
+            ocrNotes: ocr.notes || ''
+        });
+    } catch (err) {
+        console.error('Error in /scan-roster:', err);
+        res.status(500).json({ success: false, message: 'Server error while scanning roster document.' });
+    }
+});
+
 // Upload member list (TODA President) with AI OCR Roster Parsing
 router.post('/upload', protect, authorize('admin', 'toda president', 'toda_president'), upload.single('file'), async (req, res) => {
     try {
@@ -22,23 +101,47 @@ router.post('/upload', protect, authorize('admin', 'toda president', 'toda_presi
         let ocrNotes = '';
         let todaAssociation = req.user.todaAssociation || '';
 
-        try {
-            const ocr = await extractTodaRosterFromDocument(req.file.path);
-            if (ocr && Array.isArray(ocr.members)) {
-                extractedMembers = ocr.members.map(m => ({
-                    name: (m.name || '').trim(),
-                    unitNo: (m.unitNo || '').trim(),
-                    plateNo: (m.plateNo || '').trim(),
-                    confidence: 0.95
-                })).filter(m => Boolean(m.name));
-                extractedCount = extractedMembers.length;
-                ocrNotes = ocr.notes || '';
-                if (ocr.todaAssociation && (!todaAssociation || todaAssociation === 'NON-TODA')) {
-                    todaAssociation = ocr.todaAssociation;
+        // If client already pre-scanned and confirmed members:
+        if (req.body.extractedMembers) {
+            try {
+                const parsed = typeof req.body.extractedMembers === 'string' 
+                    ? JSON.parse(req.body.extractedMembers) 
+                    : req.body.extractedMembers;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    extractedMembers = parsed.map(m => ({
+                        name: (m.name || '').trim(),
+                        unitNo: (m.unitNo || '').trim(),
+                        plateNo: (m.plateNo || '').trim(),
+                        confidence: m.confidence || 0.95
+                    })).filter(m => Boolean(m.name));
+                    extractedCount = extractedMembers.length;
+                    ocrNotes = req.body.ocrNotes || 'Pre-scanned & verified by TODA President';
                 }
+            } catch (pErr) {
+                console.warn('[TodaRoster] Error parsing client extractedMembers:', pErr.message);
             }
-        } catch (ocrErr) {
-            console.warn('[TodaRoster] OCR extraction failed non-critically:', ocrErr.message);
+        }
+
+        // Fallback: If not provided by client, run OCR extraction directly on file path
+        if (extractedMembers.length === 0) {
+            try {
+                const ocr = await extractTodaRosterFromDocument(req.file.path);
+                if (ocr && Array.isArray(ocr.members)) {
+                    extractedMembers = ocr.members.map(m => ({
+                        name: (m.name || '').trim(),
+                        unitNo: (m.unitNo || '').trim(),
+                        plateNo: (m.plateNo || '').trim(),
+                        confidence: 0.95
+                    })).filter(m => Boolean(m.name));
+                    extractedCount = extractedMembers.length;
+                    ocrNotes = ocr.notes || '';
+                    if (ocr.todaAssociation && (!todaAssociation || todaAssociation === 'NON-TODA')) {
+                        todaAssociation = ocr.todaAssociation;
+                    }
+                }
+            } catch (ocrErr) {
+                console.warn('[TodaRoster] OCR extraction failed non-critically:', ocrErr.message);
+            }
         }
 
         const newSubmission = await TodaSubmission.create({
@@ -71,6 +174,54 @@ router.get('/submissions', protect, authorize('admin'), async (req, res) => {
         res.status(200).json(submissions);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching submissions' });
+    }
+});
+
+// Re-scan an existing submission with AI OCR (Admin only)
+router.put('/submissions/:id/rescan', protect, authorize('admin'), async (req, res) => {
+    try {
+        const submission = await TodaSubmission.findById(req.params.id);
+        if (!submission) {
+            return res.status(404).json({ message: 'Submission not found.' });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(400).json({ message: 'GEMINI_API_KEY is not configured on server.' });
+        }
+
+        const ocr = await extractTodaRosterFromDocument(submission.filePath);
+        if (!ocr || !Array.isArray(ocr.members) || ocr.members.length === 0) {
+            return res.status(200).json({
+                success: false,
+                message: 'Re-scan completed, but no member records could be detected in the document file.',
+                submission
+            });
+        }
+
+        const extractedMembers = ocr.members.map(m => ({
+            name: (m.name || '').trim(),
+            unitNo: (m.unitNo || '').trim(),
+            plateNo: (m.plateNo || '').trim(),
+            confidence: 0.95
+        })).filter(m => Boolean(m.name));
+
+        submission.extractedMembers = extractedMembers;
+        submission.extractedCount = extractedMembers.length;
+        if (ocr.notes) submission.ocrNotes = ocr.notes;
+        if (ocr.todaAssociation && (!submission.todaAssociation || submission.todaAssociation === 'NON-TODA')) {
+            submission.todaAssociation = ocr.todaAssociation;
+        }
+
+        await submission.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Successfully re-scanned! ${extractedMembers.length} members extracted.`,
+            submission
+        });
+    } catch (err) {
+        console.error('Error re-scanning submission:', err);
+        res.status(500).json({ message: 'Server error while re-scanning submission.' });
     }
 });
 

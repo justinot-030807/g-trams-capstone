@@ -383,10 +383,14 @@ const FranchiseMasterlist = () => {
                 <h3 className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <FileText size={14} /> Community Tax Certificate (Cedula)
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Serial Number</span>
                     <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.cedulaSerialNo || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Tax Year</span>
+                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.cedulaYear || (selectedFranchise.cedulaDate ? new Date(selectedFranchise.cedulaDate).getFullYear() : '—')}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Date Issued</span>
@@ -394,7 +398,7 @@ const FranchiseMasterlist = () => {
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Place Issued</span>
-                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.cedulaAddress || 'Gasan, Marinduque'}</span>
+                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{selectedFranchise.cedulaPlaceIssued || selectedFranchise.cedulaAddress || 'Gasan, Marinduque'}</span>
                   </div>
                 </div>
               </div>
@@ -404,12 +408,13 @@ const FranchiseMasterlist = () => {
                 <h3 className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-3">
                   Document Attachments
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                   {[
                     { label: 'OR/CR Motor', url: selectedFranchise.orCrUrl },
                     { label: "Driver's License", url: selectedFranchise.licenseUrl },
                     { label: 'TODA Endorsement', url: selectedFranchise.todaEndorsementUrl },
-                    { label: 'Barangay Clearance', url: selectedFranchise.brgyClearanceUrl }
+                    { label: 'Barangay Clearance', url: selectedFranchise.brgyClearanceUrl },
+                    { label: 'Cedula (CTC)', url: selectedFranchise.cedulaUrl }
                   ].map((doc, i) => (
                     <div key={i}>
                       {doc.url ? (

@@ -231,6 +231,18 @@ const ApplyFranchise = () => {
     cedulaAddress: '', 
     cedulaSerialNo: '',
     cedulaAmount: '',
+    cedulaYear: '',
+    cedulaPlaceIssued: '',
+    cedulaFullName: '',
+    cedulaCitizenship: '',
+    cedulaCivilStatus: '',
+    cedulaProfession: '',
+    cedulaDob: '',
+    cedulaPlaceOfBirth: '',
+    cedulaSex: '',
+    cedulaHeight: '',
+    cedulaWeight: '',
+    cedulaTin: '',
     orCrNo: '',
     orNo: '',
     orCrExpiryDate: '',
@@ -1280,25 +1292,66 @@ const ApplyFranchise = () => {
               showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
             }
           } else if (docType === 'cedula') {
-            const hasData = d.serialNo || d.dateIssued || d.placeIssued;
+            const hasData = d.serialNo || d.ctcNo || d.dateIssued || d.placeIssued || d.fullName || d.address;
             if (hasData) {
+              const fullSerial = (d.serialNo || d.ctcNo || '').trim().toUpperCase();
+              const dateStr = d.dateIssued ? normalizeDateStr(d.dateIssued) : '';
+              const placeStr = d.placeIssued || d.address || '';
+              const rawAmount = d.totalAmountPaid !== undefined && d.totalAmountPaid !== null ? String(d.totalAmountPaid).replace(/[^0-9.]/g, '') : '';
+              const amountNum = rawAmount ? parseFloat(rawAmount) : '';
+
               setAiScannedData(prev => ({
                 ...prev,
                 cedula: {
-                  serialNo: d.serialNo ? d.serialNo.toUpperCase() : '',
-                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
-                  placeIssued: d.placeIssued || '',
+                  serialNo: fullSerial,
+                  ctcNo: d.ctcNo || fullSerial,
+                  year: d.year || '',
+                  dateIssued: dateStr,
+                  placeIssued: placeStr,
+                  fullName: d.fullName || '',
+                  lastName: d.lastName || '',
+                  firstName: d.firstName || '',
+                  middleName: d.middleName || '',
+                  address: d.address || '',
+                  tin: d.tin || '',
+                  sex: d.sex || '',
+                  citizenship: d.citizenship || '',
+                  icrNo: d.icrNo || '',
+                  placeOfBirth: d.placeOfBirth || '',
+                  dateOfBirth: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '',
+                  civilStatus: d.civilStatus || '',
+                  profession: d.profession || '',
+                  height: d.height || '',
+                  weight: d.weight || '',
+                  basicCommunityTax: d.basicCommunityTax || '',
+                  additionalTax: d.additionalTax || '',
+                  interest: d.interest || '',
+                  totalAmountPaid: d.totalAmountPaid || '',
+                  treasurer: d.treasurer || '',
                   scannedAt: new Date().toISOString()
                 }
               }));
               setFormData(prev => ({
                 ...prev,
-                cedulaSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.cedulaSerialNo,
-                cedulaDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.cedulaDate,
-                cedulaAddress: d.placeIssued || prev.cedulaAddress
+                cedulaSerialNo: fullSerial || prev.cedulaSerialNo,
+                cedulaDate: dateStr || prev.cedulaDate,
+                cedulaAddress: placeStr || prev.cedulaAddress,
+                cedulaAmount: (amountNum !== '' && !isNaN(amountNum)) ? amountNum : prev.cedulaAmount,
+                cedulaYear: d.year || prev.cedulaYear || '',
+                cedulaPlaceIssued: placeStr || prev.cedulaPlaceIssued || '',
+                cedulaFullName: d.fullName || prev.cedulaFullName || '',
+                cedulaCitizenship: d.citizenship || prev.cedulaCitizenship || '',
+                cedulaCivilStatus: d.civilStatus || prev.cedulaCivilStatus || '',
+                cedulaProfession: d.profession || prev.cedulaProfession || '',
+                cedulaDob: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : prev.cedulaDob || '',
+                cedulaPlaceOfBirth: d.placeOfBirth || prev.cedulaPlaceOfBirth || '',
+                cedulaSex: d.sex || prev.cedulaSex || '',
+                cedulaHeight: d.height || prev.cedulaHeight || '',
+                cedulaWeight: d.weight || prev.cedulaWeight || '',
+                cedulaTin: d.tin || prev.cedulaTin || ''
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("AI Scan: Cedula (CTC) details detected.", 'success');
+              showToast("AI Scan: Complete Cedula (CTC) details detected.", 'success');
               scrollToField('cedulaSerialNo');
             } else {
               showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
@@ -3538,6 +3591,81 @@ const ApplyFranchise = () => {
                       />
                     </div>
                   </div>
+
+                  {/* Digitized Cedula (CTC) Details Preview Card */}
+                  {(aiScannedData?.cedula || formData.cedulaFullName) && (
+                    <div className="mt-3 p-3.5 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-xl space-y-2.5 animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Receipt size={15} className="text-emerald-700 dark:text-emerald-400" />
+                          <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider">
+                            Digitized Cedula (CTC) Information
+                          </h4>
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full">
+                          <Zap size={11} /> AI OCR Scanned
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Tax Year</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{formData.cedulaYear || aiScannedData?.cedula?.year || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Taxpayer Name</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.cedulaFullName || aiScannedData?.cedula?.fullName || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Civil Status</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaCivilStatus || aiScannedData?.cedula?.civilStatus || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Citizenship</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaCitizenship || aiScannedData?.cedula?.citizenship || 'Filipino'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Profession / Occupation</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{formData.cedulaProfession || aiScannedData?.cedula?.profession || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Date of Birth</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaDob || aiScannedData?.cedula?.dateOfBirth || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Place of Birth</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{formData.cedulaPlaceOfBirth || aiScannedData?.cedula?.placeOfBirth || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Sex / Gender</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaSex || aiScannedData?.cedula?.sex || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Height &amp; Weight</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {(formData.cedulaHeight || aiScannedData?.cedula?.height) ? `${formData.cedulaHeight || aiScannedData?.cedula?.height} ft / ` : ''}
+                            {(formData.cedulaWeight || aiScannedData?.cedula?.weight) ? `${formData.cedulaWeight || aiScannedData?.cedula?.weight} kg` : '—'}
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">TIN</span>
+                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.cedulaTin || aiScannedData?.cedula?.tin || '—'}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Basic Community Tax</span>
+                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                            {aiScannedData?.cedula?.basicCommunityTax ? `₱${aiScannedData?.cedula?.basicCommunityTax}` : '—'}
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Total Amount Paid</span>
+                          <span className="font-mono font-bold text-emerald-800 dark:text-emerald-300">
+                            {(formData.cedulaAmount || aiScannedData?.cedula?.totalAmountPaid) ? `₱${Number(formData.cedulaAmount || aiScannedData?.cedula?.totalAmountPaid).toFixed(2)}` : '—'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Minimized Application Summary Card */}

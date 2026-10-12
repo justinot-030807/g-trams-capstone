@@ -44,6 +44,8 @@ const RenewFranchise = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [cedulaFile, setCedulaFile] = useState(null);
   const [cedulaPreviewUrl, setCedulaPreviewUrl] = useState('');
+  const [isScanningCedula, setIsScanningCedula] = useState(false);
+  const [cedulaScanSuccess, setCedulaScanSuccess] = useState(false);
   const [fullPreview, setFullPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -111,6 +113,45 @@ const RenewFranchise = () => {
     setFormData(prev => ({ ...prev, [name]: sanitized }));
   };
 
+  const triggerCedulaScan = async (file) => {
+    if (!file) return;
+    setIsScanningCedula(true);
+    setCedulaScanSuccess(false);
+    try {
+      const scanFormData = new FormData();
+      scanFormData.append('document', file);
+      scanFormData.append('docType', 'cedula');
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: scanFormData
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const d = json.data;
+          const fullSerial = (d.serialNo || d.ctcNo || '').trim().toUpperCase();
+          const dateStr = d.dateIssued ? (d.dateIssued.includes('T') ? d.dateIssued.split('T')[0] : d.dateIssued) : '';
+          const placeStr = d.placeIssued || d.address || '';
+          setFormData(prev => ({
+            ...prev,
+            ctcNo: fullSerial || prev.ctcNo,
+            dateIssued: dateStr || prev.dateIssued,
+            placeIssued: placeStr || prev.placeIssued
+          }));
+          setCedulaScanSuccess(true);
+          showToast('AI Scan: Cedula details detected and auto-filled!', 'success');
+        }
+      }
+    } catch (err) {
+      console.warn('Cedula AI Scan network notice:', err);
+    } finally {
+      setIsScanningCedula(false);
+    }
+  };
+
   const handleFileSelect = (fieldId, file) => {
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
@@ -121,6 +162,7 @@ const RenewFranchise = () => {
         setCedulaFile(file);
         if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(cedulaPreviewUrl);
         setCedulaPreviewUrl(URL.createObjectURL(file));
+        triggerCedulaScan(file);
       } else {
         setOrcrFile(file);
         if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
@@ -134,6 +176,7 @@ const RenewFranchise = () => {
       if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(cedulaPreviewUrl);
       setCedulaFile(null);
       setCedulaPreviewUrl('');
+      setCedulaScanSuccess(false);
     } else {
       if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
       setOrcrFile(null);
@@ -571,6 +614,9 @@ const RenewFranchise = () => {
                     onFileSelect={handleFileSelect}
                     onFileRemove={() => handleFileRemove('cedulaDoc')}
                     onPreviewZoom={setFullPreview}
+                    onRescan={() => cedulaFile && triggerCedulaScan(cedulaFile)}
+                    isScanning={isScanningCedula}
+                    scanSuccess={cedulaScanSuccess}
                     required={false}
                   />
                 </div>

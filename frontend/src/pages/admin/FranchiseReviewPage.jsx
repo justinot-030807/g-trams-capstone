@@ -1636,34 +1636,101 @@ const FranchiseReviewPage = () => {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">CTC Serial No.</span>
-                        <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.cedulaSerialNo || '—'}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.cedulaDate)}</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const cExt = currentApp.cedulaDetails || currentApp.aiScannedData?.cedula || currentApp.aiVerification?.documents?.cedula?.extracted || {};
+                      return (
+                        <div className="space-y-1.5">
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">CTC Serial No.</span>
+                              <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.cedulaSerialNo || cExt.serialNo || '—'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Tax Year</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.cedulaYear || cExt.year || (currentApp.cedulaDate ? new Date(currentApp.cedulaDate).getFullYear() : '—')}</span>
+                            </div>
+                          </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Place Issued</span>
-                        <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaAddress || 'Gasan, Marinduque'}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Amount Paid</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
-                          {currentApp.cedulaAmount ? `₱${Number(currentApp.cedulaAmount).toFixed(2)}` : '₱55.00'}
-                        </span>
-                      </div>
-                    </div>
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.cedulaDate || cExt.dateIssued)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Place Issued</span>
+                              <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">{currentApp.cedulaPlaceIssued || currentApp.cedulaAddress || cExt.placeIssued || 'Gasan, Marinduque'}</span>
+                            </div>
+                          </div>
 
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Taxpayer Name</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.fullName || '—'}</span>
-                    </div>
+                          <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <span className="text-[10px] text-slate-400 block font-medium">Taxpayer Full Name</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.cedulaFullName || cExt.fullName || currentApp.fullName || '—'}</span>
+                            {(currentApp.address || cExt.address) && (
+                              <div className="mt-1 pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
+                                <span className="text-[10px] text-slate-400 block font-medium">Taxpayer Address</span>
+                                <span className="font-medium text-slate-800 dark:text-slate-200">{currentApp.address || cExt.address}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Citizenship</span>
+                              <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaCitizenship || cExt.citizenship || 'Filipino'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Civil Status</span>
+                              <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaCivilStatus || cExt.civilStatus || '—'}</span>
+                            </div>
+                          </div>
+
+                          {(currentApp.cedulaProfession || cExt.profession || currentApp.cedulaDob || cExt.dateOfBirth) && (
+                            <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                              <div>
+                                <span className="text-[10px] text-slate-400 block font-medium">Profession / Occupation</span>
+                                <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">{currentApp.cedulaProfession || cExt.profession || '—'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-400 block font-medium">Date of Birth</span>
+                                <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaDob ? formatDate(currentApp.cedulaDob) : (cExt.dateOfBirth || '—')}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {(currentApp.cedulaSex || cExt.sex || currentApp.cedulaHeight || cExt.height || currentApp.cedulaWeight || cExt.weight || currentApp.cedulaTin || cExt.tin) && (
+                            <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                              <div>
+                                <span className="text-[10px] text-slate-400 block font-medium">Biometrics (Sex / Ht / Wt)</span>
+                                <span className="font-medium text-slate-800 dark:text-slate-100">
+                                  {[
+                                    currentApp.cedulaSex || cExt.sex, 
+                                    (currentApp.cedulaHeight || cExt.height) ? `${currentApp.cedulaHeight || cExt.height} ft` : null, 
+                                    (currentApp.cedulaWeight || cExt.weight) ? `${currentApp.cedulaWeight || cExt.weight} kg` : null
+                                  ].filter(Boolean).join(' • ') || '—'}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-400 block font-medium">TIN</span>
+                                <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaTin || cExt.tin || '—'}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Basic Tax Due</span>
+                              <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{cExt.basicCommunityTax ? `₱${cExt.basicCommunityTax}` : '—'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Total Amount Paid</span>
+                              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                {currentApp.cedulaAmount ? `₱${Number(currentApp.cedulaAmount).toFixed(2)}` : (cExt.totalAmountPaid ? `₱${cExt.totalAmountPaid}` : '₱55.00')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 

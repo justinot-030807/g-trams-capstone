@@ -4,7 +4,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileText, CheckCircle, CheckCircle2, Search, Eye, FolderTree,
   Building2, ShieldCheck, AlertCircle, AlertTriangle, Clock, ChevronDown,
-  X, UserMinus, Sparkles, Check, CheckCheck, Loader2
+  X, UserMinus, Sparkles, Check, CheckCheck, Loader2, RefreshCw
 } from 'lucide-react';
 import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
@@ -21,6 +21,9 @@ const ValidateTODA = () => {
   const [franchises, setFranchises] = useState([]);
   const [removals, setRemovals] = useState([]);
   const [selectedSubmissionOCR, setSelectedSubmissionOCR] = useState(null);
+  const [ocrModalSearch, setOcrModalSearch] = useState('');
+  const [todaActiveSubTabs, setTodaActiveSubTabs] = useState({}); // key: todaName -> 'roster' | 'drivers'
+  const [isRescanning, setIsRescanning] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const showToast = (message, type = 'success') => {
@@ -122,6 +125,31 @@ const ValidateTODA = () => {
     }
   };
 
+  const handleRescan = async (id) => {
+    setIsRescanning(true);
+    try {
+      showToast('Re-scanning document with Google Gemini AI OCR...', 'info');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/submissions/${id}/rescan`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast(data.message || 'Re-scanned successfully!', 'success');
+        await fetchSubmissions();
+        if (selectedSubmissionOCR && selectedSubmissionOCR._id === id) {
+          setSelectedSubmissionOCR(data.submission);
+        }
+      } else {
+        showToast(data.message || 'Could not extract members during re-scan.', 'error');
+      }
+    } catch (e) {
+      showToast('Cannot connect to server.', 'error');
+    } finally {
+      setIsRescanning(false);
+    }
+  };
+
   const handleApproveRemoval = async (id, memberName, todaName) => {
     if (!window.confirm(`Are you sure you want to approve the disaffiliation of ${memberName} from ${todaName}? This operator will be reset to NON-TODA.`)) return;
 
@@ -202,6 +230,14 @@ const ValidateTODA = () => {
       const todaMatchesQuery = isSearching && todaName.toLowerCase().includes(query);
       
       const allMembersInToda = users.filter(u => (u.todaAssociation || 'NON-TODA') === todaName);
+
+      // Find all submissions associated with this TODA (sorted by latest first)
+      const todaSubmissions = submissions.filter(s => 
+        (s.todaAssociation || '').trim().toUpperCase() === todaName.toUpperCase() ||
+        (s.fileName || '').toUpperCase().includes(todaName.toUpperCase())
+      );
+      const latestSubmission = todaSubmissions[0] || null;
+      const extractedMasterlist = latestSubmission?.extractedMembers || [];
       
       const matchingMembers = allMembersInToda.filter(member => {
         if (!isSearching) return true;
@@ -219,6 +255,12 @@ const ValidateTODA = () => {
         return nameMatch || contactMatch || addressMatch || plateMatch || motorMatch || chassisMatch;
       });
 
+      const masterlistMatchesQuery = isSearching && extractedMasterlist.some(m => 
+        (m.name || '').toLowerCase().includes(query) ||
+        (m.unitNo || '').toLowerCase().includes(query) ||
+        (m.plateNo || '').toLowerCase().includes(query)
+      );
+
       const compliantCount = allMembersInToda.filter(m => {
         const f = getMemberFranchise(m);
         return f && f.status === 'Active';
@@ -233,10 +275,13 @@ const ValidateTODA = () => {
         members: matchingMembers,
         totalCount,
         complianceRate,
-        colorumCount
+        colorumCount,
+        latestSubmission,
+        todaSubmissions,
+        extractedMasterlist
       };
-    }).filter(toda => !isSearching || toda.members.length > 0);
-  }, [users, franchises, searchQuery, isSearching]);
+    }).filter(toda => !isSearching || toda.members.length > 0 || toda.todaSubmissions.length > 0 || toda.extractedMasterlist.length > 0);
+  }, [users, franchises, submissions, searchQuery, isSearching]);
 
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(sub => {
@@ -479,66 +524,260 @@ const ValidateTODA = () => {
                           </div>
                         </button>
                         
-                        {/* Member Roster Table */}
+                        {/* Sub-tab Navigation and Content inside opened TODA card */}
                         {isOpen && (
-                          <div className="bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27] overflow-x-auto">
-                            <table className="w-full text-left border-collapse min-w-[650px]">
-                              <thead>
-                                <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
-                                  <th className="p-3 pl-5">Operator Name</th>
-                                  <th className="p-3">Barangay Residence</th>
-                                  <th className="p-3">Plate No</th>
-                                  <th className="p-3">Motor / Chassis No</th>
-                                  <th className="p-3 pr-5">Compliance Status</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
-                                {toda.members.length === 0 ? (
-                                  <tr>
-                                    <td colSpan="5" className="p-6 text-center text-[#6B6761] dark:text-[#A8A29E]">
-                                      No members found in this association.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  toda.members.map((member) => {
-                                    const franchise = getMemberFranchise(member);
-                                    const isCompliant = franchise && franchise.status === 'Active';
+                          <div className="bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                            {/* Sub-Tab Header */}
+                            <div className="flex items-center gap-2 px-4 py-2 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] overflow-x-auto">
+                              <button
+                                type="button"
+                                onClick={() => setTodaActiveSubTabs(prev => ({ ...prev, [toda.name]: 'roster' }))}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[34px] ${
+                                  (todaActiveSubTabs[toda.name] || 'roster') === 'roster'
+                                    ? 'bg-[#9E2A2B] text-white shadow-xs'
+                                    : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                                }`}
+                              >
+                                <Sparkles size={13} />
+                                <span>Official Scanned Roster</span>
+                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                  (todaActiveSubTabs[toda.name] || 'roster') === 'roster' 
+                                    ? 'bg-white/20 text-white' 
+                                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
+                                }`}>
+                                  {toda.latestSubmission ? (toda.latestSubmission.extractedCount || toda.latestSubmission.extractedMembers?.length || 0) : 0}
+                                </span>
+                              </button>
 
-                                    return (
-                                      <tr key={member._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                                        <td className="p-3 pl-5 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                          {member.name}
-                                          {member.contact && (
-                                            <span className="block text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
-                                              {member.contact}
-                                            </span>
-                                          )}
-                                        </td>
-                                        <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
-                                          {member.address || 'N/A'}
-                                        </td>
-                                        <td className="p-3 font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                          {franchise?.plateNo || 'NO RECORD'}
-                                        </td>
-                                        <td className="p-3 text-[#6B6761] dark:text-[#A8A29E] font-mono text-[11px]">
-                                          <div>{franchise?.motorNo ? `M: ${franchise.motorNo}` : '—'}</div>
-                                          <div>{franchise?.chassisNo ? `C: ${franchise.chassisNo}` : '—'}</div>
-                                        </td>
-                                        <td className="p-3 pr-5">
-                                          {franchise ? (
-                                            <StatusBadge status={franchise.status} />
+                              <button
+                                type="button"
+                                onClick={() => setTodaActiveSubTabs(prev => ({ ...prev, [toda.name]: 'drivers' }))}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[34px] ${
+                                  todaActiveSubTabs[toda.name] === 'drivers'
+                                    ? 'bg-[#9E2A2B] text-white shadow-xs'
+                                    : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                                }`}
+                              >
+                                <Users size={13} />
+                                <span>Registered App Drivers</span>
+                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                  todaActiveSubTabs[toda.name] === 'drivers' 
+                                    ? 'bg-white/20 text-white' 
+                                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
+                                }`}>
+                                  {toda.members?.length || 0}
+                                </span>
+                              </button>
+                            </div>
+
+                            {/* SUB-TAB 1: OFFICIAL EXTRACTED MASTERLIST ROSTER */}
+                            {(todaActiveSubTabs[toda.name] || 'roster') === 'roster' && (
+                              <div className="p-3.5 sm:p-4 space-y-3">
+                                {toda.latestSubmission ? (
+                                  <>
+                                    {/* Submission Info Bar */}
+                                    <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                      <div className="space-y-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <div className="flex items-center gap-1 text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                            <span>{toda.latestSubmission.fileName}</span>
+                                          </div>
+                                          <StatusBadge 
+                                            status={toda.latestSubmission.status === 'Approved' ? 'Active' : 'Pending'} 
+                                            label={toda.latestSubmission.status} 
+                                          />
+                                          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                            <Sparkles size={11} />
+                                            <span>{toda.latestSubmission.extractedCount || toda.latestSubmission.extractedMembers?.length || 0} Members Digitized</span>
+                                          </span>
+                                        </div>
+                                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                                          Submitted by TODA President: <strong className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{toda.latestSubmission.presidentName}</strong> on {new Date(toda.latestSubmission.createdAt).toLocaleDateString()}
+                                        </p>
+                                      </div>
+
+                                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                                        {toda.latestSubmission.filePath && (
+                                          <a
+                                            href={toda.latestSubmission.filePath.startsWith('http') ? toda.latestSubmission.filePath : `${import.meta.env.VITE_API_URL}/${toda.latestSubmission.filePath}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-neutral-100 transition-colors shadow-xs"
+                                          >
+                                            <Eye size={12} />
+                                            <span>View Document</span>
+                                          </a>
+                                        )}
+                                        {toda.latestSubmission.status !== 'Approved' && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleApprove(toda.latestSubmission._id)}
+                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
+                                          >
+                                            <CheckCircle size={12} />
+                                            <span>Approve Masterlist</span>
+                                          </button>
+                                        )}
+                                        {(toda.latestSubmission.extractedCount === 0 || !toda.latestSubmission.extractedMembers?.length) && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRescan(toda.latestSubmission._id)}
+                                            disabled={isRescanning}
+                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
+                                          >
+                                            <RefreshCw size={12} className={isRescanning ? 'animate-spin' : ''} />
+                                            <span>Re-scan with AI OCR</span>
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Extracted Members Table */}
+                                    <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                      <table className="w-full text-left border-collapse text-xs min-w-[620px]">
+                                        <thead>
+                                          <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase">
+                                            <th className="p-2.5 pl-4 w-10">#</th>
+                                            <th className="p-2.5">Extracted Member Name</th>
+                                            <th className="p-2.5">Body / Unit #</th>
+                                            <th className="p-2.5">Plate No</th>
+                                            <th className="p-2.5 pr-4">App Registered Status</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                                          {(!toda.latestSubmission.extractedMembers || toda.latestSubmission.extractedMembers.length === 0) ? (
+                                            <tr>
+                                              <td colSpan="5" className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                                                <p className="font-semibold text-sm mb-1 text-[#1F1D1B] dark:text-[#EAE7E1]">0 member records digitized from this file.</p>
+                                                <p className="text-[11px] mb-3">This file was uploaded as a document attachment without digitized rows.</p>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleRescan(toda.latestSubmission._id)}
+                                                  disabled={isRescanning}
+                                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold cursor-pointer transition-all shadow-xs"
+                                                >
+                                                  <Sparkles size={13} />
+                                                  <span>Run AI OCR Re-scan on Document</span>
+                                                </button>
+                                              </td>
+                                            </tr>
                                           ) : (
-                                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
-                                              No Franchise Application
-                                            </span>
+                                            toda.latestSubmission.extractedMembers.map((m, idx) => {
+                                              const cleanMName = (m.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
+                                              const matchedUser = users.find(u => {
+                                                const cleanUName = (u.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
+                                                return cleanUName && (cleanUName.includes(cleanMName) || cleanMName.includes(cleanUName));
+                                              });
+                                              const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
+
+                                              return (
+                                                <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                                                  <td className="p-2.5 pl-4 font-mono text-[#6B6761]">{idx + 1}</td>
+                                                  <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                                    {m.name}
+                                                  </td>
+                                                  <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
+                                                  <td className="p-2.5 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
+                                                  <td className="p-2.5 pr-4">
+                                                    {matchedUser ? (
+                                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                                                          <CheckCircle2 size={11} />
+                                                          <span>Registered User</span>
+                                                        </span>
+                                                        {franchise && <StatusBadge status={franchise.status} />}
+                                                      </div>
+                                                    ) : (
+                                                      <span className="inline-flex items-center text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
+                                                        Not Registered in App
+                                                      </span>
+                                                    )}
+                                                  </td>
+                                                </tr>
+                                              );
+                                            })
                                           )}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="text-center py-8 bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27]">
+                                    <FileText size={26} className="mx-auto mb-2 opacity-40 text-[#6B6761]" />
+                                    <p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                      No Official Masterlist Document Submitted Yet
+                                    </p>
+                                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 max-w-sm mx-auto">
+                                      The association officer of {toda.name} has not submitted a signed endorsement roster masterlist yet.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* SUB-TAB 2: REGISTERED APP DRIVERS */}
+                            {todaActiveSubTabs[toda.name] === 'drivers' && (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse min-w-[650px]">
+                                  <thead>
+                                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
+                                      <th className="p-3 pl-5">Operator Name</th>
+                                      <th className="p-3">Barangay Residence</th>
+                                      <th className="p-3">Plate No</th>
+                                      <th className="p-3">Motor / Chassis No</th>
+                                      <th className="p-3 pr-5">Compliance Status</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
+                                    {toda.members.length === 0 ? (
+                                      <tr>
+                                        <td colSpan="5" className="p-6 text-center text-[#6B6761] dark:text-[#A8A29E]">
+                                          No registered user accounts found for this association.
                                         </td>
                                       </tr>
-                                    );
-                                  })
-                                )}
-                              </tbody>
-                            </table>
+                                    ) : (
+                                      toda.members.map((member) => {
+                                        const franchise = getMemberFranchise(member);
+                                        const isCompliant = franchise && franchise.status === 'Active';
+
+                                        return (
+                                          <tr key={member._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                                            <td className="p-3 pl-5 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                              {member.name}
+                                              {member.contact && (
+                                                <span className="block text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
+                                                  {member.contact}
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
+                                              {member.address || 'N/A'}
+                                            </td>
+                                            <td className="p-3 font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                              {franchise?.plateNo || 'NO RECORD'}
+                                            </td>
+                                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E] font-mono text-[11px]">
+                                              <div>{franchise?.motorNo ? `M: ${franchise.motorNo}` : '—'}</div>
+                                              <div>{franchise?.chassisNo ? `C: ${franchise.chassisNo}` : '—'}</div>
+                                            </td>
+                                            <td className="p-3 pr-5">
+                                              {franchise ? (
+                                                <StatusBadge status={franchise.status} />
+                                              ) : (
+                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
+                                                  No Franchise Application
+                                                </span>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      })
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -610,16 +849,27 @@ const ValidateTODA = () => {
                                 <span>{sub.extractedCount} members extracted via OCR • View List</span>
                               </button>
                             ) : (
-                              <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic block mt-0.5">
-                                Physical document attached
-                              </span>
+                              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
+                                  0 members digitized
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRescan(sub._id)}
+                                  disabled={isRescanning}
+                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                                >
+                                  <RefreshCw size={11} className={isRescanning ? 'animate-spin' : ''} />
+                                  <span>Re-scan with AI OCR</span>
+                                </button>
+                              </div>
                             )}
                           </td>
                           <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{new Date(sub.createdAt).toLocaleDateString()}</td>
                           <td className="p-3.5">
                             <StatusBadge status={sub.status === 'Approved' ? 'Active' : 'Pending'} label={sub.status} />
                           </td>
-                          <td className="p-3.5 pr-5 text-center space-x-2 flex justify-center">
+                          <td className="p-3.5 pr-5 text-center space-x-2 flex justify-center flex-wrap gap-1">
                             {(() => {
                               const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
                               return (
@@ -633,6 +883,15 @@ const ValidateTODA = () => {
                                 </a>
                               );
                             })()}
+                            {sub.extractedCount > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedSubmissionOCR(sub)}
+                                className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors cursor-pointer"
+                              >
+                                <Sparkles size={12} /> View Roster
+                              </button>
+                            )}
                             <button 
                               onClick={() => handleApprove(sub._id)} 
                               disabled={sub.status === 'Approved'} 
@@ -771,68 +1030,142 @@ const ValidateTODA = () => {
       </div>
 
       {/* OCR EXTRACTED MEMBERS MODAL */}
-      {selectedSubmissionOCR && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-xl w-full p-5 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm sm:text-base">
-                <Sparkles size={18} />
-                <span>AI OCR Extracted Roster Members</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedSubmissionOCR(null)}
-                className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white p-1 rounded cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
+      {selectedSubmissionOCR && (() => {
+        const modalMembers = (selectedSubmissionOCR.extractedMembers || []).filter(m => {
+          if (!ocrModalSearch.trim()) return true;
+          const q = ocrModalSearch.toLowerCase().trim();
+          return (m.name || '').toLowerCase().includes(q) ||
+                 (m.unitNo || '').toLowerCase().includes(q) ||
+                 (m.plateNo || '').toLowerCase().includes(q);
+        });
 
-            <div className="flex items-center justify-between text-xs bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-              <div>
-                <p className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedSubmissionOCR.fileName}</p>
-                <p className="text-[#6B6761] dark:text-[#A8A29E]">Submitted by: {selectedSubmissionOCR.presidentName} ({selectedSubmissionOCR.todaAssociation || 'TODA'})</p>
+        return (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-2xl w-full p-5 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-sm sm:text-base">
+                  <Sparkles size={18} />
+                  <span>AI OCR Digitized Masterlist Members</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedSubmissionOCR(null); setOcrModalSearch(''); }}
+                  className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white p-1 rounded cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
               </div>
-              <span className="font-bold px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                {selectedSubmissionOCR.extractedCount || selectedSubmissionOCR.extractedMembers?.length || 0} Members Detected
-              </span>
-            </div>
 
-            <div className="max-h-72 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] font-bold uppercase">
-                  <tr>
-                    <th className="p-2.5 pl-3">#</th>
-                    <th className="p-2.5">Extracted Member Name</th>
-                    <th className="p-2.5">Unit / Body #</th>
-                    <th className="p-2.5 pr-3">Plate No</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                  {(selectedSubmissionOCR.extractedMembers || []).map((m, idx) => (
-                    <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
-                      <td className="p-2.5 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
-                      <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
-                      <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
-                      <td className="p-2.5 pr-3 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] gap-2">
+                <div>
+                  <p className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedSubmissionOCR.fileName}</p>
+                  <p className="text-[#6B6761] dark:text-[#A8A29E]">
+                    Submitted by: <strong>{selectedSubmissionOCR.presidentName}</strong> ({selectedSubmissionOCR.todaAssociation || 'TODA'}) on {new Date(selectedSubmissionOCR.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={selectedSubmissionOCR.status === 'Approved' ? 'Active' : 'Pending'} label={selectedSubmissionOCR.status} />
+                  <span className="font-bold px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                    {selectedSubmissionOCR.extractedCount || selectedSubmissionOCR.extractedMembers?.length || 0} Members
+                  </span>
+                </div>
+              </div>
+
+              {/* Search in modal */}
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761]" />
+                <input
+                  type="text"
+                  placeholder="Filter extracted members by name, unit #, or plate #..."
+                  value={ocrModalSearch}
+                  onChange={(e) => setOcrModalSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none"
+                />
+              </div>
+
+              <div className="max-h-72 overflow-y-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] font-bold uppercase">
+                    <tr>
+                      <th className="p-2.5 pl-3 w-10">#</th>
+                      <th className="p-2.5">Extracted Member Name</th>
+                      <th className="p-2.5">Unit / Body #</th>
+                      <th className="p-2.5 pr-3">Plate No</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                    {modalMembers.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="p-6 text-center text-xs text-[#6B6761]">
+                          {selectedSubmissionOCR.extractedMembers?.length === 0
+                            ? 'No member records digitized from this file yet.'
+                            : 'No members match the search filter.'}
+                        </td>
+                      </tr>
+                    ) : (
+                      modalMembers.map((m, idx) => (
+                        <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
+                          <td className="p-2.5 pl-3 font-mono text-[#6B6761]">{idx + 1}</td>
+                          <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{m.name}</td>
+                          <td className="p-2.5 font-mono text-[#6B6761]">{m.unitNo || '—'}</td>
+                          <td className="p-2.5 pr-3 font-mono text-[#6B6761]">{m.plateNo || '—'}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedSubmissionOCR(null)}
-                className="px-4 py-2 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white text-xs font-bold cursor-pointer"
-              >
-                Close Viewer
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2">
+                <div className="flex items-center gap-2">
+                  {selectedSubmissionOCR.filePath && (
+                    <a
+                      href={selectedSubmissionOCR.filePath.startsWith('http') ? selectedSubmissionOCR.filePath : `${import.meta.env.VITE_API_URL}/${selectedSubmissionOCR.filePath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1"
+                    >
+                      <Eye size={13} />
+                      <span>View Original Document File</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleRescan(selectedSubmissionOCR._id)}
+                    disabled={isRescanning}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#6B6761] hover:text-[#1F1D1B] cursor-pointer"
+                  >
+                    <RefreshCw size={12} className={isRescanning ? 'animate-spin' : ''} />
+                    <span>Re-scan AI OCR</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {selectedSubmissionOCR.status !== 'Approved' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleApprove(selectedSubmissionOCR._id);
+                        setSelectedSubmissionOCR(prev => ({ ...prev, status: 'Approved' }));
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer transition-colors"
+                    >
+                      Approve &amp; Ingest
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedSubmissionOCR(null); setOcrModalSearch(''); }}
+                    className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white text-xs font-bold cursor-pointer"
+                  >
+                    Close Viewer
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Floating Toast Notification */}
       {toast.show && (
