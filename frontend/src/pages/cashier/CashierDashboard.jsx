@@ -192,7 +192,9 @@ const CashierDashboard = () => {
     const today = new Date().toISOString().substring(0, 10);
     return paidList.filter(item => {
       if (!item.paymentDate) return false;
-      return new Date(item.paymentDate).toISOString().substring(0, 10) === today;
+      const d = new Date(item.paymentDate);
+      if (isNaN(d.getTime())) return false;
+      return d.toISOString().substring(0, 10) === today;
     }).reduce((sum, item) => sum + (item.amountPaid || 500), 0);
   }, [paidList]);
 

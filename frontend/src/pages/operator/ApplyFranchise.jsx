@@ -2401,7 +2401,7 @@ const ApplyFranchise = () => {
                                 address: u1.address || prev.address,
                                 zone: u1.zone || prev.zone,
                                 todaName: u1.todaName || prev.todaName,
-                                cedulaDate: u1.cedulaDate ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
+                                cedulaDate: (u1.cedulaDate && !isNaN(new Date(u1.cedulaDate).getTime())) ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
                                 cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
                                 cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
                                 cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,

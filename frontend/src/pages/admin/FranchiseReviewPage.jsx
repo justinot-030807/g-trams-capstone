@@ -12,6 +12,7 @@ import AdminApplicationSummaryModal from '../../components/admin/AdminApplicatio
 import { useSocket } from '../../context/SocketContext';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
+import { isNameMatch } from '../../utils/nameMatcher';
 import { FranchiseReviewSkeleton } from '../../components/skeleton';
 
 const REJECT_REASONS = [
@@ -1401,17 +1402,18 @@ const FranchiseReviewPage = () => {
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-slate-400 block font-medium">Registered Owner on CR</span>
-                        {currentApp.registeredOwner && currentApp.fullName && (
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                            currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                          }`}>
-                            {currentApp.registeredOwner.toUpperCase().replace(/[^A-Z]/g, '') === currentApp.fullName.toUpperCase().replace(/[^A-Z]/g, '')
-                              ? 'Owner Matches Applicant'
-                              : 'Owner Name Differs'}
-                          </span>
-                        )}
+                        {currentApp.registeredOwner && currentApp.fullName && (() => {
+                          const isMatch = isNameMatch(currentApp.registeredOwner, currentApp.fullName);
+                          return (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                              isMatch
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                            }`}>
+                              {isMatch ? 'Owner Matches Applicant' : 'Owner Name Differs'}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <span className="font-bold text-xs text-slate-800 dark:text-slate-100 block">
                         {currentApp.registeredOwner || currentApp.fullName || '—'}

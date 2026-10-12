@@ -1363,10 +1363,10 @@ const OperatorSettings = () => {
             </div>
 
             <div className="flex-1 overflow-auto p-4 bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-center min-h-[300px]">
-              {previewDoc.url.toLowerCase().endsWith('.pdf') ? (
-                <iframe src={previewDoc.url} title={previewDoc.title} className="w-full h-[60vh] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]" />
+              {(previewDoc?.url || '').toLowerCase().endsWith('.pdf') ? (
+                <iframe src={previewDoc?.url} title={previewDoc?.title} className="w-full h-[60vh] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]" />
               ) : (
-                <img src={previewDoc.url} alt={previewDoc.title} className="max-w-full max-h-[65vh] object-contain rounded-lg shadow-md" />
+                <img src={previewDoc?.url} alt={previewDoc?.title} className="max-w-full max-h-[65vh] object-contain rounded-lg shadow-md" />
               )}
             </div>
 

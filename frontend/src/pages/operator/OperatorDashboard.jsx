@@ -263,7 +263,7 @@ const OperatorDashboard = () => {
     // Determine target field from rejectedField or parse from cancelReason
     let targetField = targetUnit.rejectedField || '';
     if (!targetField && targetUnit.cancelReason) {
-      const lower = targetUnit.cancelReason.toLowerCase();
+      const lower = String(targetUnit.cancelReason || '').toLowerCase();
       if (lower.includes('chassis')) targetField = 'chassisNo';
       else if (lower.includes('motor') || lower.includes('engine')) targetField = 'motorNo';
       else if (lower.includes('plate')) targetField = 'plateNo';

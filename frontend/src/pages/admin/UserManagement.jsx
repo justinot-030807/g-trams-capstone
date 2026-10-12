@@ -352,11 +352,11 @@ const UserManagement = () => {
     // Search query
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    const nameMatch = user.name?.toLowerCase().includes(q);
-    const contactMatch = user.contact?.toLowerCase().includes(q);
-    const todaMatch = user.todaAssociation?.toLowerCase().includes(q);
-    const plateMatch = user.units?.some(u => u.plateNo?.toLowerCase().includes(q));
-    return nameMatch || contactMatch || todaMatch || plateMatch;
+    const nameMatch = (user.name || '').toLowerCase().includes(q);
+    const contactMatch = (user.contact || '').toLowerCase().includes(q);
+    const todaMatch = (user.todaAssociation || '').toLowerCase().includes(q);
+    const plateMatch = (user.units || []).some(u => (u?.plateNo || '').toLowerCase().includes(q));
+    return Boolean(nameMatch || contactMatch || todaMatch || plateMatch);
   });
 
   // Reset pagination when search or filter changes

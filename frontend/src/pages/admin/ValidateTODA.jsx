@@ -40,7 +40,10 @@ const ValidateTODA = () => {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/toda/submissions', { 
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } 
       });
-      if (response.ok) setSubmissions(await response.json());
+      if (response.ok) {
+        const d = await response.json();
+        setSubmissions(Array.isArray(d) ? d : (d.data || []));
+      }
     } catch (error) { 
       console.error('Error fetching TODA submissions:', error); 
     }
@@ -52,7 +55,8 @@ const ValidateTODA = () => {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } 
       });
       if (response.ok) {
-        const allUsers = await response.json();
+        const raw = await response.json();
+        const allUsers = Array.isArray(raw) ? raw : (raw.data || []);
         // Filter out staff/admin users (admin, administrator, cashier)
         setUsers(allUsers.filter(u => !['admin', 'administrator', 'cashier'].includes(String(u.role || '').toLowerCase().trim())));
       }
@@ -85,7 +89,8 @@ const ValidateTODA = () => {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
-        setRemovals(await response.json());
+        const d = await response.json();
+        setRemovals(Array.isArray(d) ? d : (d.data || []));
       }
     } catch (err) {
       console.error('Error fetching removal requests:', err);
@@ -217,10 +222,10 @@ const ValidateTODA = () => {
 
   // KPI Stats Strip calculations
   const totalRecognizedTodas = TODA_LIST.filter(t => t !== 'NON-TODA').length;
-  const totalOperatorsCount = users.length;
-  const activeMtopCount = franchises.filter(f => f.status === 'Active').length;
-  const pendingRemovalsCount = removals.filter(r => r.status === 'Pending').length;
-  const pendingValidationCount = submissions.filter(s => s.status !== 'Approved').length + pendingRemovalsCount;
+  const totalOperatorsCount = Array.isArray(users) ? users.length : 0;
+  const activeMtopCount = (Array.isArray(franchises) ? franchises : []).filter(f => f.status === 'Active').length;
+  const pendingRemovalsCount = (Array.isArray(removals) ? removals : []).filter(r => r.status === 'Pending').length;
+  const pendingValidationCount = (Array.isArray(submissions) ? submissions : []).filter(s => s.status !== 'Approved').length + pendingRemovalsCount;
 
   // Unified Smart Search & TODA Grouping
   const query = searchQuery.trim().toLowerCase();

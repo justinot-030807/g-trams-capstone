@@ -335,7 +335,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Name of Operator:</span>
-                  <span className="font-bold text-slate-900 text-xs sm:text-sm">{unit.fullName?.toUpperCase()}</span>
+                  <span className="font-bold text-slate-900 text-xs sm:text-sm">{unit.fullName ? unit.fullName.toUpperCase() : (unit.operator?.name ? unit.operator.name.toUpperCase() : 'OPERATOR')}</span>
                 </div>
                 <div>
                   <span className="text-xs font-sans font-bold text-slate-500 uppercase block">Residential Address:</span>
@@ -422,7 +422,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
               <div className="flex items-center gap-2.5">
                 <div className="p-1 bg-white border border-slate-300 rounded-lg shadow-2xs shrink-0">
                   <QRCodeSVG 
-                    value={`${window.location.origin}/verify/${unit._id}`} 
+                    value={`${window.location.origin}/verify/${unit._id || ''}`} 
                     size={46} 
                     level="M" 
                   />
@@ -430,7 +430,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
                 <div className="text-left font-sans text-[8.5px] text-slate-500 space-y-0.5">
                   <p className="font-bold text-slate-800">Scan to Verify Permit</p>
                   <p>G-TRAMS Electronic Authentication</p>
-                  <p className="font-mono text-[8px] text-slate-400">DOC-ID: {String(unit._id).slice(-8).toUpperCase()}</p>
+                  <p className="font-mono text-[8px] text-slate-400">DOC-ID: {String(unit._id || '').slice(-8).toUpperCase()}</p>
                 </div>
               </div>
 

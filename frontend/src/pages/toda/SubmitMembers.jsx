@@ -116,7 +116,8 @@ const SubmitMembers = () => {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
-        setRemovalRequests(await res.json());
+        const d = await res.json();
+        setRemovalRequests(Array.isArray(d) ? d : []);
       }
     } catch (err) {
       console.error('Failed to fetch removal requests:', err);
@@ -391,7 +392,7 @@ const SubmitMembers = () => {
     return true;
   });
 
-  const pendingRemovalCount = removalRequests.filter(r => r.status === 'Pending').length;
+  const pendingRemovalCount = (Array.isArray(removalRequests) ? removalRequests : []).filter(r => r.status === 'Pending').length;
 
   return (
     <MainLayout>
