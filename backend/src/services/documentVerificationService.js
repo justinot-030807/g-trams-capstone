@@ -99,23 +99,45 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
 async function fetchImageAsBase64(url) {
     try {
         if (!url || typeof url !== 'string') return null;
-        const response = await axios.get(url, {
-            responseType: 'arraybuffer',
-            timeout: 15000,
-            headers: {
-                'Accept': 'image/*,application/pdf,*/*'
+        let targetUrl = url;
+        let response = null;
+        let isPdf = targetUrl.toLowerCase().includes('.pdf');
+
+        try {
+            response = await axios.get(targetUrl, {
+                responseType: 'arraybuffer',
+                timeout: 15000,
+                headers: {
+                    'Accept': 'image/*,application/pdf,*/*'
+                }
+            });
+        } catch (fetchErr) {
+            // Cloudinary sandbox blocks raw .pdf delivery with HTTP 401. Fallback to Cloudinary dynamic image rendering via .png
+            if (targetUrl.includes('res.cloudinary.com') && isPdf) {
+                const pngUrl = targetUrl.replace(/\.pdf$/i, '.png');
+                console.log(`[DocVerify] Cloudinary PDF returned ${fetchErr.message}. Retrying via Cloudinary image conversion: ${pngUrl}`);
+                response = await axios.get(pngUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 15000,
+                    headers: { 'Accept': 'image/*' }
+                });
+                isPdf = false;
+            } else {
+                throw fetchErr;
             }
-        });
+        }
 
         if (!response || !response.data) return null;
         let contentType = (response.headers && response.headers['content-type']) || 'image/jpeg';
         contentType = contentType.split(';')[0].trim().toLowerCase();
 
-        // Enforce application/pdf for PDF URLs or headers
-        if (url.toLowerCase().includes('.pdf') || contentType.includes('pdf')) {
+        // Enforce application/pdf only if raw PDF was actually returned
+        if (contentType.includes('pdf') || (isPdf && !contentType.includes('image'))) {
             contentType = 'application/pdf';
+        } else if (contentType.includes('png')) {
+            contentType = 'image/png';
         } else if (contentType === 'application/octet-stream') {
-            contentType = url.toLowerCase().includes('.pdf') ? 'application/pdf' : 'image/jpeg';
+            contentType = isPdf ? 'application/pdf' : 'image/jpeg';
         }
 
         const base64Data = Buffer.from(response.data).toString('base64');
