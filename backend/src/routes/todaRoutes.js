@@ -9,6 +9,7 @@ const User = require('../models/userModel');
 const Franchise = require('../models/franchiseModel');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { extractTodaRosterFromDocument } = require('../services/documentVerificationService');
+const { isNameMatch } = require('../utils/nameMatcher');
 
 const upload = require('../config/cloudinary');
 
@@ -501,13 +502,55 @@ router.get('/my-members', protect, async (req, res) => {
             });
         }
 
+        // 3. Fetch approved TODA Submissions to include endorsed masterlist members
+        const approvedSubmissions = await TodaSubmission.find({
+            status: 'Approved',
+            $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+        }).sort({ createdAt: -1 });
+
+        const latestApprovedSub = approvedSubmissions[0] || null;
+        const endorsedRoster = latestApprovedSub?.extractedMembers || [];
+
+        // Cross-match approved masterlist roster members
+        for (const rm of endorsedRoster) {
+            const rmName = (rm.name || '').trim();
+            if (!rmName) continue;
+
+            const existing = Array.from(membersMap.values()).find(m => isNameMatch(m.name, rmName));
+            if (!existing) {
+                const tempId = `roster-${rm._id || Math.random().toString(36).slice(2, 9)}`;
+                membersMap.set(tempId, {
+                    _id: tempId,
+                    name: rmName,
+                    contact: 'N/A',
+                    address: 'Endorsed Masterlist Record',
+                    email: '',
+                    profilePic: '',
+                    role: 'operator',
+                    isPresident: false,
+                    isCurrentUser: false,
+                    isRosterEndorsed: true,
+                    registeredInApp: false,
+                    lastActive: null,
+                    createdAt: latestApprovedSub.createdAt,
+                    units: []
+                });
+            } else {
+                existing.isRosterEndorsed = true;
+                existing.registeredInApp = true;
+            }
+        }
+
         const membersList = Array.from(membersMap.values());
 
-        // Sort: President first, then by name
+        // Sort: President first, then registered members, then by name
         membersList.sort((a, b) => {
             if (a.isPresident && !b.isPresident) return -1;
             if (!a.isPresident && b.isPresident) return 1;
-            return a.name.localeCompare(b.name);
+            const regA = a.registeredInApp !== false ? 1 : 0;
+            const regB = b.registeredInApp !== false ? 1 : 0;
+            if (regA !== regB) return regB - regA;
+            return (a.name || '').localeCompare(b.name || '');
         });
 
         // Compute statistics
@@ -517,7 +560,7 @@ router.get('/my-members', protect, async (req, res) => {
         let expiredUnits = 0;
 
         membersList.forEach(m => {
-            m.units.forEach(u => {
+            (m.units || []).forEach(u => {
                 totalUnits++;
                 if (u.status === 'Active') activeUnits++;
                 else if (u.status === 'Pending' || u.status === 'For Signing' || u.status === 'Ready for Pickup') pendingUnits++;
@@ -532,9 +575,11 @@ router.get('/my-members', protect, async (req, res) => {
                 totalUnits,
                 activeUnits,
                 pendingUnits,
-                expiredUnits
+                expiredUnits,
+                certifiedRosterCount: endorsedRoster.length
             },
-            members: membersList
+            members: membersList,
+            latestSubmission: latestApprovedSub
         });
     } catch (error) {
         console.error('Error fetching TODA members:', error);

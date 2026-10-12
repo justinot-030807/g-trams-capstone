@@ -7,6 +7,7 @@ const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
 const { sendPushToUser } = require('../services/pushService');
 const FranchiseService = require('../services/franchiseService');
+const { isNameMatch } = require('../utils/nameMatcher');
 
 // Auto-archive expired franchises daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -673,12 +674,20 @@ const getFranchiseRecordCheck = async (req, res) => {
         const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const exact = (v) => ({ $regex: new RegExp('^' + escapeRegex(String(v).trim()) + '$', 'i') });
 
+        // Filter out generic placeholder values to prevent cross-applicant collisions
+        const PLACEHOLDER_STRINGS = new Set(['N/A', 'NONE', 'PENDING', 'FOR REGISTRATION', 'TEMPORARY', '0', '0000', '—', '-', 'NO RECORD', 'UNREGISTERED', 'NULL', 'UNDEFINED']);
+        const isValidIdentifier = (v) => {
+            if (!v || typeof v !== 'string') return false;
+            const clean = v.trim().toUpperCase();
+            return clean.length >= 3 && !PLACEHOLDER_STRINGS.has(clean);
+        };
+
         const matchers = [];
         if (franchise.operator) matchers.push({ operator: franchise.operator });
-        if (franchise.fullName) matchers.push({ fullName: exact(franchise.fullName) });
-        if (franchise.plateNo) matchers.push({ plateNo: exact(franchise.plateNo) });
-        if (franchise.chassisNo) matchers.push({ chassisNo: exact(franchise.chassisNo) });
-        if (franchise.motorNo) matchers.push({ motorNo: exact(franchise.motorNo) });
+        if (isValidIdentifier(franchise.fullName)) matchers.push({ fullName: exact(franchise.fullName) });
+        if (isValidIdentifier(franchise.plateNo)) matchers.push({ plateNo: exact(franchise.plateNo) });
+        if (isValidIdentifier(franchise.chassisNo)) matchers.push({ chassisNo: exact(franchise.chassisNo) });
+        if (isValidIdentifier(franchise.motorNo)) matchers.push({ motorNo: exact(franchise.motorNo) });
 
         const related = matchers.length
             ? await Franchise.find({ _id: { $ne: franchise._id }, $or: matchers })
@@ -702,13 +711,13 @@ const getFranchiseRecordCheck = async (req, res) => {
             const todaRegex = new RegExp(`^${escapeRegex(franchise.todaName)}$`, 'i');
             const userOrCriteria = [];
             if (franchise.operator) userOrCriteria.push({ _id: franchise.operator });
-            if (franchise.fullName) userOrCriteria.push({ name: exact(franchise.fullName) });
+            if (isValidIdentifier(franchise.fullName)) userOrCriteria.push({ name: exact(franchise.fullName) });
 
             const userMatch = userOrCriteria.length > 0
                 ? await User.findOne({ todaAssociation: todaRegex, $or: userOrCriteria }).select('name todaAssociation')
                 : null;
 
-            // Also cross-verify against officially approved scanned OCR rosters
+            // Cross-verify against officially approved scanned OCR rosters using intelligent token matching
             let docMatch = false;
             if (!userMatch) {
                 const approvedRosters = await TodaSubmission.find({
@@ -716,14 +725,11 @@ const getFranchiseRecordCheck = async (req, res) => {
                     $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
                 }).select('extractedMembers');
 
-                const applicantClean = (franchise.fullName || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-                if (applicantClean.length >= 3) {
+                const applicantName = (franchise.fullName || '').trim();
+                if (applicantName) {
                     for (const r of approvedRosters) {
                         if (Array.isArray(r.extractedMembers)) {
-                            const found = r.extractedMembers.some(m => {
-                                const mClean = (m.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-                                return mClean && (mClean.includes(applicantClean) || applicantClean.includes(mClean));
-                            });
+                            const found = r.extractedMembers.some(m => isNameMatch(applicantName, m?.name));
                             if (found) {
                                 docMatch = true;
                                 break;

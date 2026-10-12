@@ -40,11 +40,16 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       return;
     }
 
-    const cleanPhone = phoneNumber.replace(/[\s\-()]/g, '');
-    const isValidPHPhone = /^09\d{9}$/.test(cleanPhone) || /^\+639\d{9}$/.test(cleanPhone);
-    if (!phoneNumber || !isValidPHPhone) {
-      setError('PLEASE ENTER A VALID PHILIPPINE MOBILE NUMBER (E.G. 09123456789).');
-      return;
+    let formattedPhone = '';
+    const trimmedPhone = (phoneNumber || '').trim();
+    if (trimmedPhone) {
+      const cleanPhone = trimmedPhone.replace(/[\s\-()]/g, '');
+      const isValidPHPhone = /^09\d{9}$/.test(cleanPhone) || /^\+639\d{9}$/.test(cleanPhone);
+      if (!isValidPHPhone) {
+        setError('PLEASE ENTER A VALID PHILIPPINE MOBILE NUMBER (E.G. 09123456789) OR LEAVE IT BLANK.');
+        return;
+      }
+      formattedPhone = cleanPhone.startsWith('+63') ? '0' + cleanPhone.slice(3) : cleanPhone;
     }
 
     if (!selectedBarangay) {
@@ -64,8 +69,6 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
     setIsLoading(true);
 
-    const formattedPhone = cleanPhone.startsWith('+63') ? '0' + cleanPhone.slice(3) : cleanPhone;
-
     const payload = {
       email,
       idToken: googleProfile.idToken || googleProfile.credential || undefined,
@@ -83,7 +86,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
         address: selectedBarangay.trim(),
         todaAssociation: selectedToda.trim(),
         email,
-        phone: formattedPhone,
+        phone: formattedPhone || undefined,
         contact: formattedPhone || email,
         role: 'operator'
       }
@@ -230,11 +233,16 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             </div>
           </div>
 
-          {/* Mobile Phone Number */}
+          {/* Mobile Phone Number - Optional */}
           <div>
-            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-              Phone Number (Mobile) <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
+                Phone Number (Mobile)
+              </label>
+              <span className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
+                Optional
+              </span>
+            </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                 <Phone size={18} />
@@ -248,12 +256,14 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   setPhoneNumber(e.target.value);
                   if (error) setError('');
                 }}
-                required
                 maxLength={13}
                 className={inputClasses}
-                placeholder="09123456789"
+                placeholder="09123456789 (Optional)"
               />
             </div>
+            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+              Used for official SMS franchise notifications. You can also add this later in settings.
+            </p>
           </div>
 
           {/* Barangay Dropdown */}

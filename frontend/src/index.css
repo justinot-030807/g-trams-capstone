@@ -279,3 +279,42 @@
 .dark * {
   scrollbar-color: #38332E transparent;
 }
+
+/* AI Document Scanner Laser Beam Animation */
+@keyframes laserSweep {
+  0% {
+    top: 2%;
+    opacity: 0.85;
+  }
+  50% {
+    top: 92%;
+    opacity: 1;
+  }
+  100% {
+    top: 2%;
+    opacity: 0.85;
+  }
+}
+
+.animate-laser-scan {
+  animation: laserSweep 2.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.scanner-beam-line {
+  height: 28px;
+  background: linear-gradient(180deg, rgba(158, 42, 43, 0) 0%, rgba(158, 42, 43, 0.2) 65%, rgba(158, 42, 43, 0.85) 100%);
+  border-bottom: 2px solid #9E2A2B;
+  box-shadow: 0 4px 14px rgba(158, 42, 43, 0.55), 0 0 6px rgba(212, 175, 55, 0.5);
+}
+
+.dark .scanner-beam-line {
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0) 0%, rgba(212, 175, 55, 0.2) 65%, rgba(212, 175, 55, 0.9) 100%);
+  border-bottom: 2px solid #D4AF37;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.55), 0 0 8px rgba(158, 42, 43, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-laser-scan {
+    animation: none;
+  }
+}

@@ -9,6 +9,7 @@ import {
 import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
+import { isNameMatch } from '../../utils/nameMatcher';
 
 const ValidateTODA = () => {
   const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'validations' | 'removals'
@@ -52,8 +53,8 @@ const ValidateTODA = () => {
       });
       if (response.ok) {
         const allUsers = await response.json();
-        // Filter out admin users
-        setUsers(allUsers.filter(u => u.role !== 'admin'));
+        // Filter out staff/admin users (admin, administrator, cashier)
+        setUsers(allUsers.filter(u => !['admin', 'administrator', 'cashier'].includes(String(u.role || '').toLowerCase().trim())));
       }
     } catch (error) { 
       console.error('Error fetching users:', error); 
@@ -205,11 +206,11 @@ const ValidateTODA = () => {
   const getMemberFranchise = (member) => {
     if (!member || !franchises.length) return null;
     const mId = String(member._id || '');
-    const mName = (member.name || '').trim().toLowerCase();
+    const mName = (member.name || '').trim();
     return franchises.find(f => {
-      const opId = f.operator?._id ? String(f.operator._id) : (f.operator ? String(f.operator) : '');
+      const opId = f.operator?._id ? String(f.operator._id) : (typeof f.operator === 'string' ? f.operator : '');
       if (opId && opId === mId) return true;
-      if (f.fullName && f.fullName.trim().toLowerCase() === mName) return true;
+      if (f.fullName && isNameMatch(f.fullName, mName)) return true;
       return false;
     });
   };
@@ -229,7 +230,7 @@ const ValidateTODA = () => {
     return TODA_LIST.map(todaName => {
       const todaMatchesQuery = isSearching && todaName.toLowerCase().includes(query);
       
-      const allMembersInToda = users.filter(u => (u.todaAssociation || 'NON-TODA') === todaName);
+      const allMembersInToda = users.filter(u => (u.todaAssociation || 'NON-TODA').trim().toUpperCase() === todaName.toUpperCase());
 
       // Find all submissions associated with this TODA (sorted by latest first)
       const todaSubmissions = submissions.filter(s => 
@@ -661,12 +662,10 @@ const ValidateTODA = () => {
                                               </td>
                                             </tr>
                                           ) : (
-                                            toda.latestSubmission.extractedMembers.map((m, idx) => {
-                                              const cleanMName = (m.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-                                              const matchedUser = users.find(u => {
-                                                const cleanUName = (u.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-                                                return cleanUName && (cleanUName.includes(cleanMName) || cleanMName.includes(cleanUName));
-                                              });
+                                            toda.latestSubmission.extractedMembers.filter(Boolean).map((m, idx) => {
+                                              const todaUsers = users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === toda.name.toUpperCase());
+                                              const matchedUser = todaUsers.find(u => isNameMatch(u.name, m?.name)) ||
+                                                                  users.find(u => isNameMatch(u.name, m?.name));
                                               const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
 
                                               return (
@@ -1032,11 +1031,11 @@ const ValidateTODA = () => {
 
       {/* OCR EXTRACTED MEMBERS MODAL */}
       {selectedSubmissionOCR && (() => {
-        const rawMembers = selectedSubmissionOCR.extractedMembers || [];
+        const rawMembers = (selectedSubmissionOCR.extractedMembers || []).filter(Boolean);
         const modalMembers = rawMembers.filter(m => {
           if (!ocrModalSearch.trim()) return true;
           const q = ocrModalSearch.toLowerCase().trim();
-          return (m.name || '').toLowerCase().includes(q);
+          return isNameMatch(m.name, q) || (m.name || '').toLowerCase().includes(q);
         });
 
         return (
@@ -1137,12 +1136,11 @@ const ValidateTODA = () => {
                         </td>
                       </tr>
                     ) : (
-                      modalMembers.map((m, idx) => {
-                        const cleanMName = (m.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-                        const matchedUser = users.find(u => {
-                          const cleanUName = (u.name || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
-                          return cleanUName && (cleanUName.includes(cleanMName) || cleanMName.includes(cleanUName));
-                        });
+                      modalMembers.filter(Boolean).map((m, idx) => {
+                        const currentToda = (selectedSubmissionOCR.todaAssociation || '').trim();
+                        const todaUsers = currentToda ? users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === currentToda.toUpperCase()) : [];
+                        const matchedUser = todaUsers.find(u => isNameMatch(u.name, m?.name)) ||
+                                            users.find(u => isNameMatch(u.name, m?.name));
                         const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
                         const initials = (m.name || 'M')
                           .split(' ')

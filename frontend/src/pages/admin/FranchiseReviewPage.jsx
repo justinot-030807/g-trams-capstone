@@ -1647,7 +1647,7 @@ const FranchiseReviewPage = () => {
                             </div>
                             <div>
                               <span className="text-[10px] text-slate-400 block font-medium">Tax Year</span>
-                              <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.cedulaYear || cExt.year || (currentApp.cedulaDate ? new Date(currentApp.cedulaDate).getFullYear() : '—')}</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.cedulaYear || cExt.year || (currentApp.cedulaDate && !isNaN(new Date(currentApp.cedulaDate).getTime()) ? new Date(currentApp.cedulaDate).getFullYear() : '—')}</span>
                             </div>
                           </div>
 
@@ -1724,7 +1724,7 @@ const FranchiseReviewPage = () => {
                             <div>
                               <span className="text-[10px] text-slate-400 block font-medium">Total Amount Paid</span>
                               <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                {currentApp.cedulaAmount ? `₱${Number(currentApp.cedulaAmount).toFixed(2)}` : (cExt.totalAmountPaid ? `₱${cExt.totalAmountPaid}` : '₱55.00')}
+                                {Number.isFinite(Number(currentApp.cedulaAmount)) && Number(currentApp.cedulaAmount) > 0 ? `₱${Number(currentApp.cedulaAmount).toFixed(2)}` : (cExt.totalAmountPaid ? `₱${cExt.totalAmountPaid}` : '₱55.00')}
                               </span>
                             </div>
                           </div>

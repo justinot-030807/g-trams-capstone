@@ -14,7 +14,8 @@ const DocumentUploadCard = ({
   required = false,
   isScanning = false,
   scanSuccess = false,
-  error = null
+  error = null,
+  hideHeaderLabel = false
 }) => {
   const galleryInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -85,33 +86,37 @@ const DocumentUploadCard = ({
           className="hidden"
         />
 
-        {/* Card Header: Label & Status */}
+        {/* Card Header: Label & Status (hide label if already rendered by parent section) */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
-            <p className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate leading-snug">
-              {label}
-            </p>
-            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+            {!hideHeaderLabel && (
+              <p className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate leading-snug">
+                {label}
+              </p>
+            )}
+            <div className={`text-xs sm:text-sm ${hideHeaderLabel ? '' : 'mt-0.5'}`}>
               {isCompressing ? (
-                <span className="text-[#B45309] dark:text-[#FBBF24] font-medium flex items-center gap-1">
+                <span className="text-[#B45309] dark:text-[#FBBF24] font-medium flex items-center gap-1.5">
                   <Loader2 size={13} className="animate-spin" /> Optimizing photo...
                 </span>
               ) : isScanning ? (
-                <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold flex items-center gap-1">
-                  <Loader2 size={13} className="animate-spin" /> Scanning details...
+                <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-semibold flex items-center gap-1.5">
+                  <Loader2 size={13} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37]" /> AI Scanning details...
                 </span>
               ) : scanSuccess ? (
-                <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
+                <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
                   <CheckCircle2 size={13} /> Auto-filled from document
                 </span>
               ) : hasFile ? (
-                <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
-                  <CheckCircle2 size={13} /> Attached & Ready
+                <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                  <CheckCircle2 size={13} /> Attached &amp; Ready
                 </span>
               ) : (
-                'Attach photo or PDF (Max 10MB)'
+                <span className="text-[#6B6761] dark:text-[#A8A29E]">
+                  Attach clear photo or PDF (Max 15MB)
+                </span>
               )}
-            </p>
+            </div>
           </div>
 
           {hasFile && (
@@ -124,8 +129,9 @@ const DocumentUploadCard = ({
                 }
                 onFileRemove(id);
               }}
-              className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#B91C1C] p-2 rounded-lg hover:bg-[#B91C1C]/10 transition-colors shrink-0 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center -mr-1 -mt-1"
+              className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#B91C1C] p-2 rounded-lg hover:bg-[#B91C1C]/10 transition-colors shrink-0 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center -mr-1 -mt-1"
               title="Remove document"
+              aria-label="Remove document"
             >
               <X size={18} />
             </button>
@@ -172,29 +178,64 @@ const DocumentUploadCard = ({
                 </button>
               </div>
             ) : (
-              <div className="w-full h-32 relative overflow-hidden flex items-center justify-center bg-[#F6F5F3] dark:bg-[#14110F]">
+              <div className="w-full h-36 relative overflow-hidden flex items-center justify-center bg-[#F6F5F3] dark:bg-[#14110F]">
                 <img 
                   src={previewUrl} 
                   alt={label} 
-                  className="w-full h-full object-contain p-1" 
+                  className={`w-full h-full object-contain p-1.5 transition-all duration-300 ${
+                    isScanning ? 'filter contrast-[1.05] brightness-95' : ''
+                  }`} 
                 />
-                <button
-                  type="button"
-                  onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: false })}
-                  className="absolute inset-0 bg-black/50 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs font-semibold cursor-pointer"
-                >
-                  <span className="bg-black/70 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                    <ZoomIn size={15} />
-                    <span>Preview</span>
-                  </span>
-                </button>
+
+                {/* AI Laser Scanning Animation Overlay */}
+                {isScanning ? (
+                  <>
+                    {/* Viewfinder HUD Corner Accents */}
+                    <div className="absolute top-2 left-2 w-3.5 h-3.5 border-t-2 border-l-2 border-[#9E2A2B] dark:border-[#D4AF37] pointer-events-none z-20" />
+                    <div className="absolute top-2 right-2 w-3.5 h-3.5 border-t-2 border-r-2 border-[#9E2A2B] dark:border-[#D4AF37] pointer-events-none z-20" />
+                    <div className="absolute bottom-2 left-2 w-3.5 h-3.5 border-b-2 border-l-2 border-[#9E2A2B] dark:border-[#D4AF37] pointer-events-none z-20" />
+                    <div className="absolute bottom-2 right-2 w-3.5 h-3.5 border-b-2 border-r-2 border-[#9E2A2B] dark:border-[#D4AF37] pointer-events-none z-20" />
+
+                    {/* Sweeping Laser Beam Line */}
+                    <div className="absolute inset-x-0 animate-laser-scan scanner-beam-line pointer-events-none z-10" />
+
+                    {/* Centered Frosted Scanner Badge */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                      <div className="bg-black/80 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-[#9E2A2B]/40 dark:border-[#D4AF37]/50 shadow-md flex items-center gap-2 text-white">
+                        <Loader2 size={13} className="animate-spin text-[#D4AF37]" />
+                        <span className="text-xs font-semibold tracking-wide">Reading document...</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: false })}
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 focus:opacity-100 flex items-center justify-center text-white transition-opacity gap-1.5 text-xs font-semibold cursor-pointer"
+                    aria-label="Preview document"
+                  >
+                    <span className="bg-black/75 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
+                      <ZoomIn size={14} />
+                      <span>Preview</span>
+                    </span>
+                  </button>
+                )}
               </div>
             )}
 
             {/* Retake, Re-scan & Preview Bar */}
             <div className="w-full bg-emerald-500/10 dark:bg-emerald-950/40 py-2 px-3 flex items-center justify-between text-xs border-t border-emerald-500/20">
               <span className="flex items-center gap-1 font-semibold text-emerald-800 dark:text-emerald-300 text-xs">
-                <CheckCircle2 size={13} /> Attached
+                {isScanning ? (
+                  <>
+                    <Loader2 size={12} className="animate-spin text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    <span className="text-[#9E2A2B] dark:text-[#D4AF37]">Scanning...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={13} /> Attached
+                  </>
+                )}
               </span>
               <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-end">
                 {onRescan && !isPdf && (
@@ -202,28 +243,25 @@ const DocumentUploadCard = ({
                     type="button"
                     disabled={isScanning}
                     onClick={() => onRescan(id)}
-                    className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs disabled:opacity-50"
+                    className="text-[#9E2A2B] dark:text-[#D4AF37] font-bold hover:underline flex items-center gap-1 cursor-pointer min-h-[38px] px-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Re-scan document"
                   >
-                    {isScanning ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <RotateCcw size={12} />
-                    )}
-                    <span>{isScanning ? 'Scanning...' : 'Re-scan'}</span>
+                    <RotateCcw size={12} className={isScanning ? "animate-spin" : ""} />
+                    <span>Re-scan</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf })}
-                  className="text-emerald-700 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
+                  className="text-emerald-700 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[38px] px-1 text-xs"
                 >
                   <ZoomIn size={12} /> View
                 </button>
                 <button
                   type="button"
+                  disabled={isScanning}
                   onClick={() => galleryInputRef.current?.click()}
-                  className="text-[#6B6761] dark:text-[#A8A29E] font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[44px] px-1 text-xs"
+                  className="text-[#6B6761] dark:text-[#A8A29E] font-semibold hover:underline flex items-center gap-1 cursor-pointer min-h-[38px] px-1 text-xs disabled:opacity-40"
                 >
                   <RotateCcw size={12} /> Replace
                 </button>

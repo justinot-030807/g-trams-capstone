@@ -2285,17 +2285,14 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Operator Details Card */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between pb-1">
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
+                  <div className="pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                     <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
                       Operator Identity
                     </span>
-                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
-                      Verified Account
-                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div id="field-fullName">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Operator Full Name
@@ -2323,11 +2320,6 @@ const ApplyFranchise = () => {
                           <span>Barangay Residency / Address</span>
                           <InfoTooltip text="Ang Route Zone ng traysikel ay awtomatikong nakadepende sa iyong opisyal na Barangay residency." />
                         </label>
-                        {formData.address && getZoneForBarangay(formData.address) && (
-                          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20">
-                            Zone: {getZoneForBarangay(formData.address)}
-                          </span>
-                        )}
                       </div>
                       <select 
                         name="address" 
@@ -2350,98 +2342,84 @@ const ApplyFranchise = () => {
                     </div>
                   </div>
 
-                  {/* Affiliated TODA within Barangay Jurisdiction */}
+                  {/* Affiliated TODA - Clean Inline Indicator */}
                   {(() => {
                     const currentToda = formData.todaName || loggedInToda;
                     if (!currentToda || currentToda === 'NON-TODA') return null;
                     const validTodas = formData.address ? getTodasForBarangay(formData.address) : [];
                     const isJurisdictionMatch = validTodas.length > 0 ? validTodas.includes(currentToda) : true;
                     return (
-                      <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">Affiliated TODA:</span>
-                          <span className="font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">{currentToda}</span>
+                      <div className="flex items-center justify-between flex-wrap gap-2 pt-0.5 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium">Affiliated TODA:</span>
+                          <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentToda}</span>
                         </div>
                         {formData.address && (
-                          <span className={`text-[11px] font-semibold flex items-center gap-1 ${
+                          <span className={`text-[11px] font-medium flex items-center gap-1 ${
                             isJurisdictionMatch
                               ? 'text-emerald-700 dark:text-emerald-400'
                               : 'text-amber-700 dark:text-amber-400'
                           }`}>
-                            {isJurisdictionMatch ? <CheckCircle2 size={13} className="shrink-0" /> : <AlertTriangle size={13} className="shrink-0" />}
+                            {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
                             {isJurisdictionMatch 
-                              ? `TODA operates within ${formData.address} jurisdiction` 
-                              : `Note: ${currentToda} primarily operates in other barangays for ${formData.address}`}
+                              ? `Operates in ${formData.address}` 
+                              : `Note: Primarily operates in other barangays`}
                           </span>
                         )}
                       </div>
                     );
                   })()}
 
-                  {/* Municipal Unit Allocation & Fast-Track Option */}
-                  <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        Franchise Unit Allocation
-                      </label>
-                      <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37]">
-                        Max 2 Units per Operator
+                  {/* Municipal Unit Allocation - Clean & Uncluttered */}
+                  {activeOrPendingUnits.length === 0 ? (
+                    <div className="flex items-center justify-between pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
+                      <span className="font-medium text-[#6B6761] dark:text-[#A8A29E]">Franchise Allocation:</span>
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[11px]">
+                        Unit 1 of 2 (2 Slots Allowed)
                       </span>
                     </div>
-
-                    <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                            {activeOrPendingUnits.length === 0 ? 'Registering Unit 1 of 2' : 'Registering Unit 2 of 2'}
-                          </span>
-                          <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                            {availableSlots} {availableSlots === 1 ? 'Slot Remaining' : 'Slots Remaining'}
-                          </span>
+                  ) : activeOrPendingUnits.length === 1 ? (
+                    <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">Applying for Unit 2 of 2</span>
+                            <span className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold">(Final Slot)</span>
+                          </div>
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                            Unit 1 ({activeOrPendingUnits[0]?.plateNo || 'First Unit'}) is already registered.
+                          </p>
                         </div>
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1.5">
-                          {activeOrPendingUnits.length === 0
-                            ? 'Registering your first motorized tricycle unit under Gasan franchising ordinances.'
-                            : `Unit 1 (${activeOrPendingUnits[0]?.plateNo || 'First Unit'}) is already registered. This application is for your 2nd and final unit.`}
-                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const u1 = activeOrPendingUnits[0];
+                            if (u1) {
+                              setFormData(prev => ({
+                                ...prev,
+                                fullName: u1.fullName || prev.fullName,
+                                address: u1.address || prev.address,
+                                zone: u1.zone || prev.zone,
+                                todaName: u1.todaName || prev.todaName,
+                                cedulaDate: u1.cedulaDate ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
+                                cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
+                                cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
+                                cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,
+                                todaCertNo: u1.todaCertNo || prev.todaCertNo,
+                                todaSignatory: u1.todaSignatory || prev.todaSignatory
+                              }));
+                              showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
+                            }
+                          }}
+                          className="px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0"
+                          title="Fast-Track: Automatically reuses your verified operator residency, zone, and TODA credentials from Unit 1"
+                        >
+                          <Zap size={13} className="text-amber-300" />
+                          <span>Fast-Track: Copy from Unit 1</span>
+                        </button>
                       </div>
-
-                      {activeOrPendingUnits.length === 1 && (
-                        <div className="shrink-0 flex flex-col items-start sm:items-end">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const u1 = activeOrPendingUnits[0];
-                              if (u1) {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  fullName: u1.fullName || prev.fullName,
-                                  address: u1.address || prev.address,
-                                  zone: u1.zone || prev.zone,
-                                  todaName: u1.todaName || prev.todaName,
-                                  cedulaDate: u1.cedulaDate ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
-                                  cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
-                                  cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
-                                  cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,
-                                  todaCertNo: u1.todaCertNo || prev.todaCertNo,
-                                  todaSignatory: u1.todaSignatory || prev.todaSignatory
-                                }));
-                                showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
-                              }
-                            }}
-                            className="px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-                            title="Fast-Track: Automatically reuses your verified operator residency, zone, and TODA credentials from Unit 1"
-                          >
-                            <Zap size={14} className="text-amber-300" />
-                            <span>Fast-Track: Copy from Unit 1</span>
-                          </button>
-                          <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            Reuses verified profile &amp; clearances from Unit 1
-                          </span>
-                        </div>
-                      )}
                     </div>
-                  </div>
+                  ) : null}
 
                   {/* Driver Designation Choice */}
                   <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -2585,6 +2563,7 @@ const ApplyFranchise = () => {
                         isScanning={aiScanning.license}
                         scanSuccess={aiSuccess.license}
                         error={formErrors.license}
+                        hideHeaderLabel={true}
                       />
                     </div>
 
@@ -2609,6 +2588,7 @@ const ApplyFranchise = () => {
                         isScanning={aiScanning.licenseBack}
                         scanSuccess={aiSuccess.licenseBack}
                         error={formErrors.licenseBack}
+                        hideHeaderLabel={true}
                       />
                     </div>
                   </div>
@@ -2834,6 +2814,7 @@ const ApplyFranchise = () => {
                         isScanning={aiScanning.crDocument}
                         scanSuccess={aiSuccess.crDocument}
                         error={formErrors.crDocument}
+                        hideHeaderLabel={true}
                       />
                     </div>
 
@@ -2858,6 +2839,7 @@ const ApplyFranchise = () => {
                         isScanning={aiScanning.orDocument}
                         scanSuccess={aiSuccess.orDocument}
                         error={formErrors.orDocument}
+                        hideHeaderLabel={true}
                       />
                     </div>
                   </div>
@@ -3363,6 +3345,7 @@ const ApplyFranchise = () => {
                     isScanning={aiScanning.todaEndorsement}
                     scanSuccess={aiSuccess.todaEndorsement}
                     error={formErrors.todaEndorsement}
+                    hideHeaderLabel={true}
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -3416,6 +3399,7 @@ const ApplyFranchise = () => {
                     isScanning={aiScanning.brgyClearance}
                     scanSuccess={aiSuccess.brgyClearance}
                     error={formErrors.brgyClearance}
+                    hideHeaderLabel={true}
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
@@ -3524,6 +3508,7 @@ const ApplyFranchise = () => {
                     isScanning={aiScanning.cedulaDoc}
                     scanSuccess={aiSuccess.cedulaDoc}
                     error={formErrors.cedulaDoc}
+                    hideHeaderLabel={true}
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">

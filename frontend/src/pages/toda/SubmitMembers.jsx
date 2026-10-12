@@ -368,10 +368,10 @@ const SubmitMembers = () => {
   const filteredMembers = (todaData.members || []).filter(member => {
     const q = searchTerm.toLowerCase().trim();
     const matchesSearch = !q || 
-      member.name.toLowerCase().includes(q) ||
+      (member.name || '').toLowerCase().includes(q) ||
       (member.contact && member.contact.toLowerCase().includes(q)) ||
       (member.address && member.address.toLowerCase().includes(q)) ||
-      member.units.some(u => 
+      (member.units || []).some(u => 
         (u.plateNo && u.plateNo.toLowerCase().includes(q)) ||
         (u.make && u.make.toLowerCase().includes(q)) ||
         (u.zone && u.zone.toLowerCase().includes(q))
@@ -380,13 +380,13 @@ const SubmitMembers = () => {
     if (!matchesSearch) return false;
 
     if (statusFilter === 'active') {
-      return member.units.some(u => u.status === 'Active');
+      return (member.units || []).some(u => u.status === 'Active');
     }
     if (statusFilter === 'pending') {
-      return member.units.some(u => u.status === 'Pending' || u.status === 'For Signing' || u.status === 'Ready for Pickup');
+      return (member.units || []).some(u => u.status === 'Pending' || u.status === 'For Signing' || u.status === 'Ready for Pickup');
     }
     if (statusFilter === 'expired') {
-      return member.units.some(u => u.status === 'Expired');
+      return (member.units || []).some(u => u.status === 'Expired');
     }
     return true;
   });
@@ -758,9 +758,14 @@ const SubmitMembers = () => {
                                       <Sparkles size={9} />
                                       TODA President
                                     </span>
+                                  ) : member.registeredInApp === false ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                      <FileText size={9} />
+                                      Masterlist Member (Not in App)
+                                    </span>
                                   ) : (
                                     <span className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
-                                      Operator Member
+                                      Registered App Operator
                                     </span>
                                   )}
                                 </div>
