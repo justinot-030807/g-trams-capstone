@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { GoogleGenAI } = require('@google/genai');
+const { isNameMatch } = require('../utils/nameMatcher');
 
 /**
  * Normalizes text for lenient comparison (removes whitespace, hyphens, punctuation, upper-cased)
@@ -64,6 +65,20 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
             status: 'match',
             confidence: 0.88,
             notes: 'Matches (minor prefix or formatting variation)'
+        };
+    }
+
+    // Intelligent Philippine Name Matching for inverted, middle initial, or compound names
+    const NAME_FIELDS = new Set(['ownerName', 'driverName', 'fullName', 'memberName', 'residentName']);
+    if (NAME_FIELDS.has(fieldKey) && inputVal && extractedVal && isNameMatch(inputVal, extractedVal)) {
+        return {
+            field: fieldKey,
+            label: fieldLabel,
+            inputValue: String(inputVal),
+            extractedValue: String(extractedVal),
+            status: 'match',
+            confidence: 0.96,
+            notes: 'Name match verified (conforms to official Philippine naming conventions)'
         };
     }
 

@@ -1400,7 +1400,7 @@ const FranchiseApproval = () => {
                             </button>
                           )}
 
-                          {(isPendingStatus(app.status) || app.status === 'For Payment') && (
+                          {(isPendingStatus(app.status) || app.status === 'For Payment') && app.paymentStatus !== 'Paid' && (
                             <button
                               onClick={() => {
                                 setActiveMenuId(null);

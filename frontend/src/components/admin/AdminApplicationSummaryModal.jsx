@@ -475,18 +475,20 @@ const AdminApplicationSummaryModal = ({
 
           {/* Decision Buttons (Approve / Reject) */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onReject(franchise);
-              }}
-              disabled={isProcessing}
-              className="flex-1 sm:flex-initial px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
-            >
-              <XCircle size={14} />
-              <span>Reject</span>
-            </button>
+            {franchise.paymentStatus !== 'Paid' && !['Ready for Pickup', 'Active', 'For Signing', 'Released'].includes(franchise.status) && onReject && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onReject(franchise);
+                }}
+                disabled={isProcessing}
+                className="flex-1 sm:flex-initial px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                <XCircle size={14} />
+                <span>Reject</span>
+              </button>
+            )}
 
             {isPending && (
               <button

@@ -765,7 +765,7 @@ const FranchiseReviewPage = () => {
           </button>
 
           {/* Reject Trigger: only before payment is collected */}
-          {['Pending', 'Pending for Approval', 'For Payment'].includes(currentApp.status) && (
+          {['Pending', 'Pending for Approval', 'For Payment'].includes(currentApp.status) && currentApp.paymentStatus !== 'Paid' && (
           <button
             onClick={() => setIsRejecting(prev => !prev)}
             disabled={isProcessing || reviewLock.isLocked}
