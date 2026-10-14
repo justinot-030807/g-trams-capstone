@@ -41,6 +41,15 @@ const accountsToSeed = [
     role: 'cashier',
     address: 'Treasury Office, Municipal Hall, Gasan, Marinduque',
     todaAssociation: 'NON-TODA'
+  },
+  {
+    name: 'Ian Dela Cruz',
+    contact: '09555555555',
+    email: 'ian.operator@gtrams.com',
+    password: 'Password123!',
+    role: 'operator',
+    address: 'Libtangin',
+    todaAssociation: 'LUG TODA'
   }
 ];
 
