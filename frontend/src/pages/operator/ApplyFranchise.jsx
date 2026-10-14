@@ -104,7 +104,7 @@ const ApplyFranchise = () => {
   const modeParam = searchParams.get('mode');
   const stepParam = parseInt(searchParams.get('step') || '1', 10);
   const focusParam = searchParams.get('focus');
-  const initialStep = (stepParam >= 1 && stepParam <= 4) ? stepParam : 1;
+  const initialStep = (stepParam >= 1 && stepParam <= 5) ? stepParam : 1;
 
   const [myFranchises, setMyFranchises] = useState(() => {
     try {
@@ -131,6 +131,7 @@ const ApplyFranchise = () => {
   const [hasDraftRestored, setHasDraftRestored] = useState(false);
   const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
   const [showAdvancedSpecs, setShowAdvancedSpecs] = useState(false);
+  const [isAgreedToTerms, setIsAgreedToTerms] = useState(false);
 
   // Cancellation modal state
   const [cancelModal, setCancelModal] = useState({
@@ -299,7 +300,7 @@ const ApplyFranchise = () => {
   // Sync step and formMode from searchParams
   useEffect(() => {
     const s = parseInt(searchParams.get('step') || '1', 10);
-    const validS = (s >= 1 && s <= 4) ? s : 1;
+    const validS = (s >= 1 && s <= 5) ? s : 1;
     if (validS !== currentStep) {
       setSlideDirection(validS < currentStep ? 'backward' : 'forward');
       setCurrentStep(validS);
@@ -457,10 +458,10 @@ const ApplyFranchise = () => {
     return `gtrams_apply_draft_${uid}`;
   };
 
-  // Accurate 4-Step Progress Calculation
+  // Accurate 5-Step Progress Calculation
   const calculateProgress = () => {
     let completed = 0;
-    const total = 14;
+    const total = 15;
 
     // Step 1 items (4)
     if (formData.fullName?.trim()) completed++;
@@ -483,6 +484,9 @@ const ApplyFranchise = () => {
     // Step 4 items (2)
     if (uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl) completed++;
     if (formData.cedulaSerialNo?.trim() && formData.cedulaDate) completed++;
+
+    // Step 5 item (1)
+    if (isAgreedToTerms) completed++;
 
     const pct = Math.round((completed / total) * 100);
     return { percentage: Math.min(pct, 100), completed, total };
@@ -675,6 +679,33 @@ const ApplyFranchise = () => {
       brgyClearanceNo: '',
       brgyClearanceDate: '',
       brgyIssuer: '',
+      color: '',
+      series: '',
+      yearModel: '',
+      fileNo: '',
+      vehicleType: 'Tricycle',
+      vehicleCategory: 'L4',
+      classification: 'For Hire / PUV',
+      bodyType: 'Semi-Cabin',
+      displacement: '',
+      grossWeight: '',
+      fuelType: 'Gasoline',
+      passengerCapacity: '4',
+      registeredOwner: '',
+      ownerAddress: '',
+      cedulaYear: '',
+      cedulaPlaceIssued: '',
+      cedulaFullName: '',
+      cedulaCitizenship: 'Filipino',
+      cedulaCivilStatus: '',
+      cedulaProfession: '',
+      cedulaDob: '',
+      cedulaPlaceOfBirth: '',
+      cedulaSex: '',
+      cedulaHeight: '',
+      cedulaWeight: '',
+      cedulaTin: '',
+      cedulaDetails: null,
       orCrUrl: '',
       crUrl: '',
       orUrl: '',
@@ -755,7 +786,7 @@ const ApplyFranchise = () => {
     setFilePreviews(previews);
 
     const urlStep = parseInt(searchParams.get('step') || '0', 10);
-    const targetStep = (urlStep >= 1 && urlStep <= 4) ? urlStep : (savedStep || 1);
+    const targetStep = (urlStep >= 1 && urlStep <= 5) ? urlStep : (savedStep || 1);
     navigate(`/apply-franchise?mode=new&step=${targetStep}`);
     setCurrentStep(targetStep);
     setHasDraftRestored(true);
@@ -773,6 +804,7 @@ const ApplyFranchise = () => {
       console.error('Error clearing draft:', err);
     }
     setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
+    setIsAgreedToTerms(false);
     initFreshForm();
     showToast('Draft cleared. Starting a fresh application.', 'info');
   };
@@ -785,6 +817,7 @@ const ApplyFranchise = () => {
       localStorage.removeItem('gtrams_apply_draft');
       setHasDraftRestored(false);
       setAiScannedData({});
+      setIsAgreedToTerms(false);
       initFreshForm();
       showToast('Draft has been reset.', 'info');
     } catch (err) {
@@ -818,7 +851,7 @@ const ApplyFranchise = () => {
     navigate(`/apply-franchise?mode=reapply&step=1${franchise.rejectedField ? `&focus=${franchise.rejectedField}` : ''}`);
     
     const s = parseInt(searchParams.get('step') || '1', 10);
-    const validStep = (s >= 1 && s <= 4) ? s : 1;
+    const validStep = (s >= 1 && s <= 5) ? s : 1;
     setCurrentStep(validStep);
 
     if (focusParam) {
@@ -1213,6 +1246,13 @@ const ApplyFranchise = () => {
                   fileNo: d.fileNo || '',
                   ownerName: finalOwner,
                   ownerAddress: finalOwnerAddress,
+                  displacement: d.pistonDisplacement || d.displacement || '',
+                  pistonDisplacement: d.pistonDisplacement || d.displacement || '',
+                  grossWeight: d.grossWeight || '',
+                  fuelType: d.fuelType || 'GASOLINE',
+                  bodyType: d.bodyType || 'MOTORCYCLE WITH SIDECAR',
+                  vehicleType: d.vehicleType || 'TRICYCLE / MOTORCYCLE',
+                  passengerCapacity: d.passengerCapacity || '4',
                   expiryDate: normExpiry || '',
                   isExpired: Boolean(isExpired),
                   scannedAt: new Date().toISOString()
@@ -1239,7 +1279,7 @@ const ApplyFranchise = () => {
                 vehicleCategory: d.vehicleCategory || prev.vehicleCategory,
                 classification: d.classification || prev.classification,
                 bodyType: d.bodyType || prev.bodyType,
-                displacement: d.pistonDisplacement || prev.displacement,
+                displacement: d.pistonDisplacement || d.displacement || prev.displacement,
                 grossWeight: d.grossWeight || prev.grossWeight,
                 fuelType: d.fuelType || prev.fuelType,
                 passengerCapacity: d.passengerCapacity || prev.passengerCapacity,
@@ -1328,30 +1368,31 @@ const ApplyFranchise = () => {
               showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
             }
           } else if (docType === 'cedula') {
-            const hasData = d.serialNo || d.ctcNo || d.dateIssued || d.placeIssued || d.fullName || d.address;
+            const hasData = d.serialNo || d.ctcNo || d.dateIssued || d.placeIssued || d.placeOfIssue || d.fullName || d.taxpayerName || d.address;
             if (hasData) {
               const fullSerial = (d.serialNo || d.ctcNo || '').trim().toUpperCase();
               const dateStr = d.dateIssued ? normalizeDateStr(d.dateIssued) : '';
-              const placeStr = d.placeIssued || d.address || '';
+              const placeStr = d.placeIssued || d.placeOfIssue || d.address || 'Gasan, Marinduque';
+              const fullNameStr = d.fullName || d.taxpayerName || '';
               const rawAmount = d.totalAmountPaid !== undefined && d.totalAmountPaid !== null ? String(d.totalAmountPaid).replace(/[^0-9.]/g, '') : '';
-              const amountNum = rawAmount ? parseFloat(rawAmount) : '';
+              const amountNum = rawAmount ? parseFloat(rawAmount) : 55.00;
 
               setAiScannedData(prev => ({
                 ...prev,
                 cedula: {
                   serialNo: fullSerial,
                   ctcNo: d.ctcNo || fullSerial,
-                  year: d.year || '',
+                  year: d.year || '2026',
                   dateIssued: dateStr,
                   placeIssued: placeStr,
-                  fullName: d.fullName || '',
+                  fullName: fullNameStr,
                   lastName: d.lastName || '',
                   firstName: d.firstName || '',
                   middleName: d.middleName || '',
                   address: d.address || '',
                   tin: d.tin || '',
                   sex: d.sex || '',
-                  citizenship: d.citizenship || '',
+                  citizenship: d.citizenship || 'Filipino',
                   icrNo: d.icrNo || '',
                   placeOfBirth: d.placeOfBirth || '',
                   dateOfBirth: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '',
@@ -1362,7 +1403,7 @@ const ApplyFranchise = () => {
                   basicCommunityTax: d.basicCommunityTax || '',
                   additionalTax: d.additionalTax || '',
                   interest: d.interest || '',
-                  totalAmountPaid: d.totalAmountPaid || '',
+                  totalAmountPaid: d.totalAmountPaid || '55.00',
                   treasurer: d.treasurer || '',
                   scannedAt: new Date().toISOString()
                 }
@@ -1373,10 +1414,10 @@ const ApplyFranchise = () => {
                 cedulaDate: dateStr || prev.cedulaDate,
                 cedulaAddress: placeStr || prev.cedulaAddress,
                 cedulaAmount: (amountNum !== '' && !isNaN(amountNum)) ? amountNum : prev.cedulaAmount,
-                cedulaYear: d.year || prev.cedulaYear || '',
-                cedulaPlaceIssued: placeStr || prev.cedulaPlaceIssued || '',
-                cedulaFullName: d.fullName || prev.cedulaFullName || '',
-                cedulaCitizenship: d.citizenship || prev.cedulaCitizenship || '',
+                cedulaYear: d.year || prev.cedulaYear || '2026',
+                cedulaPlaceIssued: placeStr || prev.cedulaPlaceIssued || 'Gasan, Marinduque',
+                cedulaFullName: fullNameStr || prev.cedulaFullName || '',
+                cedulaCitizenship: d.citizenship || prev.cedulaCitizenship || 'Filipino',
                 cedulaCivilStatus: d.civilStatus || prev.cedulaCivilStatus || '',
                 cedulaProfession: d.profession || prev.cedulaProfession || '',
                 cedulaDob: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : prev.cedulaDob || '',
@@ -1384,7 +1425,8 @@ const ApplyFranchise = () => {
                 cedulaSex: d.sex || prev.cedulaSex || '',
                 cedulaHeight: d.height || prev.cedulaHeight || '',
                 cedulaWeight: d.weight || prev.cedulaWeight || '',
-                cedulaTin: d.tin || prev.cedulaTin || ''
+                cedulaTin: d.tin || prev.cedulaTin || '',
+                cedulaDetails: d
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("AI Scan: Complete Cedula (CTC) details detected.", 'success');
@@ -1558,108 +1600,166 @@ const ApplyFranchise = () => {
           return false;
         }
       }
-      if (formMode === 'New') {
-        const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
-        if (!hasLicense) {
-          showValidationModal('license', "Driver's License Upload Required", "Please upload a clear photo or copy of the driver's license.");
-          return false;
-        }
-        if (!formData.driverLicenseNo?.trim()) {
-          showValidationModal('driverLicenseNo', "Driver's License Number Required", "Please enter or scan the official Driver's License Number.");
-          return false;
-        }
-        if (!formData.driverLicenseExpiryDate) {
-          showValidationModal('driverLicenseExpiryDate', "License Expiry Date Required", "Please select or verify the Driver's License expiration date.");
-          return false;
-        }
-        if (formData.driverLicenseExpiryDate && formData.driverLicenseExpiryDate < today) {
-          showValidationModal('driverLicenseExpiryDate', "Driver's License Expired", `The Driver's License expired on ${formData.driverLicenseExpiryDate}. An active, unexpired license is required.`);
-          return false;
-        }
+      
+      const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
+      if (!hasLicense) {
+        showValidationModal('license', "Driver's License Upload Required", "Please upload a clear photo or copy of the driver's license (Front).");
+        return false;
+      }
+      if (!formData.driverLicenseNo?.trim()) {
+        showValidationModal('driverLicenseNo', "Driver's License Number Required", "Please enter or scan the official Driver's License Number.");
+        return false;
+      }
+      if (!formData.driverLicenseExpiryDate) {
+        showValidationModal('driverLicenseExpiryDate', "License Expiry Date Required", "Please select or verify the Driver's License expiration date.");
+        return false;
+      }
+      if (formData.driverLicenseExpiryDate < today) {
+        showValidationModal('driverLicenseExpiryDate', "Driver's License Expired", `The Driver's License expired on ${formData.driverLicenseExpiryDate}. An active, unexpired license is required.`);
+        return false;
       }
       return true;
     }
 
     if (currentStep === 2) {
+      const hasCr = uploadedDocs.crDocument || uploadedDocs.crFile || filePreviews.crDocument || formData.crUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
+      const hasOr = uploadedDocs.orDocument || uploadedDocs.orFile || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
+      if (!hasCr) {
+        showValidationModal('crDocument', 'LTO Certificate of Registration (CR) Required', 'Please upload your LTO Certificate of Registration (CR) to verify vehicle ownership and specifications.');
+        return false;
+      }
+      if (!hasOr) {
+        showValidationModal('orDocument', 'LTO Official Receipt (OR) Required', 'Please upload your latest LTO Official Receipt (OR) to verify registration validity.');
+        return false;
+      }
+      if (!formData.make?.trim()) {
+        showValidationModal('make', 'Vehicle Make Required', 'Please enter or select the vehicle make and model (e.g. Honda TMX 125).');
+        return false;
+      }
+      if (!formData.made?.trim()) {
+        showValidationModal('made', 'Model Year Required', 'Please enter the 4-digit model year of the vehicle.');
+        return false;
+      }
+      if (!formData.zone?.trim()) {
+        showValidationModal('zone', 'Municipal Route / Zone Required', 'Please select the authorized Route Zone for this franchise.');
+        return false;
+      }
+      if (!formData.plateNo?.trim()) {
+        showValidationModal('plateNo', 'Plate Number Required', 'Please enter the official Plate Number or MV File Number.');
+        return false;
+      }
+      if (!formData.motorNo?.trim()) {
+        showValidationModal('motorNo', 'Engine / Motor Number Required', 'Please enter the Engine / Motor Number from your OR/CR.');
+        return false;
+      }
+      if (!formData.chassisNo?.trim()) {
+        showValidationModal('chassisNo', 'Chassis Serial Number Required', 'Please enter the Chassis Serial Number / VIN.');
+        return false;
+      }
+      if (!formData.orCrExpiryDate) {
+        showValidationModal('orCrExpiryDate', 'LTO Registration Expiry Date Required', 'Please enter or verify the registration expiration date from your LTO OR.');
+        return false;
+      }
+      if (formData.orCrExpiryDate < today) {
+        showValidationModal('orCrExpiryDate', 'LTO Registration Expired', `The LTO OR/CR expired on ${formData.orCrExpiryDate}. Please renew vehicle registration with LTO.`);
+        return false;
+      }
+      if (duplicateStatus.plateNo.duplicate) {
+        showValidationModal('plateNo', 'Duplicate Plate Number', duplicateStatus.plateNo.message || 'This plate number is already registered to another unit.');
+        return false;
+      }
+      if (duplicateStatus.motorNo.duplicate) {
+        showValidationModal('motorNo', 'Duplicate Motor Number', duplicateStatus.motorNo.message || 'This motor number is already registered to another unit.');
+        return false;
+      }
+      if (duplicateStatus.chassisNo.duplicate) {
+        showValidationModal('chassisNo', 'Duplicate Chassis Number', duplicateStatus.chassisNo.message || 'This chassis number is already registered to another unit.');
+        return false;
+      }
+      return true;
+    }
+
+    if (currentStep === 3) {
+      const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
+      const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
+      const currentToda = formData.todaName || loggedInToda;
+      const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && currentToda && currentToda !== 'NON-TODA';
+
+      if (!hasToda) {
+        if (isNotVerifiedInRoster) {
+          showValidationModal(
+            'todaEndorsement',
+            'TODA Endorsement Certificate Strictly Required',
+            `Operator "${formData.fullName}" is not verified in the approved digital masterlist of ${currentToda}. Dahil wala ang iyong pangalan sa online roster, mahigpit na kinakailangan ang pag-upload ng lehitimong TODA Endorsement Certificate na nilagdaan ng TODA President.`
+          );
+          return false;
+        } else {
+          showValidationModal('todaEndorsement', 'TODA Endorsement Required', 'Please upload the TODA Endorsement Certificate issued by your association.');
+          return false;
+        }
+      }
+      if (!formData.todaCertNo?.trim()) {
+        showValidationModal('todaCertNo', 'TODA Certificate Number Required', 'Please enter or scan the TODA Endorsement Certificate / Control Number.');
+        return false;
+      }
+      if (!formData.todaCertDate) {
+        showValidationModal('todaCertDate', 'TODA Date Issued Required', 'Please enter or verify the issuance date of the TODA Certificate.');
+        return false;
+      }
+
+      if (!hasBrgy) {
+        showValidationModal('brgyClearance', 'Barangay Clearance Required', 'Please upload the Barangay Clearance document.');
+        return false;
+      }
+      if (!formData.brgyClearanceNo?.trim()) {
+        showValidationModal('brgyClearanceNo', 'Barangay Clearance Number Required', 'Please enter or scan the Barangay Clearance Control Number.');
+        return false;
+      }
+      if (!formData.brgyClearanceDate) {
+        showValidationModal('brgyClearanceDate', 'Barangay Clearance Date Required', 'Please enter or verify the date the Barangay Clearance was issued.');
+        return false;
+      }
+      if (!formData.brgyIssuer?.trim()) {
+        showValidationModal('brgyIssuer', 'Punong Barangay / Issuing Official Required', 'Please enter or verify the issuing official / Punong Barangay name.');
+        return false;
+      }
+      return true;
+    }
+
+    if (currentStep === 4) {
+      const currentYear = new Date().getFullYear();
+      if (!formData.cedulaSerialNo?.trim()) {
+        showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter or scan the Community Tax Certificate (Cedula) Serial Number.');
+        return false;
+      }
+      if (!formData.cedulaDate) {
+        showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter or verify the Cedula Date Issued.');
+        return false;
+      }
+      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+      if (cedulaYear < currentYear) {
+        showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
+        return false;
+      }
+
       if (formMode === 'New') {
-        const hasCr = uploadedDocs.crDocument || uploadedDocs.crFile || filePreviews.crDocument || formData.crUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
-        const hasOr = uploadedDocs.orDocument || uploadedDocs.orFile || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
-        if (!hasCr) {
-          showValidationModal('crDocument', 'LTO Certificate of Registration (CR) Required', 'Please upload your LTO Certificate of Registration (CR) to verify vehicle ownership and specifications.');
-          return false;
-        }
-        if (!hasOr) {
-          showValidationModal('orDocument', 'LTO Official Receipt (OR) Required', 'Please upload your latest LTO Official Receipt (OR) to verify registration validity.');
-          return false;
-        }
-        if (!formData.make?.trim()) {
-          showValidationModal('make', 'Vehicle Make Required', 'Please enter or select the vehicle make and model (e.g. Honda TMX 125).');
-          return false;
-        }
-        if (!formData.made?.trim()) {
-          showValidationModal('made', 'Model Year Required', 'Please enter the 4-digit model year of the vehicle.');
-          return false;
-        }
-        if (!formData.zone?.trim()) {
-          showValidationModal('zone', 'Municipal Route / Zone Required', 'Please select the authorized Route Zone for this franchise.');
-          return false;
-        }
-        if (!formData.plateNo?.trim()) {
-          showValidationModal('plateNo', 'Plate Number Required', 'Please enter the official Plate Number or MV File Number.');
-          return false;
-        }
-        if (!formData.motorNo?.trim()) {
-          showValidationModal('motorNo', 'Engine / Motor Number Required', 'Please enter the Engine / Motor Number from your OR/CR.');
-          return false;
-        }
-        if (!formData.chassisNo?.trim()) {
-          showValidationModal('chassisNo', 'Chassis Serial Number Required', 'Please enter the 17-digit Chassis Serial Number / VIN.');
-          return false;
-        }
-        if (duplicateStatus.plateNo.duplicate) {
-          showValidationModal('plateNo', 'Duplicate Plate Number', duplicateStatus.plateNo.message || 'This plate number is already registered to another unit.');
-          return false;
-        }
-        if (duplicateStatus.motorNo.duplicate) {
-          showValidationModal('motorNo', 'Duplicate Motor Number', duplicateStatus.motorNo.message || 'This motor number is already registered to another unit.');
-          return false;
-        }
-        if (duplicateStatus.chassisNo.duplicate) {
-          showValidationModal('chassisNo', 'Duplicate Chassis Number', duplicateStatus.chassisNo.message || 'This chassis number is already registered to another unit.');
-          return false;
-        }
-        if (formData.orCrExpiryDate && formData.orCrExpiryDate < today) {
-          showValidationModal('orCrExpiryDate', 'LTO Registration Expired', `The LTO OR/CR expired on ${formData.orCrExpiryDate}. Please renew vehicle registration with LTO.`);
+        const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
+        if (!hasCedula) {
+          showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) document upload is required.');
           return false;
         }
       }
       return true;
     }
 
-    if (currentStep === 3) {
-      if (formMode === 'New') {
-        const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
-        const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
-        const currentToda = formData.todaName || loggedInToda;
-        const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && currentToda && currentToda !== 'NON-TODA';
-
-        if (!hasToda) {
-          if (isNotVerifiedInRoster) {
-            showValidationModal(
-              'todaEndorsement',
-              'TODA Endorsement Certificate Strictly Required',
-              `Operator "${formData.fullName}" is not verified in the approved digital masterlist of ${currentToda}. Dahil wala ang iyong pangalan sa online roster, mahigpit na kinakailangan ang pag-upload ng lehitimong TODA Endorsement Certificate na nilagdaan ng TODA President.`
-            );
-            return false;
-          } else {
-            showValidationModal('todaEndorsement', 'TODA Endorsement Required', 'Please upload the TODA Endorsement Certificate issued by your association.');
-            return false;
-          }
-        }
-        if (!hasBrgy) {
-          showValidationModal('brgyClearance', 'Barangay Clearance Required', 'Please upload the Barangay Clearance document.');
-          return false;
-        }
+    if (currentStep === 5) {
+      if (!isAgreedToTerms) {
+        showValidationModal(
+          'confirm-authenticity-checkbox',
+          'Confirmation Required',
+          'Pakilagyan ng tsek ang kahon ng Katunayan ng Katumpakan (Affidavit of Authenticity) upang mapatunayan na totoo at tama ang iyong mga inilagay na impormasyon.'
+        );
+        return false;
       }
       return true;
     }
@@ -1669,7 +1769,7 @@ const ApplyFranchise = () => {
 
   const nextStep = () => {
     if (!validateCurrentStep()) return;
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setSlideDirection('forward');
       const nextS = currentStep + 1;
       setCurrentStep(nextS);
@@ -1873,6 +1973,15 @@ const ApplyFranchise = () => {
     if (e?.preventDefault) e.preventDefault();
     if (isSubmitting) return;
 
+    if (!isAgreedToTerms) {
+      showValidationModal(
+        'confirm-authenticity-checkbox',
+        'Confirmation Required',
+        'Pakilagyan ng tsek ang kahon ng Katunayan ng Katumpakan (Affidavit of Authenticity) bago isumite ang aplikasyon.'
+      );
+      return;
+    }
+
     // Cedula validation
     const currentYear = new Date().getFullYear();
     if (!formData.cedulaSerialNo?.trim()) {
@@ -1978,7 +2087,11 @@ const ApplyFranchise = () => {
 
       Object.keys(formData).forEach(key => {
         if (formData[key] !== undefined && formData[key] !== null) {
-          submitData.append(key, formData[key]);
+          if (typeof formData[key] === 'object' && !(formData[key] instanceof File) && !(formData[key] instanceof Blob)) {
+            submitData.append(key, JSON.stringify(formData[key]));
+          } else {
+            submitData.append(key, formData[key]);
+          }
         }
       });
 
@@ -2082,7 +2195,8 @@ const ApplyFranchise = () => {
     { num: 1, title: 'Operator', fullTitle: 'Operator & Driver' },
     { num: 2, title: 'Vehicle', fullTitle: 'Vehicle & LTO OR/CR' },
     { num: 3, title: 'Clearances', fullTitle: 'Barangay & TODA Clearances' },
-    { num: 4, title: 'Review', fullTitle: 'Cedula & Final Review' }
+    { num: 4, title: 'Cedula', fullTitle: 'Community Tax Certificate (CTC)' },
+    { num: 5, title: 'Review', fullTitle: 'Review & Confirmation' }
   ];
 
   const isRenewing = formMode === 'Renewal' || modeParam === 'renewal';
@@ -2285,8 +2399,8 @@ const ApplyFranchise = () => {
               </p>
             </div>
 
-            {/* Stepper Navigation - Equal 4-column grid, 100% balanced and aligned */}
-            <div className="grid grid-cols-4 w-full px-1 sm:px-4 pt-1 select-none">
+            {/* Stepper Navigation - Equal 5-column grid, 100% balanced and aligned */}
+            <div className="grid grid-cols-5 w-full px-1 sm:px-3 pt-1 select-none">
               {steps.map((step, idx) => {
                 const isCompleted = currentStep > step.num;
                 const isCurrent = currentStep === step.num;
@@ -2333,7 +2447,7 @@ const ApplyFranchise = () => {
                       )}
                     </div>
                     
-                    <span className={`text-[11px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-0.5 truncate w-full ${
+                    <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-0.5 truncate w-full ${
                       isCurrent ? 'text-white font-bold' : isCompleted ? 'text-[#D4AF37]' : 'text-white/70'
                     }`}>
                       {step.title}
@@ -2351,7 +2465,7 @@ const ApplyFranchise = () => {
               />
             </div>
             <div className="flex justify-between items-center text-xs text-white/90 mt-1.5 font-medium px-1">
-              <span>Step {currentStep} of 4: <strong className="font-bold text-white">{steps[currentStep - 1]?.fullTitle || steps[currentStep - 1]?.title}</strong></span>
+              <span>Step {currentStep} of 5: <strong className="font-bold text-white">{steps[currentStep - 1]?.fullTitle || steps[currentStep - 1]?.title}</strong></span>
               <span className="font-bold text-[#D4AF37]">{calculateProgress().percentage}%</span>
             </div>
           </div>
@@ -2359,7 +2473,7 @@ const ApplyFranchise = () => {
 
         {/* Form Container */}
         <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-5 pb-16 flex-1 flex flex-col relative z-10">
-          <form onSubmit={currentStep === 4 ? handlePreSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
+          <form onSubmit={currentStep === 5 ? handlePreSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
             
             {/* STEP 1: OPERATOR & DRIVER INFO */}
             {currentStep === 1 && (
@@ -2400,7 +2514,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={getInputClasses('fullName')} 
                         required 
-                        placeholder="Juan Dela Cruz" 
+                        autoComplete="off"
                       />
                       {formErrors.fullName && (
                         <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -2716,7 +2830,7 @@ const ApplyFranchise = () => {
                           onChange={handleInputChange} 
                           className={getInputClasses('driverName')} 
                           required 
-                          placeholder="Full name of driver" 
+                          autoComplete="off"
                         />
                         {formErrors.driverName && (
                           <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -2736,7 +2850,7 @@ const ApplyFranchise = () => {
                           onChange={handleInputChange} 
                           className={getInputClasses('driverContact')} 
                           required 
-                          placeholder="09123456789" 
+                          autoComplete="off"
                         />
                         {formErrors.driverContact && (
                           <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -2857,7 +2971,7 @@ const ApplyFranchise = () => {
                           onChange={handleInputChange} 
                           className={getInputClasses('driverLicenseNo')} 
                           required 
-                          placeholder="e.g. D01-12-345678" 
+                          autoComplete="off"
                         />
                         {formErrors.driverLicenseNo && (
                           <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -2878,7 +2992,7 @@ const ApplyFranchise = () => {
                           value={formData.driverLicenseSerialNo || ''} 
                           onChange={handleInputChange} 
                           className={getInputClasses('driverLicenseSerialNo')} 
-                          placeholder="e.g. SN-0987654321" 
+                          autoComplete="off"
                         />
                       </div>
 
@@ -2916,7 +3030,7 @@ const ApplyFranchise = () => {
                           value={formData.driverDlCodes} 
                           onChange={handleInputChange} 
                           className={getInputClasses('driverDlCodes')} 
-                          placeholder="e.g. A, A1 (Tricycle authorization)" 
+                          autoComplete="off"
                         />
                         {formErrors.driverDlCodes && (
                           <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -2936,7 +3050,7 @@ const ApplyFranchise = () => {
                           value={formData.driverAddress || ''} 
                           onChange={handleInputChange} 
                           className={getInputClasses('driverAddress')} 
-                          placeholder="Barangay / Municipality" 
+                          autoComplete="off"
                         />
                       </div>
 
@@ -2950,7 +3064,7 @@ const ApplyFranchise = () => {
                           value={formData.driverConditions} 
                           onChange={handleInputChange} 
                           className={getInputClasses('driverConditions')} 
-                          placeholder="e.g. None or 1 (Corrective lenses)" 
+                          autoComplete="off"
                         />
                       </div>
                     </div>
@@ -3097,7 +3211,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={getInputClasses('make')} 
                         required 
-                        placeholder="e.g. Honda TMX 125" 
+                        autoComplete="off"
                       />
                       {formErrors.make && (
                         <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -3141,7 +3255,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={getInputClasses('made')} 
                         required 
-                        placeholder="e.g. 2024" 
+                        autoComplete="off"
                       />
                       {formErrors.made && (
                         <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
@@ -3195,7 +3309,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={`${getInputClasses('plateNo')} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                         required 
-                        placeholder="e.g. 123-ABC" 
+                        autoComplete="off"
                       />
                       {formErrors.plateNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
@@ -3232,7 +3346,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={`${getInputClasses('motorNo')} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                         required 
-                        placeholder="Motor Serial Number" 
+                        autoComplete="off"
                       />
                       {formErrors.motorNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
@@ -3269,7 +3383,7 @@ const ApplyFranchise = () => {
                         onChange={handleInputChange} 
                         className={`${getInputClasses('chassisNo')} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                         required 
-                        placeholder="17-Digit Chassis / VIN" 
+                        autoComplete="off"
                       />
                       {formErrors.chassisNo && (
                         <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
@@ -3304,7 +3418,7 @@ const ApplyFranchise = () => {
                         value={formData.color}
                         onChange={handleInputChange}
                         className={inputClasses}
-                        placeholder="e.g. BLACK / RED"
+                        autoComplete="off"
                       />
                     </div>
 
@@ -3319,7 +3433,7 @@ const ApplyFranchise = () => {
                         value={formData.fuelType}
                         onChange={handleInputChange}
                         className={inputClasses}
-                        placeholder="e.g. GASOLINE"
+                        autoComplete="off"
                       />
                     </div>
 
@@ -3371,7 +3485,7 @@ const ApplyFranchise = () => {
                                 value={formData.series}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="e.g. TMX 125, Barako II"
+                                autoComplete="off"
                               />
                             </div>
 
@@ -3385,7 +3499,7 @@ const ApplyFranchise = () => {
                                 value={formData.displacement}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="e.g. 125, 150"
+                                autoComplete="off"
                               />
                             </div>
 
@@ -3399,7 +3513,7 @@ const ApplyFranchise = () => {
                                 value={formData.grossWeight}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="e.g. 265"
+                                autoComplete="off"
                               />
                             </div>
 
@@ -3413,7 +3527,7 @@ const ApplyFranchise = () => {
                                 value={formData.bodyType}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="e.g. MOTORCYCLE W/ SIDECAR"
+                                autoComplete="off"
                               />
                             </div>
 
@@ -3427,7 +3541,7 @@ const ApplyFranchise = () => {
                                 value={formData.crNo}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="e.g. CR-12345678"
+                                autoComplete="off"
                               />
                             </div>
 
@@ -3452,7 +3566,7 @@ const ApplyFranchise = () => {
                                 value={formData.orCrNo}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="e.g. OR-98765432"
+                                autoComplete="off"
                               />
                             </div>
 
@@ -3477,7 +3591,7 @@ const ApplyFranchise = () => {
                                 value={formData.fileNo}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="e.g. 110123000632095"
+                                autoComplete="off"
                               />
                             </div>
 
@@ -3492,7 +3606,7 @@ const ApplyFranchise = () => {
                                 value={formData.registeredOwner}
                                 onChange={handleInputChange}
                                 className={inputClasses}
-                                placeholder="Full Name as printed on Certificate of Registration"
+                                autoComplete="off"
                               />
                             </div>
                           </div>
@@ -3594,7 +3708,7 @@ const ApplyFranchise = () => {
                         value={formData.todaCertNo} 
                         onChange={handleInputChange} 
                         className={inputClasses} 
-                        placeholder="e.g. TODA-2026-089" 
+                        autoComplete="off"
                       />
                     </div>
                     <div id="field-todaCertDate">
@@ -3648,7 +3762,7 @@ const ApplyFranchise = () => {
                         value={formData.brgyClearanceNo} 
                         onChange={handleInputChange} 
                         className={inputClasses} 
-                        placeholder="e.g. BC-2026-104" 
+                        autoComplete="off"
                       />
                     </div>
                     <div id="field-brgyClearanceDate">
@@ -3671,7 +3785,7 @@ const ApplyFranchise = () => {
                         value={formData.brgyIssuer} 
                         onChange={handleInputChange} 
                         className={inputClasses} 
-                        placeholder="e.g. Hon. Juan Dela Cruz" 
+                        autoComplete="off"
                       />
                     </div>
                   </div>
@@ -3693,34 +3807,34 @@ const ApplyFranchise = () => {
                     onClick={nextStep}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
                   >
-                    <span>Next: Cedula &amp; Review</span>
+                    <span>Next: Cedula (CTC)</span>
                     <ChevronRight size={18} />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 4: CEDULA & FINAL REVIEW */}
+            {/* STEP 4: COMMUNITY TAX CERTIFICATE (CEDULA / CTC) */}
             {currentStep === 4 && (
               <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
                 
                 {/* Header */}
                 <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                   <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <FileCheck size={18} />
+                    <Receipt size={18} />
                   </div>
                   <div>
                     <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Community Tax Certificate (Cedula) &amp; Review
+                      Community Tax Certificate (Cedula / CTC)
                     </h2>
                     <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Upload your current-year CTC and verify application summary
+                      I-upload ang kasalukuyang taon na Cedula (CTC) at kumpletuhin ang mga detalye
                     </p>
                   </div>
                 </div>
 
-                {/* Cedula Upload & Input Card */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
+                {/* Cedula Upload & Input Container */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Community Tax Certificate (Cedula / CTC)
@@ -3746,183 +3860,569 @@ const ApplyFranchise = () => {
                     hideHeaderLabel={true}
                   />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div id="field-cedulaSerialNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Cedula Serial Number
-                      </label>
-                      <input 
-                        type="text" 
-                        name="cedulaSerialNo" 
-                        value={formData.cedulaSerialNo} 
-                        onChange={handleInputChange} 
-                        className={getInputClasses('cedulaSerialNo')} 
-                        required 
-                        placeholder="e.g. 08123456" 
-                        autoComplete="off"
-                      />
-                      {formErrors.cedulaSerialNo && (
-                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>{formErrors.cedulaSerialNo}</span>
-                        </p>
-                      )}
-                    </div>
-                    <div id="field-cedulaDate">
-                      <SimpleDatePicker
-                        name="cedulaDate"
-                        value={formData.cedulaDate}
-                        onChange={handleInputChange}
-                        label="Date Issued"
-                        required
-                        mode="issuance"
-                        helperText="Date CTC / Cedula was issued."
-                        error={formErrors.cedulaDate}
-                      />
-                    </div>
-                    <div id="field-cedulaAddress">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Place / Barangay Issued
-                      </label>
-                      <input 
-                        type="text" 
-                        name="cedulaAddress" 
-                        value={formData.cedulaAddress} 
-                        onChange={handleInputChange} 
-                        className={getInputClasses('cedulaAddress')} 
-                        placeholder="e.g. Libtangin, Gasan, Marinduque" 
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div id="field-cedulaAmount">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Cedula Amount Paid (₱)
-                      </label>
-                      <input 
-                        type="number" 
-                        name="cedulaAmount" 
-                        value={formData.cedulaAmount || ''} 
-                        onChange={handleInputChange} 
-                        className={getInputClasses('cedulaAmount')} 
-                        placeholder="e.g. 55.00" 
-                        step="0.01"
-                        min="0"
-                        autoComplete="off"
-                      />
+                  {/* Section A: CTC Official Number & Details */}
+                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] mb-3">
+                      Opisyal na Impormasyon ng Cedula
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div id="field-cedulaSerialNo">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Cedula Serial Number
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaSerialNo" 
+                          value={formData.cedulaSerialNo} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaSerialNo')} 
+                          required 
+                          autoComplete="off"
+                        />
+                        {formErrors.cedulaSerialNo && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.cedulaSerialNo}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div id="field-cedulaDate">
+                        <SimpleDatePicker
+                          name="cedulaDate"
+                          value={formData.cedulaDate}
+                          onChange={handleInputChange}
+                          label="Date Issued"
+                          required
+                          mode="issuance"
+                          helperText="Petsa kung kailan inisyu ang CTC."
+                          error={formErrors.cedulaDate}
+                        />
+                      </div>
+
+                      <div id="field-cedulaAddress">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Place / Municipality Issued
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaAddress" 
+                          value={formData.cedulaAddress} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaAddress')} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaYear">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Tax Year
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaYear" 
+                          value={formData.cedulaYear || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaAmount" className="sm:col-span-2">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Cedula Amount Paid (₱)
+                        </label>
+                        <input 
+                          type="number" 
+                          name="cedulaAmount" 
+                          value={formData.cedulaAmount || ''} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaAmount')} 
+                          step="0.01"
+                          min="0"
+                          autoComplete="off"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Digitized Cedula (CTC) Details Preview Card */}
-                  {(aiScannedData?.cedula || formData.cedulaFullName) && (
-                    <div className="mt-3 p-3.5 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-xl space-y-2.5 animate-fadeIn">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Receipt size={15} className="text-emerald-700 dark:text-emerald-400" />
-                          <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider">
-                            Digitized Cedula (CTC) Information
-                          </h4>
-                        </div>
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full">
-                          <Zap size={11} /> AI OCR Scanned
-                        </span>
+                  {/* Section B: Taxpayer Identity & Biometrics (Editable Inputs replacing the static green card) */}
+                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                        Taxpayer Identity &amp; Biometrics (Mula sa Cedula)
+                      </h3>
+                      <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <Zap size={11} /> Auto-filled &amp; Editable
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div id="field-cedulaFullName">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Taxpayer Full Name
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaFullName" 
+                          value={formData.cedulaFullName || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Tax Year</span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200">{formData.cedulaYear || aiScannedData?.cedula?.year || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Taxpayer Name</span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formData.cedulaFullName || aiScannedData?.cedula?.fullName || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Civil Status</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaCivilStatus || aiScannedData?.cedula?.civilStatus || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Citizenship</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaCitizenship || aiScannedData?.cedula?.citizenship || 'Filipino'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Profession / Occupation</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{formData.cedulaProfession || aiScannedData?.cedula?.profession || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Date of Birth</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaDob || aiScannedData?.cedula?.dateOfBirth || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Place of Birth</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">{formData.cedulaPlaceOfBirth || aiScannedData?.cedula?.placeOfBirth || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Sex / Gender</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">{formData.cedulaSex || aiScannedData?.cedula?.sex || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Height &amp; Weight</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {(formData.cedulaHeight || aiScannedData?.cedula?.height) ? `${formData.cedulaHeight || aiScannedData?.cedula?.height} ft / ` : ''}
-                            {(formData.cedulaWeight || aiScannedData?.cedula?.weight) ? `${formData.cedulaWeight || aiScannedData?.cedula?.weight} kg` : '—'}
-                          </span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">TIN</span>
-                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{formData.cedulaTin || aiScannedData?.cedula?.tin || '—'}</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Basic Community Tax</span>
-                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
-                            {aiScannedData?.cedula?.basicCommunityTax ? `₱${aiScannedData?.cedula?.basicCommunityTax}` : '—'}
-                          </span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/80 dark:bg-[#1A1816] border border-emerald-100 dark:border-emerald-900/40">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block uppercase">Total Amount Paid</span>
-                          <span className="font-mono font-bold text-emerald-800 dark:text-emerald-300">
-                            {(formData.cedulaAmount || aiScannedData?.cedula?.totalAmountPaid) ? `₱${Number(formData.cedulaAmount || aiScannedData?.cedula?.totalAmountPaid).toFixed(2)}` : '—'}
-                          </span>
-                        </div>
+                      <div id="field-cedulaCivilStatus">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Civil Status
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaCivilStatus" 
+                          value={formData.cedulaCivilStatus || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaCitizenship">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Citizenship
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaCitizenship" 
+                          value={formData.cedulaCitizenship || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaProfession">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Profession / Occupation
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaProfession" 
+                          value={formData.cedulaProfession || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaDob">
+                        <SimpleDatePicker
+                          name="cedulaDob"
+                          value={formData.cedulaDob}
+                          onChange={handleInputChange}
+                          label="Date of Birth"
+                          helperText="Petsa ng kapanganakan sa Cedula."
+                        />
+                      </div>
+
+                      <div id="field-cedulaPlaceOfBirth">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Place of Birth
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaPlaceOfBirth" 
+                          value={formData.cedulaPlaceOfBirth || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaSex">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Sex / Kasarian
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaSex" 
+                          value={formData.cedulaSex || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaTin">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Tax Identification Number (TIN)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaTin" 
+                          value={formData.cedulaTin || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaHeight">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Height (ft)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaHeight" 
+                          value={formData.cedulaHeight || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaWeight">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Weight (kg)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaWeight" 
+                          value={formData.cedulaWeight || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
+
                 </div>
 
-                {/* Minimized Application Summary Card */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                      <FileText size={20} />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        Application Summary
-                      </h3>
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 truncate">
-                        {formData.fullName || 'Operator'} &bull; {formData.plateNo || 'Vehicle'} &bull; {formatZoneLabel(formData.zone)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsSummaryModalOpen(true)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 min-h-[44px]"
+                {/* Step 4 Actions */}
+                <div className="pt-3 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={prevStep}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
                   >
-                    <Eye size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                    <span>See Summary</span>
+                    <ChevronLeft size={18} />
+                    <span>Back to Clearances</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Review &amp; Confirmation</span>
+                    <ChevronRight size={18} />
                   </button>
                 </div>
 
-                {/* LGU Treasury Fee Notice */}
-                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
-                  <Receipt size={18} className="shrink-0 text-amber-700 dark:text-amber-400" />
-                  <div className="leading-snug">
-                    <strong className="font-bold">Franchise Fee:</strong> Standard fee of <strong className="font-bold underline">₱500.00</strong> is payable at the Municipal Cashier window upon application approval.
+                {/* Secondary draft actions */}
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveProgress(true)}
+                    className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Save size={14} />
+                    <span>Save Draft</span>
+                  </button>
+                  {hasDraftRestored && (
+                    <button
+                      type="button"
+                      onClick={handleClearDraft}
+                      className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw size={14} />
+                      <span>Reset Draft</span>
+                    </button>
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {/* STEP 5: APPLICATION REVIEW & CONFIRMATION */}
+            {currentStep === 5 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Review &amp; Confirmation (Pagsusuri at Kumpirmasyon)
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                      Suriin nang buo ang aplikasyon bago tuluyang isumite
+                    </p>
                   </div>
                 </div>
 
-                {/* Step 4 Submission Actions */}
+                {/* Section 1: Operator & Driver Information */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        1. Operator &amp; Driver Details
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(1); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 1
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Operator Name</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Residence</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.address || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver Type</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.isOperatorDriver ? 'Operator is Driver' : `Designated: ${formData.driverName || '—'}`}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver's License No.</span>
+                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Expiry Date</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseExpiryDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Serial (Back)</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseSerialNo || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Vehicle & Registration */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        2. Vehicle &amp; LTO Registration
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 2
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Make &amp; Model</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.make || '—'} ({formData.made || '—'})</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Plate / MV File No.</span>
+                      <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{formData.plateNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Authorized Zone</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formatZoneLabel(formData.zone)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Engine / Motor No.</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.motorNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Chassis Serial / VIN</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.chassisNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">LTO OR/CR Expiry</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.orCrExpiryDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Displacement / Weight</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.displacement ? `${formData.displacement}` : '—'} &bull; {formData.grossWeight ? `${formData.grossWeight}` : '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Fuel &amp; Body Type</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fuelType || 'GAS'} &bull; {formData.bodyType || 'TRICYCLE'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CR Registered Owner</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.registeredOwner || formData.fullName || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Barangay & TODA Clearances */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <FileCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        3. TODA &amp; Barangay Clearances
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(3); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 3
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Association</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaName || 'NON-TODA'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Certificate No.</span>
+                      <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaCertNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Date Issued</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaCertDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Clearance No.</span>
+                      <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Date Issued</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Issuing Official (Brgy)</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyIssuer || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Community Tax Certificate (Cedula) */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <Receipt size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        4. Community Tax Certificate (Cedula / CTC)
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(4); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 4
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Serial Number</span>
+                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaSerialNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Date Issued</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Place Issued</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaAddress || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Tax Year &bull; Total Paid</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaYear || '2026'} &bull; ₱{Number(formData.cedulaAmount || 55).toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Taxpayer Name</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.cedulaFullName || formData.fullName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Civil Status &bull; TIN</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaCivilStatus || '—'} &bull; {formData.cedulaTin || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 5: Verification Notices & Detected Defect Checks */}
+                {(() => {
+                  const detected = getAiDiscrepancies(formData, aiScannedData);
+                  const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && formData.todaName && formData.todaName !== 'NON-TODA';
+
+                  return (
+                    <div className="space-y-2">
+                      {detected.length > 0 || isNotVerifiedInRoster ? (
+                        <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 space-y-2.5">
+                          <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-xs sm:text-sm">
+                            <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span>Mga Paunawa sa Pagsusuri at Defect Check (Verification Notices)</span>
+                          </div>
+                          <ul className="space-y-1.5 pl-6 text-xs text-amber-900/90 dark:text-amber-200/90 list-disc">
+                            {isNotVerifiedInRoster && (
+                              <li>
+                                <strong>TODA Masterlist:</strong> Ang aplikante ay wala sa naaprubahang online roster ng {formData.todaName}, ngunit may nakalakip na pisikal na TODA Endorsement Certificate.
+                              </li>
+                            )}
+                            {detected.map((disc, idx) => (
+                              <li key={idx}>
+                                <strong>{disc.label}:</strong> {disc.reason}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
+                          <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>Walang nakitang depekto o discrepancy sa pagitan ng mga na-scan na dokumento at inilagay na impormasyon.</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Section 6: LGU Treasury Fee Notice */}
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                  <Receipt size={18} className="shrink-0 text-amber-700 dark:text-amber-400" />
+                  <div className="leading-snug">
+                    <strong className="font-bold">Franchise Filing Fee:</strong> Ang karaniwang bayarin na <strong className="font-bold underline">₱500.00</strong> ay babayaran lamang sa Municipal Cashier kapag na-aprubahan na ang inyong aplikasyon ng Franchising Office.
+                  </div>
+                </div>
+
+                {/* Section 7: Confirmation Checkbox (Affidavit of Authenticity) */}
+                <div className="p-4 rounded-xl border-2 border-[#D4AF37]/40 bg-white dark:bg-[#1C1917] shadow-xs">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      id="confirm-authenticity-checkbox"
+                      checked={isAgreedToTerms}
+                      onChange={(e) => setIsAgreedToTerms(e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded text-[#9E2A2B] dark:text-[#D4AF37] focus:ring-[#9E2A2B] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer shrink-0"
+                    />
+                    <div className="text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1] leading-relaxed">
+                      <strong className="font-bold text-sm block mb-0.5 text-[#9E2A2B] dark:text-[#D4AF37]">
+                        Katunayan ng Katumpakan (Affidavit of Authenticity &amp; Truthfulness):
+                      </strong>
+                      Pinatutunayan ko na ang lahat ng mga impormasyon at dokumentong aking ibinigay sa aplikasyong ito ay totoo, tama, at kumpleto ayon sa aking buong kaalaman. Nauunawaan ko na ang anumang kasinungalingan, maling impormasyon, o pekeng dokumento ay magiging batayan ng agarang pagbasura ng aplikasyon o pagbawi sa prangkisa.
+                    </div>
+                  </label>
+                </div>
+
+                {/* Step 5 Submission Actions */}
                 <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
                   <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                     <button 
@@ -3931,23 +4431,29 @@ const ApplyFranchise = () => {
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
                     >
                       <ChevronLeft size={18} />
-                      <span>Back to Clearances</span>
+                      <span>Back to Cedula</span>
                     </button>
 
                     <button 
                       type="submit" 
                       onClick={handlePreSubmit}
-                      disabled={isSubmitting}
-                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] ${
-                        isSubmitting 
-                          ? 'bg-[#6B7280] cursor-not-allowed' 
-                          : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
+                      disabled={isSubmitting || !isAgreedToTerms}
+                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 min-h-[44px] ${
+                        isSubmitting || !isAgreedToTerms
+                          ? 'bg-[#6B7280] opacity-60 cursor-not-allowed' 
+                          : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
                       }`}
                     >
                       {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
                       <span>{isSubmitting ? (uploadPhase || 'Submitting...') : 'Submit Application'}</span>
                     </button>
                   </div>
+
+                  {!isAgreedToTerms && (
+                    <p className="text-center text-xs text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">
+                      * Pakilagyan muna ng tsek ang kahon ng Katunayan ng Katumpakan sa itaas upang mai-sumite ang aplikasyon.
+                    </p>
+                  )}
 
                   {/* Secondary draft actions */}
                   <div className="flex items-center justify-center gap-4 pt-1">
@@ -4218,7 +4724,7 @@ const ApplyFranchise = () => {
 
             {/* Modal Description */}
             <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
-              You have an in-progress draft saved at <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{draftResumeModal.savedTime}</span> (Step {draftResumeModal.step} of 4). Would you like to pick up where you left off?
+              You have an in-progress draft saved at <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{draftResumeModal.savedTime}</span> (Step {draftResumeModal.step} of 5). Would you like to pick up where you left off?
             </p>
 
             {/* Draft Details Preview */}
@@ -4227,7 +4733,7 @@ const ApplyFranchise = () => {
                 <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
                   <span>Progress:</span>
                   <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                    Step {draftResumeModal.step} of 4
+                    Step {draftResumeModal.step} of 5
                   </span>
                 </div>
                 {draftResumeModal.draftData.formData.plateNo && (

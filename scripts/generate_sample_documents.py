@@ -117,6 +117,7 @@ def make_tama_cr():
         ("CHASSIS NUMBER / VIN", "MH1KF5178PK098231", "MAKE / BRAND", "HONDA"),
         ("SERIES / MODEL", "TMX 125 ALPHA", "YEAR MODEL", "2024"),
         ("COLOR", "BLACK", "BODY TYPE", "MOTORCYCLE WITH SIDECAR"),
+        ("DISPLACEMENT", "125 CC", "GROSS WEIGHT", "265 KG"),
         ("VEHICLE TYPE", "TRICYCLE / MOTORCYCLE", "CLASSIFICATION", "FOR HIRE / PUV"),
         ("FUEL TYPE", "GASOLINE", "PASSENGER CAPACITY", "4 PERSONS")
     ]
@@ -131,9 +132,9 @@ def make_tama_cr():
         d.text((w//2 + 25, y_pos + 24), val2, fill='#0F172A', font=bold_f)
         y_pos += 65
 
-    d.rectangle([40, 800, w-40, 870], fill='#FEF3C7', outline='#F59E0B', width=1)
-    d.text((w//2, 825), "NOTICE: PAYMENT AMOUNTS AND CASHIER SIGNATURES EXCLUDED FROM OCR", fill='#92400E', font=bold_f, anchor='mm')
-    d.text((w//2, 850), "Official Registration Record Verified Under LTO Information Database System", fill='#B45309', font=sm_f, anchor='mm')
+    d.rectangle([40, 770, w-40, 840], fill='#FEF3C7', outline='#F59E0B', width=1)
+    d.text((w//2, 795), "NOTICE: PAYMENT AMOUNTS AND CASHIER SIGNATURES EXCLUDED FROM OCR", fill='#92400E', font=bold_f, anchor='mm')
+    d.text((w//2, 820), "Official Registration Record Verified Under LTO Information Database System", fill='#B45309', font=sm_f, anchor='mm')
     out = os.path.join(TAMA_DIR, '03_lto_cr_TAMA.png')
     img.save(out)
 
@@ -191,18 +192,71 @@ def make_tama_toda_certificate():
     img.save(out)
 
 def make_tama_cedula():
-    w, h = 900, 600
+    w, h = 900, 720
     img = Image.new('RGB', (w, h), color='#FFFBEB')
     d = ImageDraw.Draw(img)
     d.rectangle([20, 20, w-20, h-20], outline='#78350F', width=2)
     d.text((w//2, 45), "COMMUNITY TAX CERTIFICATE (CEDULA) • 2026", fill='#78350F', font=title_f, anchor='mm')
     d.text((w//2, 70), "MUNICIPALITY OF GASAN — PROVINCE OF MARINDUQUE", fill='#92400E', font=bold_f, anchor='mm')
-    d.text((50, 110), "CTC NO.: CC12026-0928174", fill='#78350F', font=title_f)
-    d.text((600, 110), "DATE ISSUED: 2026-01-18", fill='#0F172A', font=sub_f)
-    d.text((50, 170), "TAXPAYER: JUAN DELA CRUZ", fill='#0F172A', font=title_f)
-    d.text((50, 210), "ADDRESS: BARANGAY I (POBLACION), GASAN, MARINDUQUE", fill='#334155', font=bold_f)
-    d.text((50, 260), "TOTAL AMOUNT PAID: PHP 55.00", fill='#B45309', font=title_f)
-    d.text((50, 310), "COLLECTING CASHIER: MARIA CLARA", fill='#0F172A', font=bold_f)
+    
+    # Header Grid (CTC No, Year, Date, Place Issued)
+    d.rectangle([40, 95, w-40, 155], fill='#FEF3C7', outline='#D97706', width=1)
+    d.text((55, 105), "CTC / SERIAL NO.:", fill='#78350F', font=sm_f)
+    d.text((55, 122), "CC12026-0928174", fill='#78350F', font=title_f)
+    d.text((360, 105), "TAX YEAR:", fill='#78350F', font=sm_f)
+    d.text((360, 124), "2026", fill='#0F172A', font=sub_f)
+    d.text((480, 105), "DATE ISSUED:", fill='#78350F', font=sm_f)
+    d.text((480, 124), "2026-01-18", fill='#0F172A', font=sub_f)
+    d.text((660, 105), "PLACE ISSUED:", fill='#78350F', font=sm_f)
+    d.text((660, 124), "GASAN, MARINDUQUE", fill='#0F172A', font=bold_f)
+
+    # Taxpayer Row
+    d.rectangle([40, 170, w-40, 230], fill='#FFFFFF', outline='#CBD5E1', width=1)
+    d.text((55, 178), "TAXPAYER FULL NAME (LAST, FIRST, MIDDLE):", fill='#64748B', font=sm_f)
+    d.text((55, 196), "DELA CRUZ, JUAN M.", fill='#0F172A', font=title_f)
+    d.text((480, 178), "CITIZENSHIP:", fill='#64748B', font=sm_f)
+    d.text((480, 198), "FILIPINO", fill='#0F172A', font=bold_f)
+    d.text((660, 178), "CIVIL STATUS:", fill='#64748B', font=sm_f)
+    d.text((660, 198), "MARRIED", fill='#0F172A', font=bold_f)
+
+    # Address & Profession Row
+    d.rectangle([40, 245, w-40, 305], fill='#FFFFFF', outline='#CBD5E1', width=1)
+    d.text((55, 253), "RESIDENTIAL ADDRESS:", fill='#64748B', font=sm_f)
+    d.text((55, 273), "BARANGAY I (POBLACION), GASAN, MARINDUQUE", fill='#1E293B', font=bold_f)
+    d.text((560, 253), "PROFESSION / OCCUPATION:", fill='#64748B', font=sm_f)
+    d.text((560, 273), "TRICYCLE OPERATOR", fill='#0F172A', font=bold_f)
+
+    # DOB, Place of Birth & Biometrics Row
+    d.rectangle([40, 320, w-40, 380], fill='#FFFFFF', outline='#CBD5E1', width=1)
+    d.text((55, 328), "DATE OF BIRTH:", fill='#64748B', font=sm_f)
+    d.text((55, 348), "1992-08-15", fill='#0F172A', font=bold_f)
+    d.text((220, 328), "PLACE OF BIRTH:", fill='#64748B', font=sm_f)
+    d.text((220, 348), "GASAN, MARINDUQUE", fill='#0F172A', font=bold_f)
+    d.text((460, 328), "SEX:", fill='#64748B', font=sm_f)
+    d.text((460, 348), "M", fill='#0F172A', font=bold_f)
+    d.text((540, 328), "HEIGHT:", fill='#64748B', font=sm_f)
+    d.text((540, 348), "5.6 FT", fill='#0F172A', font=bold_f)
+    d.text((660, 328), "WEIGHT:", fill='#64748B', font=sm_f)
+    d.text((660, 348), "62 KG", fill='#0F172A', font=bold_f)
+
+    # Tax Amounts & TIN Row
+    d.rectangle([40, 395, w-40, 475], fill='#F8FAFC', outline='#CBD5E1', width=1)
+    d.text((55, 405), "TIN (TAXPAYER IDENTIFICATION NO.):", fill='#64748B', font=sm_f)
+    d.text((55, 425), "432-819-021-000", fill='#0F172A', font=mono_f)
+    d.text((320, 405), "BASIC COMMUNITY TAX:", fill='#64748B', font=sm_f)
+    d.text((320, 425), "PHP 5.00", fill='#0F172A', font=bold_f)
+    d.text((500, 405), "ADDITIONAL TAX:", fill='#64748B', font=sm_f)
+    d.text((500, 425), "PHP 50.00", fill='#0F172A', font=bold_f)
+    d.text((660, 405), "TOTAL AMOUNT PAID:", fill='#B45309', font=sm_f)
+    d.text((660, 425), "PHP 55.00", fill='#B45309', font=title_f)
+    d.text((55, 452), "STATUS: OFFICIAL RECEIPT ISSUED — PAID IN CASH", fill='#16A34A', font=bold_f)
+
+    # Municipal Signatory
+    d.rectangle([40, 490, w-40, 560], fill='#FFFFFF', outline='#E2E8F0', width=1)
+    d.text((55, 505), "MUNICIPAL TREASURER / COLLECTING AGENT:", fill='#64748B', font=sm_f)
+    d.text((55, 525), "MARIA CLARA — MUNICIPAL TREASURY OFFICE", fill='#0F172A', font=bold_f)
+    d.text((600, 525), "APPROVED & RECORDED", fill='#15803D', font=bold_f)
+
     out = os.path.join(TAMA_DIR, '07_cedula_TAMA.png')
     img.save(out)
 

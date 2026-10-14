@@ -64,6 +64,7 @@ const FranchiseReviewPage = () => {
 
   // Document Viewer State
   const [activeDocKey, setActiveDocKey] = useState('crDocument');
+  const [licenseSide, setLicenseSide] = useState('front'); // 'front' | 'back'
   const [isDocLoading, setIsDocLoading] = useState(true);
   const [docError, setDocError] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
@@ -247,7 +248,10 @@ const FranchiseReviewPage = () => {
     if (!currentApp) return;
     const urls = [
       currentApp.orCrUrl,
+      currentApp.crUrl,
+      currentApp.orUrl,
       currentApp.licenseUrl,
+      currentApp.licenseBackUrl,
       currentApp.cedulaUrl,
       currentApp.todaEndorsementUrl,
       currentApp.brgyClearanceUrl
@@ -269,7 +273,7 @@ const FranchiseReviewPage = () => {
   useEffect(() => {
     if (hasNext && queue[currentIndex + 1]) {
       const nextApp = queue[currentIndex + 1];
-      [nextApp.orCrUrl, nextApp.licenseUrl, nextApp.cedulaUrl, nextApp.todaEndorsementUrl, nextApp.brgyClearanceUrl]
+      [nextApp.orCrUrl, nextApp.crUrl, nextApp.orUrl, nextApp.licenseUrl, nextApp.licenseBackUrl, nextApp.cedulaUrl, nextApp.todaEndorsementUrl, nextApp.brgyClearanceUrl]
         .filter(Boolean)
         .forEach(url => {
           if (!url.toLowerCase().includes('.pdf')) {
@@ -315,10 +319,10 @@ const FranchiseReviewPage = () => {
     },
     { 
       key: 'license', 
-      label: "Driver's License (LTO)", 
-      short: "Driver's License", 
-      sub: 'Professional / Non-Prof',
-      url: currentApp?.licenseUrl 
+      label: licenseSide === 'back' ? "Driver's License (Back)" : "Driver's License (LTO)", 
+      short: licenseSide === 'back' ? "License (Back)" : "Driver's License", 
+      sub: licenseSide === 'back' ? 'Card Serial No. & Barcode' : 'Professional / Non-Prof',
+      url: licenseSide === 'back' ? (currentApp?.licenseBackUrl || currentApp?.licenseUrl) : currentApp?.licenseUrl 
     },
     { 
       key: 'cedulaDoc', 
@@ -386,8 +390,10 @@ const FranchiseReviewPage = () => {
 
   const handleSelectDoc = (key) => {
     if (key === activeDocKey) return;
+    if (key !== 'license') setLicenseSide('front');
     const targetDoc = docTabs.find(d => d.key === key);
-    setIsDocLoading(Boolean(targetDoc?.url && !targetDoc.url.toLowerCase().includes('.pdf')));
+    const targetUrl = key === 'license' ? (licenseSide === 'back' ? (currentApp?.licenseBackUrl || currentApp?.licenseUrl) : currentApp?.licenseUrl) : targetDoc?.url;
+    setIsDocLoading(Boolean(targetUrl && !targetUrl.toLowerCase().includes('.pdf')));
     setDocError(false);
     setActiveDocKey(key);
     resetCanvasView();
@@ -400,6 +406,7 @@ const FranchiseReviewPage = () => {
     setIsFitToWidth(false);
     setIsRejecting(false);
     setDocError(false);
+    setLicenseSide('front');
     const initialDoc = docTabs.find(d => d.key === activeDocKey) || docTabs[0];
     setIsDocLoading(Boolean(initialDoc?.url && !initialDoc.url.toLowerCase().includes('.pdf')));
   }, [id, currentApp?._id]);
@@ -1349,11 +1356,11 @@ const FranchiseReviewPage = () => {
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Plate No.</span>
-                        <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || 'Pending'}</span>
+                        <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || currentApp.aiScannedData?.orCr?.plateNo || 'Pending'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">MV File No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fileNo || '—'}</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fileNo || currentApp.aiScannedData?.orCr?.fileNo || '—'}</span>
                       </div>
                     </div>
 
@@ -1361,11 +1368,11 @@ const FranchiseReviewPage = () => {
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Motor / Engine No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.motorNo || '—'}</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.motorNo || currentApp.aiScannedData?.orCr?.motorNo || '—'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Chassis No. (VIN)</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.chassisNo || '—'}</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.chassisNo || currentApp.aiScannedData?.orCr?.chassisNo || '—'}</span>
                       </div>
                     </div>
 
@@ -1374,13 +1381,13 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">CR Number</span>
                         <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.crNo || currentApp.orCrNo || '—'}
+                          {currentApp.crNo || currentApp.orCrNo || currentApp.aiScannedData?.orCr?.crNo || '—'}
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">CR Date Issued</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {formatDate(currentApp.crDate)}
+                          {formatDate(currentApp.crDate || currentApp.aiScannedData?.orCr?.crDate)}
                         </span>
                       </div>
                     </div>
@@ -1390,13 +1397,13 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Make, Series &amp; Year</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.make || '—'} {currentApp.series ? `${currentApp.series} ` : ''}({currentApp.yearModel || currentApp.made || '—'})
+                          {currentApp.make || currentApp.aiScannedData?.orCr?.make || '—'} {currentApp.series || currentApp.aiScannedData?.orCr?.series ? `${currentApp.series || currentApp.aiScannedData?.orCr?.series} ` : ''}({currentApp.yearModel || currentApp.made || currentApp.aiScannedData?.orCr?.year || '—'})
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Vehicle Color</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 uppercase truncate block">
-                          {currentApp.color || '—'}
+                          {currentApp.color || currentApp.aiScannedData?.orCr?.color || '—'}
                         </span>
                       </div>
                     </div>
@@ -1406,13 +1413,13 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Type &amp; Classification</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.vehicleType || 'Tricycle'} {currentApp.classification || currentApp.vehicleCategory ? `• ${currentApp.classification || currentApp.vehicleCategory}` : ''}
+                          {currentApp.vehicleType || currentApp.aiScannedData?.orCr?.vehicleType || 'Tricycle'} {currentApp.classification || currentApp.vehicleCategory || currentApp.aiScannedData?.orCr?.classification ? `• ${currentApp.classification || currentApp.vehicleCategory || currentApp.aiScannedData?.orCr?.classification}` : ''}
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Body Type</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.bodyType || 'Semi-Cabin'}
+                          {currentApp.bodyType || currentApp.aiScannedData?.orCr?.bodyType || 'Semi-Cabin'}
                         </span>
                       </div>
                     </div>
@@ -1422,19 +1429,27 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Displacement</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.displacement ? `${currentApp.displacement} cc` : '—'}
+                          {(() => {
+                            const val = currentApp.displacement || currentApp.aiScannedData?.orCr?.pistonDisplacement || currentApp.aiScannedData?.orCr?.displacement;
+                            if (!val) return '—';
+                            return String(val).toUpperCase().includes('CC') ? String(val) : `${val} cc`;
+                          })()}
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Fuel Type</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.fuelType || 'Gasoline'}
+                          {currentApp.fuelType || currentApp.aiScannedData?.orCr?.fuelType || 'Gasoline'}
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Gross Weight</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.grossWeight ? `${currentApp.grossWeight} kg` : '—'}
+                          {(() => {
+                            const val = currentApp.grossWeight || currentApp.aiScannedData?.orCr?.grossWeight;
+                            if (!val) return '—';
+                            return String(val).toUpperCase().includes('KG') ? String(val) : `${val} kg`;
+                          })()}
                         </span>
                       </div>
                     </div>
@@ -1443,7 +1458,7 @@ const FranchiseReviewPage = () => {
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Passenger Capacity</span>
                       <span className="font-bold text-slate-800 dark:text-slate-100">
-                        {currentApp.passengerCapacity ? `${currentApp.passengerCapacity} Persons` : '4-5 Persons'}
+                        {currentApp.passengerCapacity || currentApp.aiScannedData?.orCr?.passengerCapacity ? `${currentApp.passengerCapacity || currentApp.aiScannedData?.orCr?.passengerCapacity} Persons` : '4-5 Persons'}
                       </span>
                     </div>
 
@@ -1711,11 +1726,32 @@ const FranchiseReviewPage = () => {
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">License No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.driverLicenseNo || '—'}</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.driverLicenseNo || currentApp.aiScannedData?.license?.licenseNo || '—'}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Card Serial No. (Back)</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.driverLicenseSerialNo || '—'}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400 block font-medium">Card Serial (Back)</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextSide = licenseSide === 'front' ? 'back' : 'front';
+                              setLicenseSide(nextSide);
+                              const targetUrl = nextSide === 'back' ? (currentApp?.licenseBackUrl || currentApp?.licenseUrl) : currentApp?.licenseUrl;
+                              setIsDocLoading(Boolean(targetUrl && !targetUrl.toLowerCase().includes('.pdf')));
+                              setDocError(false);
+                              resetCanvasView();
+                            }}
+                            className="text-[9px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <RotateCw size={9} />
+                            <span>{licenseSide === 'back' ? 'Front' : 'Flip'}</span>
+                          </button>
+                        </div>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.driverLicenseSerialNo || currentApp.aiScannedData?.licenseBack?.serialNo || '—'}
+                        </span>
                       </div>
                     </div>
 
@@ -1724,8 +1760,10 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">License Expiry</span>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.driverLicenseExpiryDate)}</span>
-                          {currentApp.driverLicenseExpiryDate && (
+                          <span className="font-bold text-slate-800 dark:text-slate-100">
+                            {formatDate(currentApp.driverLicenseExpiryDate || currentApp.aiScannedData?.license?.expiryDate)}
+                          </span>
+                          {(currentApp.driverLicenseExpiryDate || currentApp.aiScannedData?.license?.expiryDate) && (
                             <span className={`text-[10px] font-bold px-1 py-0.2 rounded border ${
                               licenseValidity.isExpired
                                 ? 'bg-rose-50 text-rose-600 border-rose-200'
@@ -1740,7 +1778,9 @@ const FranchiseReviewPage = () => {
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">DL Authority Codes</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.driverDlCodes || 'A, A1'}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                          {currentApp.driverDlCodes || currentApp.aiScannedData?.license?.dlCodes || 'A, A1'}
+                        </span>
                       </div>
                     </div>
 
@@ -1748,11 +1788,15 @@ const FranchiseReviewPage = () => {
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Conditions</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.driverConditions || 'None'}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                          {currentApp.driverConditions || currentApp.aiScannedData?.license?.conditions || 'None'}
+                        </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Date of Birth</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.driverDob)}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                          {formatDate(currentApp.driverDob || currentApp.aiScannedData?.license?.dateOfBirth)}
+                        </span>
                       </div>
                     </div>
 
@@ -2016,17 +2060,23 @@ const FranchiseReviewPage = () => {
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Certificate No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.todaCertNo || '—'}</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.todaCertNo || currentApp.aiScannedData?.todaEndorsement?.certNo || '—'}
+                        </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.todaCertDate)}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                          {formatDate(currentApp.todaCertDate || currentApp.aiScannedData?.todaEndorsement?.dateIssued)}
+                        </span>
                       </div>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Authorized TODA Signatory</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.todaSignatory || 'TODA President'}</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        {currentApp.todaSignatory || currentApp.aiScannedData?.todaEndorsement?.signatory || 'PEDRO SANTOS'}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -2093,28 +2143,36 @@ const FranchiseReviewPage = () => {
 
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Barangay of Residence</span>
-                      <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || currentApp.operator?.address || '—'}</span>
+                      <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || currentApp.operator?.address || currentApp.aiScannedData?.brgyClearance?.barangay || '—'}</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Clearance No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.brgyClearanceNo || '—'}</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.brgyClearanceNo || currentApp.aiScannedData?.brgyClearance?.clearanceNo || '—'}
+                        </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.brgyClearanceDate)}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                          {formatDate(currentApp.brgyClearanceDate || currentApp.aiScannedData?.brgyClearance?.dateIssued)}
+                        </span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Resident Name</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fullName || '—'}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.fullName || currentApp.aiScannedData?.brgyClearance?.residentName || '—'}
+                        </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Punong Barangay / Issuer</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.brgyIssuer || 'Punong Barangay'}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                          {currentApp.brgyIssuer || currentApp.aiScannedData?.brgyClearance?.issuer || 'HON. VICENTE MORALES'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -2170,6 +2228,32 @@ const FranchiseReviewPage = () => {
 
             {/* Viewer Zoom & Rotation Tools */}
             <div className="flex items-center gap-1 shrink-0 text-slate-700 dark:text-slate-200">
+              {activeDocKey === 'license' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextSide = licenseSide === 'front' ? 'back' : 'front';
+                    setLicenseSide(nextSide);
+                    const targetUrl = nextSide === 'back' ? (currentApp?.licenseBackUrl || currentApp?.licenseUrl) : currentApp?.licenseUrl;
+                    setIsDocLoading(Boolean(targetUrl && !targetUrl.toLowerCase().includes('.pdf')));
+                    setDocError(false);
+                    resetCanvasView();
+                  }}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border shadow-2xs mr-1 ${
+                    licenseSide === 'back'
+                      ? 'bg-[#9E2A2B] text-white border-[#7A1B22]'
+                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700 hover:bg-amber-100'
+                  }`}
+                  title="Flip Driver's License between Front and Back"
+                >
+                  <RotateCw size={13} className={licenseSide === 'back' ? 'text-amber-300' : 'text-amber-600 dark:text-amber-400'} />
+                  <span>{licenseSide === 'back' ? 'Card: Back View' : 'Card: Front View'}</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10 uppercase font-black">
+                    {licenseSide === 'back' ? 'Flip to Front' : 'Flip to Back'}
+                  </span>
+                </button>
+              )}
+
               <button
                 onClick={() => setZoomScale(prev => Math.max(0.5, Number((prev - 0.25).toFixed(2))))}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
