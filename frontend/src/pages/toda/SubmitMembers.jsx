@@ -239,20 +239,6 @@ const SubmitMembers = () => {
     }
   };
 
-  const handleLoadSampleRoster = async () => {
-    try {
-      const response = await fetch('/sample_toda_roster.png');
-      if (!response.ok) throw new Error('Sample roster file not found.');
-      const blob = await response.blob();
-      const sampleFile = new File([blob], 'BATODA_Official_Masterlist_2026.png', { type: 'image/png' });
-      setFile(sampleFile);
-      triggerAiScan(sampleFile);
-    } catch (err) {
-      console.error(err);
-      showToast('Could not load sample file.', 'error');
-    }
-  };
-
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) return;
@@ -916,25 +902,6 @@ const SubmitMembers = () => {
                       >
                         Browse Files on Device
                       </label>
-
-                      <button
-                        type="button"
-                        onClick={handleLoadSampleRoster}
-                        className="inline-flex items-center justify-center gap-1.5 bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/20 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/30 dark:border-[#D4AF37]/30 px-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm cursor-pointer transition-all shadow-xs active:scale-95 min-h-[42px]"
-                        title="Load official pre-generated sample BATODA masterlist document to test AI OCR"
-                      >
-                        <Sparkles size={15} />
-                        <span>Use Sample Roster (1-Click Test)</span>
-                      </button>
-
-                      <a
-                        href="/sample_toda_roster.png"
-                        download="BATODA_Official_Masterlist_2026.png"
-                        className="inline-flex items-center justify-center gap-1 px-3 py-2.5 text-xs text-[#6B6761] dark:text-[#A8A29E] hover:underline"
-                        title="Download sample image to your computer"
-                      >
-                        (Download File)
-                      </a>
                     </div>
 
                     {file && (
