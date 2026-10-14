@@ -1191,7 +1191,7 @@ const ApplyFranchise = () => {
                 const cleanScanned = d.driverName.toUpperCase().replace(/[^A-Z]/g, '');
                 const cleanTarget = targetName.toUpperCase().replace(/[^A-Z]/g, '');
                 if (cleanScanned && cleanTarget && !cleanScanned.includes(cleanTarget) && !cleanTarget.includes(cleanScanned)) {
-                  showToast(`Paunawa: Pangalan sa lisensya (${d.driverName}) ay may kaibahan sa ${formData.isOperatorDriver ? 'aplikante' : 'tsuper'} (${targetName}).`, 'warning');
+                  showToast(`Notice: Name on driver's license (${d.driverName}) differs from ${formData.isOperatorDriver ? 'applicant' : 'driver'} (${targetName}).`, 'warning');
                 }
               }
 
@@ -1294,7 +1294,7 @@ const ApplyFranchise = () => {
                 const cleanOwner = finalOwner.replace(/[^A-Z]/g, '');
                 const cleanApplicant = formData.fullName.toUpperCase().replace(/[^A-Z]/g, '');
                 if (cleanOwner && cleanApplicant && !cleanOwner.includes(cleanApplicant) && !cleanApplicant.includes(cleanOwner)) {
-                  showToast(`Paunawa: Ang may-ari sa CR (${finalOwner}) ay hindi eksaktong tugma sa pangalan ng aplikante (${formData.fullName}).`, 'warning');
+                  showToast(`Notice: Registered owner on CR (${finalOwner}) does not match applicant name (${formData.fullName}).`, 'warning');
                 }
               }
 
@@ -1305,7 +1305,7 @@ const ApplyFranchise = () => {
                   `The scanned vehicle registration has expired (validity ended on ${normExpiry}). Please renew with the LTO before applying for a franchise.`
                 );
               } else {
-                showToast("AI Scan: Kumpletong detalye mula sa LTO CR/OR ay matagumpay na nakuha.", 'success');
+                showToast("AI Scan: Complete vehicle details from LTO CR/OR extracted successfully.", 'success');
               }
               scrollToField('plateNo');
             } else {
@@ -1690,7 +1690,7 @@ const ApplyFranchise = () => {
           showValidationModal(
             'todaEndorsement',
             'TODA Endorsement Certificate Strictly Required',
-            `Operator "${formData.fullName}" is not verified in the approved digital masterlist of ${currentToda}. Dahil wala ang iyong pangalan sa online roster, mahigpit na kinakailangan ang pag-upload ng lehitimong TODA Endorsement Certificate na nilagdaan ng TODA President.`
+            `Operator "${formData.fullName}" is not verified in the approved digital masterlist of ${currentToda}. Because your name is not listed in the online roster, uploading an official physical TODA Endorsement Certificate signed by the TODA President is strictly required.`
           );
           return false;
         } else {
@@ -1757,7 +1757,7 @@ const ApplyFranchise = () => {
         showValidationModal(
           'confirm-authenticity-checkbox',
           'Confirmation Required',
-          'Pakilagyan ng tsek ang kahon ng Katunayan ng Katumpakan (Affidavit of Authenticity) upang mapatunayan na totoo at tama ang iyong mga inilagay na impormasyon.'
+          'Please check the Affidavit of Authenticity box to certify that all submitted information and documents are true and correct.'
         );
         return false;
       }
@@ -1794,11 +1794,13 @@ const ApplyFranchise = () => {
   const getAiDiscrepancies = (currForm = formData, currAi = aiScannedData) => {
     const discrepancies = [];
     const today = new Date().toISOString().split('T')[0];
+    const form = currForm || {};
+    const ai = currAi || {};
 
     // 1. License Expiry Discrepancy
-    if (currAi?.license?.expiryDate) {
-      const aiExp = currAi.license.expiryDate;
-      const userExp = currForm.driverLicenseExpiryDate || '';
+    if (ai?.license?.expiryDate) {
+      const aiExp = ai.license.expiryDate;
+      const userExp = form.driverLicenseExpiryDate || '';
       const wasScannedExpired = aiExp < today;
       const isEnteredValid = userExp >= today;
 
@@ -1828,9 +1830,9 @@ const ApplyFranchise = () => {
     }
 
     // 2. OR/CR Expiry Discrepancy
-    if (currAi?.orCr?.expiryDate) {
-      const aiExp = currAi.orCr.expiryDate;
-      const userExp = currForm.orCrExpiryDate || '';
+    if (ai?.orCr?.expiryDate) {
+      const aiExp = ai.orCr.expiryDate;
+      const userExp = form.orCrExpiryDate || '';
       const wasScannedExpired = aiExp < today;
       const isEnteredValid = userExp >= today;
 
@@ -1860,88 +1862,88 @@ const ApplyFranchise = () => {
     }
 
     // 3. Plate No Discrepancy
-    if (currAi?.orCr?.plateNo && currForm.plateNo) {
-      const cleanAi = currAi.orCr.plateNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = currForm.plateNo.replace(/[^A-Z0-9]/g, '');
+    if (ai?.orCr?.plateNo && form.plateNo) {
+      const cleanAi = ai.orCr.plateNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = form.plateNo.replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'plateNo',
           docType: 'orCr',
           step: 2,
           label: "Vehicle Plate / MV File Number",
-          scannedValue: currAi.orCr.plateNo,
-          enteredValue: currForm.plateNo,
+          scannedValue: ai.orCr.plateNo,
+          enteredValue: form.plateNo,
           severity: 'warning',
-          reason: `Scanned plate/MV number (${currAi.orCr.plateNo}) differs from entered value (${currForm.plateNo}).`
+          reason: `Scanned plate/MV number (${ai.orCr.plateNo}) differs from entered value (${form.plateNo}).`
         });
       }
     }
 
     // 4. Chassis No Discrepancy
-    if (currAi?.orCr?.chassisNo && currForm.chassisNo) {
-      const cleanAi = currAi.orCr.chassisNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = currForm.chassisNo.replace(/[^A-Z0-9]/g, '');
+    if (ai?.orCr?.chassisNo && form.chassisNo) {
+      const cleanAi = ai.orCr.chassisNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = form.chassisNo.replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'chassisNo',
           docType: 'orCr',
           step: 2,
           label: "Chassis Serial Number",
-          scannedValue: currAi.orCr.chassisNo,
-          enteredValue: currForm.chassisNo,
+          scannedValue: ai.orCr.chassisNo,
+          enteredValue: form.chassisNo,
           severity: 'warning',
-          reason: `Scanned chassis serial number (${currAi.orCr.chassisNo}) differs from entered value (${currForm.chassisNo}).`
+          reason: `Scanned chassis serial number (${ai.orCr.chassisNo}) differs from entered value (${form.chassisNo}).`
         });
       }
     }
 
     // 5. Motor No Discrepancy
-    if (currAi?.orCr?.motorNo && currForm.motorNo) {
-      const cleanAi = currAi.orCr.motorNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = currForm.motorNo.replace(/[^A-Z0-9]/g, '');
+    if (ai?.orCr?.motorNo && form.motorNo) {
+      const cleanAi = ai.orCr.motorNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = form.motorNo.replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'motorNo',
           docType: 'orCr',
           step: 2,
           label: "Motor / Engine Number",
-          scannedValue: currAi.orCr.motorNo,
-          enteredValue: currForm.motorNo,
+          scannedValue: ai.orCr.motorNo,
+          enteredValue: form.motorNo,
           severity: 'warning',
-          reason: `Scanned motor number (${currAi.orCr.motorNo}) differs from entered value (${currForm.motorNo}).`
+          reason: `Scanned motor number (${ai.orCr.motorNo}) differs from entered value (${form.motorNo}).`
         });
       }
     }
 
     // 6. Driver License No Discrepancy
-    if (currAi?.license?.licenseNo && currForm.driverLicenseNo) {
-      const cleanAi = currAi.license.licenseNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = currForm.driverLicenseNo.replace(/[^A-Z0-9]/g, '');
+    if (ai?.license?.licenseNo && form.driverLicenseNo) {
+      const cleanAi = ai.license.licenseNo.replace(/[^A-Z0-9]/g, '');
+      const cleanUser = form.driverLicenseNo.replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'driverLicenseNo',
           docType: 'license',
           step: 1,
           label: "Driver's License Number",
-          scannedValue: currAi.license.licenseNo,
-          enteredValue: currForm.driverLicenseNo,
+          scannedValue: ai.license.licenseNo,
+          enteredValue: form.driverLicenseNo,
           severity: 'warning',
-          reason: `Scanned driver license number (${currAi.license.licenseNo}) differs from entered value (${currForm.driverLicenseNo}).`
+          reason: `Scanned driver license number (${ai.license.licenseNo}) differs from entered value (${form.driverLicenseNo}).`
         });
       }
     }
 
     // 7. CR Registered Owner vs Applicant Name
-    const scannedOwner = currAi?.orCr?.ownerName || currAi?.cr?.ownerName || '';
-    if (scannedOwner && currForm.fullName) {
-      if (!isNameMatch(scannedOwner, currForm.fullName)) {
+    const scannedOwner = ai?.orCr?.ownerName || ai?.cr?.ownerName || '';
+    if (scannedOwner && form.fullName) {
+      if (!isNameMatch(scannedOwner, form.fullName)) {
         discrepancies.push({
           field: 'registeredOwner',
           docType: 'cr',
           step: 2,
           label: "CR Registered Owner",
           scannedValue: scannedOwner,
-          enteredValue: currForm.fullName,
+          enteredValue: form.fullName,
           severity: 'warning',
           reason: `Vehicle registration is in the name of ${scannedOwner}. Ensure a notarized Deed of Sale or Lease/Authorization is attached.`
         });
@@ -1949,18 +1951,18 @@ const ApplyFranchise = () => {
     }
 
     // 8. TODA Jurisdiction vs Barangay Address
-    if (currForm.todaName && currForm.todaName !== 'NON-TODA' && currForm.address) {
-      const validTodas = getTodasForBarangay(currForm.address);
-      if (validTodas.length > 0 && !validTodas.includes(currForm.todaName)) {
+    if (form.todaName && form.todaName !== 'NON-TODA' && form.address) {
+      const validTodas = getTodasForBarangay(form.address);
+      if (validTodas.length > 0 && !validTodas.includes(form.todaName)) {
         discrepancies.push({
           field: 'jurisdiction',
           docType: 'toda',
           step: 1,
           label: "TODA Operational Jurisdiction",
-          scannedValue: currForm.todaName,
-          enteredValue: currForm.address,
+          scannedValue: form.todaName,
+          enteredValue: form.address,
           severity: 'warning',
-          reason: `Barangay "${currForm.address}" is outside the official operational routes of ${currForm.todaName}. (Authorized: ${validTodas.join(', ')})`
+          reason: `Barangay "${form.address}" is outside the official operational routes of ${form.todaName}. (Authorized: ${validTodas.join(', ')})`
         });
       }
     }
@@ -1977,7 +1979,7 @@ const ApplyFranchise = () => {
       showValidationModal(
         'confirm-authenticity-checkbox',
         'Confirmation Required',
-        'Pakilagyan ng tsek ang kahon ng Katunayan ng Katumpakan (Affidavit of Authenticity) bago isumite ang aplikasyon.'
+        'Please check the Affidavit of Authenticity box before submitting the application.'
       );
       return;
     }
@@ -2953,7 +2955,7 @@ const ApplyFranchise = () => {
                               : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
                           }`}>
                             {isMatch ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                            <span>{isMatch ? 'Pangalan: Tugma sa Lisensya' : `May kaibahan: ${scannedName}`}</span>
+                            <span>{isMatch ? "Name: Matches Driver's License" : `Difference: ${scannedName}`}</span>
                           </span>
                         );
                       })()}
@@ -2984,7 +2986,7 @@ const ApplyFranchise = () => {
                       <div id="field-driverLicenseSerialNo">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
                           <span>License Back Serial Number</span>
-                          <InfoTooltip text="Serial number na nakatatak sa likod ng opisyal na LTO Driver's License card." />
+                          <InfoTooltip text="Serial number printed on the back of the official LTO Driver's License card." />
                         </label>
                         <input 
                           type="text" 
@@ -3022,7 +3024,7 @@ const ApplyFranchise = () => {
                       <div id="field-driverDlCodes">
                         <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
                           <span>Authorized DL Codes</span>
-                          <InfoTooltip text="LTO code A o A1 ang kinakailangan upang legal na makapagpatakbo ng pampasadang traysikel." />
+                          <InfoTooltip text="LTO Code A or A1 is required to legally operate a commercial passenger tricycle." />
                         </label>
                         <input 
                           type="text" 
@@ -3119,10 +3121,10 @@ const ApplyFranchise = () => {
                     <div>
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
                         <span>LTO Documents (Certificate of Registration &amp; Official Receipt)</span>
-                        <InfoTooltip text="I-upload ang Certificate of Registration (CR) para sa specs ng sasakyan at ang pinakabagong Official Receipt (OR) para sa taunang rehistro." />
+                        <InfoTooltip text="Upload Certificate of Registration (CR) for vehicle specifications and Official Receipt (OR) for active annual registration." />
                       </label>
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        I-upload ang opisyal na LTO CR at pinakabagong LTO OR.
+                        Upload official LTO CR and latest annual LTO OR.
                       </p>
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 shrink-0">
@@ -3828,7 +3830,7 @@ const ApplyFranchise = () => {
                       Community Tax Certificate (Cedula / CTC)
                     </h2>
                     <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      I-upload ang kasalukuyang taon na Cedula (CTC) at kumpletuhin ang mga detalye
+                      Upload current-year Community Tax Certificate (Cedula) and complete details
                     </p>
                   </div>
                 </div>
@@ -3863,7 +3865,7 @@ const ApplyFranchise = () => {
                   {/* Section A: CTC Official Number & Details */}
                   <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] mb-3">
-                      Opisyal na Impormasyon ng Cedula
+                      Official Cedula (CTC) Information
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div id="field-cedulaSerialNo">
@@ -3895,7 +3897,7 @@ const ApplyFranchise = () => {
                           label="Date Issued"
                           required
                           mode="issuance"
-                          helperText="Petsa kung kailan inisyu ang CTC."
+                          helperText="Date when the CTC was issued."
                           error={formErrors.cedulaDate}
                         />
                       </div>
@@ -4155,10 +4157,10 @@ const ApplyFranchise = () => {
                   </div>
                   <div>
                     <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Review &amp; Confirmation (Pagsusuri at Kumpirmasyon)
+                      Review &amp; Confirmation
                     </h2>
                     <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Suriin nang buo ang aplikasyon bago tuluyang isumite
+                      Carefully review your complete application before submitting
                     </p>
                   </div>
                 </div>
@@ -4370,12 +4372,12 @@ const ApplyFranchise = () => {
                         <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 space-y-2.5">
                           <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-xs sm:text-sm">
                             <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                            <span>Mga Paunawa sa Pagsusuri at Defect Check (Verification Notices)</span>
+                            <span>Verification &amp; Defect Check Notices</span>
                           </div>
                           <ul className="space-y-1.5 pl-6 text-xs text-amber-900/90 dark:text-amber-200/90 list-disc">
                             {isNotVerifiedInRoster && (
                               <li>
-                                <strong>TODA Masterlist:</strong> Ang aplikante ay wala sa naaprubahang online roster ng {formData.todaName}, ngunit may nakalakip na pisikal na TODA Endorsement Certificate.
+                                <strong>TODA Masterlist:</strong> Applicant is not listed in the approved online roster of {formData.todaName || 'your TODA'}, but a physical TODA Endorsement Certificate is attached.
                               </li>
                             )}
                             {detected.map((disc, idx) => (
@@ -4388,7 +4390,7 @@ const ApplyFranchise = () => {
                       ) : (
                         <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
                           <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <span>Walang nakitang depekto o discrepancy sa pagitan ng mga na-scan na dokumento at inilagay na impormasyon.</span>
+                          <span>No defects or discrepancies detected between scanned documents and entered data. Everything matches.</span>
                         </div>
                       )}
                     </div>
@@ -4399,7 +4401,7 @@ const ApplyFranchise = () => {
                 <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
                   <Receipt size={18} className="shrink-0 text-amber-700 dark:text-amber-400" />
                   <div className="leading-snug">
-                    <strong className="font-bold">Franchise Filing Fee:</strong> Ang karaniwang bayarin na <strong className="font-bold underline">₱500.00</strong> ay babayaran lamang sa Municipal Cashier kapag na-aprubahan na ang inyong aplikasyon ng Franchising Office.
+                    <strong className="font-bold">Franchise Filing Fee:</strong> The standard franchise filing fee (<strong className="font-bold underline">₱500.00</strong>) is payable directly at the Municipal Treasury Cashier once your application is endorsed and approved by the Franchising Office.
                   </div>
                 </div>
 
@@ -4415,9 +4417,9 @@ const ApplyFranchise = () => {
                     />
                     <div className="text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1] leading-relaxed">
                       <strong className="font-bold text-sm block mb-0.5 text-[#9E2A2B] dark:text-[#D4AF37]">
-                        Katunayan ng Katumpakan (Affidavit of Authenticity &amp; Truthfulness):
+                        Affidavit of Authenticity &amp; Truthfulness:
                       </strong>
-                      Pinatutunayan ko na ang lahat ng mga impormasyon at dokumentong aking ibinigay sa aplikasyong ito ay totoo, tama, at kumpleto ayon sa aking buong kaalaman. Nauunawaan ko na ang anumang kasinungalingan, maling impormasyon, o pekeng dokumento ay magiging batayan ng agarang pagbasura ng aplikasyon o pagbawi sa prangkisa.
+                      I hereby certify that all information and documents provided in this application are true, accurate, and complete to the best of my knowledge. I understand that any false statement or fraudulent document will result in the immediate denial of this application or revocation of the franchise in accordance with municipal ordinances of Gasan.
                     </div>
                   </label>
                 </div>
@@ -4451,7 +4453,7 @@ const ApplyFranchise = () => {
 
                   {!isAgreedToTerms && (
                     <p className="text-center text-xs text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">
-                      * Pakilagyan muna ng tsek ang kahon ng Katunayan ng Katumpakan sa itaas upang mai-sumite ang aplikasyon.
+                      * Please check the Affidavit of Authenticity box above before submitting your application.
                     </p>
                   )}
 
@@ -4552,46 +4554,18 @@ const ApplyFranchise = () => {
       {/* Submit Application Confirmation Modal */}
       {isSubmitConfirmOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
             <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
             </div>
 
-            <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-1">
+            <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-2">
               Are you sure you want to submit?
             </h3>
 
-            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-4 leading-relaxed">
-              Pakisuri po ang inyong mga impormasyon bago tuluyang isumite upang maiwasan ang anumang pagkakamali o pagka-antala.
+            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-6 leading-relaxed">
+              Please confirm that you want to submit this franchise application. Once submitted, your documents will be forwarded to the Franchising Office for official review.
             </p>
-
-            {/* Application Overview Summary */}
-            <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 text-xs space-y-2 mb-4">
-              <div className="flex justify-between items-center pb-1.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Aplikante / Operator:</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || loggedInUserName}</span>
-              </div>
-              <div className="flex justify-between items-center pb-1.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Tricycle Unit:</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.make || 'Tricycle'} ({formData.made || 'N/A'}) &bull; {formData.plateNo || 'No Plate'}</span>
-              </div>
-              <div className="flex justify-between items-center pb-1.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">TODA &bull; Route Zone:</span>
-                <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{formData.todaName || 'NON-TODA'} &bull; {formatZoneLabel(formData.zone)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Motor &amp; Chassis:</span>
-                <span className="font-mono text-[11px] text-[#1F1D1B] dark:text-[#EAE7E1] truncate max-w-[210px]">
-                  M: {formData.motorNo || 'N/A'} | C: {formData.chassisNo || 'N/A'}
-                </span>
-              </div>
-            </div>
-
-            {/* Treasury reminder */}
-            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs mb-5 leading-relaxed">
-              <span className="font-bold block mb-0.5">Paunawa sa Pagbabayad:</span>
-              Ang franchise filing fee (₱500.00) ay babayaran lamang sa Municipal Cashier kapag na-aprubahan na ang inyong aplikasyon ng Franchising Office.
-            </div>
 
             {/* Modal Actions */}
             <div className="flex flex-col-reverse sm:flex-row gap-2.5">
@@ -4600,7 +4574,7 @@ const ApplyFranchise = () => {
                 onClick={() => setIsSubmitConfirmOpen(false)}
                 className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
               >
-                <span>Bumalik at Suriin (Review)</span>
+                <span>Cancel</span>
               </button>
 
               <button
@@ -4613,7 +4587,7 @@ const ApplyFranchise = () => {
                 className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
               >
                 {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                <span>Oo, Isumite Na (Confirm)</span>
+                <span>Yes, Submit</span>
               </button>
             </div>
           </div>
