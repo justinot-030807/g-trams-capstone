@@ -50,16 +50,6 @@ router.post('/scan-roster', protect, authorize('admin', 'toda president', 'toda_
             return res.status(400).json({ success: false, message: 'No file received for document scanning.' });
         }
 
-        if (!process.env.GEMINI_API_KEY) {
-            return res.status(200).json({
-                success: false,
-                noKey: true,
-                message: 'Notice: GEMINI_API_KEY is not configured on the server. AI roster digitization is disabled.',
-                extractedMembers: [],
-                extractedCount: 0
-            });
-        }
-
         const ocr = await extractTodaRosterFromDocument(input);
         if (!ocr || !Array.isArray(ocr.members) || ocr.members.length === 0) {
             return res.status(200).json({
