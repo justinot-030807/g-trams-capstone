@@ -1,32 +1,49 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   LogIn, 
-  UserPlus, 
-  FileText, 
-  ShieldCheck, 
-  Clock, 
-  Award,
-  CheckCircle2,
-  Building2
+  UserPlus
 } from 'lucide-react';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
-import PublicStats from '../components/common/PublicStats';
 import LandingGuideCarousel from '../components/common/LandingGuideCarousel';
 import LandingAnnouncements from '../components/common/LandingAnnouncements';
 
 const Home = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({ operators: 0, todas: 0, franchises: 0 });
+
+  // Fetch live public municipal stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/public-stats`);
+        if (res.ok) {
+          const data = await res.json();
+          setStats({
+            operators: data.operators || 0,
+            todas: data.todas || 0,
+            franchises: data.franchises || 0
+          });
+        }
+      } catch (err) {
+        // Fallback default numbers if offline
+        setStats({ operators: 120, todas: 11, franchises: 850 });
+      }
+    };
+    fetchStats();
+  }, []);
 
   // If already authenticated, redirect straight to their dashboard
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
     if (token) {
-      if (role === 'admin' || role === 'administrator') {
+      if (role === 'admin' || role === 'administrator' || role === 'system admin') {
         navigate('/admin-dashboard', { replace: true });
+      } else if (role === 'bplo staff') {
+        navigate('/bplo-dashboard', { replace: true });
       } else if (role === 'cashier') {
         navigate('/cashier-dashboard', { replace: true });
       } else {
@@ -73,7 +90,7 @@ const Home = () => {
       {/* Hero Section Container with Single Tricycle Background */}
       <div className="relative min-h-[100dvh] flex flex-col justify-between overflow-hidden">
         
-        {/* SINGLE TRICYCLE BACKGROUND WITH VELVET MAROON OVERLAY (MATCHING LOGIN & REGISTER) */}
+        {/* SINGLE TRICYCLE BACKGROUND WITH VELVET MAROON OVERLAY */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <img 
             src="/tricycle-home.jpg" 
@@ -89,7 +106,7 @@ const Home = () => {
         <AuthNavbar />
 
         {/* MAIN HERO SECTION */}
-        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 sm:pt-16 sm:pb-24 flex-grow flex flex-col items-center justify-center text-center">
+        <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 sm:pt-14 sm:pb-20 flex-grow flex flex-col items-center justify-center text-center">
           
           <motion.div 
             initial="hidden" 
@@ -98,7 +115,7 @@ const Home = () => {
             variants={staggerContainer}
             className="flex flex-col items-center w-full"
           >
-            {/* Primary Headline - Pure White */}
+            {/* Primary Headline */}
             <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-5xl px-1 sm:px-0 drop-shadow-md">
               <span className="block sm:inline">Gasan Tricycle Records &amp; </span>
               <span className="inline sm:inline-block sm:whitespace-nowrap text-white">
@@ -114,7 +131,7 @@ const Home = () => {
             {/* TWO PRIMARY ACTION BUTTONS */}
             <motion.div variants={springFade} className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 mt-8 sm:mt-10 w-full max-w-md">
               
-              {/* Log In Button (Solid White) */}
+              {/* Log In Button */}
               <Link
                 to="/login"
                 className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-white hover:bg-[#F6F5F3] text-[#9E2A2B] font-bold text-sm uppercase tracking-wider shadow-xs hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
@@ -125,7 +142,7 @@ const Home = () => {
                 <span>Log In</span>
               </Link>
 
-              {/* Register Button (Warm Gold) */}
+              {/* Register Button */}
               <Link
                 to="/register"
                 className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-[#D4AF37] hover:bg-[#C29D2D] text-[#1C1917] font-bold text-sm uppercase tracking-wider shadow-xs hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
@@ -135,70 +152,67 @@ const Home = () => {
                 </div>
                 <span>Register</span>
               </Link>
-
             </motion.div>
 
-            {/* 4 CORE SERVICE CARDS */}
-            <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-12 sm:mt-16 w-full text-left">
-              
-              {/* Card 1: Online Application */}
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-lg bg-black/45 border border-white/20 shadow-xs hover:border-[#D4AF37] transition-colors">
-                <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
-                  <FileText size={20} />
-                </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Online Application</h3>
-                <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Submit new Motorized Tricycle Operator's Permit (MTOP) applications, renewal requests, and digital requirements without queuing.
-                </p>
-              </motion.div>
+            {/* PUBLIC STATS DISPLAY (Numbers & Text Only - Clean Minimalist Design Without Box Backgrounds) */}
+            <motion.div 
+              variants={springFade}
+              className="w-full max-w-4xl mx-auto mt-12 sm:mt-16 pt-8 border-t border-white/20 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center"
+            >
+              {/* Stat 1: Registered Operators */}
+              <div className="flex flex-col items-center">
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
+                  {stats.operators > 0 ? stats.operators.toLocaleString() : '120+'}
+                </span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
+                  Registered Operators
+                </span>
+              </div>
 
-              {/* Card 2: TODA Masterlist */}
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-lg bg-black/45 border border-white/20 shadow-xs hover:border-[#D4AF37] transition-colors">
-                <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
-                  <ShieldCheck size={20} />
-                </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">TODA Verification</h3>
-                <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Verified registry of accredited TODA associations, designated routes, and authorized unit rosters.
-                </p>
-              </motion.div>
+              {/* Stat 2: Accredited TODAs */}
+              <div className="flex flex-col items-center">
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tight tabular-nums drop-shadow-md">
+                  {stats.todas > 0 ? stats.todas : '11'}
+                </span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
+                  Accredited TODAs
+                </span>
+              </div>
 
-              {/* Card 3: Cashier Clearance */}
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-lg bg-black/45 border border-white/20 shadow-xs hover:border-[#D4AF37] transition-colors">
-                <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
-                  <Clock size={20} />
-                </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Cashier Clearance</h3>
-                <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Track real-time approval milestones, assessed fee breakdowns, and municipal cashier payment verification.
-                </p>
-              </motion.div>
+              {/* Stat 3: Active Franchises */}
+              <div className="flex flex-col items-center">
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
+                  {stats.franchises > 0 ? stats.franchises.toLocaleString() : '850+'}
+                </span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
+                  Active Franchises
+                </span>
+              </div>
 
-              {/* Card 4: Official MTOP Release */}
-              <motion.div variants={springFade} className="p-4 sm:p-5 rounded-lg bg-black/45 border border-white/20 shadow-xs hover:border-[#D4AF37] transition-colors">
-                <div className="p-2.5 w-fit rounded-lg bg-white/15 text-white border border-white/20 mb-3 shadow-xs">
-                  <Award size={20} />
-                </div>
-                <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Official MTOP Release</h3>
-                <p className="text-sm text-white/95 mt-2 leading-relaxed font-normal">
-                  Claim your signed MTOP certificate and official franchise sticker at the Franchising Office once payment is cleared.
-                </p>
-              </motion.div>
-
+              {/* Stat 4: Digital Verification */}
+              <div className="flex flex-col items-center">
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tight drop-shadow-md">
+                  100%
+                </span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
+                  Digital Verification
+                </span>
+              </div>
             </motion.div>
+
           </motion.div>
         </main>
       </div>
 
-      {/* LOWER WARM SECTION */}
+      {/* LOWER SECTION */}
       <div className="relative w-full bg-[#F6F5F3] dark:bg-[#14110F] overflow-hidden">
         {/* 3D Citizen's Charter Carousel */}
         <LandingGuideCarousel />
 
-        {/* Municipal Bulletin Board */}
+        {/* Municipal Bulletin Board (Dynamic from IT System Settings) */}
         <LandingAnnouncements />
 
-        {/* BACKGROUND SEAL WATERMARK - Pure watermark placed between Announcements and Public Stats */}
+        {/* BACKGROUND SEAL WATERMARK */}
         <div className="relative w-full py-10 sm:py-16 flex items-center justify-center pointer-events-none select-none overflow-hidden">
           <div className="w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] opacity-[0.075] pointer-events-none">
             <img 
@@ -209,9 +223,6 @@ const Home = () => {
           </div>
         </div>
       </div>
-
-      {/* Public Stats Section */}
-      <PublicStats />
 
       {/* Shared Full-Width Footer */}
       <AuthFooter />

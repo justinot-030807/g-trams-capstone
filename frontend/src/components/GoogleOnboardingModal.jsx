@@ -518,7 +518,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                         onClick={() => setLguAdvisoryModal({ isOpen: true, advisory: todaCheckResult.advisory, message: todaCheckResult.message })}
                         className="text-[11px] font-bold text-red-700 dark:text-red-400 underline shrink-0 cursor-pointer"
                       >
-                        Basahin ang Advisory →
+                        View Official Advisory →
                       </button>
                     </div>
                   ) : todaCheckResult.status === 'no_roster_on_file' ? (

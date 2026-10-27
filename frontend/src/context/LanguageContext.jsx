@@ -443,14 +443,9 @@ const LanguageContext = createContext({
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguageState] = useState(() => {
     try {
-      const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
-      if (role === 'admin' || role === 'administrator') {
-        return 'en';
-      }
+      const saved = localStorage.getItem('gtrams_lang');
+      if (saved === 'fil' || saved === 'tl' || saved === 'tagalog') return 'fil';
     } catch {}
-
-    const saved = localStorage.getItem('gtrams_lang');
-    if (saved === 'fil' || saved === 'tl' || saved === 'tagalog') return 'fil';
     return 'en';
   });
 
@@ -481,7 +476,7 @@ export const LanguageProvider = ({ children }) => {
     // If the active role is Admin, strictly prioritize English for administrative clarity
     try {
       const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
-      if (role === 'admin' || role === 'administrator') {
+      if (role.includes('admin') || role.includes('bplo') || role.includes('cashier')) {
         const enDict = translations.en;
         if (enDict && enDict[key]) {
           return enDict[key];

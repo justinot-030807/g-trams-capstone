@@ -41,6 +41,33 @@ const getSettings = async (req, res) => {
       settings.maxUnitsPerOperator = 2;
     }
 
+    if (!settings.announcements || !Array.isArray(settings.announcements) || settings.announcements.length === 0) {
+      settings.announcements = [
+        {
+          title: 'Franchise Renewal Schedule',
+          desc: 'All registered tricycle operators must complete annual MTOP renewal before designated deadline to maintain active status.',
+          type: 'alert',
+          date: 'Annual Cycle',
+          isActive: true
+        },
+        {
+          title: 'Digital MTOP & QR Verification',
+          desc: 'Approved operators can now view and download their digitally signed MTOP certificates with verifiable QR codes directly from their dashboard.',
+          type: 'info',
+          date: 'Portal Update',
+          isActive: true
+        },
+        {
+          title: 'Online Application Support',
+          desc: 'Municipal Tricycle Franchising staff are available to assist operators with online registration, document scanning, and route zoning inquiries.',
+          type: 'event',
+          date: 'Advisory',
+          isActive: true
+        }
+      ];
+      await settings.save();
+    }
+
     if (!settings.violationPolicy || !Array.isArray(settings.violationPolicy.types) || settings.violationPolicy.types.length === 0) {
       settings.violationPolicy = {
         types: [
@@ -85,7 +112,8 @@ const updateSettings = async (req, res) => {
       requiredDocs,
       maintenanceMode,
       maintenanceMessage,
-      violationPolicy
+      violationPolicy,
+      announcements
     } = req.body;
 
     let settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
@@ -108,6 +136,9 @@ const updateSettings = async (req, res) => {
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
     if (violationPolicy !== undefined && typeof violationPolicy === 'object') {
       settings.violationPolicy = violationPolicy;
+    }
+    if (announcements !== undefined && Array.isArray(announcements)) {
+      settings.announcements = announcements;
     }
 
     await settings.save();

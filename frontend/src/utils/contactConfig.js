@@ -16,8 +16,8 @@ export const HOTLINE_DISPLAY = '(042) 342-1234 / 0912-345-6789';
 // TODO: Confirm official municipal website URL with LGU Gasan
 export const MUNICIPAL_WEBSITE = 'https://gasan.ph';
 
-// TODO: Confirm official LGU Gasan Facebook page URL
-export const FB_PAGE_URL = 'https://facebook.com/lgugasan';
+// Official LGU Gasan / G-TRAMS Facebook Page URL
+export const FB_PAGE_URL = 'https://www.facebook.com/profile.php?id=61594718891549';
 
 // Official Office & Administrative Department Names
 export const MUNICIPAL_OFFICE_NAME = 'Office of the Vice Mayor & Sangguniang Bayan';

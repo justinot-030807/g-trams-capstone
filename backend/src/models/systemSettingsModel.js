@@ -16,6 +16,38 @@ const systemSettingsSchema = new mongoose.Schema({
   },
   maintenanceMode: { type: Boolean, default: false },
   maintenanceMessage: { type: String, default: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.' },
+  announcements: {
+    type: [{
+      title: { type: String, required: true },
+      desc: { type: String, required: true },
+      type: { type: String, enum: ['alert', 'info', 'event'], default: 'info' },
+      date: { type: String, default: 'General Advisory' },
+      isActive: { type: Boolean, default: true }
+    }],
+    default: [
+      {
+        title: 'Franchise Renewal Schedule',
+        desc: 'All registered tricycle operators must complete annual MTOP renewal before designated deadline to maintain active status.',
+        type: 'alert',
+        date: 'Annual Cycle',
+        isActive: true
+      },
+      {
+        title: 'Digital MTOP & QR Verification',
+        desc: 'Approved operators can now view and download their digitally signed MTOP certificates with verifiable QR codes directly from their dashboard.',
+        type: 'info',
+        date: 'Portal Update',
+        isActive: true
+      },
+      {
+        title: 'Online Application Support',
+        desc: 'Municipal Tricycle Franchising staff are available to assist operators with online registration, document scanning, and route zoning inquiries.',
+        type: 'event',
+        date: 'Advisory',
+        isActive: true
+      }
+    ]
+  },
   violationPolicy: {
     types: {
       type: [{

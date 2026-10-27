@@ -86,6 +86,38 @@ const AdminSettings = () => {
     inAppToastAlerts: localStorage.getItem('gtrams_toast_alerts') !== 'false'
   });
 
+  // Announcements state
+  const [announcements, setAnnouncements] = useState([
+    {
+      title: 'Franchise Renewal Schedule',
+      desc: 'All registered tricycle operators must complete annual MTOP renewal before designated deadline to maintain active status.',
+      type: 'alert',
+      date: 'Annual Cycle',
+      isActive: true
+    },
+    {
+      title: 'Digital MTOP & QR Verification',
+      desc: 'Approved operators can now view and download their digitally signed MTOP certificates with verifiable QR codes directly from their dashboard.',
+      type: 'info',
+      date: 'Portal Update',
+      isActive: true
+    },
+    {
+      title: 'Online Application Support',
+      desc: 'Municipal Tricycle Franchising staff are available to assist operators with online registration, document scanning, and route zoning inquiries.',
+      type: 'event',
+      date: 'Advisory',
+      isActive: true
+    }
+  ]);
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: '',
+    desc: '',
+    type: 'info',
+    date: 'General Advisory'
+  });
+  const [isSavingAnnouncements, setIsSavingAnnouncements] = useState(false);
+
   // Audit Logs state
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -1676,6 +1708,158 @@ const AdminSettings = () => {
           )}
         </div>
       )}
+
+          {/* TAB: HOMEPAGE ANNOUNCEMENTS & ADVISORIES (IT Management) */}
+          {activeTab === 'announcements' && isSystemAdmin && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]">
+                        <Megaphone size={16} />
+                      </div>
+                      <h2 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                        Homepage Municipal Bulletin &amp; Announcements
+                      </h2>
+                    </div>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                      Configure advisories, renewal deadlines, and public notices shown live on the G-TRAMS homepage bulletin board.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveAnnouncements}
+                    disabled={isSavingAnnouncements}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingAnnouncements ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                    <span>Publish to Homepage</span>
+                  </button>
+                </div>
+
+                {/* List of active/draft announcements */}
+                <div className="space-y-4">
+                  {announcements.map((item, idx) => (
+                    <div 
+                      key={idx} 
+                      className="p-4 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#FAF9F7] dark:bg-[#14110F] space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-xs font-mono font-bold text-[#6B6761] dark:text-[#A8A29E]">#{idx + 1}</span>
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={(e) => handleUpdateAnnouncement(idx, 'title', e.target.value)}
+                            placeholder="Announcement Title"
+                            className="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <select
+                            value={item.type || 'info'}
+                            onChange={(e) => handleUpdateAnnouncement(idx, 'type', e.target.value)}
+                            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
+                          >
+                            <option value="alert">Alert (Red)</option>
+                            <option value="info">Portal Info (Blue)</option>
+                            <option value="event">Advisory (Amber)</option>
+                          </select>
+
+                          <input
+                            type="text"
+                            value={item.date || ''}
+                            onChange={(e) => handleUpdateAnnouncement(idx, 'date', e.target.value)}
+                            placeholder="Badge Label (e.g. Advisory)"
+                            className="w-32 px-2.5 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAnnouncement(idx)}
+                            className="p-1.5 text-red-600 hover:text-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
+                            title="Delete announcement"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <textarea
+                        rows={2}
+                        value={item.desc}
+                        onChange={(e) => handleUpdateAnnouncement(idx, 'desc', e.target.value)}
+                        placeholder="Detailed advisory message displayed on the card..."
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] resize-none"
+                      />
+
+                      <div className="flex items-center justify-between text-xs pt-1 text-[#6B6761] dark:text-[#A8A29E]">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={item.isActive !== false}
+                            onChange={(e) => handleUpdateAnnouncement(idx, 'isActive', e.target.checked)}
+                            className="rounded text-[#9E2A2B] focus:ring-[#9E2A2B]"
+                          />
+                          <span>Display active on homepage</span>
+                        </label>
+                        <span className="text-[11px] font-mono">Status: {item.isActive !== false ? 'Live' : 'Hidden'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add New Announcement Card */}
+                <div className="mt-5 p-4 rounded-xl border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/60 dark:bg-[#14110F]/60 space-y-3">
+                  <h3 className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-1.5">
+                    <Plus size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    <span>Create New Homepage Announcement</span>
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Title (e.g. Tricycle Fare Advisory)"
+                      value={newAnnouncement.title}
+                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+                      className="sm:col-span-2 px-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
+                    />
+                    <select
+                      value={newAnnouncement.type}
+                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, type: e.target.value }))}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
+                    >
+                      <option value="info">Info / General Notice</option>
+                      <option value="alert">Alert / Urgent Reminder</option>
+                      <option value="event">Advisory / Event</option>
+                    </select>
+                  </div>
+
+                  <textarea
+                    rows={2}
+                    placeholder="Content / Advisory text to appear on the public card..."
+                    value={newAnnouncement.desc}
+                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, desc: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] resize-none"
+                  />
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleAddAnnouncement}
+                      className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#9E2A2B] text-white hover:bg-[#7A1B22] cursor-pointer"
+                    >
+                      <Plus size={13} />
+                      <span>Add to Announcements List</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
       {/* SAVE CHANGES CONFIRMATION MODAL */}
       {confirmModal.isOpen && (

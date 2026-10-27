@@ -77,6 +77,7 @@ const AuthFooter = () => {
               <li><Link to="/" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Home</Link></li>
               <li><Link to="/login" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Log In</Link></li>
               <li><Link to="/register" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B]" /> Register</Link></li>
+              <li><a href={FB_PAGE_URL} target="_blank" rel="noreferrer" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#1877F2]" /> G-TRAMS Facebook Page</a></li>
               <li><a href="https://marinduque.gov.ph" target="_blank" rel="noreferrer" className="hover:text-[#D4AF37] transition-colors flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-stone-500" /> Provincial Government</a></li>
             </ul>
           </div>
