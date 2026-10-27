@@ -9,13 +9,23 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'GTRAMS_Documents', 
-        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'webp']
-    }
-});
+const storage = process.env.NODE_ENV === 'test'
+    ? multer.diskStorage({
+        destination: (req, file, cb) => {
+            const os = require('os');
+            cb(null, os.tmpdir());
+        },
+        filename: (req, file, cb) => {
+            cb(null, `test_${Date.now()}_${file.originalname}`);
+        }
+    })
+    : new CloudinaryStorage({
+        cloudinary: cloudinary,
+        params: {
+            folder: 'GTRAMS_Documents', 
+            allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'webp']
+        }
+    });
 
 const upload = multer({ 
     storage: storage,

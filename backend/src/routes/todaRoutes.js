@@ -10,6 +10,7 @@ const Franchise = require('../models/franchiseModel');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { extractTodaRosterFromDocument } = require('../services/documentVerificationService');
 const { isNameMatch } = require('../utils/nameMatcher');
+const { syncApprovedRoster } = require('../controllers/todaController');
 
 const upload = require('../config/cloudinary');
 
@@ -19,7 +20,7 @@ const memoryUpload = multer({
 });
 
 // Real-time AI OCR scanning for roster documents (zero Cloudinary delay, memory buffer)
-router.post('/scan-roster', protect, authorize('admin', 'toda president', 'toda_president'), memoryUpload.single('file'), async (req, res) => {
+router.post('/scan-roster', protect, authorize('bplo_staff', 'toda president', 'toda_president'), memoryUpload.single('file'), async (req, res) => {
     try {
         let input = null;
 
@@ -62,9 +63,12 @@ router.post('/scan-roster', protect, authorize('admin', 'toda president', 'toda_
         }
 
         const members = ocr.members.map(m => ({
-            name: (m.name || (typeof m === 'string' ? m : '')).trim(),
+            name: (m.name || m.operatorName || (typeof m === 'string' ? m : '')).trim(),
+            operatorName: (m.operatorName || m.name || (typeof m === 'string' ? m : '')).trim(),
+            bodyNumber: (m.bodyNumber || m.unitNo || '').trim(),
+            unitNo: (m.bodyNumber || m.unitNo || '').trim(),
             confidence: 0.95
-        })).filter(m => Boolean(m.name));
+        })).filter(m => Boolean(m.name || m.operatorName));
 
         return res.status(200).json({
             success: true,
@@ -81,7 +85,7 @@ router.post('/scan-roster', protect, authorize('admin', 'toda president', 'toda_
 });
 
 // Upload member list (TODA President) with AI OCR Roster Parsing
-router.post('/upload', protect, authorize('admin', 'toda president', 'toda_president'), upload.single('file'), async (req, res) => {
+router.post('/upload', protect, authorize('bplo_staff', 'toda president', 'toda_president'), upload.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
@@ -98,9 +102,13 @@ router.post('/upload', protect, authorize('admin', 'toda president', 'toda_presi
                     : req.body.extractedMembers;
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     extractedMembers = parsed.map(m => ({
-                        name: (m.name || (typeof m === 'string' ? m : '')).trim(),
+                        name: (m.name || m.operatorName || (typeof m === 'string' ? m : '')).trim(),
+                        operatorName: (m.operatorName || m.name || (typeof m === 'string' ? m : '')).trim(),
+                        bodyNumber: (m.bodyNumber || m.unitNo || '').trim(),
+                        unitNo: (m.bodyNumber || m.unitNo || '').trim(),
+                        plateNo: (m.plateNo || '').trim(),
                         confidence: m.confidence || 0.95
-                    })).filter(m => Boolean(m.name));
+                    })).filter(m => Boolean(m.name || m.operatorName));
                     extractedCount = extractedMembers.length;
                     ocrNotes = req.body.ocrNotes || 'Pre-scanned & verified by TODA President';
                 }
@@ -115,11 +123,13 @@ router.post('/upload', protect, authorize('admin', 'toda president', 'toda_presi
                 const ocr = await extractTodaRosterFromDocument(req.file.path);
                 if (ocr && Array.isArray(ocr.members)) {
                     extractedMembers = ocr.members.map(m => ({
-                        name: (m.name || '').trim(),
-                        unitNo: (m.unitNo || '').trim(),
+                        name: (m.name || m.operatorName || '').trim(),
+                        operatorName: (m.operatorName || m.name || '').trim(),
+                        bodyNumber: (m.bodyNumber || m.unitNo || '').trim(),
+                        unitNo: (m.bodyNumber || m.unitNo || '').trim(),
                         plateNo: (m.plateNo || '').trim(),
                         confidence: 0.95
-                    })).filter(m => Boolean(m.name));
+                    })).filter(m => Boolean(m.name || m.operatorName));
                     extractedCount = extractedMembers.length;
                     ocrNotes = ocr.notes || '';
                     if (ocr.todaAssociation && (!todaAssociation || todaAssociation === 'NON-TODA')) {
@@ -154,8 +164,8 @@ router.post('/upload', protect, authorize('admin', 'toda president', 'toda_presi
     }
 });
 
-// Get all submissions (Admin only)
-router.get('/submissions', protect, authorize('admin'), async (req, res) => {
+// Get all submissions (BPLO Staff only)
+router.get('/submissions', protect, authorize('bplo_staff'), async (req, res) => {
     try {
         const submissions = await TodaSubmission.find().sort({ createdAt: -1 });
         res.status(200).json(submissions);
@@ -164,8 +174,8 @@ router.get('/submissions', protect, authorize('admin'), async (req, res) => {
     }
 });
 
-// Re-scan an existing submission with AI OCR (Admin only)
-router.put('/submissions/:id/rescan', protect, authorize('admin'), async (req, res) => {
+// Re-scan an existing submission with AI OCR (BPLO Staff only)
+router.put('/submissions/:id/rescan', protect, authorize('bplo_staff'), async (req, res) => {
     try {
         const submission = await TodaSubmission.findById(req.params.id);
         if (!submission) {
@@ -210,8 +220,8 @@ router.put('/submissions/:id/rescan', protect, authorize('admin'), async (req, r
     }
 });
 
-// Approve submission (Admin only)
-router.put('/approve/:id', protect, authorize('admin'), async (req, res) => {
+// Approve submission (BPLO Staff only)
+router.put('/approve/:id', protect, authorize('bplo_staff'), async (req, res) => {
     try {
         const updatedSubmission = await TodaSubmission.findByIdAndUpdate(
             req.params.id,
@@ -223,14 +233,21 @@ router.put('/approve/:id', protect, authorize('admin'), async (req, res) => {
             return res.status(404).json({ message: 'Submission not found' });
         }
 
+        // Sync approved members into TodaRoster collection for fast indexing
+        try {
+            await syncApprovedRoster(updatedSubmission._id);
+        } catch (syncErr) {
+            console.warn('[TodaRoster] Non-critical sync warning:', syncErr.message);
+        }
+
         res.status(200).json({ message: 'Approved successfully', submission: updatedSubmission });
     } catch (error) {
         res.status(500).json({ message: 'Error updating submission status' });
     }
 });
 
-// Submit member removal / kick request (TODA President)
-router.post('/removal-requests', protect, authorize('admin', 'toda president', 'toda_president'), async (req, res) => {
+// Submit member removal / kick request (TODA President / BPLO Staff)
+router.post('/removal-requests', protect, authorize('bplo_staff', 'toda president', 'toda_president'), async (req, res) => {
     try {
         const { memberId, reason, details } = req.body;
         if (!memberId || !reason || !details) {
@@ -273,14 +290,14 @@ router.post('/removal-requests', protect, authorize('admin', 'toda president', '
     }
 });
 
-// Get removal requests (Admin sees all; Toda President sees for their TODA)
-router.get('/removal-requests', protect, authorize('admin', 'toda president', 'toda_president'), async (req, res) => {
+// Get removal requests (BPLO Staff sees all; Toda President sees for their TODA)
+router.get('/removal-requests', protect, authorize('bplo_staff', 'toda president', 'toda_president'), async (req, res) => {
     try {
-        const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
-        const isAdmin = userRole === 'admin' || userRole === 'administrator';
+        const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        const isStaff = userRole === 'bplo_staff' || userRole === 'admin' || userRole === 'system_admin';
 
         let query = {};
-        if (!isAdmin) {
+        if (!isStaff) {
             const presidentToda = (req.user.todaAssociation || '').trim();
             query.todaName = new RegExp(`^${presidentToda}$`, 'i');
         }
@@ -298,8 +315,8 @@ router.get('/removal-requests', protect, authorize('admin', 'toda president', 't
     }
 });
 
-// Approve removal request (Admin only)
-router.put('/removal-requests/:id/approve', protect, authorize('admin'), async (req, res) => {
+// Approve removal request (BPLO Staff only)
+router.put('/removal-requests/:id/approve', protect, authorize('bplo_staff'), async (req, res) => {
     try {
         const { adminRemarks = '' } = req.body;
         const request = await TodaRemovalRequest.findById(req.params.id);
@@ -330,8 +347,8 @@ router.put('/removal-requests/:id/approve', protect, authorize('admin'), async (
     }
 });
 
-// Reject removal request (Admin only)
-router.put('/removal-requests/:id/reject', protect, authorize('admin'), async (req, res) => {
+// Reject removal request (BPLO Staff only)
+router.put('/removal-requests/:id/reject', protect, authorize('bplo_staff'), async (req, res) => {
     try {
         const { adminRemarks = '' } = req.body;
         const request = await TodaRemovalRequest.findById(req.params.id);
@@ -368,8 +385,8 @@ router.get('/my-members', protect, async (req, res) => {
     try {
         // Determine the target TODA association
         let todaName = (req.query.todaName || '').trim();
-        const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
-        const isAdmin = userRole === 'admin' || userRole === 'administrator';
+        const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        const isAdmin = userRole === 'admin' || userRole === 'administrator' || userRole === 'bplo_staff' || userRole === 'system_admin';
 
         if (!todaName) {
             if (req.user.todaAssociation && req.user.todaAssociation !== 'NON-TODA') {

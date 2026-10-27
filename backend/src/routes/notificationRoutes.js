@@ -94,4 +94,45 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Retrieve SMS dispatch audit logs (System Admin, Admin, BPLO Staff)
+const { authorize } = require('../middleware/authMiddleware');
+router.get('/sms-logs', authorize('system_admin', 'admin', 'bplo_staff'), async (req, res) => {
+  try {
+    const { getSmsLogs } = require('../services/notificationService');
+    const result = await getSmsLogs({
+      page: req.query.page,
+      limit: req.query.limit,
+      type: req.query.type,
+      search: req.query.search
+    });
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error fetching SMS dispatch logs:', error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve SMS logs' });
+  }
+});
+
+// Trigger a live simulated 30-day expiration SMS alert (for defense demo)
+router.post('/simulate-sms', authorize('system_admin', 'admin', 'bplo_staff'), async (req, res) => {
+  try {
+    const { simulateTestDispatch } = require('../services/notificationService');
+    const { operatorName, phone, plateNo, bodyNumber, daysRemaining } = req.body;
+    const log = await simulateTestDispatch({
+      operatorName: operatorName || 'Juan Dela Cruz',
+      phone: phone || '09178923401',
+      plateNo: plateNo || '4528-TC',
+      bodyNumber: bodyNumber || '042',
+      daysRemaining: Number(daysRemaining) || 30
+    });
+    res.json({ 
+      success: true, 
+      message: 'Simulated 30-day expiration SMS alert dispatched successfully.', 
+      data: log 
+    });
+  } catch (error) {
+    console.error('Error triggering simulated SMS:', error);
+    res.status(500).json({ success: false, message: 'Failed to simulate SMS dispatch' });
+  }
+});
+
 module.exports = router;

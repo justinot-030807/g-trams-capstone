@@ -8,8 +8,8 @@ const { apiLimiter } = require('../middleware/rateLimiter');
 router.post('/', protect, apiLimiter, createTicket);
 router.get('/my-tickets', protect, getMyTickets);
 
-// Admin Routes
-router.get('/', protect, authorize('admin'), getAllTickets);
-router.put('/:id/status', protect, authorize('admin'), updateTicketStatus);
+// Administrative Support Routes (BPLO Staff & System Admin)
+router.get('/', protect, authorize('bplo_staff', 'system_admin', 'admin'), getAllTickets);
+router.put('/:id/status', protect, authorize('bplo_staff', 'system_admin', 'admin'), updateTicketStatus);
 
 module.exports = router;

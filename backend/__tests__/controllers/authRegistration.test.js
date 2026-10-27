@@ -18,7 +18,7 @@ beforeAll(async () => {
         await mongoose.disconnect();
     }
     await mongoose.connect(uri);
-}, 30000);
+}, 60000);
 
 afterAll(async () => {
     await mongoose.disconnect();

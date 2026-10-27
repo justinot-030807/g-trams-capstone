@@ -22,7 +22,7 @@ const auditLogSchema = new mongoose.Schema({
     },
     targetType: { 
         type: String, 
-        enum: ['Franchise', 'User', 'SystemSettings', 'TODA', 'Auth', 'General'],
+        enum: ['Franchise', 'User', 'SystemSettings', 'TODA', 'Auth', 'General', 'Violation'],
         default: 'General'
     },
     targetId: { 

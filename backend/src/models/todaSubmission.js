@@ -33,6 +33,8 @@ const todaSubmissionSchema = new mongoose.Schema({
     },
     extractedMembers: [{
         name: { type: String, trim: true },
+        operatorName: { type: String, trim: true, default: '' },
+        bodyNumber: { type: String, trim: true, default: '' },
         unitNo: { type: String, default: '' },
         plateNo: { type: String, default: '' },
         confidence: { type: Number, default: 0.95 }

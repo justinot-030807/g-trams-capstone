@@ -10,10 +10,25 @@ const userSchema = new mongoose.Schema({
     googleId: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     password: { type: String, required: true },
-    role: { type: String, enum: ['operator', 'admin', 'administrator', 'toda_president', 'toda president', 'cashier'], default: 'operator' },
+    role: { 
+        type: String, 
+        enum: [
+            'system_admin',
+            'bplo_staff',
+            'cashier',
+            'toda_president',
+            'operator',
+            'driver',
+            'admin',
+            'administrator',
+            'toda president'
+        ], 
+        default: 'operator' 
+    },
     
-    // TODA association
+    // TODA association & Body Number
     todaAssociation: { type: String, default: 'NON-TODA' },
+    bodyNumber: { type: String, default: '', trim: true },
 
     isVerified: { type: Boolean, default: false },
     profilePic: { type: String, default: '' },

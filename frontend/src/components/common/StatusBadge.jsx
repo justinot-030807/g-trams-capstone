@@ -9,9 +9,12 @@ import { useLanguage } from '../../context/LanguageContext';
  * 3. Danger (Expired, Revoked): Red
  * 4. Neutral (Cancelled, Draft, Empty, None): Gray
  */
-const StatusBadge = ({ status = '', customLabel = null, className = '' }) => {
+const StatusBadge = ({ status = '', customLabel = null, className = '', isExpired = false }) => {
   const { t } = useLanguage() || { t: (_, def) => def };
-  const rawStatus = String(status || '').trim();
+  let rawStatus = String(status || '').trim();
+  if (isExpired && (rawStatus.toLowerCase() === 'active' || rawStatus.toLowerCase() === 'operational')) {
+    rawStatus = 'Expired';
+  }
   const normalized = rawStatus.toLowerCase();
 
   let state = 'neutral';
@@ -21,6 +24,12 @@ const StatusBadge = ({ status = '', customLabel = null, className = '' }) => {
     state = 'active';
     defaultLabel = t('status.active', 'Active');
   } else if (
+    normalized === 'active - under warning' ||
+    normalized === 'under warning'
+  ) {
+    state = 'progress';
+    defaultLabel = t('status.activeUnderWarning', 'Active - Under Warning');
+  } else if (
     normalized === 'pending' ||
     normalized === 'pending for approval' ||
     normalized === 'for review' ||
@@ -28,7 +37,9 @@ const StatusBadge = ({ status = '', customLabel = null, className = '' }) => {
     normalized === 'for signing' ||
     normalized === 'ready for pickup' ||
     normalized === 'payment pending' ||
-    normalized === 'in review'
+    normalized === 'in review' ||
+    normalized === 'cancellation requested' ||
+    normalized === 'cancellation pending'
   ) {
     state = 'progress';
     if (normalized === 'for payment') {
@@ -37,17 +48,22 @@ const StatusBadge = ({ status = '', customLabel = null, className = '' }) => {
       defaultLabel = t('status.forSigning', 'For Signing');
     } else if (normalized === 'ready for pickup') {
       defaultLabel = t('status.readyForPickup', 'Ready for Pickup');
+    } else if (normalized === 'cancellation requested' || normalized === 'cancellation pending') {
+      defaultLabel = t('status.cancellationRequested', 'Cancellation Requested');
     } else {
       defaultLabel = t('status.pending', 'Pending');
     }
   } else if (
+    normalized === 'suspended' ||
     normalized === 'expired' ||
     normalized === 'revoked' ||
     normalized === 'rejected' ||
     normalized === 'failed'
   ) {
     state = 'danger';
-    if (normalized === 'revoked') {
+    if (normalized === 'suspended') {
+      defaultLabel = t('status.suspended', 'Suspended');
+    } else if (normalized === 'revoked') {
       defaultLabel = t('status.revoked', 'Revoked');
     } else if (normalized === 'expired') {
       defaultLabel = t('status.expired', 'Expired');

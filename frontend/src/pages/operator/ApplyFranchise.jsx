@@ -1437,8 +1437,11 @@ const ApplyFranchise = () => {
           }
         } else if (json.noKey) {
           showToast(json.message || 'Notice: GEMINI_API_KEY is not configured on the server. AI auto-fill is disabled.', 'warning');
+        } else if (json.isValidDocument === false) {
+          resetScanState(reqId);
+          showToast(json.message || 'Hindi ito valid na opisyal na LTO document. Mangyaring mag-upload ng lehitimong kopya.', 'error');
         } else if (json.message) {
-          showToast(json.message, 'info');
+          showToast(json.message, json.success ? 'info' : 'warning');
         }
       } else {
         const errText = await res.text().catch(() => '');
@@ -1453,6 +1456,115 @@ const ApplyFranchise = () => {
     }
   };
 
+  // Immediate AI Scanner State Reset for individual document slots
+  const resetScanState = (reqId) => {
+    if (!reqId) return;
+    const lower = reqId.toLowerCase();
+
+    // 1. Reset scan status flags
+    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
+    setAiScanning(prev => ({ ...prev, [reqId]: false }));
+
+    // 2. Clear tracked raw OCR data
+    setAiScannedData(prev => {
+      const copy = { ...prev };
+      if (lower.includes('licenseback') || lower.includes('back')) {
+        delete copy.licenseBack;
+      } else if (lower.includes('license')) {
+        delete copy.license;
+      } else if (lower.includes('cr') || lower.includes('or') || lower.includes('orcr')) {
+        delete copy.orCr;
+      } else if (lower.includes('cedula')) {
+        delete copy.cedula;
+      } else if (lower.includes('toda')) {
+        delete copy.todaEndorsement;
+      } else if (lower.includes('brgy')) {
+        delete copy.brgyClearance;
+      }
+      return copy;
+    });
+
+    // 3. Clear auto-populated form fields corresponding to this document type
+    setFormData(prev => {
+      const copy = { ...prev };
+      if (lower.includes('cr') || lower.includes('or') || lower.includes('orcr')) {
+        copy.plateNo = '';
+        copy.motorNo = '';
+        copy.chassisNo = '';
+        copy.make = '';
+        copy.made = '';
+        copy.series = '';
+        copy.yearModel = '';
+        copy.orCrNo = '';
+        copy.orNo = '';
+        copy.crNo = '';
+        copy.crDate = '';
+        copy.orDate = '';
+        copy.color = '';
+        copy.fileNo = '';
+        copy.vehicleType = '';
+        copy.vehicleCategory = '';
+        copy.classification = '';
+        copy.bodyType = '';
+        copy.displacement = '';
+        copy.grossWeight = '';
+        copy.fuelType = '';
+        copy.passengerCapacity = '';
+        copy.registeredOwner = '';
+        copy.ownerAddress = '';
+        copy.orCrExpiryDate = '';
+      } else if (lower.includes('licenseback') || lower.includes('back')) {
+        copy.driverLicenseSerialNo = '';
+      } else if (lower.includes('license')) {
+        copy.driverLicenseNo = '';
+        copy.driverLicenseExpiryDate = '';
+        copy.driverDob = '';
+        copy.driverDlCodes = '';
+        copy.driverConditions = 'None';
+        copy.driverAddress = '';
+        copy.driverNationality = 'Filipino';
+        copy.driverSex = '';
+        if (!prev.isOperatorDriver) {
+          copy.driverName = '';
+        }
+      } else if (lower.includes('cedula')) {
+        copy.cedulaSerialNo = '';
+        copy.cedulaDate = '';
+        copy.cedulaAddress = '';
+        copy.cedulaAmount = '';
+        copy.cedulaYear = '';
+        copy.cedulaPlaceIssued = '';
+        copy.cedulaFullName = '';
+        copy.cedulaCitizenship = '';
+        copy.cedulaCivilStatus = '';
+        copy.cedulaProfession = '';
+        copy.cedulaDob = '';
+        copy.cedulaPlaceOfBirth = '';
+        copy.cedulaSex = '';
+        copy.cedulaHeight = '';
+        copy.cedulaWeight = '';
+        copy.cedulaTin = '';
+        copy.cedulaDetails = null;
+      } else if (lower.includes('toda')) {
+        copy.todaCertNo = '';
+        copy.todaSignatory = '';
+        copy.todaCertDate = '';
+      } else if (lower.includes('brgy')) {
+        copy.brgyClearanceNo = '';
+        copy.brgyClearanceDate = '';
+        copy.brgyIssuer = '';
+      }
+      return copy;
+    });
+
+    // 4. Clear field-level validation errors
+    setFormErrors(prev => {
+      const copy = { ...prev };
+      delete copy[reqId];
+      return copy;
+    });
+  };
+
   const handleRescan = (reqId) => {
     showToast('Re-scanning document with AI...', 'info');
     triggerAiScan(reqId);
@@ -1460,6 +1572,9 @@ const ApplyFranchise = () => {
 
   const handleFileChange = (reqId, file) => {
     if (file) {
+      // Immediately wipe previous OCR results & auto-filled fields when new file is selected
+      resetScanState(reqId);
+
       if (formErrors[reqId]) {
         setFormErrors(prev => {
           const copy = { ...prev };
@@ -1488,6 +1603,9 @@ const ApplyFranchise = () => {
     if (e?.preventDefault) e.preventDefault();
     if (e?.stopPropagation) e.stopPropagation();
     
+    // Wipe scan states and values
+    resetScanState(reqId);
+
     setUploadedDocs(prev => {
       const copy = { ...prev };
       delete copy[reqId];
@@ -1508,8 +1626,6 @@ const ApplyFranchise = () => {
       delete copy[reqId];
       return copy;
     });
-
-    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
   };
 
   // Real-time debounced duplicate checker (Step 2)
@@ -3456,26 +3572,49 @@ const ApplyFranchise = () => {
                     <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                       <button
                         type="button"
-                        onClick={() => setShowAdvancedSpecs(!showAdvancedSpecs)}
-                        className="w-full flex items-center justify-between p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] text-left cursor-pointer"
+                        id="additional-lto-specs-toggle"
+                        aria-expanded={showAdvancedSpecs}
+                        aria-controls="additional-lto-specs-panel"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowAdvancedSpecs(prev => !prev);
+                        }}
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B]/30 dark:focus:ring-[#D4AF37]/30 ${
+                          showAdvancedSpecs 
+                            ? 'rounded-t-lg bg-[#EAE7E1] dark:bg-[#1C1917] border-b-0 shadow-xs' 
+                            : 'rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
+                        }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                          <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                            Additional LTO Specifications &amp; Numbers
-                          </span>
-                          <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] hidden sm:inline">
-                            (Auto-filled &bull; Optional review)
-                          </span>
+                        <div className="flex items-center gap-2.5">
+                          <div className={`p-1.5 rounded-md ${showAdvancedSpecs ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-[#1F1D1B]' : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]'}`}>
+                            <FileText size={16} />
+                          </div>
+                          <div>
+                            <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                              Additional LTO Specifications &amp; Numbers
+                            </span>
+                            <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] block sm:inline sm:ml-2">
+                              (Auto-filled &bull; Optional review)
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
-                          <span>{showAdvancedSpecs ? 'Hide' : 'Show Details'}</span>
-                          {showAdvancedSpecs ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
+                          <span>{showAdvancedSpecs ? 'Hide Details' : 'Show Details'}</span>
+                          <ChevronDown 
+                            size={16} 
+                            className={`transition-transform duration-200 transform ${showAdvancedSpecs ? 'rotate-180 text-[#9E2A2B] dark:text-[#D4AF37]' : 'rotate-0'}`} 
+                          />
                         </div>
                       </button>
 
                       {showAdvancedSpecs && (
-                        <div className="mt-3 p-3.5 bg-neutral-50/50 dark:bg-[#181513] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 animate-fadeIn">
+                        <div 
+                          id="additional-lto-specs-panel"
+                          role="region"
+                          aria-labelledby="additional-lto-specs-toggle"
+                          className="p-4 bg-white dark:bg-[#181513] rounded-b-lg border border-[#E4E1DC] dark:border-[#2E2A27] border-t-0 space-y-3 shadow-xs animate-fadeIn"
+                        >
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             <div id="field-series">
                               <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">

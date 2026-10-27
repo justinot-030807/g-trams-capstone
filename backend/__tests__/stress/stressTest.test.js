@@ -14,8 +14,10 @@ const Notification = require('../../src/models/notificationModel');
 let mongoServer;
 let adminToken;
 let operatorToken;
+let bploToken;
 let adminUser;
 let operatorUser;
+let bploUser;
 
 const measureConcurrent = async (label, promises) => {
   const start = Date.now();
@@ -53,6 +55,18 @@ beforeAll(async () => {
     isActive: true
   });
   adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+  bploUser = await User.create({
+    name: 'BPLO Stress Test',
+    email: 'bplo_stress@example.com',
+    contact: '09100000003',
+    address: 'Gasan Municipal Hall',
+    password: 'Password123!',
+    role: 'bplo_staff',
+    isVerified: true,
+    isActive: true
+  });
+  bploToken = jwt.sign({ id: bploUser._id, role: bploUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
   operatorUser = await User.create({
     name: 'Operator Stress Test',
@@ -188,6 +202,7 @@ describe('GTRAMS API Stress Tests', () => {
         cedulaAddress: 'Gasan',
         cedulaSerialNo: `CSN-${i}`,
         status: 'Pending',
+        paymentStatus: 'Paid',
         applicationType: 'New'
       });
     }
@@ -196,7 +211,7 @@ describe('GTRAMS API Stress Tests', () => {
     const updatePromises = inserted.map(franchiseDoc => 
       request(app)
         .put(`/api/v1/franchises/${franchiseDoc._id}/status`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${bploToken}`)
         .send({ status: 'For Signing' })
     );
 

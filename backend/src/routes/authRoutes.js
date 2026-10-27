@@ -7,6 +7,7 @@ const { authRateLimiter } = require('../middleware/rateLimiter');
 
 const { 
     register, 
+    verifyTodaRoster,
     verifyOTP, 
     login, 
     getUsers,
@@ -39,7 +40,10 @@ router.post('/heartbeat', protect, heartbeat);
 
 // Import Validation Middleware
 const validate = require('../middleware/validateMiddleware');
-const { registerSchema, verifyOtpSchema, loginSchema, forgotPasswordSchema, googleAuthSchema } = require('../schemas/authSchema');
+const { registerSchema, verifyRosterSchema, verifyOtpSchema, loginSchema, forgotPasswordSchema, googleAuthSchema } = require('../schemas/authSchema');
+
+// Pre-registration TODA Roster Verification route
+router.post('/verify-roster', registerLimiter, validate(verifyRosterSchema), verifyTodaRoster);
 
 // Google OAuth route
 router.post('/google', validate(googleAuthSchema), googleAuth);
@@ -52,18 +56,18 @@ router.get('/google-client-id', (req, res) => {
 router.post('/register', registerLimiter, validate(registerSchema), register);
 router.post('/verify-otp', registerLimiter, validate(verifyOtpSchema), verifyOTP);
 router.post('/login', loginLimiter, validate(loginSchema), login);
-router.get('/', protect, authorize('admin'), getUsers);
+router.get('/', protect, authorize('system_admin', 'admin'), getUsers);
 
 // Password management routes
 router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', resetLimiter, resetPassword);
 router.put('/change-password', protect, changePassword);
 
-// Admin routes
-router.post('/verify-password', protect, authorize('admin'), verifyAdminPassword);
+// System Admin IT routes
+router.post('/verify-password', protect, authorize('system_admin', 'admin'), verifyAdminPassword);
 
 // Account status routes
-router.put('/:id/toggle-status', protect, authorize('admin'), toggleUserStatus);
+router.put('/:id/toggle-status', protect, authorize('system_admin', 'admin'), toggleUserStatus);
 router.post('/appeal', submitAppeal);
 
 // Public routes
@@ -71,7 +75,7 @@ router.get('/verify/:id', verifyOperator);
 router.get('/public-stats', getPublicStats);
 
 router.route('/:id')
-    .put(protect, authorize('admin'), updateUser)
-    .delete(protect, authorize('admin'), deleteUser);
+    .put(protect, authorize('system_admin', 'admin'), updateUser)
+    .delete(protect, authorize('system_admin', 'admin'), deleteUser);
 
 module.exports = router;

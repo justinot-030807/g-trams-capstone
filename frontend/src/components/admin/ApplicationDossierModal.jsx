@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { GASAN_ZONES } from '../operator/TodaZoneGuideModal';
 import { formatZoneLabel, normalizeZone } from '../../utils/constants';
+import { getServerNow } from '../../utils/serverTime';
 import TricycleIcon from '../common/TricycleIcon';
 
 const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReject, isProcessing = false }) => {
@@ -42,7 +43,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
     if (!dateStr) return false;
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return false;
-    const today = new Date();
+    const today = getServerNow();
     today.setHours(0, 0, 0, 0);
     return d < today;
   };

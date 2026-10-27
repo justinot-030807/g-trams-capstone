@@ -6,13 +6,14 @@ import {
   X, Search, Loader2, ZoomIn, ZoomOut, RotateCw, Printer, ShieldCheck, Download,
   CalendarDays, User, Clock, ExternalLink, RefreshCw, ChevronRight, ChevronLeft, Shield,
   CheckSquare, Square, Filter, Users, Layers, FileSpreadsheet, Copy, Check,
-  MoreVertical, SlidersHorizontal, Sparkles, Undo2, ArrowUpDown, CheckCheck, AlertTriangle, Receipt
+  MoreVertical, SlidersHorizontal, Sparkles, Undo2, ArrowUpDown, CheckCheck, AlertTriangle, Receipt, ShieldAlert
 } from 'lucide-react';
 import { QueueListSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import BatchMtopModal from '../../components/admin/BatchMtopModal';
 import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
+import StaffCancellationReviewModal from '../../components/admin/StaffCancellationReviewModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import TricycleIcon from '../../components/common/TricycleIcon';
@@ -71,6 +72,9 @@ const FranchiseApproval = () => {
   // Application Dossier Modal state
   const [dossierTargetUnit, setDossierTargetUnit] = useState(null);
 
+  // Module 8: Voluntary Cancellation Review Modal state
+  const [cancellationReviewTarget, setCancellationReviewTarget] = useState(null);
+
   // 10-Second Undo Notification State
   const [undoState, setUndoState] = useState(null); // { timer, secondsLeft: 10, items: [{ _id, prevStatus, name }], message }
 
@@ -106,7 +110,7 @@ const FranchiseApproval = () => {
     try {
       const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
       const [response, historyRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Pending%20for%20Approval,For%20Payment,For%20Signing,Ready%20for%20Pickup&limit=2000&sort=oldest`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Pending%20for%20Approval,For%20Payment,For%20Signing,Ready%20for%20Pickup,Cancellation%20Requested&limit=2000&sort=oldest`, { headers }),
         fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active,Cancelled&limit=500`, { headers })
       ]);
       if (response.ok) {
@@ -250,6 +254,73 @@ const FranchiseApproval = () => {
     }
   };
 
+  // Module 8: Finalize Voluntary Franchise Cancellation (Directly to Cancelled, no cashier payment)
+  const handleFinalizeCancellation = async (unit, staffNotes) => {
+    if (!unit) return;
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/process-cancellation`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'finalize',
+          staffNotes
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to finalize cancellation.');
+      }
+
+      showToast(`Franchise for ${unit.plateNo} voluntarily cancelled.`, 'success');
+      fetchApplications();
+    } catch (err) {
+      console.error('Finalize cancellation error:', err);
+      showToast(err.message || 'Failed to finalize cancellation.', 'error');
+      throw err;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Module 8: Reject Voluntary Cancellation Request (Restores to Active)
+  const handleRejectCancellation = async (unit, rejectionReason, staffNotes) => {
+    if (!unit) return;
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/process-cancellation`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'reject',
+          rejectionReason,
+          staffNotes
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to reject cancellation request.');
+      }
+
+      showToast(`Cancellation request for ${unit.plateNo} rejected. Franchise restored to Active.`, 'info');
+      fetchApplications();
+    } catch (err) {
+      console.error('Reject cancellation error:', err);
+      showToast(err.message || 'Failed to reject cancellation request.', 'error');
+      throw err;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Batch Approval Action with 10-Second Undo
   const handleConfirmBatchApprove = async () => {
     if (selectedIds.length === 0) return;
@@ -353,6 +424,7 @@ const FranchiseApproval = () => {
   const paymentCount = applications.filter(a => a.status === 'For Payment').length;
   const signingCount = applications.filter(a => a.status === 'For Signing').length;
   const readyCount = applications.filter(a => a.status === 'Ready for Pickup').length;
+  const cancellationCount = applications.filter(a => a.status === 'Cancellation Requested').length;
   const allCount = applications.length;
   const approvedCount = historyApps.filter(a => a.status === 'Active').length;
   const rejectedCount = historyApps.filter(a => a.status === 'Cancelled').length;
@@ -369,6 +441,7 @@ const FranchiseApproval = () => {
       if (activeTab === 'payment' && app.status !== 'For Payment') return false;
       if (activeTab === 'signing' && app.status !== 'For Signing') return false;
       if (activeTab === 'ready' && app.status !== 'Ready for Pickup') return false;
+      if (activeTab === 'cancellations' && app.status !== 'Cancellation Requested') return false;
       if (activeTab === 'approved' && app.status !== 'Active') return false;
       if (activeTab === 'rejected' && app.status !== 'Cancelled') return false;
 
@@ -589,6 +662,18 @@ const FranchiseApproval = () => {
         totalCount={filteredApps.length}
         isProcessing={isProcessing} 
       />
+
+      {/* Module 8: BPLO Staff Voluntary Cancellation Review Modal */}
+      {cancellationReviewTarget && (
+        <StaffCancellationReviewModal
+          isOpen={Boolean(cancellationReviewTarget)}
+          onClose={() => setCancellationReviewTarget(null)}
+          unit={cancellationReviewTarget}
+          onFinalize={handleFinalizeCancellation}
+          onReject={handleRejectCancellation}
+          isProcessing={isProcessing}
+        />
+      )}
 
       {/* Quick Approve Confirmation Modal */}
       {quickApproveTarget && (
@@ -992,6 +1077,7 @@ const FranchiseApproval = () => {
             { key: 'payment', label: 'For Payment', icon: Clock, count: paymentCount },
             { key: 'signing', label: 'For Signing', icon: ShieldCheck, count: signingCount },
             { key: 'ready', label: 'Ready for Pickup', icon: Printer, count: readyCount },
+            { key: 'cancellations', label: 'Cancellations Queue', icon: ShieldAlert, count: cancellationCount, alertBadge: true },
             { key: 'all', label: 'All in Queue', icon: null, count: allCount },
             { divider: true },
             { key: 'approved', label: 'Approved', icon: CheckCircle2, count: approvedCount, history: true },
@@ -1004,6 +1090,8 @@ const FranchiseApproval = () => {
             const Icon = t.icon;
             const activeClass = t.history
               ? 'bg-[#1F1D1B] dark:bg-[#EAE7E1] text-white dark:text-[#1F1D1B] shadow-xs'
+              : t.key === 'cancellations'
+              ? 'bg-[#B91C1C] text-white shadow-xs'
               : 'bg-[#9E2A2B] text-white shadow-xs';
             return (
               <button
@@ -1016,10 +1104,14 @@ const FranchiseApproval = () => {
                   isActive ? activeClass : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                {Icon && <Icon size={14} />}
+                {Icon && <Icon size={14} className={!isActive && t.key === 'cancellations' && t.count > 0 ? 'text-[#B91C1C] dark:text-[#EF4444]' : ''} />}
                 <span>{t.label}</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-                  isActive ? 'bg-white/20 dark:bg-black/10' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                  isActive 
+                    ? 'bg-white/20 dark:bg-black/10' 
+                    : t.key === 'cancellations' && t.count > 0
+                    ? 'bg-red-100 dark:bg-red-950/60 text-[#B91C1C] dark:text-[#F87171] font-bold border border-red-200 dark:border-red-900/60'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                 }`}>
                   {t.count}
                 </span>
@@ -1253,7 +1345,16 @@ const FranchiseApproval = () => {
                     </button>
 
                     {/* Primary Button depending on status */}
-                    {app.status === 'Ready for Pickup' ? (
+                    {app.status === 'Cancellation Requested' ? (
+                      <button
+                        onClick={() => setCancellationReviewTarget(app)}
+                        className="bg-[#B91C1C] hover:bg-[#991B1B] text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        title="Review voluntary cancellation letter and finalize"
+                      >
+                        <ShieldAlert size={13} />
+                        <span>Review Cancellation</span>
+                      </button>
+                    ) : app.status === 'Ready for Pickup' ? (
                       <button
                         onClick={() => setQuickApproveTarget(app)}
                         className={`px-3.5 py-1.5 text-white rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer ${
@@ -1276,16 +1377,13 @@ const FranchiseApproval = () => {
                         <span>Mark Signed</span>
                       </button>
                     ) : app.status === 'For Payment' ? (
-                      <button
-                        type="button"
-                        onClick={() => navigate('/cashier-dashboard')}
-                        className="px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors inline-flex items-center gap-1 cursor-pointer"
-                        title="Application is at Treasury Cashier. Click to view Cashier Terminal."
+                      <span
+                        className="px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-md inline-flex items-center gap-1 select-none"
+                        title="Application is at Municipal Treasury awaiting official payment. Cashier records official receipt."
                       >
                         <Clock size={12} />
-                        <span>At Treasury</span>
-                        <ChevronRight size={12} />
-                      </button>
+                        <span>Awaiting Cashier</span>
+                      </span>
                     ) : isHistoryTab ? (
                       null
                     ) : (
@@ -1335,6 +1433,19 @@ const FranchiseApproval = () => {
                             <span>Review Details</span>
                           </button>
 
+                          {app.status === 'Cancellation Requested' && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                setCancellationReviewTarget(app);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 cursor-pointer"
+                            >
+                              <ShieldAlert size={14} />
+                              <span>Review Cancellation</span>
+                            </button>
+                          )}
+
                           {isPendingStatus(app.status) && (
                             <button
                               onClick={() => {
@@ -1345,19 +1456,6 @@ const FranchiseApproval = () => {
                             >
                               <CheckCircle2 size={14} />
                               <span>Send to Cashier</span>
-                            </button>
-                          )}
-
-                          {app.status === 'For Payment' && (
-                            <button
-                              onClick={() => {
-                                setActiveMenuId(null);
-                                navigate('/cashier-dashboard');
-                              }}
-                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-center gap-2 cursor-pointer"
-                            >
-                              <Receipt size={14} />
-                              <span>Go to Cashier Terminal</span>
                             </button>
                           )}
 

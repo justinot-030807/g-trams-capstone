@@ -30,15 +30,20 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
     const d = new Date(dateStr);
     return isNaN(d.getTime()) 
       ? 'N/A' 
-      : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      : d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const getExpirationDate = (dateStr) => {
-    if (!dateStr) return 'N/A';
-    const d = new Date(dateStr);
+  const getExpirationDate = (targetUnit) => {
+    if (!targetUnit) return 'N/A';
+    if (targetUnit.expiryDate) {
+      return formatDate(targetUnit.expiryDate);
+    }
+    const baseDate = targetUnit.approvalDate || targetUnit.dateApplied;
+    if (!baseDate) return 'N/A';
+    const d = new Date(baseDate);
     if (isNaN(d.getTime())) return 'N/A';
     d.setFullYear(d.getFullYear() + 1);
-    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    return d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   return (
@@ -181,8 +186,8 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
             `}</style>
 
             {units.map((unit, index) => {
-              const issueDate = unit.dateApplied ? formatDate(unit.dateApplied) : formatDate(new Date());
-              const expiryDate = unit.dateApplied ? getExpirationDate(unit.dateApplied) : getExpirationDate(new Date());
+              const issueDate = unit.approvalDate ? formatDate(unit.approvalDate) : (unit.dateApplied ? formatDate(unit.dateApplied) : 'N/A');
+              const expiryDate = getExpirationDate(unit);
               const cleanPlate = unit.plateNo && unit.plateNo.toUpperCase() !== 'PENDING' ? unit.plateNo : null;
               const mtopNumber = cleanPlate ? `MTOP-GASAN-${cleanPlate}` : `MTOP-GASAN-${String(unit._id).slice(-6).toUpperCase()}`;
 

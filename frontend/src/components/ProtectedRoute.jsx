@@ -34,26 +34,32 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   // Normalize user role
   const safeUserRole = normalizeRole(userRole);
-  const isAdmin = safeUserRole === 'admin' || safeUserRole === 'administrator';
+  const isUserSystemAdmin = safeUserRole === 'admin' || safeUserRole === 'administrator' || safeUserRole === 'system admin';
 
   // Block non-admins when maintenance mode is active
   const isMaintenanceActive = localStorage.getItem('maintenance_mode') === 'true';
-  if (isMaintenanceActive && !isAdmin) {
+  if (isMaintenanceActive && !isUserSystemAdmin) {
     return <Navigate to="/maintenance" replace />;
   }
 
   const safeAllowedRoles = allowedRoles.map(normalizeRole);
 
+  const isSystemAdminAllowed = safeAllowedRoles.includes('admin') || safeAllowedRoles.includes('system admin') || safeAllowedRoles.includes('administrator');
+
   // Treat toda president and operator interchangeably for operator routes
   const isOperatorAllowed = safeAllowedRoles.includes('operator') || safeAllowedRoles.includes('toda president');
   const isUserOperatorOrToda = safeUserRole === 'operator' || safeUserRole === 'toda president';
 
-  const isAuthorized = safeAllowedRoles.includes(safeUserRole) || (isOperatorAllowed && isUserOperatorOrToda);
+  const isAuthorized = safeAllowedRoles.includes(safeUserRole) || 
+    (isSystemAdminAllowed && isUserSystemAdmin) || 
+    (isOperatorAllowed && isUserOperatorOrToda);
 
   // Redirect unauthorized users to their appropriate dashboard
   if (!isAuthorized) {
-    if (safeUserRole === 'admin' || safeUserRole === 'administrator') {
+    if (isUserSystemAdmin) {
       return <Navigate to="/admin-dashboard" replace />;
+    } else if (safeUserRole === 'bplo staff') {
+      return <Navigate to="/bplo-dashboard" replace />;
     } else if (safeUserRole === 'cashier') {
       return <Navigate to="/cashier-dashboard" replace />;
     } else if (isUserOperatorOrToda) {

@@ -22,7 +22,9 @@ const {
     getCashierQueue,
     processCashierPayment,
     scanDocument,
-    checkTodaMemberStatus
+    checkTodaMemberStatus,
+    requestFranchiseCancellation,
+    processFranchiseCancellation
 } = require('../controllers/franchiseController');
 
 const memoryUpload = require('multer')({
@@ -40,7 +42,7 @@ router.post('/scan-document', protect, memoryUpload.single('file'), scanDocument
 router.get('/check-unique', protect, checkUniqueFranchiseField);
 
 // Search historical franchise records
-router.get('/search', protect, authorize('admin'), searchHistoricalFranchise);
+router.get('/search', protect, authorize('bplo_staff'), searchHistoricalFranchise);
 
 /**
  * @swagger
@@ -78,24 +80,26 @@ router.route('/')
         upload.any(), 
         createFranchise
     )
-    // Get franchise masterlist (Admin only)
-    .get(protect, authorize('admin'), getAllFranchises);
+    // Get franchise masterlist (BPLO Staff only)
+    .get(protect, authorize('bplo_staff'), getAllFranchises);
 
-// Admin routes
-router.get('/reports', protect, authorize('admin'), getFranchiseReports);
-router.put('/:id/archive', protect, authorize('admin'), toggleArchiveFranchise);
-router.put('/:id/revoke', protect, authorize('admin'), upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
-router.put('/:id/status', protect, authorize('admin'), updateFranchiseStatus);
-router.get('/:id/record-check', protect, authorize('admin', 'cashier'), getFranchiseRecordCheck);
+// BPLO Staff routes (Franchise operations only)
+router.get('/reports', protect, authorize('bplo_staff'), getFranchiseReports);
+router.put('/:id/archive', protect, authorize('bplo_staff'), toggleArchiveFranchise);
+router.put('/:id/revoke', protect, authorize('bplo_staff'), upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
+router.put('/:id/status', protect, authorize('bplo_staff'), updateFranchiseStatus);
+router.put('/:id/process-cancellation', protect, authorize('bplo_staff'), processFranchiseCancellation);
+router.get('/:id/record-check', protect, authorize('bplo_staff', 'cashier'), getFranchiseRecordCheck);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
 router.put('/:id/renew', protect, authorize('operator', 'toda president'), upload.fields([{ name: 'orcrFile', maxCount: 1 }, { name: 'cedulaDoc', maxCount: 1 }]), renewFranchise);
 router.put('/:id/cancel', protect, authorize('operator', 'toda president'), cancelMyFranchise);
+router.put('/:id/request-cancellation', protect, authorize('operator', 'toda president'), upload.fields([{ name: 'cancellationLetter', maxCount: 1 }, { name: 'letter', maxCount: 1 }]), requestFranchiseCancellation);
 
-// Municipal Cashier & Treasury routes
-router.get('/cashier-queue', protect, authorize('cashier', 'admin'), getCashierQueue);
-router.post('/:id/pay', protect, authorize('cashier', 'admin'), processCashierPayment);
+// Municipal Cashier & Treasury routes (Isolated strictly to Cashier)
+router.get('/cashier-queue', protect, authorize('cashier'), getCashierQueue);
+router.post('/:id/pay', protect, authorize('cashier'), processCashierPayment);
 
 // Update and delete franchise
 router.route('/:id')
@@ -105,6 +109,6 @@ router.route('/:id')
         upload.any(), 
         updateFranchise
     )
-    .delete(protect, authorize('admin'), deleteFranchise);
+    .delete(protect, authorize('bplo_staff'), deleteFranchise);
 
 module.exports = router;

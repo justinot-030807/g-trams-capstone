@@ -1,4 +1,11 @@
 const Franchise = require('../models/franchiseModel');
+const { 
+    getManilaNow, 
+    getManilaStartOfDay, 
+    computeManilaExpiryDate, 
+    calculateDaysRemaining, 
+    isExpired 
+} = require('../utils/phTime');
 
 class FranchiseService {
     /**
@@ -31,13 +38,16 @@ class FranchiseService {
 
         const summary = {
             total: reports.length,
-            active: reports.filter(r => r.status === 'Active').length,
+            active: reports.filter(r => r.status === 'Active' || r.status === 'Active - Under Warning').length,
+            underWarning: reports.filter(r => r.status === 'Active - Under Warning').length,
+            suspended: reports.filter(r => r.status === 'Suspended').length,
             pending: reports.filter(r => r.status === 'Pending' || r.status === 'Pending for Approval').length,
             forPayment: reports.filter(r => r.status === 'For Payment').length,
             forSigning: reports.filter(r => r.status === 'For Signing').length,
             readyForPickup: reports.filter(r => r.status === 'Ready for Pickup').length,
             revoked: reports.filter(r => r.status === 'Revoked').length,
             cancelled: reports.filter(r => r.status === 'Cancelled').length,
+            cancellationRequested: reports.filter(r => r.status === 'Cancellation Requested').length,
             expired: reports.filter(r => r.status === 'Expired').length,
             newApps: reports.filter(r => r.applicationType === 'New').length,
             newAppsThisYear: reports.filter(r => {
@@ -49,40 +59,35 @@ class FranchiseService {
             // Peak readiness metrics for January renewal surge
             renewalsDue30: reports.filter(r => {
                 if (r.status !== 'Active') return false;
-                const base = r.approvalDate ? new Date(r.approvalDate) : (r.dateApplied ? new Date(r.dateApplied) : null);
-                const exp = r.orCrExpiryDate ? new Date(r.orCrExpiryDate) : (base ? new Date(base.setFullYear(base.getFullYear() + 1)) : null);
-                if (!exp || isNaN(exp.getTime())) return false;
-                const diffDays = Math.ceil((exp - new Date()) / 86400000);
-                return diffDays >= 0 && diffDays <= 30;
+                const days = r.daysRemaining !== undefined && r.daysRemaining !== null 
+                    ? r.daysRemaining 
+                    : calculateDaysRemaining(r.expiryDate || (r.approvalDate ? computeManilaExpiryDate(r.approvalDate) : null));
+                return days !== null && days >= 0 && days <= 30;
             }).length,
 
             renewalsDue60: reports.filter(r => {
                 if (r.status !== 'Active') return false;
-                const base = r.approvalDate ? new Date(r.approvalDate) : (r.dateApplied ? new Date(r.dateApplied) : null);
-                const exp = r.orCrExpiryDate ? new Date(r.orCrExpiryDate) : (base ? new Date(base.setFullYear(base.getFullYear() + 1)) : null);
-                if (!exp || isNaN(exp.getTime())) return false;
-                const diffDays = Math.ceil((exp - new Date()) / 86400000);
-                return diffDays >= 0 && diffDays <= 60;
+                const days = r.daysRemaining !== undefined && r.daysRemaining !== null 
+                    ? r.daysRemaining 
+                    : calculateDaysRemaining(r.expiryDate || (r.approvalDate ? computeManilaExpiryDate(r.approvalDate) : null));
+                return days !== null && days >= 0 && days <= 60;
             }).length,
 
             renewalsDue90: reports.filter(r => {
                 if (r.status !== 'Active') return false;
-                const base = r.approvalDate ? new Date(r.approvalDate) : (r.dateApplied ? new Date(r.dateApplied) : null);
-                const exp = r.orCrExpiryDate ? new Date(r.orCrExpiryDate) : (base ? new Date(base.setFullYear(base.getFullYear() + 1)) : null);
-                if (!exp || isNaN(exp.getTime())) return false;
-                const diffDays = Math.ceil((exp - new Date()) / 86400000);
-                return diffDays >= 0 && diffDays <= 90;
+                const days = r.daysRemaining !== undefined && r.daysRemaining !== null 
+                    ? r.daysRemaining 
+                    : calculateDaysRemaining(r.expiryDate || (r.approvalDate ? computeManilaExpiryDate(r.approvalDate) : null));
+                return days !== null && days >= 0 && days <= 90;
             }).length,
 
             receivedToday: (() => {
-                const startOfToday = new Date();
-                startOfToday.setHours(0, 0, 0, 0);
+                const startOfToday = getManilaStartOfDay();
                 return reports.filter(r => new Date(r.createdAt || r.dateApplied || 0) >= startOfToday).length;
             })(),
 
             processedToday: (() => {
-                const startOfToday = new Date();
-                startOfToday.setHours(0, 0, 0, 0);
+                const startOfToday = getManilaStartOfDay();
                 return reports.filter(r => 
                     new Date(r.updatedAt || 0) >= startOfToday && 
                     ['For Signing', 'Ready for Pickup', 'Active', 'Cancelled', 'Revoked'].includes(r.status)
@@ -183,6 +188,8 @@ class FranchiseService {
             applicationType: data.applicationType || 'New',
             status: data.status || 'Pending',
             dateApplied: parsedDateApplied,
+            approvalDate: data.approvalDate && !isNaN(new Date(data.approvalDate).getTime()) ? new Date(data.approvalDate) : undefined,
+            expiryDate: data.expiryDate && !isNaN(new Date(data.expiryDate).getTime()) ? new Date(data.expiryDate) : (data.approvalDate ? computeManilaExpiryDate(data.approvalDate) : undefined),
             orCrUrl: data.orCrUrl, 
             crUrl: data.crUrl || '',
             orUrl: data.orUrl || '',
@@ -291,10 +298,57 @@ class FranchiseService {
                 }
             });
 
-            if (statusList.length === 1) {
+            const now = getManilaNow();
+            const oneYearAgo = new Date(now);
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+            const hasActive = statusList.includes('Active');
+            const hasExpired = statusList.includes('Expired');
+
+            if (statusList.length === 1 && hasActive) {
+                queryCondition.status = 'Active';
+                queryCondition.$or = [
+                    { expiryDate: { $gt: now } },
+                    { expiryDate: null, approvalDate: { $gt: oneYearAgo } }
+                ];
+            } else if (statusList.length === 1 && hasExpired) {
+                queryCondition.$or = [
+                    { status: 'Expired' },
+                    { 
+                        status: 'Active', 
+                        $or: [
+                            { expiryDate: { $lte: now } },
+                            { expiryDate: null, approvalDate: { $lte: oneYearAgo } }
+                        ]
+                    }
+                ];
+            } else if (statusList.length === 1) {
                 queryCondition.status = statusList[0];
             } else if (statusList.length > 1) {
-                queryCondition.status = { $in: statusList };
+                if (hasActive && !hasExpired) {
+                    queryCondition.status = { $in: statusList };
+                    queryCondition.$and = queryCondition.$and || [];
+                    queryCondition.$and.push({
+                        $or: [
+                            { status: { $ne: 'Active' } },
+                            { expiryDate: { $gt: now } },
+                            { expiryDate: null, approvalDate: { $gt: oneYearAgo } }
+                        ]
+                    });
+                } else if (hasExpired && !hasActive) {
+                    queryCondition.$or = [
+                        { status: { $in: statusList } },
+                        { 
+                            status: 'Active', 
+                            $or: [
+                                { expiryDate: { $lte: now } },
+                                { expiryDate: null, approvalDate: { $lte: oneYearAgo } }
+                            ]
+                        }
+                    ];
+                } else {
+                    queryCondition.status = { $in: statusList };
+                }
             }
         }
 

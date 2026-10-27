@@ -1,11 +1,14 @@
+import { getServerNow } from './serverTime';
+
 /**
  * Asia/Manila Timezone-grounded Document Validity Engine
  * Used for Franchises, OR/CR, Driver's License, Cedula, etc.
+ * Server-authoritative: Neutralizes laptop/browser clock changes.
  */
 
 export const getManilaCurrentDate = () => {
-  // Compute Manila date (UTC+8) accurately
-  const now = new Date();
+  // Compute Manila date (UTC+8) accurately using server-authoritative clock
+  const now = getServerNow();
   const manilaString = now.toLocaleString("en-US", { timeZone: "Asia/Manila" });
   const manilaDate = new Date(manilaString);
   manilaDate.setHours(0, 0, 0, 0);
@@ -170,7 +173,7 @@ export const getTimeWaiting = (dateStr) => {
   if (!dateStr) return '—';
   const applied = new Date(dateStr);
   if (isNaN(applied.getTime())) return '—';
-  const now = new Date();
+  const now = getServerNow();
   const diffMs = now.getTime() - applied.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   if (diffHours < 1) return '<1h';

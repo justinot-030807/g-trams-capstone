@@ -7,12 +7,21 @@ const User = require('../src/models/userModel');
 
 const accountsToSeed = [
   {
-    name: 'Tester Admin (OVM Gasan)',
+    name: 'System Administrator (IT)',
     contact: '09111111111',
     email: 'admin.tester@gtrams.com',
     password: 'Password123!',
-    role: 'admin',
+    role: 'system_admin',
     address: 'Municipal Hall, Maharlika, Gasan, Marinduque',
+    todaAssociation: 'NON-TODA'
+  },
+  {
+    name: 'BPLO Licensing Officer',
+    contact: '09666666666',
+    email: 'bplo.tester@gtrams.com',
+    password: 'Password123!',
+    role: 'bplo_staff',
+    address: 'BPLO Licensing Office, Municipal Hall, Gasan, Marinduque',
     todaAssociation: 'NON-TODA'
   },
   {
@@ -29,7 +38,7 @@ const accountsToSeed = [
     contact: '09333333333',
     email: 'todapres.tester@gtrams.com',
     password: 'Password123!',
-    role: 'toda president',
+    role: 'toda_president',
     address: 'Barangay Libtangin, Gasan, Marinduque',
     todaAssociation: 'GASAN CENTRAL TODA'
   },

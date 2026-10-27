@@ -4,7 +4,8 @@ import {
   Sliders, User, Lock, Camera, Save, Loader2, 
   CheckCircle2, AlertCircle, Moon, Sun, Globe, Clock, 
   Wallet, CalendarDays, AlertTriangle, ShieldCheck, 
-  Bell, FileCheck, Shield, ChevronRight, ChevronLeft, X, Search, RefreshCw, Info
+  Bell, FileCheck, Shield, ChevronRight, ChevronLeft, X, Search, RefreshCw, Info,
+  ShieldAlert, Plus, Trash2, Scale
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -15,7 +16,9 @@ const AdminSettings = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
 
-  const [activeTab, setActiveTab] = useState('system');
+  const userRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+  const isSystemAdmin = userRole === 'system admin' || userRole === 'admin' || userRole === 'administrator';
+  const [activeTab, setActiveTab] = useState(isSystemAdmin ? 'system' : 'account');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -33,7 +36,32 @@ const AdminSettings = () => {
     maintenanceMode: false,
     expiryWarningDays: 30,
     requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
-    newDocInput: ''
+    newDocInput: '',
+    violationPolicy: {
+      types: [
+        { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+        { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+        { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true },
+        { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30, isActive: true },
+        { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+        { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30, isActive: true },
+        { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true }
+      ],
+      tiers: {
+        firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning', description: 'Official Warning recorded in municipal database; franchise remains operational.' },
+        secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15, description: 'Temporary suspension of franchise operations and imposition of administrative fine.' },
+        thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Immediate and permanent revocation of MTOP franchise and permit.' },
+        graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Direct revocation regardless of prior offense count due to critical offense severity.' }
+      }
+    }
+  });
+
+  const [newViolationInput, setNewViolationInput] = useState({
+    name: '',
+    severity: 'Medium',
+    isGrave: false,
+    defaultFine: 500,
+    suspensionDays: 15
   });
 
   // Account and security state
@@ -151,7 +179,8 @@ const AdminSettings = () => {
                   maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
                   maintenanceMode: Boolean(d.maintenanceMode),
                   expiryWarningDays: d.expiryWarningDays ?? prev.expiryWarningDays,
-                  requiredDocs: loadedDocs
+                  requiredDocs: loadedDocs,
+                  violationPolicy: d.violationPolicy || prev.violationPolicy
                 };
                 setInitialSystemConfig(newState);
 
@@ -284,6 +313,116 @@ const AdminSettings = () => {
     showToast('Reset document requirements to default standard.', 'success');
   };
 
+  const handleToggleViolationActive = (index) => {
+    setSystemConfig(prev => {
+      const types = [...(prev.violationPolicy?.types || [])];
+      if (types[index]) {
+        types[index] = { ...types[index], isActive: !types[index].isActive };
+      }
+      return {
+        ...prev,
+        violationPolicy: {
+          ...(prev.violationPolicy || {}),
+          types
+        }
+      };
+    });
+  };
+
+  const handleToggleViolationGrave = (index) => {
+    setSystemConfig(prev => {
+      const types = [...(prev.violationPolicy?.types || [])];
+      if (types[index]) {
+        const nextGrave = !types[index].isGrave;
+        types[index] = {
+          ...types[index],
+          isGrave: nextGrave,
+          severity: nextGrave ? 'Grave' : (types[index].severity === 'Grave' ? 'High' : types[index].severity)
+        };
+      }
+      return {
+        ...prev,
+        violationPolicy: {
+          ...(prev.violationPolicy || {}),
+          types
+        }
+      };
+    });
+  };
+
+  const handleRemoveViolation = (index) => {
+    setSystemConfig(prev => {
+      const types = (prev.violationPolicy?.types || []).filter((_, i) => i !== index);
+      return {
+        ...prev,
+        violationPolicy: {
+          ...(prev.violationPolicy || {}),
+          types
+        }
+      };
+    });
+    showToast('Violation type removed from list.', 'info');
+  };
+
+  const handleAddViolation = (e) => {
+    e?.preventDefault();
+    const name = (newViolationInput.name || '').trim();
+    if (!name) {
+      showToast('Please enter a violation name.', 'error');
+      return;
+    }
+    const currentTypes = systemConfig.violationPolicy?.types || [];
+    if (currentTypes.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      showToast('This violation type already exists in policy.', 'error');
+      return;
+    }
+
+    const code = name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').slice(0, 30);
+    const newEntry = {
+      code,
+      name,
+      severity: newViolationInput.isGrave ? 'Grave' : newViolationInput.severity,
+      isGrave: Boolean(newViolationInput.isGrave),
+      defaultFine: Number(newViolationInput.defaultFine) || 500,
+      suspensionDays: Number(newViolationInput.suspensionDays) || 15,
+      isActive: true
+    };
+
+    setSystemConfig(prev => ({
+      ...prev,
+      violationPolicy: {
+        ...(prev.violationPolicy || {}),
+        types: [...(prev.violationPolicy?.types || []), newEntry]
+      }
+    }));
+
+    setNewViolationInput({
+      name: '',
+      severity: 'Medium',
+      isGrave: false,
+      defaultFine: 500,
+      suspensionDays: 15
+    });
+
+    showToast(`Added "${name}" to violations policy.`, 'success');
+  };
+
+  const handleTierConfigChange = (tierName, field, value) => {
+    setSystemConfig(prev => ({
+      ...prev,
+      violationPolicy: {
+        ...(prev.violationPolicy || {}),
+        tiers: {
+          ...(prev.violationPolicy?.tiers || {}),
+          [tierName]: {
+            ...(prev.violationPolicy?.tiers?.[tierName] || {}),
+            [field]: value
+          }
+        }
+      }
+    }));
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -350,7 +489,8 @@ const AdminSettings = () => {
             expiryWarningDays: Number(systemConfig.expiryWarningDays),
             maxUnitsPerOperator: Number(systemConfig.maxUnitsPerOperator) || 2,
             requiredDocs: docsArray,
-            maintenanceMode: Boolean(systemConfig.maintenanceMode)
+            maintenanceMode: Boolean(systemConfig.maintenanceMode),
+            violationPolicy: systemConfig.violationPolicy
           })
         });
 
@@ -530,17 +670,19 @@ const AdminSettings = () => {
         <div className="space-y-6 w-full">
           {/* TAB NAVIGATION PILLS */}
           <div className="flex items-center gap-1.5 p-1 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg w-full sm:w-fit overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('system')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
-                activeTab === 'system'
-                  ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
-                  : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
-              }`}
-            >
-              <Sliders size={15} />
-              <span>System & Platform</span>
-            </button>
+            {isSystemAdmin && (
+              <button
+                onClick={() => setActiveTab('system')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
+                  activeTab === 'system'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
+                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+                }`}
+              >
+                <Sliders size={15} />
+                <span>System & Platform</span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveTab('account')}
@@ -566,21 +708,23 @@ const AdminSettings = () => {
               <span>Preferences & Appearance</span>
             </button>
 
-            <button
-              onClick={() => { setActiveTab('audit'); fetchAuditLogs(1, auditActionFilter, auditSearchQuery); }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
-                activeTab === 'audit'
-                  ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
-                  : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
-              }`}
-            >
-              <Shield size={15} />
-              <span>Audit Trail & Security Logs</span>
-            </button>
+            {isSystemAdmin && (
+              <button
+                onClick={() => { setActiveTab('audit'); fetchAuditLogs(1, auditActionFilter, auditSearchQuery); }}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
+                  activeTab === 'audit'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
+                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+                }`}
+              >
+                <Shield size={15} />
+                <span>Audit Trail & Security Logs</span>
+              </button>
+            )}
           </div>
 
           {/* TAB 1: SYSTEM & PLATFORM CONFIGURATION */}
-          {activeTab === 'system' && (
+          {activeTab === 'system' && isSystemAdmin && (
             <div className="space-y-6">
               {/* Franchise Rules & Validity */}
               <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
@@ -852,6 +996,278 @@ const AdminSettings = () => {
                 </div>
               </div>
 
+              {/* PROGRESSIVE VIOLATION & PENALTY POLICY CONFIGURATION */}
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
+                      <ShieldAlert size={18} />
+                    </div>
+                    <div>
+                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                        Progressive Violation & Penalty Policy
+                      </h2>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        3-Tier Progressive Discipline Engine & Municipal Violation Matrix
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                    <CheckCircle2 size={13} /> Progressive Engine Active
+                  </span>
+                </div>
+
+                {/* 3-Tier Policy Architecture Cards */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-3">
+                    Progressive Sanction Engine Rules
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    {/* 1st Offense */}
+                    <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">Tier 1</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200">
+                            1st Offense
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Official Warning</p>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                          Resulting Status: <span className="font-semibold text-amber-700 dark:text-amber-400">Active - Under Warning</span>. Unit remains authorized to operate while notice is recorded.
+                        </p>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-amber-200/60 dark:border-amber-900/40 text-[10px] font-medium text-amber-800 dark:text-amber-300">
+                        Sanction: Formal Written Warning
+                      </div>
+                    </div>
+
+                    {/* 2nd Offense */}
+                    <div className="p-3.5 rounded-lg border border-orange-200 dark:border-orange-900/40 bg-orange-50/50 dark:bg-orange-950/20 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">Tier 2</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 dark:bg-orange-900/60 text-orange-800 dark:text-orange-200">
+                            2nd Offense
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Fine & Suspension</p>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed mb-2.5">
+                          Resulting Status: <span className="font-semibold text-orange-700 dark:text-orange-400">Suspended</span>. Operations temporarily barred.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div>
+                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Default Fine (₱)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={systemConfig.violationPolicy?.tiers?.secondOffense?.defaultFine ?? 500}
+                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultFine', Number(e.target.value))}
+                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Days Suspended</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="180"
+                              value={systemConfig.violationPolicy?.tiers?.secondOffense?.defaultSuspensionDays ?? 15}
+                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultSuspensionDays', Number(e.target.value))}
+                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-orange-200/60 dark:border-orange-900/40 text-[10px] font-medium text-orange-800 dark:text-orange-300">
+                        Sanction: Temporary Suspension
+                      </div>
+                    </div>
+
+                    {/* 3rd Offense */}
+                    <div className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-bold text-red-800 dark:text-red-300 uppercase tracking-wider">Tier 3</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-200">
+                            3rd Offense
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Franchise Revocation</p>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                          Resulting Status: <span className="font-semibold text-red-700 dark:text-red-400">Revoked</span>. Permanent cancellation of permit; assigned body number returned to municipal roster.
+                        </p>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-red-200/60 dark:border-red-900/40 text-[10px] font-medium text-red-800 dark:text-red-300">
+                        Sanction: Permanent Cancellation
+                      </div>
+                    </div>
+
+                    {/* Grave Violation */}
+                    <div className="p-3.5 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-bold text-rose-900 dark:text-rose-200 uppercase tracking-wider">Direct Rule</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-200 dark:bg-rose-900/80 text-rose-900 dark:text-rose-100">
+                            Grave Violation
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Direct Revocation</p>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                          Resulting Status: <span className="font-semibold text-rose-700 dark:text-rose-400">Revoked</span>. Bypasses 1st and 2nd offense tiers directly due to critical severity (Colorum, endangerment).
+                        </p>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-rose-300/60 dark:border-rose-900/60 text-[10px] font-medium text-rose-900 dark:text-rose-200">
+                        Sanction: Instant Revocation
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Configured Violation Types Table */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
+                      Municipal Violation Types & Classifications ({systemConfig.violationPolicy?.types?.length || 0})
+                    </label>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <table className="w-full text-left border-collapse min-w-[700px] text-xs">
+                      <thead>
+                        <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider font-semibold">
+                          <th className="p-3 pl-4">Violation Name</th>
+                          <th className="p-3">Severity</th>
+                          <th className="p-3 text-center">Direct Revoke (Grave)</th>
+                          <th className="p-3 text-right">Default Fine</th>
+                          <th className="p-3 text-center">Suspension</th>
+                          <th className="p-3 text-center">Status</th>
+                          <th className="p-3 text-center pr-4">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                        {(systemConfig.violationPolicy?.types || []).map((vt, index) => (
+                          <tr key={index} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                            <td className="p-3 pl-4 font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              <p className="font-semibold">{vt.name}</p>
+                              <span className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E]">{vt.code}</span>
+                            </td>
+                            <td className="p-3">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                vt.severity === 'Grave'
+                                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-900/60'
+                                  : vt.severity === 'High'
+                                    ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/40'
+                                    : vt.severity === 'Medium'
+                                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                              }`}>
+                                {vt.severity}
+                              </span>
+                            </td>
+                            <td className="p-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleViolationGrave(index)}
+                                className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+                                  vt.isGrave
+                                    ? 'bg-rose-600 text-white border-rose-600'
+                                    : 'bg-white dark:bg-[#1C1917] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27] hover:border-rose-400'
+                                }`}
+                                title="Click to toggle Grave classification"
+                              >
+                                {vt.isGrave ? 'Yes (Direct Revocation)' : 'No (3-Tier)'}
+                              </button>
+                            </td>
+                            <td className="p-3 text-right font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              ₱{vt.defaultFine?.toLocaleString() || 0}
+                            </td>
+                            <td className="p-3 text-center text-[#6B6761] dark:text-[#A8A29E]">
+                              {vt.suspensionDays || 0} days
+                            </td>
+                            <td className="p-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleViolationActive(index)}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer ${
+                                  vt.isActive !== false
+                                    ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
+                                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                {vt.isActive !== false ? 'Active' : 'Inactive'}
+                              </button>
+                            </td>
+                            <td className="p-3 text-center pr-4">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveViolation(index)}
+                                className="p-1 rounded text-red-600 hover:text-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                                title="Remove violation from policy"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Add New Violation Type Form */}
+                  <div className="mt-4 p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-3 flex items-center gap-1.5">
+                      <Plus size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Add New Municipal Violation Type
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                      <div className="lg:col-span-2">
+                        <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">Violation Name / Description</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Failure to convey student discount"
+                          value={newViolationInput.name}
+                          onChange={(e) => setNewViolationInput(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2.5 py-1.5 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">Severity Level</label>
+                        <select
+                          value={newViolationInput.severity}
+                          onChange={(e) => setNewViolationInput(prev => ({ ...prev, severity: e.target.value }))}
+                          className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2 py-1.5 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                        >
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                          <option value="Grave">Grave (Direct Revoke)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">Default Fine (₱)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={newViolationInput.defaultFine}
+                          onChange={(e) => setNewViolationInput(prev => ({ ...prev, defaultFine: Number(e.target.value) }))}
+                          className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2 py-1.5 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={handleAddViolation}
+                          className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Plus size={14} /> Add Violation
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* SAVE BUTTON FOR SYSTEM CONFIG */}
               <div className="flex justify-end pt-2">
                 <button
@@ -1078,7 +1494,7 @@ const AdminSettings = () => {
           )}
 
           {/* TAB 4: AUDIT TRAIL & SECURITY LOGS */}
-          {activeTab === 'audit' && (
+          {activeTab === 'audit' && isSystemAdmin && (
             <div className="space-y-6">
               <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">

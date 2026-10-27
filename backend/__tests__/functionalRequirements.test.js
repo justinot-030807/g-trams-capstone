@@ -36,6 +36,8 @@ let mongoServer;
 let adminUser, adminToken;
 let operatorUser, operatorToken;
 let presidentUser, presidentToken;
+let bploUser, bploToken;
+let cashierUser, cashierToken;
 
 // ─── SETUP & TEARDOWN ──────────────────────────────────────────────────────────
 
@@ -61,6 +63,34 @@ beforeAll(async () => {
     });
     await adminUser.save();
     adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    // Seed BPLO staff user (for franchise operations)
+    bploUser = new User({
+        name: 'BPLO Staff Maria',
+        address: 'Poblacion, Gasan',
+        contact: 'bplo@gtrams.test',
+        email: 'bplo@gtrams.test',
+        password: 'BploPass123!',
+        role: 'bplo_staff',
+        isVerified: true,
+        isActive: true
+    });
+    await bploUser.save();
+    bploToken = jwt.sign({ id: bploUser._id, role: bploUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    // Seed Cashier user (for treasury payment collection)
+    cashierUser = new User({
+        name: 'Municipal Cashier Elena',
+        address: 'Poblacion, Gasan',
+        contact: 'cashier@gtrams.test',
+        email: 'cashier@gtrams.test',
+        password: 'CashierPass123!',
+        role: 'cashier',
+        isVerified: true,
+        isActive: true
+    });
+    await cashierUser.save();
+    cashierToken = jwt.sign({ id: cashierUser._id, role: cashierUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Seed operator user
     operatorUser = new User({
@@ -125,6 +155,7 @@ const createTestFranchise = async (overrides = {}) => {
         cedulaAddress: 'Gasan, Marinduque',
         cedulaSerialNo: '123456',
         status: 'Pending',
+        paymentStatus: 'Paid',
         applicationType: 'New',
         isArchived: false
     };
@@ -466,7 +497,7 @@ describe('Module 3: Manage Account Profile', () => {
 
 describe('Module 4: Submit TODA Records', () => {
 
-    it('M4-01: Admin should view all TODA submissions', async () => {
+    it('M4-01: BPLO Staff should view all TODA submissions', async () => {
         // Seed a submission directly
         await TodaSubmission.create({
             submittedBy: presidentUser._id,
@@ -478,15 +509,21 @@ describe('Module 4: Submit TODA Records', () => {
 
         const res = await request(app)
             .get('/api/v1/toda/submissions')
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${bploToken}`);
 
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body)).toBe(true);
         expect(res.body.length).toBeGreaterThanOrEqual(1);
         expect(res.body[0].presidentName).toBe('Pres. Carlos Santos');
+
+        // Verify System Admin is blocked from viewing BPLO submissions
+        const adminRes = await request(app)
+            .get('/api/v1/toda/submissions')
+            .set('Authorization', `Bearer ${adminToken}`);
+        expect(adminRes.status).toBe(403);
     });
 
-    it('M4-02: Admin should approve a TODA submission', async () => {
+    it('M4-02: BPLO Staff should approve a TODA submission', async () => {
         const submission = await TodaSubmission.create({
             submittedBy: presidentUser._id,
             presidentName: presidentUser.name,
@@ -497,13 +534,13 @@ describe('Module 4: Submit TODA Records', () => {
 
         const res = await request(app)
             .put(`/api/v1/toda/approve/${submission._id}`)
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${bploToken}`);
 
         expect(res.status).toBe(200);
         expect(res.body.submission.status).toBe('Approved');
     });
 
-    it('M4-03: Operator should NOT access admin-only submissions endpoint', async () => {
+    it('M4-03: Operator should NOT access admin/staff submissions endpoint', async () => {
         const res = await request(app)
             .get('/api/v1/toda/submissions')
             .set('Authorization', `Bearer ${operatorToken}`);
@@ -533,7 +570,7 @@ describe('Module 4: Submit TODA Records', () => {
         const fakeId = new mongoose.Types.ObjectId();
         const res = await request(app)
             .put(`/api/v1/toda/approve/${fakeId}`)
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${bploToken}`);
 
         expect(res.status).toBe(404);
     });
@@ -612,12 +649,19 @@ describe('Module 5: Apply and Renew Franchise Applications', () => {
         expect(res.body.message).toContain('already registered');
     });
 
-    it('M5-03: Admin should approve franchise (Pending → For Signing)', async () => {
-        const franchise = await createTestFranchise({ status: 'Pending' });
+    it('M5-03: BPLO Staff should approve franchise (Pending → For Signing)', async () => {
+        const franchise = await createTestFranchise({ status: 'Pending', paymentStatus: 'Paid' });
+
+        // System Admin should be blocked by RBAC
+        const adminRes = await request(app)
+            .put(`/api/v1/franchises/${franchise._id}/status`)
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ status: 'For Signing' });
+        expect(adminRes.status).toBe(403);
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/status`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({ status: 'For Signing' });
 
         expect(res.status).toBe(200);
@@ -625,24 +669,24 @@ describe('Module 5: Apply and Renew Franchise Applications', () => {
         expect(res.body.approvalDate).toBeDefined();
     });
 
-    it('M5-04: Admin should advance status (For Signing → Ready for Pickup)', async () => {
-        const franchise = await createTestFranchise({ status: 'For Signing', approvalDate: new Date() });
+    it('M5-04: BPLO Staff should advance status (For Signing → Ready for Pickup)', async () => {
+        const franchise = await createTestFranchise({ status: 'For Signing', approvalDate: new Date(), paymentStatus: 'Paid' });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/status`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({ status: 'Ready for Pickup' });
 
         expect(res.status).toBe(200);
         expect(res.body.status).toBe('Ready for Pickup');
     });
 
-    it('M5-05: Admin should activate franchise (Ready for Pickup → Active)', async () => {
-        const franchise = await createTestFranchise({ status: 'Ready for Pickup', approvalDate: new Date() });
+    it('M5-05: BPLO Staff should activate franchise (Ready for Pickup → Active)', async () => {
+        const franchise = await createTestFranchise({ status: 'Ready for Pickup', approvalDate: new Date(), paymentStatus: 'Paid' });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/status`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({ status: 'Active' });
 
         expect(res.status).toBe(200);
@@ -768,12 +812,13 @@ describe('Module 6: Retrieve Franchise & MTOP Certificate Details', () => {
         const franchise = await createTestFranchise({
             status: 'For Signing',
             plateNo: 'NOTIF-STUB-001',
-            approvalDate: new Date()
+            approvalDate: new Date(),
+            paymentStatus: 'Paid'
         });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/status`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({ status: 'Ready for Pickup' });
 
         expect(res.status).toBe(200);
@@ -789,14 +834,14 @@ describe('Module 6: Retrieve Franchise & MTOP Certificate Details', () => {
 
 describe('Module 7: Generate System Reports', () => {
 
-    it('M7-01: Admin should generate franchise reports with summary analytics', async () => {
+    it('M7-01: BPLO Staff should generate franchise reports with summary analytics', async () => {
         await createTestFranchise({ status: 'Active', plateNo: 'RPT-001', todaName: 'BATODA' });
         await createTestFranchise({ status: 'Pending', plateNo: 'RPT-002', todaName: 'BATODA' });
         await createTestFranchise({ status: 'Revoked', plateNo: 'RPT-003', todaName: 'GATODA' });
 
         const res = await request(app)
             .get('/api/v1/franchises/reports')
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${bploToken}`);
 
         expect(res.status).toBe(200);
         expect(res.body.summary).toBeDefined();
@@ -809,13 +854,13 @@ describe('Module 7: Generate System Reports', () => {
         expect(res.body.summary.todaMap['GATODA']).toBe(1);
     });
 
-    it('M7-02: Admin should filter reports by status', async () => {
+    it('M7-02: BPLO Staff should filter reports by status', async () => {
         await createTestFranchise({ status: 'Active', plateNo: 'FILTER-001' });
         await createTestFranchise({ status: 'Pending', plateNo: 'FILTER-002' });
 
         const res = await request(app)
             .get('/api/v1/franchises/reports?status=Active')
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${bploToken}`);
 
         expect(res.status).toBe(200);
         expect(res.body.summary.total).toBe(1);
@@ -823,26 +868,26 @@ describe('Module 7: Generate System Reports', () => {
         expect(res.body.data.every(f => f.status === 'Active')).toBe(true);
     });
 
-    it('M7-03: Admin should filter reports by TODA name', async () => {
+    it('M7-03: BPLO Staff should filter reports by TODA name', async () => {
         await createTestFranchise({ status: 'Active', plateNo: 'TODA-FILTER-001', todaName: 'BATODA' });
         await createTestFranchise({ status: 'Active', plateNo: 'TODA-FILTER-002', todaName: 'GATODA' });
 
         const res = await request(app)
             .get('/api/v1/franchises/reports?todaName=BATODA')
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${bploToken}`);
 
         expect(res.status).toBe(200);
         expect(res.body.data.every(f => f.todaName === 'BATODA')).toBe(true);
     });
 
-    it('M7-04: Admin should view paginated franchise masterlist', async () => {
+    it('M7-04: BPLO Staff should view paginated franchise masterlist', async () => {
         for (let i = 0; i < 5; i++) {
             await createTestFranchise({ status: 'Active', plateNo: `PAGE-${i}` });
         }
 
         const res = await request(app)
             .get('/api/v1/franchises?page=1&limit=3')
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${bploToken}`);
 
         expect(res.status).toBe(200);
         expect(res.body.data.length).toBe(3);
@@ -852,12 +897,16 @@ describe('Module 7: Generate System Reports', () => {
         expect(res.body.pagination.hasNextPage).toBe(true);
     });
 
-    it('M7-05: Operator should NOT access admin reports endpoint', async () => {
-        const res = await request(app)
+    it('M7-05: Operator and System Admin should NOT access BPLO reports endpoint', async () => {
+        const opRes = await request(app)
             .get('/api/v1/franchises/reports')
             .set('Authorization', `Bearer ${operatorToken}`);
+        expect(opRes.status).toBe(403);
 
-        expect(res.status).toBe(403);
+        const adminRes = await request(app)
+            .get('/api/v1/franchises/reports')
+            .set('Authorization', `Bearer ${adminToken}`);
+        expect(adminRes.status).toBe(403);
     });
 
     it('M7-06: Admin should view user list with fleet unit counts', async () => {
@@ -923,12 +972,12 @@ describe('Module 8: Manage Franchise Cancellation and Revocation', () => {
         expect(res.body.message).toContain('pending or unreleased');
     });
 
-    it('M8-04: Admin should revoke an active franchise with violation reason', async () => {
+    it('M8-04: BPLO Staff should revoke an active franchise with violation reason', async () => {
         const franchise = await createTestFranchise({ status: 'Active', plateNo: 'REVOKE-001' });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/revoke`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({ cancelReason: 'Violation: Expired registration' });
 
         expect(res.status).toBe(200);
@@ -936,19 +985,19 @@ describe('Module 8: Manage Franchise Cancellation and Revocation', () => {
         expect(res.body.franchise.cancelReason).toBe('Violation: Expired registration');
     });
 
-    it('M8-05: Admin should revoke with default reason when none provided', async () => {
+    it('M8-05: BPLO Staff should revoke with default reason when none provided', async () => {
         const franchise = await createTestFranchise({ status: 'Active', plateNo: 'REVOKE-DEFAULT-001' });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/revoke`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({});
 
         expect(res.status).toBe(200);
         expect(res.body.franchise.cancelReason).toBe('Revoked by Admin due to violation');
     });
 
-    it('M8-06: Operator should NOT revoke a franchise (admin only)', async () => {
+    it('M8-06: Operator should NOT revoke a franchise (admin/staff only)', async () => {
         const franchise = await createTestFranchise({ status: 'Active', plateNo: 'REVOKE-UNAUTH-001' });
 
         const res = await request(app)
@@ -986,19 +1035,19 @@ describe('Module 8: Manage Franchise Cancellation and Revocation', () => {
         await User.deleteOne({ _id: otherOp._id });
     });
 
-    it('M8-08: Admin should archive a franchise', async () => {
+    it('M8-08: BPLO Staff should archive a franchise', async () => {
         const franchise = await createTestFranchise({ status: 'Expired', plateNo: 'ARCHIVE-001' });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/archive`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({ isArchived: true });
 
         expect(res.status).toBe(200);
         expect(res.body.franchise.isArchived).toBe(true);
     });
 
-    it('M8-09: Admin should restore an archived franchise', async () => {
+    it('M8-09: BPLO Staff should restore an archived franchise', async () => {
         const franchise = await createTestFranchise({
             status: 'Expired',
             plateNo: 'RESTORE-001',
@@ -1008,7 +1057,7 @@ describe('Module 8: Manage Franchise Cancellation and Revocation', () => {
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/archive`)
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${bploToken}`)
             .send({ isArchived: false });
 
         expect(res.status).toBe(200);

@@ -40,8 +40,8 @@ afterEach(async () => {
 });
 
 describe('Security and Edge Case Test Suite', () => {
-  let adminToken, operatorToken, operator2Token, todaPresidentToken;
-  let adminId, operatorId, operator2Id, todaPresidentId;
+  let adminToken, operatorToken, operator2Token, todaPresidentToken, bploToken;
+  let adminId, operatorId, operator2Id, todaPresidentId, bploId;
 
   beforeEach(async () => {
     // Setup users
@@ -57,6 +57,19 @@ describe('Security and Edge Case Test Suite', () => {
     });
     adminId = admin._id;
     adminToken = createToken(admin);
+
+    const bplo = await User.create({
+      name: 'BPLO Staff User',
+      contact: '09123456784',
+      email: 'bplo@example.com',
+      password: 'password123',
+      role: 'bplo_staff',
+      address: 'BPLO Office',
+      isVerified: true,
+      isActive: true
+    });
+    bploId = bplo._id;
+    bploToken = createToken(bplo);
 
     const operator = await User.create({
       name: 'Operator One',
@@ -218,7 +231,7 @@ describe('Security and Edge Case Test Suite', () => {
     it('Query params with injection should be handled', async () => {
       const res = await request(app)
         .get('/api/v1/franchises?status[$gt]=')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Authorization', `Bearer ${bploToken}`);
       expect([200, 400]).toContain(res.status);
     });
   });
@@ -293,16 +306,24 @@ describe('Security and Edge Case Test Suite', () => {
     it('GET invalid ID should return 400 or 404', async () => {
       const res = await request(app)
         .get('/api/v1/franchises/INVALID_ID')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Authorization', `Bearer ${bploToken}`);
       expect([400, 404, 500]).toContain(res.status);
     });
 
     it('PUT invalid ID should return 400 or 404', async () => {
       const res = await request(app)
         .put('/api/v1/franchises/not-a-valid-id/status')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${bploToken}`)
         .send({ status: 'Active' });
       expect([400, 404, 500]).toContain(res.status);
+    });
+
+    it('System Admin should be strictly forbidden from updating franchise status (RBAC 403)', async () => {
+      const res = await request(app)
+        .put('/api/v1/franchises/not-a-valid-id/status')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'Active' });
+      expect(res.status).toBe(403);
     });
   });
 

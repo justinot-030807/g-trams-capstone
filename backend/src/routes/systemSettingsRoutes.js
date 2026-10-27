@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
-const { getSettings, updateSettings } = require('../controllers/systemSettingsController');
+const { getServerTime, getSettings, updateSettings, getSystemHealth } = require('../controllers/systemSettingsController');
 
+router.get('/time', getServerTime);
 router.get('/', getSettings);
-router.put('/', protect, authorize('admin', 'administrator'), updateSettings);
+router.get('/health', protect, authorize('system_admin', 'admin'), getSystemHealth);
+router.put('/', protect, authorize('system_admin', 'admin'), updateSettings);
 
 module.exports = router;

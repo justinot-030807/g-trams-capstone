@@ -20,6 +20,7 @@ import OperatorGuideModal from '../../components/operator/OperatorGuideModal';
 import LanguagePreferenceModal from '../../components/operator/LanguagePreferenceModal';
 import FeedbackModal from '../../components/common/FeedbackModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
+import RequestCancellationModal from '../../components/operator/RequestCancellationModal';
 import { useNotifications } from '../../context/NotificationContext';
 import { 
   getNotificationVisuals, 
@@ -27,6 +28,7 @@ import {
   renderRichNotificationMessage 
 } from '../../utils/notificationUtils';
 import { formatZoneLabel } from '../../utils/constants';
+import { getServerNow, calculateDaysRemaining as calcServerDaysRemaining, recordServerTimeFromResponse } from '../../utils/serverTime';
 
 const CANCEL_REASONS = [
   "Need to correct vehicle or tricycle details",
@@ -83,6 +85,9 @@ const OperatorDashboard = () => {
     isSubmitting: false
   });
 
+  // Module 8: Voluntary Franchise Cancellation modal state
+  const [voluntaryCancelTarget, setVoluntaryCancelTarget] = useState(null);
+
   const [feedbackModal, setFeedbackModal] = useState({
     isOpen: false,
     type: 'success',
@@ -118,11 +123,19 @@ const OperatorDashboard = () => {
 
   const calculateDaysRemaining = (unit) => {
     if (!unit) return null;
+    // Prefer authoritative daysRemaining supplied directly by the server
+    if (typeof unit === 'object' && unit.daysRemaining !== undefined && unit.daysRemaining !== null) {
+      return unit.daysRemaining;
+    }
+    // Prefer authoritative expiryDate from server
+    if (typeof unit === 'object' && unit.expiryDate) {
+      return calcServerDaysRemaining(unit.expiryDate);
+    }
     const dateToUse = typeof unit === 'object' ? (unit.approvalDate || unit.dateApplied) : unit;
     if (!dateToUse) return null;
     const expDate = new Date(dateToUse);
     expDate.setFullYear(expDate.getFullYear() + 1);
-    const today = new Date();
+    const today = getServerNow();
     const diffTime = expDate.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
@@ -161,6 +174,7 @@ const OperatorDashboard = () => {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
+        recordServerTimeFromResponse(response);
         const data = await response.json();
         const list = Array.isArray(data) ? data : [];
         setFranchises(list);
@@ -248,12 +262,18 @@ const OperatorDashboard = () => {
 
   const getExpirationDate = (unit) => {
     if (!unit) return 'N/A';
+    const locale = language === 'fil' ? 'tl-PH' : 'en-US';
+    if (typeof unit === 'object' && unit.expiryDate) {
+      const d = new Date(unit.expiryDate);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString(locale, { timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+    }
     const dateToUse = typeof unit === 'object' ? (unit.approvalDate || unit.dateApplied) : unit;
     if (!dateToUse) return 'N/A';
     const date = new Date(dateToUse);
     date.setFullYear(date.getFullYear() + 1); 
-    const locale = language === 'fil' ? 'tl-PH' : 'en-US';
-    return date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
+    return date.toLocaleDateString(locale, { timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   const handleFixIssues = (targetUnit) => {
@@ -378,6 +398,18 @@ const OperatorDashboard = () => {
   const renderApplicationTracker = (status) => {
     if (status === 'Active') return null;
 
+    if (status === 'Cancellation Requested') {
+      return (
+        <div className="mb-4 bg-[#FEF3C7]/60 dark:bg-[#78350F]/20 border border-[#F59E0B]/40 rounded-lg p-3.5 flex items-start gap-2.5">
+          <Clock className="text-[#B45309] dark:text-[#FBBF24] shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-xs font-bold text-[#92400E] dark:text-[#FDE68A]">Voluntary Cancellation Pending Review</p>
+            <p className="text-xs text-[#B45309] dark:text-[#FCD34D] leading-snug mt-0.5">Your formal cancellation request has been submitted to the BPLO Licensing Office. No cashier payment is required.</p>
+          </div>
+        </div>
+      );
+    }
+
     if (status === 'Cancelled') {
       return (
         <div className="mb-4 bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 border border-[#EF4444]/30 rounded-lg p-3.5 flex items-start gap-2.5">
@@ -385,6 +417,48 @@ const OperatorDashboard = () => {
           <div>
             <p className="text-xs font-bold text-[#991B1B] dark:text-[#FCA5A5]">{t('dashboard.attentionTitle', 'Application Needs Attention')}</p>
             <p className="text-xs text-[#B91C1C] dark:text-[#F87171] leading-snug mt-0.5">{t('dashboard.attentionDesc', 'Please review the reason below and click "Fix Issues" to re-submit corrected details.')}</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (status === 'Active - Under Warning') {
+      return (
+        <div className="mb-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-900/60 rounded-lg p-3.5 flex items-start gap-2.5">
+          <AlertTriangle className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-xs font-bold text-amber-900 dark:text-amber-200">1st Offense Notice: Active - Under Warning</p>
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-snug mt-0.5">
+              An official municipal citation warning has been issued. Your tricycle remains authorized to operate, but continued infractions will result in temporary suspension and administrative fines.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (status === 'Suspended') {
+      return (
+        <div className="mb-4 bg-orange-50 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-900/60 rounded-lg p-3.5 flex items-start gap-2.5">
+          <ShieldAlert className="text-orange-700 dark:text-orange-400 shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-xs font-bold text-orange-900 dark:text-orange-200">Franchise Temporarily Suspended (2nd Offense)</p>
+            <p className="text-xs text-orange-800 dark:text-orange-300 leading-snug mt-0.5">
+              Franchise operations are temporarily suspended due to a repeat violation. Please visit the BPLO Licensing Office and settle the administrative fine at the Treasury Cashier to lift this suspension.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (status === 'Revoked') {
+      return (
+        <div className="mb-4 bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-900/60 rounded-lg p-3.5 flex items-start gap-2.5">
+          <ShieldAlert className="text-red-700 dark:text-red-400 shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-xs font-bold text-red-900 dark:text-red-200">Franchise Permanently Revoked</p>
+            <p className="text-xs text-red-800 dark:text-red-300 leading-snug mt-0.5">
+              This Motorized Tricycle Operator's Permit (MTOP) has been revoked by the Municipality of Gasan due to accumulated violations or a grave ordinance infraction.
+            </p>
           </div>
         </div>
       );
@@ -1168,11 +1242,15 @@ const OperatorDashboard = () => {
                       <div className="flex items-start gap-2">
                         <AlertCircle className="text-[#B91C1C] dark:text-[#EF4444] shrink-0 mt-0.5" size={15} />
                         <div className="min-w-0">
-                          <h4 className="text-[#991B1B] dark:text-[#FCA5A5] font-bold text-xs uppercase mb-0.5">Application Needs Correction</h4>
+                          <h4 className="text-[#991B1B] dark:text-[#FCA5A5] font-bold text-xs uppercase mb-0.5">
+                            {unit?.cancellationDetails?.reason ? 'Franchise Voluntarily Cancelled' : 'Application Needs Correction'}
+                          </h4>
                           <p className="text-xs text-[#B91C1C] dark:text-[#F87171] font-medium leading-relaxed">
-                            {unit.cancelReason || 'Application requires correction. Click Fix Issues below.'}
+                            {unit?.cancellationDetails?.reason 
+                              ? `Voluntary cancellation finalized: ${unit.cancellationDetails.reason}${unit.cancellationDetails.remarks ? ` — ${unit.cancellationDetails.remarks}` : ''}`
+                              : (unit.cancelReason || 'Application requires correction. Click Fix Issues below.')}
                           </p>
-                          {unit.rejectedField && (
+                          {unit.rejectedField && !unit?.cancellationDetails?.reason && (
                             <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#FEE2E2] dark:bg-[#7F1D1D]/60 text-[#B91C1C] dark:text-[#FCA5A5] text-[10px] font-bold uppercase tracking-wider">
                               Target Field: {unit.rejectedField}
                             </span>
@@ -1199,8 +1277,29 @@ const OperatorDashboard = () => {
                       title="View Approved MTOP Certificate with Watermark"
                     >
                       <Award size={15} /> 
-                      <span>View E-Copy (Approved MTOP)</span>
+                      <span>View E-Copy</span>
                     </button>
+                    <button 
+                      onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                    >
+                      {t('dashboard.btnViewDetails', 'Details')}
+                    </button>
+                    <button 
+                      onClick={() => setVoluntaryCancelTarget(unit)} 
+                      className="bg-white hover:bg-rose-50 dark:bg-[#1C1917] dark:hover:bg-rose-950/30 text-[#B91C1C] dark:text-[#F87171] border border-rose-200 dark:border-rose-900/60 px-3 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs shrink-0"
+                      title="Request voluntary cancellation of this franchise"
+                    >
+                      <XCircle size={14} />
+                      <span>Request Cancellation</span>
+                    </button>
+                  </div>
+                ) : unit?.status === 'Cancellation Requested' ? (
+                  <div className="flex flex-col sm:flex-row w-full gap-2">
+                    <div className="flex-1 bg-[#FFFBEB] dark:bg-[#451A03]/40 border border-[#FDE68A] dark:border-[#92400E] text-[#B45309] dark:text-[#FBBF24] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs select-none">
+                      <Clock size={15} /> 
+                      <span>Cancellation Under BPLO Review</span>
+                    </div>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
                       className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
@@ -1251,9 +1350,15 @@ const OperatorDashboard = () => {
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  <button onClick={() => handleFixIssues(unit)} className="w-full bg-[#B91C1C] hover:bg-[#991B1B] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs">
-                    <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
-                  </button>
+                  unit?.cancellationDetails?.reason ? (
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs">
+                      {t('dashboard.btnViewDetails', 'View Details')}
+                    </button>
+                  ) : (
+                    <button onClick={() => handleFixIssues(unit)} className="w-full bg-[#B91C1C] hover:bg-[#991B1B] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs">
+                      <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
+                    </button>
+                  )
                 ) : (
                   <div className="flex flex-col sm:flex-row items-center w-full gap-2">
                     <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs">{t('dashboard.btnViewDetails', 'View Details')}</button>
@@ -1289,6 +1394,26 @@ const OperatorDashboard = () => {
           onViewECopy={(unit) => {
             setECopyUnit(unit);
             setIsECopyModalOpen(true);
+          }}
+        />
+      )}
+
+      {/* Module 8: Voluntary Franchise Cancellation Modal */}
+      {voluntaryCancelTarget && (
+        <RequestCancellationModal
+          isOpen={Boolean(voluntaryCancelTarget)}
+          onClose={() => setVoluntaryCancelTarget(null)}
+          unit={voluntaryCancelTarget}
+          onSuccess={() => {
+            fetchMyFranchises();
+            setFeedbackModal({
+              isOpen: true,
+              type: 'success',
+              title: 'Cancellation Request Submitted',
+              message: 'Your voluntary cancellation request and letter have been submitted to BPLO. The status is now "Cancellation Requested" awaiting review.',
+              confirmText: 'OK',
+              onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+            });
           }}
         />
       )}

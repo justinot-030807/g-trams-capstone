@@ -322,31 +322,36 @@ const UserManagement = () => {
   };
 
   const allCount = users.length;
-  const operatorCount = users.filter(u => {
+  const bploStaffCount = users.filter(u => {
     const r = (u.role || '').toLowerCase();
-    return r === 'operator' || !r;
+    return r === 'bplo_staff' || r === 'bplo staff';
+  }).length;
+  const adminCount = users.filter(u => {
+    const r = (u.role || '').toLowerCase();
+    return r === 'system_admin' || r === 'system admin' || r === 'admin' || r === 'administrator';
+  }).length;
+  const cashierCount = users.filter(u => {
+    const r = (u.role || '').toLowerCase();
+    return r === 'cashier';
   }).length;
   const todaPresidentCount = users.filter(u => {
     const r = (u.role || '').toLowerCase();
     return r === 'toda_president' || r === 'toda president';
   }).length;
-  const adminCount = users.filter(u => {
+  const operatorCount = users.filter(u => {
     const r = (u.role || '').toLowerCase();
-    return r === 'admin' || r === 'administrator';
-  }).length;
-  const cashierCount = users.filter(u => {
-    const r = (u.role || '').toLowerCase();
-    return r === 'cashier';
+    return r === 'operator' || (!r && r !== 'bplo_staff' && r !== 'system_admin' && r !== 'cashier');
   }).length;
   const onlineUsersCount = users.filter(u => getActivityStatus(u).isOnline).length;
 
   const filteredUsers = users.filter(user => {
     // Role filter
     const r = (user.role || '').toLowerCase();
-    if (roleFilter === 'operator' && r !== 'operator' && r !== '') return false;
-    if (roleFilter === 'toda_president' && r !== 'toda_president' && r !== 'toda president') return false;
-    if (roleFilter === 'admin' && r !== 'admin' && r !== 'administrator') return false;
+    if (roleFilter === 'bplo_staff' && r !== 'bplo_staff' && r !== 'bplo staff') return false;
+    if (roleFilter === 'admin' && r !== 'system_admin' && r !== 'system admin' && r !== 'admin' && r !== 'administrator') return false;
     if (roleFilter === 'cashier' && r !== 'cashier') return false;
+    if (roleFilter === 'toda_president' && r !== 'toda_president' && r !== 'toda president') return false;
+    if (roleFilter === 'operator' && r !== 'operator' && r !== '') return false;
     if (roleFilter === 'online' && !getActivityStatus(user).isOnline) return false;
 
     // Search query
@@ -458,10 +463,11 @@ const UserManagement = () => {
       <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1 text-xs">
         {[
           { id: 'all', label: `All Users (${allCount})` },
-          { id: 'operator', label: `Operators (${operatorCount})` },
-          { id: 'toda_president', label: `TODA Presidents (${todaPresidentCount})` },
-          { id: 'admin', label: `Administrators (${adminCount})` },
+          { id: 'bplo_staff', label: `BPLO Staff (${bploStaffCount})` },
+          { id: 'admin', label: `System Admin (${adminCount})` },
           { id: 'cashier', label: `Cashiers (${cashierCount})` },
+          { id: 'toda_president', label: `TODA Presidents (${todaPresidentCount})` },
+          { id: 'operator', label: `Operators (${operatorCount})` },
           { id: 'online', label: `Online (${onlineUsersCount})` },
         ].map(tab => (
           <button
@@ -525,7 +531,14 @@ const UserManagement = () => {
                   const unitsCount = user.unitsCount || 0;
                   const isMaxUnits = unitsCount >= 2;
                   const r = (user.role || '').toLowerCase();
-                  const isAdminUser = r === 'admin' || r === 'administrator';
+                  const isAdminUser = r === 'admin' || r === 'administrator' || r === 'system_admin' || r === 'system admin';
+                  const isStaffOrCashier = r === 'bplo_staff' || r === 'bplo staff' || r === 'cashier';
+                  let isSelf = false;
+                  try {
+                    const stored = JSON.parse(localStorage.getItem('user') || '{}');
+                    const myId = localStorage.getItem('userId') || stored._id || stored.id;
+                    if (myId && String(myId) === String(user._id)) isSelf = true;
+                  } catch {}
 
                   return (
                     <tr 
@@ -561,14 +574,21 @@ const UserManagement = () => {
                       {/* Contact & TODA */}
                       <td className="py-3 px-3">
                         <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono">{user.contact}</p>
-                        <p className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 inline-block px-1.5 py-0.5 rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 mt-0.5">
-                          {user.todaAssociation || 'NON-TODA'}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                          <p className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 inline-block px-1.5 py-0.5 rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
+                            {user.todaAssociation || 'NON-TODA'}
+                          </p>
+                          {user.bodyNumber && (
+                            <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                              #{user.bodyNumber}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Units / Fleet (Compact Badge - No Logo) */}
                       <td className="py-3 px-3 text-center">
-                        {isAdminUser ? (
+                        {isAdminUser || isStaffOrCashier ? (
                           <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">—</span>
                         ) : (
                           <button 
@@ -629,9 +649,9 @@ const UserManagement = () => {
 
                       {/* Manage Role */}
                       <td className="py-3 px-3 text-center">
-                        {isAdminUser ? (
+                        {isSelf ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
-                            Administrator
+                            System Admin (You)
                           </span>
                         ) : (
                           <select
@@ -641,8 +661,10 @@ const UserManagement = () => {
                             className="border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg px-2 py-1 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
                           >
                             <option value="operator">Operator</option>
-                            <option value="toda_president">TODA President</option>
+                            <option value="bplo_staff">BPLO Staff</option>
+                            <option value="system_admin">System Admin</option>
                             <option value="cashier">Cashier</option>
+                            <option value="toda_president">TODA President</option>
                           </select>
                         )}
                       </td>
@@ -657,7 +679,7 @@ const UserManagement = () => {
                           <Info size={14} />
                         </button>
 
-                        {isAdminUser ? (
+                        {isSelf ? (
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
                             Protected
                           </span>
@@ -975,11 +997,16 @@ const UserManagement = () => {
               <div className="flex items-start gap-3 p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <Building2 className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5" size={16} />
                 <div className="flex-1">
-                  <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">TODA Association</p>
-                  <div className="mt-0.5">
+                  <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">TODA Association &amp; Assigned Body No.</p>
+                  <div className="mt-0.5 flex items-center gap-2 flex-wrap">
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
                       {selectedUser.todaAssociation || 'NON-TODA'}
                     </span>
+                    {selectedUser.bodyNumber && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                        Body No. #{selectedUser.bodyNumber}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -45,7 +45,7 @@ const SubmitMembers = () => {
   const [detectedToda, setDetectedToda] = useState('');
   const [ocrNotes, setOcrNotes] = useState('');
   const [scanWarning, setScanWarning] = useState('');
-  const [newMemberInput, setNewMemberInput] = useState({ name: '' });
+  const [newMemberInput, setNewMemberInput] = useState({ name: '', bodyNumber: '' });
   const [showAddMemberRow, setShowAddMemberRow] = useState(false);
   const [selectedHistoryOCR, setSelectedHistoryOCR] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -211,14 +211,19 @@ const SubmitMembers = () => {
       showToast('Please enter member full name.', 'error');
       return;
     }
+    const cleanName = newMemberInput.name.trim();
+    const cleanBodyNumber = (newMemberInput.bodyNumber || '').trim().toUpperCase();
     setExtractedRoster(prev => [
       ...prev,
       {
-        name: newMemberInput.name.trim(),
+        name: cleanName,
+        operatorName: cleanName,
+        bodyNumber: cleanBodyNumber,
+        unitNo: cleanBodyNumber,
         confidence: 1.0
       }
     ]);
-    setNewMemberInput({ name: '' });
+    setNewMemberInput({ name: '', bodyNumber: '' });
     setShowAddMemberRow(false);
     showToast('Member added to roster list.', 'success');
   };
@@ -978,12 +983,15 @@ const SubmitMembers = () => {
                               <tr>
                                 <th className="p-2.5 pl-3 w-10">#</th>
                                 <th className="p-2.5">Member Full Name</th>
+                                <th className="p-2.5 w-28">Body No.</th>
                                 <th className="p-2.5 pr-3 text-right w-16">Action</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                               {extractedRoster.map((m, idx) => {
-                                const initials = (m.name || 'M')
+                                const displayName = m.operatorName || m.name || '';
+                                const displayBodyNo = m.bodyNumber || m.unitNo || '';
+                                const initials = (displayName || 'M')
                                   .split(' ')
                                   .filter(Boolean)
                                   .slice(0, 2)
@@ -999,8 +1007,18 @@ const SubmitMembers = () => {
                                         <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center text-[10px] font-bold shrink-0">
                                           {initials}
                                         </span>
-                                        <span>{m.name}</span>
+                                        <span>{displayName}</span>
                                       </div>
+                                    </td>
+                                    <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                      {displayBodyNo ? (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                          <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                          {displayBodyNo}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] italic">Not set</span>
+                                      )}
                                     </td>
                                     <td className="p-2.5 pr-3 text-right">
                                       <button
@@ -1031,19 +1049,26 @@ const SubmitMembers = () => {
                         </div>
 
                         {showAddMemberRow && (
-                          <div className="flex items-center gap-2 pt-1 bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1 bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <input
                               type="text"
                               placeholder="Full Name (e.g. Dela Cruz, Juan A.)"
                               value={newMemberInput.name}
-                              onChange={(e) => setNewMemberInput({ name: e.target.value })}
+                              onChange={(e) => setNewMemberInput(prev => ({ ...prev, name: e.target.value }))}
+                              className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Body No. (e.g. GAS-001)"
+                              value={newMemberInput.bodyNumber}
+                              onChange={(e) => setNewMemberInput(prev => ({ ...prev, bodyNumber: e.target.value.toUpperCase() }))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
                                   handleAddExtractedMember();
                                 }
                               }}
-                              className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                              className="w-full sm:w-36 px-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
                             />
                             <button
                               type="button"
@@ -1374,11 +1399,14 @@ const SubmitMembers = () => {
                   <tr>
                     <th className="p-2.5 pl-3 w-10">#</th>
                     <th className="p-2.5">Certified Member Name</th>
+                    <th className="p-2.5 w-28">Body No.</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                   {(selectedHistoryOCR.extractedMembers || []).map((m, idx) => {
-                    const initials = (m.name || 'M')
+                    const displayName = m.operatorName || m.name || '';
+                    const displayBodyNo = m.bodyNumber || m.unitNo || '';
+                    const initials = (displayName || 'M')
                       .split(' ')
                       .filter(Boolean)
                       .slice(0, 2)
@@ -1394,8 +1422,18 @@ const SubmitMembers = () => {
                             <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center text-[10px] font-bold shrink-0">
                               {initials}
                             </span>
-                            <span>{m.name}</span>
+                            <span>{displayName}</span>
                           </div>
+                        </td>
+                        <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          {displayBodyNo ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                              <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                              {displayBodyNo}
+                            </span>
+                          ) : (
+                            <span className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] italic">Not set</span>
+                          )}
                         </td>
                       </tr>
                     );

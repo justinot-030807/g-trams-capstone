@@ -42,9 +42,9 @@ const initSocket = (server) => {
     // Join personal room
     socket.join(`user_${socket.userId}`);
     
-    // Admins join admin room
-    const role = String(socket.userRole || '').toLowerCase().replace(/_/g, ' ');
-    if (role === 'admin' || role === 'administrator') {
+    // Admins and BPLO Staff join administrative room
+    const role = String(socket.userRole || '').toLowerCase().replace(/[\s-]+/g, '_');
+    if (role === 'admin' || role === 'administrator' || role === 'system_admin' || role === 'bplo_staff') {
       socket.join('admin');
     }
 

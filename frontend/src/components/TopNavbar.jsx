@@ -41,13 +41,16 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
   // Notifications sourced solely from database via context
   const allNotifs = useMemo(() => {
-    const isRoleAdmin = String(role || '').toLowerCase().includes('admin');
-    const isRoleCashier = String(role || '').toLowerCase().includes('cashier');
+    const normalizedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
+    const isRoleSystemAdmin = normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system admin';
+    const isRoleBplo = normalizedRole === 'bplo staff';
+    const isRoleCashier = normalizedRole === 'cashier';
     return (Array.isArray(ctxNotifs) ? ctxNotifs : []).map((n) => {
       let defaultLink = '/operator-dashboard';
-      if (isRoleAdmin) defaultLink = '/franchise-masterlist';
+      if (isRoleSystemAdmin) defaultLink = '/admin-dashboard';
+      if (isRoleBplo) defaultLink = '/bplo-dashboard';
       if (isRoleCashier) defaultLink = '/cashier-dashboard';
-      if (n?.type === 'chat') defaultLink = isRoleAdmin ? '/admin/tickets' : '/operator-dashboard';
+      if (n?.type === 'chat') defaultLink = (isRoleSystemAdmin || isRoleBplo) ? '/admin/tickets' : '/operator-dashboard';
 
       return {
         id: n?._id,
@@ -185,15 +188,18 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
   const getRoleBadge = () => {
     const normalized = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
-    if (normalized === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
-    if (normalized === 'admin' || normalized === 'administrator') return t('nav.roleAdmin', 'ADMINISTRATOR');
+    if (normalized === 'system admin' || normalized === 'system_admin' || normalized === 'admin' || normalized === 'administrator') return t('nav.roleSystemAdmin', 'SYSTEM ADMIN');
+    if (normalized === 'bplo staff' || normalized === 'bplo_staff') return t('nav.roleBploStaff', 'BPLO STAFF');
+    if (normalized === 'toda president' || normalized === 'toda_president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     if (normalized === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
     return t('nav.roleOperator', 'OPERATOR');
   };
 
   const getBreadcrumbTitle = () => {
     const path = location.pathname;
-    if (path === '/admin-dashboard' || path === '/operator-dashboard') return t('nav.dashboard', 'Dashboard');
+    if (path === '/admin-dashboard') return 'IT Dashboard';
+    if (path === '/bplo-dashboard') return 'Operations Dashboard';
+    if (path === '/operator-dashboard') return t('nav.dashboard', 'Dashboard');
     if (path === '/franchise-masterlist') return 'Franchise Masterlist';
     if (path === '/franchise-approval') return 'Approvals Queue';
     if (path === '/manage-revocations') return 'Revocations';
@@ -204,6 +210,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     if (path.startsWith('/renew-franchise')) return 'Renew Franchise';
     if (path === '/submit-members') return t('nav.submitMembers', 'Submit Members');
     if (path === '/admin/settings' || path === '/operator/settings') return t('nav.settings', 'Settings');
+    if (path === '/cashier-dashboard') return 'Cashier Terminal';
+    if (path === '/cashier-settings') return 'Cashier Settings';
     if (path === '/help-support') return t('nav.helpSupport', 'Help & Support');
     return 'G-TRAMS';
   };
@@ -607,7 +615,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   onClick={() => {
                     setIsProfileOpen(false);
                     const normalizedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
-                    if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
+                    if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system admin' || normalizedRole === 'bplo staff') {
                       navigate('/admin/settings');
                     } else if (normalizedRole === 'cashier') {
                       navigate('/cashier-settings');

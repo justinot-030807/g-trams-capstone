@@ -27,6 +27,7 @@ const HelpSupport = lazyRetry(() => import('./pages/operator/HelpSupport'), 'Hel
 
 // Admin Pages (Code-split to isolate large administrative bundles from operator devices)
 const AdminDashboard = lazyRetry(() => import('./pages/admin/AdminDashboard'), 'AdminDashboard');
+const BploDashboard = lazyRetry(() => import('./pages/admin/BploDashboard'), 'BploDashboard');
 const FranchiseMasterlist = lazyRetry(() => import('./pages/admin/FranchiseMasterlist'), 'FranchiseMasterlist');
 const UserManagement = lazyRetry(() => import('./pages/admin/UserManagement'), 'UserManagement');
 const AdminSettings = lazyRetry(() => import('./pages/admin/AdminSettings'), 'AdminSettings');
@@ -48,6 +49,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import PwaInstallBanner from './components/common/PwaInstallBanner';
 import SplashScreen from './components/common/SplashScreen';
 
+import { initServerTimeSync, recordServerTimeFromResponse } from './utils/serverTime';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
 const PageLoader = () => (
@@ -61,7 +63,10 @@ const PageLoader = () => (
 
 const ProfileRedirect = () => {
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
-  if (role === 'admin' || role === 'administrator') {
+  if (role === 'admin' || role === 'administrator' || role === 'system admin') {
+    return <Navigate to="/admin/settings" replace />;
+  }
+  if (role === 'bplo staff') {
     return <Navigate to="/admin/settings" replace />;
   }
   if (role === 'cashier') {
@@ -72,11 +77,13 @@ const ProfileRedirect = () => {
 
 function App() {
   useEffect(() => {
-    // Initial sync of system configuration (maintenance mode, fiscal year, fees)
+    // Initial sync of system configuration and server-authoritative time
     const syncSettings = async () => {
       try {
+        initServerTimeSync(import.meta.env.VITE_API_URL);
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
         if (res.ok) {
+          recordServerTimeFromResponse(res);
           const json = await res.json();
           if (json.data) {
             const d = json.data;
@@ -112,22 +119,26 @@ function App() {
                   <Route path="/maintenance" element={<MaintenanceMode />} />
                   <Route path="/verify/:id" element={<VerifyOperator />} />
 
-                  {/* ADMIN SECURE ROUTES */}
-                  <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-                  <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseMasterlist /></ProtectedRoute>} />
-                  <Route path="/user-management" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
-                  <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
+                  {/* SYSTEM ADMIN SECURE ROUTES (IT Maintenance, Accounts, Telemetry, Policy) */}
+                  <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><AdminDashboard /></ProtectedRoute>} />
+                  <Route path="/user-management" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><UserManagement /></ProtectedRoute>} />
+                  <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminSettings /></ProtectedRoute>} />
                   <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
-                  <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseApproval /></ProtectedRoute>} />
-                  <Route path="/franchise-approval/review/:id" element={<ProtectedRoute allowedRoles={['admin']}><FranchiseReviewPage /></ProtectedRoute>} />
-                  <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['admin']}><ManageRevocations /></ProtectedRoute>} />
-                  <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['admin']}><ValidateTODA /></ProtectedRoute>} />
-                  <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminReports /></ProtectedRoute>} />
-                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['admin']}><AdminTickets /></ProtectedRoute>} />
+                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminTickets /></ProtectedRoute>} />
 
-                  {/* MUNICIPAL CASHIER & TREASURY ROUTES */}
-                  <Route path="/cashier-dashboard" element={<ProtectedRoute allowedRoles={['cashier', 'admin']}><CashierDashboard /></ProtectedRoute>} />
-                  <Route path="/cashier-settings" element={<ProtectedRoute allowedRoles={['cashier', 'admin']}><CashierSettings /></ProtectedRoute>} />
+                  {/* BPLO STAFF SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
+                  <Route path="/bplo-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><BploDashboard /></ProtectedRoute>} />
+                  <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseMasterlist /></ProtectedRoute>} />
+                  <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseApproval /></ProtectedRoute>} />
+                  <Route path="/franchise-approval/review/:id" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseReviewPage /></ProtectedRoute>} />
+                  <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ManageRevocations /></ProtectedRoute>} />
+                  <Route path="/admin/violations" element={<ProtectedRoute allowedRoles={['bplo_staff', 'system_admin', 'admin']}><ManageRevocations /></ProtectedRoute>} />
+                  <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ValidateTODA /></ProtectedRoute>} />
+                  <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['bplo_staff']}><AdminReports /></ProtectedRoute>} />
+
+                  {/* MUNICIPAL CASHIER & TREASURY ROUTES (Isolated Payments & Log OR) */}
+                  <Route path="/cashier-dashboard" element={<ProtectedRoute allowedRoles={['cashier']}><CashierDashboard /></ProtectedRoute>} />
+                  <Route path="/cashier-settings" element={<ProtectedRoute allowedRoles={['cashier']}><CashierSettings /></ProtectedRoute>} />
                   <Route path="/cashier/settings" element={<Navigate to="/cashier-settings" replace />} />
 
                   {/* TODA PRESIDENT SECURE ROUTES */}

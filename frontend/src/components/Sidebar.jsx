@@ -46,20 +46,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   });
 
-  let role = String(localStorage.getItem('role') || 'operator').toLowerCase().trim().replace(/_/g, ' ');
-
-  const adminRoutes = [
-    '/admin-dashboard', '/franchise-masterlist', '/franchise-approval', 
-    '/manage-revocations', '/user-management', '/system-settings', 
-    '/admin/settings', '/validate-toda', '/system-reports', '/admin/tickets'
-  ];
-  if (adminRoutes.includes(location.pathname)) {
-    role = 'admin';
-  }
-
-  const isOperatorOrToda = role === 'operator' || role === 'toda president' || role === 'toda_president';
-  const isCashier = role === 'cashier';
+  const storedRole = String(localStorage.getItem('role') || 'operator').toLowerCase().trim().replace(/_/g, ' ');
+  const isSystemAdmin = storedRole === 'admin' || storedRole === 'administrator' || storedRole === 'system admin';
+  const isBploStaff = storedRole === 'bplo staff';
+  const isOperatorOrToda = storedRole === 'operator' || storedRole === 'toda president';
+  const isCashier = storedRole === 'cashier';
   const hideMobileSidebar = isOperatorOrToda || isCashier;
+  const role = storedRole;
 
   const fetchChatUnreadCount = useCallback(async () => {
     try {
@@ -79,7 +72,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   // Listen for socket real-time chat and notifications
   useEffect(() => {
-    if (role === 'admin' || role === 'administrator') {
+    if (isSystemAdmin || isBploStaff) {
       fetchChatUnreadCount();
 
       const handleUnreadUpdate = (e) => {
@@ -98,11 +91,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         clearInterval(interval);
       };
     }
-  }, [role, fetchChatUnreadCount]);
+  }, [isSystemAdmin, isBploStaff, fetchChatUnreadCount]);
 
   useEffect(() => {
     if (!socket) return;
-    if (role !== 'admin' && role !== 'administrator') return;
+    if (!isSystemAdmin && !isBploStaff) return;
 
     const onChatMessage = () => {
       fetchChatUnreadCount();
@@ -125,7 +118,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       socket.off('chat_read', onChatRead);
       socket.off('notification', onNotification);
     };
-  }, [socket, role, fetchChatUnreadCount]);
+  }, [socket, isSystemAdmin, isBploStaff, fetchChatUnreadCount]);
 
   const prevPathnameRef = useRef(location.pathname);
 
@@ -139,8 +132,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   }, [location.pathname, onClose]);
 
+  // Only BPLO Staff fetches pending franchise queue metrics
   useEffect(() => {
-    if (role === 'admin' || role === 'administrator') {
+    if (isBploStaff) {
       fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/reports`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       })
@@ -152,7 +146,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         })
         .catch(() => {});
     }
-  }, [role]);
+  }, [isBploStaff]);
 
   const todaMenu = [
     { 
@@ -181,61 +175,91 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   ];
 
+  const systemAdminMenu = [
+    { 
+      type: 'link', 
+      name: t('nav.itDashboard', 'IT Dashboard'), 
+      path: '/admin-dashboard', 
+      icon: <LayoutDashboard size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.userManagement', 'User Accounts'), 
+      path: '/user-management', 
+      icon: <Users size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.itSettings', 'System Settings & Policy'), 
+      path: '/admin/settings', 
+      icon: <Settings size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.supportTickets', 'Support & Tickets'), 
+      path: '/admin/tickets', 
+      icon: <HelpCircle size={18} />,
+      badge: chatUnreadCount > 0 ? chatUnreadCount : null
+    }
+  ];
+
+  const bploStaffMenu = [
+    { 
+      type: 'link', 
+      name: t('nav.dashboard', 'Operations Dashboard'), 
+      path: '/bplo-dashboard', 
+      icon: <LayoutDashboard size={18} /> 
+    },
+    {
+      type: 'dropdown',
+      name: 'Franchise Records',
+      id: 'franchises',
+      icon: <Folder size={18} />,
+      badge: pendingCount > 0 ? pendingCount : null,
+      subItems: [
+        { name: 'Masterlist', path: '/franchise-masterlist', icon: <FileText size={16} /> },
+        { 
+          name: 'Approvals Queue', 
+          path: '/franchise-approval', 
+          icon: <FileCheck size={16} />, 
+          badge: pendingCount > 0 ? pendingCount : null 
+        },
+        { name: 'Violations & Sanctions', path: '/manage-revocations', icon: <ShieldAlert size={16} /> }
+      ]
+    },
+    { 
+      type: 'link', 
+      name: 'TODA Management', 
+      path: '/validate-toda', 
+      icon: <Users size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: 'System Reports', 
+      path: '/system-reports', 
+      icon: <Printer size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: 'Support & Inquiries', 
+      path: '/admin/tickets', 
+      icon: <HelpCircle size={18} />,
+      badge: chatUnreadCount > 0 ? chatUnreadCount : null
+    },
+    { 
+      type: 'link', 
+      name: t('nav.settings', 'Settings'), 
+      path: '/admin/settings', 
+      icon: <Settings size={18} /> 
+    }
+  ];
+
   const menuConfig = {
-    'admin': [
-      { 
-        type: 'link', 
-        name: t('nav.dashboard', 'Dashboard'), 
-        path: '/admin-dashboard', 
-        icon: <LayoutDashboard size={18} /> 
-      },
-      {
-        type: 'dropdown',
-        name: 'Franchise Records',
-        id: 'franchises',
-        icon: <Folder size={18} />,
-        badge: pendingCount > 0 ? pendingCount : null,
-        subItems: [
-          { name: 'Masterlist', path: '/franchise-masterlist', icon: <FileText size={16} /> },
-          { 
-            name: 'Approvals Queue', 
-            path: '/franchise-approval', 
-            icon: <FileCheck size={16} />, 
-            badge: pendingCount > 0 ? pendingCount : null 
-          },
-          { name: 'Revocations', path: '/manage-revocations', icon: <ShieldAlert size={16} /> }
-        ]
-      },
-      {
-        type: 'dropdown',
-        name: 'TODA & Accounts',
-        id: 'accounts',
-        icon: <Users size={18} />,
-        subItems: [
-          { name: 'TODA Management', path: '/validate-toda', icon: <Users size={16} /> },
-          { name: 'User Management', path: '/user-management', icon: <User size={16} /> }
-        ]
-      },
-      { 
-        type: 'link', 
-        name: 'System Reports', 
-        path: '/system-reports', 
-        icon: <Printer size={18} /> 
-      },
-      { 
-        type: 'link', 
-        name: 'Live Chat & Support', 
-        path: '/admin/tickets', 
-        icon: <HelpCircle size={18} />,
-        badge: chatUnreadCount > 0 ? chatUnreadCount : null
-      },
-      { 
-        type: 'link', 
-        name: t('nav.settings', 'Settings'), 
-        path: '/admin/settings', 
-        icon: <Settings size={18} /> 
-      }
-    ],
+    'system admin': systemAdminMenu,
+    'admin': systemAdminMenu,
+    'administrator': systemAdminMenu,
+    'bplo staff': bploStaffMenu,
+    'bplo_staff': bploStaffMenu,
     'cashier': [
       { 
         type: 'link', 
@@ -280,11 +304,11 @@ const Sidebar = ({ isOpen, onClose }) => {
     'toda_president': todaMenu
   };
 
-  const activeMenu = menuConfig[role] || menuConfig['operator'];
+  const activeMenu = menuConfig[role] || (isSystemAdmin ? systemAdminMenu : isBploStaff ? bploStaffMenu : menuConfig['operator']);
 
   // Auto-expand active dropdown without collapsing user-opened ones
   useEffect(() => {
-    const currentMenu = menuConfig[role] || menuConfig['operator'];
+    const currentMenu = activeMenu;
     currentMenu.forEach(item => {
       if (item.type === 'dropdown') {
         const isCurrentInside = item.subItems.some(sub => 
@@ -300,7 +324,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
       }
     });
-  }, [location.pathname, role]);
+  }, [location.pathname, activeMenu]);
 
   const toggleSubMenu = (id) => {
     setOpenSubMenus(prev => {
@@ -311,9 +335,10 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const getRoleLabel = () => {
-    if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
-    if (role === 'admin') return t('nav.roleAdmin', 'ADMINISTRATOR');
+    if (role === 'system_admin' || role === 'system admin' || role === 'admin' || role === 'administrator') return t('nav.roleSystemAdmin', 'SYSTEM ADMIN');
+    if (role === 'bplo_staff' || role === 'bplo staff') return t('nav.roleBploStaff', 'BPLO STAFF');
     if (role === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
+    if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     return t('nav.roleOperator', 'OPERATOR');
   };
 

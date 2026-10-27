@@ -283,13 +283,34 @@ async function extractWithGemini(base64Data, mimeType, docType) {
         let prompt = '';
         if (docType === 'orCr' || docType === 'crFile' || docType === 'orFile') {
             prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) Certificate of Registration (CR) and Official Receipt (OR) documents.
-Extract all visible tricycle / motorcycle vehicle information from this document image.
+
+CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
+You must FIRST evaluate whether this image is an actual, genuine, and official Philippine LTO Certificate of Registration (CR) or Official Receipt (OR).
+If the image is:
+- A selfie, face portrait, photograph of a person, group photo, or human body
+- A blank, empty, or plain page/screen
+- A photo of an animal, scenery, food, motorcycle/vehicle photo without official paper, meme, or everyday object
+- An unrelated document (e.g. store receipt, utility bill, diploma, school ID, or non-LTO document)
+- Blurry, completely dark, unreadable, or illegible
+
+YOU MUST IMMEDIATELY REJECT IT by returning ONLY this JSON object:
+{
+  "isValidDocument": false,
+  "isExpectedDocumentType": false,
+  "detectedDocumentType": "Non-document or Invalid Image (Selfie/Photo/Blank/Unrelated)",
+  "message": "Hindi ito valid na opisyal na LTO CR/OR document. Mangyaring mag-upload ng lehitimong kopya."
+}
+
+DO NOT populate or hallucinate vehicle fields if it is not a genuine LTO document.
+
+ONLY if the image is a genuine Philippine LTO CR or OR document, extract all visible vehicle information:
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract any payment amounts, registration fees, or total paid amounts (e.g. PHP 1,068.00).
 - DO NOT extract any signatures, registrant's signatures, or authorized official signatories (e.g. Assistant Secretary, Cashier, Registrar names).
 
 Extract and return ONLY a valid JSON object with these exact keys:
 {
+  "isValidDocument": true,
   "isExpectedDocumentType": true,
   "detectedDocumentType": "LTO Certificate of Registration / Official Receipt",
   "plateNo": "extracted plate number (e.g. L154JX), or null",
@@ -323,7 +344,27 @@ Extract and return ONLY a valid JSON object with these exact keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'license') {
             prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses (Front).
-Carefully inspect this driver's license document image and extract all essential driving credentials.
+
+CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
+You must FIRST evaluate whether this image is an actual, genuine, and official Philippine Land Transportation Office (LTO) Driver's License card (Front).
+If the image is:
+- A personal selfie, face portrait, or photograph of a person (not an actual plastic/paper LTO driver's license card)
+- A blank, empty, or plain paper/screen
+- An everyday photo, pet, food, scenery, or random object
+- An unrelated ID or document (e.g., student ID, employee card, cedula, non-LTO card)
+- Blurry, completely dark, unreadable, or illegible
+
+YOU MUST IMMEDIATELY REJECT IT by returning ONLY this JSON object:
+{
+  "isValidDocument": false,
+  "isExpectedDocumentType": false,
+  "detectedDocumentType": "Non-document or Invalid Image (Selfie/Photo/Blank/Unrelated)",
+  "message": "Hindi ito valid na opisyal na LTO Driver's License. Mangyaring mag-upload ng lehitimong kopya."
+}
+
+DO NOT populate or hallucinate credentials if it is not an actual Driver's License card.
+
+ONLY if this image is a genuine Philippine LTO Driver's License card:
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract blood type (Blood type must NOT be extracted).
 - DO NOT extract height or weight (Too personal / biometrics must NOT be extracted).
@@ -332,6 +373,7 @@ EXCLUSION RULES (CRITICAL):
 
 Extract and return ONLY a valid JSON object with these exact keys:
 {
+  "isValidDocument": true,
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Driver's License (Front)",
   "licenseNo": "extracted license number (format like D01-12-345678, N01-12-345678), or null",
@@ -347,13 +389,23 @@ Extract and return ONLY a valid JSON object with these exact keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'licenseBack') {
             prompt = `You are an expert OCR specialist for Philippine Land Transportation Office (LTO) driver's licenses (Back).
-Carefully inspect the back of this driver's license document image and extract the card serial number.
+
+CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
+If the image is a selfie, blank page, person's photo, or not the back of an official Philippine Driver's License card, reject it:
+{
+  "isValidDocument": false,
+  "isExpectedDocumentType": false,
+  "detectedDocumentType": "Non-document or Invalid Image",
+  "message": "Hindi ito valid na likod ng LTO Driver's License. Mangyaring mag-upload ng lehitimong kopya."
+}
+
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract signatures or signing government officials.
 - DO NOT extract blood type or biometrics.
 
-Extract and return ONLY a valid JSON object with these exact keys:
+ONLY if genuine, extract and return:
 {
+  "isValidDocument": true,
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Driver's License (Back)",
   "serialNo": "extracted card serial number or barcode serial number on the back of the license, or null",
@@ -363,10 +415,19 @@ Extract and return ONLY a valid JSON object with these exact keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'cedula') {
             prompt = `You are an expert OCR specialist for Philippine Community Tax Certificates (Cedula / CTC Individual or Corporate).
-Carefully read and extract all details from this Community Tax Certificate document image.
 
-Extract and return ONLY a valid JSON object with these exact keys:
+CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
+If the image is a selfie, portrait, blank page, personal photo, or not an official Philippine Community Tax Certificate (Cedula), reject it:
 {
+  "isValidDocument": false,
+  "isExpectedDocumentType": false,
+  "detectedDocumentType": "Non-document or Invalid Image",
+  "message": "Hindi ito valid na opisyal na Community Tax Certificate (Cedula). Mangyaring mag-upload ng lehitimong kopya."
+}
+
+ONLY if genuine, extract and return ONLY a valid JSON object with these exact keys:
+{
+  "isValidDocument": true,
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Community Tax Certificate (Cedula)",
   "serialNo": "extracted CTC / Cedula complete serial or certificate number (e.g. CC12012 11793510), or null",
@@ -398,13 +459,23 @@ Extract and return ONLY a valid JSON object with these exact keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'todaEndorsement') {
             prompt = `You are an expert OCR specialist for Tricycle Operators and Drivers Association (TODA) Endorsement Certificates.
-Extract the TODA details from this document image.
+
+CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
+If the image is a selfie, portrait, blank page, or not an official TODA endorsement certificate, reject it:
+{
+  "isValidDocument": false,
+  "isExpectedDocumentType": false,
+  "detectedDocumentType": "Non-document or Invalid Image",
+  "message": "Hindi ito valid na TODA Endorsement Certificate. Mangyaring mag-upload ng lehitimong kopya."
+}
+
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract membership dues, fees, or payment amounts.
 - DO NOT extract president or secretary signatures.
 
-Return ONLY a valid JSON object with these exact keys:
+ONLY if genuine, extract and return:
 {
+  "isValidDocument": true,
   "isExpectedDocumentType": true,
   "detectedDocumentType": "TODA Endorsement Certificate",
   "certNo": "extracted certificate or clearance number, or null",
@@ -415,13 +486,23 @@ Return ONLY a valid JSON object with these exact keys:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         } else if (docType === 'brgyClearance') {
             prompt = `You are an expert OCR specialist for Philippine Barangay Clearances.
-Extract the clearance details from this document image.
+
+CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
+If the image is a selfie, portrait, blank page, or not an official Philippine Barangay Clearance document, reject it:
+{
+  "isValidDocument": false,
+  "isExpectedDocumentType": false,
+  "detectedDocumentType": "Non-document or Invalid Image",
+  "message": "Hindi ito valid na opisyal na Barangay Clearance. Mangyaring mag-upload ng lehitimong kopya."
+}
+
 EXCLUSION RULES (CRITICAL):
 - DO NOT extract clearance fees or payment amounts.
 - DO NOT extract signatures.
 
-Return ONLY a valid JSON object with these exact keys:
+ONLY if genuine, extract and return:
 {
+  "isValidDocument": true,
   "isExpectedDocumentType": true,
   "detectedDocumentType": "Barangay Clearance",
   "clearanceNo": "extracted clearance or control number, or null",
@@ -493,6 +574,15 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
         const parsed = JSON.parse(cleaned);
         console.log(`[DocVerify] Parsed extraction data for ${docType}:`, parsed);
+        if (parsed && (parsed.isValidDocument === false || parsed.isExpectedDocumentType === false)) {
+            console.warn(`[DocVerify] Image rejected by Document Classification Guard for ${docType}:`, parsed.message || parsed.detectedDocumentType);
+            return {
+                isValidDocument: false,
+                isExpectedDocumentType: false,
+                detectedDocumentType: parsed.detectedDocumentType || 'Invalid Image / Non-document',
+                message: parsed.message || 'Hindi ito valid na opisyal na LTO document. Mangyaring mag-upload ng lehitimong kopya.'
+            };
+        }
         return parsed;
     } catch (err) {
         console.error(`[DocVerify] Gemini OCR error for ${docType}:`, err.message);
@@ -883,11 +973,11 @@ async function extractTodaRosterFromDocument(input) {
             documentTitle: "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
             totalMembersDetected: 5,
             members: [
-                { name: "JUAN DELA CRUZ" },
-                { name: "PEDRO S. SANTOS" },
-                { name: "ROBERTO V. REYES" },
-                { name: "MARIO D. BAUTISTA" },
-                { name: "EDGARDO C. RAMOS" }
+                { name: "JUAN DELA CRUZ", operatorName: "JUAN DELA CRUZ", bodyNumber: "01", unitNo: "01" },
+                { name: "PEDRO S. SANTOS", operatorName: "PEDRO S. SANTOS", bodyNumber: "02", unitNo: "02" },
+                { name: "ROBERTO V. REYES", operatorName: "ROBERTO V. REYES", bodyNumber: "03", unitNo: "03" },
+                { name: "MARIO D. BAUTISTA", operatorName: "MARIO D. BAUTISTA", bodyNumber: "04", unitNo: "04" },
+                { name: "EDGARDO C. RAMOS", operatorName: "EDGARDO C. RAMOS", bodyNumber: "05", unitNo: "05" }
             ],
             notes: "Official Accredited TODA Masterlist (Digitized)"
         };
@@ -912,11 +1002,11 @@ async function extractTodaRosterFromDocument(input) {
             documentTitle: "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
             totalMembersDetected: 5,
             members: [
-                { name: "JUAN DELA CRUZ" },
-                { name: "PEDRO S. SANTOS" },
-                { name: "ROBERTO V. REYES" },
-                { name: "MARIO D. BAUTISTA" },
-                { name: "EDGARDO C. RAMOS" }
+                { name: "JUAN DELA CRUZ", operatorName: "JUAN DELA CRUZ", bodyNumber: "01", unitNo: "01" },
+                { name: "PEDRO S. SANTOS", operatorName: "PEDRO S. SANTOS", bodyNumber: "02", unitNo: "02" },
+                { name: "ROBERTO V. REYES", operatorName: "ROBERTO V. REYES", bodyNumber: "03", unitNo: "03" },
+                { name: "MARIO D. BAUTISTA", operatorName: "MARIO D. BAUTISTA", bodyNumber: "04", unitNo: "04" },
+                { name: "EDGARDO C. RAMOS", operatorName: "EDGARDO C. RAMOS", bodyNumber: "05", unitNo: "05" }
             ],
             notes: "Official Accredited TODA Masterlist (Digitized)"
         };
@@ -934,12 +1024,13 @@ async function extractTodaRosterFromDocument(input) {
     try {
         const ai = new GoogleGenAI({ apiKey });
         const prompt = `You are an expert OCR specialist for Philippine Tricycle Operators and Drivers Association (TODA) official masterlists, member rosters, and endorsement sheets.
-Analyze this document image or PDF carefully and extract ONLY the full clean names of each listed member, operator, or driver.
+Analyze this document image or PDF carefully and extract:
+1. Full clean legal name of each listed operator/member.
+2. Assigned Body Number or Unit Number (e.g. "01", "042", "GAS-001", "POB-015").
 
-EXCLUSION RULES (CRITICAL):
-- DO NOT extract unit numbers, body numbers, motor numbers, or plate numbers. Focus ONLY on member names.
+EXCLUSION RULES:
 - DO NOT extract any monetary fees, dues, or payment figures.
-- DO NOT extract general signatures or municipal officer names.
+- DO NOT extract municipal officer signatories.
 
 Return ONLY a valid JSON object matching this schema:
 {
@@ -948,7 +1039,8 @@ Return ONLY a valid JSON object matching this schema:
   "totalMembersDetected": 0,
   "members": [
     {
-      "name": "Full clean name of the member/operator/driver (e.g. JUAN M. DELA CRUZ)"
+      "name": "Full clean name of the member/operator (e.g. JUAN M. DELA CRUZ)",
+      "bodyNumber": "Assigned Body Number or Unit Number (e.g. GAS-001, 01, 042)"
     }
   ],
   "notes": "Short observation regarding image clarity and list format"

@@ -67,11 +67,12 @@ async function run() {
     opTama.role = 'operator';
     opTama.address = 'Barangay I (Poblacion)';
     opTama.todaAssociation = 'POB TODA';
+    opTama.bodyNumber = '01';
     opTama.isVerified = true;
     opTama.isActive = true;
     opTama.authProvider = 'local';
     await opTama.save();
-    console.log(`\n[SETUP TAMA] ${opTama.name} (${opTama.email}) saved. Password: Password123!`);
+    console.log(`\n[SETUP TAMA] ${opTama.name} (${opTama.email}) saved with Body No. 01. Password: Password123!`);
 
     // Clean any existing franchises for Juan Dela Cruz so he has a fresh slate for demo!
     await Franchise.deleteMany({ operator: opTama._id });
@@ -145,25 +146,46 @@ async function run() {
         todaAssociation: 'POB TODA',
         extractedCount: 5,
         extractedMembers: [
-          { name: 'JUAN DELA CRUZ', unitNo: '01', plateNo: '4528-TC', confidence: 0.98 },
-          { name: 'PEDRO SANTOS', unitNo: '02', plateNo: '5678-CD', confidence: 0.98 },
-          { name: 'ROBERTO REYES', unitNo: '03', plateNo: '9012-EF', confidence: 0.95 },
-          { name: 'EDGARDO RAMOS', unitNo: '04', plateNo: '7890-IJ', confidence: 0.95 },
-          { name: 'MARIO BAUTISTA', unitNo: '05', plateNo: '3456-GH', confidence: 0.95 }
+          { name: 'JUAN DELA CRUZ', operatorName: 'JUAN DELA CRUZ', bodyNumber: '01', unitNo: '01', plateNo: '4528-TC', confidence: 0.98 },
+          { name: 'PEDRO SANTOS', operatorName: 'PEDRO SANTOS', bodyNumber: '02', unitNo: '02', plateNo: '5678-CD', confidence: 0.98 },
+          { name: 'ROBERTO REYES', operatorName: 'ROBERTO REYES', bodyNumber: '03', unitNo: '03', plateNo: '9012-EF', confidence: 0.95 },
+          { name: 'EDGARDO RAMOS', operatorName: 'EDGARDO RAMOS', bodyNumber: '04', unitNo: '04', plateNo: '7890-IJ', confidence: 0.95 },
+          { name: 'MARIO BAUTISTA', operatorName: 'MARIO BAUTISTA', bodyNumber: '05', unitNo: '05', plateNo: '3456-GH', confidence: 0.95 }
         ],
         ocrNotes: 'Verified Official TODA Roster'
       });
       await pobRoster.save();
       console.log('Seeded Approved TodaSubmission for POB TODA (Juan Dela Cruz is verified member).');
     } else {
-      // Ensure Juan Dela Cruz is in the members list
-      const hasJuan = pobRoster.extractedMembers.some(m => m.name.includes('JUAN DELA CRUZ'));
-      if (!hasJuan) {
-        pobRoster.extractedMembers.push({ name: 'JUAN DELA CRUZ', unitNo: '01', plateNo: '4528-TC', confidence: 0.98 });
-        await pobRoster.save();
-        console.log('Updated POB TODA roster to include JUAN DELA CRUZ.');
-      }
+      // Ensure Juan Dela Cruz is in the members list with bodyNumber
+      pobRoster.extractedMembers = [
+        { name: 'JUAN DELA CRUZ', operatorName: 'JUAN DELA CRUZ', bodyNumber: '01', unitNo: '01', plateNo: '4528-TC', confidence: 0.98 },
+        { name: 'PEDRO SANTOS', operatorName: 'PEDRO SANTOS', bodyNumber: '02', unitNo: '02', plateNo: '5678-CD', confidence: 0.98 },
+        { name: 'ROBERTO REYES', operatorName: 'ROBERTO REYES', bodyNumber: '03', unitNo: '03', plateNo: '9012-EF', confidence: 0.95 },
+        { name: 'EDGARDO RAMOS', operatorName: 'EDGARDO RAMOS', bodyNumber: '04', unitNo: '04', plateNo: '7890-IJ', confidence: 0.95 },
+        { name: 'MARIO BAUTISTA', operatorName: 'MARIO BAUTISTA', bodyNumber: '05', unitNo: '05', plateNo: '3456-GH', confidence: 0.95 }
+      ];
+      await pobRoster.save();
+      console.log('Updated POB TODA roster with operatorName and bodyNumber.');
     }
+
+    // Also sync into TodaRoster collection for fast indexing
+    const TodaRoster = require('../src/models/todaModel');
+    for (const m of pobRoster.extractedMembers) {
+      await TodaRoster.findOneAndUpdate(
+        { todaAssociation: 'POB TODA', bodyNumber: m.bodyNumber },
+        {
+          todaAssociation: 'POB TODA',
+          operatorName: m.operatorName || m.name,
+          bodyNumber: m.bodyNumber,
+          plateNo: m.plateNo || '',
+          status: 'Active',
+          submissionRef: pobRoster._id
+        },
+        { upsert: true, new: true }
+      );
+    }
+    console.log('Synchronized POB TODA masterlist to TodaRoster collection.');
 
     console.log('\n================ CLEANUP & SETUP COMPLETE ================');
     const finalUsers = await User.find({}, 'name email contact role todaAssociation isVerified');

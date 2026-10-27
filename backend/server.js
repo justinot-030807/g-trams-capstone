@@ -66,8 +66,16 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['X-Server-Time', 'X-Server-Timezone']
 }));
+
+// Server-Authoritative Time Header (Asia/Manila, UTC+8)
+app.use((req, res, next) => {
+    res.setHeader('X-Server-Time', new Date().toISOString());
+    res.setHeader('X-Server-Timezone', 'Asia/Manila');
+    next();
+});
 
 // Body parsing with payload size limits to prevent DOS
 app.use(express.json({ limit: '10mb' }));
@@ -105,6 +113,7 @@ app.use(`${BASE_URI}/notifications`, require('./src/routes/notificationRoutes'))
 app.use(`${BASE_URI}/push`, require('./src/routes/pushRoutes'));
 app.use(`${BASE_URI}/chat`, require('./src/routes/chatRoutes'));
 app.use(`${BASE_URI}/tickets`, require('./src/routes/ticketRoutes'));
+app.use(`${BASE_URI}/violations`, require('./src/routes/violationRoutes'));
 
 // Swagger API Documentation
 const swaggerUi = require('swagger-ui-express');
@@ -130,6 +139,8 @@ initSocket(server);
 // Initialize Cron Jobs
 const { startCleanupJobs } = require('./src/jobs/cleanupJobs');
 startCleanupJobs();
+const { startFranchiseCronJobs } = require('./src/services/cronService');
+startFranchiseCronJobs();
 
 // Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {

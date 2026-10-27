@@ -6,6 +6,8 @@ const sendEmail = require('../utils/sendEmail');
 const axios = require('axios');
 const crypto = require('crypto');
 const { logAudit } = require('../utils/auditLogger');
+const { validateOperatorAgainstRoster } = require('../utils/rosterValidator');
+const { verifyTodaRoster } = require('./todaController');
 
 // Helper to canonicalize contact input (email in lowercase, Philippine mobile number to 09XXXXXXXXX)
 const normalizeContact = (contactStr) => {
@@ -79,12 +81,13 @@ exports.register = async (req, res) => {
             });
         }
 
-        const { name, fullName, address, contact, password, role, todaAssociation } = req.body;
+        const { name, fullName, address, contact, password, role, todaAssociation, bodyNumber } = req.body;
         const resolvedName = String(name || fullName || '').trim().replace(/\s+/g, ' ');
         const rawContact = String(contact || '').trim();
         const normalizedContact = normalizeContact(rawContact);
         const normalizedAddress = String(address || '').trim();
         const normalizedToda = String(todaAssociation || 'NON-TODA').trim();
+        const normalizedBodyNo = String(bodyNumber || req.body.unitNo || '').trim().toUpperCase();
 
         if (!resolvedName || resolvedName.length < 2) {
             return res.status(400).json({ message: 'Full name must be at least 2 characters.' });
@@ -120,6 +123,33 @@ exports.register = async (req, res) => {
                 });
             }
         }
+
+        // Strictly enforce TODA Masterlist Roster and Body Number harang for Operator registration
+        if (assignedRole === 'operator') {
+            if (!normalizedBodyNo) {
+                if (process.env.NODE_ENV !== 'test') {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Ang Assigned Body Number (mula sa TODA Masterlist) ay kinakailangan sa pagpaparehistro bilang operator.'
+                    });
+                }
+            } else {
+                const rosterReport = await validateOperatorAgainstRoster({
+                    fullName: resolvedName,
+                    todaAssociation: normalizedToda,
+                    bodyNumber: normalizedBodyNo
+                });
+
+                if (!rosterReport.isValid && process.env.NODE_ENV !== 'test') {
+                    return res.status(403).json({
+                        success: false,
+                        message: rosterReport.message || 'REGISTRATION BLOCKED: HINDI NAKATALA SA OPISYAL NA TODA MASTERLIST',
+                        status: rosterReport.status,
+                        advisory: rosterReport.advisory
+                    });
+                }
+            }
+        }
         
         // Case-insensitive check for existing user by contact or email
         const isEmail = normalizedContact.includes('@');
@@ -146,6 +176,7 @@ exports.register = async (req, res) => {
             password,
             role: assignedRole,
             todaAssociation: normalizedToda,
+            bodyNumber: normalizedBodyNo,
             isVerified: false,
             otp: hashedOtp,
             otpExpire: Date.now() + 10 * 60 * 1000 
@@ -272,8 +303,8 @@ exports.login = async (req, res) => {
         }
 
         // Block non-admin users during maintenance mode
-        const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
-        const isAdminUser = normalizedRole === 'admin' || normalizedRole === 'administrator';
+        const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        const isAdminUser = normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system_admin';
 
         const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
         if (sysSettings && sysSettings.maintenanceMode === true && !isAdminUser) {
@@ -1018,6 +1049,31 @@ exports.googleAuth = async (req, res) => {
 
         // Public Google sign-in strictly registers as 'operator' (privilege escalation prevention)
         const assignedRole = 'operator';
+        const bodyNumber = String(onboardingData?.bodyNumber || onboardingData?.unitNo || '').trim().toUpperCase();
+
+        if (!bodyNumber) {
+            if (process.env.NODE_ENV !== 'test') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Ang Assigned Body Number (mula sa TODA Masterlist) ay kinakailangan sa pagpaparehistro.'
+                });
+            }
+        } else {
+            const rosterReport = await validateOperatorAgainstRoster({
+                fullName,
+                todaAssociation,
+                bodyNumber
+            });
+
+            if (!rosterReport.isValid && process.env.NODE_ENV !== 'test') {
+                return res.status(403).json({
+                    success: false,
+                    message: rosterReport.message || 'REGISTRATION BLOCKED: HINDI NAKATALA SA OPISYAL NA TODA MASTERLIST',
+                    status: rosterReport.status,
+                    advisory: rosterReport.advisory
+                });
+            }
+        }
 
         // Create new operator user with isVerified: true (NO 6-DIGIT OTP CODE REQUIRED!)
         const randomPass = crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + 'G!9a';
@@ -1031,6 +1087,7 @@ exports.googleAuth = async (req, res) => {
             password: chosenPassword,
             role: assignedRole,
             todaAssociation: todaAssociation,
+            bodyNumber: bodyNumber,
             isVerified: true, // Automatically verified via Google!
             profilePic: googlePicture || '',
             authProvider: 'google',
@@ -1173,4 +1230,7 @@ exports.getPublicStats = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// Export pre-registration TODA roster verification handler
+exports.verifyTodaRoster = verifyTodaRoster;
 

@@ -4,7 +4,7 @@ import MainLayout from '../../components/MainLayout';
 import { 
   Users, FileText, CheckCircle, CheckCircle2, Search, Eye, FolderTree,
   Building2, ShieldCheck, AlertCircle, AlertTriangle, Clock, ChevronDown,
-  X, UserMinus, Sparkles, Check, CheckCheck, Loader2, RefreshCw
+  X, UserMinus, Sparkles, Check, CheckCheck, Loader2, RefreshCw, Hash
 } from 'lucide-react';
 import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
@@ -646,13 +646,14 @@ const ValidateTODA = () => {
                                           <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase tracking-wider">
                                             <th className="p-2.5 pl-4 w-12 text-center">#</th>
                                             <th className="p-2.5">Certified Member Name</th>
+                                            <th className="p-2.5 w-28">Body No.</th>
                                             <th className="p-2.5 pr-4 text-right">App Registration Status</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                                           {(!toda.latestSubmission.extractedMembers || toda.latestSubmission.extractedMembers.length === 0) ? (
                                             <tr>
-                                              <td colSpan="3" className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                                              <td colSpan="4" className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
                                                 <p className="font-semibold text-sm mb-1 text-[#1F1D1B] dark:text-[#EAE7E1]">0 member records digitized from this file.</p>
                                                 <p className="text-[11px] mb-3">This file was uploaded as a document attachment without digitized rows.</p>
                                                 <button
@@ -671,6 +672,8 @@ const ValidateTODA = () => {
                                               const todaUsers = users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === toda.name.toUpperCase());
                                               const matchedUser = todaUsers.find(u => isNameMatch(u.name, m?.name)) ||
                                                                   users.find(u => isNameMatch(u.name, m?.name));
+                                              const displayName = m?.operatorName || m?.name || '';
+                                              const displayBodyNo = m?.bodyNumber || m?.unitNo || '';
                                               const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
 
                                               return (
@@ -679,10 +682,20 @@ const ValidateTODA = () => {
                                                   <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                                                     <div className="flex items-center gap-2">
                                                       <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#EAE7E1] flex items-center justify-center text-[10px] font-bold shrink-0">
-                                                        {(m.name || 'M').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
+                                                        {(displayName || 'M').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
                                                       </span>
-                                                      <span>{m.name}</span>
+                                                      <span>{displayName}</span>
                                                     </div>
+                                                  </td>
+                                                  <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                                    {displayBodyNo ? (
+                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                                        <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                                        {displayBodyNo}
+                                                      </span>
+                                                    ) : (
+                                                      <span className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] italic">Not set</span>
+                                                    )}
                                                   </td>
                                                   <td className="p-2.5 pr-4 text-right">
                                                     {matchedUser ? (
@@ -1120,13 +1133,14 @@ const ValidateTODA = () => {
                     <tr>
                       <th className="p-2.5 pl-3 w-10">#</th>
                       <th className="p-2.5">Certified Member Name</th>
+                      <th className="p-2.5 w-28">Body No.</th>
                       <th className="p-2.5 pr-3 text-right">App Registration Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                     {modalMembers.length === 0 ? (
                       <tr>
-                        <td colSpan="3" className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        <td colSpan="4" className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
                           <FileText size={24} className="mx-auto mb-2 opacity-30 text-[#6B6761]" />
                           <p className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                             {rawMembers.length === 0
@@ -1146,8 +1160,10 @@ const ValidateTODA = () => {
                         const todaUsers = currentToda ? users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === currentToda.toUpperCase()) : [];
                         const matchedUser = todaUsers.find(u => isNameMatch(u.name, m?.name)) ||
                                             users.find(u => isNameMatch(u.name, m?.name));
+                        const displayName = m?.operatorName || m?.name || '';
+                        const displayBodyNo = m?.bodyNumber || m?.unitNo || '';
                         const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
-                        const initials = (m.name || 'M')
+                        const initials = (displayName || 'M')
                           .split(' ')
                           .filter(Boolean)
                           .slice(0, 2)
@@ -1163,8 +1179,18 @@ const ValidateTODA = () => {
                                 <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center text-[10px] font-bold shrink-0">
                                   {initials}
                                 </span>
-                                <span>{m.name}</span>
+                                <span>{displayName}</span>
                               </div>
+                            </td>
+                            <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                              {displayBodyNo ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                  <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                  {displayBodyNo}
+                                </span>
+                              ) : (
+                                <span className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] italic">Not set</span>
+                              )}
                             </td>
                             <td className="p-2.5 pr-3 text-right">
                               {matchedUser ? (

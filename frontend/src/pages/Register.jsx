@@ -18,11 +18,14 @@ import {
   AlertCircle,
   ChevronDown,
   AlertTriangle,
-  Info
+  Info,
+  Hash,
+  ShieldAlert
 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import TermsPolicyModal from '../components/common/TermsPolicyModal';
+import LguAdvisoryModal from '../components/common/LguAdvisoryModal';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
@@ -44,6 +47,7 @@ const Register = () => {
     password: '', 
     confirmPassword: '', 
     todaAssociation: '',
+    bodyNumber: '',
     role: 'operator'
   });
   const [otpCode, setOtpCode] = useState('');
@@ -57,6 +61,13 @@ const Register = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Official LGU Advisory Notice Modal (Registration Harang)
+  const [lguAdvisoryModal, setLguAdvisoryModal] = useState({
+    isOpen: false,
+    advisory: null,
+    message: ''
+  });
 
   // Google Sign-In Streamlined Onboarding
   const [googleOnboardingProfile, setGoogleOnboardingProfile] = useState(incomingGoogle || null);
@@ -72,20 +83,29 @@ const Register = () => {
       return;
     }
 
+    if (!formData.name || !formData.bodyNumber) {
+      setTodaCheckResult({
+        status: 'pending_input',
+        message: 'Punan ang inyong Legal Name at Assigned Body Number upang masuri ang roster status.'
+      });
+      return;
+    }
+
     const timer = setTimeout(async () => {
       setIsCheckingToda(true);
       try {
-        const query = new URLSearchParams({
-          todaName: formData.todaAssociation,
-          name: formData.name || '',
-          barangay: formData.address || ''
-        });
         const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
-        const res = await fetch(`${baseUrl}/api/v1/franchises/check-toda-member?${query.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setTodaCheckResult(data);
-        }
+        const res = await fetch(`${baseUrl}/api/v1/auth/verify-roster`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: formData.name,
+            todaAssociation: formData.todaAssociation,
+            bodyNumber: formData.bodyNumber
+          })
+        });
+        const data = await res.json();
+        setTodaCheckResult(data);
       } catch (e) {
         console.error('TODA check error in Register:', e);
       } finally {
@@ -94,7 +114,7 @@ const Register = () => {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [formData.todaAssociation, formData.name, formData.address]);
+  }, [formData.todaAssociation, formData.name, formData.bodyNumber]);
 
   // Ensure light canvas consistency for auth view
   useEffect(() => {
@@ -173,6 +193,20 @@ const Register = () => {
       return setError('ACCORDING TO MUNICIPAL ORDINANCE, OPERATORS MUST SELECT AN ACCREDITED TODA.');
     }
 
+    if (!formData.bodyNumber || !formData.bodyNumber.trim()) {
+      return setError('MANGYARING ILAGAY ANG INYONG ASSIGNED BODY NUMBER (MULA SA TODA MASTERLIST).');
+    }
+
+    // Pre-check: If client already has unverified roster result, block immediately with LGU Advisory Modal
+    if (todaCheckResult && !todaCheckResult.verified) {
+      setLguAdvisoryModal({
+        isOpen: true,
+        advisory: todaCheckResult.advisory,
+        message: todaCheckResult.message
+      });
+      return setError((todaCheckResult.message || 'REGISTRATION BLOCKED: HINDI NAKATALA SA OPISYAL NA TODA MASTERLIST').toUpperCase());
+    }
+
     // Validate contact format
     if (!isValidContact(formData.contact)) {
       return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
@@ -208,6 +242,7 @@ const Register = () => {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
+      bodyNumber: formData.bodyNumber.trim().toUpperCase(),
       role: 'operator'
     };
 
@@ -224,6 +259,13 @@ const Register = () => {
         setResendCooldown(60);
         setStep(2); 
       } else { 
+        if (response.status === 403 || data.advisory) {
+          setLguAdvisoryModal({
+            isOpen: true,
+            advisory: data.advisory,
+            message: data.message
+          });
+        }
         let errorMsg = data.message || data.error || 'REGISTRATION FAILED.';
         if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
           const detailed = data.errors.map(err => err.message).filter(Boolean).join('. ');
@@ -255,6 +297,7 @@ const Register = () => {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
+      bodyNumber: formData.bodyNumber.trim().toUpperCase(),
       role: 'operator'
     };
 
@@ -497,7 +540,7 @@ const Register = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">TODA</label>
+                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">TODA Association</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
                             <Building2 size={18} />
@@ -528,56 +571,133 @@ const Register = () => {
                       </div>
                     </div>
 
-                    {/* Live TODA Roster & Jurisdiction Feedback */}
+                    {/* Assigned Body Number (Required for Operator Registration) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
+                          Assigned Body Number
+                        </label>
+                        <span className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                          * Required (TODA Roster)
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
+                          <Hash size={18} />
+                        </div>
+                        <input 
+                          type="text" 
+                          name="bodyNumber" 
+                          maxLength="20" 
+                          value={formData.bodyNumber} 
+                          onChange={(e) => {
+                            const val = e.target.value.toUpperCase();
+                            setFormData(prev => ({ ...prev, bodyNumber: val }));
+                            if (error) setError('');
+                          }} 
+                          required 
+                          className={`${inputClasses} font-mono font-bold tracking-wider uppercase`} 
+                          placeholder="hal. GAS-001 o 042" 
+                        />
+                      </div>
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 font-medium">
+                        Ipasok ang opisyal na Body Number na nakatalaga sa inyong unit ayon sa TODA Masterlist.
+                      </p>
+                    </div>
+
+                    {/* Live TODA Roster Verification & Harang Notice */}
                     {formData.todaAssociation && formData.todaAssociation !== 'NON-TODA' && (
                       <div className="text-xs rounded-lg transition-all animate-fadeIn">
                         {isCheckingToda ? (
                           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-800">
                             <Loader2 size={13} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
-                            <span>Checking official {formData.todaAssociation} masterlist...</span>
+                            <span>Kinukumpirma ang kombinasyon sa opisyal na masterlist ng {formData.todaAssociation}...</span>
                           </div>
                         ) : todaCheckResult ? (
                           <div className="space-y-1.5">
-                            {todaCheckResult.jurisdictionStatus === 'mismatch' && (
-                              <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50">
-                                <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                                <div>
-                                  <span className="font-bold">Route Notice: </span>
-                                  <span>{todaCheckResult.jurisdictionWarning || `Barangay "${formData.address}" is outside the official operational routes of ${formData.todaAssociation}.`}</span>
-                                </div>
-                              </div>
-                            )}
-
-                            {todaCheckResult.todaStatus === 'verified_member' ? (
+                            {todaCheckResult.verified ? (
                               <div className="flex items-start gap-2 text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
-                                <CheckCircle2 size={14} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                                <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
                                 <div>
-                                  <span className="font-bold">Verified Member: </span>
-                                  <span>Name <strong>"{todaCheckResult.matchedMember || formData.name}"</strong> is on the official approved roster of {formData.todaAssociation}.</span>
+                                  <span className="font-bold">Verified TODA Member: </span>
+                                  <span>
+                                    Pangalan <strong>"{todaCheckResult.matchedMember || formData.name}"</strong> ay opisyal na nakatala sa <strong>{formData.todaAssociation}</strong> (Body No. <strong>{todaCheckResult.matchedBodyNumber || formData.bodyNumber}</strong>).
+                                  </span>
                                 </div>
                               </div>
-                            ) : todaCheckResult.todaStatus === 'not_in_roster' ? (
-                              <div className="flex items-start gap-2 text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 p-2.5 rounded-lg border border-blue-200 dark:border-blue-900/50">
-                                <Info size={14} className="shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
-                                <div>
-                                  <span className="font-bold">Notice: </span>
-                                  <span>Your name is not currently in the digital roster of {formData.todaAssociation}. You can continue registration, but you will need to upload a <strong>TODA Endorsement Certificate</strong> when applying for a franchise.</span>
+                            ) : todaCheckResult.status === 'wrong_body_number' ? (
+                              <div className="flex items-start justify-between gap-2 text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-lg border border-amber-300 dark:border-amber-800">
+                                <div className="flex items-start gap-2">
+                                  <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                                  <div>
+                                    <span className="font-bold">Body Number Mismatch: </span>
+                                    <span>{todaCheckResult.message}</span>
+                                  </div>
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setLguAdvisoryModal({ isOpen: true, advisory: todaCheckResult.advisory, message: todaCheckResult.message })}
+                                  className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] underline shrink-0 cursor-pointer"
+                                >
+                                  LGU Advisory →
+                                </button>
                               </div>
-                            ) : todaCheckResult.todaStatus === 'pending_name' ? (
-                              <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                                <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
-                                <div>
-                                  <span className="font-bold">Digital Roster on File: </span>
-                                  <span>{formData.todaAssociation} has an approved masterlist. Enter your full name above to verify your membership.</span>
+                            ) : todaCheckResult.status === 'body_number_taken' ? (
+                              <div className="flex items-start justify-between gap-2 text-red-900 dark:text-red-200 bg-red-50 dark:bg-red-950/40 p-2.5 rounded-lg border border-red-300 dark:border-red-800">
+                                <div className="flex items-start gap-2">
+                                  <ShieldAlert size={16} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+                                  <div>
+                                    <span className="font-bold">Body Number Conflict: </span>
+                                    <span>{todaCheckResult.message}</span>
+                                  </div>
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setLguAdvisoryModal({ isOpen: true, advisory: todaCheckResult.advisory, message: todaCheckResult.message })}
+                                  className="text-[11px] font-bold text-red-700 dark:text-red-400 underline shrink-0 cursor-pointer"
+                                >
+                                  LGU Advisory →
+                                </button>
+                              </div>
+                            ) : todaCheckResult.status === 'not_in_roster' ? (
+                              <div className="flex items-start justify-between gap-2 text-red-900 dark:text-red-200 bg-red-50 dark:bg-red-950/40 p-2.5 rounded-lg border border-red-300 dark:border-red-800">
+                                <div className="flex items-start gap-2">
+                                  <ShieldAlert size={16} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+                                  <div>
+                                    <span className="font-bold">Registration Harang: </span>
+                                    <span>Hindi nakatala ang kombinasyon ng pangalan at Body Number sa masterlist ng {formData.todaAssociation}.</span>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setLguAdvisoryModal({ isOpen: true, advisory: todaCheckResult.advisory, message: todaCheckResult.message })}
+                                  className="text-[11px] font-bold text-red-700 dark:text-red-400 underline shrink-0 cursor-pointer"
+                                >
+                                  Basahin ang Advisory →
+                                </button>
+                              </div>
+                            ) : todaCheckResult.status === 'no_roster_on_file' ? (
+                              <div className="flex items-start justify-between gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <div className="flex items-start gap-2">
+                                  <Info size={16} className="shrink-0 mt-0.5 text-slate-500" />
+                                  <div>
+                                    <span className="font-bold">Pending Roster: </span>
+                                    <span>{todaCheckResult.message}</span>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setLguAdvisoryModal({ isOpen: true, advisory: todaCheckResult.advisory, message: todaCheckResult.message })}
+                                  className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] underline shrink-0 cursor-pointer"
+                                >
+                                  Advisory →
+                                </button>
                               </div>
                             ) : (
-                              <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                                <Info size={14} className="shrink-0 mt-0.5 text-slate-500" />
+                              <div className="flex items-start gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <Info size={16} className="shrink-0 mt-0.5 text-slate-500" />
                                 <div>
-                                  <span className="font-bold">Status: </span>
-                                  <span>No digital roster on file for {formData.todaAssociation}. You can proceed with registration.</span>
+                                  <span>{todaCheckResult.message || `Pakilagay ang inyong legal name at assigned body number para sa ${formData.todaAssociation}.`}</span>
                                 </div>
                               </div>
                             )}
@@ -892,6 +1012,19 @@ const Register = () => {
         onClose={() => setShowTermsModal(false)}
         onAccept={() => setTermsAccepted(true)}
         defaultLang="en"
+      />
+
+      {/* Official LGU Advisory Notice Modal (Mandatory Roster Registration Harang) */}
+      <LguAdvisoryModal
+        isOpen={lguAdvisoryModal.isOpen}
+        onClose={() => setLguAdvisoryModal({ isOpen: false, advisory: null, message: '' })}
+        advisory={lguAdvisoryModal.advisory}
+        message={lguAdvisoryModal.message}
+        applicantData={{
+          fullName: formData.name,
+          todaAssociation: formData.todaAssociation,
+          bodyNumber: formData.bodyNumber
+        }}
       />
 
       {/* SHARED FULL-WIDTH FOOTER */}

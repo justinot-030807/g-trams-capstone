@@ -1,4 +1,19 @@
+const mongoose = require('mongoose');
 const SystemSettings = require('../models/systemSettingsModel');
+const User = require('../models/userModel');
+const Franchise = require('../models/franchiseModel');
+const AuditLog = require('../models/auditLogModel');
+const Ticket = require('../models/ticketModel');
+
+// Get server-authoritative time in Asia/Manila (UTC+8)
+const getServerTime = (req, res) => {
+  res.status(200).json({
+    success: true,
+    serverTime: new Date().toISOString(),
+    timeZone: 'Asia/Manila',
+    timestamp: Date.now()
+  });
+};
 
 // Get system settings
 const getSettings = async (req, res) => {
@@ -26,6 +41,27 @@ const getSettings = async (req, res) => {
       settings.maxUnitsPerOperator = 2;
     }
 
+    if (!settings.violationPolicy || !Array.isArray(settings.violationPolicy.types) || settings.violationPolicy.types.length === 0) {
+      settings.violationPolicy = {
+        types: [
+          { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+          { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+          { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true },
+          { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30, isActive: true },
+          { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+          { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30, isActive: true },
+          { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true }
+        ],
+        tiers: {
+          firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning', description: 'Official Warning recorded in municipal database; franchise remains operational.' },
+          secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15, description: 'Temporary suspension of franchise operations and imposition of administrative fine.' },
+          thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Immediate and permanent revocation of MTOP franchise and permit.' },
+          graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Direct revocation regardless of prior offense count due to critical offense severity.' }
+        }
+      };
+      await settings.save();
+    }
+
     res.status(200).json({ success: true, data: settings });
   } catch (error) {
     console.error('Error fetching system settings:', error);
@@ -48,7 +84,8 @@ const updateSettings = async (req, res) => {
       maxUnitsPerOperator,
       requiredDocs,
       maintenanceMode,
-      maintenanceMessage
+      maintenanceMessage,
+      violationPolicy
     } = req.body;
 
     let settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
@@ -69,6 +106,9 @@ const updateSettings = async (req, res) => {
     if (requiredDocs !== undefined && Array.isArray(requiredDocs)) settings.requiredDocs = requiredDocs;
     if (maintenanceMode !== undefined) settings.maintenanceMode = Boolean(maintenanceMode);
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
+    if (violationPolicy !== undefined && typeof violationPolicy === 'object') {
+      settings.violationPolicy = violationPolicy;
+    }
 
     await settings.save();
 
@@ -86,8 +126,99 @@ const updateSettings = async (req, res) => {
   }
 };
 
+// Get system health & telemetry (System Admin IT maintenance only)
+const getSystemHealth = async (req, res) => {
+  try {
+    const isDbConnected = mongoose.connection.readyState === 1;
+    let dbPingMs = -1;
+
+    if (isDbConnected) {
+      const pingStart = Date.now();
+      try {
+        await mongoose.connection.db.admin().ping();
+        dbPingMs = Date.now() - pingStart;
+      } catch {
+        dbPingMs = -1;
+      }
+    }
+
+    const [userCount, franchiseCount, auditCount, ticketCount, users] = await Promise.all([
+      User.countDocuments().catch(() => 0),
+      Franchise.countDocuments().catch(() => 0),
+      AuditLog.countDocuments().catch(() => 0),
+      Ticket.countDocuments().catch(() => 0),
+      User.find().select('role isActive isVerified').lean().catch(() => [])
+    ]);
+
+    // Role breakdown
+    const roleBreakdown = {
+      system_admin: 0,
+      bplo_staff: 0,
+      cashier: 0,
+      toda_president: 0,
+      operator: 0,
+      driver: 0
+    };
+
+    let activeUsers = 0;
+    let deactivatedUsers = 0;
+
+    users.forEach(u => {
+      const r = String(u.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+      if (r === 'system_admin' || r === 'admin' || r === 'administrator') roleBreakdown.system_admin++;
+      else if (r === 'bplo_staff') roleBreakdown.bplo_staff++;
+      else if (r === 'cashier') roleBreakdown.cashier++;
+      else if (r === 'toda_president') roleBreakdown.toda_president++;
+      else if (r === 'driver') roleBreakdown.driver++;
+      else roleBreakdown.operator++;
+
+      if (u.isActive === false) deactivatedUsers++;
+      else activeUsers++;
+    });
+
+    const mem = process.memoryUsage();
+    const settings = await SystemSettings.findOne().sort({ updatedAt: -1 }).lean().catch(() => null);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        database: {
+          status: isDbConnected ? 'Healthy' : 'Disconnected',
+          connected: isDbConnected,
+          pingMs: dbPingMs,
+          host: mongoose.connection.host || 'MongoDB Atlas'
+        },
+        counts: {
+          users: userCount,
+          franchises: franchiseCount,
+          auditLogs: auditCount,
+          tickets: ticketCount
+        },
+        users: {
+          total: userCount,
+          active: activeUsers,
+          deactivated: deactivatedUsers,
+          roles: roleBreakdown
+        },
+        system: {
+          uptimeSeconds: Math.floor(process.uptime()),
+          nodeVersion: process.version,
+          memoryMb: Math.round(mem.heapUsed / 1024 / 1024),
+          maintenanceMode: Boolean(settings?.maintenanceMode),
+          fiscalYear: settings?.fiscalYear || new Date().getFullYear().toString()
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error in getSystemHealth:', error);
+    res.status(500).json({ success: false, message: 'Server error retrieving system diagnostics' });
+  }
+};
+
 module.exports = {
+  getServerTime,
   getSettings,
-  updateSettings
+  updateSettings,
+  getSystemHealth
 };
 

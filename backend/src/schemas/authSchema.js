@@ -13,6 +13,7 @@ const registerSchema = z.object({
         contact: z.string().trim().min(5, 'Valid email or phone number is required'),
         address: z.string().trim().min(2, 'Valid address is required'),
         todaAssociation: z.string().trim().optional(),
+        bodyNumber: z.string().trim().optional(),
         password: z.string().min(6, 'Password must be at least 6 characters'),
         confirmPassword: z.string().optional(),
         role: z.preprocess(
@@ -34,6 +35,21 @@ const registerSchema = z.object({
         {
             message: 'Full name must be at least 2 characters',
             path: ['name']
+        }
+    )
+});
+
+const verifyRosterSchema = z.object({
+    body: z.object({
+        name: z.string().optional(),
+        fullName: z.string().optional(),
+        todaAssociation: z.string().trim().min(1, 'TODA Association is required'),
+        bodyNumber: z.string().trim().min(1, 'Assigned Body Number is required')
+    }).passthrough().refine(
+        (data) => Boolean((data.name && data.name.trim().length >= 2) || (data.fullName && data.fullName.trim().length >= 2)),
+        {
+            message: 'Full name must be at least 2 characters',
+            path: ['fullName']
         }
     )
 });
@@ -73,6 +89,7 @@ const googleAuthSchema = z.object({
 
 module.exports = {
     registerSchema,
+    verifyRosterSchema,
     verifyOtpSchema,
     loginSchema,
     forgotPasswordSchema,

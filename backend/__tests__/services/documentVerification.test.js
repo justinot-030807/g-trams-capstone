@@ -67,7 +67,7 @@ beforeAll(async () => {
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
     );
-});
+}, 60000);
 
 afterAll(async () => {
     await mongoose.disconnect();

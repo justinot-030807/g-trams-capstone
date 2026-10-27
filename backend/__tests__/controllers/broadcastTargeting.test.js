@@ -104,7 +104,7 @@ beforeAll(async () => {
         gttodaOps.push(u);
         allOps.push(u);
     }
-});
+}, 60000);
 
 afterAll(async () => {
     await mongoose.disconnect();

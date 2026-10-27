@@ -1,7 +1,7 @@
 const Franchise = require('../models/franchiseModel');
 const User = require('../models/userModel');
 const TodaSubmission = require('../models/todaSubmission');
-const cron = require('node-cron');
+const { computeManilaExpiryDate } = require('../utils/phTime');
 const { logAudit } = require('../utils/auditLogger');
 const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
@@ -35,32 +35,6 @@ function buildTodaSearchConditions(todaName) {
     }
     return conditions;
 }
-
-// Auto-archive expired franchises daily at midnight
-cron.schedule('0 0 * * *', async () => {
-    try {
-        console.log('Running Auto-Archive Engine...');
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-        const result = await Franchise.updateMany(
-            { 
-                status: 'Expired', 
-                updatedAt: { $lt: oneYearAgo }, 
-                isArchived: { $ne: true } 
-            },
-            { 
-                $set: { isArchived: true, archivedAt: Date.now() } 
-            }
-        );
-
-        if (result.modifiedCount > 0) {
-            console.log(`Auto-Archived ${result.modifiedCount} expired franchises.`);
-        }
-    } catch (error) {
-        console.error('Error in Auto-Archive Engine:', error);
-    }
-});
 
 const createFranchise = async (req, res) => {
     try {
@@ -440,9 +414,17 @@ const updateFranchiseStatus = async (req, res) => {
         
         const previousStatus = existingFranchise.status;
 
-        // Paid franchises cannot be rejected or cancelled
-        if (status === 'Cancelled' && existingFranchise.paymentStatus === 'Paid') {
+        // Paid pending applications cannot be rejected during the approval pipeline,
+        // but voluntary cancellation of an active franchise (from Cancellation Requested) is permitted.
+        if (status === 'Cancelled' && existingFranchise.paymentStatus === 'Paid' && existingFranchise.status !== 'Cancellation Requested' && !req.body.isVoluntaryCancellation) {
             return res.status(400).json({ message: 'Cannot reject or cancel an application that has already been paid.' });
+        }
+
+        // Strict Pipeline Rule: Cannot advance to For Signing, Ready for Pickup, or Active without Cashier payment
+        if (['For Signing', 'Ready for Pickup', 'Active'].includes(status) && existingFranchise.paymentStatus !== 'Paid') {
+            return res.status(400).json({ 
+                message: `Cannot advance status to '${status}': Official Treasury payment has not been recorded by Cashier.` 
+            });
         }
 
         let targetField = rejectedField || '';
@@ -467,6 +449,14 @@ const updateFranchiseStatus = async (req, res) => {
             rejectedField: targetField
         };
 
+        if (existingFranchise.status === 'Cancellation Requested' && status === 'Cancelled') {
+            updateData['cancellationDetails.reviewedBy'] = req.user._id;
+            updateData['cancellationDetails.reviewedAt'] = new Date();
+            if (req.body.staffNotes) {
+                updateData['cancellationDetails.staffNotes'] = req.body.staffNotes;
+            }
+        }
+
         // NOTE: Do NOT auto-archive cancelled/rejected applications!
         // The operator must see rejection remarks to fix and resubmit their application,
         // and admin must see them in the Rejected queue. Only explicit archiving moves them.
@@ -479,6 +469,11 @@ const updateFranchiseStatus = async (req, res) => {
             updateData.approvalDate = new Date();
         }
 
+        if (status === 'Active') {
+            const baseApproval = updateData.approvalDate || existingFranchise.approvalDate || new Date();
+            updateData.expiryDate = computeManilaExpiryDate(baseApproval);
+        }
+
         const updatedFranchise = await Franchise.findByIdAndUpdate(
             req.params.id,
             updateData,
@@ -489,7 +484,13 @@ const updateFranchiseStatus = async (req, res) => {
             let notifTitle = `Franchise ${status}`;
             let notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has been updated to: ${status}`;
 
-            if (status === 'For Payment') {
+            if (status === 'Cancellation Requested') {
+                notifTitle = 'Franchise Cancellation Requested';
+                notifMessage = `Your voluntary cancellation request for franchise ${updatedFranchise.plateNo} has been submitted to BPLO.`;
+            } else if (status === 'Cancelled' && previousStatus === 'Cancellation Requested') {
+                notifTitle = 'Franchise Formally Cancelled';
+                notifMessage = `Your voluntary cancellation request for franchise ${updatedFranchise.plateNo} has been approved and finalized by BPLO. The franchise is now cancelled.`;
+            } else if (status === 'For Payment') {
                 notifTitle = 'Requirements Approved - For Payment';
                 notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has passed technical review! Please proceed to the Municipal Treasury / Cashier to settle your fee.`;
             } else if (status === 'For Signing') {
@@ -556,6 +557,7 @@ const cancelMyFranchise = async (req, res) => {
         const reason = (req.body.cancelReason || 'Cancelled by operator').trim();
         franchise.status = 'Cancelled';
         franchise.cancelReason = reason;
+        franchise.isArchived = true;
         await franchise.save();
 
         logAudit(req, {
@@ -572,6 +574,242 @@ const cancelMyFranchise = async (req, res) => {
         res.status(200).json(franchise);
     } catch (error) {
         res.status(500).json({ error: 'An internal server error occurred' });
+    }
+};
+
+/**
+ * Request Voluntary Franchise Cancellation (Operator Side)
+ * Status transition: Active -> Cancellation Requested
+ */
+const requestFranchiseCancellation = async (req, res) => {
+    try {
+        const franchise = await Franchise.findById(req.params.id);
+        if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        // Authorization check: User must be the operator
+        if (!franchise.operator || franchise.operator.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'You are not authorized to request cancellation for this franchise.' });
+        }
+
+        // Only Active franchises can undergo voluntary cancellation
+        if (franchise.status !== 'Active') {
+            return res.status(400).json({ 
+                message: `Cannot request voluntary cancellation: Current status is '${franchise.status}'. Only Active franchises can be voluntarily cancelled.` 
+            });
+        }
+
+        const { reason, customReason, remarks } = req.body;
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({ message: 'A valid reason for cancellation is required.' });
+        }
+
+        const files = req.files || {};
+        let letterUrl = '';
+        if (files.cancellationLetter && files.cancellationLetter[0]) {
+            letterUrl = files.cancellationLetter[0].path || files.cancellationLetter[0].secure_url || '';
+        } else if (files.letter && files.letter[0]) {
+            letterUrl = files.letter[0].path || files.letter[0].secure_url || '';
+        } else if (req.body.letterUrl) {
+            letterUrl = req.body.letterUrl;
+        }
+
+        if (!letterUrl) {
+            return res.status(400).json({ message: 'A signed formal cancellation letter or handwritten letter image is required.' });
+        }
+
+        const effectiveReason = reason === 'Other' && customReason ? customReason.trim() : reason.trim();
+        const fullReason = remarks && remarks.trim() ? `${effectiveReason} - ${remarks.trim()}` : effectiveReason;
+
+        franchise.status = 'Cancellation Requested';
+        franchise.cancelReason = fullReason;
+        franchise.evidenceUrl = letterUrl;
+        franchise.cancellationDetails = {
+            reason: reason.trim(),
+            customReason: (customReason || '').trim(),
+            remarks: (remarks || '').trim(),
+            letterUrl: letterUrl,
+            requestedAt: new Date(),
+            reviewedBy: null,
+            reviewedAt: null,
+            staffNotes: '',
+            rejectionReason: ''
+        };
+
+        await franchise.save();
+
+        // Notify BPLO staff members
+        try {
+            const staffUsers = await User.find({ role: { $in: ['bplo_staff', 'admin', 'administrator'] } });
+            for (const staff of staffUsers) {
+                const notif = await Notification.create({
+                    recipient: staff._id,
+                    type: 'status_change',
+                    title: 'Voluntary Cancellation Requested',
+                    message: `Operator ${franchise.fullName} submitted a voluntary cancellation request for franchise ${franchise.plateNo} (${effectiveReason}).`,
+                    relatedFranchise: franchise._id
+                });
+                emitToUser(staff._id.toString(), 'notification', notif);
+            }
+        } catch (notifErr) {
+            console.error('Error notifying staff of cancellation request:', notifErr);
+        }
+
+        // Notify operator of receipt
+        try {
+            const opNotif = await Notification.create({
+                recipient: req.user._id,
+                type: 'status_change',
+                title: 'Cancellation Request Submitted',
+                message: `Your voluntary cancellation request for ${franchise.plateNo} has been received by BPLO. Awaiting staff review.`,
+                relatedFranchise: franchise._id
+            });
+            emitToUser(req.user._id.toString(), 'notification', opNotif);
+        } catch (opNotifErr) {
+            console.error('Error sending confirmation to operator:', opNotifErr);
+        }
+
+        logAudit(req, {
+            action: 'FRANCHISE_CANCELLATION_REQUESTED',
+            targetType: 'Franchise',
+            targetId: req.params.id,
+            details: {
+                plateNo: franchise.plateNo,
+                fullName: franchise.fullName,
+                reason: effectiveReason,
+                remarks: remarks || '',
+                letterUrl
+            }
+        });
+
+        res.status(200).json({
+            message: 'Voluntary cancellation request submitted successfully. It is now queued for BPLO Staff review.',
+            franchise
+        });
+    } catch (error) {
+        console.error('Error requesting franchise cancellation:', error);
+        res.status(500).json({ message: 'An internal server error occurred while submitting cancellation request.' });
+    }
+};
+
+/**
+ * Review and Process Voluntary Franchise Cancellation (BPLO Staff Side)
+ * Status: Cancellation Requested -> Cancelled (Finalize) OR Active (Reject)
+ * CRITICAL: Directly finalizes cancellation without routing to Cashier payment!
+ */
+const processFranchiseCancellation = async (req, res) => {
+    try {
+        const { action, staffNotes, rejectionReason } = req.body;
+        const franchise = await Franchise.findById(req.params.id).populate('operator', 'name contact');
+        if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
+
+        if (franchise.status !== 'Cancellation Requested') {
+            return res.status(400).json({ 
+                message: `Invalid action: Current status is '${franchise.status}'. Only franchises with 'Cancellation Requested' can be processed.` 
+            });
+        }
+
+        if (action === 'finalize' || action === 'approve') {
+            // Finalize cancellation without cashier payment routing
+            franchise.status = 'Cancelled';
+            const reasonDesc = franchise.cancellationDetails?.reason || franchise.cancelReason || 'Voluntary Surrender';
+            franchise.cancelReason = franchise.cancelReason || `Voluntary Cancellation: ${reasonDesc}`;
+            franchise.cancellationDetails.reviewedBy = req.user._id;
+            franchise.cancellationDetails.reviewedAt = new Date();
+            franchise.cancellationDetails.staffNotes = (staffNotes || '').trim();
+            franchise.isArchived = false;
+
+            await franchise.save();
+
+            // Notify operator
+            if (franchise.operator) {
+                const opId = franchise.operator._id || franchise.operator;
+                const notif = await Notification.create({
+                    recipient: opId,
+                    type: 'status_change',
+                    title: 'Franchise Cancelled',
+                    message: `Your voluntary franchise cancellation request for ${franchise.plateNo} has been finalized by BPLO Staff. Your franchise is now officially cancelled.`,
+                    relatedFranchise: franchise._id
+                });
+                emitToUser(String(opId), 'notification', notif);
+                sendPushToUser(opId, {
+                    title: 'Franchise Cancelled',
+                    message: `Your voluntary cancellation for ${franchise.plateNo} has been finalized.`,
+                    url: '/operator-dashboard',
+                    type: 'status_change'
+                }).catch(() => {});
+            }
+
+            logAudit(req, {
+                action: 'FRANCHISE_VOLUNTARILY_CANCELLED_BY_STAFF',
+                targetType: 'Franchise',
+                targetId: req.params.id,
+                details: {
+                    plateNo: franchise.plateNo,
+                    fullName: franchise.fullName,
+                    reason: franchise.cancelReason,
+                    staffNotes: staffNotes || ''
+                }
+            });
+
+            return res.status(200).json({
+                message: 'Franchise cancellation successfully finalized.',
+                franchise
+            });
+        } else if (action === 'reject') {
+            if (!rejectionReason || !rejectionReason.trim()) {
+                return res.status(400).json({ message: 'A rejection reason is required to reject a cancellation request.' });
+            }
+
+            // Restore franchise to Active
+            franchise.status = 'Active';
+            franchise.cancellationDetails.reviewedBy = req.user._id;
+            franchise.cancellationDetails.reviewedAt = new Date();
+            franchise.cancellationDetails.rejectionReason = rejectionReason.trim();
+            franchise.cancellationDetails.staffNotes = (staffNotes || '').trim();
+
+            await franchise.save();
+
+            // Notify operator
+            if (franchise.operator) {
+                const opId = franchise.operator._id || franchise.operator;
+                const notif = await Notification.create({
+                    recipient: opId,
+                    type: 'status_change',
+                    title: 'Cancellation Request Rejected',
+                    message: `Your cancellation request for ${franchise.plateNo} was rejected by BPLO: "${rejectionReason.trim()}". Your franchise remains Active.`,
+                    relatedFranchise: franchise._id
+                });
+                emitToUser(String(opId), 'notification', notif);
+                sendPushToUser(opId, {
+                    title: 'Cancellation Request Rejected',
+                    message: `Your cancellation request for ${franchise.plateNo} was rejected. Franchise remains Active.`,
+                    url: '/operator-dashboard',
+                    type: 'status_change'
+                }).catch(() => {});
+            }
+
+            logAudit(req, {
+                action: 'FRANCHISE_CANCELLATION_REJECTED_BY_STAFF',
+                targetType: 'Franchise',
+                targetId: req.params.id,
+                details: {
+                    plateNo: franchise.plateNo,
+                    fullName: franchise.fullName,
+                    rejectionReason: rejectionReason.trim(),
+                    staffNotes: staffNotes || ''
+                }
+            });
+
+            return res.status(200).json({
+                message: 'Cancellation request rejected. Franchise restored to Active.',
+                franchise
+            });
+        } else {
+            return res.status(400).json({ message: "Invalid action. Must be 'finalize' or 'reject'." });
+        }
+    } catch (error) {
+        console.error('Error processing franchise cancellation:', error);
+        res.status(500).json({ message: 'An internal server error occurred while processing cancellation.' });
     }
 };
 
@@ -703,16 +941,16 @@ const getFranchiseById = async (req, res) => {
         const franchise = await Franchise.findById(req.params.id).populate('operator', 'name address contact');
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
 
-        // IDOR Protection: verify user is owner, admin, or cashier
-        const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
-        const isAdmin = role === 'admin' || role === 'administrator';
+        // IDOR Protection: verify user is owner, bplo_staff, or cashier
+        const role = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        const isBploStaff = role === 'bplo_staff';
         const isCashier = role === 'cashier';
         const isOwner = franchise.operator && (
             (franchise.operator._id && franchise.operator._id.toString() === req.user._id.toString()) ||
             franchise.operator.toString() === req.user._id.toString()
         );
 
-        if (!isAdmin && !isCashier && !isOwner) {
+        if (!isBploStaff && !isCashier && !isOwner) {
             return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to view this franchise record.' });
         }
 
@@ -1073,6 +1311,16 @@ const scanDocument = async (req, res) => {
         }
 
         let extracted = await extractWithGemini(base64Data, mimeType, docType);
+        if (extracted && (extracted.isValidDocument === false || extracted.isExpectedDocumentType === false)) {
+            return res.status(200).json({
+                success: false,
+                isValidDocument: false,
+                fileUrl,
+                docType,
+                message: extracted.message || 'Hindi ito valid na opisyal na LTO document. Mangyaring mag-upload ng lehitimong kopya.'
+            });
+        }
+
         if (!extracted) {
             extracted = getSampleFallbackData(docType);
         }
@@ -1216,6 +1464,8 @@ module.exports = {
     getCashierQueue,
     processCashierPayment,
     scanDocument,
-    checkTodaMemberStatus
+    checkTodaMemberStatus,
+    requestFranchiseCancellation,
+    processFranchiseCancellation
 };
 

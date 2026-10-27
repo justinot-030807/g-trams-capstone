@@ -41,7 +41,7 @@ const protect = async (req, res, next) => {
     }
 };
 
-const normalizeRole = (r) => String(r || '').toLowerCase().trim().replace(/_/g, ' ');
+const normalizeRole = (r) => String(r || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
 
 // Role-based authorization middleware
 const authorize = (...roles) => {
@@ -53,17 +53,36 @@ const authorize = (...roles) => {
         const userRole = normalizeRole(req.user.role);
         const allowedRoles = roles.map(normalizeRole);
 
-        // Admin and administrator are treated interchangeably
-        const isAdminAllowed = allowedRoles.includes('admin') || allowedRoles.includes('administrator');
-        const isUserAdmin = userRole === 'admin' || userRole === 'administrator';
+        // 1. Direct role match
+        let isAuthorized = allowedRoles.includes(userRole);
 
-        // Operator and toda president are treated interchangeably for operator routes
-        const isOperatorAllowed = allowedRoles.includes('operator') || allowedRoles.includes('toda president') || allowedRoles.includes('toda_president');
-        const isUserOperatorOrToda = userRole === 'operator' || userRole === 'toda president' || userRole === 'toda_president';
+        // 2. System Admin alias matching: system_admin, admin, administrator
+        const isUserSysAdmin = userRole === 'system_admin' || userRole === 'admin' || userRole === 'administrator';
+        const isSysAdminAllowed = allowedRoles.some(r => r === 'system_admin' || r === 'admin' || r === 'administrator');
+        if (isUserSysAdmin && isSysAdminAllowed) {
+            isAuthorized = true;
+        }
 
-        const isAuthorized = allowedRoles.includes(userRole) || 
-                             (isAdminAllowed && isUserAdmin) || 
-                             (isOperatorAllowed && isUserOperatorOrToda);
+        // 3. Operator & TODA President alias matching for general operator access
+        const isUserOpOrToda = userRole === 'operator' || userRole === 'toda_president';
+        const isOpAllowed = allowedRoles.includes('operator');
+        if (isUserOpOrToda && isOpAllowed) {
+            isAuthorized = true;
+        }
+
+        // Strict Separation Guard: System Admin CANNOT perform BPLO Staff franchise operations
+        if (allowedRoles.includes('bplo_staff') && isUserSysAdmin && !allowedRoles.includes('system_admin')) {
+            return res.status(403).json({
+                message: 'ACCESS DENIED: System Admin is restricted to IT maintenance and cannot review or approve franchises.'
+            });
+        }
+
+        // Strict Cashier Guard: Only Cashier can execute Cashier operations
+        if (allowedRoles.includes('cashier') && userRole !== 'cashier') {
+            return res.status(403).json({
+                message: 'ACCESS DENIED: Official receipt and payment logging is restricted to Municipal Cashier.'
+            });
+        }
 
         if (!isAuthorized) {
             return res.status(403).json({

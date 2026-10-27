@@ -3,6 +3,6 @@ const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { getAuditLogs } = require('../controllers/auditLogController');
 
-router.get('/', protect, authorize('admin'), getAuditLogs);
+router.get('/', protect, authorize('system_admin', 'admin'), getAuditLogs);
 
 module.exports = router;
