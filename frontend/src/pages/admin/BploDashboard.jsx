@@ -541,8 +541,8 @@ const BploDashboard = () => {
         </div>
       </div>
 
-      {/* Automated SMS Dispatcher Audit Log */}
-      <div className="mt-8">
+      {/* Automated SMS Dispatcher Audit Log (Full Width) */}
+      <div className="mt-8 w-full">
         <SmsDispatcherLog />
       </div>
     </MainLayout>

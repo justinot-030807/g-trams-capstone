@@ -403,11 +403,11 @@ const SystemAdminDashboard = () => {
             <ArrowRight size={14} className="text-[#6B6761] group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
+      </div>
 
-        {/* Automated SMS Dispatcher Audit Log */}
-        <div className="mt-8">
-          <SmsDispatcherLog />
-        </div>
+      {/* 5. Automated SMS Dispatcher Audit Log (Full Width) */}
+      <div className="mt-8 w-full">
+        <SmsDispatcherLog />
       </div>
     </MainLayout>
   );

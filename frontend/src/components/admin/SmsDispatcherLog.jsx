@@ -132,7 +132,7 @@ const SmsDispatcherLog = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+    <div className="w-full bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
       {/* Toast Alert */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -150,25 +150,25 @@ const SmsDispatcherLog = () => {
       )}
 
       {/* Header Container */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="p-1.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] shrink-0">
               <Smartphone size={16} />
             </div>
-            <h2 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
+            <h2 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2 flex-wrap">
               <span>Automated SMS Dispatcher &amp; Expiration Logs</span>
-              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
                 PST (UTC+8) Active
               </span>
             </h2>
           </div>
           <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
-            Real-time audit log of automated 30-day renewal warnings and notifications sent to operators' registered phones.
+            Real-time audit log of automated 30-day renewal warnings and notifications sent to operators' registered mobile numbers.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={() => fetchLogs(true)}
@@ -183,7 +183,7 @@ const SmsDispatcherLog = () => {
           <button
             type="button"
             onClick={() => setShowSimulateModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer"
             title="Trigger simulated 30-day expiration SMS for defense demonstration"
           >
             <Zap size={13} className="text-[#D4AF37]" />
@@ -194,7 +194,7 @@ const SmsDispatcherLog = () => {
 
       {/* Filter and Counter */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative flex-1 w-full sm:max-w-sm">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
           <input
             type="text"
@@ -205,7 +205,7 @@ const SmsDispatcherLog = () => {
           />
         </div>
 
-        <div className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1.5">
+        <div className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1.5 shrink-0">
           <Clock size={13} />
           <span>{pagination.totalRecords} total dispatch message{pagination.totalRecords === 1 ? '' : 's'} recorded</span>
         </div>
