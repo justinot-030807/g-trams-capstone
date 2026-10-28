@@ -12,27 +12,35 @@ import LandingAnnouncements from '../components/common/LandingAnnouncements';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({ operators: 0, todas: 0, franchises: 0 });
+  const [stats, setStats] = useState({ operators: null, todas: null, franchises: null });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
-  // Fetch live public municipal stats
+  // Fetch real-time public stats directly from live database
   useEffect(() => {
+    let isMounted = true;
     const fetchStats = async () => {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/public-stats`);
         if (res.ok) {
           const data = await res.json();
-          setStats({
-            operators: data.operators || 0,
-            todas: data.todas || 0,
-            franchises: data.franchises || 0
-          });
+          if (isMounted) {
+            setStats({
+              operators: typeof data.operators === 'number' ? data.operators : 0,
+              todas: typeof data.todas === 'number' ? data.todas : 0,
+              franchises: typeof data.franchises === 'number' ? data.franchises : 0
+            });
+          }
         }
       } catch (err) {
-        // Fallback default numbers if offline
-        setStats({ operators: 120, todas: 11, franchises: 850 });
+        console.error('Failed to fetch public stats from database:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingStats(false);
+        }
       }
     };
     fetchStats();
+    return () => { isMounted = false; };
   }, []);
 
   // If already authenticated, redirect straight to their dashboard
@@ -154,15 +162,15 @@ const Home = () => {
               </Link>
             </motion.div>
 
-            {/* PUBLIC STATS DISPLAY (Numbers & Text Only - Clean Minimalist Design Without Box Backgrounds) */}
+            {/* PUBLIC STATS DISPLAY (Real Database Numbers - 3 Pillars) */}
             <motion.div 
               variants={springFade}
-              className="w-full max-w-4xl mx-auto mt-12 sm:mt-16 pt-8 border-t border-white/20 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center"
+              className="w-full max-w-3xl mx-auto mt-12 sm:mt-16 pt-8 border-t border-white/20 grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-10 text-center"
             >
               {/* Stat 1: Registered Operators */}
               <div className="flex flex-col items-center">
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
-                  {stats.operators > 0 ? stats.operators.toLocaleString() : '120+'}
+                  {isLoadingStats ? '—' : stats.operators.toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
                   Registered Operators
@@ -172,7 +180,7 @@ const Home = () => {
               {/* Stat 2: Accredited TODAs */}
               <div className="flex flex-col items-center">
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tight tabular-nums drop-shadow-md">
-                  {stats.todas > 0 ? stats.todas : '11'}
+                  {isLoadingStats ? '—' : stats.todas.toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
                   Accredited TODAs
@@ -182,20 +190,10 @@ const Home = () => {
               {/* Stat 3: Active Franchises */}
               <div className="flex flex-col items-center">
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
-                  {stats.franchises > 0 ? stats.franchises.toLocaleString() : '850+'}
+                  {isLoadingStats ? '—' : stats.franchises.toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
                   Active Franchises
-                </span>
-              </div>
-
-              {/* Stat 4: Digital Verification */}
-              <div className="flex flex-col items-center">
-                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tight drop-shadow-md">
-                  100%
-                </span>
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
-                  Digital Verification
                 </span>
               </div>
             </motion.div>

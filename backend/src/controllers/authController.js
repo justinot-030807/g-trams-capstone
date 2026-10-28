@@ -1213,9 +1213,12 @@ exports.getPublicStats = async (req, res) => {
     try {
         const totalOperators = await User.countDocuments({ role: 'operator', isActive: true });
         
-        // Count distinct TODA associations
-        const distinctTodas = await User.distinct('todaAssociation', { todaAssociation: { $nin: ['', 'NON-TODA'] } });
-        const totalTodas = distinctTodas.length;
+        // Count distinct accredited TODA associations across certified rosters and registered operators
+        const TodaRoster = require('../models/todaModel');
+        const rosterTodas = await TodaRoster.distinct('todaAssociation', { todaAssociation: { $nin: ['', null, 'NON-TODA'] } }).catch(() => []);
+        const userTodas = await User.distinct('todaAssociation', { todaAssociation: { $nin: ['', null, 'NON-TODA'] } }).catch(() => []);
+        const combinedTodas = new Set([...rosterTodas, ...userTodas]);
+        const totalTodas = combinedTodas.size;
         
         // Also get total active franchises
         const totalFranchises = await Franchise.countDocuments({ status: 'Active', isArchived: { $ne: true } });
