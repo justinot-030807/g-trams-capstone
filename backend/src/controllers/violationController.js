@@ -231,8 +231,12 @@ const recordViolation = async (req, res) => {
             // 2nd Offense: Fine + Temporary Suspension
             sanctionType = 'Suspension';
             resultingStatus = 'Suspended';
-            fineAmount = Number(customFine) || matchedTypeConfig?.defaultFine || policyTiers.secondOffense?.defaultFine || 500;
-            suspensionDays = Number(customSuspensionDays) || matchedTypeConfig?.suspensionDays || policyTiers.secondOffense?.defaultSuspensionDays || 15;
+            fineAmount = (customFine !== undefined && customFine !== null && !isNaN(Number(customFine))) 
+                ? Number(customFine) 
+                : (matchedTypeConfig?.defaultFine || policyTiers.secondOffense?.defaultFine || 500);
+            suspensionDays = (customSuspensionDays !== undefined && customSuspensionDays !== null && !isNaN(Number(customSuspensionDays))) 
+                ? Number(customSuspensionDays) 
+                : (matchedTypeConfig?.suspensionDays || policyTiers.secondOffense?.defaultSuspensionDays || 15);
             suspensionStartDate = new Date();
             suspensionEndDate = new Date(Date.now() + suspensionDays * 24 * 60 * 60 * 1000);
         } else {
@@ -270,9 +274,11 @@ const recordViolation = async (req, res) => {
 
         await franchise.save();
 
+        const operatorRef = franchise.operator?._id || franchise.operator || null;
+
         // Save new violation record
         const violation = await Violation.create({
-            operator: franchise.operator._id || franchise.operator,
+            operator: operatorRef,
             franchise: franchise._id,
             plateNo: franchise.plateNo,
             bodyNumber: franchise.bodyType || req.body.bodyNumber || '',
@@ -292,21 +298,22 @@ const recordViolation = async (req, res) => {
             },
             remarks: remarks || '',
             evidenceUrl,
-            recordedBy: req.user._id,
-            recordedByName: req.user.name || 'BPLO Staff',
+            recordedBy: req.user?._id,
+            recordedByName: req.user?.name || 'BPLO Staff',
             status: 'Active'
         });
 
         // Notify Operator in real-time
         try {
-            const operatorId = (franchise.operator._id || franchise.operator).toString();
-            const notifTitle = isGrave 
-                ? 'URGENT: Franchise Revoked (Grave Violation)'
-                : offenseNumber === 1
-                    ? 'Official Warning Issued (1st Offense)'
-                    : offenseNumber === 2
-                        ? `Franchise Suspended (${suspensionDays} Days) - 2nd Offense`
-                        : 'Franchise Revoked (3rd Offense)';
+            const operatorId = operatorRef ? operatorRef.toString() : null;
+            if (operatorId) {
+                const notifTitle = isGrave 
+                    ? 'URGENT: Franchise Revoked (Grave Violation)'
+                    : offenseNumber === 1
+                        ? 'Official Warning Issued (1st Offense)'
+                        : offenseNumber === 2
+                            ? `Franchise Suspended (${suspensionDays} Days) - 2nd Offense`
+                            : 'Franchise Revoked (3rd Offense)';
             
             const notifMessage = isGrave
                 ? `Your franchise for unit ${franchise.plateNo} has been revoked due to a grave municipal violation: ${violationType}.`
@@ -324,6 +331,7 @@ const recordViolation = async (req, res) => {
                 relatedFranchise: franchise._id
             });
             emitToUser(operatorId, 'notification', opNotif);
+        }
         } catch (notifErr) {
             console.error('Error emitting operator notification:', notifErr);
         }

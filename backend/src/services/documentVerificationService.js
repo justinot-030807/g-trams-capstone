@@ -516,14 +516,13 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
         // Multi-model auto-failover cascade: Uses current stable Gemini Vision models.
-        const preferredModel = (process.env.GEMINI_MODEL && !process.env.GEMINI_MODEL.includes('3.')) ? process.env.GEMINI_MODEL : 'gemini-2.5-flash';
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
         const modelsToTry = [
             preferredModel,
-            'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-1.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-2.0-flash-lite'
+            'gemini-2.0-flash-lite',
+            'gemini-1.5-flash-8b'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
         let responseText = null;
@@ -535,12 +534,17 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
                     model: modelName,
                     contents: [
                         {
-                            inlineData: {
-                                mimeType: mimeType || 'image/jpeg',
-                                data: base64Data
-                            }
-                        },
-                        { text: prompt }
+                            role: 'user',
+                            parts: [
+                                {
+                                    inlineData: {
+                                        mimeType: mimeType || 'image/jpeg',
+                                        data: base64Data
+                                    }
+                                },
+                                { text: prompt }
+                            ]
+                        }
                     ],
                     config: {
                         responseMimeType: 'application/json'
@@ -559,8 +563,8 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
         if (!responseText) {
-            console.warn(`[DocVerify] No text returned by Gemini models for ${docType}. Applying resilient fallback...`);
-            return getSampleFallbackData(docType);
+            console.warn(`[DocVerify] No text returned by Gemini models for ${docType}.`);
+            return null;
         }
 
         // Clean any code fences or extra wrapping
@@ -586,7 +590,7 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         return parsed;
     } catch (err) {
         console.error(`[DocVerify] Gemini OCR error for ${docType}:`, err.message);
-        return getSampleFallbackData(docType);
+        return null;
     }
 }
 
@@ -1047,14 +1051,13 @@ Return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only, no markdown, no surrounding text.`;
 
-        const preferredModel = (process.env.GEMINI_MODEL && !process.env.GEMINI_MODEL.includes('3.')) ? process.env.GEMINI_MODEL : 'gemini-2.5-flash';
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
         const modelsToTry = [
             preferredModel,
-            'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-1.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-2.0-flash-lite'
+            'gemini-2.0-flash-lite',
+            'gemini-1.5-flash-8b'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
         let responseText = null;
@@ -1065,13 +1068,21 @@ Return raw JSON only, no markdown, no surrounding text.`;
                     model: modelName,
                     contents: [
                         {
-                            inlineData: {
-                                mimeType: mimeType,
-                                data: img.base64Data
-                            }
-                        },
-                        { text: prompt }
-                    ]
+                            role: 'user',
+                            parts: [
+                                {
+                                    inlineData: {
+                                        mimeType: mimeType,
+                                        data: img.base64Data
+                                    }
+                                },
+                                { text: prompt }
+                            ]
+                        }
+                    ],
+                    config: {
+                        responseMimeType: 'application/json'
+                    }
                 });
                 if (interaction && interaction.text) {
                     responseText = interaction.text.trim();
@@ -1099,11 +1110,18 @@ Return raw JSON only, no markdown, no surrounding text.`;
             };
         }
 
-        const cleanJson = responseText
+        let cleanJson = responseText
             .replace(/^```json\s*/i, '')
             .replace(/^```\s*/i, '')
             .replace(/```\s*$/i, '')
             .trim();
+
+        const firstBrace = cleanJson.indexOf('{');
+        const lastBrace = cleanJson.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+            cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+        }
+        cleanJson = cleanJson.replace(/,\s*([}\]])/g, '$1');
 
         const parsed = JSON.parse(cleanJson);
         if (parsed && Array.isArray(parsed.members) && parsed.members.length > 0) {

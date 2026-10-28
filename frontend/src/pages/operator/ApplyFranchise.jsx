@@ -1129,7 +1129,7 @@ const ApplyFranchise = () => {
               setAiScannedData(prev => ({
                 ...prev,
                 licenseBack: {
-                  serialNo: d.serialNo ? d.serialNo.toUpperCase() : '',
+                  serialNo: d.serialNo ? String(d.serialNo).toUpperCase() : '',
                   conditions: d.conditions || '',
                   dlCodes: d.dlCodes || '',
                   scannedAt: new Date().toISOString()
@@ -1138,7 +1138,7 @@ const ApplyFranchise = () => {
 
               setFormData(prev => ({
                 ...prev,
-                driverLicenseSerialNo: d.serialNo ? d.serialNo.toUpperCase() : prev.driverLicenseSerialNo,
+                driverLicenseSerialNo: d.serialNo ? String(d.serialNo).toUpperCase() : prev.driverLicenseSerialNo,
                 driverConditions: d.conditions || prev.driverConditions,
                 driverDlCodes: d.dlCodes || prev.driverDlCodes
               }));
@@ -1159,7 +1159,7 @@ const ApplyFranchise = () => {
               setAiScannedData(prev => ({
                 ...prev,
                 license: {
-                  licenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : (prev.license?.licenseNo || ''),
+                  licenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : (prev.license?.licenseNo || ''),
                   expiryDate: normExpiry || (prev.license?.expiryDate || ''),
                   dateOfBirth: normDob || (prev.license?.dateOfBirth || ''),
                   dlCodes: d.dlCodes || (prev.license?.dlCodes || ''),
@@ -1173,7 +1173,7 @@ const ApplyFranchise = () => {
               setFormData(prev => ({
                 ...prev,
                 fullName: (!prev.fullName && d.driverName) ? d.driverName : prev.fullName,
-                driverLicenseNo: d.licenseNo ? d.licenseNo.toUpperCase() : prev.driverLicenseNo,
+                driverLicenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : prev.driverLicenseNo,
                 driverLicenseExpiryDate: normExpiry || prev.driverLicenseExpiryDate,
                 driverDob: normDob || prev.driverDob,
                 driverDlCodes: d.dlCodes || prev.driverDlCodes,
@@ -1188,8 +1188,8 @@ const ApplyFranchise = () => {
               // Validate name match between license and applicant / designated driver
               const targetName = formData.isOperatorDriver ? formData.fullName : formData.driverName;
               if (d.driverName && targetName) {
-                const cleanScanned = d.driverName.toUpperCase().replace(/[^A-Z]/g, '');
-                const cleanTarget = targetName.toUpperCase().replace(/[^A-Z]/g, '');
+                const cleanScanned = String(d.driverName).toUpperCase().replace(/[^A-Z]/g, '');
+                const cleanTarget = String(targetName).toUpperCase().replace(/[^A-Z]/g, '');
                 if (cleanScanned && cleanTarget && !cleanScanned.includes(cleanTarget) && !cleanTarget.includes(cleanScanned)) {
                   showToast(`Notice: Name on driver's license (${d.driverName}) differs from ${formData.isOperatorDriver ? 'applicant' : 'driver'} (${targetName}).`, 'warning');
                 }
@@ -1217,16 +1217,16 @@ const ApplyFranchise = () => {
               const today = new Date().toISOString().split('T')[0];
               const isExpired = normExpiry && normExpiry < today;
 
-              const finalPlate = d.plateNo ? d.plateNo.toUpperCase() : '';
-              const finalMotor = (d.motorNo || d.engineNo) ? (d.motorNo || d.engineNo).toUpperCase() : '';
-              const finalChassis = d.chassisNo ? d.chassisNo.toUpperCase() : '';
-              const finalMake = d.make ? d.make.toUpperCase() : '';
-              const finalSeries = d.series ? d.series.toUpperCase() : '';
+              const finalPlate = d.plateNo ? String(d.plateNo).toUpperCase() : '';
+              const finalMotor = (d.motorNo || d.engineNo) ? String(d.motorNo || d.engineNo).toUpperCase() : '';
+              const finalChassis = d.chassisNo ? String(d.chassisNo).toUpperCase() : '';
+              const finalMake = d.make ? String(d.make).toUpperCase() : '';
+              const finalSeries = d.series ? String(d.series).toUpperCase() : '';
               const finalYear = d.yearModel || d.year ? String(d.yearModel || d.year) : '';
-              const finalCrNo = d.crNo ? d.crNo.toUpperCase() : '';
-              const finalOrNo = (d.orNo || d.orCrNo) ? (d.orNo || d.orCrNo).toUpperCase() : '';
-              const finalColor = d.color ? d.color.toUpperCase() : '';
-              const finalOwner = d.ownerName ? d.ownerName.toUpperCase() : '';
+              const finalCrNo = d.crNo ? String(d.crNo).toUpperCase() : '';
+              const finalOrNo = (d.orNo || d.orCrNo) ? String(d.orNo || d.orCrNo).toUpperCase() : '';
+              const finalColor = d.color ? String(d.color).toUpperCase() : '';
+              const finalOwner = d.ownerName ? String(d.ownerName).toUpperCase() : '';
               const finalOwnerAddress = d.ownerAddress || '';
 
               setAiScannedData(prev => ({
@@ -1317,7 +1317,7 @@ const ApplyFranchise = () => {
               setAiScannedData(prev => ({
                 ...prev,
                 todaEndorsement: {
-                  certNo: d.certNo ? d.certNo.toUpperCase() : '',
+                  certNo: d.certNo ? String(d.certNo).toUpperCase() : '',
                   signatory: d.signatory || '',
                   todaName: d.todaName || '',
                   dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
@@ -1326,7 +1326,7 @@ const ApplyFranchise = () => {
               }));
               setFormData(prev => ({
                 ...prev,
-                todaCertNo: d.certNo ? d.certNo.toUpperCase() : prev.todaCertNo,
+                todaCertNo: d.certNo ? String(d.certNo).toUpperCase() : prev.todaCertNo,
                 todaSignatory: d.signatory || prev.todaSignatory,
                 todaCertDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.todaCertDate
               }));
@@ -1342,7 +1342,7 @@ const ApplyFranchise = () => {
               setAiScannedData(prev => ({
                 ...prev,
                 brgyClearance: {
-                  clearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : '',
+                  clearanceNo: d.clearanceNo ? String(d.clearanceNo).toUpperCase() : '',
                   barangay: d.barangay || '',
                   issuer: d.issuer || '',
                   dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
@@ -1356,7 +1356,7 @@ const ApplyFranchise = () => {
                   ...prev,
                   address: detectedBrgy || prev.address,
                   zone: autoZone || prev.zone,
-                  brgyClearanceNo: d.clearanceNo ? d.clearanceNo.toUpperCase() : prev.brgyClearanceNo,
+                  brgyClearanceNo: d.clearanceNo ? String(d.clearanceNo).toUpperCase() : prev.brgyClearanceNo,
                   brgyClearanceDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.brgyClearanceDate,
                   brgyIssuer: d.issuer || prev.brgyIssuer
                 };
@@ -1370,7 +1370,7 @@ const ApplyFranchise = () => {
           } else if (docType === 'cedula') {
             const hasData = d.serialNo || d.ctcNo || d.dateIssued || d.placeIssued || d.placeOfIssue || d.fullName || d.taxpayerName || d.address;
             if (hasData) {
-              const fullSerial = (d.serialNo || d.ctcNo || '').trim().toUpperCase();
+              const fullSerial = String(d.serialNo || d.ctcNo || '').trim().toUpperCase();
               const dateStr = d.dateIssued ? normalizeDateStr(d.dateIssued) : '';
               const placeStr = d.placeIssued || d.placeOfIssue || d.address || 'Gasan, Marinduque';
               const fullNameStr = d.fullName || d.taxpayerName || '';
@@ -1381,7 +1381,7 @@ const ApplyFranchise = () => {
                 ...prev,
                 cedula: {
                   serialNo: fullSerial,
-                  ctcNo: d.ctcNo || fullSerial,
+                  ctcNo: d.ctcNo ? String(d.ctcNo) : fullSerial,
                   year: d.year || '2026',
                   dateIssued: dateStr,
                   placeIssued: placeStr,
@@ -1979,8 +1979,8 @@ const ApplyFranchise = () => {
 
     // 3. Plate No Discrepancy
     if (ai?.orCr?.plateNo && form.plateNo) {
-      const cleanAi = ai.orCr.plateNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = form.plateNo.replace(/[^A-Z0-9]/g, '');
+      const cleanAi = String(ai.orCr.plateNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.plateNo || '').replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'plateNo',
@@ -1997,8 +1997,8 @@ const ApplyFranchise = () => {
 
     // 4. Chassis No Discrepancy
     if (ai?.orCr?.chassisNo && form.chassisNo) {
-      const cleanAi = ai.orCr.chassisNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = form.chassisNo.replace(/[^A-Z0-9]/g, '');
+      const cleanAi = String(ai.orCr.chassisNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.chassisNo || '').replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'chassisNo',
@@ -2015,8 +2015,8 @@ const ApplyFranchise = () => {
 
     // 5. Motor No Discrepancy
     if (ai?.orCr?.motorNo && form.motorNo) {
-      const cleanAi = ai.orCr.motorNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = form.motorNo.replace(/[^A-Z0-9]/g, '');
+      const cleanAi = String(ai.orCr.motorNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.motorNo || '').replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'motorNo',
@@ -2033,8 +2033,8 @@ const ApplyFranchise = () => {
 
     // 6. Driver License No Discrepancy
     if (ai?.license?.licenseNo && form.driverLicenseNo) {
-      const cleanAi = ai.license.licenseNo.replace(/[^A-Z0-9]/g, '');
-      const cleanUser = form.driverLicenseNo.replace(/[^A-Z0-9]/g, '');
+      const cleanAi = String(ai.license.licenseNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.driverLicenseNo || '').replace(/[^A-Z0-9]/g, '');
       if (cleanAi && cleanUser && cleanAi !== cleanUser) {
         discrepancies.push({
           field: 'driverLicenseNo',

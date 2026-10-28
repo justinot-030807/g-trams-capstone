@@ -713,7 +713,8 @@ const processFranchiseCancellation = async (req, res) => {
             franchise.status = 'Cancelled';
             const reasonDesc = franchise.cancellationDetails?.reason || franchise.cancelReason || 'Voluntary Surrender';
             franchise.cancelReason = franchise.cancelReason || `Voluntary Cancellation: ${reasonDesc}`;
-            franchise.cancellationDetails.reviewedBy = req.user._id;
+            franchise.cancellationDetails = franchise.cancellationDetails || {};
+            franchise.cancellationDetails.reviewedBy = req.user?._id;
             franchise.cancellationDetails.reviewedAt = new Date();
             franchise.cancellationDetails.staffNotes = (staffNotes || '').trim();
             franchise.isArchived = false;
@@ -762,7 +763,8 @@ const processFranchiseCancellation = async (req, res) => {
 
             // Restore franchise to Active
             franchise.status = 'Active';
-            franchise.cancellationDetails.reviewedBy = req.user._id;
+            franchise.cancellationDetails = franchise.cancellationDetails || {};
+            franchise.cancellationDetails.reviewedBy = req.user?._id;
             franchise.cancellationDetails.reviewedAt = new Date();
             franchise.cancellationDetails.rejectionReason = rejectionReason.trim();
             franchise.cancellationDetails.staffNotes = (staffNotes || '').trim();
@@ -968,7 +970,7 @@ const getFranchiseById = async (req, res) => {
 const getFranchiseRecordCheck = async (req, res) => {
     try {
         const franchise = await Franchise.findById(req.params.id)
-            .select('operator fullName plateNo chassisNo motorNo applicationType todaName');
+            .select('operator fullName plateNo chassisNo motorNo applicationType todaName barangay address registeredOwner isOperatorDriver driverName cedulaFullName aiScannedData aiVerification');
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
 
         const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

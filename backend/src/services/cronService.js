@@ -8,7 +8,8 @@ const {
     MANILA_TIMEZONE, 
     getManilaNow, 
     calculateDaysRemaining, 
-    formatManilaDate 
+    formatManilaDate,
+    computeManilaExpiryDate
 } = require('../utils/phTime');
 
 /**
@@ -40,9 +41,7 @@ async function syncFranchiseStatuses() {
         for (const franchise of expiredFranchises) {
             franchise.status = 'Expired';
             if (!franchise.expiryDate && franchise.approvalDate) {
-                const calculatedExp = new Date(franchise.approvalDate);
-                calculatedExp.setFullYear(calculatedExp.getFullYear() + 1);
-                franchise.expiryDate = calculatedExp;
+                franchise.expiryDate = computeManilaExpiryDate(franchise.approvalDate);
             }
             await franchise.save();
 
@@ -118,10 +117,11 @@ async function sendRenewalReminders() {
         for (const franchise of dueFranchises) {
             const operatorId = franchise.operator?._id || franchise.operator;
             const daysLeft = calculateDaysRemaining(franchise.expiryDate, now);
+            const safeDays = daysLeft !== null ? daysLeft : 0;
             const formattedExpiry = formatManilaDate(franchise.expiryDate);
 
-            const notifTitle = `Renewal Reminder: ${daysLeft} Day${daysLeft === 1 ? '' : 's'} Remaining`;
-            const notifMessage = `Your franchise permit for unit ${franchise.plateNo || 'Tricycle'} will expire on ${formattedExpiry} (${daysLeft} days remaining). The annual renewal window is now open.`;
+            const notifTitle = `Renewal Reminder: ${safeDays} Day${safeDays === 1 ? '' : 's'} Remaining`;
+            const notifMessage = `Your franchise permit for unit ${franchise.plateNo || 'Tricycle'} will expire on ${formattedExpiry}${daysLeft !== null ? ` (${daysLeft} days remaining)` : ''}. The annual renewal window is now open.`;
 
             try {
                 if (operatorId) {

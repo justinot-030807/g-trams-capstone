@@ -312,11 +312,12 @@ const ManageRevocations = () => {
   };
 
   // Filtered operators / franchises
+  const cleanQuery = (searchQuery || '').toLowerCase().trim();
   const filteredFranchises = franchises.filter(f => {
-    const isSearchMatch = 
-      (f.fullName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
-      (f.plateNo?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (f.todaName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const isSearchMatch = !cleanQuery ||
+      (f.fullName?.toLowerCase() || '').includes(cleanQuery) || 
+      (f.plateNo?.toLowerCase() || '').includes(cleanQuery) ||
+      (f.todaName?.toLowerCase() || '').includes(cleanQuery);
 
     if (activeTab === 'revoked') {
       return isSearchMatch && f.status === 'Revoked';
@@ -331,10 +332,10 @@ const ManageRevocations = () => {
 
   // Filtered violations list
   const filteredViolations = violations.filter(v => {
-    const isSearchMatch = 
-      (v.plateNo?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (v.violationType?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (v.driverName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const isSearchMatch = !cleanQuery ||
+      (v.plateNo?.toLowerCase() || '').includes(cleanQuery) ||
+      (v.violationType?.toLowerCase() || '').includes(cleanQuery) ||
+      (v.driverName?.toLowerCase() || '').includes(cleanQuery);
     return isSearchMatch;
   });
 
@@ -834,8 +835,8 @@ const ManageRevocations = () => {
                   className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-3 py-2 text-xs outline-none focus:border-red-500 cursor-pointer font-medium"
                 >
                   {(violationPolicy.types || []).map((v, i) => (
-                    <option key={i} value={v.name}>
-                      {v.name} ({v.severity}{v.isGrave ? ' - Direct Revoke' : ''})
+                    <option key={i} value={v.name || 'Violation'}>
+                      {v.name || 'Violation'} ({v.severity || 'Medium'}{v.isGrave ? ' - Direct Revoke' : ''})
                     </option>
                   ))}
                 </select>

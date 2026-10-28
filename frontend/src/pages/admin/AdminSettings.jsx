@@ -226,6 +226,10 @@ const AdminSettings = () => {
 
                 return newState;
               });
+
+              if (Array.isArray(d.announcements) && d.announcements.length > 0) {
+                setAnnouncements(d.announcements);
+              }
             }
           }
         } catch (err) {
@@ -654,6 +658,65 @@ const AdminSettings = () => {
     setPreferences(prev => ({ ...prev, inAppToastAlerts: nextVal }));
     localStorage.setItem('gtrams_toast_alerts', String(nextVal));
     showToast(nextVal ? 'Toast notifications enabled' : 'Toast notifications silenced', 'success');
+  };
+
+  const handleUpdateAnnouncement = (idx, field, value) => {
+    setAnnouncements(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleDeleteAnnouncement = (idx) => {
+    setAnnouncements(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleAddAnnouncement = () => {
+    if (!newAnnouncement.title || !newAnnouncement.title.trim()) {
+      showToast('Announcement title is required.', 'error');
+      return;
+    }
+    setAnnouncements(prev => [
+      ...prev,
+      {
+        ...newAnnouncement,
+        isActive: true,
+        _id: `custom-${Date.now()}`
+      }
+    ]);
+    setNewAnnouncement({
+      title: '',
+      desc: '',
+      type: 'info',
+      date: 'General Advisory'
+    });
+    showToast('New announcement drafted. Remember to click "Publish to Homepage".', 'info');
+  };
+
+  const handleSaveAnnouncements = async () => {
+    setIsSavingAnnouncements(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ announcements })
+      });
+      if (res.ok) {
+        showToast('Homepage announcements updated and published successfully!', 'success');
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        showToast(errJson.message || 'Failed to publish announcements.', 'error');
+      }
+    } catch (err) {
+      showToast('Network error saving announcements.', 'error');
+    } finally {
+      setIsSavingAnnouncements(false);
+    }
   };
 
   const inputClasses = "w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors";
