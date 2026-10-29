@@ -273,8 +273,13 @@ function getSampleFallbackData(docType) {
 async function extractWithGemini(base64Data, mimeType, docType) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        console.warn(`[DocVerify] GEMINI_API_KEY not defined in environment. Using official sample fallback for ${docType}`);
-        return getSampleFallbackData(docType);
+        console.warn(`[DocVerify] GEMINI_API_KEY not defined in environment for ${docType}`);
+        return {
+            isValidDocument: false,
+            isExpectedDocumentType: false,
+            noKey: true,
+            message: 'Hindi ma-activate ang AI scan dahil walang GEMINI_API_KEY sa server. Mangyaring i-type ang mga detalye nang manual.'
+        };
     }
 
     try {
@@ -286,12 +291,13 @@ async function extractWithGemini(base64Data, mimeType, docType) {
 
 CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
 You must FIRST evaluate whether this image is an actual, genuine, and official Philippine LTO Certificate of Registration (CR) or Official Receipt (OR).
-If the image is:
+REJECT IMMEDIATELY if:
+- The image is a Driver's License (Plastic ID card or paper driver's license). This slot is strictly for LTO Certificate of Registration (CR) or Official Receipt (OR), NOT a driver's license!
 - A selfie, face portrait, photograph of a person, group photo, or human body
 - A blank, empty, or plain page/screen
-- A photo of an animal, scenery, food, motorcycle/vehicle photo without official paper, meme, or everyday object
-- An unrelated document (e.g. store receipt, utility bill, diploma, school ID, or non-LTO document)
-- Blurry, completely dark, unreadable, or illegible
+- A photo of a motorcycle or street without official LTO paperwork
+- An unrelated document (e.g. store receipt, utility bill, diploma, cedula, barangay clearance, school ID, or non-LTO document)
+- Blurry, out of focus, glaring, completely dark, unreadable, or illegible
 
 YOU MUST IMMEDIATELY REJECT IT by returning ONLY this JSON object:
 {
@@ -347,12 +353,13 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
 
 CRITICAL DOCUMENT CLASSIFICATION & AUTHENTICITY GUARD:
 You must FIRST evaluate whether this image is an actual, genuine, and official Philippine Land Transportation Office (LTO) Driver's License card (Front).
-If the image is:
+REJECT IMMEDIATELY if:
+- The image is an LTO CR/OR (Certificate of Registration / Official Receipt paper) instead of a Driver's License card!
 - A personal selfie, face portrait, or photograph of a person (not an actual plastic/paper LTO driver's license card)
 - A blank, empty, or plain paper/screen
 - An everyday photo, pet, food, scenery, or random object
-- An unrelated ID or document (e.g., student ID, employee card, cedula, non-LTO card)
-- Blurry, completely dark, unreadable, or illegible
+- An unrelated ID or document (e.g., student ID, employee card, cedula, barangay clearance, non-LTO card)
+- Blurry, out of focus, dark, or illegible
 
 YOU MUST IMMEDIATELY REJECT IT by returning ONLY this JSON object:
 {

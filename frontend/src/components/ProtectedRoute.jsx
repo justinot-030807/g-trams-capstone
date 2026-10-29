@@ -36,9 +36,18 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const safeUserRole = normalizeRole(userRole);
   const isUserSystemAdmin = safeUserRole === 'admin' || safeUserRole === 'administrator' || safeUserRole === 'system admin';
 
-  // Block non-admins when maintenance mode is active
+  // Scoped Maintenance Mode:
+  // Non-admin staff (BPLO Staff, Cashier) and IT Admin retain full access to their modules.
+  // For operators, viewing dashboard, profile, and existing records remains operational;
+  // only new franchise applications / renewal wizards are paused during maintenance.
   const isMaintenanceActive = localStorage.getItem('maintenance_mode') === 'true';
-  if (isMaintenanceActive && !isUserSystemAdmin) {
+  const isStaffUser = isUserSystemAdmin || safeUserRole === 'bplo staff' || safeUserRole === 'cashier';
+  const isApplicationWizard = typeof window !== 'undefined' && (
+    window.location.pathname.includes('/apply-franchise') || 
+    window.location.pathname.includes('/renew-franchise')
+  );
+
+  if (isMaintenanceActive && !isStaffUser && isApplicationWizard) {
     return <Navigate to="/maintenance" replace />;
   }
 

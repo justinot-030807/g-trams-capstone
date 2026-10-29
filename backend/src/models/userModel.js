@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
     address: { type: String, required: true },
     // Contact and credentials
     contact: { type: String, required: true, unique: true },
+    backupContact: { type: String, default: '' },
     email: { type: String, default: '' },
     googleId: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },

@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   Info,
   Hash,
-  ShieldAlert
+  ShieldAlert,
+  Phone
 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
@@ -43,7 +44,8 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: incomingGoogle?.name || '', 
     address: '', 
-    contact: incomingGoogle?.email || '', 
+    contact: incomingGoogle?.email || '',
+    backupContact: '', 
     password: '', 
     confirmPassword: '', 
     todaAssociation: '',
@@ -212,6 +214,18 @@ const Register = () => {
       return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
     }
 
+    if (!formData.backupContact || !formData.backupContact.trim()) {
+      return setError('BACKUP PHONE NUMBER OR EMAIL IS REQUIRED (CANNOT BE EMPTY).');
+    }
+
+    if (!isValidContact(formData.backupContact)) {
+      return setError('PLEASE ENTER A VALID BACKUP EMAIL OR PHILIPPINE MOBILE NUMBER (09XXXXXXXXX).');
+    }
+
+    if (formData.backupContact.trim().toLowerCase() === formData.contact.trim().toLowerCase()) {
+      return setError('BACKUP CONTACT MUST BE DIFFERENT FROM YOUR PRIMARY CONTACT.');
+    }
+
     if (!formData.password || formData.password.length < 8) {
       return setError('PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.');
     }
@@ -233,12 +247,15 @@ const Register = () => {
 
     const rawContact = formData.contact.trim();
     const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
+    const rawBackup = formData.backupContact.trim();
+    const cleanBackup = rawBackup.includes('@') ? rawBackup.toLowerCase() : rawBackup.replace(/[\s\-()]/g, '');
 
     const payload = {
       name: formData.name.trim(),
       fullName: formData.name.trim(),
       address: formData.address.trim(),
       contact: cleanContact,
+      backupContact: cleanBackup,
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
@@ -288,12 +305,15 @@ const Register = () => {
 
     const rawContact = formData.contact.trim();
     const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
+    const rawBackup = (formData.backupContact || '').trim();
+    const cleanBackup = rawBackup.includes('@') ? rawBackup.toLowerCase() : rawBackup.replace(/[\s\-()]/g, '');
 
     const payload = {
       name: formData.name.trim(),
       fullName: formData.name.trim(),
       address: formData.address.trim(),
       contact: cleanContact,
+      backupContact: cleanBackup,
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
@@ -729,6 +749,39 @@ const Register = () => {
                           placeholder="juan@gmail.com or 09123456789" 
                         />
                       </div>
+                    </div>
+
+                    {/* Backup Contact (Required) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case">
+                          Backup Phone Number or Email <span className="text-[#9E2A2B] dark:text-red-400 font-bold">*</span>
+                        </label>
+                        <span className="text-xs text-[#9E2A2B] dark:text-red-400 font-medium">Required</span>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
+                          <Phone size={18} />
+                        </div>
+                        <input 
+                          type="text" 
+                          name="backupContact" 
+                          maxLength="50" 
+                          value={formData.backupContact} 
+                          onChange={handleChange} 
+                          autoComplete="tel"
+                          inputMode="text"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          required 
+                          className={inputClasses} 
+                          placeholder="Secondary mobile (09XXXXXXXXX) or email" 
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        Emergency notifications and account recovery contact. Hindi ito maaaring kapareho ng pangunahing contact.
+                      </p>
                     </div>
 
                     {/* Password & Confirm Password */}

@@ -124,7 +124,7 @@ function App() {
                   <Route path="/user-management" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><UserManagement /></ProtectedRoute>} />
                   <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminSettings /></ProtectedRoute>} />
                   <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
-                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminTickets /></ProtectedRoute>} />
+                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><AdminTickets /></ProtectedRoute>} />
 
                   {/* BPLO STAFF SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
                   <Route path="/bplo-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><BploDashboard /></ProtectedRoute>} />

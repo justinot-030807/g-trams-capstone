@@ -11,6 +11,7 @@ const registerSchema = z.object({
             z.string().min(2, 'Full name must be at least 2 characters').optional()
         ),
         contact: z.string().trim().min(5, 'Valid email or phone number is required'),
+        backupContact: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().min(5, 'Backup contact (email or phone number) is required').optional()),
         address: z.string().trim().min(2, 'Valid address is required'),
         todaAssociation: z.string().trim().optional(),
         bodyNumber: z.string().trim().optional(),

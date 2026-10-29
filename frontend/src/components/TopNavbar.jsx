@@ -50,7 +50,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
       if (isRoleSystemAdmin) defaultLink = '/admin-dashboard';
       if (isRoleBplo) defaultLink = '/bplo-dashboard';
       if (isRoleCashier) defaultLink = '/cashier-dashboard';
-      if (n?.type === 'chat') defaultLink = (isRoleSystemAdmin || isRoleBplo) ? '/admin/tickets' : '/operator-dashboard';
+      if (n?.type === 'chat') defaultLink = isRoleSystemAdmin ? '/admin/tickets' : '/operator-dashboard';
 
       return {
         id: n?._id,
@@ -132,7 +132,9 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             if (d.validityRenew) localStorage.setItem('validity_renew', d.validityRenew);
             
             const currentRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
-            if (isMaint && currentRole !== 'admin' && currentRole !== 'administrator') {
+            const isStaff = ['admin', 'administrator', 'system admin', 'bplo staff', 'cashier'].includes(currentRole);
+            const isApplying = window.location.pathname.includes('/apply-franchise') || window.location.pathname.includes('/renew-franchise');
+            if (isMaint && !isStaff && isApplying) {
               navigate('/maintenance');
             }
           }
@@ -149,7 +151,9 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
       const isMaint = localStorage.getItem('maintenance_mode') === 'true';
       setIsMaintenanceActive(isMaint);
       const storedRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
-      if (isMaint && storedRole !== 'admin' && storedRole !== 'administrator') {
+      const isStaff = ['admin', 'administrator', 'system admin', 'bplo staff', 'cashier'].includes(storedRole);
+      const isApplying = window.location.pathname.includes('/apply-franchise') || window.location.pathname.includes('/renew-franchise');
+      if (isMaint && !isStaff && isApplying) {
         navigate('/maintenance');
       }
     };

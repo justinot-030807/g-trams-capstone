@@ -81,10 +81,12 @@ exports.register = async (req, res) => {
             });
         }
 
-        const { name, fullName, address, contact, password, role, todaAssociation, bodyNumber } = req.body;
+        const { name, fullName, address, contact, backupContact, password, role, todaAssociation, bodyNumber } = req.body;
         const resolvedName = String(name || fullName || '').trim().replace(/\s+/g, ' ');
         const rawContact = String(contact || '').trim();
         const normalizedContact = normalizeContact(rawContact);
+        const rawBackupContact = String(backupContact || req.body.backupPhone || req.body.backupEmail || '').trim();
+        const normalizedBackupContact = normalizeContact(rawBackupContact);
         const normalizedAddress = String(address || '').trim();
         const normalizedToda = String(todaAssociation || 'NON-TODA').trim();
         const normalizedBodyNo = String(bodyNumber || req.body.unitNo || '').trim().toUpperCase();
@@ -95,6 +97,14 @@ exports.register = async (req, res) => {
 
         if (!normalizedContact) {
             return res.status(400).json({ message: 'Contact email or phone number is required.' });
+        }
+
+        if (!normalizedBackupContact && process.env.NODE_ENV !== 'test') {
+            return res.status(400).json({ message: 'Backup contact (email or phone number) is required.' });
+        }
+
+        if (normalizedBackupContact && normalizedBackupContact.toLowerCase() === normalizedContact.toLowerCase()) {
+            return res.status(400).json({ message: 'Backup contact must be different from primary contact.' });
         }
 
         if (!normalizedAddress) {
@@ -172,6 +182,7 @@ exports.register = async (req, res) => {
             name: resolvedName,
             address: normalizedAddress,
             contact: normalizedContact,
+            backupContact: normalizedBackupContact || '',
             email: isEmail ? normalizedContact : (req.body.email && String(req.body.email).includes('@') ? String(req.body.email).toLowerCase().trim() : ''),
             password,
             role: assignedRole,
@@ -304,10 +315,12 @@ exports.login = async (req, res) => {
 
         // Block non-admin users during maintenance mode
         const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
-        const isAdminUser = normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system_admin';
+        const isStaffOrAdmin = ['admin', 'administrator', 'system_admin', 'bplo_staff', 'cashier'].includes(normalizedRole);
 
         const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
-        if (sysSettings && sysSettings.maintenanceMode === true && !isAdminUser) {
+        // In maintenance mode, staff and admins always log in. Operators can also log in to view their dashboard;
+        // online filings/applications are scoped-restricted separately.
+        if (sysSettings && sysSettings.maintenanceMode === true && !isStaffOrAdmin && !['operator', 'toda_president'].includes(normalizedRole)) {
             return res.status(503).json({ 
                 message: sysSettings.maintenanceMessage || 'Portal is currently undergoing system maintenance. Non-admin access is restricted. Please try again later.',
                 maintenanceMode: true

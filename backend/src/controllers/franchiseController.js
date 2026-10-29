@@ -116,8 +116,8 @@ const createFranchise = async (req, res) => {
         if (!isAdmin) {
             try {
                 const User = require('../models/userModel');
-                const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
-                for (const adm of admins) {
+                const staffAndAdmins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin', 'bplo_staff'] } });
+                for (const adm of staffAndAdmins) {
                     const notif = await Notification.create({
                         recipient: adm._id,
                         type: 'info',
@@ -140,8 +140,16 @@ const createFranchise = async (req, res) => {
                 message: 'Tricycle (Plate/Motor/Chassis) is already registered.' 
             });
         }
-        res.status(error?.message?.includes('registered') ? 400 : 500).json({ 
-            message: error?.message?.includes('registered') ? error.message : 'Server error creating franchise application.' 
+        const isClientError = error.name === 'ValidationError' || 
+                              error.name === 'CastError' || 
+                              error.statusCode === 400 || 
+                              error?.message?.includes('registered') || 
+                              error?.message?.includes('required') || 
+                              error?.message?.includes('blocked') ||
+                              error?.message?.includes('exceeded') ||
+                              error?.message?.includes('invalid');
+        return res.status(isClientError ? 400 : 500).json({ 
+            message: error.message || 'Server error creating franchise application.' 
         });
     }
 };
@@ -1111,17 +1119,24 @@ const getFranchiseRecordCheck = async (req, res) => {
 const getCashierQueue = async (req, res) => {
     try {
         const { q, status } = req.query;
-        const query = { isArchived: false };
+        let query = { isArchived: false };
 
         if (status) {
             query.status = status;
         } else {
-            query.status = { $in: ['For Payment', 'Ready for Pickup', 'Active'] };
+            // Include pending payment units as well as ANY processed payment unit
+            query = {
+                isArchived: false,
+                $or: [
+                    { status: { $in: ['For Payment', 'Ready for Pickup', 'Pending'] }, paymentStatus: { $ne: 'Paid' } },
+                    { paymentStatus: 'Paid' }
+                ]
+            };
         }
 
         let franchises = await Franchise.find(query)
             .populate('operator', 'name contact address')
-            .sort({ updatedAt: -1 });
+            .sort({ paymentDate: -1, updatedAt: -1 });
 
         if (q && q.trim()) {
             const search = q.trim().toLowerCase();
@@ -1293,22 +1308,12 @@ const scanDocument = async (req, res) => {
         const { extractWithGemini, getSampleFallbackData } = require('../services/documentVerificationService');
 
         if (!process.env.GEMINI_API_KEY) {
-            console.warn('[scanDocument] GEMINI_API_KEY is not defined in environment variables. Utilizing official sample fallback for dry-run testing.');
-            const fallbackData = getSampleFallbackData(docType);
-            if (fallbackData) {
-                return res.status(200).json({
-                    success: true,
-                    fileUrl,
-                    docType,
-                    data: fallbackData,
-                    isFallback: true
-                });
-            }
+            console.warn('[scanDocument] GEMINI_API_KEY is not defined in environment variables.');
             return res.status(200).json({
                 success: false,
                 noKey: true,
                 fileUrl,
-                message: 'Document attached! (Notice: GEMINI_API_KEY must be configured in environment variables for AI auto-fill to activate.)'
+                message: 'Document attached. Server AI scanner is offline (GEMINI_API_KEY not configured). Mangyaring i-type ang mga detalye nang manual.'
             });
         }
 
@@ -1323,16 +1328,17 @@ const scanDocument = async (req, res) => {
             });
         }
 
-        if (!extracted) {
-            extracted = getSampleFallbackData(docType);
-        }
         console.log(`[scanDocument] Extraction result for ${docType}:`, extracted);
 
-        if (!extracted) {
+        if (!extracted || extracted.isValidDocument === false || extracted.isExpectedDocumentType === false) {
             return res.status(200).json({
                 success: false,
+                isValidDocument: false,
+                isExpectedDocumentType: false,
                 fileUrl,
-                message: 'Could not extract information from document. You may enter the details manually.'
+                docType,
+                detectedType: extracted?.detectedDocumentType,
+                message: extracted?.message || 'Hindi tinanggap: Malabo ang larawan o hindi ito ang tamang opisyal na dokumento para sa slot na ito. Paki-upload ng malinaw at lehitimong kopya.'
             });
         }
 

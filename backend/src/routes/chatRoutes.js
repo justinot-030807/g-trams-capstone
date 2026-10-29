@@ -11,7 +11,7 @@ router.use(protect);
 router.get('/unread-count', async (req, res) => {
   try {
     const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
-    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
     const adminIds = adminUsers.map(a => a._id);
 
     let threadQuery;
@@ -53,7 +53,7 @@ router.get('/unread-count', async (req, res) => {
 router.get('/threads', async (req, res) => {
   try {
     const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
-    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
     const adminIds = adminUsers.map(a => a._id);
 
     let query;
@@ -138,7 +138,7 @@ router.post('/messages', async (req, res) => {
       }
 
       if (!thread) {
-        const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+        const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } });
         if (!admins.length) return res.status(400).json({ message: 'No admin found to receive message' });
         const adminIds = admins.map(a => a._id);
 
@@ -157,7 +157,7 @@ router.post('/messages', async (req, res) => {
     }
 
     // Ensure all current admins and sender are included in participants
-    const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+    const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
     const existingStrs = new Set((thread.participants || []).map(p => p.toString()));
     let threadModified = false;
     for (const a of admins) {
@@ -250,7 +250,7 @@ router.post('/messages', async (req, res) => {
 
       if (autoReply && recipients.length > 0) {
         // Find an admin user to attribute auto-reply
-        const adminUser = await User.findOne({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+        const adminUser = await User.findOne({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } });
         const adminSenderId = adminUser ? adminUser._id : recipients[0];
         
         // Wait 1.5 seconds for realism
@@ -307,7 +307,7 @@ router.put('/messages/:threadId/read', async (req, res) => {
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
 
     if (isUserAdmin) {
-      const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } }).select('_id');
+      const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
       const adminIds = adminUsers.map(a => a._id);
 
       // Admin reading: ONLY mark messages from OPERATORS (non-admins) as read!

@@ -526,6 +526,10 @@ const ApplyFranchise = () => {
         selectedId,
         userId: getCurrentUserId()
       }).catch(err => console.error('Draft save error:', err));
+
+      if (uploadedDocs && Object.keys(uploadedDocs).length > 0) {
+        localforage.setItem(`${key}_files`, uploadedDocs).catch(err => console.error('Draft files save error:', err));
+      }
  
       if (isManual) {
         setHasDraftRestored(true);
@@ -758,7 +762,7 @@ const ApplyFranchise = () => {
     initFreshForm();
   };
 
-  const handleConfirmResumeDraft = () => {
+  const handleConfirmResumeDraft = async () => {
     if (!draftResumeModal.draftData) return;
     const { formData: savedForm, currentStep: savedStep, aiScannedData: savedAiData } = draftResumeModal.draftData;
 
@@ -774,15 +778,32 @@ const ApplyFranchise = () => {
       setAiScannedData(savedAiData);
     }
 
+    const key = getDraftKey();
     const previews = {};
-    if (savedForm.crUrl) previews.crDocument = savedForm.crUrl;
-    if (savedForm.orUrl) previews.orDocument = savedForm.orUrl;
-    if (savedForm.orCrUrl && !savedForm.crUrl) previews.crDocument = savedForm.orCrUrl;
-    if (savedForm.licenseUrl) previews.license = savedForm.licenseUrl;
-    if (savedForm.licenseBackUrl) previews.licenseBack = savedForm.licenseBackUrl;
-    if (savedForm.todaEndorsementUrl) previews.todaEndorsement = savedForm.todaEndorsementUrl;
-    if (savedForm.brgyClearanceUrl) previews.brgyClearance = savedForm.brgyClearanceUrl;
-    if (savedForm.cedulaUrl) previews.cedulaDoc = savedForm.cedulaUrl;
+
+    try {
+      const savedFiles = await localforage.getItem(`${key}_files`);
+      if (savedFiles && typeof savedFiles === 'object') {
+        setUploadedDocs(savedFiles);
+        Object.keys(savedFiles).forEach(k => {
+          const fileObj = savedFiles[k];
+          if (fileObj instanceof Blob || fileObj instanceof File) {
+            previews[k] = URL.createObjectURL(fileObj);
+          }
+        });
+      }
+    } catch (filesErr) {
+      console.warn('Could not restore draft file blobs:', filesErr);
+    }
+
+    if (!previews.crDocument && savedForm.crUrl) previews.crDocument = savedForm.crUrl;
+    if (!previews.orDocument && savedForm.orUrl) previews.orDocument = savedForm.orUrl;
+    if (!previews.crDocument && savedForm.orCrUrl) previews.crDocument = savedForm.orCrUrl;
+    if (!previews.license && savedForm.licenseUrl) previews.license = savedForm.licenseUrl;
+    if (!previews.licenseBack && savedForm.licenseBackUrl) previews.licenseBack = savedForm.licenseBackUrl;
+    if (!previews.todaEndorsement && savedForm.todaEndorsementUrl) previews.todaEndorsement = savedForm.todaEndorsementUrl;
+    if (!previews.brgyClearance && savedForm.brgyClearanceUrl) previews.brgyClearance = savedForm.brgyClearanceUrl;
+    if (!previews.cedulaDoc && savedForm.cedulaUrl) previews.cedulaDoc = savedForm.cedulaUrl;
     setFilePreviews(previews);
 
     const urlStep = parseInt(searchParams.get('step') || '0', 10);
@@ -791,7 +812,7 @@ const ApplyFranchise = () => {
     setCurrentStep(targetStep);
     setHasDraftRestored(true);
     setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
-    showToast('Your saved draft has been restored.', 'success');
+    showToast('Your saved draft and attached documents have been restored.', 'success');
   };
 
   const handleDiscardDraft = async () => {
@@ -799,6 +820,7 @@ const ApplyFranchise = () => {
     try {
       await localforage.removeItem(userDraftKey);
       await localforage.removeItem('gtrams_apply_draft');
+      await localforage.removeItem(`${userDraftKey}_files`);
       localStorage.removeItem('gtrams_apply_draft');
     } catch (err) {
       console.error('Error clearing draft:', err);
@@ -1437,9 +1459,16 @@ const ApplyFranchise = () => {
           }
         } else if (json.noKey) {
           showToast(json.message || 'Notice: GEMINI_API_KEY is not configured on the server. AI auto-fill is disabled.', 'warning');
-        } else if (json.isValidDocument === false) {
-          resetScanState(reqId);
-          showToast(json.message || 'Hindi ito valid na opisyal na LTO document. Mangyaring mag-upload ng lehitimong kopya.', 'error');
+        } else if (json.isValidDocument === false || json.isExpectedDocumentType === false) {
+          handleRemoveFile(reqId);
+          showValidationModal(
+            reqId,
+            "Document Rejected / Hindi Tinanggap",
+            json.message || "Ang na-upload na litrato ay malabo o hindi tumutugma sa kinakailangang opisyal na dokumento para sa slot na ito. Paki-upload ang tamang opisyal na kopya."
+          );
+          showToast(json.message || 'Dokumento hindi tinanggap. Paki-upload ang tamang kopya.', 'error');
+        } else if (json.noKey) {
+          showToast(json.message || 'Notice: GEMINI_API_KEY is not configured on the server. AI auto-fill is disabled.', 'warning');
         } else if (json.message) {
           showToast(json.message, json.success ? 'info' : 'warning');
         }
@@ -2253,9 +2282,31 @@ const ApplyFranchise = () => {
         body: submitData
       });
 
+      if (response.status === 401) {
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Session Expired',
+          message: 'Your login session has expired or the token is unauthorized. Please log in again to continue submitting your application.',
+          confirmText: 'Log In Again',
+          onConfirm: () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('role');
+            setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+            navigate('/login');
+          }
+        });
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok) {
+        try {
+          const key = getDraftKey();
+          await localforage.removeItem(`${key}_files`);
+        } catch {}
         try {
           const key = getDraftKey();
           await localforage.removeItem(key);
