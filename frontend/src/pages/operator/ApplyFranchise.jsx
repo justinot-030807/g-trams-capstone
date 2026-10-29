@@ -189,6 +189,18 @@ const ApplyFranchise = () => {
     cedulaDoc: false
   });
 
+  // Manual input alert state when AI scanning fails or cannot auto-fill
+  const [manualScanAlerts, setManualScanAlerts] = useState({
+    license: null,
+    licenseBack: null,
+    crDocument: null,
+    orDocument: null,
+    orCrDocument: null,
+    todaEndorsement: null,
+    brgyClearance: null,
+    cedulaDoc: null
+  });
+
   // Raw AI Scanned data tracker & discrepancy confirmation modal
   const [aiScannedData, setAiScannedData] = useState({});
   const [discrepancyModal, setDiscrepancyModal] = useState({
@@ -1072,6 +1084,7 @@ const ApplyFranchise = () => {
 
     setAiScanning(prev => ({ ...prev, [reqId]: true }));
     setAiSuccess(prev => ({ ...prev, [reqId]: false }));
+    setManualScanAlerts(prev => ({ ...prev, [reqId]: null, [docType]: null }));
 
     try {
       const scanFormData = new FormData();
@@ -1458,15 +1471,21 @@ const ApplyFranchise = () => {
             }
           }
         } else {
-          // Document remains attached! User can proceed and enter details manually
-          showToast(json.message || 'Document attached! You may enter the details manually below.', 'info');
+          // Document remains attached! User is explicitly prompted to enter details manually
+          const manualMsg = json.message || 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+          setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
+          showToast(manualMsg, 'warning');
         }
       } else {
-        showToast('Document attached! You may enter the details manually below.', 'info');
+        const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+        setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
+        showToast(manualMsg, 'warning');
       }
     } catch (err) {
       console.warn('AI Scan network notice:', err);
-      showToast('Document attached! You may enter the details manually below.', 'info');
+      const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+      setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
+      showToast(manualMsg, 'warning');
     } finally {
       setAiScanning(prev => ({ ...prev, [reqId]: false }));
     }
@@ -1480,6 +1499,7 @@ const ApplyFranchise = () => {
     // 1. Reset scan status flags
     setAiSuccess(prev => ({ ...prev, [reqId]: false }));
     setAiScanning(prev => ({ ...prev, [reqId]: false }));
+    setManualScanAlerts(prev => ({ ...prev, [reqId]: null }));
 
     // 2. Clear tracked raw OCR data
     setAiScannedData(prev => {
@@ -2113,6 +2133,41 @@ const ApplyFranchise = () => {
         'Confirmation Required',
         'Please check the Affidavit of Authenticity box before submitting the application.'
       );
+      return;
+    }
+
+    // 1. Comprehensive Step 1 Check (Operator and Driver info)
+    if (!formData.fullName?.trim() || !formData.address?.trim() || !formData.driverLicenseNo?.trim()) {
+      showValidationModal(
+        'fullName',
+        'Kulang ang Impormasyon sa Hakbang 1',
+        'Hindi pa kumpleto ang impormasyon ng aplikante o lisensya sa Hakbang 1. Pakipunan ang mga patlang bago mag-submit.'
+      );
+      setSlideDirection('backward');
+      setCurrentStep(1);
+      return;
+    }
+
+    // 2. Comprehensive Step 2 Check (Vehicle Specifications - prevents dashed blanks)
+    if (!formData.plateNo?.trim() || !formData.motorNo?.trim() || !formData.chassisNo?.trim() || !formData.make?.trim() || !formData.made?.trim()) {
+      showValidationModal(
+        'plateNo',
+        'Kulang ang Impormasyon ng Sasakyan sa Hakbang 2',
+        'Naka-dash pa ang mga detalye ng iyong sasakyan sa Hakbang 2. Paki-type nang manual ang Plate Number, Engine/Motor Number, Chassis Number, Make, at Year Model bago mag-submit.'
+      );
+      setSlideDirection('backward');
+      setCurrentStep(2);
+      return;
+    }
+
+    if (!formData.orCrExpiryDate) {
+      showValidationModal(
+        'orCrExpiryDate',
+        'LTO Registration Expiry Date Required',
+        'Pakilagay ang registration expiration date mula sa iyong LTO OR/CR sa Hakbang 2 bago mag-submit.'
+      );
+      setSlideDirection('backward');
+      setCurrentStep(2);
       return;
     }
 
@@ -3087,6 +3142,17 @@ const ApplyFranchise = () => {
                     </div>
                   </div>
 
+                  {/* Manual Input Alert for License */}
+                  {(manualScanAlerts.license || manualScanAlerts.licenseBack) && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
+                      <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <div>
+                        <strong className="block font-bold text-amber-950 dark:text-amber-200">Kailangan I-manual ang Lisensya:</strong>
+                        <span className="text-amber-800 dark:text-amber-300">{manualScanAlerts.license || manualScanAlerts.licenseBack}</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Auto-filled License Details Grid */}
                   <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
@@ -3344,6 +3410,19 @@ const ApplyFranchise = () => {
                   <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg flex items-center gap-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                     <CheckCircle2 size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <span>LTO document details detected: Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
+                  </div>
+                )}
+
+                {/* Manual Input Alert for LTO Documents */}
+                {(manualScanAlerts.crDocument || manualScanAlerts.orDocument || manualScanAlerts.orCrDocument || manualScanAlerts.orCr) && (
+                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
+                    <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div>
+                      <strong className="block font-bold text-amber-950 dark:text-amber-200">Paalala: Kailangan I-manual ang mga Detalye ng Sasakyan</strong>
+                      <span className="text-amber-800 dark:text-amber-300">
+                        {manualScanAlerts.crDocument || manualScanAlerts.orDocument || manualScanAlerts.orCrDocument || manualScanAlerts.orCr || 'Naka-attach na ang iyong dokumento ngunit hindi ito awtomatikong na-scan. Mangyaring i-type nang manual ang Plate Number, Engine Number, Chassis Number, Make, at Year Model sa ibaba bago magpatuloy.'}
+                      </span>
+                    </div>
                   </div>
                 )}
 
@@ -3876,6 +3955,13 @@ const ApplyFranchise = () => {
                     hideHeaderLabel={true}
                   />
 
+                  {manualScanAlerts.todaEndorsement && (
+                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>{manualScanAlerts.todaEndorsement}</span>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div id="field-todaCertNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
@@ -3929,6 +4015,13 @@ const ApplyFranchise = () => {
                     error={formErrors.brgyClearance}
                     hideHeaderLabel={true}
                   />
+
+                  {manualScanAlerts.brgyClearance && (
+                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>{manualScanAlerts.brgyClearance}</span>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     <div id="field-brgyClearanceNo">
@@ -4038,6 +4131,13 @@ const ApplyFranchise = () => {
                     error={formErrors.cedulaDoc}
                     hideHeaderLabel={true}
                   />
+
+                  {manualScanAlerts.cedulaDoc && (
+                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>{manualScanAlerts.cedulaDoc}</span>
+                    </div>
+                  )}
 
                   {/* Section A: CTC Official Number & Details */}
                   <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
@@ -4405,6 +4505,22 @@ const ApplyFranchise = () => {
                       Edit Step 2
                     </button>
                   </div>
+
+                  {(!formData.plateNo || !formData.motorNo || !formData.chassisNo || !formData.make || !formData.made) && (
+                    <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-red-700 dark:text-red-300 font-semibold">
+                        <AlertCircle size={18} className="text-red-600 shrink-0" />
+                        <span>Kulang ang impormasyon ng sasakyan (naka-dash pa ang mga detalye). Kailangang i-type sa Hakbang 2 bago mag-submit.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
+                        className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-xs"
+                      >
+                        Pumunta sa Hakbang 2 (I-manual)
+                      </button>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
                     <div>

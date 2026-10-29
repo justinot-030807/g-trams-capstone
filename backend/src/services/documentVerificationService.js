@@ -278,7 +278,8 @@ async function extractWithGemini(base64Data, mimeType, docType) {
             isValidDocument: false,
             isExpectedDocumentType: false,
             noKey: true,
-            message: 'Hindi ma-activate ang AI scan dahil walang GEMINI_API_KEY sa server. Mangyaring i-type ang mga detalye nang manual.'
+            needsManual: true,
+            message: 'Hindi awtomatikong na-scan ang dokumento dahil walang GEMINI_API_KEY sa server. Kailangan mong i-manual o i-type ang mga detalye sa mga kahon sa ibaba.'
         };
     }
 
@@ -522,13 +523,15 @@ ONLY if genuine, extract and return:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Multi-model auto-failover cascade: Uses current stable Gemini Vision models.
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        // Multi-model auto-failover cascade: Uses current stable Gemini Vision models with Gemini 3.8 Flash as top priority.
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
         const modelsToTry = [
             preferredModel,
+            'gemini-3.8-flash',
             'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-1.5-flash',
+            'gemini-3.5-flash-lite',
             'gemini-2.5-flash-lite',
             'gemini-2.0-flash-lite',
             'gemini-1.5-flash-8b'
@@ -1060,11 +1063,15 @@ Return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only, no markdown, no surrounding text.`;
 
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
         const modelsToTry = [
             preferredModel,
+            'gemini-3.8-flash',
+            'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-1.5-flash',
+            'gemini-3.5-flash-lite',
+            'gemini-2.5-flash-lite',
             'gemini-2.0-flash-lite',
             'gemini-1.5-flash-8b'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);

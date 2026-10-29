@@ -140,6 +140,12 @@ const createFranchise = async (req, res) => {
                 message: 'Tricycle (Plate/Motor/Chassis) is already registered.' 
             });
         }
+        if (error.name === 'ValidationError') {
+            const missingFields = Object.keys(error.errors || {}).join(', ');
+            return res.status(400).json({
+                message: `Kulang ang impormasyon ng aplikasyon (${missingFields || error.message}). Mangyaring i-type nang manual ang mga kulang na detalye sa Hakbang 2 bago mag-submit.`
+            });
+        }
         const isClientError = error.name === 'ValidationError' || 
                               error.name === 'CastError' || 
                               error.statusCode === 400 || 
@@ -1331,11 +1337,15 @@ const scanDocument = async (req, res) => {
         }
 
         // Graceful non-blocking fallback: Document remains attached, operator enters details manually
+        const manualNotice = (extracted && extracted.message)
+            || 'Hindi awtomatikong na-scan ang dokumento. Kailangan mong i-manual o i-type ang mga detalye (Plate No, Engine No, Chassis No) sa mga kahon sa ibaba.';
+
         return res.status(200).json({
             success: false,
             fileUrl,
             docType,
-            message: 'Document attached! You may enter the details manually below.'
+            needsManual: true,
+            message: manualNotice
         });
     } catch (error) {
         console.error('Error in scanDocument:', error);
