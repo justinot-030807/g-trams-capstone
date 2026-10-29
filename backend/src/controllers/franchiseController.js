@@ -1305,48 +1305,37 @@ const scanDocument = async (req, res) => {
 
         console.log(`[scanDocument] Received scan request for "${docType}" (bytes: ${base64Data.length}, mime: ${mimeType})`);
 
-        const { extractWithGemini, getSampleFallbackData } = require('../services/documentVerificationService');
+        const { extractWithGemini } = require('../services/documentVerificationService');
 
-        if (!process.env.GEMINI_API_KEY) {
+        let extracted = null;
+        if (process.env.GEMINI_API_KEY) {
+            try {
+                extracted = await extractWithGemini(base64Data, mimeType, docType);
+            } catch (err) {
+                console.warn('[scanDocument] Gemini extraction error:', err.message);
+            }
+        } else {
             console.warn('[scanDocument] GEMINI_API_KEY is not defined in environment variables.');
-            return res.status(200).json({
-                success: false,
-                noKey: true,
-                fileUrl,
-                message: 'Document attached. Server AI scanner is offline (GEMINI_API_KEY not configured). Mangyaring i-type ang mga detalye nang manual.'
-            });
-        }
-
-        let extracted = await extractWithGemini(base64Data, mimeType, docType);
-        if (extracted && (extracted.isValidDocument === false || extracted.isExpectedDocumentType === false)) {
-            return res.status(200).json({
-                success: false,
-                isValidDocument: false,
-                fileUrl,
-                docType,
-                message: extracted.message || 'Hindi ito valid na opisyal na LTO document. Mangyaring mag-upload ng lehitimong kopya.'
-            });
         }
 
         console.log(`[scanDocument] Extraction result for ${docType}:`, extracted);
 
-        if (!extracted || extracted.isValidDocument === false || extracted.isExpectedDocumentType === false) {
+        // If extraction returned valid extracted fields (and not explicitly marked as invalid)
+        if (extracted && extracted.isValidDocument !== false && extracted.isExpectedDocumentType !== false) {
             return res.status(200).json({
-                success: false,
-                isValidDocument: false,
-                isExpectedDocumentType: false,
+                success: true,
                 fileUrl,
                 docType,
-                detectedType: extracted?.detectedDocumentType,
-                message: extracted?.message || 'Hindi tinanggap: Malabo ang larawan o hindi ito ang tamang opisyal na dokumento para sa slot na ito. Paki-upload ng malinaw at lehitimong kopya.'
+                data: extracted
             });
         }
 
+        // Graceful non-blocking fallback: Document remains attached, operator enters details manually
         return res.status(200).json({
-            success: true,
+            success: false,
             fileUrl,
             docType,
-            data: extracted
+            message: 'Document attached! You may enter the details manually below.'
         });
     } catch (error) {
         console.error('Error in scanDocument:', error);

@@ -1457,29 +1457,16 @@ const ApplyFranchise = () => {
               showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
             }
           }
-        } else if (json.noKey) {
-          showToast(json.message || 'Notice: GEMINI_API_KEY is not configured on the server. AI auto-fill is disabled.', 'warning');
-        } else if (json.isValidDocument === false || json.isExpectedDocumentType === false) {
-          handleRemoveFile(reqId);
-          showValidationModal(
-            reqId,
-            "Document Rejected / Hindi Tinanggap",
-            json.message || "Ang na-upload na litrato ay malabo o hindi tumutugma sa kinakailangang opisyal na dokumento para sa slot na ito. Paki-upload ang tamang opisyal na kopya."
-          );
-          showToast(json.message || 'Dokumento hindi tinanggap. Paki-upload ang tamang kopya.', 'error');
-        } else if (json.noKey) {
-          showToast(json.message || 'Notice: GEMINI_API_KEY is not configured on the server. AI auto-fill is disabled.', 'warning');
-        } else if (json.message) {
-          showToast(json.message, json.success ? 'info' : 'warning');
+        } else {
+          // Document remains attached! User can proceed and enter details manually
+          showToast(json.message || 'Document attached! You may enter the details manually below.', 'info');
         }
       } else {
-        const errText = await res.text().catch(() => '');
-        console.warn('AI Scan server responded with status:', res.status, errText);
-        showToast('Document attached. (Server AI scan is taking longer than expected — you can continue typing manually.)', 'info');
+        showToast('Document attached! You may enter the details manually below.', 'info');
       }
     } catch (err) {
       console.warn('AI Scan network notice:', err);
-      showToast('Document attached. AI scan timed out — please type details manually.', 'info');
+      showToast('Document attached! You may enter the details manually below.', 'info');
     } finally {
       setAiScanning(prev => ({ ...prev, [reqId]: false }));
     }
