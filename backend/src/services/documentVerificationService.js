@@ -523,11 +523,13 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
         // Multi-model auto-failover cascade: Uses current stable Gemini Vision models.
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
         const modelsToTry = [
             preferredModel,
+            'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-1.5-flash',
+            'gemini-2.5-flash-lite',
             'gemini-2.0-flash-lite',
             'gemini-1.5-flash-8b'
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
