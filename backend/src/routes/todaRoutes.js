@@ -721,6 +721,7 @@ router.get('/next-body-number', protect, async (req, res) => {
             prefix,
             nextSeq: candidateSeq,
             suggestedBodyNumber: candidateFormatted,
+            nextBodyNumber: candidateFormatted,
             alternativeBodyNumber: candidateSimple,
             totalExistingUnits: existingBodyNumbers.size
         });
@@ -730,10 +731,8 @@ router.get('/next-body-number', protect, async (req, res) => {
     }
 });
 
-// @route   POST /api/v1/toda/members/single
-// @desc    Add a single individual member directly to active accredited TODA roster
-// @access  Private (TODA President, BPLO Staff, Admin)
-router.post('/members/single', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'admin'), async (req, res) => {
+// Handler for adding single member to accredited roster
+const handleAddSingleMember = async (req, res) => {
     try {
         const { operatorName, bodyNumber, plateNo, contact, remarks, todaAssociation } = req.body;
         const targetToda = (todaAssociation || req.user.todaAssociation || '').trim();
@@ -811,6 +810,12 @@ router.post('/members/single', protect, authorize('toda_president', 'toda presid
         console.error('Error adding individual member:', error);
         res.status(500).json({ message: 'Error adding individual member to TODA roster' });
     }
-});
+};
+
+// @route   POST /api/v1/toda/members/single AND /api/v1/toda/members/individual
+// @desc    Add a single individual member directly to active accredited TODA roster
+// @access  Private (TODA President, BPLO Staff, Admin)
+router.post('/members/single', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'admin'), handleAddSingleMember);
+router.post('/members/individual', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'admin'), handleAddSingleMember);
 
 module.exports = router;
