@@ -254,6 +254,11 @@ const htmlContent = `<!DOCTYPE html>
       margin-bottom: 6px;
     }
     
+    h1, h2, h3, .step-header {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+    
     p {
       margin: 0 0 8px 0;
       text-align: justify;
@@ -1147,8 +1152,6 @@ const htmlContent = `<!DOCTYPE html>
     </div>
   </div>
 
-  <div class="page-break"></div>
-
   <!-- SECTION 9: TROUBLESHOOTING & SUPPORT -->
   <div>
     <h1>9. Troubleshooting, FAQs & Support Directory</h1>
@@ -1245,6 +1248,8 @@ const htmlContent = `<!DOCTYPE html>
       Yes. In compliance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>, passwords use cryptographic bcrypt hashing, biometric markers like blood type are excluded from AI OCR extraction, and documents are stored in secure cloud vaults with expiring tokens.
     </div>
 
+    <div class="page-break"></div>
+
     <h2>9.3 LGU Office Directory & Official Support Channels</h2>
     <table>
       <thead>
@@ -1311,7 +1316,8 @@ const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 if (fs.existsSync(chromePath)) {
   console.log('Compiling publication-grade PDF via Chrome Headless...');
-  const cmd = `"${chromePath}" --headless=new --disable-gpu --run-all-compositor-stages-before-draw --no-pdf-header-footer --print-to-pdf="${primaryPdfPath}" "${htmlPath}"`;
+  const tempProfileDir = path.join(require('os').tmpdir(), 'chrome_pdf_profile_' + Date.now());
+  const cmd = `"${chromePath}" --headless=new --disable-gpu --user-data-dir="${tempProfileDir}" --run-all-compositor-stages-before-draw --no-pdf-header-footer --print-to-pdf="${primaryPdfPath}" "${htmlPath}"`;
   execSync(cmd, { stdio: 'inherit' });
   
   // Also copy to alias path so any tool or test looking for either file finds the exact build
