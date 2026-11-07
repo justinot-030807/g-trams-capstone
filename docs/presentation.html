@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G-TRAMS Final Capstone Defense Presentation</title>
+  <style>
+    :root {
+      --maroon: #9E2A2B;
+      --maroon-dark: #7A1F20;
+      --gold: #D4AF37;
+      --dark-bg: #0F172A;
+      --card-bg: #1E293B;
+      --card-border: #334155;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--card-border);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      border-left: 2px solid var(--maroon);
+      padding-left: 10px;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-ctrl {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-ctrl:hover {
+      background: var(--maroon);
+      border-color: var(--maroon);
+    }
+
+    /* Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 4px;
+      background: var(--card-border);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 6.66%;
+      background: linear-gradient(90deg, var(--maroon), var(--gold));
+      transition: width 0.3s ease;
+    }
+
+    /* Slide Stage */
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 40px;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      height: 100%;
+      max-height: 680px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 40px 50px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      flex-direction: column;
+      justify-content: space-between;
+      animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Slide Content Typography */
+    .slide-header {
+      border-bottom: 2px solid var(--maroon);
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .slide-title {
+      font-size: 26pt;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+    }
+
+    .slide-speaker {
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(212, 175, 55, 0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .slide-text {
+      flex: 1.2;
+    }
+
+    .slide-visual {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .feature-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--gold);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+
+    .feature-card h4 {
+      font-size: 13pt;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+
+    .feature-card p {
+      font-size: 10.5pt;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Grid for Personas & Architecture */
+    .persona-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      width: 100%;
+    }
+
+    .persona-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 15px;
+      text-align: left;
+    }
+
+    .persona-box h5 {
+      font-size: 12pt;
+      color: var(--gold);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .persona-box ul {
+      padding-left: 18px;
+      font-size: 9.5pt;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Stat Box */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      width: 100%;
+      margin: 20px 0;
+    }
+
+    .stat-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-top: 4px solid var(--maroon);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 32pt;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    .stat-label {
+      font-size: 10pt;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Cover Slide Specifics */
+    .cover-slide {
+      text-align: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .cover-title {
+      font-size: 48pt;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+      text-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+    }
+
+    .cover-sub {
+      font-size: 18pt;
+      color: #FFFFFF;
+      font-weight: 600;
+      margin-bottom: 25px;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      max-width: 900px;
+      margin: 20px auto;
+    }
+
+    .team-member {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 15px 10px;
+    }
+
+    .member-name {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .member-role {
+      font-size: 9pt;
+      color: var(--gold);
+      margin-top: 4px;
+    }
+
+    /* Speaker Notes Drawer */
+    .speaker-drawer {
+      display: none;
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 1000px;
+      background: #020617;
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 16px 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      z-index: 20;
+    }
+
+    .speaker-drawer.open {
+      display: block;
+    }
+
+    .speaker-title {
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .speaker-text {
+      font-size: 10.5pt;
+      color: #E2E8F0;
+      line-height: 1.5;
+    }
+
+    /* Bottom Controls */
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 30px;
+      background: var(--dark-bg);
+      border-top: 1px solid var(--card-border);
+    }
+
+    .slide-counter {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-nav {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-nav:hover {
+      background: var(--maroon);
+      border-color: var(--maroon);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="brand">
+      <div class="brand-logo">G-TRAMS</div>
+      <div class="brand-subtitle">LGU Gasan, Marinduque • Capstone Final Defense 2026</div>
+    </div>
+    <div class="top-controls">
+      <button class="btn-ctrl" onclick="toggleSpeakerNotes()">🎤 Notes (S)</button>
+      <button class="btn-ctrl" onclick="toggleFullScreen()">⛶ Fullscreen (F)</button>
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Stage -->
+  <div class="stage">
+
+    <!-- Slide 1: Cover -->
+    <div class="slide active cover-slide" data-speaker="Buong Grupo" data-notes="Lahat ay magpapakilala ng pangalan at gampanin. Simulan nang may tiwala: 'Magandang araw sa ating kagalang-galang na panel, kami po ang Group 5 at ikinagagalak naming ipresenta ang G-TRAMS.'">
+      <div>
+        <div style="font-size: 12pt; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">
+          Marinduque State University • College of Information and Computing Sciences
+        </div>
+        <div class="cover-title">G-TRAMS</div>
+        <div class="cover-sub">Gasan Tricycle Regulatory and Automated Management System</div>
+      </div>
+      <div class="team-grid">
+        <div class="team-member">
+          <div class="member-name">Jhon Kyn Axix Cabrigas</div>
+          <div class="member-role">Lead Backend Developer</div>
+        </div>
+        <div class="team-member">
+          <div class="member-name">Justine S. Lachica</div>
+          <div class="member-role">Frontend Lead Developer</div>
+        </div>
+        <div class="team-member">
+          <div class="member-name">Jay Vincent G. Motol</div>
+          <div class="member-role">Quality Assurance</div>
+        </div>
+        <div class="team-member">
+          <div class="member-name">Ian Simon Francis Rey</div>
+          <div class="member-role">DevOps & Cloud Engineer</div>
+        </div>
+      </div>
+      <div style="font-size: 11pt; color: var(--gold); font-weight: 600;">
+        Live Web Application: https://g-trams-official.vercel.app
+      </div>
+    </div>
+
+    <!-- Slide 2: Problem Statement -->
+    <div class="slide" data-speaker="Jhon Kyn Axix Cabrigas" data-notes="Bigyang-diin ang 7-14 araw na dating paghihintay ng mga driver, ang panganib ng mga colorum sa kalsada, at ang manual logbooks na madaling masira sa baha o sunog.">
+      <div class="slide-header">
+        <div class="slide-title">Problem Statement & Local Context</div>
+        <div class="slide-speaker">Speaker: Jhon Kyn Axix Cabrigas</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>1. Mabagal at Papel-Intensive na Proseso</h4>
+            <p>Umaabot ng 7 hanggang 14 araw ang pagpoproseso ng MTOP franchise permit dahil sa manu-manong pagpasa ng sari-saring photocopies sa iba't ibang opisina.</p>
+          </div>
+          <div class="feature-card">
+            <h4>2. Paglaganap ng "Colorum" at Peke na Permiso</h4>
+            <p>Walang instant digital tool ang PNP at Traffic Enforcers upang malaman sa gilid ng kalsada kung lehitimo o paso na ang prangkisa ng bumibiyaheng tricycle.</p>
+          </div>
+          <div class="feature-card">
+            <h4>3. Duplicate Body Numbers & Roster Conflicts</h4>
+            <p>Dahil walang sentralisadong database ang mga TODA, nagkakaroon ng nagkakarerang body numbers na pinagmumulan ng alitan sa mga terminal.</p>
+          </div>
+        </div>
+        <div class="slide-visual">
+          <div style="background: rgba(158, 42, 43, 0.2); border: 2px dashed var(--maroon); border-radius: 12px; padding: 30px; text-align: center;">
+            <div style="font-size: 48pt; color: var(--maroon);">⚠️</div>
+            <div style="font-size: 14pt; font-weight: 700; color: #FFFFFF; margin-top: 10px;">LGU Pain Points</div>
+            <div style="font-size: 10.5pt; color: var(--text-muted); margin-top: 6px;">7–14 Days MTOP Lead Time • Disorganized TODA Records • No Real-Time Roadside Verification</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Objectives -->
+    <div class="slide" data-speaker="Justine S. Lachica" data-notes="Ipaliwanag na ang G-TRAMS ay hindi simpleng website, kundi kumpletong digital ecosystem na nag-uugnay sa mamamayan, asosasyon, at pamahalaan.">
+      <div class="slide-header">
+        <div class="slide-title">Project Objectives & Deliverables</div>
+        <div class="slide-speaker">Speaker: Justine S. Lachica</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>🎯 Sentralisadong Lifecycle Automation</h4>
+            <p>I-digitize ang buong daloy: Online Application, TODA Endorsement, AI Document Pre-check, Cashier Payment, at Digital MTOP Issuance.</p>
+          </div>
+          <div class="feature-card">
+            <h4>⚡ 1.5-Second AI Vision OCR</h4>
+            <p>Pabilisin ang data entry gamit ang Google Gemini Vision upang awtomatikong ma-extract ang Motor No., Chassis No., at Plate No. mula sa LTO OR/CR.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📱 Tamper-Proof Roadside QR Verification</h4>
+            <p>Paganahin ang sub-second mobile verification para sa kapulisan at enforcers gamit ang anumang smartphone camera.</p>
+          </div>
+          <div class="feature-card">
+            <h4>🛡️ Comprehensive Disaster Recovery (DRP)</h4>
+            <p>Awtomatikong weekly database backup at 1-click direct offline download na sumusunod sa Data Privacy Act (RA 10173).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: System Architecture -->
+    <div class="slide" data-speaker="Ian Simon Francis Rey" data-notes="Banggitin ang decoupling ng React 19 Frontend (Vercel) at Express Backend (Render) para sa scalability at high availability.">
+      <div class="slide-header">
+        <div class="slide-title">System Architecture & Tech Stack</div>
+        <div class="slide-speaker">Speaker: Ian Simon Francis Rey</div>
+      </div>
+      <div class="slide-body">
+        <div class="persona-grid" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="persona-box">
+            <h5>💻 Frontend Architecture</h5>
+            <ul>
+              <li><strong>Framework:</strong> React 19.2 + Vite 8.0 (Modern Client)</li>
+              <li><strong>Styling:</strong> Tailwind CSS 3.4 (LGU Official Palette)</li>
+              <li><strong>PWA:</strong> Installable Web App na may Offline Shell</li>
+              <li><strong>Accessibility:</strong> WCAG AA Compliance, Text Resizer, Dark Mode</li>
+              <li><strong>Hosting:</strong> Vercel Global Edge Network</li>
+            </ul>
+          </div>
+          <div class="persona-box">
+            <h5>⚙️ Backend & API Engine</h5>
+            <ul>
+              <li><strong>Runtime:</strong> Node.js + Express 5.2 (RESTful Architecture)</li>
+              <li><strong>Database:</strong> MongoDB Atlas (Managed NoSQL with Indexes)</li>
+              <li><strong>AI Engine:</strong> Google GenAI SDK (Gemini Vision OCR)</li>
+              <li><strong>Security:</strong> JWT, Bcrypt Hashing, Role-Based Access Control</li>
+              <li><strong>Hosting:</strong> Render Containerized Cloud Platform</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: RBAC -->
+    <div class="slide" data-speaker="Justine S. Lachica" data-notes="I-highlight na pinaghiwalay na ang IT Admin at BPLO Staff alinsunod sa puna ng panel noong pre-final defense.">
+      <div class="slide-header">
+        <div class="slide-title">Role-Based Access Control (RBAC)</div>
+        <div class="slide-speaker">Speaker: Justine S. Lachica</div>
+      </div>
+      <div class="slide-body">
+        <div class="persona-grid">
+          <div class="persona-box">
+            <h5>🛵 Tricycle Operator</h5>
+            <ul>
+              <li>Filing ng Bagong Aplikasyon & Renewal</li>
+              <li>Digital ID & MTOP Certificate Viewing</li>
+              <li>SMS Alerts & Status Tracking</li>
+            </ul>
+          </div>
+          <div class="persona-box">
+            <h5>👥 TODA President</h5>
+            <ul>
+              <li>Association Member Roster Management</li>
+              <li>Unique Body Number Allocation</li>
+              <li>Digital Member Endorsement & Clearance</li>
+            </ul>
+          </div>
+          <div class="persona-box">
+            <h5>👮 Traffic Enforcer</h5>
+            <ul>
+              <li>Mobile QR Code Roadside Scanning</li>
+              <li>Instant Permit Validity Verification</li>
+              <li>Traffic Violation & Citation Issuance</li>
+            </ul>
+          </div>
+          <div class="persona-box">
+            <h5>💵 Municipal Cashier</h5>
+            <ul>
+              <li>Franchise & Violation Fee Assessment</li>
+              <li>Official Receipt (OR) Logging</li>
+              <li>Daily Remittance Sheet & CSV Export</li>
+            </ul>
+          </div>
+          <div class="persona-box">
+            <h5>🏢 BPLO Licensing Officer</h5>
+            <ul>
+              <li>Review Queue & AI OCR Comparison</li>
+              <li>Physical Inspection Scheduling</li>
+              <li>Final MTOP Certificate Issuance</li>
+            </ul>
+          </div>
+          <div class="persona-box">
+            <h5>🛡️ System Admin (IT)</h5>
+            <ul>
+              <li>User Accounts & Security Audits</li>
+              <li>Weekly Database Backup & DRP Engine</li>
+              <li>System Policies & Master Data Settings</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Operator Portal -->
+    <div class="slide" data-speaker="Justine S. Lachica" data-notes="Ipakita kung paano pinapabilis ng AI Vision ang OCR para hindi na kailangang mag-type ng driver, at may recovery contact na sakaling mawala ang SIM.">
+      <div class="slide-header">
+        <div class="slide-title">Feature 1: Operator Portal & AI OCR</div>
+        <div class="slide-speaker">Speaker: Justine S. Lachica</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>📄 3-Step Online Filing Process</h4>
+            <p>Pumili ng New, Renewal, o Voluntary Cancellation; ilagay ang vehicle specs; at i-upload ang LTO OR/CR, Cedula, Driver's License, at TODA Clearance.</p>
+          </div>
+          <div class="feature-card">
+            <h4>🤖 Automated AI Vision OCR Pre-Verification</h4>
+            <p>Binabasa at sinusuri ng Google Gemini Vision ang plaka, motor no., at chassis no. sa loob ng 1.5 segundo. May built-in guard laban sa maling litrato o selfie.</p>
+          </div>
+          <div class="feature-card">
+            <h4>🔑 Multi-Channel Recovery Contact</h4>
+            <p>May opsyonal na backup email at telepono para makatanggap ng OTP kahit mawala ang primary SIM card ng driver.</p>
+          </div>
+        </div>
+        <div class="slide-visual">
+          <div style="background: rgba(30, 41, 59, 0.8); border: 1px solid var(--gold); border-radius: 8px; padding: 20px; text-align: center;">
+            <div style="font-size: 13pt; font-weight: 700; color: var(--gold);">AI OCR Processing</div>
+            <div style="font-size: 32pt; font-weight: 900; color: #FFFFFF; margin: 10px 0;">1.5s</div>
+            <div style="font-size: 9.5pt; color: var(--text-muted);">Average Document Extraction Latency</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: TODA Management -->
+    <div class="slide" data-speaker="Jay Vincent G. Motol" data-notes="Banggitin na may automated sequential number generator at naipasa ang 5-concurrent collision test sa QA.">
+      <div class="slide-header">
+        <div class="slide-title">Feature 2: TODA Member Roster & Numbers</div>
+        <div class="slide-speaker">Speaker: Jay Vincent G. Motol</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>🔢 Strict Duplicate Prevention</h4>
+            <p>Compound unique database index sa TODA at Body Number upang pigilan ang dobleng pagpaparehistro ng parehong numero.</p>
+          </div>
+          <div class="feature-card">
+            <h4>⚡ Auto-Generate Sequential Numbers</h4>
+            <p>Isang click lamang ng TODA President, ibinibigay ng system ang susunod na bakanteng numero sa asosasyon nang walang conflict.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📋 Digital Clearance & Endorsement</h4>
+            <p>Hindi na kailangan ng papel na trip-ticket. Ang mga na-endorse lamang na miyembro ang maaaring mag-apply sa BPLO.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: BPLO Workflow -->
+    <div class="slide" data-speaker="Jhon Kyn Axix Cabrigas" data-notes="Ipakita kung paano sinusuri ng staff ang orihinal na litrato katabi ng AI OCR text bago aprubahan ang bayad.">
+      <div class="slide-header">
+        <div class="slide-title">Feature 3: BPLO Licensing & Review Queue</div>
+        <div class="slide-speaker">Speaker: Jhon Kyn Axix Cabrigas</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>🔍 Side-by-Side Document Inspection</h4>
+            <p>Makikita ng licensing staff ang orihinal na litrato katabi ng extracted OCR fields para sa mabilis at tumpak na beripikasyon.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📅 Physical Inspection Scheduling</h4>
+            <p>Pagtatakda ng appointment para sa safety inspection ng preno, ilaw, at emission ng tricycle unit bago ang pinal na pirma.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📜 Certified Digital MTOP Certificate</h4>
+            <p>Awtomatikong paggawa ng official certificate na may dynamic QR code, selyo ng LGU, at pirma ng Municipal Mayor at Sanggunian.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Cashier & Remittance -->
+    <div class="slide" data-speaker="Ian Simon Francis Rey" data-notes="Bigyang-diin ang Daily Remittance Sheet na may lagda ng Cashier at Treasurer alinsunod sa COA regulations.">
+      <div class="slide-header">
+        <div class="slide-title">Feature 4: Municipal Cashier & Remittance</div>
+        <div class="slide-speaker">Speaker: Ian Simon Francis Rey</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>💵 Zero Admin Bypass Terminal</h4>
+            <p>Tanging ang awtorisadong Cashier lamang ang may karapatang tumanggap ng bayad at mag-isyu ng LGU Official Receipt (OR).</p>
+          </div>
+          <div class="feature-card">
+            <h4>📑 COA-Compliant Daily Remittance Sheet</h4>
+            <p>Awtomatikong end-of-day collection summary na may authorized signature blocks para sa Cashier at Municipal Treasurer.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📊 1-Click CSV Audit Export</h4>
+            <p>Instant download ng formatted CSV spreadsheet para sa direktang pagsusuri ng Municipal Accounting Office.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Roadside QR -->
+    <div class="slide" data-speaker="Jay Vincent G. Motol" data-notes="Ipakita na naayos na ang 404 issue gamit ang Dual-Lookup Engine; subukan ito ng live gamit ang cellphone camera sa harapan ng panel.">
+      <div class="slide-header">
+        <div class="slide-title">Feature 5: Roadside Dual-Lookup QR Engine</div>
+        <div class="slide-speaker">Speaker: Jay Vincent G. Motol</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>🔍 Dual-Lookup Smart Engine</h4>
+            <p>Awtomatikong kinikilala kung Operator Physical ID o Tricycle MTOP Certificate ang iniscan, iniiwasan ang 404 errors.</p>
+          </div>
+          <div class="feature-card">
+            <h4>⚡ Real-Time Live Database Query</h4>
+            <p>Direktang kumukonsulta sa live cloud database upang makita ang pinakabagong status (Active, Suspended, o Expired) sa loob ng 1 segundo.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📱 No App Required</h4>
+            <p>Gumagana sa anumang standard camera ng Android o iPhone nang walang kailangang i-install na third-party app.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11: DRP & Backup -->
+    <div class="slide" data-speaker="Ian Simon Francis Rey" data-notes="Ipaliwanag kung bakit ginawa ang Direct In-Memory Gzip Stream para sa ephemeral cloud resilience nang walang gastos sa AWS S3.">
+      <div class="slide-header">
+        <div class="slide-title">Disaster Recovery & Database Backup (DRP)</div>
+        <div class="slide-speaker">Speaker: Ian Simon Francis Rey</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>⏰ Automated Weekly Cron Snapshot</h4>
+            <p>Tumatakbo tuwing Linggo ng 12:00 MN (Midnight) para i-archive ang buong 13 database collections na may rolling 8-week retention.</p>
+          </div>
+          <div class="feature-card">
+            <h4>💾 Direct Offline In-Memory Gzip Stream</h4>
+            <p>Ini-stream ang compressed archive (.json.gz) diretso sa USB ng Municipal IT Officer; matatag laban sa cloud container restarts.</p>
+          </div>
+          <div class="feature-card">
+            <h4>🛡️ Double-Confirmation Safety Restore</h4>
+            <p>Kailangang i-type ang 'RESTORE' na may awtomatikong pre-restore safety snapshot bago magsagawa ng database recovery.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12: Security & RA 10173 -->
+    <div class="slide" data-speaker="Jhon Kyn Axix Cabrigas" data-notes="Banggitin na server-locked sa Philippine Standard Time (PST) ang expiration kaya hindi madadaya kahit palitan ang oras ng laptop.">
+      <div class="slide-header">
+        <div class="slide-title">Security, RA 10173 & Server-Authoritative Time</div>
+        <div class="slide-speaker">Speaker: Jhon Kyn Axix Cabrigas</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="feature-card">
+            <h4>🔒 Data Privacy Act of 2012 (RA 10173)</h4>
+            <p>One-way bcrypt password hashing; awtomatikong tinatanggal (strip) ang mga active OTPs sa backup archive bago i-export.</p>
+          </div>
+          <div class="feature-card">
+            <h4>🕒 Server-Authoritative Time (PST UTC+8)</h4>
+            <p>Naka-lock sa Philippine Standard Time ang expiry evaluation; hindi maaapektuhan kahit baguhin ng user ang oras ng kanyang laptop.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📜 Immutable Security Audit Trail</h4>
+            <p>Naitatala ang bawat pag-apruba, pag-revoke, pag-login, at transaksyon kasama ang user ID, timestamp, at IP address.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 13: QA & Testing -->
+    <div class="slide" data-speaker="Jay Vincent G. Motol" data-notes="Ipakita na 201/201 ang pumasa sa Jest test suites at naipasa ang 50-concurrent stress test na may 22ms average latency.">
+      <div class="slide-header">
+        <div class="slide-title">Quality Assurance & Concurrency Stress Tests</div>
+        <div class="slide-speaker">Speaker: Jay Vincent G. Motol</div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text">
+          <div class="stats-container">
+            <div class="stat-card">
+              <div class="stat-num">14/14</div>
+              <div class="stat-label">Test Suites Passed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num">201</div>
+              <div class="stat-label">Automated Tests Passed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num">0</div>
+              <div class="stat-label">Failed Unit Tests</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num">22ms</div>
+              <div class="stat-label">Average API Latency</div>
+            </div>
+          </div>
+          <div class="feature-card" style="margin-top: 15px;">
+            <h4>🧪 500-Request Concurrency Stress Test Passed</h4>
+            <p>Sinubukan ang sabay-sabay na cashier payments, masterlist loading, at duplicate body number submissions nang walang database lock o memory leak.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 14: System Impact -->
+    <div class="slide" data-speaker="Justine S. Lachica" data-notes="Ipakita ang malaking pagbabago sa serbisyo publiko ng Munisipalidad ng Gasan.">
+      <div class="slide-header">
+        <div class="slide-title">System Impact on LGU Gasan</div>
+        <div class="slide-speaker">Speaker: Justine S. Lachica</div>
+      </div>
+      <div class="slide-body">
+        <div class="persona-grid" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="persona-box" style="border-top: 4px solid var(--maroon);">
+            <h5 style="color: var(--maroon);">❌ Dati (Manual Workflow)</h5>
+            <ul>
+              <li>7 hanggang 14 araw na processing lead time</li>
+              <li>Mahabang pila at paulit-ulit na pagbiyahe sa munisipyo</li>
+              <li>Mano-manong logbooks na madaling masira sa sakuna</li>
+              <li>Walang paraan para ma-verify ang colorum sa kalsada</li>
+            </ul>
+          </div>
+          <div class="persona-box" style="border-top: 4px solid #22C55E;">
+            <h5 style="color: #22C55E;">✅ Ngayon (G-TRAMS Automated)</h5>
+            <ul>
+              <li>2 hanggang 3 araw na lamang ang kabuuang proseso</li>
+              <li>85% pagbawas sa pisikal na papel at photocopies</li>
+              <li>100% digital auditability at end-of-day remittance</li>
+              <li>Sub-second roadside QR checking para sa kapulisan</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 15: Conclusion -->
+    <div class="slide cover-slide" data-speaker="Jhon Kyn Axix Cabrigas" data-notes="Magpasalamat sa Panel, Adviser, at sa LGU Gasan. Sabihing handa na ang grupo para sa mga katanungan.">
+      <div>
+        <div class="cover-title" style="font-size: 36pt;">Maraming Salamat po!</div>
+        <div class="cover-sub" style="font-size: 15pt; margin-top: 10px;">
+          G-TRAMS: Gasan Tricycle Regulatory and Automated Management System
+        </div>
+        <p style="color: var(--text-muted); font-size: 11pt; max-width: 600px; margin: 15px auto;">
+          Nakahanda na po ang aming buong grupo para sa inyong mga katanungan, obserbasyon, at suhestiyon.
+        </p>
+      </div>
+      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--gold); border-radius: 8px; padding: 15px; display: inline-block;">
+        <span style="color: var(--gold); font-weight: 700;">Deliverable #7 User's Manual PDF:</span>
+        <span style="color: #FFFFFF;"> Deliverable7_Group5_GTRAMS_UsersManual.pdf</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Speaker Notes Drawer -->
+  <div class="speaker-drawer" id="speakerDrawer">
+    <div class="speaker-title">
+      <span id="speakerName">Speaker Notes</span>
+      <span style="font-size: 9pt; color: var(--text-muted);">Press 'S' to close</span>
+    </div>
+    <div class="speaker-text" id="speakerNotesText">Notes here...</div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="bottom-bar">
+    <div class="slide-counter" id="slideCounter">Slide 1 of 15</div>
+    <div class="nav-buttons">
+      <button class="btn-nav" onclick="prevSlide()">◀ Previous</button>
+      <button class="btn-nav" onclick="nextSlide()">Next ▶</button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const progressBar = document.getElementById('progressBar');
+    const slideCounter = document.getElementById('slideCounter');
+    const speakerDrawer = document.getElementById('speakerDrawer');
+    const speakerName = document.getElementById('speakerName');
+    const speakerNotesText = document.getElementById('speakerNotesText');
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === currentSlide);
+      });
+
+      const pct = ((currentSlide + 1) / totalSlides) * 100;
+      progressBar.style.width = pct + '%';
+      slideCounter.innerText = `Slide ${currentSlide + 1} of ${totalSlides}`;
+
+      const activeSlide = slides[currentSlide];
+      const speaker = activeSlide.getAttribute('data-speaker') || 'Group 5';
+      const notes = activeSlide.getAttribute('data-notes') || 'No specific notes for this slide.';
+
+      speakerName.innerText = `🎤 Speaker: ${speaker}`;
+      speakerNotesText.innerText = notes;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function toggleSpeakerNotes() {
+      speakerDrawer.classList.toggle('open');
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key.toLowerCase() === 's') {
+        toggleSpeakerNotes();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullScreen();
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
