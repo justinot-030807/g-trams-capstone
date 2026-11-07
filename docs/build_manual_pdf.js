@@ -2,35 +2,42 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const assetsDir = path.join(__dirname, 'manual_assets');
+console.log('Starting G-TRAMS Deliverable #7 Publication-Grade PDF Builder...');
 
-// Helper to convert local image to base64 data URI so Chrome prints without local CORS or broken paths
-function getBase64Image(filename) {
-  const filePath = path.join(assetsDir, filename);
-  if (fs.existsSync(filePath)) {
-    const ext = path.extname(filename).replace('.', '') || 'png';
-    const data = fs.readFileSync(filePath).toString('base64');
-    return `data:image/${ext};base64,${data}`;
+// Helper to convert image to base64 data URI
+function getBase64Image(filename, candidateDirs = ['manual_assets', '../remotion/assets', '../frontend/public']) {
+  for (const dir of candidateDirs) {
+    const fullPath = path.resolve(__dirname, dir, filename);
+    if (fs.existsSync(fullPath)) {
+      const ext = path.extname(filename).replace('.', '') || 'png';
+      const data = fs.readFileSync(fullPath).toString('base64');
+      return `data:image/${ext};base64,${data}`;
+    }
   }
   return '';
 }
 
+// Load all 17 numbered figure assets + official logos
 const images = {
-  fig1: getBase64Image('fig1_login_page.png'),
-  fig2: getBase64Image('fig2_register_page.png'),
-  fig3: getBase64Image('fig3_forgot_password.png'),
-  fig4: getBase64Image('fig4_landing_page.png'),
-  fig5: getBase64Image('fig5_operator_dashboard.png'),
-  fig6: getBase64Image('fig6_apply_franchise.png'),
-  fig7: getBase64Image('fig7_qr_verification.png'),
-  fig8: getBase64Image('fig8_toda_roster.png'),
-  fig9: getBase64Image('fig9_cashier_dashboard.png'),
+  gasanLogo: getBase64Image('gasan-logo.png'),
+  gtramsLogo: getBase64Image('gtrams-logo.png'),
+  fig1: getBase64Image('fig4_landing_page.png') || getBase64Image('screen1_landing.png'),
+  fig2: getBase64Image('fig1_login_page.png'),
+  fig3: getBase64Image('fig2_register_page.png'),
+  fig4: getBase64Image('fig3_forgot_password.png'),
+  fig5: getBase64Image('screen4_verify.png') || getBase64Image('fig7_qr_verification.png'),
+  fig6: getBase64Image('fig5_operator_dashboard.png'),
+  fig7: getBase64Image('fig6_apply_franchise.png'),
+  fig8: getBase64Image('screen2_application.png') || getBase64Image('fig6_apply_franchise.png'),
+  fig9: getBase64Image('sample_toda_roster.png'),
+  fig10: getBase64Image('fig8_toda_roster.png'),
   fig11: getBase64Image('fig11_bplo_dashboard.png'),
   fig12: getBase64Image('fig12_bplo_approval_queue.png'),
-  fig13: getBase64Image('fig13_franchise_masterlist.png'),
-  fig14: getBase64Image('fig14_admin_dashboard.png'),
-  fig15: getBase64Image('fig15_user_management.png'),
-  fig16: getBase64Image('fig16_admin_settings.png'),
+  fig13: getBase64Image('fig13_franchise_masterlist.png') || getBase64Image('screen3_masterlist.png'),
+  fig14: getBase64Image('fig9_cashier_dashboard.png'),
+  fig15: getBase64Image('fig14_admin_dashboard.png'),
+  fig16: getBase64Image('fig15_user_management.png'),
+  fig17: getBase64Image('fig16_admin_settings.png') || getBase64Image('fig16_admin_database_backup.png'),
 };
 
 const htmlContent = `<!DOCTYPE html>
@@ -41,9 +48,18 @@ const htmlContent = `<!DOCTYPE html>
   <style>
     @page {
       size: A4 portrait;
-      margin: 20mm 15mm 20mm 15mm;
+      margin: 18mm 14mm 18mm 14mm;
       @bottom-right {
         content: counter(page);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 8pt;
+        color: #6B6761;
+      }
+      @bottom-left {
+        content: "G-TRAMS Deliverable #7: User's Manual of the System • Municipality of Gasan";
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 8pt;
+        color: #6B6761;
       }
     }
     
@@ -55,37 +71,56 @@ const htmlContent = `<!DOCTYPE html>
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 10.5pt;
+      font-size: 9pt;
       line-height: 1.5;
       color: #1F1D1B;
-      background: #FFF;
+      background: #FFFFFF;
       margin: 0;
       padding: 0;
     }
     
     .page-break {
-      page-break-after: always;
-      break-after: page;
+      page-break-before: always;
+      break-before: page;
     }
     
-    /* Cover Page */
+    .avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    /* COVER PAGE */
     .cover-page {
+      min-height: 250mm;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      height: 245mm;
       text-align: center;
-      padding: 20mm 10mm;
+      padding: 25mm 15mm 20mm 15mm;
       border: 3px double #9E2A2B;
       background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F5 100%);
     }
     
+    .cover-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 15px;
+    }
+    
+    .cover-logo-img {
+      width: 75px;
+      height: 75px;
+      object-fit: contain;
+    }
+    
     .univ-header {
-      margin-bottom: 25px;
+      margin-bottom: 20px;
     }
     .univ-title {
-      font-size: 16pt;
+      font-size: 15pt;
       font-weight: 800;
       color: #1F1D1B;
       text-transform: uppercase;
@@ -93,72 +128,81 @@ const htmlContent = `<!DOCTYPE html>
       margin: 0;
     }
     .college-title {
-      font-size: 13pt;
-      font-weight: 600;
+      font-size: 12pt;
+      font-weight: 700;
       color: #9E2A2B;
-      margin: 6px 0 0 0;
+      margin: 4px 0 0 0;
+    }
+    .dept-title {
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: #6B6761;
+      margin: 2px 0 0 0;
     }
     .address {
-      font-size: 9pt;
+      font-size: 8.5pt;
       color: #6B6761;
-      margin: 4px 0 0 0;
+      margin: 3px 0 0 0;
     }
     
     .cover-main {
-      margin: 30px 0;
+      margin: 20px 0;
     }
     .deliverable-badge {
       display: inline-block;
       background-color: #9E2A2B;
       color: #FFFFFF;
-      font-size: 11pt;
+      font-size: 10pt;
       font-weight: 700;
-      padding: 6px 18px;
+      padding: 5px 16px;
       border-radius: 4px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 20px;
+      letter-spacing: 1.5px;
+      margin-bottom: 15px;
     }
     .system-title {
-      font-size: 26pt;
+      font-size: 28pt;
       font-weight: 900;
       color: #9E2A2B;
-      line-height: 1.2;
-      margin: 0 0 10px 0;
+      line-height: 1.15;
+      margin: 0 0 8px 0;
+      letter-spacing: 1px;
     }
     .system-subtitle {
-      font-size: 13pt;
-      font-weight: 600;
+      font-size: 12.5pt;
+      font-weight: 700;
       color: #D4AF37;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin: 0 0 20px 0;
+      margin: 0 0 15px 0;
     }
     .doc-type {
-      font-size: 18pt;
+      font-size: 17pt;
       font-weight: 800;
       color: #1F1D1B;
       border-top: 2px solid #D4AF37;
       border-bottom: 2px solid #D4AF37;
       padding: 8px 0;
       margin: 15px auto;
-      max-width: 400px;
+      max-width: 460px;
+      letter-spacing: 0.5px;
     }
     
     .meta-box {
       background: #FFFFFF;
       border: 1px solid #E4E1DC;
+      border-left: 4px solid #9E2A2B;
       border-radius: 6px;
-      padding: 15px 25px;
+      padding: 14px 22px;
       text-align: left;
-      font-size: 10pt;
-      margin-top: 25px;
+      font-size: 8.5pt;
+      margin-top: 15px;
       display: inline-block;
-      min-width: 320px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      min-width: 380px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.04);
     }
     .meta-row {
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       display: flex;
       justify-content: space-between;
     }
@@ -173,190 +217,238 @@ const htmlContent = `<!DOCTYPE html>
     }
     
     .cover-footer {
-      font-size: 9pt;
+      font-size: 8.5pt;
       color: #6B6761;
-      margin-top: 20px;
+      margin-top: 15px;
+      line-height: 1.4;
     }
     
-    /* Document Body */
+    /* SECTION HEADINGS */
     h1 {
       color: #9E2A2B;
-      font-size: 16pt;
+      font-size: 14pt;
       font-weight: 800;
       border-bottom: 2px solid #9E2A2B;
-      padding-bottom: 5px;
-      margin-top: 25px;
-      margin-bottom: 15px;
+      padding-bottom: 4px;
+      margin-top: 22px;
+      margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     
     h2 {
       color: #1F1D1B;
-      font-size: 13pt;
+      font-size: 11pt;
       font-weight: 700;
-      border-left: 4px solid #D4AF37;
-      padding-left: 10px;
-      margin-top: 22px;
-      margin-bottom: 10px;
+      border-left: 3.5px solid #D4AF37;
+      padding-left: 8px;
+      margin-top: 18px;
+      margin-bottom: 8px;
     }
     
     h3 {
       color: #9E2A2B;
-      font-size: 11pt;
+      font-size: 9.5pt;
       font-weight: 700;
-      margin-top: 16px;
-      margin-bottom: 8px;
+      margin-top: 14px;
+      margin-bottom: 6px;
     }
     
     p {
-      margin: 0 0 10px 0;
+      margin: 0 0 8px 0;
       text-align: justify;
     }
     
     ul, ol {
-      margin: 0 0 12px 0;
-      padding-left: 24px;
+      margin: 0 0 10px 0;
+      padding-left: 20px;
     }
     
     li {
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     
+    /* TABLES */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 15px 0;
-      font-size: 9.5pt;
+      margin: 12px 0;
+      font-size: 8.5pt;
     }
     
     th, td {
       border: 1px solid #D6D3D1;
-      padding: 8px 10px;
+      padding: 6px 8px;
       text-align: left;
+      vertical-align: top;
     }
     
     th {
       background-color: #9E2A2B;
       color: #FFFFFF;
       font-weight: 700;
+      text-transform: uppercase;
+      font-size: 8pt;
+      letter-spacing: 0.5px;
     }
     
     tr:nth-child(even) {
       background-color: #F8F7F5;
     }
     
+    /* FIGURE CONTAINERS */
     .figure-container {
-      margin: 15px 0 20px 0;
+      margin: 12px 0 16px 0;
       text-align: center;
       background: #FAFAF9;
       border: 1px solid #E4E1DC;
-      border-radius: 6px;
-      padding: 10px;
+      border-radius: 5px;
+      padding: 8px;
       page-break-inside: avoid;
     }
     
     .figure-img {
-      max-width: 95%;
-      max-height: 95mm;
+      max-width: 96%;
+      max-height: 85mm;
       height: auto;
       border: 1px solid #D6D3D1;
       border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+      display: inline-block;
     }
     
     .figure-caption {
-      font-size: 9pt;
+      font-size: 8pt;
       font-weight: 700;
       color: #6B6761;
-      margin-top: 8px;
+      margin-top: 6px;
+      line-height: 1.35;
+      padding: 0 8px;
     }
     
+    /* CALLOUT BOXES */
     .callout {
       background-color: #F8F5EE;
-      border-left: 4px solid #D4AF37;
-      padding: 10px 14px;
+      border-left: 3.5px solid #D4AF37;
+      padding: 8px 12px;
       border-radius: 0 4px 4px 0;
-      margin: 14px 0;
-      font-size: 9.5pt;
+      margin: 10px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
     }
     .callout-title {
       font-weight: 700;
       color: #9E2A2B;
-      margin-bottom: 4px;
-    }
-    
-    .badge {
-      display: inline-block;
-      font-size: 8pt;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 3px;
-      background-color: #9E2A2B;
-      color: #FFF;
-      text-transform: uppercase;
+      margin-bottom: 3px;
     }
     
     .step-box {
       background: #FFFFFF;
       border: 1px solid #E4E1DC;
-      border-left: 4px solid #9E2A2B;
+      border-left: 3.5px solid #9E2A2B;
       border-radius: 4px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
       page-break-inside: avoid;
     }
     .step-header {
-      font-size: 11pt;
+      font-size: 10pt;
       font-weight: 700;
       color: #9E2A2B;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .step-purpose {
-      font-size: 9.5pt;
+      font-size: 8.5pt;
       color: #6B6761;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-style: italic;
     }
     .step-result {
       background: #F0FDF4;
       border: 1px solid #BBF7D0;
       color: #166534;
-      padding: 6px 10px;
+      padding: 5px 8px;
       border-radius: 4px;
-      font-size: 9pt;
-      margin-top: 8px;
+      font-size: 8pt;
+      font-weight: 600;
+      margin-top: 6px;
     }
     
-    .header-tag {
-      float: right;
-      font-size: 9pt;
-      font-weight: 600;
-      color: #D4AF37;
+    .badge {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background-color: #9E2A2B;
+      color: #FFF;
       text-transform: uppercase;
+    }
+    .badge-gold {
+      background-color: #D4AF37;
+      color: #1F1D1B;
+    }
+    .badge-green {
+      background-color: #15803D;
+      color: #FFF;
+    }
+    
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dotted #D6D3D1;
+      font-size: 8.5pt;
+    }
+    .toc-section {
+      font-weight: 700;
+      color: #9E2A2B;
+    }
+    .toc-dots {
+      flex: 1;
+      border-bottom: 1px dotted #A8A29E;
+      margin: 0 8px 3px 8px;
+    }
+    .toc-page {
+      font-weight: 600;
+      color: #6B6761;
     }
   </style>
 </head>
 <body>
 
   <!-- COVER PAGE -->
-  <div class="cover-page page-break">
+  <div class="cover-page">
+    <div class="cover-logos">
+      ${images.gasanLogo ? `<img src="${images.gasanLogo}" class="cover-logo-img" alt="Municipality of Gasan Seal">` : ''}
+      ${images.gtramsLogo ? `<img src="${images.gtramsLogo}" class="cover-logo-img" alt="G-TRAMS Emblem">` : ''}
+    </div>
+
     <div class="univ-header">
       <h2 class="univ-title">Marinduque State University</h2>
       <h3 class="college-title">College of Information and Computing Sciences</h3>
+      <div class="dept-title">Department of Information Technology</div>
       <p class="address">Panfilo M. Manguera Sr. Rd., Brgy. Tanza, Boac, Marinduque, Philippines 4900</p>
     </div>
     
     <div class="cover-main">
       <div class="deliverable-badge">Deliverable #7</div>
       <h1 class="system-title">G-TRAMS</h1>
-      <div class="system-subtitle">Gasan Tricycle Regulatory & Automated Management System</div>
+      <div class="system-subtitle">Gasan Tricycle Regulatory and Automated Management System</div>
       <div class="doc-type">USER’S MANUAL OF THE SYSTEM</div>
       
       <div class="meta-box">
         <div class="meta-row">
-          <span class="meta-label">Course / Program:</span>
-          <span class="meta-value">BS Information Technology (Capstone Project)</span>
+          <span class="meta-label">Municipal Client:</span>
+          <span class="meta-value">Municipality of Gasan, Marinduque</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Municipal Mayor:</span>
+          <span class="meta-value">HON. LIDANY A. LAO-BALDO</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Authorizing Bodies:</span>
+          <span class="meta-value">Sangguniang Bayan • MTFRB • BPLO</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">System Version:</span>
@@ -366,541 +458,868 @@ const htmlContent = `<!DOCTYPE html>
           <span class="meta-label">Deployment URL:</span>
           <span class="meta-value">https://g-trams-official.vercel.app</span>
         </div>
-        <div class="meta-row">
-          <span class="meta-label">Development Team:</span>
-          <span class="meta-value">Group 5 (CICS)</span>
+        <div class="meta-row" style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #E4E1DC;">
+          <span class="meta-label">Capstone Group:</span>
+          <span class="meta-value">Group 5 (CICS - MarSU)</span>
         </div>
-        <div class="meta-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #E4E1DC;">
-          <span class="meta-label">Lead Backend:</span>
+        <div class="meta-row">
+          <span class="meta-label">Lead Backend Architect:</span>
           <span class="meta-value">Jhon Kyn Axix H. Cabrigas</span>
         </div>
         <div class="meta-row">
-          <span class="meta-label">Frontend Lead:</span>
+          <span class="meta-label">Frontend Lead & UI/UX:</span>
           <span class="meta-value">Justine S. Lachica</span>
         </div>
         <div class="meta-row">
-          <span class="meta-label">Quality Assurance:</span>
+          <span class="meta-label">Quality Assurance Lead:</span>
           <span class="meta-value">Jay Vincent G. Motol</span>
         </div>
         <div class="meta-row">
-          <span class="meta-label">DevOps & Cloud:</span>
+          <span class="meta-label">DevOps & Cloud Engineer:</span>
           <span class="meta-value">Ian Simon Francis M. Rey</span>
         </div>
       </div>
     </div>
     
     <div class="cover-footer">
-      <p style="margin: 0; text-align: center;">Municipality of Gasan, Province of Marinduque • Academic Year 2026–2027</p>
+      <strong>Pamahalaang Bayan ng Gasan • Sangguniang Bayan • MTFRB</strong><br>
+      Published for Academic Year 2026–2027 • Approved for Municipal Implementation
     </div>
   </div>
 
-  <!-- TABLE OF CONTENTS & SYSTEM OVERVIEW -->
+  <div class="page-break"></div>
+
+  <!-- DOCUMENT REVISION & TABLE OF CONTENTS -->
   <div>
-    <h1>1. System Overview</h1>
+    <h1>Document Metadata & Revision History</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th>Release Date</th>
+          <th>Authors / Contributors</th>
+          <th>Summary of Operational Milestones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>v1.0.0</strong></td>
+          <td>September 14, 2026</td>
+          <td>Group 5 (CICS)</td>
+          <td>Initial baseline for Proposal Defense; preliminary system architecture and wireframe workflows.</td>
+        </tr>
+        <tr>
+          <td><strong>v1.8.0</strong></td>
+          <td>October 18, 2026</td>
+          <td>Justine S. Lachica, Jay Vincent G. Motol</td>
+          <td>Midterm release incorporating multi-role authentication, 5-step MTOP wizard, and BPLO queue.</td>
+        </tr>
+        <tr>
+          <td><strong>v2.2.0</strong></td>
+          <td>November 2, 2026</td>
+          <td>Jhon Kyn Axix H. Cabrigas, Ian Simon Francis M. Rey</td>
+          <td>Gemini Vision AI OCR parsing, COA physical OR booklet serialization, and Sunday 12MN backups.</td>
+        </tr>
+        <tr>
+          <td><strong>v2.4.0</strong></td>
+          <td>November 7, 2026</td>
+          <td>Group 5 (CICS)</td>
+          <td>Final production release for Final Defense and LGU Turn-over; comprehensive 6-role manual and 17 figure catalog.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h1>Executive Table of Contents</h1>
+    <div style="margin: 12px 0;">
+      <div class="toc-item">
+        <span class="toc-section">1. System Overview & Citizen's Charter</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 1</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">2. Shared Authentication & Security Infrastructure</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 2</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">3. Public Visitor & Passenger Guide</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 3</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">4. Tricycle Operator Guide (5-Step Wizard & 2-Unit Quota)</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 4</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">5. TODA President Guide (Roster AI OCR & Delisting)</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 5</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">6. BPLO Licensing Officer Guide (Review Console & Sanctions)</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 6</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">7. Municipal Cashier Guide (OR-GASAN-2026 Serialization & Remittance)</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 7</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">8. System Administrator & IT Operations Guide (Disaster Recovery & Telemetry)</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 8</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-section">9. Troubleshooting, FAQs & Support Directory</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Section 9</span>
+      </div>
+    </div>
+
+    <h1>1. System Overview & Citizen's Charter</h1>
     <p>
-      The <strong>Gasan Tricycle Regulatory and Automated Management System (G-TRAMS)</strong> is an enterprise-grade, cloud-native web portal developed for the Local Government Unit (LGU) of Gasan, Marinduque. It replaces outdated, paper-intensive tricycle franchising procedures with a fully synchronized, role-based digital architecture.
+      The <strong>Gasan Tricycle Regulatory and Automated Management System (G-TRAMS)</strong> is an enterprise-grade municipal e-governance platform commissioned by the Local Government Unit (LGU) of Gasan, Province of Marinduque. Developed by Marinduque State University - College of Information and Computing Sciences (MarSU CICS) BSIT Capstone Group 5, G-TRAMS automates the regulatory lifecycle of motorized tricycles-for-hire across the municipality.
     </p>
-    
-    <h2>1.1 Purpose and Objectives</h2>
+
+    <h2>1.1 Municipal Mandate & Legal Framework</h2>
     <ul>
-      <li><strong>Automate MTOP Issuance:</strong> Streamline the entire lifecycle of Motorized Tricycle Operator's Permits (MTOP) from online application, verification, fee settlement, to digital permit issuance.</li>
-      <li><strong>Eliminate "Colorum" Units:</strong> Enforce strict municipal body number assignments, preventing vehicle duplicates, forged documents, and unregistered commercial operations.</li>
-      <li><strong>Integrate Roadside Enforcement:</strong> Equip municipal police and traffic enforcers with mobile QR code scanning tools to verify legitimate permits in under 3 seconds.</li>
-      <li><strong>Promote Financial Transparency:</strong> Provide the Municipal Treasury with real-time payment audit trails, instant official receipting, and COA-compliant daily remittance sheets.</li>
-      <li><strong>Comply with National Standards:</strong> Ensure full adherence to the <em>Data Privacy Act of 2012 (RA 10173)</em>, ARTA Ease of Doing Business regulations, and ISO-standard local government recordkeeping.</li>
+      <li><strong>Republic Act No. 7160 (Local Government Code of 1991):</strong> Section 447 (a)(3)(vi) delegates the franchising and regulation of tricycles-for-hire to the Sangguniang Bayan and Municipal Mayor via the Municipal Tricycle Franchising and Regulatory Board (MTFRB).</li>
+      <li><strong>Municipal Franchising Ordinance Section 4 (Fleet Quota Limit):</strong> Enforces a statutory individual operator ceiling of <strong>maximum two (2) motorized tricycle units</strong> to eliminate commercial monopoly, prevent unauthorized subleasing, and ensure equitable livelihood distribution among Gasan transport operators.</li>
+      <li><strong>Republic Act No. 11032 (Ease of Doing Business & ARTA):</strong> Mandates digital citizen service delivery with strict Service Level Agreements (SLAs), completing simple evaluations within 3 working days and complex regulatory audits within 7 working days.</li>
+      <li><strong>Republic Act No. 10173 (Data Privacy Act of 2012):</strong> Strictly enforces <strong>Data Minimization</strong>; sensitive biometric markers (such as blood type) are deliberately excluded from AI OCR extraction routines, recording only legally mandated licensing attributes.</li>
+      <li><strong>Commission on Audit (COA) Guidelines:</strong> Precludes unverified online payments; fees are collected strictly via Over-the-Counter Cashier operations and bound to physical serialized Official Receipt booklets (<code>OR-GASAN-2026-XXXX</code>).</li>
     </ul>
 
-    <h2>1.2 Intended User Roles</h2>
+    <h2>1.2 The 5-Step Application Lifecycle</h2>
+    <p>
+      G-TRAMS establishes an immutable, five-stage Citizen's Charter workflow:
+      <br>
+      <strong>Step 1: Online Filing</strong> (Operator files application, vehicle specs, and documents via 5-Step Wizard; AI OCR pre-check) $\rightarrow$
+      <strong>Step 2: BPLO Scrutiny</strong> (Dual-Pane inspection, OCR discrepancy check, and physical inspection scheduling) $\rightarrow$
+      <strong>Step 3: Treasury Settlement</strong> (Cashier collects ₱500 fee, logs serialized receipt <code>OR-GASAN-2026-XXXX</code>) $\rightarrow$
+      <strong>Step 4: Mayoral Sign-Off</strong> (Hon. Lidany A. Lao-Baldo & MTFRB authorize permit) $\rightarrow$
+      <strong>Step 5: Physical Release</strong> (Operator claims sticker; instant watermarked e-Copy with dynamic QR activates on mobile device).
+    </p>
+
+    <h2>1.3 Geographic Scope & Route Zones</h2>
+    <p>
+      The territorial jurisdiction of G-TRAMS covers all <strong>25 official Barangays</strong> of the Municipality of Gasan, categorized into three (3) distinct operational route zones:
+    </p>
+    <ul>
+      <li><strong>Central Zone (Poblacion Town Proper Loop):</strong> Barangay I (Poblacion), Barangay II (Poblacion), Barangay III (Poblacion). Commercial center, municipal hall, public market, and port.</li>
+      <li><strong>North Zone (Northern Coastal & Upland Route):</strong> Bahi, Bangbang, Cabugao, Mangiliol, Masiga, Tapuyan, Tiguion. Northern agriculture, fishing barangays, and circum-island road link.</li>
+      <li><strong>South Zone (Southern Coastal & Interior Valley Route):</strong> Antipolo, Bachao Ibaba, Bachao Ilaya, Bacong-Bacong, Banot, Banuyo, Bognuyan, Dawis, Dili, Libtangin, Mahunig, Matandang Gasan, Pangi, Pinggan, Tabionan.</li>
+    </ul>
+
+    <h2>1.4 Transport Associations Directory (17 Accredited TODAs)</h2>
+    <p>
+      Every commercial tricycle unit in Gasan must affiliate with an accredited transport association:
+      BATODA, POB TODA, GT TODA, LUG TODA, NBI TODA, BANGBANG IPIL TODA, TAB TODA, TIGUION TODA, MASIGA TODA, MAT TODA, PG TODA, 4B TODA, DPAB TODA, ILAYA TODA, GASAN CENTRAL TODA, BAHI TODA, and NON-TODA (monitored municipal independent commercial units).
+    </p>
+
+    <div class="figure-container">
+      <img src="${images.fig1}" class="figure-img" alt="G-TRAMS Landing Page">
+      <div class="figure-caption">Figure 1: G-TRAMS Public Citizen Landing Page & Municipal Portal — Features the top navigation bar with Gasan municipal seal, live statistics counter (Registered Operators, Accredited TODAs, Active Franchises), dual Call-to-Action buttons ("LOG IN" and "REGISTER"), municipal mandate announcement, and 5-step Citizen's Charter interactive service cards.</div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 2: AUTHENTICATION & SECURITY -->
+  <div>
+    <h1>2. Shared Authentication & Security Infrastructure</h1>
+    <p>
+      G-TRAMS implements a centralized, role-based authentication gateway that guarantees high security while ensuring accessibility for transport workers and administrative personnel alike.
+    </p>
+
+    <h2>2.1 Multi-Identifier Login Architecture</h2>
+    <p>
+      To accommodate operators without active email addresses, the login portal (<code>/login</code>) accepts either an <strong>11-digit Philippine mobile phone number</strong> (e.g. <code>09123456789</code>) or a <strong>verified email address</strong>. Credentials are cryptographically salt-hashed using bcrypt, and authenticated sessions are governed by JSON Web Tokens (JWT).
+    </p>
+
+    <div class="step-box">
+      <div class="step-header">Procedure 2.1: Portal Sign-In</div>
+      <div class="step-purpose">Purpose: Authenticate authorized users and route them to their assigned role dashboard.</div>
+      <ol>
+        <li>Navigate to <code>https://g-trams-official.vercel.app/login</code>.</li>
+        <li>Enter your registered 11-digit mobile number or email address.</li>
+        <li>Type your account password. Click the eye toggle glyph to check visibility if needed.</li>
+        <li>Click the maroon <strong>"Log In"</strong> button.</li>
+      </ol>
+      <div class="step-result">✓ Expected Result: Session token is issued and user is immediately directed to their role console.</div>
+    </div>
+
+    <div class="figure-container">
+      <img src="${images.fig2}" class="figure-img" alt="Login Terminal">
+      <div class="figure-caption">Figure 2: Shared Multi-Identifier Authentication Login Terminal — Secure login portal accessible via /login supporting both 11-digit Philippine mobile numbers (09XXXXXXXXX) and verified email addresses, password field with visibility toggle, Google OAuth single-sign-on integration, and direct link to password recovery.</div>
+    </div>
+
+    <h2>2.2 Account Registration with Secondary Recovery Contact</h2>
+    <p>
+      To prevent permanent account lockout when mobile SIM cards are damaged or lost, the registration workflow enforces the collection of a mandatory secondary recovery contact (backup mobile phone or email).
+    </p>
+
+    <div class="step-box">
+      <div class="step-header">Procedure 2.2: New Account Registration</div>
+      <div class="step-purpose">Purpose: Onboard new tricycle operators and transport leaders with account recovery safeguards.</div>
+      <ol>
+        <li>Click <strong>"Register"</strong> on the portal header.</li>
+        <li>Input your Full Legal Name matching official government credentials.</li>
+        <li>Enter your Primary Mobile Contact and a mandatory Secondary Recovery Contact.</li>
+        <li>Select your official Barangay Residency from Gasan's 25 official barangays.</li>
+        <li>Select your affiliated TODA Association and input your unit body number.</li>
+        <li>Configure a password (minimum 8 characters with uppercase and numeric digit).</li>
+        <li>Click <strong>"Create Account"</strong> and enter the 6-digit OTP code dispatched to your contact.</li>
+      </ol>
+      <div class="step-result">✓ Expected Result: Account is created in MongoDB Atlas and user is transitioned to their active garage.</div>
+    </div>
+
+    <div class="figure-container">
+      <img src="${images.fig3}" class="figure-img" alt="Registration Form">
+      <div class="figure-caption">Figure 3: Citizen & Operator Account Registration Interface — Multi-field onboarding console collecting legal applicant name, primary mobile contact, mandatory secondary recovery contact (backup mobile/email) to prevent lockouts, residency selection from Gasan's 25 official barangays, accredited TODA affiliation, and initial body number specification.</div>
+    </div>
+
+    <h2>2.3 Multi-Channel Password Recovery via 6-Digit OTP</h2>
+    <p>
+      If credentials are lost, operators can request a 6-digit One-Time PIN (OTP) valid for five (5) minutes dispatched via SMS or email to either their primary or secondary recovery contact.
+    </p>
+
+    <div class="figure-container">
+      <img src="${images.fig4}" class="figure-img" alt="Forgot Password Modal">
+      <div class="figure-caption">Figure 4: Multi-Channel Password Recovery & OTP Verification Modal — Security modal displaying the red alert shield, contact input field (juan@gmail.com or 09123456789), 6-digit one-time PIN (OTP) verification mechanism with 5-minute timeout window, and password reset form.</div>
+    </div>
+
+    <h2>2.4 Role-Based Access Control (RBAC) Governance Matrix</h2>
     <table>
       <thead>
         <tr>
-          <th>User Role</th>
-          <th>Description & Scope of Authority</th>
-          <th>Primary Workflows</th>
+          <th>Capability / Route</th>
+          <th>Public</th>
+          <th>Operator</th>
+          <th>TODA Pres</th>
+          <th>BPLO Officer</th>
+          <th>Cashier</th>
+          <th>Sys Admin</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><strong>Tricycle Operator / Driver</strong></td>
-          <td>Individual tricycle franchise holders and drivers residing in Gasan.</td>
-          <td>Online franchise filing (New/Renewal/Dropping), document upload, application tracking, digital ID/certificate viewing.</td>
+          <td>Citizen's Charter & Announcements</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
         </tr>
         <tr>
-          <td><strong>TODA President</strong></td>
-          <td>Elected leaders of accredited Tricycle Operators and Drivers Associations.</td>
-          <td>Master roster management, individual member addition, digital clearance issuance, and member removal requests.</td>
+          <td>Roadside QR Verification (<code>/verify/:id</code>)</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
+          <td>Read</td>
         </tr>
         <tr>
-          <td><strong>Traffic Enforcer (PNP / CTMO)</strong></td>
-          <td>Field traffic officers authorized to inspect tricycles on municipal routes.</td>
-          <td>Mobile QR code verification of operator IDs and vehicle MTOPs, issuing digital traffic citation tickets.</td>
+          <td>5-Step Online MTOP Wizard</td>
+          <td>❌</td>
+          <td>Full</td>
+          <td>Full</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
         </tr>
         <tr>
-          <td><strong>Municipal Cashier / Treasury</strong></td>
-          <td>Municipal Treasury disbursing officers handling revenue collection.</td>
-          <td>Payment assessment, logging cash and digital payments, issuing official receipts, and generating daily remittance sheets.</td>
+          <td>TODA Roster Digitization & OCR</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>Full</td>
+          <td>Review</td>
+          <td>❌</td>
+          <td>❌</td>
         </tr>
         <tr>
-          <td><strong>BPLO Licensing Officer</strong></td>
-          <td>Business Permits and Licensing Office regulatory staff.</td>
-          <td>Queue review, document inspection with AI OCR extraction, physical inspection scheduling, and permit approval.</td>
+          <td>Dual-Pane Document Review & Approvals</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>Full</td>
+          <td>❌</td>
+          <td>❌</td>
         </tr>
         <tr>
-          <td><strong>System Administrator (IT)</strong></td>
-          <td>Municipal IT officers responsible for system availability and security.</td>
-          <td>User access control (RBAC), audit logging, and automated weekly database backups with disaster recovery.</td>
+          <td>Treasury Payment Terminal & OR Logging</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>Full</td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td>COA Daily Remittance CSV Export</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>Full</td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td>IT Telemetry, DRP Restore & Policy</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>Full</td>
         </tr>
       </tbody>
     </table>
-    
-    <div class="figure-container">
-      <img src="${images.fig4}" class="figure-img" alt="Landing Page">
-      <div class="figure-caption">Figure 1. G-TRAMS Public Citizen Portal & Services Landing Page</div>
+    <div class="callout">
+      <div class="callout-title">Strict Separation of Duties (SoD) Guardrail</div>
+      System Administrators are restricted to IT infrastructure and cannot review or approve franchises. Cashiers are restricted to fee receipting and cannot alter permit details or reject applications.
     </div>
   </div>
 
   <div class="page-break"></div>
 
-  <!-- SYSTEM REQUIREMENTS & GETTING STARTED -->
+  <!-- SECTION 3: PUBLIC VISITOR & PASSENGER GUIDE -->
   <div>
-    <h1>2. System Requirements and Access</h1>
+    <h1>3. Public Visitor & Passenger Guide</h1>
     <p>
-      G-TRAMS operates as a lightweight Progressive Web Application (PWA) accessible via any modern web browser without requiring dedicated software installations.
+      G-TRAMS provides transparent public services accessible to all citizens, tourists, and law enforcement officers without requiring account registration or login.
     </p>
 
-    <h2>2.1 Hardware and Software Requirements</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Component</th>
-          <th>Minimum Requirement</th>
-          <th>Recommended Specification</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>Devices Supported</strong></td>
-          <td>Android / iOS Smartphone, Tablet</td>
-          <td>Desktop PC or Laptop (1080p Display) for LGU Staff</td>
-        </tr>
-        <tr>
-          <td><strong>Web Browser</strong></td>
-          <td>Chrome 100+, Edge 100+, Safari 15+, Firefox 100+</td>
-          <td>Latest Google Chrome or Microsoft Edge</td>
-        </tr>
-        <tr>
-          <td><strong>Internet Connection</strong></td>
-          <td>Stable 3G/4G Mobile Data (minimum 1 Mbps)</td>
-          <td>Broadband / Wi-Fi (5 Mbps or higher)</td>
-        </tr>
-        <tr>
-          <td><strong>Official URL</strong></td>
-          <td colspan="2"><a href="https://g-trams-official.vercel.app">https://g-trams-official.vercel.app</a></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h1>3. Getting Started: Access, Registration & Login</h1>
-    
-    <div class="step-box">
-      <div class="step-header">3.1 Account Registration Procedure</div>
-      <div class="step-purpose">Purpose: Allows new tricycle operators and TODA leaders to create a verified personal account.</div>
-      <ol>
-        <li>Open your browser and navigate to <strong>https://g-trams-official.vercel.app</strong>.</li>
-        <li>Click the <strong>"Register"</strong> link located on the top navigation bar or below the login form.</li>
-        <li>Complete the registration form with your <strong>Full Legal Name</strong>, <strong>Primary Mobile Number</strong>, <strong>Email Address</strong>, and <strong>Barangay Address</strong> in Gasan.</li>
-        <li>Provide a secondary <strong>Recovery Contact</strong> (backup phone number or email) to ensure account recovery if your primary SIM or email is misplaced.</li>
-        <li>Select your designated <strong>TODA Association</strong> (or "NON-TODA" if unaffiliated) and vehicle body number.</li>
-        <li>Create a secure password containing at least 8 characters, an uppercase letter, and a number.</li>
-        <li>Click <strong>"Create Account"</strong> and enter the 6-digit OTP code received on your registered contact.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: Account is successfully registered, verified, and redirected to your role-specific dashboard.</div>
-    </div>
-
-    <div class="figure-container">
-      <img src="${images.fig2}" class="figure-img" alt="Registration Page">
-      <div class="figure-caption">Figure 2. G-TRAMS New User Account Registration with Recovery Contacts</div>
-    </div>
-
-    <div class="step-box">
-      <div class="step-header">3.2 Portal Login Procedure</div>
-      <div class="step-purpose">Purpose: Grants authenticated access to authorized modules based on role permissions.</div>
-      <ol>
-        <li>Navigate to <strong>https://g-trams-official.vercel.app/login</strong>.</li>
-        <li>Enter your registered <strong>Email Address</strong> or <strong>Mobile Phone Number</strong>.</li>
-        <li>Type your password in the password field. You may click the eye icon to verify visibility.</li>
-        <li>Click the <strong>"Log In"</strong> button.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: The system authenticates your token and directs you immediately to your active dashboard.</div>
-    </div>
-
-    <div class="figure-container">
-      <img src="${images.fig1}" class="figure-img" alt="Login Page">
-      <div class="figure-caption">Figure 3. Official G-TRAMS Secure Authentication Login Terminal</div>
-    </div>
-
-    <div class="step-box">
-      <div class="step-header">3.3 Password Recovery (Forgot Password)</div>
-      <div class="step-purpose">Purpose: Enables operators to regain account access via SMS or email verification.</div>
-      <ol>
-        <li>On the login page, click <strong>"Forgot Password?"</strong>.</li>
-        <li>Enter your registered primary email, phone number, or backup recovery contact.</li>
-        <li>Click <strong>"Send Reset Code"</strong> to receive an authorized 6-digit one-time PIN.</li>
-        <li>Enter the received OTP code and configure your new secure password.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: Password is updated securely, allowing immediate sign-in with your new credentials.</div>
-    </div>
-
-    <div class="figure-container">
-      <img src="${images.fig3}" class="figure-img" alt="Forgot Password Page">
-      <div class="figure-caption">Figure 4. Password Recovery & Multi-Channel OTP Reset Interface</div>
-    </div>
-  </div>
-
-  <div class="page-break"></div>
-
-  <!-- OPERATOR PORTAL INSTRUCTIONS -->
-  <div>
-    <h1>4. Operator Portal: Step-by-Step Instructions</h1>
+    <h2>3.1 Public Portal Navigation & Announcements</h2>
     <p>
-      The Operator Portal is designed for ease of use by tricycle owners and drivers. It presents a clear overview of active franchises, inspection dates, and permit credentials.
+      Citizens navigating to <code>https://g-trams-official.vercel.app/</code> can review real-time transport telemetry (Registered Operators, Accredited TODAs, Active Franchises), official municipal bulletins, and traffic advisories published by the Sangguniang Bayan.
     </p>
 
-    <div class="figure-container">
-      <img src="${images.fig5}" class="figure-img" alt="Operator Dashboard">
-      <div class="figure-caption">Figure 5. Operator Dashboard with Unit Allocation & Digital ID Badge</div>
-    </div>
+    <h2>3.2 Roadside Mobile Camera QR Verification (<code>/verify/:id</code>)</h2>
+    <p>
+      Every franchised tricycle in Gasan features an official QR code sticker affixed to the sidecar windshield and driver digital ID. Any smartphone camera can scan this code to independently verify vehicle legality in real time.
+    </p>
 
     <div class="step-box">
-      <div class="step-header">4.1 Submitting an Online Franchise Application</div>
-      <div class="step-purpose">Purpose: Apply for a New Franchise, Annual Renewal, Dropping, or Transfer without visiting the municipal hall.</div>
+      <div class="step-header">Procedure 3.1: Roadside QR Inspection</div>
+      <div class="step-purpose">Purpose: Verify legitimate commercial tricycle franchises and detect colorum units roadside in under 3 seconds.</div>
       <ol>
-        <li>From your Operator Dashboard, click the <strong>"Apply for Franchise"</strong> or <strong>"Apply Online"</strong> button.</li>
-        <li>Select the application type: <strong>New Franchise</strong>, <strong>Renewal</strong>, or <strong>Transfer of Ownership</strong>.</li>
-        <li>Input the tricycle vehicle technical details:
+        <li>Open your smartphone camera or any QR scanner application.</li>
+        <li>Aim the camera at the physical QR decal on the tricycle windshield or driver digital ID.</li>
+        <li>Tap the recognized URL link: <code>https://g-trams-official.vercel.app/verify/:id</code>.</li>
+        <li>Inspect the official LGU verification card:
           <ul>
-            <li><strong>LTO Plate Number</strong> (e.g., 123-ABC)</li>
-            <li><strong>Motor Number</strong> & <strong>Chassis Number</strong> (from vehicle registration)</li>
-            <li><strong>Make / Brand</strong> (e.g., Honda TMX 125, Kawasaki Barako)</li>
-            <li><strong>Assigned Body Number</strong></li>
-          </ul>
-        </li>
-        <li>Upload clear digital photos or scans of mandatory credentials:
-          <ul>
-            <li><strong>LTO Official Receipt & Certificate of Registration (OR/CR)</strong></li>
-            <li><strong>Community Tax Certificate (Cedula)</strong> with serial number and date</li>
-            <li><strong>Valid Professional Driver's License</strong></li>
-            <li><strong>TODA Clearance & Certification</strong> issued by your TODA President</li>
-          </ul>
-        </li>
-        <li>Click <strong>"Submit Application"</strong>. The system's integrated AI OCR engine will immediately inspect document text clarity and queue the submission for BPLO verification.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: Application status transitions to <em>"Pending Review"</em> with a generated application reference ID.</div>
-    </div>
-
-    <div class="figure-container">
-      <img src="${images.fig6}" class="figure-img" alt="Apply Franchise Form">
-      <div class="figure-caption">Figure 6. Online MTOP Application Form with Document Upload & OCR Pre-Check</div>
-    </div>
-
-    <div class="step-box">
-      <div class="step-header">4.2 Accessing Digital Operator ID & MTOP Certificate</div>
-      <div class="step-purpose">Purpose: Display official digital credentials on mobile devices for inspection by authorities.</div>
-      <ol>
-        <li>Log in to your Operator account and locate your approved unit under <strong>"Active Franchises"</strong>.</li>
-        <li>Click <strong>"View Digital ID"</strong> to open the full-screen official digital identification card.</li>
-        <li>To view or print your MTOP permit certificate, click <strong>"Download / View MTOP Certificate"</strong>.</li>
-        <li>Present the tamper-evident QR code directly to any municipal traffic officer during roadside inspection.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: Full digital permit displays with certified municipal seals, validity date, and route authorization.</div>
-    </div>
-  </div>
-
-  <div class="page-break"></div>
-
-  <!-- TODA PRESIDENT & TRAFFIC ENFORCER INSTRUCTIONS -->
-  <div>
-    <h1>5. TODA President Portal: Roster & Clearances</h1>
-    <p>
-      TODA Presidents possess delegated authority to endorse members, manage association roster allocations, and ensure that only accredited operators receive barangay franchise privileges.
-    </p>
-
-    <div class="step-box">
-      <div class="step-header">5.1 Managing Association Member Rosters</div>
-      <div class="step-purpose">Purpose: Register new association members and verify compliance before LGU submission.</div>
-      <ol>
-        <li>Log in with your verified TODA President credentials.</li>
-        <li>Navigate to the <strong>"Submit / Manage Members"</strong> module from the sidebar.</li>
-        <li>To register a single new member: Click <strong>"Add Member"</strong>, input the member's full name, license number, and assign a unique association body number. The system automatically blocks duplicate numbers.</li>
-        <li>To upload multiple members: Click <strong>"Bulk Roster Upload"</strong> and select your association's masterlist spreadsheet or photo.</li>
-        <li>Review each member's status and click <strong>"Endorse / Issue Clearance"</strong> to authorize their municipal MTOP application.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: Endorsed members immediately appear in the BPLO verification queue with validated TODA accreditation.</div>
-    </div>
-
-    <div class="figure-container">
-      <img src="${images.fig8}" class="figure-img" alt="TODA Roster Management">
-      <div class="figure-caption">Figure 7. TODA President Member Roster Management & Body Number Assignment</div>
-    </div>
-
-    <h1>6. Traffic Enforcer Portal: Roadside Inspection</h1>
-    <p>
-      Field traffic enforcers and PNP personnel utilize mobile devices to scan tricycle QR codes and verify franchise validity instantaneously.
-    </p>
-
-    <div class="step-box">
-      <div class="step-header">6.1 Scanning QR Codes and Roadside Verification</div>
-      <div class="step-purpose">Purpose: Instantly detect illegal colorum vehicles, expired permits, and unauthorized drivers.</div>
-      <ol>
-        <li>Open any mobile camera or QR scanner and point it at the physical tricycle MTOP sticker or driver's digital ID.</li>
-        <li>The browser opens the secure verification URL: <code>https://g-trams-official.vercel.app/verify/:id</code>.</li>
-        <li>Inspect the verification display:
-          <ul>
-            <li><strong>Franchise Status Badge:</strong> Green (Active / Valid), Yellow (Renewal Pending), or Red (Expired / Revoked).</li>
-            <li><strong>Verified Vehicle Specs:</strong> Plate Number, Motor Number, Body Number, and Registered TODA.</li>
-            <li><strong>Operator Identity:</strong> Full legal name and registered contact number.</li>
+            <li><strong>Validity Badge:</strong> Green (VALID LGU GASAN FRANCHISE) or Red (EXPIRED / REVOKED).</li>
+            <li><strong>Operator Profile:</strong> Full Legal Name, photo, and registered contact.</li>
+            <li><strong>Vehicle Specifications:</strong> Plate Number, Motor Number, Chassis Number, Make, and Body Number.</li>
+            <li><strong>Association & Route:</strong> Accredited TODA, assigned Route Zone, and permit expiration date.</li>
           </ul>
         </li>
       </ol>
-      <div class="step-result">✓ Expected Result: Official LGU verification is displayed within 1 to 2 seconds, confirming genuine permit records.</div>
+      <div class="step-result">✓ Expected Result: Official municipal verification renders immediately, confirming genuine registration records.</div>
     </div>
 
     <div class="figure-container">
-      <img src="${images.fig7}" class="figure-img" alt="QR Verification Result">
-      <div class="figure-caption">Figure 8. Live Real-Time Roadside QR Code Verification Terminal</div>
+      <img src="${images.fig5}" class="figure-img" alt="Public Roadside QR Verification">
+      <div class="figure-caption">Figure 5: Public Roadside Mobile QR Verification Terminal (/verify/:id) — Passenger and traffic enforcer mobile verification screen displaying real-time franchise validity badge (Active / Under Warning / Expired / Suspended), operator legal name, verified tricycle photograph, LTO plate number, engine/motor number, chassis number, assigned body number, and authorized route zone.</div>
+    </div>
+
+    <h2>3.3 Official Municipal Fare & Tariff Matrix Calculation</h2>
+    <p>
+      Pursuant to Sangguniang Bayan Municipal Fare Ordinances, tricycle fares in Gasan are standardized:
+    </p>
+    <ul>
+      <li><strong>Base Regular Fare:</strong> <strong>₱15.00</strong> for the first kilometer within municipal routes.</li>
+      <li><strong>Succeeding Kilometer Rate:</strong> <strong>₱2.50</strong> for each succeeding kilometer traveled.</li>
+      <li><strong>Mandatory 20% Discount (RA 11364):</strong> Students, Senior Citizens, and Persons with Disability (PWD) are entitled to a 20% statutory discount:
+        $$\text{Discounted Fare} = \text{Regular Fare} \times 0.80$$
+      </li>
+    </ul>
+    <div class="callout">
+      <div class="callout-title">Passenger Protection & Fare Complaint Hotline</div>
+      In case of fare overcharging or refusal to convey passengers, report the body number and plate number to the BPLO Helpdesk at (042) 342-1234 or email support@gasan.ph.
     </div>
   </div>
 
   <div class="page-break"></div>
 
-  <!-- CASHIER & TREASURY INSTRUCTIONS -->
+  <!-- SECTION 4: TRICYCLE OPERATOR GUIDE -->
   <div>
-    <h1>7. Municipal Cashier & Treasury Portal</h1>
+    <h1>4. Tricycle Operator Guide</h1>
     <p>
-      The Cashier Portal is an isolated financial terminal where treasury personnel assess regulatory fees, log official receipts (OR), and produce end-of-day revenue reconciliation sheets.
+      The Operator Portal empowers commercial tricycle operators to manage their fleet, file online franchise applications, and access tamper-evident digital credentials.
     </p>
 
+    <h2>4.1 Operator Garage Dashboard & Fleet Quota Limit (Max 2 Units)</h2>
+    <p>
+      Upon signing in, operators access their central garage dashboard:
+    </p>
+    <ul>
+      <li><strong>Fleet Quota Progress Bar (Section 4 Enforcement):</strong> Enforces the statutory limit of <strong>maximum two (2) units</strong> per individual:
+        <br>
+        <code>Unit Capacity 1 / 2 — 1 Slot(s) Available</code> (or <code>Unit Capacity 2 / 2 — Quota Limit Reached</code>).
+        Attempting to file a 3rd unit hard-locks the application form with an ordinance alert.
+      </li>
+      <li><strong>Lifecycle Status Tracker:</strong> Tracks milestones: <code>Applied</code> $\rightarrow$ <code>Pending Review</code> $\rightarrow$ <code>For Payment</code> $\rightarrow$ <code>For Signing</code> $\rightarrow$ <code>Ready for Pickup</code> $\rightarrow$ <code>Active</code>.</li>
+      <li><strong>"Fix Issues" Direct Resolution:</strong> Red discrepancy alerts allow operators to click "Fix Issues", jumping straight to the erroneous step with misread data highlighted in yellow.</li>
+    </ul>
+
+    <div class="figure-container">
+      <img src="${images.fig6}" class="figure-img" alt="Operator Dashboard">
+      <div class="figure-caption">Figure 6: Tricycle Operator Main Garage Dashboard — Comprehensive operator fleet management console displaying the Section 4 statutory quota progress bar ("Unit Capacity 1 / 2 - 1 Slot(s) Available"), active unit status badges, application lifecycle tracker (Needs Attention alert with direct Fix Issues button), digital ID shortcut, and floating municipal help widget.</div>
+    </div>
+
+    <h2>4.2 5-Step Online MTOP Application Wizard</h2>
     <div class="step-box">
-      <div class="step-header">7.1 Processing Fee Settlements & Issuing Official Receipts</div>
-      <div class="step-purpose">Purpose: Record payments for franchise permits, renewal fees, and violation citations.</div>
+      <div class="step-header">Procedure 4.1: Filing an Online MTOP Application</div>
+      <div class="step-purpose">Purpose: Apply for New Franchise, Annual Renewal, or Transfer/Dropping without municipal queueing.</div>
       <ol>
-        <li>From the Cashier Dashboard, locate the applicant in the <strong>"Payment Queue"</strong> or search by Plate Number, Body Number, or Applicant Name.</li>
-        <li>Verify the assessed fees: Standard MTOP regulatory fee, sticker fee, inspection fee, or penalty charges.</li>
-        <li>Select the payment channel: <strong>Cash (Over-the-Counter)</strong> or <strong>GCash / Digital Payment</strong>.</li>
-        <li>Input the <strong>Official Receipt (OR) Number</strong> issued by the Municipal Treasury.</li>
-        <li>Click <strong>"Confirm & Release Receipt"</strong>. The transaction is instantly recorded in the immutable treasury ledger.</li>
+        <li>Click <strong>"Apply for Franchise"</strong> from the Operator Dashboard.</li>
+        <li><strong>Step 1 (Operator & Driver):</strong> Confirm legal name and barangay address. Toggle Operator-is-Driver or input hired driver credentials with Driver's License photo and expiry date.</li>
+        <li><strong>Step 2 (Vehicle Specs):</strong> Enter LTO Plate, Engine, Chassis numbers, Make/Model, and Year. The system executes duplicate prevention queries.</li>
+        <li><strong>Step 3 (TODA & Barangay Clearances):</strong> Select affiliated TODA (green verified badge renders if matched in roster) and upload Barangay Clearance.</li>
+        <li><strong>Step 4 (Cedula / CTC):</strong> Enter current fiscal year Cedula serial number, issue date, and upload document photo.</li>
+        <li><strong>Step 5 (Review & Affidavit):</strong> Review summary, confirm sworn affidavit under Article 172 of the Revised Penal Code, and submit. Interrupted sessions are saved via <code>localforage</code> draft autosave.</li>
       </ol>
-      <div class="step-result">✓ Expected Result: Permit status automatically advances to <em>"For Signing / Ready for Pickup"</em>, and an SMS notification is sent to the operator.</div>
+      <div class="step-result">✓ Expected Result: Application transitions to "Pending Review" with a reference ID.</div>
     </div>
 
     <div class="figure-container">
-      <img src="${images.fig9}" class="figure-img" alt="Cashier Dashboard">
-      <div class="figure-caption">Figure 9. Municipal Cashier Payment Terminal with Real-Time Collection Counter</div>
+      <img src="${images.fig7}" class="figure-img" alt="Apply Franchise Wizard">
+      <div class="figure-caption">Figure 7: 5-Step Online MTOP Application Wizard (Operator & Route Validation) — Multi-step online franchise filing interface showing 20% progress tracker (Step 1 of 5: Operator & Driver), applicant profile fields, barangay residency dropdown, TODA verification badge (✓ Verified in Roster), and route conflict detector (⚠ Route Mismatch warning).</div>
     </div>
 
-    <div class="step-box">
-      <div class="step-header">7.2 Generating Daily Treasury Collection & Remittance Sheet</div>
-      <div class="step-purpose">Purpose: Produce COA-compliant daily financial turnover sheets with 1-click CSV export.</div>
-      <ol>
-        <li>Click the <strong>"Daily Remittance Sheet"</strong> button located on the top action bar of the Cashier Terminal.</li>
-        <li>Review the daily collection breakdown: Total transactions, cash receipts, digital collections, and total municipal turnover.</li>
-        <li>Click <strong>"Export Remittance CSV"</strong> to download a formatted spreadsheet (<code>GTRAMS_Treasury_Daily_Remittance_&lt;DATE&gt;.csv</code>) for municipal accounting archives.</li>
-        <li>Click <strong>"Print Remittance Form"</strong> to generate the physical audit sheet complete with authorized signature blocks for the Cashier and Municipal Treasurer.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: End-of-day treasury reconciliation is completed in under 1 minute without manual recalculations.</div>
+    <h2>4.3 Multimodal AI OCR Document Intake & Dual LTO Segregation</h2>
+    <p>
+      G-TRAMS features multimodal Google Gemini Vision OCR (<code>gemini-3.8-flash</code>) to parse uploaded credentials and automatically populate technical fields:
+    </p>
+    <ul>
+      <li><strong>Dual LTO Segregation:</strong> Dedicated separate upload slots for the <strong>Certificate of Registration (CR)</strong> (ownership and technical specifications) and the latest <strong>Official Receipt (OR)</strong> (annual LTO roadworthiness payment).</li>
+      <li><strong>Pre-Check Validation:</strong> Blurry or cut-off documents trigger instant confidence warnings prompting re-capture before final submission.</li>
+    </ul>
+
+    <div class="figure-container">
+      <img src="${images.fig8}" class="figure-img" alt="AI OCR Document Intake">
+      <div class="figure-caption">Figure 8: Multimodal AI OCR Document Intake & LTO Credential Segregation — Dedicated upload slots for LTO Certificate of Registration (CR), LTO Official Receipt (OR), Driver's License (with RA 10173 data minimization), Barangay Clearance, and Community Tax Certificate (Cedula), highlighting real-time Gemini Vision OCR text parsing and automated field pre-population.</div>
     </div>
+
+    <h2>4.4 Data Minimization Compliance (RA 10173)</h2>
+    <p>
+      Under the Data Privacy Act of 2012 (RA 10173), non-essential biometric markers such as <strong>blood type</strong> and medical indicators are strictly omitted from OCR extraction schemas. The system captures only Driver's License Number, Expiry, DL restriction codes (Code A/A1), and birthdate.
+    </p>
+
+    <h2>4.5 Digital MTOP Certificate & Watermarked e-Copy Retrieval</h2>
+    <p>
+      When an application reaches <code>Ready for Pickup</code> or <code>Active</code>, clicking <strong>"View E-Copy"</strong> renders the high-resolution digital permit featuring the diagonal security watermark:
+      <br>
+      <code>"APPROVED - ELECTRONIC COPY • VALID ISSUANCE"</code>
+      <br>
+      and dynamic QR verification code along with Mayor Hon. Lidany A. Lao-Baldo's official signature.
+    </p>
+
+    <h2>4.6 Voluntary Franchise Cancellation & Support Ticketing</h2>
+    <p>
+      Operators relinquishing commercial operations can click <strong>"Request Voluntary Cancellation"</strong>, specify grounds (Vehicle Sold, Out of Service, Transfer of Residence), and route their request for dropping certification. The integrated Help & Support module enables submitting inquiries directly to municipal IT staff.
+    </p>
   </div>
 
   <div class="page-break"></div>
 
-  <!-- BPLO & SYSTEM ADMIN INSTRUCTIONS -->
+  <!-- SECTION 5: TODA PRESIDENT GUIDE -->
   <div>
-    <h1>8. BPLO Licensing Officer Portal</h1>
+    <h1>5. TODA President Guide</h1>
     <p>
-      BPLO personnel evaluate submitted documents, verify technical specifications, schedule physical inspections, and authorize final MTOP certificate issuance.
+      TODA Presidents maintain accredited transport association rosters, issue digital clearances, and enforce collision-free body number allocations.
+    </p>
+
+    <h2>5.1 Association Member Directory & Status Verification</h2>
+    <p>
+      Navigating to <code>/submit-members</code> renders the association management console. The header displays association metrics (e.g. <em>GASAN CENTRAL TODA</em>, 89 Members, 2 Active Units). The directory provides real-time search by driver name, body number, and plate number.
+    </p>
+
+    <h2>5.2 Gemini Vision AI OCR Digitization of Paper Rosters</h2>
+    <p>
+      To eliminate manual typing of historical paper member logbooks, TODA Presidents can upload physical document scans for automated AI transcription.
     </p>
 
     <div class="step-box">
-      <div class="step-header">8.1 Evaluating Applications in the Review Queue</div>
-      <div class="step-purpose">Purpose: Inspect uploaded credentials side-by-side with automated AI OCR extraction data.</div>
+      <div class="step-header">Procedure 5.1: Digitizing Paper Rosters</div>
+      <div class="step-purpose">Purpose: Convert physical association paper masterlists into certified database records via AI OCR.</div>
       <ol>
-        <li>Access the <strong>"Franchise Approval"</strong> module from the BPLO sidebar.</li>
-        <li>Click <strong>"Review"</strong> on any pending application.</li>
-        <li>Inspect the uploaded OR/CR, Cedula, Driver's License, and TODA Clearance images alongside the automated OCR field comparison.</li>
-        <li>If details match: Assign the scheduled physical inspection date and click <strong>"Approve for Payment"</strong>.</li>
-        <li>If documents are blurred or mismatched: Click <strong>"Request Correction"</strong> and type a specific note guiding the applicant.</li>
+        <li>Select <strong>Tab 2: "Upload Roster Document"</strong> in the TODA portal.</li>
+        <li>Upload a clear photo or scan of your physical paper membership sheet.</li>
+        <li>Click <strong>"Process Roster with AI OCR"</strong>. Gemini Vision parses tabular rows into Operator Name, Body Number, and Plate Number.</li>
+        <li>Review extracted rows in the editable staging table; correct typos or click "+ Add Member" to append rows.</li>
+        <li>Click <strong>"Submit Certified Roster to BPLO"</strong> to commit the roster to the municipal masterlist.</li>
       </ol>
-      <div class="step-result">✓ Expected Result: Applicant is notified immediately via SMS and dashboard banner regarding the review outcome.</div>
+      <div class="step-result">✓ Expected Result: Member roster is accredited and indexed for instant validation during operator application filing.</div>
     </div>
+
+    <div class="figure-container">
+      <img src="${images.fig9}" class="figure-img" alt="Scanned TODA Roster">
+      <div class="figure-caption">Figure 9: Physical TODA Association Member Masterlist Scanned Document — Authenticated paper roster from Gasan Central TODA utilized as input for Gemini Vision AI OCR digitization, detailing operator names, unit body numbers, and plate registrations.</div>
+    </div>
+
+    <div class="figure-container">
+      <img src="${images.fig10}" class="figure-img" alt="TODA Roster Management Console">
+      <div class="figure-caption">Figure 10: TODA President Association Member Management Terminal — Association administration console displaying active member count (89), active commercial units (2), multi-tab layout ("Member Roster", "Upload Roster Document", "Removal Requests"), member search filter, and PWA installation prompt.</div>
+    </div>
+
+    <h2>5.3 Association Body Number Collision Prevention</h2>
+    <p>
+      G-TRAMS enforces unique compound database indexing (<code>todaAssociation + bodyNumber</code>). Attempting to assign an existing body number triggers an immediate collision block:
+      <br>
+      <code>"Duplicate Body Number Detected: Unit #X is already registered to [Driver Name]. Collision prevented."</code>
+    </p>
+
+    <h2>5.4 Member Delisting & Removal Requests</h2>
+    <p>
+      Under Tab 3 ("Removal Requests"), presidents can petition BPLO to delist inactive or non-compliant drivers by selecting standard grounds (Relocated, Bylaw Violation, Non-payment of dues, Resigned).
+    </p>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 6: BPLO LICENSING OFFICER GUIDE -->
+  <div>
+    <h1>6. BPLO Licensing Officer Guide</h1>
+    <p>
+      The Business Permits and Licensing Office (BPLO) serves as the primary municipal regulatory authority, evaluating applications, inspecting vehicles, and enforcing traffic sanctions.
+    </p>
+
+    <h2>6.1 Operations Dashboard & Pipeline Telemetry</h2>
+    <p>
+      The BPLO Dashboard (<code>/bplo-dashboard</code>) displays live executive KPIs: Active Franchises, Pending Approvals, In Pipeline, Expiring Units, and the TODA fleet distribution chart.
+    </p>
+
+    <div class="figure-container">
+      <img src="${images.fig11}" class="figure-img" alt="BPLO Operations Dashboard">
+      <div class="figure-caption">Figure 11: BPLO Operations Dashboard & Executive KPI Telemetry — Central licensing control center showing live operational metrics (Active Franchises, Pending Approvals, In Pipeline, Expiring Units), compliance pipeline distribution (50% compliant units), TODA fleet charts, and daily application intake queues.</div>
+    </div>
+
+    <h2>6.2 Dual-Pane Document Review Console & AI OCR Discrepancy Checks</h2>
+    <p>
+      Clicking "Review" on any application opens the high-resolution Dual-Pane Review Console:
+    </p>
+    <ul>
+      <li><strong>Left Canvas (Document Inspection):</strong> High-resolution viewer with zoom, rotation (90° CW/CCW), brightness (100%–175%), contrast (100%–150%), and pan controls for scrutinizing LTO OR/CR, Cedula, Driver's License, and clearances.</li>
+      <li><strong>Right Panel (AI OCR Cross-Check):</strong> Side-by-side comparison highlighting matching data with green badges and mismatches with amber discrepancy tags. Flags third-party CR ownership requiring a Deed of Sale.</li>
+      <li><strong>Concurrency Lock:</strong> Real-time WebSocket locks prevent two officers from modifying the same record simultaneously.</li>
+    </ul>
+
+    <h2>6.3 Multi-Stage Franchise Approval Pipeline</h2>
+    <p>
+      Applications transition through discrete operational queues: <code>Needs Review</code> $\rightarrow$ <code>For Payment</code> (sent to Cashier) $\rightarrow$ <code>For Signing</code> (Mayor/MTFRB) $\rightarrow$ <code>Ready for Pickup</code> $\rightarrow$ <code>Active</code>. Every action includes a 10-second undo toast countdown.
+    </p>
 
     <div class="figure-container">
       <img src="${images.fig12}" class="figure-img" alt="BPLO Approval Queue">
-      <div class="figure-caption">Figure 10. BPLO Application Review Queue & Document Inspection Interface</div>
+      <div class="figure-caption">Figure 12: BPLO Multi-Stage Franchise Approval & Evaluation Queue — Structured evaluation pipeline displaying segregated workflow tabs (Needs Review, For Payment, For Signing, Ready for Pickup, Cancellations Queue, Approved, Rejected), multi-parameter filters (All TODAs, Types, Barangays, ⚠ Flagged Only), and FIFO sorting.</div>
     </div>
+
+    <h2>6.4 Progressive Traffic Sanctions & Disciplinary Enforcement</h2>
+    <p>
+      Through <code>/manage-revocations</code>, officers log traffic citations with automated penalty progression:
+    </p>
+    <ul>
+      <li><strong>1st Offense:</strong> Official Warning $\rightarrow$ Status: <code>Active - Under Warning</code>.</li>
+      <li><strong>2nd Offense:</strong> 15-day suspension + ₱500 municipal fine $\rightarrow$ Status: <code>Suspended</code>.</li>
+      <li><strong>3rd Offense:</strong> Permanent Franchise Revocation $\rightarrow$ Status: <code>Revoked</code>.</li>
+      <li><strong>Grave Offense (Colorum):</strong> Direct Revocation on first occurrence.</li>
+    </ul>
+
+    <h2>6.5 Municipal Franchise Masterlist Registry & PDF Export</h2>
+    <p>
+      The Masterlist Registry (<code>/franchise-masterlist</code>) indexes all active, expired, and historical records. Officers can execute batch MTOP certificate printing and export the full registry to PDF.
+    </p>
 
     <div class="figure-container">
       <img src="${images.fig13}" class="figure-img" alt="Franchise Masterlist">
-      <div class="figure-caption">Figure 11. Municipal Franchise Masterlist Registry with Filter & Export Controls</div>
-    </div>
-
-    <h1>9. System Administrator Portal & Disaster Recovery</h1>
-    <p>
-      The System Admin module provides Municipal IT staff with comprehensive user management, security audit logging, and automated database disaster recovery protocols.
-    </p>
-
-    <div class="step-box">
-      <div class="step-header">9.1 Database Backup & Disaster Recovery Management (DRP)</div>
-      <div class="step-purpose">Purpose: Safeguard municipal franchise records through automated weekly archives and instant offline downloads.</div>
-      <ol>
-        <li>Navigate to <strong>Admin Settings</strong> and select <strong>Tab 5: "Database Backup & Disaster Recovery"</strong>.</li>
-        <li><strong>Automated Backup:</strong> The system automatically performs a full compressed database backup every Sunday at 12:00 MN (Midnight) with rolling 8-week retention.</li>
-        <li><strong>Direct Offline Download:</strong> Click <strong>"Direct Offline Download"</strong> to stream a fresh compressed gzip snapshot (<code>.json.gz</code>) directly to your local laptop or secure USB flash drive.</li>
-        <li><strong>Restoring Data:</strong> In the event of server failure, select <strong>"Upload & Restore Backup"</strong>, choose your archive file, type <code>RESTORE</code> in the confirmation prompt, and click confirm.</li>
-      </ol>
-      <div class="step-result">✓ Expected Result: All 13 municipal database collections are restored with 100% data integrity within seconds.</div>
-    </div>
-
-    <div class="figure-container">
-      <img src="${images.fig16}" class="figure-img" alt="Admin Settings & Backup">
-      <div class="figure-caption">Figure 12. Database Backup & Disaster Recovery Protocol in System Admin Settings</div>
-    </div>
-
-    <div class="figure-container">
-      <img src="${images.fig15}" class="figure-img" alt="User Management">
-      <div class="figure-caption">Figure 13. System User Management & Role-Based Access Control (RBAC) Interface</div>
+      <div class="figure-caption">Figure 13: Municipal Franchise Masterlist Registry & Historical Archive — Official municipal registry detailing verified franchise units, plate numbers (143-ABC, 4528-TC), affiliated operators (Jhon Kyn Axix Cabrigas, Jay Vincent Motol), TODA assignments, status tags (Active, Cancelled), and one-click "Print / Save as PDF" export button.</div>
     </div>
   </div>
 
   <div class="page-break"></div>
 
-  <!-- TROUBLESHOOTING, FAQS & SECURITY -->
+  <!-- SECTION 7: MUNICIPAL CASHIER GUIDE -->
   <div>
-    <h1>10. Error Handling and Troubleshooting</h1>
+    <h1>7. Municipal Cashier Guide</h1>
     <p>
-      The following matrix outlines common operational issues, root causes, and verified resolution steps:
+      The Cashier Portal is an isolated financial terminal restricted to Municipal Treasury disbursing officers for regulatory fee collection and COA audit compliance.
     </p>
 
+    <h2>7.1 Isolated Treasury Terminal & Security Controls</h2>
+    <p>
+      Operating at Treasury Counter 2 (<code>/cashier-dashboard</code>), the terminal displays live financial metrics: Awaiting Collection, Today's Total Collections (PHP), and Total Processed Transactions.
+    </p>
+
+    <h2>7.2 Over-the-Counter Cash Collection & Fee Schedule</h2>
+    <p>
+      The cashier verifies the assessed regulatory fees: Basic Franchise Fee (₱500.00), Sticker/Inspection Fee (₱150.00), and late monthly renewal penalties (₱50.00/month). Payments are collected in Cash Over-the-Counter.
+    </p>
+
+    <h2>7.3 Mandatory Physical Official Receipt (OR) Serialization</h2>
+    <p>
+      In compliance with COA regulations, the cashier issues a physical paper receipt from the municipal booklet and enters the serialized number:
+      <br>
+      <code>OR-GASAN-2026-XXXX</code> (e.g. <code>OR-GASAN-2026-0042</code>).
+      <br>
+      The system enforces uppercase formatting and uniqueness to prevent duplicate receipt accounting.
+    </p>
+
+    <div class="figure-container">
+      <img src="${images.fig14}" class="figure-img" alt="Cashier Payment Terminal">
+      <div class="figure-caption">Figure 14: Municipal Treasury Cashier Collection Terminal — Isolated financial collection console showing real-time revenue metric cards ("Awaiting Collection", "Today's Collections", "Total Processed"), searchable payment queue, mandatory physical Official Receipt booklet serialization (OR-GASAN-2026-XXXX), and daily COA remittance reconciliation.</div>
+    </div>
+
+    <h2>7.4 COA Daily Remittance CSV Export & Turnover Voucher Printing</h2>
+    <div class="step-box">
+      <div class="step-header">Procedure 7.1: Daily Treasury Revenue Reconciliation</div>
+      <div class="step-purpose">Purpose: Generate COA-compliant daily financial turnover sheets and accounting export at shift close (5:00 PM).</div>
+      <ol>
+        <li>Click <strong>"Daily Remittance Sheet"</strong> on the Cashier Terminal action bar.</li>
+        <li>Review the summary breakdown: total transactions, cash receipts, and total municipal turnover.</li>
+        <li>Click <strong>"Export Remittance CSV"</strong> to download: <code>GTRAMS_Treasury_Daily_Remittance_YYYY-MM-DD.csv</code>.</li>
+        <li>Click <strong>"Print Turnover Voucher"</strong> to print the audit turnover sheet complete with signature blocks for the Collecting Cashier and Municipal Treasurer.</li>
+        <li>Submit physical cash collections and signed vouchers to the Treasury vault.</li>
+      </ol>
+      <div class="step-result">✓ Expected Result: Treasury reconciliation is completed in under 1 minute with 100% audit accuracy.</div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 8: SYSTEM ADMINISTRATOR & IT OPERATIONS GUIDE -->
+  <div>
+    <h1>8. System Administrator & IT Operations Guide</h1>
+    <p>
+      The IT Administrator module governs user directory security, system telemetry, global ordinance configurations, and automated disaster recovery protocols.
+    </p>
+
+    <h2>8.1 IT Diagnostics & Server Telemetry Monitoring</h2>
+    <p>
+      The IT Dashboard (<code>/admin-dashboard</code>) monitors Node.js process runtime uptime, heap memory utilization, MongoDB Atlas ping latency in milliseconds, cluster connection state, and live security audit logs.
+    </p>
+
+    <div class="figure-container">
+      <img src="${images.fig15}" class="figure-img" alt="System Admin Dashboard">
+      <div class="figure-caption">Figure 15: System Administrator IT Diagnostics & Server Telemetry Dashboard — Municipal IT oversight console displaying server status, MongoDB Atlas round-trip latency, Node.js runtime process memory allocation, system uptime counter, maintenance mode toggle, and live security audit event stream.</div>
+    </div>
+
+    <h2>8.2 User Accounts Directory & Role-Based Access Control (RBAC) Governance</h2>
+    <p>
+      Through <code>/user-management</code>, IT staff oversee user accounts across all 6 tiers:
+    </p>
+    <ul>
+      <li><strong>Socket Presence Tracking:</strong> Displays real-time status: <code>• 1 Online Now</code>, <code>Active Xm ago</code>, <code>Offline</code>.</li>
+      <li><strong>Protected Admin Guard:</strong> Administrator accounts are tagged <code>System Admin (You) Protected</code>, disabling deactivation buttons to prevent accidental self-lockout.</li>
+      <li><strong>Account Deactivation & Appeals:</strong> Suspends compromised accounts with mandatory justification notes.</li>
+    </ul>
+
+    <div class="figure-container">
+      <img src="${images.fig16}" class="figure-img" alt="User Management">
+      <div class="figure-caption">Figure 16: User Accounts Directory & Role-Based Access Control (RBAC) Governance — Administrative user directory displaying real-time socket presence tracking (• 1 Online Now, Active 12m ago), role distribution filters across 6 user tiers, SMS verification badges, and account protection guardrails ((You) Protected).</div>
+    </div>
+
+    <h2>8.3 System Policy & Fee Schedule Configuration</h2>
+    <p>
+      Under Admin Settings (<code>/admin/settings</code>), administrators configure municipal parameters:
+      Franchise Validity (New: 3 Years, Renewal: 1 Year, Expiry Warning: 30 Days), Fiscal Year, Franchise Fee (₱500.00), Base Fare (₱15.00), Per-Km Rate (₱2.50), and the System Maintenance Mode toggle.
+    </p>
+
+    <h2>8.4 Disaster Recovery Protocol (DRP): Weekly Backups, Offline Snapshots & Database Restore</h2>
+    <p>
+      G-TRAMS establishes a three-tier Disaster Recovery Protocol (DRP):
+    </p>
+    <ul>
+      <li><strong>Automated Weekly Cron Archive:</strong> Backs up all 13 MongoDB collections every <strong>Sunday at 12:00 MN (Midnight)</strong> into compressed <code>.json.gz</code> archives with rolling 8-week retention.</li>
+      <li><strong>1-Click Offline Snapshot:</strong> Direct download of compressed gzip database snapshots to encrypted local USB drives for offsite physical custody.</li>
+      <li><strong>Safe Restoration Engine:</strong> Full database restoration requiring typing the explicit uppercase safety phrase: <code>RESTORE</code>. Restores all 13 collections with verified data integrity in seconds.</li>
+    </ul>
+
+    <div class="figure-container">
+      <img src="${images.fig17}" class="figure-img" alt="Admin Settings & Backup">
+      <div class="figure-caption">Figure 17: System Policy Configuration & Disaster Recovery Protocol (DRP) — System settings console detailing franchise validity durations (New: 3 Years, Renewal: 1 Year, 30-day expiry warning alert), municipal fare tariff settings, automated Sunday 12:00 MN cron backup status, 1-click .json.gz offline snapshot download, and full 13-collection restore requiring safety confirmation phrase "RESTORE".</div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 9: TROUBLESHOOTING & SUPPORT -->
+  <div>
+    <h1>9. Troubleshooting, FAQs & Support Directory</h1>
+    <p>
+      The following diagnostic matrix provides verified resolutions for common operational symptoms:
+    </p>
+
+    <h2>9.1 Error Resolution Matrix</h2>
     <table>
       <thead>
         <tr>
           <th>Symptom / Error Message</th>
-          <th>Likely Root Cause</th>
-          <th>Step-by-Step Resolution</th>
+          <th>Probable Root Cause</th>
+          <th>Verified Step-by-Step Resolution</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td><strong>"Invalid credentials or incorrect password"</strong></td>
-          <td>Typo in password or non-activated account.</td>
-          <td>Verify Caps Lock is disabled. If problem persists, click "Forgot Password?" to reset your password via SMS OTP.</td>
+          <td>Typo in password or account not yet activated via OTP.</td>
+          <td>Verify Caps Lock is disabled. Ensure you are using an 11-digit mobile number (09xxxxxxxxx) or verified email. Click "Forgot Password?" to reset.</td>
         </tr>
         <tr>
           <td><strong>"OTP code has expired or is invalid"</strong></td>
-          <td>More than 5 minutes elapsed since code dispatch.</td>
-          <td>Click "Resend OTP". Ensure your phone has active mobile network signal in Gasan.</td>
+          <td>More than 5 minutes elapsed since OTP dispatch.</td>
+          <td>Click "Resend OTP". Ensure active mobile cellular reception in Gasan and enter the newly dispatched 6-digit code immediately.</td>
         </tr>
         <tr>
-          <td><strong>"Document upload failed / File too large"</strong></td>
-          <td>File format unsupported or exceeds 10 MB limit.</td>
-          <td>Upload files in JPG, PNG, or PDF format. Reduce camera photo resolution if image exceeds 10 MB.</td>
+          <td><strong>"Document upload failed / File exceeds size limit"</strong></td>
+          <td>Unsupported format or image exceeds 10 MB limit.</td>
+          <td>Upload files in .jpg, .png, or .pdf format. Crop margins or reduce camera photo resolution if image exceeds 10 MB.</td>
         </tr>
         <tr>
-          <td><strong>"Duplicate body number detected"</strong></td>
-          <td>Another operator is already assigned this body number.</td>
-          <td>Consult your TODA President or BPLO officer to assign an unallocated municipal body number.</td>
+          <td><strong>"Duplicate vehicle identifier detected"</strong></td>
+          <td>Plate, Engine, or Chassis number already registered.</td>
+          <td>Cross-check LTO CR. If acquired second-hand, confirm the previous owner filed a formal Dropping / Transfer at BPLO.</td>
+        </tr>
+        <tr>
+          <td><strong>"Unit Capacity 2/2 Reached — Quota Ceiling Enforced"</strong></td>
+          <td>Operator already holds two active franchises.</td>
+          <td>Under Section 4 of Municipal Franchising Ordinance, operators are limited to 2 units. You must drop an existing unit before filing a new one.</td>
+        </tr>
+        <tr>
+          <td><strong>"Notice: Official TODA Certificate Required"</strong></td>
+          <td>Applicant name is unlisted in association roster.</td>
+          <td>Consult TODA President to encode membership in digital roster. If unlisted, upload a signed physical TODA Clearance certificate.</td>
         </tr>
         <tr>
           <td><strong>"Access Denied (403 Unauthorized)"</strong></td>
-          <td>Logged-in account does not possess role permissions.</td>
-          <td>Log out and re-login with the correct authorized credentials for the specific portal module.</td>
+          <td>User role lacks permissions for the target module.</td>
+          <td>Log out and authenticate with the authorized account (e.g., Cashier for treasury, BPLO for approvals, Admin for IT).</td>
         </tr>
         <tr>
-          <td><strong>"Server connection timeout / Offline"</strong></td>
-          <td>Temporary network drop or maintenance mode.</td>
-          <td>Check internet connectivity. If scheduled maintenance is underway, wait until service resumes.</td>
+          <td><strong>"Official Receipt (OR) Number already exists"</strong></td>
+          <td>Cashier entered an OR number already recorded.</td>
+          <td>Inspect physical municipal receipt booklet to confirm accurate sequential serial number. Duplicate entries are blocked for COA compliance.</td>
+        </tr>
+        <tr>
+          <td><strong>"Restore Aborted: Invalid confirmation phrase"</strong></td>
+          <td>Administrator failed to type safety phrase.</td>
+          <td>Type the exact word RESTORE in all capital letters in the confirmation prompt to authorize database restoration.</td>
+        </tr>
+        <tr>
+          <td><strong>"Server connection timeout / Maintenance in progress"</strong></td>
+          <td>Scheduled maintenance mode or temporary network drop.</td>
+          <td>Check internet connection. If maintenance mode is active, wait until municipal IT staff complete scheduled upgrades.</td>
         </tr>
       </tbody>
     </table>
 
-    <h1>11. Frequently Asked Questions (FAQs)</h1>
-    
+    <h2>9.2 Frequently Asked Questions (FAQs)</h2>
     <div class="callout">
-      <div class="callout-title">Q1: How long does it take for a new franchise application to be approved?</div>
-      Applications typically take <strong>2 to 3 business days</strong> upon submission of complete documents. You can track real-time progress on your Operator Dashboard.
+      <div class="callout-title">Q1: What is the processing turnaround time for an MTOP application in G-TRAMS?</div>
+      Under RA 11032 (Ease of Doing Business), complete applications with verified credentials are processed within <strong>2 to 3 business days</strong> from online submission to BPLO inspection, payment, and final permit release.
     </div>
 
     <div class="callout">
-      <div class="callout-title">Q2: Can I renew my franchise before it officially expires?</div>
-      Yes. The system activates the <strong>"Renew Franchise"</strong> button on your dashboard <strong>60 days prior</strong> to your permit expiration date.
+      <div class="callout-title">Q2: When am I eligible to renew my commercial tricycle franchise?</div>
+      Franchise permits are valid for <strong>1 year for Renewals</strong> and <strong>3 years for New Franchises</strong>. The system triggers an alert on your dashboard <strong>30 days prior</strong> to expiration, activating early renewal filing.
     </div>
 
     <div class="callout">
-      <div class="callout-title">Q3: What if I lose my primary mobile phone or email address?</div>
-      During registration, G-TRAMS captures a <strong>Recovery Contact</strong> (secondary phone or email). You can receive password reset OTPs through your registered recovery channel.
+      <div class="callout-title">Q3: What should I do if my primary mobile phone is lost or damaged?</div>
+      During registration, G-TRAMS captures a mandatory <strong>Secondary Recovery Contact</strong>. Click "Forgot Password?", enter your recovery contact, and receive an OTP to regain account access without visiting municipal hall.
     </div>
 
     <div class="callout">
-      <div class="callout-title">Q4: How do traffic enforcers know my digital permit is legitimate?</div>
-      Every digital ID and MTOP certificate features a secure, dynamic <strong>QR Code</strong>. When scanned by enforcers, it retrieves the live record directly from the municipal database.
+      <div class="callout-title">Q4: How does a traffic enforcer know my digital e-Copy MTOP is authentic?</div>
+      Every digital MTOP certificate and physical sidecar sticker features a <strong>dynamic encrypted QR code</strong>. Scanning it retrieves live, tamper-evident records directly from the municipal database at <code>/verify/:id</code>.
     </div>
 
     <div class="callout">
-      <div class="callout-title">Q5: Is my personal information and document data secure?</div>
-      Yes. In compliance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>, all passwords use one-way bcrypt hashing, active OTPs are stripped from archives, and documents are stored in encrypted cloud storage.
+      <div class="callout-title">Q5: Is my personal document data protected under Philippine privacy laws?</div>
+      Yes. In compliance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>, passwords use cryptographic bcrypt hashing, biometric markers like blood type are excluded from AI OCR extraction, and documents are stored in secure cloud vaults with expiring tokens.
     </div>
 
-    <h1>12. Security Reminders & Official Support</h1>
-    <ul>
-      <li><strong>Credential Protection:</strong> Never disclose your account password or OTP to anyone, including municipal personnel or fellow drivers.</li>
-      <li><strong>Session Hygiene:</strong> Always click <strong>"Log Out"</strong> when accessing the portal on shared devices, public internet cafes, or mobile kiosks.</li>
-      <li><strong>Document Authenticity:</strong> Uploading forged or altered LTO credentials constitutes a criminal violation under Philippine law and leads to permanent franchise revocation.</li>
-    </ul>
-
-    <h2>12.1 Technical Support & LGU Contact Channels</h2>
+    <h2>9.3 LGU Office Directory & Official Support Channels</h2>
     <table>
       <thead>
         <tr>
-          <th>Office / Department</th>
+          <th>Department / Office</th>
           <th>Physical Office Location</th>
+          <th>Operating Hours</th>
           <th>Contact Number & Email</th>
         </tr>
       </thead>
       <tbody>
         <tr>
+          <td><strong>Office of the Municipal Mayor</strong></td>
+          <td>2nd Floor, Gasan Municipal Hall, Poblacion, Gasan</td>
+          <td>Mon – Fri, 8:00 AM – 5:00 PM</td>
+          <td>(042) 342-1001 • mayor@gasan.ph</td>
+        </tr>
+        <tr>
           <td><strong>BPLO Franchising Division</strong></td>
           <td>2nd Floor, Gasan Municipal Hall, Poblacion, Gasan</td>
+          <td>Mon – Fri, 8:00 AM – 5:00 PM</td>
           <td>(042) 342-1234 • bplo@gasan.ph</td>
         </tr>
         <tr>
-          <td><strong>Municipal Treasury Office</strong></td>
+          <td><strong>Municipal Treasury (Counter 2)</strong></td>
           <td>Ground Floor, Gasan Municipal Hall, Poblacion, Gasan</td>
+          <td>Mon – Fri, 8:00 AM – 5:00 PM</td>
           <td>(042) 342-1235 • treasury@gasan.ph</td>
+        </tr>
+        <tr>
+          <td><strong>Traffic Enforcement / CTMO</strong></td>
+          <td>Ground Floor (East Wing), Gasan Municipal Hall</td>
+          <td>24/7 Roadside Operations</td>
+          <td>(042) 342-1111 • traffic@gasan.ph</td>
         </tr>
         <tr>
           <td><strong>G-TRAMS IT Technical Support</strong></td>
           <td>College of Information and Computing Sciences, MarSU</td>
+          <td>Mon – Fri, 8:00 AM – 5:00 PM</td>
           <td>support@gtrams.ph • cics@mar-su.edu.ph</td>
         </tr>
       </tbody>
     </table>
+
+    <div style="margin-top: 30px; text-align: center; font-size: 8.5pt; color: #6B6761;">
+      — End of Deliverable #7: User's Manual of the System —<br>
+      <strong>G-TRAMS v2.4.0 • Municipality of Gasan, Marinduque • Marinduque State University CICS BSIT Capstone Group 5</strong>
+    </div>
   </div>
 
 </body>
-</html>`;
+</html>
+`;
 
-fs.writeFileSync(path.join(__dirname, 'generate_manual.html'), htmlContent, 'utf8');
-console.log('HTML manual successfully generated at docs/generate_manual.html!');
+// Save the unified HTML file
+const htmlPath = path.join(__dirname, 'Deliverable7_Group5_UsersManual.html');
+fs.writeFileSync(htmlPath, htmlContent, 'utf8');
+console.log('Successfully generated HTML User Manual at:', htmlPath);
 
-// Now run Chrome headless to print to PDF
+// Target PDF outputs (both primary and GTRAMS alias for full compatibility)
+const primaryPdfPath = path.join(__dirname, 'Deliverable7_Group5_UsersManual.pdf');
+const aliasPdfPath = path.join(__dirname, 'Deliverable7_Group5_GTRAMS_UsersManual.pdf');
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const inputHtml = path.join(__dirname, 'generate_manual.html');
-const outputPdf = path.join(__dirname, '..', 'Deliverable7_Group5_GTRAMS_UsersManual.pdf');
 
-console.log('Rendering publication-grade PDF via Chrome Headless...');
-const cmd = `"${chromePath}" --headless=new --disable-gpu --no-pdf-header-footer --print-to-pdf="${outputPdf}" "${inputHtml}"`;
-try {
+if (fs.existsSync(chromePath)) {
+  console.log('Compiling publication-grade PDF via Chrome Headless...');
+  const cmd = `"${chromePath}" --headless=new --disable-gpu --run-all-compositor-stages-before-draw --no-pdf-header-footer --print-to-pdf="${primaryPdfPath}" "${htmlPath}"`;
   execSync(cmd, { stdio: 'inherit' });
-  console.log(`PDF successfully created at: ${outputPdf}`);
-} catch (err) {
-  console.error('Error generating PDF with Chrome:', err.message);
+  
+  // Also copy to alias path so any tool or test looking for either file finds the exact build
+  fs.copyFileSync(primaryPdfPath, aliasPdfPath);
+  
+  const stats = fs.statSync(primaryPdfPath);
+  console.log(`PDF successfully created at: ${primaryPdfPath}`);
+  console.log(`PDF File Size: ${(stats.size / 1024 / 1024).toFixed(2)} MB (${stats.size} bytes)`);
+} else {
+  console.error('Google Chrome binary not found at default location:', chromePath);
 }
