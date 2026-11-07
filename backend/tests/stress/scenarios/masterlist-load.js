@@ -5,10 +5,11 @@
 const { request, runConcurrent } = require('../utils/httpClient');
 const { calculateMetrics } = require('../utils/metrics');
 
-async function runMasterlistLoadTest(baseUrl, { adminToken, totalRequests = 100, concurrency = 25 } = {}) {
+async function runMasterlistLoadTest(baseUrl, { adminToken, bploToken, totalRequests = 100, concurrency = 25 } = {}) {
+    const token = bploToken || adminToken;
     const url = `${baseUrl}/api/v1/franchises?page=1&limit=20`;
     const headers = {
-        'Authorization': `Bearer ${adminToken}`
+        'Authorization': `Bearer ${token}`
     };
 
     const tasks = [];

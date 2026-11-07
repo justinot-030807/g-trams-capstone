@@ -5,7 +5,7 @@ import {
   CheckCircle2, AlertCircle, Moon, Sun, Globe, Clock, 
   Wallet, CalendarDays, AlertTriangle, ShieldCheck, 
   Bell, FileCheck, Shield, ChevronRight, ChevronLeft, X, Search, RefreshCw, Info,
-  ShieldAlert, Plus, Trash2, Scale
+  ShieldAlert, Plus, Trash2, Scale, Database, RotateCcw, Download, UploadCloud, FileArchive, HardDrive
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -131,6 +131,204 @@ const AdminSettings = () => {
   });
   const [auditActionFilter, setAuditActionFilter] = useState('All');
   const [auditSearchQuery, setAuditSearchQuery] = useState('');
+
+  // Database Backup & Disaster Recovery state
+  const [backups, setBackups] = useState([]);
+  const [backupStats, setBackupStats] = useState({
+    totalBackups: 0,
+    latestBackupDate: null,
+    totalStorageFormatted: '0 KB',
+    cronSchedule: 'Every Sunday @ 00:00 PST',
+    retentionPolicy: 'Rolling 8 Weeks'
+  });
+  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [restoreModal, setRestoreModal] = useState({
+    isOpen: false,
+    filename: null,
+    isRestoring: false,
+    confirmText: '',
+    error: ''
+  });
+  const backupUploadInputRef = useRef(null);
+
+  const fetchBackups = async () => {
+    setIsLoadingBackups(true);
+    try {
+      const token = localStorage.getItem('token');
+      const [listRes, statusRes] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/list`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        setBackups(listData.backups || []);
+      }
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        if (statusData.stats) setBackupStats(statusData.stats);
+      }
+    } catch (err) {
+      console.error('Error fetching backups:', err);
+    } finally {
+      setIsLoadingBackups(false);
+    }
+  };
+
+  const handleCreateManualBackup = async () => {
+    setIsBackingUp(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notes: 'Manual admin snapshot' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Database snapshot created successfully!', 'success');
+        fetchBackups();
+      } else {
+        showToast(data.message || 'Failed to create backup.', 'error');
+      }
+    } catch (err) {
+      showToast('Network error while creating backup.', 'error');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleDownloadDirectSnapshot = () => {
+    const token = localStorage.getItem('token');
+    showToast('Preparing direct database snapshot...', 'info');
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/direct-download`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Download failed');
+        return res.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gtrams_live_snapshot_${new Date().toISOString().slice(0, 10)}.json.gz`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showToast('Snapshot downloaded to offline storage.', 'success');
+      })
+      .catch(() => showToast('Error downloading direct snapshot.', 'error'));
+  };
+
+  const handleDownloadBackupFile = (filename) => {
+    const token = localStorage.getItem('token');
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/download/${filename}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Download failed');
+        return res.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      })
+      .catch(() => showToast('Error downloading file.', 'error'));
+  };
+
+  const handleExecuteRestore = async () => {
+    if (restoreModal.confirmText.trim() !== 'RESTORE') {
+      setRestoreModal(prev => ({ ...prev, error: 'Pakitayp ang salitang RESTORE upang kumpirmahin.' }));
+      return;
+    }
+
+    setRestoreModal(prev => ({ ...prev, isRestoring: true, error: '' }));
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/restore-file/${restoreModal.filename}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Database successfully restored from archive!', 'success');
+        setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' });
+        fetchBackups();
+      } else {
+        setRestoreModal(prev => ({ ...prev, isRestoring: false, error: data.message || 'Restore failed.' }));
+      }
+    } catch (err) {
+      setRestoreModal(prev => ({ ...prev, isRestoring: false, error: 'Server error during database restoration.' }));
+    }
+  };
+
+  const handleUploadBackupRestore = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!window.confirm(`Sigurado ka bang nais mong i-restore ang database gamit ang "${file.name}"? Ang kasalukuyang data ay mapapalitan ng laman ng backup file.`)) {
+      e.target.value = '';
+      return;
+    }
+
+    showToast('Restoring database from upload... Mangyaring maghintay.', 'info', 6000);
+    const formData = new FormData();
+    formData.append('backupFile', file);
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/restore-upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Database successfully restored from uploaded file!', 'success');
+        fetchBackups();
+      } else {
+        showToast(data.message || 'Failed to restore database.', 'error');
+      }
+    } catch {
+      showToast('Error uploading and restoring backup file.', 'error');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteBackupFile = async (filename) => {
+    if (!window.confirm(`Nais mo bang burahin ang backup file na "${filename}"?`)) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/${filename}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showToast('Backup archive deleted.', 'success');
+        fetchBackups();
+      }
+    } catch {
+      showToast('Error deleting backup file.', 'error');
+    }
+  };
 
   // Modal and toast state
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, data: null });
@@ -814,6 +1012,19 @@ const AdminSettings = () => {
               >
                 <Shield size={15} />
                 <span>Audit Trail & Security Logs</span>
+              </button>
+            )}
+            {isSystemAdmin && (
+              <button
+                onClick={() => { setActiveTab('backup'); fetchBackups(); }}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
+                  activeTab === 'backup'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
+                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+                }`}
+              >
+                <Database size={15} />
+                <span>Database Backup & Recovery</span>
               </button>
             )}
           </div>
@@ -1919,6 +2130,296 @@ const AdminSettings = () => {
                       <span>Add to Announcements List</span>
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+      
+          {/* TAB 5: DATABASE BACKUP & DISASTER RECOVERY */}
+          {activeTab === 'backup' && isSystemAdmin && (
+            <div className="space-y-6">
+              {/* Status Header Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0">
+                    <Database size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Archives</p>
+                    <p className="text-lg font-black text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{backupStats.totalBackups} Snapshots</p>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <Clock size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Last Backup Date</p>
+                    <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5 truncate">
+                      {backupStats.latestBackupDate ? new Date(backupStats.latestBackupDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'No Backups Yet'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                    <CalendarDays size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Weekly Schedule</p>
+                    <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">Every Sun @ 12:00 MN</p>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                    <HardDrive size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Storage &amp; Retention</p>
+                    <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{backupStats.totalStorageFormatted} (8 Wks)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Toolbar */}
+              <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    <span>LGU Database Disaster Recovery Operations</span>
+                  </h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                    Generate point-in-time archives (.json.gz) covering all 13 collections, permits, and audit trails.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <input
+                    type="file"
+                    ref={backupUploadInputRef}
+                    onChange={handleUploadBackupRestore}
+                    accept=".gz,.json"
+                    className="hidden"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => backupUploadInputRef.current?.click()}
+                    className="px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
+                    title="I-restore ang database gamit ang na-upload na .json.gz file"
+                  >
+                    <UploadCloud size={14} />
+                    <span>Upload &amp; Restore</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadDirectSnapshot}
+                    className="px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
+                    title="Direktang i-download ang live compressed backup sa inyong laptop o USB flash drive"
+                  >
+                    <Download size={14} />
+                    <span>Direct Offline Download</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCreateManualBackup}
+                    disabled={isBackingUp}
+                    className="px-3.5 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {isBackingUp ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>Creating Snapshot...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={14} />
+                        <span>Backup Database Now</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Backup Archives Table */}
+              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden">
+                <div className="p-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-wider flex items-center gap-1.5">
+                    <FileArchive size={15} className="text-[#6B6761] dark:text-[#A8A29E]" />
+                    <span>Available Backup Archives ({backups.length})</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={fetchBackups}
+                    className="p-1.5 rounded-lg text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors cursor-pointer"
+                    title="Refresh backups list"
+                  >
+                    <RefreshCw size={14} className={isLoadingBackups ? 'animate-spin' : ''} />
+                  </button>
+                </div>
+
+                {isLoadingBackups ? (
+                  <div className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    <Loader2 size={20} className="animate-spin mx-auto mb-2 text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    <span>Kinukuha ang talaan ng mga backup archives...</span>
+                  </div>
+                ) : backups.length === 0 ? (
+                  <div className="p-10 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    <Database size={28} className="mx-auto mb-2.5 opacity-30" />
+                    <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">Wala pang nakaimbak na backup archive.</p>
+                    <p className="mt-1 max-w-sm mx-auto">
+                      Pindutin ang <strong>"Backup Database Now"</strong> o <strong>"Direct Offline Download"</strong> upang mag-save ng kopya ng buong database.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold text-[11px] tracking-wider">
+                          <th className="p-3 pl-4">Archive Filename</th>
+                          <th className="p-3">Type</th>
+                          <th className="p-3">Creation Date</th>
+                          <th className="p-3">Size</th>
+                          <th className="p-3 pr-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                        {backups.map((b, idx) => (
+                          <tr key={idx} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
+                            <td className="p-3 pl-4 font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate max-w-xs">
+                              {b.filename}
+                            </td>
+                            <td className="p-3">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                b.isAutomated
+                                  ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60'
+                                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60'
+                              }`}>
+                                {b.type}
+                              </span>
+                            </td>
+                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
+                              {new Date(b.createdAt).toLocaleString('en-PH')}
+                            </td>
+                            <td className="p-3 font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              {b.sizeFormatted}
+                            </td>
+                            <td className="p-3 pr-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadBackupFile(b.filename)}
+                                  className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-neutral-200 text-xs flex items-center gap-1 cursor-pointer"
+                                  title="Download .json.gz"
+                                >
+                                  <Download size={13} />
+                                  <span>Download</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setRestoreModal({ isOpen: true, filename: b.filename, isRestoring: false, confirmText: '', error: '' })}
+                                  className="p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                                  title="Restore database from this archive"
+                                >
+                                  <RotateCcw size={13} />
+                                  <span>Restore</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteBackupFile(b.filename)}
+                                  className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 text-xs cursor-pointer"
+                                  title="Delete backup file"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* RESTORE CONFIRMATION SAFETY MODAL */}
+          {restoreModal.isOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <div
+                className="absolute inset-0 bg-black/60"
+                onClick={() => !restoreModal.isRestoring && setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' })}
+              />
+              <div className="relative bg-white dark:bg-[#1C1917] border border-red-300 dark:border-red-900/60 rounded-lg shadow-xl w-full max-w-md p-5 sm:p-6 transition-colors">
+                <div className="flex items-center gap-3 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] mb-3">
+                  <div className="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-950/50 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                    <AlertTriangle size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-red-700 dark:text-red-400">Database Restoration Guard</h3>
+                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Disaster Recovery Confirmation</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 text-xs text-[#1F1D1B] dark:text-[#EAE7E1]">
+                  <p className="leading-relaxed">
+                    Babaguhin ng pagkilos na ito ang kasalukuyang database at ibabalik ang lahat ng datos mula sa archive:
+                  </p>
+                  <p className="p-2.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-[11px] font-bold text-red-700 dark:text-red-300 truncate">
+                    {restoreModal.filename}
+                  </p>
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                    * Kusa munang gagawa ang system ng emergency safety backup bago mag-restore. Upang magpatuloy, mangyaring i-type ang salitang <strong>RESTORE</strong> sa kahon:
+                  </p>
+
+                  <input
+                    type="text"
+                    value={restoreModal.confirmText}
+                    onChange={(e) => setRestoreModal(prev => ({ ...prev, confirmText: e.target.value, error: '' }))}
+                    placeholder="Type RESTORE to confirm"
+                    className="w-full px-3 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-red-600"
+                  />
+
+                  {restoreModal.error && (
+                    <p className="text-red-600 dark:text-red-400 font-bold text-[11px]">{restoreModal.error}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] mt-4">
+                  <button
+                    type="button"
+                    disabled={restoreModal.isRestoring}
+                    onClick={() => setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' })}
+                    className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+                  >
+                    Kanselahin
+                  </button>
+                  <button
+                    type="button"
+                    disabled={restoreModal.isRestoring || restoreModal.confirmText.trim() !== 'RESTORE'}
+                    onClick={handleExecuteRestore}
+                    className="flex-1 py-2 rounded-lg font-bold text-xs bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
+                  >
+                    {restoreModal.isRestoring ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>Restoring Data...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw size={13} />
+                        <span>Confirm Restore</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

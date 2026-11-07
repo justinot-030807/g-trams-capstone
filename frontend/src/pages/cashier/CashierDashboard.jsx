@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
-  Receipt, Search, CheckCircle2, Clock, DollarSign, 
+  Receipt, Search, Download, CheckCircle2, Clock, DollarSign, 
   Printer, ArrowRight, Loader2, AlertCircle, RefreshCw,
   FileText, ShieldCheck, User, Calendar, CreditCard, Banknote, Sparkles, Filter, X, Settings
 } from 'lucide-react';
@@ -28,6 +28,51 @@ const CashierDashboard = () => {
     paymentMethod: 'Cash',
     remarks: ''
   });
+
+  // Daily Treasury Remittance Modal State
+  const [isRemittanceModalOpen, setIsRemittanceModalOpen] = useState(false);
+
+  const todayPaidRecords = useMemo(() => {
+    const today = new Date().toISOString().substring(0, 10);
+    const records = paidList.filter(item => {
+      if (!item.paymentDate) return false;
+      const d = new Date(item.paymentDate);
+      if (isNaN(d.getTime())) return false;
+      return d.toISOString().substring(0, 10) === today;
+    });
+    return records.length > 0 ? records : paidList.slice(0, 50);
+  }, [paidList]);
+
+  const handleExportRemittanceCSV = () => {
+    if (todayPaidRecords.length === 0) {
+      showToast('No paid records found to export.', 'info');
+      return;
+    }
+
+    const headers = ['Official Receipt No', 'Payer Full Name', 'Plate Number', 'TODA Association', 'Amount Paid (PHP)', 'Payment Method', 'Payment Timestamp', 'Collecting Cashier'];
+    const rows = todayPaidRecords.map(item => [
+      item.officialReceiptNo || 'PENDING',
+      `"${(item.fullName || item.payerName || '').replace(/"/g, '""')}"`,
+      item.plateNo || 'PENDING',
+      `"${(item.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
+      item.amountPaid || 500,
+      item.paymentMethod || 'Cash',
+      item.paymentDate ? new Date(item.paymentDate).toLocaleString('en-PH') : 'N/A',
+      `"${(item.cashierName || currentCashierName).replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GTRAMS_Treasury_Daily_Remittance_${new Date().toISOString().substring(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${todayPaidRecords.length} collection records to CSV!`, 'success');
+  };
 
   // Official Receipt Print Modal State
   const [receiptData, setReceiptData] = useState(null);
@@ -285,7 +330,29 @@ const CashierDashboard = () => {
               <p className="text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-2 font-mono">
                 ₱{totalTodayCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
               </p>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Official Municipal Treasury receipts</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Official Municipal Treasury receipts</p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsRemittanceModalOpen(true)}
+                    className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-0.5"
+                    title="View Remittance Sheet"
+                  >
+                    <span>Sheet</span>
+                  </button>
+                  <span className="text-[#E4E1DC] dark:text-[#2E2A27]">&bull;</span>
+                  <button
+                    type="button"
+                    onClick={handleExportRemittanceCSV}
+                    className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-0.5"
+                    title="Export CSV"
+                  >
+                    <Download size={11} />
+                    <span>CSV</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
@@ -826,6 +893,127 @@ const CashierDashboard = () => {
         </div>
       )}
 
+
+      {/* TREASURY DAILY REMITTANCE REPORT MODAL */}
+      {isRemittanceModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 print:bg-white print:p-0 print:static">
+          <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 sm:p-6 print:border-none print:shadow-none print:max-h-none print:p-0">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 print:hidden">
+                  <Receipt size={24} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-tight">
+                    Daily Treasury Collection &amp; Remittance Sheet
+                  </h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    Municipal Treasury Office &bull; Municipality of Gasan, Marinduque
+                  </p>
+                  <p className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] mt-0.5">
+                    Date: {new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })} &bull; Terminal: {currentCashierName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRemittanceModalOpen(false)}
+                className="p-1 rounded-lg text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] print:hidden cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Summary KPI Strip */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <p className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Collection Remitted</p>
+                <p className="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                  ₱{todayPaidRecords.reduce((sum, r) => sum + (r.amountPaid || 500), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <p className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Official Receipts Issued</p>
+                <p className="text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">
+                  {todayPaidRecords.length} Transactions
+                </p>
+              </div>
+            </div>
+
+            {/* Transactions Table */}
+            <div className="border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg overflow-hidden mb-5">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold text-[10px] tracking-wider border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <th className="p-2.5 pl-3">OR Number</th>
+                    <th className="p-2.5">Payer Name</th>
+                    <th className="p-2.5">Plate No.</th>
+                    <th className="p-2.5">Time</th>
+                    <th className="p-2.5 pr-3 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                  {todayPaidRecords.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50">
+                      <td className="p-2.5 pl-3 font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{item.officialReceiptNo || 'N/A'}</td>
+                      <td className="p-2.5 font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{item.fullName || item.payerName || 'Operator'}</td>
+                      <td className="p-2.5 font-mono text-[#6B6761] dark:text-[#A8A29E]">{item.plateNo || '—'}</td>
+                      <td className="p-2.5 text-[#6B6761] dark:text-[#A8A29E]">
+                        {item.paymentDate ? new Date(item.paymentDate).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                      </td>
+                      <td className="p-2.5 pr-3 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                        ₱{(item.amountPaid || 500).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Official Signatures for Remittance */}
+            <div className="grid grid-cols-2 gap-8 pt-4 pb-2 text-xs border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div>
+                <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold mb-6">Prepared &amp; Remitted By:</p>
+                <p className="font-bold border-b border-[#1F1D1B] dark:border-[#F6F5F3] pb-1 text-[#1F1D1B] dark:text-[#F6F5F3]">{currentCashierName}</p>
+                <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Collecting Officer / Cashier</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold mb-6">Received By:</p>
+                <p className="font-bold border-b border-[#1F1D1B] dark:border-[#F6F5F3] pb-1 text-[#1F1D1B] dark:text-[#F6F5F3]">Municipal Treasurer</p>
+                <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Municipal Treasury Office, Gasan</p>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center gap-2 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] mt-3 print:hidden">
+              <button
+                type="button"
+                onClick={() => setIsRemittanceModalOpen(false)}
+                className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handleExportRemittanceCSV}
+                className="flex-1 py-2 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Download size={14} />
+                <span>Export to CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Printer size={14} />
+                <span>Print Remittance</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

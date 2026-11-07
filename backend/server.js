@@ -107,6 +107,7 @@ app.use(`${BASE_URI}/settings`, require('./src/routes/systemSettingsRoutes'));
 
 // Audit logs routes (Admin only)
 app.use(`${BASE_URI}/audit-logs`, auditLogRoutes);
+app.use(`${BASE_URI}/backups`, require('./src/routes/backupRoutes'));
 
 // Notification and Chat routes
 app.use(`${BASE_URI}/notifications`, require('./src/routes/notificationRoutes'));

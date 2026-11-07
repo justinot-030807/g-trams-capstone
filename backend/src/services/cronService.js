@@ -219,6 +219,25 @@ function startFranchiseCronJobs() {
         timezone: MANILA_TIMEZONE
     });
 
+    // Weekly Automated Database Backup at Sunday 00:00:00 (Asia/Manila)
+    const backupService = require('./backupService');
+    cron.schedule('0 0 * * 0', async () => {
+        console.log(`[CRON] Running weekly automated database backup at ${new Date().toISOString()} (${MANILA_TIMEZONE})...`);
+        try {
+            const res = await backupService.createBackupFile({
+                isAutomated: true,
+                triggeredBy: 'Weekly Automated Cron',
+                notes: 'Automated weekly system maintenance snapshot'
+            });
+            console.log(`[CRON] Weekly automated database backup completed: ${res.filename} (${(res.sizeBytes / 1024).toFixed(1)} KB)`);
+        } catch (backupErr) {
+            console.error('[CRON ERROR] Failed to create automated weekly database backup:', backupErr.message);
+        }
+    }, {
+        scheduled: true,
+        timezone: MANILA_TIMEZONE
+    });
+
     return midnightTask;
 }
 

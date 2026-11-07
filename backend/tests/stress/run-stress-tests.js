@@ -7,10 +7,10 @@
 
 process.env.NODE_ENV = 'test';
 process.env.FORCE_RATE_LIMIT = 'true';
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const os = require('os');
-const path = require('path');
 const http = require('http');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
@@ -38,6 +38,7 @@ async function main() {
     let operatorToken = null;
     let adminToken = null;
     let cashierToken = null;
+    let bploToken = null;
     let operatorId = null;
     let paymentFranchiseId = null;
 
@@ -94,6 +95,16 @@ async function main() {
                 address: 'Municipal Hall, Gasan, Marinduque'
             });
 
+            // Seed BPLO Staff User
+            const bplo = await User.create({
+                name: 'Stress Test BPLO Staff',
+                email: 'bplo.stress@gtrams.gov.ph',
+                password: 'Password123!',
+                role: 'bplo_staff',
+                contact: '09123450000',
+                address: 'BPLO, Municipal Hall, Gasan, Marinduque'
+            });
+
             // Seed Target Franchise for Concurrent Payment Testing
             const paymentFranchise = await Franchise.create({
                 operator: operator._id,
@@ -119,6 +130,7 @@ async function main() {
             adminToken = jwt.sign({ id: admin._id, role: admin.role }, secret, { expiresIn: '2h' });
             operatorToken = jwt.sign({ id: operator._id, role: operator.role }, secret, { expiresIn: '2h' });
             cashierToken = jwt.sign({ id: cashier._id, role: cashier.role }, secret, { expiresIn: '2h' });
+            bploToken = jwt.sign({ id: bplo._id, role: bplo.role }, secret, { expiresIn: '2h' });
 
             // Seed Sample Franchise Records for Masterlist Query Load
             const sampleFranchises = [];
@@ -158,6 +170,7 @@ async function main() {
             adminToken = jwt.sign({ id: new mongoose.Types.ObjectId(), role: 'admin' }, secret, { expiresIn: '2h' });
             operatorToken = jwt.sign({ id: new mongoose.Types.ObjectId(), role: 'operator' }, secret, { expiresIn: '2h' });
             cashierToken = jwt.sign({ id: new mongoose.Types.ObjectId(), role: 'cashier' }, secret, { expiresIn: '2h' });
+            bploToken = jwt.sign({ id: new mongoose.Types.ObjectId(), role: 'bplo_staff' }, secret, { expiresIn: '2h' });
             operatorId = new mongoose.Types.ObjectId();
         }
 
@@ -190,7 +203,7 @@ async function main() {
 
         // Scenario 4: Authenticated Masterlist Query Load
         console.log('\n⏳ Running Scenario 4: Authenticated Masterlist Query & Pagination Load...');
-        const s4 = await runMasterlistLoadTest(baseUrl, { adminToken, totalRequests: 100, concurrency: 25 });
+        const s4 = await runMasterlistLoadTest(baseUrl, { adminToken: bploToken, bploToken, totalRequests: 100, concurrency: 25 });
         memoryProfiler.recordPeak();
         printScenarioResult(s4.name, s4.metrics, s4.description);
         scenarios.push(s4);
@@ -207,7 +220,7 @@ async function main() {
             console.log('\n⏳ Running Scenario 6: Cashier Payment Atomic Concurrency & Rejection Immunity Guard...');
             const origConsoleError = console.error;
             console.error = () => {};
-            const s6 = await runCashierPaymentRaceTest(baseUrl, { cashierToken, adminToken, franchiseId: paymentFranchiseId, concurrency: 20 });
+            const s6 = await runCashierPaymentRaceTest(baseUrl, { cashierToken, adminToken: bploToken, bploToken, franchiseId: paymentFranchiseId, concurrency: 20 });
             console.error = origConsoleError;
             memoryProfiler.recordPeak();
             printScenarioResult(s6.name, s6.metrics, s6.description);

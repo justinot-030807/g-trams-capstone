@@ -3,6 +3,7 @@
 ### 1. Pangalan at Layunin
 - **G-TRAMS** (Gasan Tricycle Regulatory and Management System): Web application para sa digital na pamamahala ng Motorized Tricycle Operator's Permit (MTOP) at prangkisa sa Munisipalidad ng Gasan, Marinduque.
 - Nagbibigay ng sentralisadong portal para sa mga operator (application, renewal, e-copy), TODA presidents (endorsement), Cashier/Treasury (bayad), at Admin/LGU (review, signing, pickup, masterlist, compliance).
+- **Official Production URL**: `https://g-trams-official.vercel.app` (Official Frontend Deployment)
 
 ### 2. Tech Stack at Bersyon
 - **Runtime & Language**: Node.js, JavaScript (ES Modules sa frontend, CommonJS sa backend).

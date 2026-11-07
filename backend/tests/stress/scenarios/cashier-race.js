@@ -7,7 +7,7 @@
 const { request } = require('../utils/httpClient');
 const { calculateMetrics } = require('../utils/metrics');
 
-async function runCashierPaymentRaceTest(baseUrl, { cashierToken, adminToken, franchiseId, concurrency = 20 } = {}) {
+async function runCashierPaymentRaceTest(baseUrl, { cashierToken, adminToken, bploToken, franchiseId, concurrency = 20 } = {}) {
     const payUrl = `${baseUrl}/api/v1/franchises/${franchiseId}/pay`;
     const statusUrl = `${baseUrl}/api/v1/franchises/${franchiseId}/status`;
 
@@ -15,8 +15,8 @@ async function runCashierPaymentRaceTest(baseUrl, { cashierToken, adminToken, fr
         'Authorization': `Bearer ${cashierToken}`
     };
 
-    const adminHeaders = {
-        'Authorization': `Bearer ${adminToken}`
+    const staffHeaders = {
+        'Authorization': `Bearer ${bploToken || adminToken}`
     };
 
     // 1. Fire simultaneous payment attempts at the EXACT SAME millisecond using Promise.all
@@ -48,12 +48,12 @@ async function runCashierPaymentRaceTest(baseUrl, { cashierToken, adminToken, fr
     // Error rate is unexpected server crashes (500)
     metrics.errorRatePercent = Number(((serverErrorCount / metrics.totalRequests) * 100).toFixed(2));
 
-    // 2. Post-condition check: verify that an Admin CANNOT cancel/reject a paid franchise
+    // 2. Post-condition check: verify that a BPLO Staff / Admin CANNOT cancel/reject a paid franchise
     let rejectionBlocked = false;
     try {
         const rejectRes = await request(statusUrl, {
             method: 'PUT',
-            headers: adminHeaders,
+            headers: staffHeaders,
             body: {
                 status: 'Cancelled',
                 cancelReason: 'Attempted stress-test illegal rejection of paid franchise'

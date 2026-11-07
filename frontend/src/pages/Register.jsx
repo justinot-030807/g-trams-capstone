@@ -45,7 +45,9 @@ const Register = () => {
     name: incomingGoogle?.name || '', 
     address: '', 
     contact: incomingGoogle?.email || '',
-    backupContact: '', 
+    backupContact: '',
+    recoveryEmail: '',
+    recoveryPhone: '',
     password: '', 
     confirmPassword: '', 
     todaAssociation: '',
@@ -214,16 +216,33 @@ const Register = () => {
       return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
     }
 
-    if (!formData.backupContact || !formData.backupContact.trim()) {
-      return setError('BACKUP PHONE NUMBER OR EMAIL IS REQUIRED (CANNOT BE EMPTY).');
+    if (formData.backupContact && formData.backupContact.trim()) {
+      if (!isValidContact(formData.backupContact)) {
+        return setError('PLEASE ENTER A VALID BACKUP EMAIL OR PHILIPPINE MOBILE NUMBER (09XXXXXXXXX).');
+      }
+      if (formData.backupContact.trim().toLowerCase() === formData.contact.trim().toLowerCase()) {
+        return setError('BACKUP CONTACT MUST BE DIFFERENT FROM YOUR PRIMARY CONTACT.');
+      }
     }
-
-    if (!isValidContact(formData.backupContact)) {
-      return setError('PLEASE ENTER A VALID BACKUP EMAIL OR PHILIPPINE MOBILE NUMBER (09XXXXXXXXX).');
+    if (formData.recoveryEmail && formData.recoveryEmail.trim()) {
+      const rec = formData.recoveryEmail.trim().toLowerCase();
+      if (!rec.includes('@') || !rec.includes('.')) {
+        return setError('MANGYARING MAGLAGAY NG WASTONG RECOVERY EMAIL FORMAT.');
+      }
+      if (rec === formData.contact.trim().toLowerCase()) {
+        return setError('ANG RECOVERY EMAIL AY DAPAT IBA SA INYONG PRIMARY CONTACT EMAIL.');
+      }
     }
-
-    if (formData.backupContact.trim().toLowerCase() === formData.contact.trim().toLowerCase()) {
-      return setError('BACKUP CONTACT MUST BE DIFFERENT FROM YOUR PRIMARY CONTACT.');
+    if (formData.recoveryPhone && formData.recoveryPhone.trim()) {
+      const recP = formData.recoveryPhone.trim().replace(/[s-()]/g, '');
+      const rawC = formData.contact.trim().replace(/[s-()]/g, '');
+      if (!/^(09|+639)d{9}$/.test(recP)) {
+        return setError('MANGYARING MAGLAGAY NG WASTONG RECOVERY PHONE (09XXXXXXXXX).');
+      }
+      if (recP === rawC) {
+        return setError('ANG RECOVERY PHONE AY DAPAT IBA SA INYONG PRIMARY PHONE NUMBER.');
+      }
+    }
     }
 
     if (!formData.password || formData.password.length < 8) {
@@ -255,7 +274,9 @@ const Register = () => {
       fullName: formData.name.trim(),
       address: formData.address.trim(),
       contact: cleanContact,
-      backupContact: cleanBackup,
+      backupContact: cleanBackup || formData.recoveryPhone || formData.recoveryEmail || '',
+      recoveryEmail: formData.recoveryEmail?.trim()?.toLowerCase() || '',
+      recoveryPhone: formData.recoveryPhone?.trim() || '',
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
@@ -313,7 +334,9 @@ const Register = () => {
       fullName: formData.name.trim(),
       address: formData.address.trim(),
       contact: cleanContact,
-      backupContact: cleanBackup,
+      backupContact: cleanBackup || formData.recoveryPhone || formData.recoveryEmail || '',
+      recoveryEmail: formData.recoveryEmail?.trim()?.toLowerCase() || '',
+      recoveryPhone: formData.recoveryPhone?.trim() || '',
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
@@ -751,11 +774,11 @@ const Register = () => {
                       </div>
                     </div>
 
-                    {/* Backup Contact (Required) */}
+                    {/* Backup Contact / Account Recovery Options */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case">
-                          Backup Phone Number or Email <span className="text-[#9E2A2B] dark:text-red-400 font-bold">*</span>
+                          Backup Contact / Recovery Phone or Email <span className="text-[#9E2A2B] dark:text-red-400 font-bold">*</span>
                         </label>
                         <span className="text-xs text-[#9E2A2B] dark:text-red-400 font-medium">Required</span>
                       </div>
@@ -767,8 +790,15 @@ const Register = () => {
                           type="text" 
                           name="backupContact" 
                           maxLength="50" 
-                          value={formData.backupContact} 
-                          onChange={handleChange} 
+                          value={formData.backupContact || formData.recoveryPhone || formData.recoveryEmail || ''} 
+                          onChange={(e) => {
+                            handleChange(e);
+                            if (e.target.value.includes('@')) {
+                              setFormData(prev => ({ ...prev, recoveryEmail: e.target.value, backupContact: e.target.value }));
+                            } else {
+                              setFormData(prev => ({ ...prev, recoveryPhone: e.target.value, backupContact: e.target.value }));
+                            }
+                          }}
                           autoComplete="tel"
                           inputMode="text"
                           autoCapitalize="none"
@@ -776,11 +806,13 @@ const Register = () => {
                           spellCheck="false"
                           required 
                           className={inputClasses} 
-                          placeholder="Secondary mobile (09XXXXXXXXX) or email" 
+                          placeholder="Secondary mobile (09XXXXXXXXX) or recovery email" 
                         />
                       </div>
                       <p className="mt-1 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Emergency notifications and account recovery contact. Hindi ito maaaring kapareho ng pangunahing contact.
+                        Pang-recover kung sakaling mawala ang inyong primary email o SIM card.
+                      </p>
+                    </div>
                       </p>
                     </div>
 

@@ -20,8 +20,8 @@ const normalizeContact = (contactStr) => {
     return cleanDigits;
 };
 
-// Build MongoDB query matching email or various phone number formats (09..., +639..., dashes)
-const getContactQueryFilter = (contactStr) => {
+// Build MongoDB query strictly matching PRIMARY email or phone number formats (for registration & new account checks)
+const getPrimaryContactQueryFilter = (contactStr) => {
     const raw = String(contactStr || '').trim();
     if (!raw) return { contact: '__non_existent__' };
     if (raw.includes('@')) {
@@ -55,6 +55,43 @@ const getContactQueryFilter = (contactStr) => {
     return orConditions.length === 1 ? orConditions[0] : { $or: orConditions };
 };
 
+// Build MongoDB query matching email or various phone number formats (09..., +639..., dashes, and recovery contacts)
+const getContactQueryFilter = (contactStr) => {
+    const raw = String(contactStr || '').trim();
+    if (!raw) return { contact: '__non_existent__' };
+    if (raw.includes('@')) {
+        const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return {
+            $or: [
+                { contact: { $regex: new RegExp(`^${escaped}$`, 'i') } },
+                { email: { $regex: new RegExp(`^${escaped}$`, 'i') } },
+                { recoveryEmail: { $regex: new RegExp(`^${escaped}$`, 'i') } }
+            ]
+        };
+    }
+    const cleanDigits = raw.replace(/[\s\-()]/g, '');
+    const variants = new Set([raw, cleanDigits]);
+    if (cleanDigits.startsWith('+639')) {
+        variants.add('0' + cleanDigits.slice(3));
+        variants.add(cleanDigits.slice(1));
+    } else if (cleanDigits.startsWith('639') && cleanDigits.length === 12) {
+        variants.add('0' + cleanDigits.slice(2));
+        variants.add('+' + cleanDigits);
+    } else if (cleanDigits.startsWith('09')) {
+        variants.add('+63' + cleanDigits.slice(1));
+        variants.add('63' + cleanDigits.slice(1));
+    }
+    const orConditions = [];
+    variants.forEach(v => {
+        if (v) {
+            const esc = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            orConditions.push({ contact: { $regex: new RegExp(`^${esc}$`, 'i') } });
+            orConditions.push({ recoveryPhone: { $regex: new RegExp(`^${esc}$`, 'i') } });
+        }
+    });
+    return orConditions.length === 1 ? orConditions[0] : { $or: orConditions };
+};
+
 // Cryptographic OTP hashing helper (SHA-256)
 const hashOtp = (rawOtp) => {
     return crypto.createHash('sha256').update(String(rawOtp || '').trim()).digest('hex');
@@ -81,7 +118,7 @@ exports.register = async (req, res) => {
             });
         }
 
-        const { name, fullName, address, contact, backupContact, password, role, todaAssociation, bodyNumber } = req.body;
+        const { name, fullName, address, contact, backupContact, password, role, todaAssociation, bodyNumber, recoveryEmail, recoveryPhone } = req.body;
         const resolvedName = String(name || fullName || '').trim().replace(/\s+/g, ' ');
         const rawContact = String(contact || '').trim();
         const normalizedContact = normalizeContact(rawContact);
@@ -161,9 +198,26 @@ exports.register = async (req, res) => {
             }
         }
         
-        // Case-insensitive check for existing user by contact or email
+        // Validate recovery email/phone are not identical to primary contact
+        const cleanRecEmail = recoveryEmail && String(recoveryEmail).includes('@') ? String(recoveryEmail).toLowerCase().trim() : '';
+        const cleanRecPhone = recoveryPhone ? String(recoveryPhone).replace(/[\s\-()]/g, '').trim() : '';
+
+        if (cleanRecEmail && (cleanRecEmail === rawContact.toLowerCase() || cleanRecEmail === normalizedContact.toLowerCase())) {
+            return res.status(400).json({ 
+                message: 'Ang Recovery Email ay dapat iba sa inyong pangunahing contact email.' 
+            });
+        }
+
+        const rawCleanDigits = rawContact.replace(/[\s\-()]/g, '');
+        if (cleanRecPhone && (cleanRecPhone === rawCleanDigits || normalizeContact(cleanRecPhone) === normalizedContact)) {
+            return res.status(400).json({ 
+                message: 'Ang Recovery Phone ay dapat iba sa inyong pangunahing numero ng telepono.' 
+            });
+        }
+
+        // Case-insensitive check for existing user by primary contact or email
         const isEmail = normalizedContact.includes('@');
-        let user = await User.findOne(getContactQueryFilter(rawContact));
+        let user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
 
         if (user) {
             if (user.isVerified) {
@@ -184,6 +238,8 @@ exports.register = async (req, res) => {
             contact: normalizedContact,
             backupContact: normalizedBackupContact || '',
             email: isEmail ? normalizedContact : (req.body.email && String(req.body.email).includes('@') ? String(req.body.email).toLowerCase().trim() : ''),
+            recoveryEmail: recoveryEmail && String(recoveryEmail).includes('@') ? String(recoveryEmail).toLowerCase().trim() : '',
+            recoveryPhone: recoveryPhone ? String(recoveryPhone).trim() : '',
             password,
             role: assignedRole,
             todaAssociation: normalizedToda,
@@ -244,7 +300,7 @@ exports.verifyOTP = async (req, res) => {
             return res.status(400).json({ message: 'Contact and OTP code are required.' });
         }
 
-        const contactFilter = getContactQueryFilter(rawContact);
+        const contactFilter = getPrimaryContactQueryFilter(rawContact);
         const hashedInputOtp = hashOtp(normalizedOtp);
         const user = await User.findOne({ 
             ...contactFilter,
@@ -446,7 +502,7 @@ exports.forgotPassword = async (req, res) => {
             return res.status(400).json({ message: 'Contact email or phone number is required.' });
         }
 
-        // Robust lookup across contact, email, and phone variants
+        // Robust lookup across contact, email, and phone variants (including recovery contacts)
         const user = await User.findOne(getContactQueryFilter(rawContact));
         if (!user) return res.status(404).json({ message: 'Contact is not registered.' });
 
@@ -455,24 +511,55 @@ exports.forgotPassword = async (req, res) => {
         user.otpExpire = Date.now() + 10 * 60 * 1000;
         await user.save();
 
+        // Check if applicant used recovery contact
+        const isEmailInput = rawContact.includes('@');
+        let destination = normalizedContact;
+        let isRecovery = false;
+
+        const cleanRawDigits = rawContact.replace(/[\s\-()]/g, '');
+        const cleanUserRecPhone = (user.recoveryPhone || '').replace(/[\s\-()]/g, '');
+
+        if (isEmailInput && user.recoveryEmail && rawContact.toLowerCase() === user.recoveryEmail.toLowerCase()) {
+            destination = user.recoveryEmail.toLowerCase();
+            isRecovery = true;
+        } else if (!isEmailInput && cleanUserRecPhone && (cleanRawDigits === cleanUserRecPhone || normalizeContact(rawContact) === normalizeContact(user.recoveryPhone))) {
+            destination = normalizeContact(user.recoveryPhone);
+            isRecovery = true;
+        }
+
+        const isDestEmail = destination.includes('@');
+
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`[DEV/TEST OTP] Password Reset OTP for ${destination}${isRecovery ? ' (via Recovery Contact)' : ''}: ${otp}`);
+        }
+
         try {
-            if (normalizedContact.includes('@')) {
-                // Send OTP via email
-                await sendEmail({ 
-                    email: normalizedContact, 
-                    subject: 'G-TRAMS: Account Verification OTP', 
-                    message: `Your OTP for G-TRAMS password reset is: ${otp}\n\nThis code is valid for 10 minutes only.` 
-                });
-                return res.status(200).json({ message: 'OTP sent successfully to your email.' });
-            } else {
-                // Send OTP via SMS
-                await axios.post('https://api.semaphore.co/api/v4/messages', { 
-                    apikey: process.env.SEMAPHORE_API_KEY, 
-                    number: normalizedContact, 
-                    message: `G-TRAMS: Your password reset verification code is ${otp}. Do not share this with anyone.` 
-                }, { timeout: 5000 });
-                return res.status(200).json({ message: 'OTP sent successfully via SMS.' });
+            if (process.env.NODE_ENV !== 'test') {
+                if (isDestEmail) {
+                    // Send OTP via email
+                    await sendEmail({ 
+                        email: destination, 
+                        subject: 'G-TRAMS: Account Recovery OTP', 
+                        message: `Your OTP for G-TRAMS password reset is: ${otp}\n\nThis code is valid for 10 minutes only.${isRecovery ? '\n\nNote: This code was requested using your registered Recovery Email.' : ''}` 
+                    });
+                } else {
+                    // Send OTP via SMS
+                    await axios.post('https://api.semaphore.co/api/v4/messages', { 
+                        apikey: process.env.SEMAPHORE_API_KEY, 
+                        number: destination, 
+                        message: `G-TRAMS: Your password reset verification code is ${otp}. Do not share this with anyone.${isRecovery ? ' (Sent to recovery phone)' : ''}` 
+                    }, { timeout: 5000 });
+                }
             }
+
+            return res.status(200).json({ 
+                message: isRecovery 
+                    ? `OTP recovery code sent successfully to your Recovery ${isDestEmail ? 'Email' : 'Phone'} (${destination}).` 
+                    : `OTP sent successfully to your ${isDestEmail ? 'email' : 'SMS'}.`,
+                recoveryUsed: isRecovery,
+                destination: isRecovery ? destination : undefined,
+                ...(process.env.NODE_ENV === 'test' ? { testOtp: otp } : {})
+            });
         } catch (err) {
             console.error("FORGOT PASSWORD OTP SEND ERROR:", err?.response?.data || err.message);
             user.otp = undefined;
@@ -680,6 +767,8 @@ exports.updateProfile = async (req, res) => {
         if (name !== undefined) updateData.name = name;
         if (address !== undefined) updateData.address = address;
         if (contact !== undefined) updateData.contact = contact;
+        if (req.body.recoveryEmail !== undefined) updateData.recoveryEmail = String(req.body.recoveryEmail || '').trim().toLowerCase();
+        if (req.body.recoveryPhone !== undefined) updateData.recoveryPhone = String(req.body.recoveryPhone || '').trim();
         if (todaAssociation !== undefined) updateData.todaAssociation = todaAssociation;
         if (language !== undefined) updateData.language = language;
         if (theme !== undefined) updateData.theme = theme;
@@ -1184,37 +1273,88 @@ const maskContactInfo = (val) => {
     return str.length > 4 ? `${str.slice(0, 2)}****` : '****';
 };
 
-// Verify Operator for QR Code
+// Verify Operator for QR Code (Accepts User ID or Franchise ID from MTOP Certificate)
 exports.verifyOperator = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).select('name fullName profilePic role todaAssociation contact isActive');
-        if (!user) return res.status(404).json({ message: 'Operator not found' });
-        
-        let formattedProfilePic = user.profilePic;
-        if (formattedProfilePic && !formattedProfilePic.startsWith('http')) {
-            formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
+        const queryId = req.params.id;
+
+        // 1. Try finding by User ID first
+        let user = await User.findById(queryId).select('name fullName profilePic role todaAssociation contact isActive');
+        let franchises = [];
+
+        if (user) {
+            let formattedProfilePic = user.profilePic;
+            if (formattedProfilePic && !formattedProfilePic.startsWith('http')) {
+                formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
+            }
+
+            const operatorName = user.name || user.fullName || 'Registered Operator';
+
+            franchises = await Franchise.find({ 
+                $or: [
+                    { operator: user._id },
+                    { fullName: operatorName }
+                ],
+                isArchived: { $ne: true }
+            }).select('make plateNo motorNo status todaName');
+            
+            return res.status(200).json({
+                name: operatorName,
+                fullName: operatorName,
+                profilePic: formattedProfilePic,
+                role: user.role,
+                todaAssociation: user.todaAssociation || 'NON-TODA',
+                isActive: user.isActive,
+                contact: maskContactInfo(user.contact),
+                franchises: franchises || []
+            });
         }
 
-        const operatorName = user.name || user.fullName || 'Registered Operator';
+        // 2. If not a User ID, try finding by Franchise ID (from printed MTOP Certificate QR code)
+        const franchise = await Franchise.findById(queryId).populate('operator', 'name fullName profilePic role todaAssociation contact isActive');
+        if (franchise) {
+            const opUser = franchise.operator;
+            const opName = franchise.fullName || opUser?.name || opUser?.fullName || 'Registered Operator';
+            let formattedProfilePic = opUser?.profilePic || '';
+            if (formattedProfilePic && !formattedProfilePic.startsWith('http')) {
+                formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
+            }
 
-        const franchises = await Franchise.find({ 
-            $or: [
-                { operator: user._id },
-                { fullName: operatorName }
-            ],
-            isArchived: { $ne: true }
-        }).select('make plateNo motorNo status todaName');
-        
-        res.status(200).json({
-            name: operatorName,
-            fullName: operatorName,
-            profilePic: formattedProfilePic,
-            role: user.role,
-            todaAssociation: user.todaAssociation || 'NON-TODA',
-            isActive: user.isActive,
-            contact: maskContactInfo(user.contact),
-            franchises: franchises || []
-        });
+            const allFranchises = await Franchise.find({
+                $or: [
+                    { operator: opUser?._id },
+                    { fullName: opName }
+                ].filter(c => Object.values(c)[0]),
+                isArchived: { $ne: true }
+            }).select('make plateNo motorNo status todaName');
+
+            const resultUnits = allFranchises.length > 0 ? allFranchises : [{
+                make: franchise.make,
+                plateNo: franchise.plateNo,
+                motorNo: franchise.motorNo,
+                status: franchise.status,
+                todaName: franchise.todaName
+            }];
+
+            return res.status(200).json({
+                name: opName,
+                fullName: opName,
+                profilePic: formattedProfilePic,
+                role: opUser?.role || 'operator',
+                todaAssociation: franchise.todaName || opUser?.todaAssociation || 'NON-TODA',
+                isActive: opUser ? opUser.isActive : true,
+                contact: maskContactInfo(opUser?.contact || ''),
+                franchises: resultUnits,
+                scannedFranchise: {
+                    plateNo: franchise.plateNo,
+                    make: franchise.make,
+                    status: franchise.status,
+                    todaName: franchise.todaName
+                }
+            });
+        }
+
+        return res.status(404).json({ message: 'Operator or Franchise not found for this QR code.' });
     } catch (error) {
         console.error('VERIFY OPERATOR ERROR:', error);
         res.status(500).json({ message: 'Server error: ' });

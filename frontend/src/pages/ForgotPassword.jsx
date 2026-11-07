@@ -144,8 +144,8 @@ const ForgotPassword = () => {
               </h2>
               <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-1.5 leading-relaxed">
                 {step === 1 
-                  ? 'Enter your registered email or phone number to receive a 6-digit recovery code.' 
-                  : `Enter the 6-digit code sent to ${contact} and create your new password.`}
+                  ? 'Ilagay ang inyong email, mobile number, o ang itinalagang Recovery Email/Phone number upang matanggap ang 6-digit reset code.' 
+                  : `Ilagay ang 6-digit verification code na ipinadala sa inyo at gumawa ng bagong password.`}
               </p>
             </div>
 
@@ -163,9 +163,14 @@ const ForgotPassword = () => {
             {step === 1 && (
               <form onSubmit={handleRequestOTP} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
-                    Email or Phone Number
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
+                      Email, Mobile, o Recovery Contact
+                    </label>
+                    <span className="text-[10px] font-bold text-[#D4AF37]">
+                      May Recovery Support
+                    </span>
+                  </div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                       <User size={18} />
@@ -176,9 +181,12 @@ const ForgotPassword = () => {
                       onChange={(e) => setContact(e.target.value)}
                       required 
                       className={`w-full pl-10 pr-3.5 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium min-h-[46px]`} 
-                      placeholder="juan@gmail.com or 09123456789" 
+                      placeholder="Email, 0912..., o recovery email/phone" 
                     />
                   </div>
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1.5 leading-tight">
+                    Nawala o hindi mabuksan ang inyong email? Ilagay ang inyong <strong>Recovery Email</strong> o <strong>Recovery Phone</strong> upang doon ipadala ang reset code.
+                  </p>
                 </div>
                 
                 <div className="pt-2">

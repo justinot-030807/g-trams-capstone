@@ -13,6 +13,14 @@ const registerSchema = z.object({
         contact: z.string().trim().min(5, 'Valid email or phone number is required'),
         backupContact: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().min(5, 'Backup contact (email or phone number) is required').optional()),
         address: z.string().trim().min(2, 'Valid address is required'),
+        recoveryEmail: z.preprocess(
+            (val) => (typeof val === 'string' ? val.trim() : ''),
+            z.union([z.string().email('Invalid recovery email format'), z.literal('')]).optional()
+        ).optional(),
+        recoveryPhone: z.preprocess(
+            (val) => (typeof val === 'string' ? val.replace(/[\s\-()]/g, '') : ''),
+            z.union([z.string().regex(/^(09|\+639)\d{9}$/, 'Invalid recovery phone number (e.g. 09XXXXXXXXX)'), z.literal('')]).optional()
+        ).optional(),
         todaAssociation: z.string().trim().optional(),
         bodyNumber: z.string().trim().optional(),
         password: z.string().min(6, 'Password must be at least 6 characters'),

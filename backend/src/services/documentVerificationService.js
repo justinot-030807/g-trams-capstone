@@ -523,18 +523,16 @@ ONLY if genuine, extract and return:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // Multi-model auto-failover cascade: Uses current stable Gemini Vision models with Gemini 3.8 Flash as top priority.
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+        // High-speed multi-model auto-failover cascade:
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
         const modelsToTry = [
             preferredModel,
-            'gemini-3.8-flash',
-            'gemini-2.5-flash',
             'gemini-2.0-flash',
-            'gemini-1.5-flash',
-            'gemini-3.5-flash-lite',
-            'gemini-2.5-flash-lite',
             'gemini-2.0-flash-lite',
-            'gemini-1.5-flash-8b'
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-1.5-flash'
+        
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
         let responseText = null;
@@ -542,6 +540,13 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         for (const modelName of modelsToTry) {
             try {
                 console.log(`[DocVerify] Invoking model ${modelName} for ${docType}...`);
+                const reqConfig = {
+                    responseMimeType: 'application/json'
+                };
+                if (modelName.includes('2.5') || modelName.includes('thinking')) {
+                    reqConfig.thinkingConfig = { thinkingBudget: 0 };
+                }
+
                 const interaction = await ai.models.generateContent({
                     model: modelName,
                     contents: [
@@ -558,9 +563,7 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
                             ]
                         }
                     ],
-                    config: {
-                        responseMimeType: 'application/json'
-                    }
+                    config: reqConfig
                 });
                 responseText = interaction.text || (interaction.candidates?.[0]?.content?.parts?.[0]?.text);
                 if (responseText) {
@@ -1063,40 +1066,39 @@ Return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only, no markdown, no surrounding text.`;
 
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
         const modelsToTry = [
             preferredModel,
-            'gemini-3.8-flash',
-            'gemini-2.5-flash',
             'gemini-2.0-flash',
-            'gemini-1.5-flash',
-            'gemini-3.5-flash-lite',
-            'gemini-2.5-flash-lite',
             'gemini-2.0-flash-lite',
-            'gemini-1.5-flash-8b'
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-1.5-flash'
+        
         ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
 
         let responseText = null;
         for (const modelName of modelsToTry) {
             try {
                 console.log(`[TodaRosterOCR] Invoking model ${modelName} (mimeType: ${mimeType}, base64 length: ${img.base64Data.length})...`);
+                const rosterConfig = {};
+                if (modelName.includes('2.5') || modelName.includes('thinking')) {
+                    rosterConfig.thinkingConfig = { thinkingBudget: 0 };
+                }
+
                 const interaction = await ai.models.generateContent({
                     model: modelName,
                     contents: [
                         {
-                            role: 'user',
-                            parts: [
-                                {
-                                    inlineData: {
-                                        mimeType: mimeType,
-                                        data: img.base64Data
-                                    }
-                                },
-                                { text: prompt }
-                            ]
-                        }
+                            inlineData: {
+                                mimeType: mimeType,
+                                data: img.base64Data
+                            }
+                        },
+                        { text: prompt }
                     ],
                     config: {
+                        ...rosterConfig,
                         responseMimeType: 'application/json'
                     }
                 });

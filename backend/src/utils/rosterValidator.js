@@ -290,8 +290,168 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
     };
 }
 
+/**
+ * Checks if a body number is already assigned in TodaRoster, TodaSubmission, User, or Franchise
+ * @param {string} candidateNo Body number to check
+ * @param {string} todaAssociation Association name
+ * @returns {Promise<{ isTaken: boolean, matchedBodyNumber: string | null, reason: string | null }>}
+ */
+async function isBodyNumberTaken(candidateNo, todaAssociation) {
+    if (!candidateNo || !todaAssociation) return { isTaken: false, matchedBodyNumber: null, reason: null };
+    const cleanCand = normalizeBodyNumber(candidateNo);
+    if (!cleanCand) return { isTaken: false, matchedBodyNumber: null, reason: null };
+
+    const todaRegex = buildTodaSearchRegex(todaAssociation);
+
+    // 1. Check in TodaRoster (Active, Inactive, Suspended - body numbers cannot be duplicated)
+    const rosterEntries = await TodaRoster.find({ todaAssociation: todaRegex });
+    for (const r of rosterEntries) {
+        if (isBodyNumberMatch(cleanCand, r.bodyNumber)) {
+            return {
+                isTaken: true,
+                matchedBodyNumber: r.bodyNumber,
+                ownerName: r.operatorName,
+                source: 'TodaRoster',
+                reason: `Ang Body Number "${candidateNo}" ay nakatala na kay "${r.operatorName}" sa ${todaAssociation}.`
+            };
+        }
+    }
+
+    // 2. Check in approved or pending TodaSubmissions
+    const submissions = await TodaSubmission.find({
+        status: { $in: ['Approved', 'Pending'] },
+        todaAssociation: todaRegex
+    });
+    for (const sub of submissions) {
+        for (const m of (sub.extractedMembers || [])) {
+            const bNo = (m.bodyNumber || m.unitNo || '').trim();
+            if (bNo && isBodyNumberMatch(cleanCand, bNo)) {
+                return {
+                    isTaken: true,
+                    matchedBodyNumber: bNo,
+                    ownerName: m.operatorName || m.name,
+                    source: 'TodaSubmission',
+                    reason: `Ang Body Number "${candidateNo}" ay nakalaan na sa sertipikadong masterlist ng ${todaAssociation}.`
+                };
+            }
+        }
+    }
+
+    // 3. Check in User accounts for that TODA
+    const User = require('../models/userModel');
+    const existingUsers = await User.find({
+        todaAssociation: todaRegex,
+        bodyNumber: { $exists: true, $ne: '' }
+    });
+    for (const u of existingUsers) {
+        if (isBodyNumberMatch(cleanCand, u.bodyNumber)) {
+            return {
+                isTaken: true,
+                matchedBodyNumber: u.bodyNumber,
+                ownerName: u.name,
+                source: 'User',
+                reason: `Ang Body Number "${candidateNo}" ay aktibong ginagamit na ni "${u.name}".`
+            };
+        }
+    }
+
+    return { isTaken: false, matchedBodyNumber: null, reason: null };
+}
+
+/**
+ * Generates the next sequential unique body number for a given TODA association.
+ * Strictly guarantees NO DUPLICATE by cross-checking all existing records.
+ * @param {string} todaAssociation
+ * @returns {Promise<string>} Next unique body number (e.g. "06", "042", "101")
+ */
+async function generateNextBodyNumber(todaAssociation) {
+    const cleanToda = String(todaAssociation || '').trim();
+    if (!cleanToda || cleanToda.toUpperCase() === 'NON-TODA') {
+        throw new Error('Valid TODA Association is required to generate body number.');
+    }
+
+    const todaRegex = buildTodaSearchRegex(cleanToda);
+    const existingNumbers = [];
+
+    // Collect from TodaRoster
+    const rosterEntries = await TodaRoster.find({ todaAssociation: todaRegex });
+    rosterEntries.forEach(r => {
+        if (r.bodyNumber) existingNumbers.push(r.bodyNumber.trim());
+    });
+
+    // Collect from TodaSubmission (Approved or Pending)
+    const submissions = await TodaSubmission.find({
+        status: { $in: ['Approved', 'Pending'] },
+        todaAssociation: todaRegex
+    });
+    submissions.forEach(sub => {
+        (sub.extractedMembers || []).forEach(m => {
+            const b = (m.bodyNumber || m.unitNo || '').trim();
+            if (b) existingNumbers.push(b);
+        });
+    });
+
+    // Collect from User
+    const User = require('../models/userModel');
+    const users = await User.find({
+        todaAssociation: todaRegex,
+        bodyNumber: { $exists: true, $ne: '' }
+    });
+    users.forEach(u => {
+        if (u.bodyNumber) existingNumbers.push(u.bodyNumber.trim());
+    });
+
+    // Analyze existing formatting patterns
+    let maxNum = 0;
+    let maxDigitsLength = 2; // Default minimum 2-digit padding (e.g. "01")
+    let commonPrefix = '';
+
+    for (const raw of existingNumbers) {
+        const clean = normalizeBodyNumber(raw);
+        const letters = clean.replace(/[0-9]/g, '');
+        const digits = clean.replace(/[^0-9]/g, '');
+
+        if (letters && !commonPrefix) {
+            const match = raw.match(/^([A-Za-z]+)[-\s]?/);
+            if (match) commonPrefix = match[1].toUpperCase() + '-';
+        }
+
+        if (digits) {
+            maxDigitsLength = Math.max(maxDigitsLength, digits.length);
+            const val = parseInt(digits, 10);
+            if (!isNaN(val) && val > maxNum) {
+                maxNum = val;
+            }
+        }
+    }
+
+    // Candidate sequential search
+    let candidateInt = maxNum + 1;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 10000;
+
+    while (attempts < MAX_ATTEMPTS) {
+        attempts++;
+        const paddedDigits = String(candidateInt).padStart(maxDigitsLength, '0');
+        const candidateBodyNo = commonPrefix ? `${commonPrefix}${paddedDigits}` : paddedDigits;
+
+        // Check against ALL existing numbers using strict isBodyNumberMatch
+        const hasCollision = existingNumbers.some(existing => isBodyNumberMatch(candidateBodyNo, existing));
+
+        if (!hasCollision) {
+            return candidateBodyNo;
+        }
+
+        candidateInt++;
+    }
+
+    return String(candidateInt).padStart(3, '0');
+}
+
 module.exports = {
     normalizeBodyNumber,
     isBodyNumberMatch,
-    validateOperatorAgainstRoster
+    validateOperatorAgainstRoster,
+    isBodyNumberTaken,
+    generateNextBodyNumber
 };

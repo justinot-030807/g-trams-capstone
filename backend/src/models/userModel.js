@@ -8,6 +8,8 @@ const userSchema = new mongoose.Schema({
     contact: { type: String, required: true, unique: true },
     backupContact: { type: String, default: '' },
     email: { type: String, default: '' },
+    recoveryEmail: { type: String, default: '', trim: true, lowercase: true },
+    recoveryPhone: { type: String, default: '', trim: true },
     googleId: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     password: { type: String, required: true },
@@ -44,6 +46,9 @@ const userSchema = new mongoose.Schema({
     language: { type: String, default: 'en' },
     theme: { type: String, default: 'light' }
 }, { timestamps: true });
+
+userSchema.index({ recoveryEmail: 1 }, { sparse: true });
+userSchema.index({ recoveryPhone: 1 }, { sparse: true });
 
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) return;

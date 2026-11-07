@@ -53,8 +53,8 @@ const todaRosterSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Compound indexes for fast lookup and integrity
-todaRosterSchema.index({ todaAssociation: 1, bodyNumber: 1 });
+// Compound indexes for fast lookup and strict uniqueness integrity
+todaRosterSchema.index({ todaAssociation: 1, bodyNumber: 1 }, { unique: true });
 todaRosterSchema.index({ todaAssociation: 1, operatorName: 1 });
 todaRosterSchema.index({ bodyNumber: 1 });
 

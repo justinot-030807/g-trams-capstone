@@ -1,6 +1,6 @@
 # 📊 GTRAMS API Stress & Load Performance Report
 
-**Date of Execution:** 10/8/2026, 9:04:02 PM  
+**Date of Execution:** 11/7/2026, 6:17:40 PM  
 **Target Environment:** http://localhost:5055  
 **Node.js Version:** v24.13.0 | **Platform:** win32 (x64)  
 **CPUs:** 4 cores | **Total System Memory:** 3.9 GB  
@@ -13,12 +13,12 @@ This report documents the empirical stress, load, and concurrency resilience tes
 
 | Scenario | Total Req | Concurrency | Throughput (RPS) | Avg Latency | p95 Latency | Error Rate | Verification Status |
 |---|---|---|---|---|---|---|---|
-| **Read Throughput & Public Endpoints** | 250 | 50 | 106.43 req/s | 444.64 ms | 1055.51 ms | 0% | ✅ PASSED |
-| **Authentication Concurrency & Brute-Force Rate Limiting** | 40 | 10 | 163.93 req/s | 59.58 ms | 149.83 ms | 0% | ✅ PASSED |
-| **Franchise Race-Condition & Atomic Concurrency Guard** | 25 | 25 | 50.51 req/s | 481.92 ms | 487.43 ms | 0% | ✅ PASSED |
-| **Authenticated Masterlist Query & Pagination Load** | 100 | 25 | 23.03 req/s | 1073.53 ms | 1358.47 ms | 0% | ✅ PASSED |
-| **Socket.IO Real-Time Concurrency & WebSocket Handshake** | 30 | 30 | 51.55 req/s | 496.17 ms | 539.59 ms | 0% | ✅ PASSED |
-| **Cashier Payment Atomic Concurrency & Rejection Immunity Guard** | 20 | 20 | 30.03 req/s | 633.66 ms | 640.1 ms | 0% | ✅ PASSED |
+| **Read Throughput & Public Endpoints** | 250 | 50 | 105.4 req/s | 439.75 ms | 862.21 ms | 0% | ✅ PASSED |
+| **Authentication Concurrency & Brute-Force Rate Limiting** | 40 | 10 | 170.94 req/s | 57.03 ms | 132.02 ms | 0% | ✅ PASSED |
+| **Franchise Race-Condition & Atomic Concurrency Guard** | 25 | 25 | 23.26 req/s | 1018.29 ms | 1041.62 ms | 0% | ✅ PASSED |
+| **Authenticated Masterlist Query & Pagination Load** | 100 | 25 | 13.94 req/s | 1751.17 ms | 2254.5 ms | 0% | ✅ PASSED |
+| **Socket.IO Real-Time Concurrency & WebSocket Handshake** | 30 | 30 | 73.89 req/s | 351.86 ms | 372.53 ms | 0% | ✅ PASSED |
+| **Cashier Payment Atomic Concurrency & Rejection Immunity Guard** | 20 | 20 | 40.16 req/s | 473.75 ms | 477.47 ms | 0% | ✅ PASSED |
 
 ---
 
@@ -30,18 +30,18 @@ This report documents the empirical stress, load, and concurrency resilience tes
 **Concurrency Level:** 50 concurrent clients  
 
 - **Total Requests Processed:** 250
-- **Throughput:** 106.43 requests/second
+- **Throughput:** 105.4 requests/second
 - **Response Time Distribution:**
-  - **Minimum:** 128 ms
-  - **Average:** 444.64 ms
-  - **Median (p50):** 398.93 ms
-  - **90th Percentile (p90):** 881.3 ms
-  - **95th Percentile (p95):** 1055.51 ms
-  - **99th Percentile (p99):** 1196.98 ms
-  - **Maximum:** 1223.86 ms
+  - **Minimum:** 116.1 ms
+  - **Average:** 439.75 ms
+  - **Median (p50):** 417.38 ms
+  - **90th Percentile (p90):** 793.03 ms
+  - **95th Percentile (p95):** 862.21 ms
+  - **99th Percentile (p99):** 945.18 ms
+  - **Maximum:** 987.28 ms
 - **HTTP Status Code Breakdown:**
   - `HTTP 200`: 250 responses
-- **Validation Finding:** All 250 requests completed successfully with 0% error rate. Average latency was 444.64ms at 106.43 req/sec.
+- **Validation Finding:** All 250 requests completed successfully with 0% error rate. Average latency was 439.75ms at 105.4 req/sec.
 
 ### Authentication Concurrency & Brute-Force Rate Limiting
 **Objective:** Tests rapid login attempts to verify rate-limiting defense (HTTP 429) against brute-force attacks without 500 server crashes.  
@@ -49,15 +49,15 @@ This report documents the empirical stress, load, and concurrency resilience tes
 **Concurrency Level:** 10 concurrent clients  
 
 - **Total Requests Processed:** 40
-- **Throughput:** 163.93 requests/second
+- **Throughput:** 170.94 requests/second
 - **Response Time Distribution:**
-  - **Minimum:** 23.59 ms
-  - **Average:** 59.58 ms
-  - **Median (p50):** 32.45 ms
-  - **90th Percentile (p90):** 146.24 ms
-  - **95th Percentile (p95):** 149.83 ms
-  - **99th Percentile (p99):** 151.2 ms
-  - **Maximum:** 151.2 ms
+  - **Minimum:** 26.02 ms
+  - **Average:** 57.03 ms
+  - **Median (p50):** 34.83 ms
+  - **90th Percentile (p90):** 131.29 ms
+  - **95th Percentile (p95):** 132.02 ms
+  - **99th Percentile (p99):** 132.89 ms
+  - **Maximum:** 132.89 ms
 - **HTTP Status Code Breakdown:**
   - `HTTP 400`: 5 responses
   - `HTTP 429`: 35 responses
@@ -69,19 +69,19 @@ This report documents the empirical stress, load, and concurrency resilience tes
 **Concurrency Level:** 25 concurrent clients  
 
 - **Total Requests Processed:** 25
-- **Throughput:** 50.51 requests/second
+- **Throughput:** 23.26 requests/second
 - **Response Time Distribution:**
-  - **Minimum:** 468.7 ms
-  - **Average:** 481.92 ms
-  - **Median (p50):** 483.44 ms
-  - **90th Percentile (p90):** 487.37 ms
-  - **95th Percentile (p95):** 487.43 ms
-  - **99th Percentile (p99):** 493.98 ms
-  - **Maximum:** 493.98 ms
+  - **Minimum:** 967.54 ms
+  - **Average:** 1018.29 ms
+  - **Median (p50):** 1029.09 ms
+  - **90th Percentile (p90):** 1038.93 ms
+  - **95th Percentile (p95):** 1041.62 ms
+  - **99th Percentile (p99):** 1071.08 ms
+  - **Maximum:** 1071.08 ms
 - **HTTP Status Code Breakdown:**
   - `HTTP 201`: 1 responses
-  - `HTTP 400`: 2 responses
-  - `HTTP 409`: 22 responses
+  - `HTTP 400`: 15 responses
+  - `HTTP 409`: 9 responses
 - **Validation Finding:** PERFECT ATOMIC CONCURRENCY! Exactly 1 submission succeeded (HTTP 201), and all 24 other conflicting submissions were safely rejected (HTTP 400/409). 0 duplicates created, 0 server errors (500).
 
 ### Authenticated Masterlist Query & Pagination Load
@@ -90,18 +90,18 @@ This report documents the empirical stress, load, and concurrency resilience tes
 **Concurrency Level:** 25 concurrent clients  
 
 - **Total Requests Processed:** 100
-- **Throughput:** 23.03 requests/second
+- **Throughput:** 13.94 requests/second
 - **Response Time Distribution:**
-  - **Minimum:** 818.87 ms
-  - **Average:** 1073.53 ms
-  - **Median (p50):** 1043.36 ms
-  - **90th Percentile (p90):** 1344.01 ms
-  - **95th Percentile (p95):** 1358.47 ms
-  - **99th Percentile (p99):** 1390.09 ms
-  - **Maximum:** 1392.01 ms
+  - **Minimum:** 498 ms
+  - **Average:** 1751.17 ms
+  - **Median (p50):** 1689 ms
+  - **90th Percentile (p90):** 2240.74 ms
+  - **95th Percentile (p95):** 2254.5 ms
+  - **99th Percentile (p99):** 2262.43 ms
+  - **Maximum:** 2263.65 ms
 - **HTTP Status Code Breakdown:**
   - `HTTP 200`: 100 responses
-- **Validation Finding:** Processed 100 authenticated requests with 0% error rate. Average database query + JWT verification response time was 1073.53ms at 23.03 req/sec.
+- **Validation Finding:** Processed 100 authenticated requests with 0% error rate. Average database query + JWT verification response time was 1751.17ms at 13.94 req/sec.
 
 ### Socket.IO Real-Time Concurrency & WebSocket Handshake
 **Objective:** Simultaneously connects multiple WebSocket clients, authenticates via JWT, and tests event delivery.  
@@ -109,18 +109,18 @@ This report documents the empirical stress, load, and concurrency resilience tes
 **Concurrency Level:** 30 concurrent clients  
 
 - **Total Requests Processed:** 30
-- **Throughput:** 51.55 requests/second
+- **Throughput:** 73.89 requests/second
 - **Response Time Distribution:**
-  - **Minimum:** 451.44 ms
-  - **Average:** 496.17 ms
-  - **Median (p50):** 492.36 ms
-  - **90th Percentile (p90):** 529.89 ms
-  - **95th Percentile (p95):** 539.59 ms
-  - **99th Percentile (p99):** 550.97 ms
-  - **Maximum:** 550.97 ms
+  - **Minimum:** 328.72 ms
+  - **Average:** 351.86 ms
+  - **Median (p50):** 351.9 ms
+  - **90th Percentile (p90):** 365.09 ms
+  - **95th Percentile (p95):** 372.53 ms
+  - **99th Percentile (p99):** 389.11 ms
+  - **Maximum:** 389.11 ms
 - **HTTP Status Code Breakdown:**
   - `HTTP 200`: 30 responses
-- **Validation Finding:** Successfully established 30/30 authenticated WebSocket connections concurrently. Average handshake latency was 496.17ms. All sockets closed cleanly.
+- **Validation Finding:** Successfully established 30/30 authenticated WebSocket connections concurrently. Average handshake latency was 351.86ms. All sockets closed cleanly.
 
 ### Cashier Payment Atomic Concurrency & Rejection Immunity Guard
 **Objective:** Simultaneously fires multiple cashier payments for the same application and confirms that Paid applications cannot be cancelled/rejected.  
@@ -128,15 +128,15 @@ This report documents the empirical stress, load, and concurrency resilience tes
 **Concurrency Level:** 20 concurrent clients  
 
 - **Total Requests Processed:** 20
-- **Throughput:** 30.03 requests/second
+- **Throughput:** 40.16 requests/second
 - **Response Time Distribution:**
-  - **Minimum:** 568.86 ms
-  - **Average:** 633.66 ms
-  - **Median (p50):** 636.57 ms
-  - **90th Percentile (p90):** 639.82 ms
-  - **95th Percentile (p95):** 640.1 ms
-  - **99th Percentile (p99):** 655.64 ms
-  - **Maximum:** 655.64 ms
+  - **Minimum:** 468.94 ms
+  - **Average:** 473.75 ms
+  - **Median (p50):** 471.09 ms
+  - **90th Percentile (p90):** 477.23 ms
+  - **95th Percentile (p95):** 477.47 ms
+  - **99th Percentile (p99):** 496.2 ms
+  - **Maximum:** 496.2 ms
 - **HTTP Status Code Breakdown:**
   - `HTTP 200`: 1 responses
   - `HTTP 409`: 19 responses
@@ -150,11 +150,11 @@ GTRAMS backend heap and process memory were profiled before and after sustained 
 
 | Metric | Baseline | Under Peak Load | Post-Cooldown / GC | Delta |
 |---|---|---|---|---|
-| **Heap Used** | 26.16 MB | 111.44 MB | 76.58 MB | 50.42 MB |
-| **Heap Total** | 36.23 MB | 195.49 MB | 200.24 MB | - |
-| **RSS (Resident Set)** | 73.72 MB | 252.34 MB | 253.58 MB | - |
+| **Heap Used** | 26.32 MB | 139.68 MB | 115.98 MB | 89.66 MB |
+| **Heap Total** | 35.98 MB | 227.95 MB | 239.7 MB | - |
+| **RSS (Resident Set)** | 72.62 MB | 286.42 MB | 295.04 MB | - |
 
-**Analysis:** Healthy heap retention (+50.42 MB), fully within normal buffer bounds for concurrent in-process database and server execution.
+**Analysis:** Healthy heap retention (+89.66 MB), fully within normal buffer bounds for concurrent in-process database and server execution.
 
 ---
 ## 4. Key Capstone Defense Talking Points

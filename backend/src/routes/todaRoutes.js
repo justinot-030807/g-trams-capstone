@@ -5,12 +5,13 @@ const path = require('path');
 
 const TodaSubmission = require('../models/todaSubmission'); 
 const TodaRemovalRequest = require('../models/todaRemovalRequest');
+const TodaRoster = require('../models/todaModel');
 const User = require('../models/userModel');
 const Franchise = require('../models/franchiseModel');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { extractTodaRosterFromDocument } = require('../services/documentVerificationService');
 const { isNameMatch } = require('../utils/nameMatcher');
-const { syncApprovedRoster } = require('../controllers/todaController');
+const { syncApprovedRoster, getNextBodyNumber, addIndividualMember } = require('../controllers/todaController');
 
 const upload = require('../config/cloudinary');
 
@@ -18,6 +19,12 @@ const memoryUpload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 15 * 1024 * 1024 }
 });
+
+// Auto-generate next unique body number for a TODA (strictly no duplicates)
+router.get('/next-body-number', protect, authorize('bplo_staff', 'toda president', 'toda_president', 'admin', 'system_admin'), getNextBodyNumber);
+
+// Register an individual member (when only one operator joins a TODA)
+router.post('/members/individual', protect, authorize('bplo_staff', 'toda president', 'toda_president', 'admin', 'system_admin'), addIndividualMember);
 
 // Real-time AI OCR scanning for roster documents (zero Cloudinary delay, memory buffer)
 router.post('/scan-roster', protect, authorize('bplo_staff', 'toda president', 'toda_president'), memoryUpload.single('file'), async (req, res) => {
@@ -427,7 +434,7 @@ router.get('/my-members', protect, async (req, res) => {
 
         // 2. Fetch all users registered under this TODA
         const users = await User.find({ todaAssociation: todaRegex })
-            .select('name contact address email profilePic role todaAssociation lastActive createdAt')
+            .select('name contact address email profilePic role todaAssociation lastActive createdAt bodyNumber')
             .sort({ name: 1 });
 
         // 3. Aggregate into member profiles
@@ -444,6 +451,7 @@ router.get('/my-members', protect, async (req, res) => {
                 contact: u.contact || 'N/A',
                 address: u.address || 'N/A',
                 email: u.email || '',
+                bodyNumber: u.bodyNumber || '',
                 profilePic: u.profilePic || '',
                 role: u.role,
                 isPresident: isPres,
@@ -468,6 +476,7 @@ router.get('/my-members', protect, async (req, res) => {
                         contact: f.operator.contact || 'N/A',
                         address: f.operator.address || f.address || 'N/A',
                         email: f.operator.email || '',
+                        bodyNumber: f.operator.bodyNumber || '',
                         profilePic: f.operator.profilePic || '',
                         role: f.operator.role || 'operator',
                         isPresident: isPres,
@@ -483,6 +492,7 @@ router.get('/my-members', protect, async (req, res) => {
                         contact: 'N/A',
                         address: f.address || 'N/A',
                         email: '',
+                        bodyNumber: '',
                         profilePic: '',
                         role: 'operator',
                         isPresident: false,
@@ -509,42 +519,96 @@ router.get('/my-members', protect, async (req, res) => {
             });
         }
 
-        // 3. Fetch approved TODA Submissions to include endorsed masterlist members
+        // 3. Fetch direct TodaRoster records (including individually registered members)
+        const directRoster = await TodaRoster.find({ todaAssociation: todaRegex });
+        for (const dr of directRoster) {
+            const drName = (dr.operatorName || '').trim();
+            if (!drName) continue;
+
+            const existing = Array.from(membersMap.values()).find(m => isNameMatch(m.name, drName));
+            if (!existing) {
+                const tempId = `roster-direct-${dr._id}`;
+                membersMap.set(tempId, {
+                    _id: tempId,
+                    name: drName,
+                    contact: dr.contact || 'N/A',
+                    address: dr.remarks || 'TODA Masterlist Member',
+                    email: '',
+                    bodyNumber: dr.bodyNumber || '',
+                    plateNo: dr.plateNo || '',
+                    profilePic: '',
+                    role: 'operator',
+                    isPresident: false,
+                    isCurrentUser: false,
+                    isRosterEndorsed: true,
+                    registeredInApp: Boolean(dr.registeredUser),
+                    lastActive: null,
+                    createdAt: dr.createdAt,
+                    units: dr.plateNo ? [{
+                        _id: `unit-${dr._id}`,
+                        plateNo: dr.plateNo,
+                        make: 'Tricycle',
+                        status: 'Active',
+                        dateApplied: dr.createdAt,
+                        createdAt: dr.createdAt
+                    }] : []
+                });
+            } else {
+                if (!existing.bodyNumber && dr.bodyNumber) {
+                    existing.bodyNumber = dr.bodyNumber;
+                }
+                existing.isRosterEndorsed = true;
+            }
+        }
+
+        // 4. Fetch approved TODA Submissions to include endorsed masterlist members
         const approvedSubmissions = await TodaSubmission.find({
             status: 'Approved',
             $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
         }).sort({ createdAt: -1 });
 
         const latestApprovedSub = approvedSubmissions[0] || null;
-        const endorsedRoster = latestApprovedSub?.extractedMembers || [];
 
-        // Cross-match approved masterlist roster members
-        for (const rm of endorsedRoster) {
-            const rmName = (rm.name || '').trim();
-            if (!rmName) continue;
+        for (const sub of approvedSubmissions) {
+            for (const rm of (sub.extractedMembers || [])) {
+                const rmName = (rm.name || rm.operatorName || '').trim();
+                const rmBodyNo = (rm.bodyNumber || rm.unitNo || '').trim();
+                if (!rmName) continue;
 
-            const existing = Array.from(membersMap.values()).find(m => isNameMatch(m.name, rmName));
-            if (!existing) {
-                const tempId = `roster-${rm._id || Math.random().toString(36).slice(2, 9)}`;
-                membersMap.set(tempId, {
-                    _id: tempId,
-                    name: rmName,
-                    contact: 'N/A',
-                    address: 'Endorsed Masterlist Record',
-                    email: '',
-                    profilePic: '',
-                    role: 'operator',
-                    isPresident: false,
-                    isCurrentUser: false,
-                    isRosterEndorsed: true,
-                    registeredInApp: false,
-                    lastActive: null,
-                    createdAt: latestApprovedSub.createdAt,
-                    units: []
-                });
-            } else {
-                existing.isRosterEndorsed = true;
-                existing.registeredInApp = true;
+                const existing = Array.from(membersMap.values()).find(m => isNameMatch(m.name, rmName));
+                if (!existing) {
+                    const tempId = `roster-${rm._id || Math.random().toString(36).slice(2, 9)}`;
+                    membersMap.set(tempId, {
+                        _id: tempId,
+                        name: rmName,
+                        contact: 'N/A',
+                        address: 'Endorsed Masterlist Record',
+                        email: '',
+                        bodyNumber: rmBodyNo,
+                        plateNo: rm.plateNo || '',
+                        profilePic: '',
+                        role: 'operator',
+                        isPresident: false,
+                        isCurrentUser: false,
+                        isRosterEndorsed: true,
+                        registeredInApp: false,
+                        lastActive: null,
+                        createdAt: sub.createdAt,
+                        units: rm.plateNo ? [{
+                            _id: `sub-unit-${tempId}`,
+                            plateNo: rm.plateNo,
+                            make: 'Tricycle',
+                            status: 'Active',
+                            dateApplied: sub.createdAt,
+                            createdAt: sub.createdAt
+                        }] : []
+                    });
+                } else {
+                    if (!existing.bodyNumber && rmBodyNo) {
+                        existing.bodyNumber = rmBodyNo;
+                    }
+                    existing.isRosterEndorsed = true;
+                }
             }
         }
 
@@ -575,6 +639,8 @@ router.get('/my-members', protect, async (req, res) => {
             });
         });
 
+        const certifiedRosterCount = directRoster.length + approvedSubmissions.reduce((acc, s) => acc + (s.extractedMembers?.length || 0), 0);
+
         res.status(200).json({
             todaName,
             stats: {
@@ -583,7 +649,7 @@ router.get('/my-members', protect, async (req, res) => {
                 activeUnits,
                 pendingUnits,
                 expiredUnits,
-                certifiedRosterCount: endorsedRoster.length
+                certifiedRosterCount
             },
             members: membersList,
             latestSubmission: latestApprovedSub

@@ -243,9 +243,14 @@ const Login = () => {
 
               <form onSubmit={handleLogin} className="space-y-2.5 sm:space-y-3.5">
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-                    Email or Phone Number
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
+                      Email, Phone, o Recovery Contact
+                    </label>
+                    <span className="text-[10px] font-semibold text-[#D4AF37]">
+                      May Recovery Support
+                    </span>
+                  </div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                       <User size={18} />
@@ -262,9 +267,12 @@ const Login = () => {
                       spellCheck="false"
                       required
                       className={inputClasses}
-                      placeholder="Enter your email or phone number"
+                      placeholder="Email, 0912..., o recovery email/phone"
                     />
                   </div>
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-tight">
+                    Nawala ang inyong email o SIM? Maaari ring gamitin ang inyong <strong>Recovery Email</strong> o <strong>Recovery Phone</strong>.
+                  </p>
                 </div>
 
                 <div>

@@ -4,7 +4,7 @@ import {
   UploadCloud, FileText, CheckCircle2, Clock3, ArrowLeft, X, Loader2, 
   FileSpreadsheet, Users, ShieldCheck, Phone, MapPin, Hash, Search, 
   Filter, Printer, Sparkles, RefreshCw, AlertCircle, Check, ChevronRight,
-  UserMinus, AlertTriangle, ShieldAlert, CheckCircle, ExternalLink, Eye
+  UserMinus, AlertTriangle, ShieldAlert, CheckCircle, ExternalLink, Eye, UserPlus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SubmissionCardsSkeleton } from '../../components/skeleton';
@@ -61,6 +61,19 @@ const SubmitMembers = () => {
     reason: REMOVAL_REASONS[0],
     details: '',
     isSubmitting: false
+  });
+
+  // Individual Member Addition State (When a single operator joins)
+  const [individualModal, setIndividualModal] = useState({
+    isOpen: false,
+    operatorName: '',
+    bodyNumber: '',
+    plateNo: '',
+    contact: '',
+    remarks: '',
+    isLoadingNumber: false,
+    isSubmitting: false,
+    error: ''
   });
 
   const [feedbackModal, setFeedbackModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
@@ -356,15 +369,119 @@ const SubmitMembers = () => {
     }
   };
 
+  const handleOpenAddMemberModal = async () => {
+    const targetToda = todaData.todaName || '';
+    setIndividualModal({
+      isOpen: true,
+      operatorName: '',
+      bodyNumber: '',
+      plateNo: '',
+      contact: '',
+      remarks: '',
+      isLoadingNumber: true,
+      isSubmitting: false,
+      error: ''
+    });
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/next-body-number?todaAssociation=${encodeURIComponent(targetToda)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.nextBodyNumber) {
+        setIndividualModal(prev => ({
+          ...prev,
+          bodyNumber: data.nextBodyNumber,
+          isLoadingNumber: false
+        }));
+      } else {
+        setIndividualModal(prev => ({ ...prev, isLoadingNumber: false }));
+      }
+    } catch (e) {
+      console.warn('Could not auto-generate next body number:', e);
+      setIndividualModal(prev => ({ ...prev, isLoadingNumber: false }));
+    }
+  };
+
+  const handleRefreshNextBodyNumber = async () => {
+    const targetToda = todaData.todaName || '';
+    setIndividualModal(prev => ({ ...prev, isLoadingNumber: true, error: '' }));
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/next-body-number?todaAssociation=${encodeURIComponent(targetToda)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.nextBodyNumber) {
+        setIndividualModal(prev => ({ ...prev, bodyNumber: data.nextBodyNumber, isLoadingNumber: false }));
+      } else {
+        setIndividualModal(prev => ({ ...prev, isLoadingNumber: false }));
+      }
+    } catch {
+      setIndividualModal(prev => ({ ...prev, isLoadingNumber: false }));
+    }
+  };
+
+  const handleSubmitIndividualMember = async (e) => {
+    e.preventDefault();
+    if (!individualModal.operatorName.trim()) {
+      setIndividualModal(prev => ({ ...prev, error: 'Pakilagay ang buong legal na pangalan ng operator/miyembro.' }));
+      return;
+    }
+
+    setIndividualModal(prev => ({ ...prev, isSubmitting: true, error: '' }));
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/members/individual`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          operatorName: individualModal.operatorName.trim(),
+          todaAssociation: todaData.todaName,
+          bodyNumber: individualModal.bodyNumber.trim().toUpperCase(),
+          plateNo: individualModal.plateNo.trim().toUpperCase(),
+          contact: individualModal.contact.trim(),
+          remarks: individualModal.remarks.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || `Matagumpay na naidagdag si "${individualModal.operatorName}"!`, 'success');
+        setIndividualModal({
+          isOpen: false,
+          operatorName: '',
+          bodyNumber: '',
+          plateNo: '',
+          contact: '',
+          remarks: '',
+          isLoadingNumber: false,
+          isSubmitting: false,
+          error: ''
+        });
+        fetchMyMembers();
+      } else {
+        setIndividualModal(prev => ({ ...prev, isSubmitting: false, error: data.message || 'Nabigong idagdag ang miyembro.' }));
+      }
+    } catch (err) {
+      console.error('Error adding individual member:', err);
+      setIndividualModal(prev => ({ ...prev, isSubmitting: false, error: 'Hindi makakonekta sa server.' }));
+    }
+  };
+
   // Filter members based on search and status
   const filteredMembers = (todaData.members || []).filter(member => {
     const q = searchTerm.toLowerCase().trim();
     const matchesSearch = !q || 
       (member.name || '').toLowerCase().includes(q) ||
+      (member.bodyNumber && member.bodyNumber.toLowerCase().includes(q)) ||
       (member.contact && member.contact.toLowerCase().includes(q)) ||
       (member.address && member.address.toLowerCase().includes(q)) ||
       (member.units || []).some(u => 
         (u.plateNo && u.plateNo.toLowerCase().includes(q)) ||
+        (u.bodyNumber && u.bodyNumber.toLowerCase().includes(q)) ||
         (u.make && u.make.toLowerCase().includes(q)) ||
         (u.zone && u.zone.toLowerCase().includes(q))
       );
@@ -669,6 +786,18 @@ const SubmitMembers = () => {
                 >
                   Expired
                 </button>
+
+                <div className="h-6 w-px bg-[#E4E1DC] dark:bg-[#2E2A27] mx-1 hidden sm:block" />
+
+                <button
+                  type="button"
+                  onClick={handleOpenAddMemberModal}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[38px] flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#801B24] text-white shadow-xs active:scale-95 shrink-0"
+                  title="Magdagdag ng isang bagong miyembro sa TODA (Auto-Generated Body Number)"
+                >
+                  <UserPlus size={15} />
+                  <span>Magdagdag ng Miyembro</span>
+                </button>
               </div>
             </div>
 
@@ -738,6 +867,12 @@ const SubmitMembers = () => {
                                   <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#EAE7E1] truncate">
                                     {member.name}
                                   </p>
+                                  {member.bodyNumber && (
+                                    <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] dark:bg-[#D4AF37]/10 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 shadow-2xs">
+                                      <Hash size={10} />
+                                      Body No. {member.bodyNumber}
+                                    </span>
+                                  )}
                                   {member.isCurrentUser && (
                                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]">
                                       You
@@ -1466,6 +1601,189 @@ const SubmitMembers = () => {
         </div>
       )}
 
+
+      {/* ADD INDIVIDUAL MEMBER MODAL */}
+      {individualModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center border border-[#9E2A2B]/20">
+                  <UserPlus size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
+                    Magdagdag ng Isahang Miyembro
+                  </h3>
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                    Opisyal na pagtatala ng bagong miyembro sa {todaData.todaName || 'TODA'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIndividualModal(prev => ({ ...prev, isOpen: false }))}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                title="Close modal"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {individualModal.error && (
+              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs">
+                {individualModal.error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitIndividualMember} className="space-y-3.5">
+              {/* Operator Full Legal Name */}
+              <div>
+                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
+                  Pangalan ng Miyembro / Operator <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
+                    <Users size={16} />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={individualModal.operatorName}
+                    onChange={(e) => setIndividualModal(prev => ({ ...prev, operatorName: e.target.value, error: '' }))}
+                    placeholder="hal. Juan M. Dela Cruz"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* TODA Association (Pre-filled & Verified) */}
+              <div>
+                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
+                  TODA Association
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={todaData.todaName || 'Accredited TODA'}
+                  className="w-full px-3 py-2.5 rounded-lg bg-[#E4E1DC]/40 dark:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-bold text-[#6B6761] dark:text-[#A8A29E] cursor-not-allowed min-h-[42px]"
+                />
+              </div>
+
+              {/* Auto-Generated Body Number */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
+                    Assigned Body Number <span className="text-red-500">*</span>
+                  </label>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                    <CheckCircle2 size={12} /> Auto-Generated & Walang Duplicate
+                  </span>
+                </div>
+                <div className="relative flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
+                      <Hash size={16} />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={individualModal.bodyNumber}
+                      onChange={(e) => setIndividualModal(prev => ({ ...prev, bodyNumber: e.target.value.toUpperCase(), error: '' }))}
+                      placeholder="hal. 01, 042, GAS-001"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-sm font-black text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px] tracking-wider uppercase"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRefreshNextBodyNumber}
+                    disabled={individualModal.isLoadingNumber}
+                    className="h-[44px] px-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                    title="Bumuo ng bagong Body Number"
+                  >
+                    <RefreshCw size={14} className={individualModal.isLoadingNumber ? 'animate-spin' : ''} />
+                    <span className="hidden sm:inline">Regenerate</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-tight">
+                  Awtomatikong sinusuri ng system ang lahat ng umiiral na prangkisa at talaan upang masigurong walang kapareho.
+                </p>
+              </div>
+
+              {/* Optional Plate & Contact */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
+                    Plate Number <span className="text-[10px] text-[#6B6761] font-normal">(Opsyonal)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={individualModal.plateNo}
+                    onChange={(e) => setIndividualModal(prev => ({ ...prev, plateNo: e.target.value.toUpperCase() }))}
+                    placeholder="hal. 1234-TC"
+                    className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px] uppercase"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
+                    Contact Number <span className="text-[10px] text-[#6B6761] font-normal">(Opsyonal)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={individualModal.contact}
+                    onChange={(e) => setIndividualModal(prev => ({ ...prev, contact: e.target.value }))}
+                    placeholder="hal. 09123456789"
+                    className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px]"
+                  />
+                </div>
+              </div>
+
+              {/* Remarks */}
+              <div>
+                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
+                  Remarks / Tala <span className="text-[10px] text-[#6B6761] font-normal">(Opsyonal)</span>
+                </label>
+                <input
+                  type="text"
+                  value={individualModal.remarks}
+                  onChange={(e) => setIndividualModal(prev => ({ ...prev, remarks: e.target.value }))}
+                  placeholder="hal. Bagong miyembro mula sa Brgy. II"
+                  className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                <button
+                  type="button"
+                  onClick={() => setIndividualModal(prev => ({ ...prev, isOpen: false }))}
+                  disabled={individualModal.isSubmitting}
+                  className="px-4 py-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-colors cursor-pointer"
+                >
+                  Kanselahin
+                </button>
+                <button
+                  type="submit"
+                  disabled={individualModal.isSubmitting}
+                  className="px-5 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#801B24] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {individualModal.isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Itinatala...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>I-rehistro ang Miyembro</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Centered Feedback Modal */}
       <FeedbackModal

@@ -124,6 +124,15 @@ const VerifyOperator = () => {
 
             {/* Franchise Info */}
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+              {operator.scannedFranchise && (
+                <div className="mb-3 p-2.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/40 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">Scanned MTOP Certificate Unit</p>
+                    <p className="font-mono font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-white">Plate: {operator.scannedFranchise.plateNo} &bull; {operator.scannedFranchise.make}</p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white uppercase tracking-wider">{operator.scannedFranchise.status}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between mb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2">
                 <p className="text-[10px] uppercase font-bold text-[#6B6761] dark:text-[#A8A29E] tracking-wider">Franchise Status</p>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#E4E1DC] dark:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1]">

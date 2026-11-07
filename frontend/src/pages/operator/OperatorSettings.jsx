@@ -59,6 +59,8 @@ const OperatorSettings = () => {
   const [profileData, setProfileData] = useState({
     name: '',
     contact: '',
+    recoveryEmail: '',
+    recoveryPhone: '',
     emergencyContact: '',
     address: 'Municipality of Gasan',
     todaAssociation: 'NON-TODA'
@@ -220,6 +222,8 @@ const OperatorSettings = () => {
             setProfileData({
               name: dbUser.name || dbUser.fullName || localStorage.getItem('name') || '',
               contact: dbUser.contact || '',
+              recoveryEmail: dbUser.recoveryEmail || '',
+              recoveryPhone: dbUser.recoveryPhone || '',
               emergencyContact: dbUser.emergencyContact || '',
               address: dbUser.address || 'Municipality of Gasan',
               todaAssociation: dbUser.todaAssociation || 'NON-TODA'
@@ -375,6 +379,8 @@ const OperatorSettings = () => {
       const formData = new FormData();
       formData.append('name', profileData.name);
       formData.append('contact', profileData.contact);
+      formData.append('recoveryEmail', profileData.recoveryEmail || '');
+      formData.append('recoveryPhone', profileData.recoveryPhone || '');
       formData.append('emergencyContact', profileData.emergencyContact);
       formData.append('address', profileData.address);
       formData.append('todaAssociation', profileData.todaAssociation);
@@ -398,6 +404,8 @@ const OperatorSettings = () => {
         setProfileData({
           name: updated.name || updated.fullName || profileData.name,
           contact: updated.contact || '',
+          recoveryEmail: updated.recoveryEmail || '',
+          recoveryPhone: updated.recoveryPhone || '',
           emergencyContact: updated.emergencyContact || '',
           address: updated.address || profileData.address,
           todaAssociation: updated.todaAssociation || profileData.todaAssociation
@@ -1065,6 +1073,47 @@ const OperatorSettings = () => {
                   placeholder="e.g. 09123456789"
                   className={inputClasses}
                 />
+              </div>
+
+              {/* Account Recovery Backup Section */}
+              <div className="pt-2 border-t border-dashed border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider">
+                  <ShieldCheck size={14} />
+                  <span>Account Recovery Contacts (Opsyonal)</span>
+                </div>
+                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                  Backup contact kapag nawala o hindi ma-access ang iyong pangunahing numero o email. Maaaring ipadala ang OTP recovery dito.
+                </p>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5 flex items-center gap-1.5">
+                    <Mail size={13} className="text-[#6B6761] dark:text-[#A8A29E]" />
+                    <span>Recovery Email</span>
+                  </label>
+                  <input
+                    type="email"
+                    maxLength="80"
+                    value={profileData.recoveryEmail}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryEmail: e.target.value }))}
+                    placeholder="e.g. backup.email@gmail.com"
+                    className={inputClasses}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5 flex items-center gap-1.5">
+                    <Phone size={13} className="text-[#6B6761] dark:text-[#A8A29E]" />
+                    <span>Recovery Phone Number</span>
+                  </label>
+                  <input
+                    type="tel"
+                    maxLength="20"
+                    value={profileData.recoveryPhone}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryPhone: e.target.value }))}
+                    placeholder="e.g. 09187654321"
+                    className={inputClasses}
+                  />
+                </div>
               </div>
 
               <div>

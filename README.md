@@ -8,7 +8,7 @@ Jay Vincent G. Motol - QA
 Ian Simon Francis M. Rey - DevOps 
 
 Deployment Links
-Frontend Web Application (Vercel): https://g-trams-web2.vercel.app
+Frontend Web Application (Vercel): https://g-trams-official.vercel.app
 
 Backend API (Render): https://g-trams-web2.onrender.com
 
