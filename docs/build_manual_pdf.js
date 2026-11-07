@@ -596,10 +596,10 @@ const htmlContent = `<!DOCTYPE html>
     <p>
       G-TRAMS establishes an immutable, five-stage Citizen's Charter workflow:
       <br>
-      <strong>Step 1: Online Filing</strong> (Operator files application, vehicle specs, and documents via 5-Step Wizard; AI OCR pre-check) $\rightarrow$
-      <strong>Step 2: BPLO Scrutiny</strong> (Dual-Pane inspection, OCR discrepancy check, and physical inspection scheduling) $\rightarrow$
-      <strong>Step 3: Treasury Settlement</strong> (Cashier collects ₱500 fee, logs serialized receipt <code>OR-GASAN-2026-XXXX</code>) $\rightarrow$
-      <strong>Step 4: Mayoral Sign-Off</strong> (Hon. Lidany A. Lao-Baldo & MTFRB authorize permit) $\rightarrow$
+      <strong>Step 1: Online Filing</strong> (Operator files application, vehicle specs, and documents via 5-Step Wizard; AI OCR pre-check) &rarr;
+      <strong>Step 2: BPLO Scrutiny</strong> (Dual-Pane inspection, OCR discrepancy check, and physical inspection scheduling) &rarr;
+      <strong>Step 3: Treasury Settlement</strong> (Cashier collects ₱500 fee, logs serialized receipt <code>OR-GASAN-2026-XXXX</code>) &rarr;
+      <strong>Step 4: Mayoral Sign-Off</strong> (Hon. Lidany A. Lao-Baldo & MTFRB authorize permit) &rarr;
       <strong>Step 5: Physical Release</strong> (Operator claims sticker; instant watermarked e-Copy with dynamic QR activates on mobile device).
     </p>
 
@@ -864,7 +864,7 @@ const htmlContent = `<!DOCTYPE html>
         <code>Unit Capacity 1 / 2 — 1 Slot(s) Available</code> (or <code>Unit Capacity 2 / 2 — Quota Limit Reached</code>).
         Attempting to file a 3rd unit hard-locks the application form with an ordinance alert.
       </li>
-      <li><strong>Lifecycle Status Tracker:</strong> Tracks milestones: <code>Applied</code> $\rightarrow$ <code>Pending Review</code> $\rightarrow$ <code>For Payment</code> $\rightarrow$ <code>For Signing</code> $\rightarrow$ <code>Ready for Pickup</code> $\rightarrow$ <code>Active</code>.</li>
+      <li><strong>Lifecycle Status Tracker:</strong> Tracks milestones: <code>Applied</code> &rarr; <code>Pending Review</code> &rarr; <code>For Payment</code> &rarr; <code>For Signing</code> &rarr; <code>Ready for Pickup</code> &rarr; <code>Active</code>.</li>
       <li><strong>"Fix Issues" Direct Resolution:</strong> Red discrepancy alerts allow operators to click "Fix Issues", jumping straight to the erroneous step with misread data highlighted in yellow.</li>
     </ul>
 
@@ -1013,7 +1013,7 @@ const htmlContent = `<!DOCTYPE html>
 
     <h2>6.3 Multi-Stage Franchise Approval Pipeline</h2>
     <p>
-      Applications transition through discrete operational queues: <code>Needs Review</code> $\rightarrow$ <code>For Payment</code> (sent to Cashier) $\rightarrow$ <code>For Signing</code> (Mayor/MTFRB) $\rightarrow$ <code>Ready for Pickup</code> $\rightarrow$ <code>Active</code>. Every action includes a 10-second undo toast countdown.
+      Applications transition through discrete operational queues: <code>Needs Review</code> &rarr; <code>For Payment</code> (sent to Cashier) &rarr; <code>For Signing</code> (Mayor/MTFRB) &rarr; <code>Ready for Pickup</code> &rarr; <code>Active</code>. Every action includes a 10-second undo toast countdown.
     </p>
 
     <div class="figure-container">
@@ -1026,9 +1026,9 @@ const htmlContent = `<!DOCTYPE html>
       Through <code>/manage-revocations</code>, officers log traffic citations with automated penalty progression:
     </p>
     <ul>
-      <li><strong>1st Offense:</strong> Official Warning $\rightarrow$ Status: <code>Active - Under Warning</code>.</li>
-      <li><strong>2nd Offense:</strong> 15-day suspension + ₱500 municipal fine $\rightarrow$ Status: <code>Suspended</code>.</li>
-      <li><strong>3rd Offense:</strong> Permanent Franchise Revocation $\rightarrow$ Status: <code>Revoked</code>.</li>
+      <li><strong>1st Offense:</strong> Official Warning &rarr; Status: <code>Active - Under Warning</code>.</li>
+      <li><strong>2nd Offense:</strong> 15-day suspension + ₱500 municipal fine &rarr; Status: <code>Suspended</code>.</li>
+      <li><strong>3rd Offense:</strong> Permanent Franchise Revocation &rarr; Status: <code>Revoked</code>.</li>
       <li><strong>Grave Offense (Colorum):</strong> Direct Revocation on first occurrence.</li>
     </ul>
 
