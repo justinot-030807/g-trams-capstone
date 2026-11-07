@@ -243,7 +243,6 @@ const Register = () => {
         return setError('ANG RECOVERY PHONE AY DAPAT IBA SA INYONG PRIMARY PHONE NUMBER.');
       }
     }
-    }
 
     if (!formData.password || formData.password.length < 8) {
       return setError('PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.');
@@ -811,8 +810,6 @@ const Register = () => {
                       </div>
                       <p className="mt-1 text-xs text-[#6B6761] dark:text-[#A8A29E]">
                         Pang-recover kung sakaling mawala ang inyong primary email o SIM card.
-                      </p>
-                    </div>
                       </p>
                     </div>
 
