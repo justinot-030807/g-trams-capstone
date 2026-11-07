@@ -20,3 +20,5 @@ remotion/node_modules/
 remotion/.remotion/
 remotion/out/
 .agents/
+
+*.zip
