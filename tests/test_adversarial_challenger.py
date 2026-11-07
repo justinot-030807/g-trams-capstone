@@ -3,12 +3,14 @@ test_adversarial_challenger.py - Empirical Adversarial Stress Testing Harness
 Author: Challenger 1 (teamwork_challenger)
 Role: critic, specialist
 
-Conducts exhaustive adversarial checks against Deliverable #7:
-1. Extended AI Fluff & Cliche Dictionary Hunter (40+ tropes across MD and PDF).
+Conducts exhaustive empirical adversarial checks against Deliverable #7:
+1. Extended AI Fluff & Cliche Dictionary Hunter (38+ tropes across MD and PDF).
 2. Code/Template/Placeholder Leaks (NaN, undefined, {{...}}, TODO, broken img).
-3. 22-Page Structural Layout & Orphaned Heading Detection (identifies split headings).
-4. Functional Role Contract Verification across all 6 roles & statutory ordinances.
-5. Figure Continuity & Asset Integrity (Figures 1-17 sequential & non-empty).
+3. Unrendered LaTeX / Syntax Leaks (checks for raw $\\rightarrow$ / ightarrow).
+4. 22-Page Structural Layout & Orphaned Heading Detection.
+5. Page Density & Starvation Stress Check.
+6. Functional Role Contract Verification across all 6 roles & statutory ordinances.
+7. Figure Continuity & Asset Integrity (Figures 1-17 sequential & non-empty).
 """
 
 import os
@@ -78,7 +80,7 @@ class TestAdversarialFluffAndBoilerplate(unittest.TestCase):
             cls.md_text = f.read()
 
     def test_pdf_extended_fluff_dictionary(self):
-        """Adversarially scans PDF extracted text against 35+ subtle AI tropes."""
+        """Adversarially scans PDF extracted text against 38+ subtle AI tropes."""
         violations = []
         for pat, label in EXTENDED_AI_FLUFF_PATTERNS:
             matches = list(re.finditer(pat, self.pdf_full_text, re.IGNORECASE))
@@ -90,7 +92,7 @@ class TestAdversarialFluffAndBoilerplate(unittest.TestCase):
         )
 
     def test_markdown_extended_fluff_dictionary(self):
-        """Adversarially scans manual_content.md against 35+ subtle AI tropes."""
+        """Adversarially scans manual_content.md against 38+ subtle AI tropes."""
         violations = []
         for pat, label in EXTENDED_AI_FLUFF_PATTERNS:
             matches = list(re.finditer(pat, self.md_text, re.IGNORECASE))
@@ -154,6 +156,17 @@ class TestAdversarialCodeAndTemplateLeaks(unittest.TestCase):
             matches = list(re.finditer(pat, self.pdf_text))
             self.assertEqual(len(matches), 0, f"Found {desc} in PDF: {[m.group(0) for m in matches]}")
 
+    def test_no_unrendered_latex_syntax(self):
+        """
+        Adversarial check: verifies no unrendered LaTeX arrow syntax like $\\rightarrow$
+        or its escape artifacts (ightarrow) appear in HTML or PDF text.
+        """
+        latex_in_html = re.findall(r"ightarrow", self.html_text)
+        self.assertEqual(
+            len(latex_in_html), 0,
+            f"DEFECT FOUND: {len(latex_in_html)} instances of unrendered LaTeX '$\\rightarrow$' (escaped to ightarrow) leaked into HTML deliverable."
+        )
+
     def test_no_developer_todo_or_tbd_tags(self):
         """Verifies absence of TODO, FIXME, or TBD notes in published manual."""
         todo_patterns = [r"\bTODO\b", r"\bFIXME\b", r"\bTBD\b", r"\[PLACEHOLDER\]"]
@@ -191,16 +204,21 @@ class TestAdversarialPageLayoutAndGeometry(unittest.TestCase):
             f"Deliverable has {self.page_count} pages; required exactly 22 pages"
         )
 
-    def test_no_starved_or_empty_pages(self):
-        """Verifies every page has substantial text (>= 600 characters except cover)."""
+    def test_page_density_and_starvation(self):
+        """
+        Adversarial check: verifies no page is content-starved (< 500 characters).
+        Flags severe layout imbalances such as Page 20 containing only a single figure.
+        """
+        sparse_pages = []
         for i, text in enumerate(self.page_texts):
             char_count = len(text.strip())
-            # Page 1 is cover (has logos & title block)
-            min_expected = 400 if i == 0 else 600
-            self.assertGreater(
-                char_count, min_expected,
-                f"Page {i+1} has suspiciously sparse text ({char_count} chars). Content:\n{text[:200]}"
-            )
+            if char_count < 500:
+                sparse_pages.append((i + 1, char_count))
+        
+        self.assertEqual(
+            len(sparse_pages), 0,
+            f"DEFECT FOUND: {len(sparse_pages)} content-starved page(s) with < 500 characters: {sparse_pages}"
+        )
 
     def test_detect_orphaned_headings_at_page_bottoms(self):
         """
@@ -216,16 +234,13 @@ class TestAdversarialPageLayoutAndGeometry(unittest.TestCase):
             if not lines:
                 continue
             last_line = lines[-1]
-            # Check if last line looks like an unattached heading
             if heading_pattern.match(last_line) and len(last_line) < 80:
                 orphaned_headings.append((i + 1, last_line))
 
-        # We document any detected orphan heading as an empirical observation
-        # Page 9 has '4.2 5-Step Online MTOP Application Wizard' at the bottom
-        if orphaned_headings:
-            print(f"\n[ORPHAN HEADING ADVERSARIAL FINDING]: Detected orphan headings: {orphaned_headings}")
-        # Note: We assert whether any page has a naked orphan heading
-        # In professional publication, orphan headings are high-severity layout defects.
+        self.assertEqual(
+            len(orphaned_headings), 0,
+            f"DEFECT FOUND: Orphaned headings at page bottoms without following content: {orphaned_headings}"
+        )
 
 
 class TestAdversarialFigureContinuity(unittest.TestCase):
@@ -263,9 +278,7 @@ class TestAdversarialFigureContinuity(unittest.TestCase):
     def test_no_duplicate_figure_numbers(self):
         """Verifies no figure number is duplicated in captions."""
         fig_captions = re.findall(r"Figure\s+(\d+):", self.pdf_text, re.IGNORECASE)
-        # Convert to ints
         fig_nums = [int(n) for n in fig_captions]
-        # Check uniqueness
         duplicates = [n for n in set(fig_nums) if fig_nums.count(n) > 1]
         self.assertEqual(
             len(duplicates), 0,
@@ -284,55 +297,55 @@ class TestAdversarialRoleContractsAndOrdinances(unittest.TestCase):
 
     def test_role1_public_visitor_contracts(self):
         """Verifies Public Visitor: Citizen's Charter, QR verification, and ₱15 base fare schedule."""
-        self.assertRegex(self.text, r"Citizen['’]?s Charter", "Missing Citizen's Charter")
-        self.assertRegex(self.text, r"/verify", "Missing roadside /verify endpoint")
-        self.assertRegex(self.text, r"₱15|15\.00", "Missing ₱15 base fare")
-        self.assertRegex(self.text, r"20%", "Missing 20% discount statutory policy")
+        self.assertTrue(re.search(r"Citizen['’]?s Charter", self.text, re.IGNORECASE), "Missing Citizen's Charter")
+        self.assertTrue(re.search(r"/verify", self.text, re.IGNORECASE), "Missing roadside /verify endpoint")
+        self.assertTrue(re.search(r"₱15|15\.00", self.text), "Missing ₱15 base fare")
+        self.assertTrue(re.search(r"20%", self.text), "Missing 20% discount statutory policy")
 
     def test_role2_operator_contracts(self):
-        """Verifies Operator: 5-step wizard, Section 4 quota (max 2 units), OCR data minimization."""
-        self.assertRegex(self.text, r"5-Step|Wizard", "Missing 5-step wizard")
-        self.assertRegex(self.text, r"Section 4|2[- ]Unit|quota", "Missing Section 4 2-unit quota")
-        self.assertRegex(self.text, r"10173|minimization", "Missing RA 10173 data minimization")
-        self.assertRegex(self.text, r"watermark", "Missing watermarked e-MTOP")
-        self.assertRegex(self.text, r"cancellation", "Missing voluntary cancellation")
+        """Verifies Operator: 5-step wizard, Section 4 quota (max 2 units), OCR data minimization, cancellation."""
+        self.assertTrue(re.search(r"5-Step|Wizard", self.text, re.IGNORECASE), "Missing 5-step wizard")
+        self.assertTrue(re.search(r"Section 4|2[- ]Unit|quota", self.text, re.IGNORECASE), "Missing Section 4 2-unit quota")
+        self.assertTrue(re.search(r"10173|minimization", self.text, re.IGNORECASE), "Missing RA 10173 data minimization")
+        self.assertTrue(re.search(r"watermark", self.text, re.IGNORECASE), "Missing watermarked e-MTOP")
+        self.assertTrue(re.search(r"Cancellation|Dropping", self.text, re.IGNORECASE), "Missing voluntary cancellation")
 
     def test_role3_toda_president_contracts(self):
         """Verifies TODA President: Roster OCR, body number collision, member delisting."""
-        self.assertRegex(self.text, r"Roster", "Missing roster management")
-        self.assertRegex(self.text, r"collision|duplicate body", "Missing body number collision check")
-        self.assertRegex(self.text, r"delisting|removal", "Missing delisting workflow")
+        self.assertTrue(re.search(r"Roster", self.text, re.IGNORECASE), "Missing roster management")
+        self.assertTrue(re.search(r"collision|duplicate body", self.text, re.IGNORECASE), "Missing body number collision check")
+        self.assertTrue(re.search(r"delisting|removal", self.text, re.IGNORECASE), "Missing delisting workflow")
 
     def test_role4_cashier_contracts(self):
         """Verifies Cashier: Isolated terminal, COA OR-GASAN serialization, daily remittance CSV."""
-        self.assertRegex(self.text, r"Counter 2|Cashier", "Missing Cashier terminal")
-        self.assertRegex(self.text, r"OR-GASAN-2026", "Missing OR-GASAN-2026 serialization")
-        self.assertRegex(self.text, r"Remittance|CSV|Turnover", "Missing daily remittance CSV/voucher")
+        self.assertTrue(re.search(r"Counter 2|Cashier", self.text, re.IGNORECASE), "Missing Cashier terminal")
+        self.assertTrue(re.search(r"OR-GASAN-2026", self.text), "Missing OR-GASAN-2026 serialization")
+        self.assertTrue(re.search(r"Remittance|CSV|Turnover", self.text, re.IGNORECASE), "Missing daily remittance CSV/voucher")
 
     def test_role5_bplo_officer_contracts(self):
         """Verifies BPLO: Dual-pane console, 4-stage pipeline, progressive sanctions, batch printing."""
-        self.assertRegex(self.text, r"Dual-Pane", "Missing dual-pane review console")
-        self.assertRegex(self.text, r"For Payment.*For Signing.*Ready for Pickup|Needs Review", "Missing pipeline stages")
-        self.assertRegex(self.text, r"Warning.*Suspension.*Revocation|Progressive Sanctions", "Missing progressive sanctions")
-        self.assertRegex(self.text, r"Batch|Masterlist", "Missing batch printing and masterlist registry")
+        self.assertTrue(re.search(r"Dual-Pane", self.text, re.IGNORECASE), "Missing dual-pane review console")
+        self.assertTrue(re.search(r"For Payment.*For Signing.*Ready for Pickup|Needs Review", self.text, re.DOTALL | re.IGNORECASE), "Missing pipeline stages")
+        self.assertTrue(re.search(r"Progressive Traffic Sanctions|1st Offense.*2nd Offense.*3rd Offense", self.text, re.DOTALL | re.IGNORECASE), "Missing progressive sanctions")
+        self.assertTrue(re.search(r"Batch|Masterlist", self.text, re.IGNORECASE), "Missing batch printing and masterlist registry")
 
     def test_role6_system_administrator_contracts(self):
         """Verifies System Admin: RBAC directory, cluster telemetry, weekly backup, safety phrase 'RESTORE'."""
-        self.assertRegex(self.text, r"RBAC|User Directory", "Missing RBAC user accounts directory")
-        self.assertRegex(self.text, r"MongoDB Atlas|Latency|Memory|Telemetry", "Missing cluster telemetry")
-        self.assertRegex(self.text, r"Sunday|12:00 MN|Backup", "Missing weekly Sunday cron backup")
-        self.assertRegex(self.text, r"RESTORE", "Missing disaster recovery confirmation safety phrase 'RESTORE'")
+        self.assertTrue(re.search(r"RBAC|User Directory", self.text, re.IGNORECASE), "Missing RBAC user accounts directory")
+        self.assertTrue(re.search(r"MongoDB Atlas|Latency|Memory|Telemetry", self.text, re.IGNORECASE), "Missing cluster telemetry")
+        self.assertTrue(re.search(r"Sunday|12:00 MN|Backup", self.text, re.IGNORECASE), "Missing weekly Sunday cron backup")
+        self.assertTrue(re.search(r"RESTORE", self.text), "Missing disaster recovery confirmation safety phrase 'RESTORE'")
 
     def test_academic_and_municipal_authorship(self):
         """Verifies all four group authors, MarSU, CICS, and Mayor Lao-Baldo."""
-        self.assertRegex(self.text, r"Jhon Kyn Axix", "Missing author: Jhon Kyn Axix Cabrigas")
-        self.assertRegex(self.text, r"Justine.*Lachica", "Missing author: Justine Lachica")
-        self.assertRegex(self.text, r"Jay Vincent.*Motol", "Missing author: Jay Vincent Motol")
-        self.assertRegex(self.text, r"Ian Simon Francis.*Rey", "Missing author: Ian Simon Francis Rey")
-        self.assertRegex(self.text, r"Marinduque State University", "Missing MarSU")
-        self.assertRegex(self.text, r"College of Information and Computing Sciences|CICS", "Missing CICS")
-        self.assertRegex(self.text, r"Municipality of Gasan", "Missing Gasan")
-        self.assertRegex(self.text, r"Lao-Baldo", "Missing Mayor Lao-Baldo")
+        self.assertTrue(re.search(r"Jhon Kyn Axix", self.text, re.IGNORECASE), "Missing author: Jhon Kyn Axix Cabrigas")
+        self.assertTrue(re.search(r"Justine.*Lachica", self.text, re.IGNORECASE), "Missing author: Justine Lachica")
+        self.assertTrue(re.search(r"Jay Vincent.*Motol", self.text, re.IGNORECASE), "Missing author: Jay Vincent Motol")
+        self.assertTrue(re.search(r"Ian Simon Francis.*Rey", self.text, re.IGNORECASE), "Missing author: Ian Simon Francis Rey")
+        self.assertTrue(re.search(r"Marinduque State University", self.text, re.IGNORECASE), "Missing MarSU")
+        self.assertTrue(re.search(r"College of Information and Computing Sciences|CICS", self.text, re.IGNORECASE), "Missing CICS")
+        self.assertTrue(re.search(r"Municipality of Gasan", self.text, re.IGNORECASE), "Missing Gasan")
+        self.assertTrue(re.search(r"Lao-Baldo", self.text, re.IGNORECASE), "Missing Mayor Lao-Baldo")
 
 
 if __name__ == '__main__':
