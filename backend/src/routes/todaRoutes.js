@@ -660,4 +660,157 @@ router.get('/my-members', protect, async (req, res) => {
     }
 });
 
+// @route   GET /api/v1/toda/next-body-number
+// @desc    Auto-generate next sequential duplicate-proof body number for a TODA
+// @access  Private (TODA President, BPLO Staff, Admin)
+router.get('/next-body-number', protect, async (req, res) => {
+    try {
+        const todaName = (req.query.todaAssociation || req.user.todaAssociation || '').trim();
+        if (!todaName) {
+            return res.status(400).json({ message: 'TODA Association is required' });
+        }
+
+        const escapedToda = todaName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+
+        // Derive short prefix (e.g., "POB TODA" -> "POB", "BATODA" -> "BAT", "GASAN" -> "GAS")
+        let prefix = 'GAS';
+        const cleanUpper = todaName.toUpperCase().replace(/[^A-Z0-9\s]/g, '').trim();
+        const firstWord = cleanUpper.split(/\s+/)[0];
+        if (firstWord && firstWord.length >= 3) {
+            prefix = firstWord.substring(0, 4);
+        }
+
+        // Gather all existing body numbers from both TodaRoster and Franchise
+        const [rosterRecords, franchiseRecords] = await Promise.all([
+            TodaRoster.find({ todaAssociation: todaRegex }).select('bodyNumber'),
+            Franchise.find({ todaName: todaRegex }).select('bodyNumber')
+        ]);
+
+        const existingBodyNumbers = new Set();
+        rosterRecords.forEach(r => { if (r.bodyNumber) existingBodyNumbers.add(String(r.bodyNumber).trim().toUpperCase()); });
+        franchiseRecords.forEach(f => { if (f.bodyNumber) existingBodyNumbers.add(String(f.bodyNumber).trim().toUpperCase()); });
+
+        // Extract numeric sequences
+        let maxSeq = 0;
+        existingBodyNumbers.forEach(bn => {
+            const matches = bn.match(/\d+/g);
+            if (matches) {
+                matches.forEach(m => {
+                    const num = parseInt(m, 10);
+                    if (!isNaN(num) && num > maxSeq && num < 10000) {
+                        maxSeq = num;
+                    }
+                });
+            }
+        });
+
+        let candidateSeq = maxSeq + 1;
+        let candidateFormatted = `${prefix}-${String(candidateSeq).padStart(3, '0')}`;
+        let candidateSimple = String(candidateSeq).padStart(3, '0');
+
+        // Advance sequence if candidate already collides
+        while (existingBodyNumbers.has(candidateFormatted) || existingBodyNumbers.has(candidateSimple)) {
+            candidateSeq++;
+            candidateFormatted = `${prefix}-${String(candidateSeq).padStart(3, '0')}`;
+            candidateSimple = String(candidateSeq).padStart(3, '0');
+        }
+
+        res.status(200).json({
+            todaAssociation: todaName,
+            prefix,
+            nextSeq: candidateSeq,
+            suggestedBodyNumber: candidateFormatted,
+            alternativeBodyNumber: candidateSimple,
+            totalExistingUnits: existingBodyNumbers.size
+        });
+    } catch (error) {
+        console.error('Error generating next body number:', error);
+        res.status(500).json({ message: 'Error calculating next sequential body number' });
+    }
+});
+
+// @route   POST /api/v1/toda/members/single
+// @desc    Add a single individual member directly to active accredited TODA roster
+// @access  Private (TODA President, BPLO Staff, Admin)
+router.post('/members/single', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'admin'), async (req, res) => {
+    try {
+        const { operatorName, bodyNumber, plateNo, contact, remarks, todaAssociation } = req.body;
+        const targetToda = (todaAssociation || req.user.todaAssociation || '').trim();
+
+        if (!operatorName || !operatorName.trim()) {
+            return res.status(400).json({ message: 'Operator full name is required' });
+        }
+        if (!bodyNumber || !bodyNumber.trim()) {
+            return res.status(400).json({ message: 'Assigned body number is required' });
+        }
+        if (!targetToda) {
+            return res.status(400).json({ message: 'TODA association could not be determined' });
+        }
+
+        const cleanName = operatorName.trim().toUpperCase();
+        const cleanBodyNumber = bodyNumber.trim().toUpperCase();
+        const cleanPlateNo = (plateNo || '').trim().toUpperCase();
+        const cleanContact = (contact || '').trim();
+
+        // 1. Strict Duplicate Check on Compound Key (todaAssociation + bodyNumber)
+        const escapedToda = targetToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+        const bodyRegex = new RegExp(`^${cleanBodyNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+
+        const existingBodyInRoster = await TodaRoster.findOne({
+            todaAssociation: todaRegex,
+            bodyNumber: bodyRegex
+        });
+
+        if (existingBodyInRoster) {
+            return res.status(409).json({
+                message: `Body Number "${cleanBodyNumber}" is already assigned to ${existingBodyInRoster.operatorName} in ${targetToda}. Duplicate body numbers are strictly prohibited.`,
+                conflictField: 'bodyNumber',
+                assignedTo: existingBodyInRoster.operatorName
+            });
+        }
+
+        // 2. Cross-check if vehicle plate is registered under another active franchise
+        if (cleanPlateNo) {
+            const plateRegex = new RegExp(`^${cleanPlateNo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+            const existingPlate = await Franchise.findOne({
+                plateNumber: plateRegex,
+                status: { $in: ['Active', 'Pending', 'For Signing', 'Ready for Pickup'] }
+            });
+            if (existingPlate && existingPlate.todaName?.toUpperCase() !== targetToda.toUpperCase()) {
+                return res.status(409).json({
+                    message: `Vehicle plate number "${cleanPlateNo}" is already actively associated with ${existingPlate.todaName}. A unit cannot belong to multiple TODAs simultaneously.`,
+                    conflictField: 'plateNo'
+                });
+            }
+        }
+
+        // 3. Create active roster entry
+        const newRosterEntry = await TodaRoster.create({
+            todaAssociation: targetToda,
+            operatorName: cleanName,
+            bodyNumber: cleanBodyNumber,
+            plateNo: cleanPlateNo,
+            contact: cleanContact,
+            status: 'Active',
+            remarks: remarks?.trim() || `Individually added by ${req.user.name || req.user.role} on ${new Date().toLocaleDateString('en-PH')}`
+        });
+
+        res.status(201).json({
+            message: `Operator ${cleanName} with Body No. ${cleanBodyNumber} successfully added to ${targetToda} roster.`,
+            member: newRosterEntry
+        });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({
+                message: 'Database constraint violation: Body Number already exists in this association.',
+                conflictField: 'bodyNumber'
+            });
+        }
+        console.error('Error adding individual member:', error);
+        res.status(500).json({ message: 'Error adding individual member to TODA roster' });
+    }
+});
+
 module.exports = router;

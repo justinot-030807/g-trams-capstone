@@ -12,6 +12,7 @@ import FeedbackModal from '../../components/common/FeedbackModal';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import StatusBadge from '../../components/common/StatusBadge';
 import { formatZoneLabel } from '../../utils/constants';
+import { compressImage } from '../../utils/imageCompressor';
 
 const REMOVAL_REASONS = [
   'No longer operating / Inactive',
@@ -189,7 +190,15 @@ const SubmitMembers = () => {
     setOcrNotes('');
 
     const formData = new FormData();
-    formData.append('file', selectedFile);
+    let fileToUpload = selectedFile;
+    try {
+      if (selectedFile.type?.startsWith('image/') || (selectedFile.name && /\.(jpe?g|png|webp)$/i.test(selectedFile.name))) {
+        fileToUpload = await compressImage(selectedFile, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
+      }
+    } catch (compErr) {
+      console.warn('Roster image compression skipped:', compErr);
+    }
+    formData.append('file', fileToUpload);
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/scan-roster`, {

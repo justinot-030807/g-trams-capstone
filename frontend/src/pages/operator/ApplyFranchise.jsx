@@ -26,6 +26,8 @@ import SimpleDatePicker from '../../components/common/SimpleDatePicker';
 import { useLanguage } from '../../context/LanguageContext';
 import { isNameMatch } from '../../utils/nameMatcher';
 
+import { compressImage } from '../../utils/imageCompressor';
+
 const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
 
 const STANDARD_DOC_IDS = ['crDocument', 'orDocument', 'orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
@@ -1107,14 +1109,22 @@ const ApplyFranchise = () => {
       }
 
       if (fileToScan) {
-        scanFormData.append('file', fileToScan, 'document.jpg');
+        let processedFile = fileToScan;
+        try {
+          if (fileToScan.type?.startsWith('image/') || (fileToScan.name && /\.(jpe?g|png|webp)$/i.test(fileToScan.name))) {
+            processedFile = await compressImage(fileToScan, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
+          }
+        } catch (compErr) {
+          console.warn('Client-side compression skipped:', compErr);
+        }
+        scanFormData.append('file', processedFile, 'document.jpg');
         // Pre-read base64 client-side to eliminate extra remote Cloudinary re-fetch
         try {
           const base64Data = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result);
             reader.onerror = () => resolve(null);
-            reader.readAsDataURL(fileToScan);
+            reader.readAsDataURL(processedFile);
           });
           if (base64Data) {
             scanFormData.append('base64', base64Data);
