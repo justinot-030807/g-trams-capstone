@@ -6,8 +6,11 @@ const PublicRoute = ({ children }) => {
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
 
   if (token) {
-    if (role === 'admin' || role === 'administrator') {
+    if (role === 'admin' || role === 'administrator' || role === 'system admin') {
       return <Navigate to="/admin-dashboard" replace />;
+    }
+    if (role === 'bplo staff') {
+      return <Navigate to="/bplo-dashboard" replace />;
     }
     if (role === 'cashier') {
       return <Navigate to="/cashier-dashboard" replace />;

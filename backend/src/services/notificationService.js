@@ -1,6 +1,6 @@
 const axios = require('axios');
 const SmsLog = require('../models/smsLogModel');
-const { emitToUser, getIO } = require('../config/socket');
+const { emitToUser, emitToAdmins, getIO } = require('../config/socket');
 const { getManilaNow, formatManilaDate } = require('../utils/phTime');
 
 /**
@@ -81,7 +81,7 @@ async function dispatchExpirationSms({
         try {
             const io = getIO();
             if (io) {
-                io.emit('sms_dispatched', logEntry);
+                emitToAdmins('sms_dispatched', logEntry);
             }
         } catch (sockErr) {
             // Non-critical socket notification

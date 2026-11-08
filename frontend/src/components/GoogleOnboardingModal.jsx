@@ -144,11 +144,13 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
     const payload = {
       email,
+      onboardingToken: googleProfile.onboardingToken || undefined,
       idToken: googleProfile.idToken || googleProfile.credential || undefined,
       credential: googleProfile.credential || googleProfile.idToken || undefined,
       accessToken: googleProfile.accessToken || undefined,
       googleProfile: {
         email,
+      onboardingToken: googleProfile.onboardingToken || undefined,
         name: editableName.trim(),
         picture,
         googleId: googleProfile.googleId || ''
@@ -160,6 +162,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
         todaAssociation: selectedToda.trim(),
         bodyNumber: bodyNumber.trim().toUpperCase(),
         email,
+      onboardingToken: googleProfile.onboardingToken || undefined,
         phone: formattedPhone || undefined,
         contact: formattedPhone || email,
         role: 'operator'

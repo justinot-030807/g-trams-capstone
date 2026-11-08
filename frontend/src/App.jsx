@@ -124,7 +124,7 @@ function App() {
                   <Route path="/user-management" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><UserManagement /></ProtectedRoute>} />
                   <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminSettings /></ProtectedRoute>} />
                   <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
-                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><AdminTickets /></ProtectedRoute>} />
+                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminTickets /></ProtectedRoute>} />
 
                   {/* BPLO STAFF SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
                   <Route path="/bplo-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><BploDashboard /></ProtectedRoute>} />
@@ -132,7 +132,7 @@ function App() {
                   <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseApproval /></ProtectedRoute>} />
                   <Route path="/franchise-approval/review/:id" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseReviewPage /></ProtectedRoute>} />
                   <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ManageRevocations /></ProtectedRoute>} />
-                  <Route path="/admin/violations" element={<ProtectedRoute allowedRoles={['bplo_staff', 'system_admin', 'admin']}><ManageRevocations /></ProtectedRoute>} />
+                  <Route path="/admin/violations" element={<ProtectedRoute allowedRoles={['bplo_staff', 'admin']}><ManageRevocations /></ProtectedRoute>} />
                   <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ValidateTODA /></ProtectedRoute>} />
                   <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['bplo_staff']}><AdminReports /></ProtectedRoute>} />
 
@@ -153,8 +153,8 @@ function App() {
                   
                   {/* SHARED SECURE ROUTES & REDIRECTS */}
                   <Route path="/manage-profile" element={<ProfileRedirect />} />
-                  <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
-                  <Route path="/about" element={<ProtectedRoute allowedRoles={['admin', 'operator', 'toda president']}><About /></ProtectedRoute>} />
+                  <Route path="/help-support" element={<ProtectedRoute allowedRoles={['admin', 'system_admin', 'bplo_staff', 'cashier', 'operator', 'toda president']}><HelpSupport /></ProtectedRoute>} />
+                  <Route path="/about" element={<ProtectedRoute allowedRoles={['admin', 'system_admin', 'bplo_staff', 'cashier', 'operator', 'toda president']}><About /></ProtectedRoute>} />
 
                   {/* CATCH-ALL 404 ROUTE */}
                   <Route path="*" element={<NotFound />} />

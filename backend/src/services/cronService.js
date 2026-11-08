@@ -20,12 +20,13 @@ const {
 async function syncFranchiseStatuses() {
     try {
         const now = getManilaNow();
+        await Franchise.updateMany({ status: 'Suspended', suspensionEndDate: { $ne: null, $lte: now } }, { $set: { status: 'Active - Under Warning', suspensionEndDate: null, currentSanction: 'Warning' } }).catch(() => {});
         const oneYearAgo = new Date(now);
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
         // Find active franchises that have expired
         const expiredFranchises = await Franchise.find({
-            status: 'Active',
+            status: { $in: ['Active', 'Active - Under Warning'] },
             $or: [
                 { expiryDate: { $lte: now } },
                 { expiryDate: null, approvalDate: { $lte: oneYearAgo } }
@@ -90,6 +91,7 @@ async function syncFranchiseStatuses() {
 async function sendRenewalReminders() {
     try {
         const now = getManilaNow();
+        await Franchise.updateMany({ status: 'Suspended', suspensionEndDate: { $ne: null, $lte: now } }, { $set: { status: 'Active - Under Warning', suspensionEndDate: null, currentSanction: 'Warning' } }).catch(() => {});
 
         // Retrieve configured warning window from System Settings
         const settings = await SystemSettings.findOne().lean();
@@ -100,7 +102,7 @@ async function sendRenewalReminders() {
 
         // Find active franchises within the renewal window that haven't received a reminder in the last 7 days
         const dueFranchises = await Franchise.find({
-            status: 'Active',
+            status: { $in: ['Active', 'Active - Under Warning'] },
             expiryDate: { $gt: now, $lte: warningThreshold },
             $or: [
                 { lastRenewalReminderSentAt: null },
@@ -172,6 +174,7 @@ async function sendRenewalReminders() {
 async function autoArchiveOldExpired() {
     try {
         const now = getManilaNow();
+        await Franchise.updateMany({ status: 'Suspended', suspensionEndDate: { $ne: null, $lte: now } }, { $set: { status: 'Active - Under Warning', suspensionEndDate: null, currentSanction: 'Warning' } }).catch(() => {});
         const oneYearAgo = new Date(now);
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 

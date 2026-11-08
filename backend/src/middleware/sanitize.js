@@ -25,7 +25,15 @@ const mongoSanitize = (req, res, next) => {
     try {
         if (req.body) cleanObject(req.body);
         if (req.params) cleanObject(req.params);
-        if (req.query) cleanObject(req.query);
+        if (req.query) {
+            const sanitizedQuery = cleanObject({ ...req.query });
+            Object.defineProperty(req, 'query', {
+                value: sanitizedQuery,
+                writable: true,
+                configurable: true,
+                enumerable: true
+            });
+        }
     } catch (e) {
         console.error('Sanitization warning:', e);
     }

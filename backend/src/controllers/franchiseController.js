@@ -201,7 +201,7 @@ const updateFranchise = async (req, res) => {
 
         // IDOR Protection: verify user is owner or admin
         const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
-        const isAdmin = role === 'admin' || role === 'administrator';
+        const isAdmin = role === 'admin' || role === 'administrator' || role === 'bplo staff' || role === 'system admin';
         const isOwner = existingFranchise.operator && existingFranchise.operator.toString() === req.user._id.toString();
 
         if (!isAdmin && !isOwner) {
@@ -212,7 +212,7 @@ const updateFranchise = async (req, res) => {
         const wasCancelled = existingFranchise.status === 'Cancelled';
 
         if (!isAdmin) {
-            delete updateData.operator;
+            delete updateData.operator; delete updateData.isArchived; delete updateData.paymentStatus; delete updateData.officialReceiptNo; delete updateData.amountPaid; delete updateData.paymentDate; delete updateData.paidByCashier; delete updateData.cashierName; delete updateData.approvalDate; delete updateData.expiryDate; delete updateData.mtopNo; delete updateData.aiVerification; delete updateData.activeViolationCount; delete updateData.suspensionEndDate; delete updateData.currentSanction;
             delete updateData.isArchived;
 
             // When an operator re-submits a cancelled/rejected application to fix issues,
@@ -353,11 +353,11 @@ const renewFranchise = async (req, res) => {
 
         // IDOR Protection: verify user is owner or admin
         const role = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' ');
-        const isAdmin = role === 'admin' || role === 'administrator';
+        const isAdmin = role === 'admin' || role === 'administrator' || role === 'bplo staff' || role === 'system admin';
         const isOwner = existingFranchise.operator && existingFranchise.operator.toString() === req.user._id.toString();
 
         if (!isAdmin && !isOwner) {
-            return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to renew this franchise record.' });
+            return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to renew this franchise record.' }); } if (['Revoked', 'Suspended'].includes(existingFranchise.status)) { return res.status(400).json({ message: `Cannot renew a franchise while its status is ${existingFranchise.status}.` });
         }
 
         const { 

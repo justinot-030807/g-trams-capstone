@@ -188,7 +188,7 @@ function parseBackupBuffer(buffer) {
     let rawString = null;
     try {
         // Try decompressing as gzip first
-        const decompressed = zlib.gunzipSync(buffer);
+        const decompressed = zlib.gunzipSync(buffer, { maxOutputLength: 50 * 1024 * 1024 });
         rawString = decompressed.toString('utf-8');
     } catch {
         // Fallback to plain UTF-8 JSON if not gzipped

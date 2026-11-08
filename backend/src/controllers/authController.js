@@ -229,7 +229,7 @@ exports.register = async (req, res) => {
             await User.deleteOne({ _id: user._id }); 
         }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = crypto.randomInt(100000, 1000000).toString();
         const hashedOtp = hashOtp(otp);
         
         user = new User({
@@ -506,7 +506,7 @@ exports.forgotPassword = async (req, res) => {
         const user = await User.findOne(getContactQueryFilter(rawContact));
         if (!user) return res.status(404).json({ message: 'Contact is not registered.' });
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = crypto.randomInt(100000, 1000000).toString();
         user.otp = hashOtp(otp);
         user.otpExpire = Date.now() + 10 * 60 * 1000;
         await user.save();
@@ -698,7 +698,7 @@ exports.updateUser = async (req, res) => {
 
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id, 
-            req.body, 
+            (() => { const b = { ...req.body }; delete b.password; delete b.otp; delete b.otpExpire; delete b.failedLoginAttempts; delete b.lockUntil; return b; })(), 
             { new: true }
         ).select('-password');
 
@@ -865,7 +865,7 @@ exports.googleAuth = async (req, res) => {
                 // Verify with Google's tokeninfo API for id_token
                 try {
                     const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenCandidate}`, { timeout: 4000 });
-                    if (googleRes.data && googleRes.data.email) {
+                    if (googleRes.data && googleRes.data.email && (!process.env.GOOGLE_CLIENT_ID || !googleRes.data.aud || googleRes.data.aud === process.env.GOOGLE_CLIENT_ID)) {
                         email = String(googleRes.data.email).toLowerCase().trim();
                         googleId = googleRes.data.sub || googleRes.data.user_id || '';
                         googleName = googleRes.data.name || '';
@@ -876,7 +876,7 @@ exports.googleAuth = async (req, res) => {
                 }
 
                 // Safe fallback: only allowed in non-production environments (e.g., local tests/offline mock)
-                if (!email && process.env.NODE_ENV !== 'production') {
+                if (!email && process.env.NODE_ENV === 'test') {
                     try {
                         const decoded = jwt.decode(tokenCandidate);
                         if (decoded && (decoded.email || decoded.sub || decoded.email_verified)) {
@@ -893,7 +893,7 @@ exports.googleAuth = async (req, res) => {
                 // Not a JWT: test with tokeninfo?access_token=
                 try {
                     const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?access_token=${tokenCandidate}`, { timeout: 4000 });
-                    if (googleRes.data && googleRes.data.email) {
+                    if (googleRes.data && googleRes.data.email && (!process.env.GOOGLE_CLIENT_ID || !googleRes.data.aud || googleRes.data.aud === process.env.GOOGLE_CLIENT_ID)) {
                         email = String(googleRes.data.email).toLowerCase().trim();
                         googleId = googleId || googleRes.data.sub || googleRes.data.user_id || '';
                     }
@@ -950,7 +950,8 @@ exports.googleAuth = async (req, res) => {
 
         // 3. Client-provided googleProfile fallback (handles direct or nested wrappers)
         const profileCandidate = googleProfile || req.body.profile || req.body.user || null;
-        if (!email && profileCandidate) {
+        if (!email && (req.body.onboardingToken || profileCandidate?.onboardingToken)) { try { const verifiedOnboarding = jwt.verify(req.body.onboardingToken || profileCandidate.onboardingToken, getJwtSecret()); if (verifiedOnboarding?.purpose === 'google_onboarding' && verifiedOnboarding.email) { email = String(verifiedOnboarding.email).toLowerCase().trim(); googleId = googleId || verifiedOnboarding.googleId || ''; googleName = googleName || verifiedOnboarding.name || ''; googlePicture = googlePicture || verifiedOnboarding.picture || ''; } } catch {} }
+        if (!email && profileCandidate && process.env.NODE_ENV === 'test') {
             const p = profileCandidate.googleProfile || profileCandidate.profile || profileCandidate.user || profileCandidate.data || profileCandidate;
             const pEmail = p.email || p.mail || p.emailAddress || p.userEmail || (typeof p.contact === 'string' && p.contact.includes('@') ? p.contact : '');
             if (pEmail) {
@@ -977,7 +978,7 @@ exports.googleAuth = async (req, res) => {
         }
 
         // 4. In non-production environments (test/local dev), allow direct body / onboarding mock fields
-        if (!email && process.env.NODE_ENV !== 'production') {
+        if (!email && process.env.NODE_ENV === 'test') {
             if (req.body.email && String(req.body.email).includes('@')) {
                 email = String(req.body.email).toLowerCase().trim();
             } else if (req.body.contact && String(req.body.contact).includes('@')) {
@@ -1098,7 +1099,7 @@ exports.googleAuth = async (req, res) => {
             return res.status(200).json({
                 isNewUser: true,
                 message: 'Google account verified. Please complete your registration.',
-                googleProfile: { email, googleId, name: googleName, picture: googlePicture }
+                googleProfile: { email, googleId, name: googleName, picture: googlePicture, onboardingToken: jwt.sign({ purpose: 'google_onboarding', email, googleId, name: googleName, picture: googlePicture }, getJwtSecret(), { expiresIn: '15m' }) }
             });
         }
 

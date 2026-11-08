@@ -161,7 +161,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     window.addEventListener('storage', handleSettingsUpdate);
 
     const handleClickOutside = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) setIsNotifOpen(false);
+      // Notification popover uses its own full-screen backdrop for outside clicks
       if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -182,7 +182,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
       ctxMarkRead(notif.id);
     }
     setIsNotifOpen(false);
-    if (notif.link) navigate(notif.link);
+    if (typeof notif.link === 'string' && notif.link.startsWith('/') && !notif.link.startsWith('//')) navigate(notif.link);
   };
 
   const handleDeleteNotification = (e, notifId) => {
@@ -642,7 +642,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                     localStorage.removeItem('user');
                     localStorage.removeItem('userId');
                     localStorage.removeItem('gtrams_apply_draft');
-                    localStorage.removeItem('reapply_target');
+                    localStorage.removeItem('reapply_target'); localStorage.removeItem('gtrams_cached_franchises'); if (window.caches) { window.caches.delete('api-cache').catch(() => {}); }
                     navigate('/login');
                   }}
                   className="w-full px-4 py-2 text-left text-xs font-semibold text-[#B91C1C] dark:text-[#EF4444] hover:bg-[#B91C1C]/10 flex items-center gap-2.5 transition-colors cursor-pointer"

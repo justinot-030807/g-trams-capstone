@@ -125,7 +125,7 @@ router.post('/messages', async (req, res) => {
     const isSenderAdmin = senderRole.includes('admin');
     
     if (threadId && threadId !== 'new') {
-      thread = await ChatThread.findById(threadId);
+      thread = isSenderAdmin ? await ChatThread.findById(threadId) : await ChatThread.findOne({ _id: threadId, participants: req.user._id });
     }
 
     if (!thread) {

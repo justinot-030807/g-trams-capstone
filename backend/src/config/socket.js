@@ -1,13 +1,27 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
 
 let io;
+
+const ALLOWED_SOCKET_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'https://g-trams-official.vercel.app',
+  'https://g-trams-web2.vercel.app',
+  ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL.replace(/\/$/, '')] : [])
+];
 
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || origin.endsWith('.vercel.app')) {
+        if (!origin || ALLOWED_SOCKET_ORIGINS.includes(origin)) {
           return callback(null, true);
         }
         callback(new Error('CORS not allowed'));
@@ -18,13 +32,17 @@ const initSocket = (server) => {
   });
 
   // JWT authentication middleware for Socket.IO
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) return next(new Error('Authentication required'));
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.id;
-      socket.userRole = decoded.role;
+      const user = await User.findById(decoded.id).select('role isActive').lean();
+      if (!user || user.isActive === false) {
+        return next(new Error('Account is inactive or not found'));
+      }
+      socket.userId = String(decoded.id);
+      socket.userRole = user.role || decoded.role;
       next();
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
@@ -44,7 +62,8 @@ const initSocket = (server) => {
     
     // Admins and BPLO Staff join administrative room
     const role = String(socket.userRole || '').toLowerCase().replace(/[\s-]+/g, '_');
-    if (role === 'admin' || role === 'administrator' || role === 'system_admin' || role === 'bplo_staff') {
+    const isAdminOrStaff = role === 'admin' || role === 'administrator' || role === 'system_admin' || role === 'bplo_staff';
+    if (isAdminOrStaff) {
       socket.join('admin');
     }
 
@@ -58,9 +77,9 @@ const initSocket = (server) => {
       }
     });
 
-    // Concurrency: Review Locking
+    // Concurrency: Review Locking (Staff / Admin only)
     socket.on('review:join', ({ franchiseId, userName }, callback) => {
-      if (!franchiseId) return;
+      if (!franchiseId || !isAdminOrStaff) return;
       const now = Date.now();
       const existing = activeReviewLocks.get(franchiseId);
 
@@ -99,7 +118,7 @@ const initSocket = (server) => {
     });
 
     socket.on('review:leave', ({ franchiseId }) => {
-      if (!franchiseId) return;
+      if (!franchiseId || !isAdminOrStaff) return;
       const existing = activeReviewLocks.get(franchiseId);
       if (existing && (existing.socketId === socket.id || existing.userId === socket.userId)) {
         activeReviewLocks.delete(franchiseId);

@@ -89,6 +89,8 @@ app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 3000;
 const BASE_URI = process.env.BASE_URI || '/api/v1';
+const { apiLimiter } = require('./src/middleware/rateLimiter');
+app.use(BASE_URI, apiLimiter);
 
 // Auth routes
 const authRoutes = require('./src/routes/authRoutes');

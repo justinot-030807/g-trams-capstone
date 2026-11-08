@@ -80,7 +80,7 @@ const getOperatorViolationHistory = async (req, res) => {
         const { franchiseId } = req.params;
         const franchise = await Franchise.findById(franchiseId).populate('operator', 'name email contact');
         if (!franchise) {
-            return res.status(404).json({ success: false, message: 'Franchise not found.' });
+            return res.status(404).json({ success: false, message: 'Franchise not found.' }); } const callerRole = String(req.user?.role || '').toLowerCase().trim().replace(/_/g, ' '); if ((callerRole === 'operator' || callerRole === 'toda president') && String(franchise.operator?._id || franchise.operator) !== String(req.user._id)) { return res.status(403).json({ success: false, message: 'ACCESS DENIED: You can only view violation history for your own franchise.' });
         }
 
         // Active violations count determines the progressive discipline tier

@@ -23,6 +23,15 @@ router.post('/subscribe', async (req, res) => {
     }
 
     const { endpoint, keys } = subscription;
+    try {
+      const parsedEndpoint = new URL(endpoint);
+      const allowedHostSuffixes = ['.googleapis.com', '.google.com', '.mozilla.com', '.push.apple.com', '.notify.windows.com'];
+      if (parsedEndpoint.protocol !== 'https:' || !allowedHostSuffixes.some(s => parsedEndpoint.hostname.endsWith(s))) {
+        return res.status(400).json({ message: 'Invalid or untrusted push service endpoint URL' });
+      }
+    } catch {
+      return res.status(400).json({ message: 'Malformed push subscription endpoint URL' });
+    }
     const userAgent = req.headers['user-agent'] || '';
 
     // Update if endpoint exists, otherwise insert

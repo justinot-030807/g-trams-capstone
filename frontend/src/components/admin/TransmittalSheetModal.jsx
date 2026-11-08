@@ -54,7 +54,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
       return [
         i + 1,
         permitNo,
-        `"${(u.fullName || '').replace(/"/g, '""')}"`,
+        `"${(u.fullName || '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`,
         `"${(u.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
         `"${(u.plateNo || 'PENDING').replace(/"/g, '""')}"`,
         `"${(u.motorNo || 'N/A').replace(/"/g, '""')}"`,

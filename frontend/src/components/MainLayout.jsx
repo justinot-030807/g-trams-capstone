@@ -20,7 +20,7 @@ const MainLayout = ({ children, hideNav = false }) => {
   });
 
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
-  const isAdmin = role === 'admin' || role === 'administrator';
+  const isAdmin = role === 'admin' || role === 'administrator' || role === 'system admin' || role === 'bplo staff';
   const isOperator = role === 'operator';
   const isTodaPresident = role === 'toda president' || role === 'toda_president';
   const isCashier = role === 'cashier';

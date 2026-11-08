@@ -12,7 +12,7 @@ const {
 // All violation management endpoints are role-protected
 router.get('/', protect, authorize('bplo_staff', 'system_admin', 'admin'), getViolations);
 router.get('/history/:franchiseId', protect, authorize('bplo_staff', 'system_admin', 'admin', 'operator', 'toda president'), getOperatorViolationHistory);
-router.post('/', protect, authorize('bplo_staff', 'system_admin', 'admin'), upload.fields([{ name: 'evidence', maxCount: 1 }]), recordViolation);
-router.put('/:id/settle', protect, authorize('bplo_staff', 'system_admin', 'admin'), settleOrLiftViolation);
+router.post('/', protect, authorize('bplo_staff', 'admin'), upload.fields([{ name: 'evidence', maxCount: 1 }]), recordViolation);
+router.put('/:id/settle', protect, authorize('bplo_staff', 'admin'), settleOrLiftViolation);
 
 module.exports = router;

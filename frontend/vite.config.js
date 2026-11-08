@@ -53,7 +53,7 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /\/api\/v1\/(?!auth).*/i,
+            urlPattern: /\/api\/v1\/(franchises\/public-stats|settings(\/public)?|toda\/list)$/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

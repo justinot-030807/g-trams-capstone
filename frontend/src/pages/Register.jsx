@@ -234,9 +234,9 @@ const Register = () => {
       }
     }
     if (formData.recoveryPhone && formData.recoveryPhone.trim()) {
-      const recP = formData.recoveryPhone.trim().replace(/[s-()]/g, '');
-      const rawC = formData.contact.trim().replace(/[s-()]/g, '');
-      if (!/^(09|+639)d{9}$/.test(recP)) {
+      const recP = formData.recoveryPhone.trim().replace(/[\s\-()]/g, '');
+      const rawC = formData.contact.trim().replace(/[\s\-()]/g, '');
+      if (!/^(09|\+639)\d{9}$/.test(recP)) {
         return setError('MANGYARING MAGLAGAY NG WASTONG RECOVERY PHONE (09XXXXXXXXX).');
       }
       if (recP === rawC) {
@@ -427,7 +427,7 @@ const Register = () => {
       }
     }
 
-    if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
+    if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system admin') { navigate('/admin-dashboard'); } else if (normalizedRole === 'bplo staff') { navigate('/bplo-dashboard'); } else if (normalizedRole === 'cashier') { navigate('/cashier-dashboard'); } else if (false) {
       navigate('/admin-dashboard');
     } else {
       navigate('/operator-dashboard');
@@ -793,9 +793,9 @@ const Register = () => {
                           onChange={(e) => {
                             handleChange(e);
                             if (e.target.value.includes('@')) {
-                              setFormData(prev => ({ ...prev, recoveryEmail: e.target.value, backupContact: e.target.value }));
+                              setFormData(prev => ({ ...prev, recoveryEmail: e.target.value, recoveryPhone: '', backupContact: e.target.value }));
                             } else {
-                              setFormData(prev => ({ ...prev, recoveryPhone: e.target.value, backupContact: e.target.value }));
+                              setFormData(prev => ({ ...prev, recoveryPhone: e.target.value, recoveryEmail: '', backupContact: e.target.value }));
                             }
                           }}
                           autoComplete="tel"

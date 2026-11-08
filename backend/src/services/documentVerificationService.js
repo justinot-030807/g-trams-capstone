@@ -99,6 +99,7 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
 async function fetchImageAsBase64(url) {
     try {
         if (!url || typeof url !== 'string') return null;
+        try { const parsedUrl = new URL(url); const host = parsedUrl.hostname.toLowerCase(); if (!['http:', 'https:'].includes(parsedUrl.protocol) || host === 'localhost' || host === '0.0.0.0' || host === '[::1]' || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) { console.warn('[DocVerify] Blocked SSRF attempt to internal/disallowed URL:', url); return null; } } catch { return null; }
         let targetUrl = url;
         let response = null;
         let isPdf = targetUrl.toLowerCase().includes('.pdf');
@@ -524,7 +525,7 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
         // High-speed multi-model auto-failover cascade:
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+        const rawPreferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash'; const preferredModel = rawPreferredModel === 'gemini-3.8-flash' ? 'gemini-2.5-flash' : rawPreferredModel;
         const modelsToTry = [
             preferredModel,
             'gemini-2.0-flash',
@@ -1066,7 +1067,7 @@ Return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only, no markdown, no surrounding text.`;
 
-        const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+        const rawPreferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash'; const preferredModel = rawPreferredModel === 'gemini-3.8-flash' ? 'gemini-2.5-flash' : rawPreferredModel;
         const modelsToTry = [
             preferredModel,
             'gemini-2.0-flash',
@@ -1145,7 +1146,7 @@ Return raw JSON only, no markdown, no surrounding text.`;
         if (parsed && Array.isArray(parsed.members) && parsed.members.length > 0) {
             parsed.members = parsed.members.map(m => {
                 const nameStr = (typeof m === 'string' ? m : (m && m.name ? m.name : '')).trim();
-                return { name: nameStr };
+                const bodyNoStr = (typeof m === 'object' && m ? (m.bodyNumber || m.unitNo || '') : '').trim(); return { name: nameStr, operatorName: nameStr, ...(bodyNoStr ? { bodyNumber: bodyNoStr, unitNo: bodyNoStr } : {}) };
             }).filter(m => Boolean(m.name));
             parsed.totalMembersDetected = parsed.members.length;
             return parsed;

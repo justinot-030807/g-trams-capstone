@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ShieldCheck, User, MapPin, Award, AlertTriangle, Loader2 } from 'lucide-react';
+import { User, MapPin, Award, AlertTriangle } from 'lucide-react';
 import { VerifyOperatorSkeleton } from '../../components/skeleton';
 
 const VerifyOperator = () => {
@@ -11,11 +11,10 @@ const VerifyOperator = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // We will do a generic fetch. If the public verification endpoint doesn't exist yet, 
-    // we just show a safe fallback.
     const fetchVerification = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/verify/${id}`);
+        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+        const res = await fetch(`${baseUrl}/api/v1/auth/verify/${encodeURIComponent(id || '')}`);
         if (res.ok) {
           const data = await res.json();
           setOperator({
@@ -23,25 +22,11 @@ const VerifyOperator = () => {
             name: data.name || data.fullName || 'Registered Operator'
           });
         } else {
-          // If endpoint doesn't exist or unauthorized, just mock it based on id for demo purposes 
-          // or show a generic error. Let's just mock it to look good if API fails (since backend might not have this route yet).
-          if (res.status === 404 || res.status === 401) {
-             setOperator({
-               name: "Registered Operator",
-               todaAssociation: "Verified via System",
-               role: "operator"
-             });
-          } else {
-             setError('Operator not found or invalid QR code.');
-          }
+          const errData = await res.json().catch(() => ({}));
+          setError(errData.message || 'Operator or franchise record not found. This QR code may be invalid, expired, or counterfeit.');
         }
-      } catch (err) {
-        // Fallback mock if completely offline
-        setOperator({
-          name: "Registered Operator",
-          todaAssociation: "Verified via System",
-          role: "operator"
-        });
+      } catch {
+        setError('Unable to reach the official LGU verification server. Please check your internet connection and scan again.');
       } finally {
         setLoading(false);
       }
@@ -61,7 +46,7 @@ const VerifyOperator = () => {
             <AlertTriangle size={32} />
           </div>
           <h2 className="text-lg font-bold text-[#1F1D1B] dark:text-white mb-1.5">Verification Failed</h2>
-          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-6">{error}</p>
+          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-6">{error || 'Invalid or unregistered QR code.'}</p>
           <button 
             onClick={() => navigate('/')}
             className="w-full bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#2E2A27] dark:hover:bg-[#3E3834] text-white py-3 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors min-h-[44px] cursor-pointer"
@@ -73,14 +58,19 @@ const VerifyOperator = () => {
     );
   }
 
+  const scannedStatus = operator.scannedFranchise?.status || '';
+  const isScannedUnitInvalid = ['Revoked', 'Suspended', 'Expired', 'Cancelled', 'Rejected'].includes(scannedStatus);
+
   return (
     <div className="min-h-[100dvh] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
-        <div className="bg-[#9E2A2B] border-b border-[#7A1B22] rounded-t-lg pt-6 pb-16 px-6 text-center relative overflow-hidden">
+        <div className={`${isScannedUnitInvalid ? 'bg-red-800 border-red-950' : 'bg-[#9E2A2B] border-[#7A1B22]'} border-b rounded-t-lg pt-6 pb-16 px-6 text-center relative overflow-hidden`}>
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-md p-2">
             <img src="/gasan-logo.png" alt="LGU" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-white font-bold tracking-tight text-lg mb-0.5">VERIFIED OPERATOR</h1>
+          <h1 className="text-white font-bold tracking-tight text-lg mb-0.5">
+            {isScannedUnitInvalid ? `FRANCHISE ${scannedStatus.toUpperCase()}` : 'VERIFIED OPERATOR'}
+          </h1>
           <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider">Official LGU Record</p>
         </div>
         
@@ -130,7 +120,11 @@ const VerifyOperator = () => {
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">Scanned MTOP Certificate Unit</p>
                     <p className="font-mono font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-white">Plate: {operator.scannedFranchise.plateNo} &bull; {operator.scannedFranchise.make}</p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white uppercase tracking-wider">{operator.scannedFranchise.status}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white uppercase tracking-wider ${
+                    operator.scannedFranchise.status === 'Active' ? 'bg-emerald-600' :
+                    operator.scannedFranchise.status === 'Active - Under Warning' || operator.scannedFranchise.status === 'Pending' ? 'bg-amber-600' :
+                    'bg-red-600'
+                  }`}>{operator.scannedFranchise.status}</span>
                 </div>
               )}
               <div className="flex items-center justify-between mb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2">
@@ -156,7 +150,8 @@ const VerifyOperator = () => {
                       </div>
                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${
                         f.status === 'Active' ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-600/30' :
-                        f.status === 'Pending' ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-600/30' :
+                        f.status === 'Pending' || f.status === 'Active - Under Warning' ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-600/30' :
+                        ['Revoked', 'Suspended', 'Expired', 'Cancelled', 'Rejected'].includes(f.status) ? 'bg-red-500/10 text-red-800 dark:text-red-300 border-red-600/30' :
                         'bg-[#F6F5F3] text-[#6B6761] border-[#E4E1DC] dark:bg-[#2E2A27] dark:text-[#A8A29E] dark:border-[#3E3834]'
                       }`}>
                         {f.status}

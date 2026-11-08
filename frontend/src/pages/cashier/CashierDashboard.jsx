@@ -52,7 +52,7 @@ const CashierDashboard = () => {
     const headers = ['Official Receipt No', 'Payer Full Name', 'Plate Number', 'TODA Association', 'Amount Paid (PHP)', 'Payment Method', 'Payment Timestamp', 'Collecting Cashier'];
     const rows = todayPaidRecords.map(item => [
       item.officialReceiptNo || 'PENDING',
-      `"${(item.fullName || item.payerName || '').replace(/"/g, '""')}"`,
+      `"${(item.fullName || item.payerName || '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`,
       item.plateNo || 'PENDING',
       `"${(item.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
       item.amountPaid || 500,

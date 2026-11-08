@@ -150,7 +150,7 @@ class FranchiseService {
         });
                 
         if (existingTricycle) {
-            throw new Error('Tricycle (Plate/Motor/Chassis) is already registered.');
+            throw new Error('Tricycle (Plate/Motor/Chassis) is already registered.'); } await Franchise.updateMany({ $or: [{ motorNo }, { chassisNo }, { plateNo }], status: 'Cancelled', isArchived: false }, { $set: { isArchived: true } }); if (operatorId) { const SystemSettings = require('../models/systemSettingsModel'); const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean(); const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2; const currentActiveOrPending = await Franchise.countDocuments({ operator: operatorId, isArchived: { $ne: true }, status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] } }); if (currentActiveOrPending >= maxUnits) { throw new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`); }
         }
 
         // Safe date parsing
@@ -171,7 +171,7 @@ class FranchiseService {
             cedulaDate: parsedCedulaDate,
             cedulaAddress: data.cedulaAddress || 'Gasan, Marinduque',
             cedulaSerialNo: data.cedulaSerialNo || '000000',
-            cedulaAmount: Number(data.cedulaAmount) || 0,
+            cedulaAmount: 0,
             cedulaYear: data.cedulaYear || '',
             cedulaPlaceIssued: data.cedulaPlaceIssued || data.cedulaAddress || '',
             cedulaFullName: data.cedulaFullName || '',
@@ -181,8 +181,8 @@ class FranchiseService {
             cedulaDob: data.cedulaDob && !isNaN(new Date(data.cedulaDob).getTime()) ? new Date(data.cedulaDob) : undefined,
             cedulaPlaceOfBirth: data.cedulaPlaceOfBirth || '',
             cedulaSex: data.cedulaSex || '',
-            cedulaHeight: data.cedulaHeight || '',
-            cedulaWeight: data.cedulaWeight || '',
+            cedulaHeight: '',
+            cedulaWeight: '',
             cedulaTin: data.cedulaTin || '',
             cedulaDetails: data.cedulaDetails || (data.aiScannedData?.cedula || null),
             applicationType: data.applicationType || 'New',

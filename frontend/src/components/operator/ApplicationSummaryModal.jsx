@@ -55,7 +55,7 @@ const ApplicationSummaryModal = ({
     : DEFAULT_MODAL_REQUIREMENTS;
 
   const getDocUrl = (req) => {
-    if (uploadedDocs && uploadedDocs[req.id]) {
+    if (filePreviews && filePreviews[req.id]) return filePreviews[req.id]; if (uploadedDocs && uploadedDocs[req.id]) {
       return typeof uploadedDocs[req.id] === 'string' ? uploadedDocs[req.id] : URL.createObjectURL(uploadedDocs[req.id]);
     }
     if (filePreviews && filePreviews[req.id]) return filePreviews[req.id];

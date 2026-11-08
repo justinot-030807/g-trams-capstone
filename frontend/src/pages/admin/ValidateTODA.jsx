@@ -58,7 +58,7 @@ const ValidateTODA = () => {
         const raw = await response.json();
         const allUsers = Array.isArray(raw) ? raw : (raw.data || []);
         // Filter out staff/admin users (admin, administrator, cashier)
-        setUsers(allUsers.filter(u => !['admin', 'administrator', 'cashier'].includes(String(u.role || '').toLowerCase().trim())));
+        setUsers(allUsers.filter(u => !['admin', 'administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff', 'cashier'].includes(String(u.role || '').toLowerCase().trim())));
       }
     } catch (error) { 
       console.error('Error fetching users:', error); 

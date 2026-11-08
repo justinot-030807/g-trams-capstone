@@ -31,7 +31,7 @@ const FranchiseMasterlist = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   const [activeTab, setActiveTab] = useState('active'); 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get('search') || '');
   
   // Multi-Select Status Filter
   const [selectedStatuses, setSelectedStatuses] = useState([]);

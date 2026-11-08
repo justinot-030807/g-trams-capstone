@@ -85,7 +85,7 @@ const AdminReports = () => {
     const rows = reports.map((r, i) => [
       i + 1,
       `"${(r.plateNo || 'PENDING').replace(/"/g, '""')}"`,
-      `"${(r.fullName || '').replace(/"/g, '""')}"`,
+      `"${(r.fullName || '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`,
       `"${(r.address || 'N/A').replace(/"/g, '""')}"`,
       `"${(r.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
       `"${r.dateApplied ? new Date(r.dateApplied).toLocaleDateString() : 'N/A'}"`,

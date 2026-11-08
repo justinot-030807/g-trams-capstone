@@ -735,7 +735,8 @@ router.get('/next-body-number', protect, async (req, res) => {
 const handleAddSingleMember = async (req, res) => {
     try {
         const { operatorName, bodyNumber, plateNo, contact, remarks, todaAssociation } = req.body;
-        const targetToda = (todaAssociation || req.user.todaAssociation || '').trim();
+        const isTodaPres = ['toda_president', 'toda president'].includes(String(req.user?.role || '').toLowerCase().trim());
+        const targetToda = (isTodaPres ? (req.user.todaAssociation || todaAssociation || '') : (todaAssociation || req.user.todaAssociation || '')).trim();
 
         if (!operatorName || !operatorName.trim()) {
             return res.status(400).json({ message: 'Operator full name is required' });
@@ -774,7 +775,7 @@ const handleAddSingleMember = async (req, res) => {
         if (cleanPlateNo) {
             const plateRegex = new RegExp(`^${cleanPlateNo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
             const existingPlate = await Franchise.findOne({
-                plateNumber: plateRegex,
+                plateNo: plateRegex,
                 status: { $in: ['Active', 'Pending', 'For Signing', 'Ready for Pickup'] }
             });
             if (existingPlate && existingPlate.todaName?.toUpperCase() !== targetToda.toUpperCase()) {

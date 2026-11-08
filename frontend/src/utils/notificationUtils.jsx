@@ -176,7 +176,7 @@ export const renderRichNotificationMessage = (text) => {
 
     // Secondary keyword matching for unformatted text
     // Keywords to highlight: Approved, Ready for Pickup, For Signing, Action Required, etc.
-    const keywordRegex = /\b(Approved|Ready for Pickup|For Signing|In Review|Active Permit|Action Required|Expired|Cancelled|Returned|LGU Note:|Remarks:)\b/gi;
+    const keywordRegex = /(\bApproved\b|\bReady for Pickup\b|\bFor Signing\b|\bIn Review\b|\bActive Permit\b|\bAction Required\b|\bExpired\b|\bCancelled\b|\bReturned\b|LGU Note:|Remarks:)/gi;
     const subParts = part.split(keywordRegex);
 
     if (subParts.length === 1) {
@@ -186,7 +186,7 @@ export const renderRichNotificationMessage = (text) => {
     return (
       <React.Fragment key={index}>
         {subParts.map((sub, subIdx) => {
-          if (keywordRegex.test(sub)) {
+          if (/^(\bApproved\b|\bReady for Pickup\b|\bFor Signing\b|\bIn Review\b|\bActive Permit\b|\bAction Required\b|\bExpired\b|\bCancelled\b|\bReturned\b|LGU Note:|Remarks:)$/i.test(sub)) {
             return (
               <strong key={subIdx} className="font-bold text-slate-900 dark:text-white">
                 {sub}

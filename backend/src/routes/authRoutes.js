@@ -46,7 +46,7 @@ const { registerSchema, verifyRosterSchema, verifyOtpSchema, loginSchema, forgot
 router.post('/verify-roster', registerLimiter, validate(verifyRosterSchema), verifyTodaRoster);
 
 // Google OAuth route
-router.post('/google', validate(googleAuthSchema), googleAuth);
+router.post('/google', loginLimiter, validate(googleAuthSchema), googleAuth);
 router.get('/google-client-id', (req, res) => {
     const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '';
     res.status(200).json({ clientId });
@@ -61,14 +61,14 @@ router.get('/', protect, authorize('system_admin', 'admin'), getUsers);
 // Password management routes
 router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', resetLimiter, resetPassword);
-router.put('/change-password', protect, changePassword);
+router.put('/change-password', resetLimiter, protect, changePassword);
 
 // System Admin IT routes
-router.post('/verify-password', protect, authorize('system_admin', 'admin'), verifyAdminPassword);
+router.post('/verify-password', loginLimiter, protect, authorize('system_admin', 'admin'), verifyAdminPassword);
 
 // Account status routes
 router.put('/:id/toggle-status', protect, authorize('system_admin', 'admin'), toggleUserStatus);
-router.post('/appeal', submitAppeal);
+router.post('/appeal', loginLimiter, submitAppeal);
 
 // Public routes
 router.get('/verify/:id', verifyOperator);

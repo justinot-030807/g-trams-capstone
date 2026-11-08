@@ -193,7 +193,7 @@ const SubmitMembers = () => {
     let fileToUpload = selectedFile;
     try {
       if (selectedFile.type?.startsWith('image/') || (selectedFile.name && /\.(jpe?g|png|webp)$/i.test(selectedFile.name))) {
-        fileToUpload = await compressImage(selectedFile, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
+        fileToUpload = await compressImage(selectedFile, 1600, 0.82);
       }
     } catch (compErr) {
       console.warn('Roster image compression skipped:', compErr);

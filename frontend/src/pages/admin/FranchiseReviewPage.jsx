@@ -203,7 +203,7 @@ const FranchiseReviewPage = () => {
     });
 
     const onLocked = (data) => {
-      if (data.franchiseId === currentApp._id && data.reviewerId !== socket.userId) {
+      if (data.franchiseId === currentApp._id && data.reviewerId !== (localStorage.getItem('userId') || socket.userId)) {
         setReviewLock({ isLocked: true, reviewerName: data.reviewerName });
       }
     };
@@ -294,7 +294,7 @@ const FranchiseReviewPage = () => {
       document.documentElement.classList.remove('review-station-active');
       document.body.classList.remove('review-station-active');
       if (window.innerWidth >= 769) {
-        document.documentElement.style.zoom = '0.9';
+        document.documentElement.style.zoom = '';
       } else {
         document.documentElement.style.zoom = '1';
       }

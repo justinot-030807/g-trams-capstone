@@ -1,10 +1,19 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import MaintenanceMode from '../pages/MaintenanceMode';
+import { jwtDecode } from 'jwt-decode';
 
 const normalizeRole = (role) => {
   if (!role) return '';
   return String(role).toLowerCase().trim().replace(/_/g, ' ');
+};
+
+const clearAuthStorage = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('role');
+  localStorage.removeItem('name');
+  localStorage.removeItem('user');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('gtrams_cached_franchises');
 };
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -12,23 +21,36 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   let userRole = localStorage.getItem('role');
   const userStr = localStorage.getItem('user');
 
+  // Verify JWT structure, expiration, and authoritative role claim
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      if (decoded?.exp && decoded.exp * 1000 < Date.now()) {
+        clearAuthStorage();
+        return <Navigate to="/login" replace />;
+      }
+      if (decoded?.role) {
+        userRole = decoded.role;
+      }
+    } catch {
+      clearAuthStorage();
+      return <Navigate to="/login" replace />;
+    }
+  }
+
   // Fallback: get role from user object if missing from storage key
   if (!userRole && userStr) {
     try {
       const userObj = JSON.parse(userStr);
       userRole = userObj?.role;
-    } catch (error) {
-      console.error("Failed to parse user data.");
+    } catch {
+      console.error('Failed to parse user data.');
     }
   }
 
   // Redirect to login if unauthenticated
   if (!token || !userRole) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('name');
-    localStorage.removeItem('user');
-    localStorage.removeItem('userId');
+    clearAuthStorage();
     return <Navigate to="/login" replace />;
   }
 
@@ -55,13 +77,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   const isSystemAdminAllowed = safeAllowedRoles.includes('admin') || safeAllowedRoles.includes('system admin') || safeAllowedRoles.includes('administrator');
 
-  // Treat toda president and operator interchangeably for operator routes
-  const isOperatorAllowed = safeAllowedRoles.includes('operator') || safeAllowedRoles.includes('toda president');
+  // A TODA President is also an operator and may access operator routes,
+  // but a regular operator MUST NOT access TODA President-only routes (e.g., /submit-members).
+  const isTodaAllowedOnOperatorRoute = safeAllowedRoles.includes('operator') && safeUserRole === 'toda president';
   const isUserOperatorOrToda = safeUserRole === 'operator' || safeUserRole === 'toda president';
 
   const isAuthorized = safeAllowedRoles.includes(safeUserRole) || 
     (isSystemAdminAllowed && isUserSystemAdmin) || 
-    (isOperatorAllowed && isUserOperatorOrToda);
+    isTodaAllowedOnOperatorRoute;
 
   // Redirect unauthorized users to their appropriate dashboard
   if (!isAuthorized) {
@@ -74,11 +97,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     } else if (isUserOperatorOrToda) {
       return <Navigate to="/operator-dashboard" replace />;
     } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('name');
-      localStorage.removeItem('user');
-      localStorage.removeItem('userId');
+      clearAuthStorage();
       return <Navigate to="/login" replace />;
     }
   }
