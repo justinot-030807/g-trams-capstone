@@ -26,7 +26,10 @@ export const SocketProvider = ({ children }) => {
 
       if (socketRef.current?.connected) return;
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const apiUrl = rawApiUrl.includes('workers.dev')
+        ? 'https://g-trams-web2.onrender.com'
+        : rawApiUrl;
       const newSocket = io(apiUrl, {
         auth: { token },
         transports: ['websocket', 'polling'],

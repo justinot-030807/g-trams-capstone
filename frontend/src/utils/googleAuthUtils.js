@@ -117,26 +117,29 @@ export const unwrapGoogleProfile = (raw) => {
 
 export const DEFAULT_GOOGLE_CLIENT_ID = '371606618285-og7vq7cn9gb0kpacq171fhf1jclvlhgq.apps.googleusercontent.com';
 
-let preferredApiOrigin = null;
+const DIRECT_RENDER_URL = 'https://g-trams-web2.onrender.com';
+const LEGACY_WORKER_URL = 'https://gtrams-backend.justinelachica114.workers.dev';
+
+export const normalizeApiOrigin = (rawUrl) => {
+  const cleaned = String(rawUrl || '').trim().replace(/\/+$/, '');
+  if (!cleaned || cleaned === LEGACY_WORKER_URL || cleaned.includes('workers.dev')) {
+    return DIRECT_RENDER_URL;
+  }
+  return cleaned;
+};
 
 export const getCandidateBaseUrls = () => {
-  const primary = String(import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+  const primary = normalizeApiOrigin(import.meta.env.VITE_API_URL);
   const isLocal = primary.includes('localhost') || primary.includes('127.0.0.1');
   if (isLocal) {
     return [primary];
   }
-  const candidates = [
-    preferredApiOrigin,
-    primary,
-    'https://g-trams-web2.onrender.com',
-    'https://gtrams-backend.justinelachica114.workers.dev'
-  ].filter(Boolean);
-  return [...new Set(candidates)];
+  return [...new Set([primary, DIRECT_RENDER_URL].filter(Boolean))];
 };
 
 /**
- * Resilient fetch wrapper that handles Render cold-start hibernation (429 text/plain),
- * shared proxy 429 rate-limits on workers.dev, and gateway cold-start (502/503/504).
+ * Resilient fetch wrapper that handles Render cold-start hibernation (429/502/503/504)
+ * directly against Render without routing through the legacy Cloudflare Worker proxy.
  */
 export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -155,12 +158,8 @@ export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => 
       const isBadGateway = res.status === 502 || res.status === 503 || res.status === 504;
 
       if ((isRateLimited429 || isBadGateway) && attempt < maxAttempts - 1) {
-        await new Promise(resolve => setTimeout(resolve, 600 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
         continue;
-      }
-
-      if (res.ok && !baseUrl.includes('localhost')) {
-        preferredApiOrigin = baseUrl;
       }
 
       return res;
@@ -177,8 +176,8 @@ export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => 
 };
 
 /**
- * Installs a global window.fetch interceptor so any direct fetch(`${VITE_API_URL}/api/v1/...`)
- * automatically falls back from workers.dev to g-trams-web2.onrender.com on HTTP 429 / 502 / 503 / 504 or network failure.
+ * Installs a global window.fetch interceptor so any legacy workers.dev request is
+ * rewritten directly to https://g-trams-web2.onrender.com, with automatic retry on Render cold-start.
  */
 export const installGlobalApiFetchInterceptor = () => {
   if (typeof window === 'undefined' || typeof window.fetch !== 'function' || window.__gtramsFetchInstalled) {
@@ -187,42 +186,29 @@ export const installGlobalApiFetchInterceptor = () => {
   window.__gtramsFetchInstalled = true;
   const nativeFetch = window.fetch.bind(window);
 
-  const PROD_ORIGINS = [
-    'https://gtrams-backend.justinelachica114.workers.dev',
-    'https://g-trams-web2.onrender.com'
-  ];
-
   window.fetch = async (input, init) => {
-    const rawUrl = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
-    const matchedOrigin = PROD_ORIGINS.find(origin => rawUrl.startsWith(origin));
-
-    if (!matchedOrigin || typeof input !== 'string') {
+    if (typeof input !== 'string') {
       return nativeFetch(input, init);
     }
 
-    const pathAndQuery = rawUrl.slice(matchedOrigin.length);
-    const firstOrigin = preferredApiOrigin && PROD_ORIGINS.includes(preferredApiOrigin)
-      ? preferredApiOrigin
-      : matchedOrigin;
-    const fallbackOrigin = PROD_ORIGINS.find(o => o !== firstOrigin) || firstOrigin;
+    const targetUrl = input.startsWith(LEGACY_WORKER_URL)
+      ? `${DIRECT_RENDER_URL}${input.slice(LEGACY_WORKER_URL.length)}`
+      : input;
+
+    if (!targetUrl.startsWith(DIRECT_RENDER_URL)) {
+      return nativeFetch(targetUrl, init);
+    }
 
     try {
-      const res = await nativeFetch(`${firstOrigin}${pathAndQuery}`, init);
-      if ((res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504) && fallbackOrigin !== firstOrigin) {
-        const retryRes = await nativeFetch(`${fallbackOrigin}${pathAndQuery}`, init);
-        if (retryRes.ok || retryRes.status !== 429) {
-          preferredApiOrigin = fallbackOrigin;
-          return retryRes;
-        }
+      const res = await nativeFetch(targetUrl, init);
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return nativeFetch(targetUrl, init);
       }
       return res;
-    } catch (err) {
-      if (fallbackOrigin !== firstOrigin) {
-        const retryRes = await nativeFetch(`${fallbackOrigin}${pathAndQuery}`, init);
-        preferredApiOrigin = fallbackOrigin;
-        return retryRes;
-      }
-      throw err;
+    } catch {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return nativeFetch(targetUrl, init);
     }
   };
 };
