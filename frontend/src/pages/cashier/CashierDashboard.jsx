@@ -328,7 +328,7 @@ const CashierDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-2 font-mono">
-                ₱{totalTodayCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                ₱{Number(totalTodayCollected || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
               </p>
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Official Municipal Treasury receipts</p>

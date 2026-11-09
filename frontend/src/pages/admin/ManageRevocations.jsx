@@ -552,7 +552,7 @@ const ManageRevocations = () => {
                       <td className="p-3.5">
                         <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{v.sanction?.type}</span>
                         {v.sanction?.fineAmount > 0 && (
-                          <p className="text-orange-700 dark:text-orange-400 font-mono font-medium">Fine: ₱{v.sanction.fineAmount.toLocaleString()}</p>
+                          <p className="text-orange-700 dark:text-orange-400 font-mono font-medium">Fine: ₱{Number(v.sanction?.fineAmount || 0).toLocaleString()}</p>
                         )}
                         {v.sanction?.suspensionDays > 0 && (
                           <p className="text-[#6B6761] dark:text-[#A8A29E] text-[11px]">{v.sanction.suspensionDays} days suspension</p>
@@ -1025,11 +1025,11 @@ const ManageRevocations = () => {
             <form onSubmit={handleSettleViolationSubmit} className="space-y-3.5 text-xs">
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <p className="text-[10px] uppercase font-bold text-[#6B6761] dark:text-[#A8A29E]">Citation Target</p>
-                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{settleModal.violation.plateNo}</p>
-                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Offense: {settleModal.violation.violationType}</p>
-                {settleModal.violation.sanction?.fineAmount > 0 && (
+                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{settleModal.violation?.plateNo}</p>
+                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Offense: {settleModal.violation?.violationType}</p>
+                {settleModal.violation?.sanction?.fineAmount > 0 && (
                   <p className="text-orange-700 dark:text-orange-400 font-mono font-bold mt-1">
-                    Fine to Settle: ₱{settleModal.violation.sanction.fineAmount.toLocaleString()}
+                    Fine to Settle: ₱{Number(settleModal.violation?.sanction?.fineAmount || 0).toLocaleString()}
                   </p>
                 )}
               </div>

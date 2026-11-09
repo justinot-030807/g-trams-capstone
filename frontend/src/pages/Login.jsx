@@ -6,7 +6,7 @@ import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
-import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
+import { unwrapGoogleProfile, isValidContact, resilientApiFetch } from '../utils/googleAuthUtils';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -73,14 +73,14 @@ const Login = () => {
     }, 8000);
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/login', {
+      const response = await resilientApiFetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
       clearTimeout(slowNetworkTimer);
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
         handleAuthSuccess(data);
@@ -214,9 +214,9 @@ const Login = () => {
           </div>
 
           {/* RIGHT COLUMN: CLEAN FORM PANEL */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white dark:bg-[#1C1917] min-h-full">
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-5 sm:pt-8 md:pt-12 pb-6 sm:pb-10 bg-white dark:bg-[#1C1917] min-h-full">
             <div className="w-full max-w-md">
-              <div className="mb-4 sm:mb-5">
+              <div className="mb-5 sm:mb-6">
                 <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] tracking-tight leading-tight">
                   Welcome back
                 </h1>
@@ -227,7 +227,7 @@ const Login = () => {
               </div>
 
               {error && (
-                <div className={`mb-3 text-xs font-bold rounded-lg p-3 text-center shadow-xs animate-shake tracking-wide ${
+                <div className={`mb-4 text-xs font-bold rounded-lg p-3 text-center shadow-xs animate-shake tracking-wide ${
                   error.toLowerCase().includes('google')
                     ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 leading-relaxed'
                     : 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400'
@@ -241,16 +241,11 @@ const Login = () => {
                 </div>
               )}
 
-              <form onSubmit={handleLogin} className="space-y-2.5 sm:space-y-3.5">
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
-                      Email, Phone, o Recovery Contact
-                    </label>
-                    <span className="text-[10px] font-semibold text-[#D4AF37]">
-                      May Recovery Support
-                    </span>
-                  </div>
+                  <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
+                    Email or Phone Number
+                  </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                       <User size={18} />
@@ -267,16 +262,13 @@ const Login = () => {
                       spellCheck="false"
                       required
                       className={inputClasses}
-                      placeholder="Email, 0912..., o recovery email/phone"
+                      placeholder="Enter email or phone number"
                     />
                   </div>
-                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-tight">
-                    Nawala ang inyong email o SIM? Maaari ring gamitin ang inyong <strong>Recovery Email</strong> o <strong>Recovery Phone</strong>.
-                  </p>
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center mb-1">
+                  <div className="flex justify-between items-center mb-1.5">
                     <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
                       Password
                     </label>
@@ -304,7 +296,7 @@ const Login = () => {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  <div className="text-right mt-1">
+                  <div className="text-right mt-1.5">
                     <Link 
                       to="/forgot-password" 
                       className="text-xs sm:text-sm font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline transition-colors"
@@ -318,7 +310,7 @@ const Login = () => {
                   <button
                     type="submit"
                     disabled={isLoading || lockoutSeconds > 0}
-                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 sm:py-3 rounded-lg text-base font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px] sm:min-h-[48px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 sm:py-3 rounded-lg text-base font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px] sm:min-h-[48px]"
                   >
                     {isLoading ? (
                       <>
@@ -335,7 +327,7 @@ const Login = () => {
               </form>
 
               {/* DIVIDER */}
-              <div className="flex items-center gap-3 my-2 sm:my-3">
+              <div className="flex items-center gap-3 my-4">
                 <div className="flex-1 h-px bg-[#E4E1DC] dark:bg-[#2E2A27]" />
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E]">OR</span>
                 <div className="flex-1 h-px bg-[#E4E1DC] dark:bg-[#2E2A27]" />
@@ -371,7 +363,7 @@ const Login = () => {
                 />
               </div>
 
-              <div className="mt-2.5 pt-2 sm:mt-4 sm:pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-center">
+              <div className="mt-5 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-center">
                 <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
                   Don't have an account?{' '}
                   <Link to="/register" className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline">

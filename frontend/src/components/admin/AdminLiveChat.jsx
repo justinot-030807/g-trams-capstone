@@ -17,7 +17,13 @@ const AdminLiveChat = () => {
   const messagesContainerRef = useRef(null);
   
   const API_URL = import.meta.env.VITE_API_URL || '';
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}') || {};
+    } catch {
+      return {};
+    }
+  })();
 
   const getHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('token')}`,

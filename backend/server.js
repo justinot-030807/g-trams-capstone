@@ -54,12 +54,17 @@ const ALLOWED_ORIGINS = [
     ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL.replace(/\/$/, '')] : [])
 ];
 
+const isOriginAllowed = (origin) => {
+    if (!origin) return true;
+    if (ALLOWED_ORIGINS.includes(origin)) return true;
+    if (/^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.(vercel\.app|workers\.dev|onrender\.com)$/i.test(origin)) return true;
+    if (/^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/i.test(origin)) return true;
+    return false;
+};
+
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow mobile apps, curl, or server-to-server requests without Origin header
-        if (!origin) return callback(null, true);
-        
-        if (ALLOWED_ORIGINS.includes(origin)) {
+        if (isOriginAllowed(origin)) {
             return callback(null, true);
         }
         return callback(new Error(`Blocked by CORS policy: Origin ${origin} not allowed.`));

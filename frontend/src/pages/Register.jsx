@@ -30,7 +30,7 @@ import LguAdvisoryModal from '../components/common/LguAdvisoryModal';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
-import { unwrapGoogleProfile, isValidContact } from '../utils/googleAuthUtils';
+import { unwrapGoogleProfile, isValidContact, resilientApiFetch } from '../utils/googleAuthUtils';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -55,6 +55,7 @@ const Register = () => {
     role: 'operator'
   });
   const [otpCode, setOtpCode] = useState('');
+  const [otpChannel, setOtpChannel] = useState('primary'); // 'primary' | 'backup'
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -98,8 +99,7 @@ const Register = () => {
     const timer = setTimeout(async () => {
       setIsCheckingToda(true);
       try {
-        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
-        const res = await fetch(`${baseUrl}/api/v1/auth/verify-roster`, {
+        const res = await resilientApiFetch('/api/v1/auth/verify-roster', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -263,15 +263,15 @@ const Register = () => {
     setIsLoading(true);
     const slowTimer = setTimeout(() => setError('YOUR NETWORK SEEMS SLOW. PLEASE WAIT...'), 8000);
 
-    const rawContact = formData.contact.trim();
+    const rawContact = (formData.contact || '').trim();
     const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
-    const rawBackup = formData.backupContact.trim();
+    const rawBackup = (formData.backupContact || '').trim();
     const cleanBackup = rawBackup.includes('@') ? rawBackup.toLowerCase() : rawBackup.replace(/[\s\-()]/g, '');
 
     const payload = {
-      name: formData.name.trim(),
-      fullName: formData.name.trim(),
-      address: formData.address.trim(),
+      name: (formData.name || '').trim(),
+      fullName: (formData.name || '').trim(),
+      address: (formData.address || '').trim(),
       contact: cleanContact,
       backupContact: cleanBackup || formData.recoveryPhone || formData.recoveryEmail || '',
       recoveryEmail: formData.recoveryEmail?.trim()?.toLowerCase() || '',
@@ -279,12 +279,12 @@ const Register = () => {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
-      bodyNumber: formData.bodyNumber.trim().toUpperCase(),
+      bodyNumber: (formData.bodyNumber || '').trim().toUpperCase(),
       role: 'operator'
     };
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/register', {
+      const response = await resilientApiFetch('/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -292,6 +292,7 @@ const Register = () => {
       clearTimeout(slowTimer);
       const data = await response.json();
       if (response.ok) { 
+        setOtpChannel('primary');
         setSuccess('OTP CODE SENT SUCCESSFULLY!'); 
         setResendCooldown(60);
         setStep(2); 
@@ -318,20 +319,21 @@ const Register = () => {
     }
   };
 
-  const handleResendOTP = async () => {
-    if (resendCooldown > 0 || isLoading) return;
+  const handleResendOTP = async (targetChannel = otpChannel) => {
+    if (isLoading) return;
+    if (targetChannel === otpChannel && resendCooldown > 0) return;
     setError(''); setSuccess('');
     setIsLoading(true);
 
-    const rawContact = formData.contact.trim();
+    const rawContact = (formData.contact || '').trim();
     const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
     const rawBackup = (formData.backupContact || '').trim();
     const cleanBackup = rawBackup.includes('@') ? rawBackup.toLowerCase() : rawBackup.replace(/[\s\-()]/g, '');
 
     const payload = {
-      name: formData.name.trim(),
-      fullName: formData.name.trim(),
-      address: formData.address.trim(),
+      name: (formData.name || '').trim(),
+      fullName: (formData.name || '').trim(),
+      address: (formData.address || '').trim(),
       contact: cleanContact,
       backupContact: cleanBackup || formData.recoveryPhone || formData.recoveryEmail || '',
       recoveryEmail: formData.recoveryEmail?.trim()?.toLowerCase() || '',
@@ -339,19 +341,25 @@ const Register = () => {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
-      bodyNumber: formData.bodyNumber.trim().toUpperCase(),
-      role: 'operator'
+      bodyNumber: (formData.bodyNumber || '').trim().toUpperCase(),
+      role: 'operator',
+      useBackupContact: targetChannel === 'backup'
     };
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/register', {
+      const response = await resilientApiFetch('/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (response.ok) {
-        setSuccess('NEW OTP CODE SENT SUCCESSFULLY!');
+        setOtpChannel(targetChannel);
+        setSuccess(
+          targetChannel === 'backup'
+            ? 'OTP CODE SENT TO YOUR BACKUP CONTACT!'
+            : 'NEW OTP CODE SENT SUCCESSFULLY!'
+        );
         setResendCooldown(60);
       } else {
         const errorMsg = data.message || data.error || 'FAILED TO RESEND OTP.';
@@ -370,16 +378,16 @@ const Register = () => {
     setError(''); setSuccess('');
     setIsLoading(true);
 
-    const rawContact = formData.contact.trim();
+    const rawContact = (formData.contact || '').trim();
     const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/verify-otp', {
+      const response = await resilientApiFetch('/api/v1/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           contact: cleanContact, 
-          otp: otpCode.trim() 
+          otp: (otpCode || '').trim() 
         }),
       });
       const data = await response.json();
@@ -484,7 +492,9 @@ const Register = () => {
                 </h1>
                 <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2" />
                 <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-2 leading-relaxed">
-                  {step === 1 ? 'Create your operator account to apply online.' : `Enter the 6-digit OTP sent to ${formData.contact}`}
+                  {step === 1
+                    ? 'Create your operator account to apply online.'
+                    : `Enter the 6-digit OTP sent to ${otpChannel === 'backup' ? (formData.backupContact || formData.recoveryPhone || formData.recoveryEmail || formData.contact) : formData.contact}`}
                 </p>
               </div>
 
@@ -1055,7 +1065,7 @@ const Register = () => {
                   <div className="flex items-center justify-between pt-2">
                     <button 
                       type="button" 
-                      onClick={handleResendOTP} 
+                      onClick={() => handleResendOTP(otpChannel)} 
                       disabled={resendCooldown > 0 || isLoading}
                       className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
                     >
@@ -1069,6 +1079,30 @@ const Register = () => {
                       ← Change Info
                     </button>
                   </div>
+
+                  {/* Backup Contact OTP Switcher: Only during OTP verification if primary contact doesn't receive it */}
+                  {Boolean(formData.backupContact || formData.recoveryPhone || formData.recoveryEmail) && (
+                    <div className="mt-3 p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/80 dark:bg-[#14110F]/80">
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium leading-relaxed">
+                        {otpChannel === 'backup'
+                          ? `Kasalukuyang ipinapadala ang OTP sa inyong Backup Contact (${formData.backupContact || formData.recoveryPhone || formData.recoveryEmail}).`
+                          : 'Di gumagana o walang natanggap na OTP sa inyong primary contact?'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleResendOTP(otpChannel === 'backup' ? 'primary' : 'backup')}
+                        disabled={isLoading}
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline disabled:opacity-50 cursor-pointer"
+                      >
+                        <Phone size={13} />
+                        <span>
+                          {otpChannel === 'backup'
+                            ? `Ibalik sa Primary Contact (${formData.contact})`
+                            : `Ipadala ang OTP sa Backup Contact (${formData.backupContact || formData.recoveryPhone || formData.recoveryEmail})`}
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </form>
               )}
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, User, Lock } from 'lucide-react';
+import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, User, Lock, Phone, Mail } from 'lucide-react';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
+import { resilientApiFetch } from '../utils/googleAuthUtils';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -10,11 +11,35 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingBackup, setIsSendingBackup] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   
   const [contact, setContact] = useState('');
+  const [activeContactTarget, setActiveContactTarget] = useState('');
+  const [backupInfo, setBackupInfo] = useState({
+    hasBackupContact: false,
+    maskedBackupContact: '',
+    maskedPrimaryContact: '',
+    activeChannel: 'primary'
+  });
+  const [showManualRecoveryInput, setShowManualRecoveryInput] = useState(false);
+  const [manualRecoveryContact, setManualRecoveryContact] = useState('');
+
   const [otpCode, setOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown(prev => (prev > 1 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCooldown]);
 
   // Ensure light canvas consistency for auth view
   useEffect(() => {
@@ -31,7 +56,7 @@ const ForgotPassword = () => {
   }, []);
 
   const isValidContact = (value) => {
-    const trimmed = value.trim();
+    const trimmed = String(value || '').trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^(09|\+639)\d{9}$/;
     return emailRegex.test(trimmed) || phoneRegex.test(trimmed.replace(/[\s-]/g, ''));
@@ -50,24 +75,130 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/forgot-password', {
+      const response = await resilientApiFetch('/api/v1/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact }),
+        body: JSON.stringify({ contact: contact.trim() }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
-        setSuccess('OTP CODE SENT SUCCESSFULLY!');
+        setActiveContactTarget(data.destination || contact.trim());
+        setBackupInfo({
+          hasBackupContact: Boolean(data.hasBackupContact),
+          maskedBackupContact: data.maskedBackupContact || '',
+          maskedPrimaryContact: data.maskedPrimaryContact || contact.trim(),
+          activeChannel: data.recoveryUsed ? 'backup' : 'primary'
+        });
+        setShowManualRecoveryInput(false);
+        setResendCooldown(60);
+        setSuccess(data.message || 'OTP CODE SENT SUCCESSFULLY!');
         setStep(2); 
       } else {
         setError(data.message || 'ERROR FINDING ACCOUNT.');
       }
-    } catch (err) {
+    } catch {
       setError('CANNOT CONNECT TO THE SERVER.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSendToBackupContact = async (customRecoveryValue) => {
+    if (isSendingBackup || isLoading) return;
+    setError(''); setSuccess('');
+
+    const targetRecovery = typeof customRecoveryValue === 'string' && customRecoveryValue.trim()
+      ? customRecoveryValue.trim()
+      : '';
+
+    if (targetRecovery && !isValidContact(targetRecovery)) {
+      return setError('PLEASE ENTER A VALID RECOVERY EMAIL OR PHONE NUMBER.');
+    }
+
+    setIsSendingBackup(true);
+    try {
+      const wantBackup = targetRecovery ? true : (backupInfo.activeChannel !== 'backup');
+      const payload = targetRecovery
+        ? { contact: targetRecovery, useBackupContact: true }
+        : { contact: contact.trim(), useBackupContact: wantBackup };
+
+      const response = await resilientApiFetch('/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        if (targetRecovery) {
+          setActiveContactTarget(targetRecovery);
+          setBackupInfo(prev => ({
+            ...prev,
+            activeChannel: 'backup',
+            maskedBackupContact: targetRecovery
+          }));
+          setShowManualRecoveryInput(false);
+        } else {
+          setActiveContactTarget(
+            wantBackup
+              ? (data.destination || backupInfo.maskedBackupContact || 'Backup Contact')
+              : contact.trim()
+          );
+          setBackupInfo(prev => ({
+            ...prev,
+            hasBackupContact: Boolean(data.hasBackupContact ?? prev.hasBackupContact),
+            maskedBackupContact: data.maskedBackupContact || prev.maskedBackupContact,
+            activeChannel: wantBackup ? 'backup' : 'primary'
+          }));
+        }
+        setResendCooldown(60);
+        setSuccess(
+          data.message ||
+          (wantBackup
+            ? `OTP CODE SENT TO YOUR RECOVERY CONTACT (${targetRecovery || backupInfo.maskedBackupContact})!`
+            : `OTP CODE SENT TO YOUR PRIMARY CONTACT!`)
+        );
+      } else {
+        setError(data.message || 'COULD NOT SEND OTP TO RECOVERY CONTACT.');
+      }
+    } catch {
+      setError('CANNOT CONNECT TO THE SERVER.');
+    } finally {
+      setIsSendingBackup(false);
+    }
+  };
+
+  const handleResendCurrentOTP = async () => {
+    if (resendCooldown > 0 || isLoading || isSendingBackup) return;
+    setError(''); setSuccess('');
+    setIsSendingBackup(true);
+
+    try {
+      const isUsingManual = activeContactTarget && activeContactTarget !== contact.trim() && ! activeContactTarget.includes('*');
+      const payload = isUsingManual
+        ? { contact: activeContactTarget }
+        : { contact: contact.trim(), useBackupContact: backupInfo.activeChannel === 'backup' };
+
+      const response = await resilientApiFetch('/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        setResendCooldown(60);
+        setSuccess('NEW OTP CODE SENT SUCCESSFULLY!');
+      } else {
+        setError(data.message || 'FAILED TO RESEND OTP CODE.');
+      }
+    } catch {
+      setError('CANNOT CONNECT TO THE SERVER.');
+    } finally {
+      setIsSendingBackup(false);
     }
   };
 
@@ -89,17 +220,21 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/auth/reset-password', {
+      const lookupContact = (activeContactTarget && !activeContactTarget.includes('*'))
+        ? activeContactTarget
+        : contact.trim();
+
+      const response = await resilientApiFetch('/api/v1/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contact: contact,
+          contact: lookupContact,
           otp: otpCode,
           newPassword: newPassword
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
         setSuccess('PASSWORD RESET SUCCESSFUL! REDIRECTING...');
@@ -109,7 +244,7 @@ const ForgotPassword = () => {
       } else {
         setError(data.message || 'INVALID OR EXPIRED OTP.');
       }
-    } catch (err) {
+    } catch {
       setError('CANNOT CONNECT TO THE SERVER.');
     } finally {
       setIsLoading(false);
@@ -144,8 +279,8 @@ const ForgotPassword = () => {
               </h2>
               <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-1.5 leading-relaxed">
                 {step === 1 
-                  ? 'Ilagay ang inyong email, mobile number, o ang itinalagang Recovery Email/Phone number upang matanggap ang 6-digit reset code.' 
-                  : `Ilagay ang 6-digit verification code na ipinadala sa inyo at gumawa ng bagong password.`}
+                  ? 'Enter your registered email or phone number to receive a 6-digit verification code.' 
+                  : `Enter the 6-digit verification code sent to ${activeContactTarget || contact} and create your new password.`}
               </p>
             </div>
 
@@ -163,14 +298,9 @@ const ForgotPassword = () => {
             {step === 1 && (
               <form onSubmit={handleRequestOTP} className="space-y-4">
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
-                      Email, Mobile, o Recovery Contact
-                    </label>
-                    <span className="text-[10px] font-bold text-[#D4AF37]">
-                      May Recovery Support
-                    </span>
-                  </div>
+                  <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
+                    Email or Phone Number
+                  </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                       <User size={18} />
@@ -181,12 +311,9 @@ const ForgotPassword = () => {
                       onChange={(e) => setContact(e.target.value)}
                       required 
                       className={`w-full pl-10 pr-3.5 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium min-h-[46px]`} 
-                      placeholder="Email, 0912..., o recovery email/phone" 
+                      placeholder="Enter email or phone number" 
                     />
                   </div>
-                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1.5 leading-tight">
-                    Nawala o hindi mabuksan ang inyong email? Ilagay ang inyong <strong>Recovery Email</strong> o <strong>Recovery Phone</strong> upang doon ipadala ang reset code.
-                  </p>
                 </div>
                 
                 <div className="pt-2">
@@ -234,6 +361,65 @@ const ForgotPassword = () => {
                     className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2.5 text-center text-2xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-[0.3em] font-mono outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] shadow-inner" 
                     placeholder="000000" 
                   />
+
+                  {/* OTP Recovery Contact Switcher (When primary contact is inaccessible/not working) */}
+                  <div className="mt-3 p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
+                    {backupInfo.hasBackupContact ? (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium leading-snug">
+                          {backupInfo.activeChannel === 'backup'
+                            ? `Code sent to your Backup Contact (${backupInfo.maskedBackupContact}).`
+                            : 'Di na gumagana o walang natanggap sa primary contact?'}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={isSendingBackup}
+                          onClick={() => handleSendToBackupContact()}
+                          className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline shrink-0 text-left sm:text-right cursor-pointer disabled:opacity-50"
+                        >
+                          {isSendingBackup
+                            ? 'Sending...'
+                            : backupInfo.activeChannel === 'backup'
+                            ? 'Send to Primary Contact instead'
+                            : `Receive OTP via Backup (${backupInfo.maskedBackupContact})`}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                            Di na gumagana ang {contact}?
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowManualRecoveryInput(!showManualRecoveryInput)}
+                            className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline shrink-0 cursor-pointer"
+                          >
+                            {showManualRecoveryInput ? 'Cancel' : 'Receive OTP sa Backup Contact'}
+                          </button>
+                        </div>
+                        {showManualRecoveryInput && (
+                          <div className="mt-2.5 flex gap-2">
+                            <input
+                              type="text"
+                              value={manualRecoveryContact}
+                              onChange={(e) => setManualRecoveryContact(e.target.value)}
+                              placeholder="Enter recovery email or 0912..."
+                              className="flex-1 px-3 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B]"
+                            />
+                            <button
+                              type="button"
+                              disabled={isSendingBackup || !manualRecoveryContact.trim()}
+                              onClick={() => handleSendToBackupContact(manualRecoveryContact)}
+                              className="px-3 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold shrink-0 cursor-pointer disabled:opacity-50"
+                            >
+                              {isSendingBackup ? 'Sending...' : 'Send OTP'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -274,7 +460,7 @@ const ForgotPassword = () => {
                   </div>
                 </div>
                 
-                <div className="pt-2 space-y-2">
+                <div className="pt-2 space-y-2.5">
                   <button 
                     type="submit" 
                     disabled={isLoading}
@@ -291,13 +477,23 @@ const ForgotPassword = () => {
                     )}
                   </button>
                   
-                  <button 
-                    type="button" 
-                    onClick={() => setStep(1)} 
-                    className="w-full text-center text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] py-1 transition-colors cursor-pointer"
-                  >
-                    ← Change Contact Info
-                  </button>
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0 || isLoading || isSendingBackup}
+                      onClick={handleResendCurrentOTP}
+                      className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
+                    >
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setStep(1)} 
+                      className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
+                    >
+                      ← Change Contact Info
+                    </button>
+                  </div>
                 </div>
               </form>
             )}

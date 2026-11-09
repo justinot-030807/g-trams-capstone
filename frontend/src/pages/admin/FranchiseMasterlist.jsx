@@ -182,7 +182,7 @@ const FranchiseMasterlist = () => {
       });
 
       if (response.ok) {
-        showToast(`Record successfully ${confirmModal.data.action.toLowerCase()}d!`);
+        showToast(`Record successfully ${(confirmModal.data?.action || 'update').toLowerCase()}d!`);
         setConfirmModal({ isOpen: false, data: null });
         fetchFranchises(); 
       } else {
@@ -893,11 +893,11 @@ const FranchiseMasterlist = () => {
             </div>
             
             <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
-              {confirmModal.data.action} Record?
+              {confirmModal.data?.action} Record?
             </h3>
             
             <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
-              Are you sure you want to {confirmModal.data.action.toLowerCase()} the franchise record of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{confirmModal.data.name}</strong>?
+              Are you sure you want to {(confirmModal.data?.action || '').toLowerCase()} the franchise record of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{confirmModal.data?.name}</strong>?
             </p>
 
             <div className="flex gap-2">

@@ -242,7 +242,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
           <div className="space-y-5 text-xs">
 
             {/* AI Document Discrepancy & Modification Notice */}
-            {franchise.aiDiscrepancies && franchise.aiDiscrepancies.length > 0 && (
+            {Array.isArray(franchise?.aiDiscrepancies) && franchise.aiDiscrepancies.length > 0 && (
               <div className="border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/40 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
@@ -257,7 +257,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                   The applicant modified the following field(s) differing from the values detected on uploaded document images:
                 </p>
                 <div className="space-y-1.5">
-                  {franchise.aiDiscrepancies.map((d, i) => (
+                  {(franchise.aiDiscrepancies || []).map((d, i) => (
                     <div key={i} className="bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1 text-xs">
                       <div className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">{d.label || d.field}</div>
                       <div className="grid grid-cols-2 gap-2 text-[11px]">
@@ -545,15 +545,15 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Amount Assessed / Paid</span>
-                  <span className="text-xs font-bold text-slate-900">₱{franchise.amountPaid ? franchise.amountPaid.toLocaleString() : '500'}.00</span>
+                  <span className="text-xs font-bold text-slate-900">₱{franchise?.amountPaid != null ? Number(franchise.amountPaid).toLocaleString() : '500'}.00</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Cashier In-Charge</span>
-                  <span className="text-xs font-semibold text-slate-800">{franchise.cashierName || 'Treasury Staff'}</span>
+                  <span className="text-xs font-semibold text-slate-800">{franchise?.cashierName || 'Treasury Staff'}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Payment Date</span>
-                  <span className="text-xs font-semibold text-slate-800">{formatDate(franchise.paymentDate)}</span>
+                  <span className="text-xs font-semibold text-slate-800">{formatDate(franchise?.paymentDate)}</span>
                 </div>
               </div>
             </div>
@@ -580,7 +580,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 <p className="text-[10px] font-bold uppercase text-slate-400 mb-8">Official Recommendation:</p>
                 <div className="border-t border-slate-800 pt-1 flex flex-col items-center">
                   <span className="text-xs font-black uppercase text-[#7A1B22]">
-                    {franchise.status === 'Pending' ? 'RECOMMENDED FOR APPROVAL' : franchise.status.toUpperCase()}
+                    {franchise?.status === 'Pending' ? 'RECOMMENDED FOR APPROVAL' : (franchise?.status || '').toUpperCase()}
                   </span>
                   <p className="text-[10px] text-slate-500">Subject to Final Executive Signing</p>
                 </div>

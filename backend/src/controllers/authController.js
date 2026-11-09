@@ -65,7 +65,8 @@ const getContactQueryFilter = (contactStr) => {
             $or: [
                 { contact: { $regex: new RegExp(`^${escaped}$`, 'i') } },
                 { email: { $regex: new RegExp(`^${escaped}$`, 'i') } },
-                { recoveryEmail: { $regex: new RegExp(`^${escaped}$`, 'i') } }
+                { recoveryEmail: { $regex: new RegExp(`^${escaped}$`, 'i') } },
+                { backupContact: { $regex: new RegExp(`^${escaped}$`, 'i') } }
             ]
         };
     }
@@ -87,6 +88,7 @@ const getContactQueryFilter = (contactStr) => {
             const esc = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             orConditions.push({ contact: { $regex: new RegExp(`^${esc}$`, 'i') } });
             orConditions.push({ recoveryPhone: { $regex: new RegExp(`^${esc}$`, 'i') } });
+            orConditions.push({ backupContact: { $regex: new RegExp(`^${esc}$`, 'i') } });
         }
     });
     return orConditions.length === 1 ? orConditions[0] : { $or: orConditions };
@@ -251,19 +253,23 @@ exports.register = async (req, res) => {
         
         await user.save();
 
+        const useBackupForOtp = Boolean(req.body.useBackupContact && normalizedBackupContact);
+        const otpTargetContact = useBackupForOtp ? normalizedBackupContact : normalizedContact;
+        const isOtpTargetEmail = otpTargetContact.includes('@');
+
         if (process.env.NODE_ENV !== 'test') {
             try {
-                if (isEmail) {
+                if (isOtpTargetEmail) {
                     await sendEmail({ 
-                        email: normalizedContact, 
+                        email: otpTargetContact, 
                         subject: 'G-TRAMS: Account Verification OTP', 
-                        message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` 
+                        message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.${useBackupForOtp ? '\n\n(Sent via your Backup Contact)' : ''}` 
                     });
                 } else {
                     await axios.post('https://api.semaphore.co/api/v4/messages', { 
                         apikey: process.env.SEMAPHORE_API_KEY, 
-                        number: normalizedContact, 
-                        message: `G-TRAMS: Your verification code is ${otp}. Do not share this with anyone.` 
+                        number: otpTargetContact, 
+                        message: `G-TRAMS: Your verification code is ${otp}. Do not share this with anyone.${useBackupForOtp ? ' (Backup Contact)' : ''}` 
                     }, { timeout: 5000 });
                 }
             } catch (sendErr) {
@@ -271,7 +277,7 @@ exports.register = async (req, res) => {
             }
         }
         if (process.env.NODE_ENV !== 'production') {
-            console.log(`[DEV/TEST OTP] Registration OTP for ${normalizedContact}: ${otp}`);
+            console.log(`[DEV/TEST OTP] Registration OTP for ${otpTargetContact}: ${otp}`);
         }
 
         res.status(201).json({ 
@@ -511,19 +517,35 @@ exports.forgotPassword = async (req, res) => {
         user.otpExpire = Date.now() + 10 * 60 * 1000;
         await user.save();
 
-        // Check if applicant used recovery contact
+        // Check if applicant used recovery contact or explicitly requested backup contact in Step 2
         const isEmailInput = rawContact.includes('@');
+        const backupTargetRaw = String(user.backupContact || user.recoveryEmail || user.recoveryPhone || '').trim();
+        const primaryTargetRaw = String(user.contact || user.email || rawContact).trim();
+        const requestBackup = Boolean(req.body.useBackupContact);
+
         let destination = normalizedContact;
         let isRecovery = false;
 
         const cleanRawDigits = rawContact.replace(/[\s\-()]/g, '');
         const cleanUserRecPhone = (user.recoveryPhone || '').replace(/[\s\-()]/g, '');
+        const cleanUserBackupDigits = backupTargetRaw.replace(/[\s\-()]/g, '');
 
-        if (isEmailInput && user.recoveryEmail && rawContact.toLowerCase() === user.recoveryEmail.toLowerCase()) {
+        if (requestBackup && backupTargetRaw) {
+            destination = backupTargetRaw.includes('@')
+                ? backupTargetRaw.toLowerCase()
+                : normalizeContact(backupTargetRaw);
+            isRecovery = true;
+        } else if (isEmailInput && user.recoveryEmail && rawContact.toLowerCase() === user.recoveryEmail.toLowerCase()) {
             destination = user.recoveryEmail.toLowerCase();
+            isRecovery = true;
+        } else if (isEmailInput && backupTargetRaw.includes('@') && rawContact.toLowerCase() === backupTargetRaw.toLowerCase()) {
+            destination = backupTargetRaw.toLowerCase();
             isRecovery = true;
         } else if (!isEmailInput && cleanUserRecPhone && (cleanRawDigits === cleanUserRecPhone || normalizeContact(rawContact) === normalizeContact(user.recoveryPhone))) {
             destination = normalizeContact(user.recoveryPhone);
+            isRecovery = true;
+        } else if (!isEmailInput && cleanUserBackupDigits && !backupTargetRaw.includes('@') && (cleanRawDigits === cleanUserBackupDigits || normalizeContact(rawContact) === normalizeContact(backupTargetRaw))) {
+            destination = normalizeContact(backupTargetRaw);
             isRecovery = true;
         }
 
@@ -554,10 +576,13 @@ exports.forgotPassword = async (req, res) => {
 
             return res.status(200).json({ 
                 message: isRecovery 
-                    ? `OTP recovery code sent successfully to your Recovery ${isDestEmail ? 'Email' : 'Phone'} (${destination}).` 
+                    ? `OTP recovery code sent successfully to your Recovery ${isDestEmail ? 'Email' : 'Phone'} (${maskContactInfo(destination)}).` 
                     : `OTP sent successfully to your ${isDestEmail ? 'email' : 'SMS'}.`,
                 recoveryUsed: isRecovery,
                 destination: isRecovery ? destination : undefined,
+                hasBackupContact: Boolean(backupTargetRaw && backupTargetRaw.toLowerCase() !== primaryTargetRaw.toLowerCase()),
+                maskedBackupContact: backupTargetRaw ? maskContactInfo(backupTargetRaw) : '',
+                maskedPrimaryContact: primaryTargetRaw ? maskContactInfo(primaryTargetRaw) : '',
                 ...(process.env.NODE_ENV === 'test' ? { testOtp: otp } : {})
             });
         } catch (err) {
@@ -859,7 +884,7 @@ exports.googleAuth = async (req, res) => {
 
         // 1. If tokenCandidate is provided, determine if it is a JWT (ID token) or access token
         if (tokenCandidate) {
-            const isLikelyJwt = typeof tokenCandidate === 'string' && tokenCandidate.split('.').length >= 2;
+            const isLikelyJwt = typeof tokenCandidate === 'string' && tokenCandidate.split('.').length === 3 && tokenCandidate.startsWith('eyJ');
 
             if (isLikelyJwt) {
                 // Verify with Google's tokeninfo API for id_token
@@ -904,7 +929,7 @@ exports.googleAuth = async (req, res) => {
         }
 
         // 2. If access token is provided (or tokenCandidate was an access token) and email not yet resolved
-        const rawAccessToken = accessTokenCandidate || (!email && tokenCandidate && !tokenCandidate.includes('.') ? tokenCandidate : null);
+        const rawAccessToken = accessTokenCandidate || (!email && tokenCandidate ? tokenCandidate : null);
         if (!email && rawAccessToken) {
             // Check Google tokeninfo for access_token
             try {
@@ -991,8 +1016,8 @@ exports.googleAuth = async (req, res) => {
             }
         }
 
-        // In production, require that a valid Google credential or token was supplied
-        if (process.env.NODE_ENV === 'production' && !tokenCandidate && !accessTokenCandidate) {
+        // In production, require that a valid Google credential, access token, or signed onboardingToken was supplied
+        if (process.env.NODE_ENV === 'production' && !tokenCandidate && !accessTokenCandidate && !req.body.onboardingToken && !profileCandidate?.onboardingToken) {
             return res.status(400).json({ message: 'Valid Google credential or token is required in production.' });
         }
 
@@ -1260,7 +1285,7 @@ exports.submitAppeal = async (req, res) => {
     }
 };
 // Mask contact info for public QR verification compliance with RA 10173
-const maskContactInfo = (val) => {
+function maskContactInfo(val) {
     if (!val) return '';
     const str = String(val).trim();
     if (str.includes('@')) {

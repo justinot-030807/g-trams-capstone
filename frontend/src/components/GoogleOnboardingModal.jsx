@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST, getTodasForBarangay } from '../utils/constants';
+import { resilientApiFetch } from '../utils/googleAuthUtils';
 import TermsPolicyModal from './common/TermsPolicyModal';
 import LguAdvisoryModal from './common/LguAdvisoryModal';
 import { 
@@ -62,8 +63,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
     const timer = setTimeout(async () => {
       setIsCheckingToda(true);
       try {
-        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
-        const res = await fetch(`${baseUrl}/api/v1/auth/verify-roster`, {
+        const res = await resilientApiFetch('/api/v1/auth/verify-roster', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -169,15 +169,14 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       }
     };
 
-    const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
     try {
-      const res = await fetch(`${baseUrl}/api/v1/auth/google`, {
+      const res = await resilientApiFetch('/api/v1/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         if (res.status === 403 && data.advisory) {

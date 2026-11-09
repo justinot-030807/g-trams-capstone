@@ -668,8 +668,8 @@ const ValidateTODA = () => {
                                               </td>
                                             </tr>
                                           ) : (
-                                            toda.latestSubmission.extractedMembers.filter(Boolean).map((m, idx) => {
-                                              const todaUsers = users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === toda.name.toUpperCase());
+                                            (toda.latestSubmission?.extractedMembers || []).filter(Boolean).map((m, idx) => {
+                                              const todaUsers = users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === (toda.name || '').toUpperCase());
                                               const matchedUser = todaUsers.find(u => isNameMatch(u.name, m?.name)) ||
                                                                   users.find(u => isNameMatch(u.name, m?.name));
                                               const displayName = m?.operatorName || m?.name || '';
@@ -748,14 +748,14 @@ const ValidateTODA = () => {
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
-                                    {toda.members.length === 0 ? (
+                                    {(toda.members || []).length === 0 ? (
                                       <tr>
                                         <td colSpan="5" className="p-6 text-center text-[#6B6761] dark:text-[#A8A29E]">
                                           No registered user accounts found for this association.
                                         </td>
                                       </tr>
                                     ) : (
-                                      toda.members.map((member) => {
+                                      (toda.members || []).map((member) => {
                                         const franchise = getMemberFranchise(member);
                                         const isCompliant = franchise && franchise.status === 'Active';
 

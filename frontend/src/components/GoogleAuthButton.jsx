@@ -1,25 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, ShieldCheck, X } from 'lucide-react';
-import { unwrapGoogleProfile } from '../utils/googleAuthUtils';
+import { unwrapGoogleProfile, resilientApiFetch, DEFAULT_GOOGLE_CLIENT_ID } from '../utils/googleAuthUtils';
+
+const formatAuthErrorMessage = (err, fallbackMsg) => {
+  const raw = typeof err === 'string' ? err : (err?.message || '');
+  if (!raw || raw === 'Failed to fetch' || raw.includes('NetworkError') || raw.includes('Load failed')) {
+    return 'Unable to connect to the server. Please check your internet connection and try again.';
+  }
+  return raw || fallbackMsg;
+};
 
 const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH GOOGLE', className = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  const [clientId, setClientId] = useState(envClientId || '');
+  const [clientId, setClientId] = useState(envClientId || DEFAULT_GOOGLE_CLIENT_ID);
 
-  // Fetch client ID from backend (Render) if not set in frontend env (Vercel)
+  // Fetch client ID from backend (and warm up server) on mount
   useEffect(() => {
-    if (!envClientId) {
-      fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google-client-id`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.clientId) {
-            setClientId(data.clientId);
-          }
-        })
-        .catch(err => console.warn('Could not fetch google-client-id from server:', err));
-    }
+    resilientApiFetch('/api/v1/auth/google-client-id', {}, 2)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.clientId) {
+          setClientId(data.clientId);
+        }
+      })
+      .catch(err => console.warn('Could not fetch google-client-id from server:', err));
   }, [envClientId]);
 
   // Handle One Tap credential response (ID Token JWT)
@@ -35,7 +41,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
+      const res = await resilientApiFetch('/api/v1/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -47,7 +53,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
         })
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) { 
         if (data.accountDeactivated) { 
           if (onError) onError(data); 
@@ -64,6 +70,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
       if (data.isNewUser) {
         onNewUser({
           ...(data.googleProfile || decodedProfile || {}),
+          onboardingToken: data.googleProfile?.onboardingToken || data.onboardingToken || undefined,
           credential: response.credential,
           idToken: response.credential
         });
@@ -72,7 +79,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
       }
     } catch (err) {
       console.error('Google One Tap error:', err);
-      if (onError) onError(err.message || 'Failed to sign in with Google.');
+      if (onError) onError(formatAuthErrorMessage(err, 'Failed to sign in with Google.'));
     } finally {
       setIsLoading(false);
     }
@@ -186,18 +193,17 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               }
             }
 
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/google`, {
+            const res = await resilientApiFetch('/api/v1/auth/google', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
                 accessToken: tokenResponse.access_token,
-                token: tokenResponse.access_token,
                 email: directGoogleProfile?.email || undefined,
                 googleProfile: directGoogleProfile
               })
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (!res.ok) { 
               if (data.accountDeactivated) { 
                 if (onError) onError(data); 
@@ -214,6 +220,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
             if (data.isNewUser) {
               onNewUser({
                 ...(data.googleProfile || directGoogleProfile || {}),
+                onboardingToken: data.googleProfile?.onboardingToken || data.onboardingToken || undefined,
                 accessToken: tokenResponse.access_token
               });
             } else {
@@ -221,7 +228,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
             }
           } catch (err) {
             console.error('Google OAuth error:', err);
-            if (onError) onError(err.message || 'Failed to complete Google Sign-In.');
+            if (onError) onError(formatAuthErrorMessage(err, 'Failed to complete Google Sign-In.'));
           } finally {
             setIsLoading(false);
           }

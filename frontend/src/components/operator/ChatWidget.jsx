@@ -33,7 +33,13 @@ const ChatWidget = ({ inline = false }) => {
   };
 
   const API_URL = import.meta.env.VITE_API_URL || '';
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}') || {};
+    } catch {
+      return {};
+    }
+  })();
   const currentUserId = currentUser._id || currentUser.id || localStorage.getItem('userId');
 
   const getHeaders = () => ({

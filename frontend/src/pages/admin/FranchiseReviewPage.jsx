@@ -1216,7 +1216,7 @@ const FranchiseReviewPage = () => {
                       The applicant modified the following field(s) differing from values detected on uploaded document images:
                     </p>
                     <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-                      {currentApp.aiDiscrepancies.map((d, i) => {
+                      {(currentApp?.aiDiscrepancies || []).map((d, i) => {
                         const targetTabKey = getDocKeyForDiscrepancy(d);
                         return (
                           <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1.5 shadow-2xs">
@@ -2360,10 +2360,10 @@ const FranchiseReviewPage = () => {
                 <AlertCircle size={38} className="text-amber-500 mx-auto mb-2" />
                 <h3 className="font-semibold text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">No Attached Document</h3>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                  The applicant has not uploaded a file for {currentDoc.short} yet.
+                  The applicant has not uploaded a file for {currentDoc?.short || 'this document'} yet.
                 </p>
               </div>
-            ) : currentDoc.url.toLowerCase().includes('.pdf') ? (
+            ) : (currentDoc?.url || '').toLowerCase().includes('.pdf') ? (
               <iframe
                 src={currentDoc.url}
                 title={currentDoc.label}

@@ -637,7 +637,7 @@ const CashierSettings = () => {
                   Total Collected
                 </p>
                 <p className="text-lg sm:text-xl font-bold font-mono text-[#9E2A2B] dark:text-[#D4AF37]">
-                  ₱{totalAmountCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₱{Number(totalAmountCollected || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>

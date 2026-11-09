@@ -28,10 +28,11 @@ const {
 } = require('../controllers/authController');
 
 // Rate limiters
-const loginLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many login attempts. Please try again after 15 minutes.' });
-const registerLimiter = authRateLimiter({ max: 10, windowMs: 15 * 60 * 1000, message: 'Too many registration attempts. Please try again after 15 minutes.' });
-const forgotLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many password reset requests. Please try again after 15 minutes.' });
-const resetLimiter = authRateLimiter({ max: 5, windowMs: 15 * 60 * 1000, message: 'Too many password reset attempts. Please try again after 15 minutes.' });
+const loginLimiter = authRateLimiter({ max: 15, windowMs: 15 * 60 * 1000, message: 'Too many login attempts. Please try again after 15 minutes.' });
+const googleAuthLimiter = authRateLimiter({ max: 30, windowMs: 15 * 60 * 1000, message: 'Too many Google sign-in attempts. Please try again shortly.' });
+const registerLimiter = authRateLimiter({ max: 20, windowMs: 15 * 60 * 1000, message: 'Too many registration attempts. Please try again after 15 minutes.' });
+const forgotLimiter = authRateLimiter({ max: 10, windowMs: 15 * 60 * 1000, message: 'Too many password reset requests. Please try again after 15 minutes.' });
+const resetLimiter = authRateLimiter({ max: 10, windowMs: 15 * 60 * 1000, message: 'Too many password reset attempts. Please try again after 15 minutes.' });
 
 // Profile & Heartbeat routes
 router.get('/profile', protect, getProfile);
@@ -46,7 +47,7 @@ const { registerSchema, verifyRosterSchema, verifyOtpSchema, loginSchema, forgot
 router.post('/verify-roster', registerLimiter, validate(verifyRosterSchema), verifyTodaRoster);
 
 // Google OAuth route
-router.post('/google', loginLimiter, validate(googleAuthSchema), googleAuth);
+router.post('/google', googleAuthLimiter, validate(googleAuthSchema), googleAuth);
 router.get('/google-client-id', (req, res) => {
     const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '';
     res.status(200).json({ clientId });

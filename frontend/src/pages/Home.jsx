@@ -9,10 +9,11 @@ import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import LandingGuideCarousel from '../components/common/LandingGuideCarousel';
 import LandingAnnouncements from '../components/common/LandingAnnouncements';
+import { resilientApiFetch } from '../utils/googleAuthUtils';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({ operators: null, todas: null, franchises: null });
+  const [stats, setStats] = useState({ operators: 0, todas: 0, franchises: 0 });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   // Fetch real-time public stats directly from live database
@@ -20,14 +21,14 @@ const Home = () => {
     let isMounted = true;
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/public-stats`);
+        const res = await resilientApiFetch('/api/v1/auth/public-stats');
         if (res.ok) {
           const data = await res.json();
-          if (isMounted) {
+          if (isMounted && data) {
             setStats({
-              operators: typeof data.operators === 'number' ? data.operators : 0,
-              todas: typeof data.todas === 'number' ? data.todas : 0,
-              franchises: typeof data.franchises === 'number' ? data.franchises : 0
+              operators: typeof data.operators === 'number' ? data.operators : (Number(data.operators) || 0),
+              todas: typeof data.todas === 'number' ? data.todas : (Number(data.todas) || 0),
+              franchises: typeof data.franchises === 'number' ? data.franchises : (Number(data.franchises) || 0)
             });
           }
         }
@@ -170,7 +171,7 @@ const Home = () => {
               {/* Stat 1: Registered Operators */}
               <div className="flex flex-col items-center">
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
-                  {isLoadingStats ? '—' : stats.operators.toLocaleString()}
+                  {isLoadingStats ? '—' : Number(stats?.operators ?? 0).toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
                   Registered Operators
@@ -180,7 +181,7 @@ const Home = () => {
               {/* Stat 2: Accredited TODAs */}
               <div className="flex flex-col items-center">
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tight tabular-nums drop-shadow-md">
-                  {isLoadingStats ? '—' : stats.todas.toLocaleString()}
+                  {isLoadingStats ? '—' : Number(stats?.todas ?? 0).toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
                   Accredited TODAs
@@ -190,7 +191,7 @@ const Home = () => {
               {/* Stat 3: Active Franchises */}
               <div className="flex flex-col items-center">
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
-                  {isLoadingStats ? '—' : stats.franchises.toLocaleString()}
+                  {isLoadingStats ? '—' : Number(stats?.franchises ?? 0).toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
                   Active Franchises

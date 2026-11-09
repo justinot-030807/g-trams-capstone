@@ -17,11 +17,19 @@ const ALLOWED_SOCKET_ORIGINS = [
   ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL.replace(/\/$/, '')] : [])
 ];
 
+const isSocketOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (ALLOWED_SOCKET_ORIGINS.includes(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.(vercel\.app|workers\.dev|onrender\.com)$/i.test(origin)) return true;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/i.test(origin)) return true;
+  return false;
+};
+
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin || ALLOWED_SOCKET_ORIGINS.includes(origin)) {
+        if (isSocketOriginAllowed(origin)) {
           return callback(null, true);
         }
         callback(new Error('CORS not allowed'));

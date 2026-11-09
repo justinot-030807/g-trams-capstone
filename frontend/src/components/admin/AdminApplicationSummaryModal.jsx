@@ -138,7 +138,7 @@ const AdminApplicationSummaryModal = ({
                 <div className="flex items-center gap-1.5 min-w-0">
                   <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
                   <span className="font-bold text-amber-800 dark:text-amber-300 truncate">
-                    AI Discrepancy Flagged ({franchise.aiDiscrepancies.length})
+                    AI Discrepancy Flagged ({(franchise?.aiDiscrepancies || []).length})
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300 shrink-0">
@@ -149,7 +149,7 @@ const AdminApplicationSummaryModal = ({
 
               {isAiNoticeOpen && (
                 <div className="p-3 pt-0 border-t border-amber-200 dark:border-amber-900/40 space-y-1 mt-1">
-                  {franchise.aiDiscrepancies.map((d, i) => (
+                  {(franchise?.aiDiscrepancies || []).map((d, i) => (
                     <div key={i} className="text-[11px] flex items-center justify-between gap-2 border-b border-amber-200/60 dark:border-amber-900/40 pb-1 last:border-0 last:pb-0">
                       <span className="font-medium text-slate-700 dark:text-slate-300">{d.label || d.field}:</span>
                       <span className="text-right">

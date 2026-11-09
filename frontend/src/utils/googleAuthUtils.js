@@ -101,6 +101,7 @@ export const unwrapGoogleProfile = (raw) => {
 
   const credential = (rawObj && (rawObj.credential || rawObj.idToken)) || (typeof raw === 'string' && raw.includes('.') ? raw : '') || (p && (p.credential || p.idToken)) || '';
   const accessToken = (rawObj && (rawObj.accessToken || rawObj.access_token)) || (p && (p.accessToken || p.access_token)) || '';
+  const onboardingToken = (rawObj && rawObj.onboardingToken) || (p && p.onboardingToken) || '';
 
   return { 
     email, 
@@ -109,8 +110,62 @@ export const unwrapGoogleProfile = (raw) => {
     googleId, 
     credential: credential || undefined, 
     idToken: credential || undefined, 
-    accessToken: accessToken || undefined 
+    accessToken: accessToken || undefined,
+    onboardingToken: onboardingToken || undefined
   };
+};
+
+export const DEFAULT_GOOGLE_CLIENT_ID = '371606618285-og7vq7cn9gb0kpacq171fhf1jclvlhgq.apps.googleusercontent.com';
+
+export const getCandidateBaseUrls = () => {
+  const primary = String(import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+  const isLocal = primary.includes('localhost') || primary.includes('127.0.0.1');
+  if (isLocal) {
+    return [primary];
+  }
+  const candidates = [
+    primary,
+    'https://gtrams-backend.justinelachica114.workers.dev',
+    'https://g-trams-web2.onrender.com'
+  ].filter(Boolean);
+  return [...new Set(candidates)];
+};
+
+/**
+ * Resilient fetch wrapper that handles Render cold-start hibernation (429 text/plain),
+ * mobile browser popup focus network transitions, and workers.dev fallback to onrender.com.
+ */
+export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const baseUrls = getCandidateBaseUrls();
+  let lastError = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const baseUrl = baseUrls[attempt % baseUrls.length];
+    const url = `${baseUrl}${cleanPath}`;
+    try {
+      const res = await fetch(url, options);
+      const contentType = res.headers?.get ? (res.headers.get('content-type') || '') : '';
+
+      // Detect Render edge hibernate rate-limit (429 text/plain) or gateway cold-start (502/504)
+      const isEdgeHibernate429 = res.status === 429 && !contentType.includes('application/json');
+      const isBadGateway = res.status === 502 || res.status === 504;
+
+      if ((isEdgeHibernate429 || isBadGateway) && attempt < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1200 * (attempt + 1)));
+        continue;
+      }
+
+      return res;
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 900 * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError || new Error('Unable to connect to the server.');
 };
 
 export const isValidContact = (value) => {

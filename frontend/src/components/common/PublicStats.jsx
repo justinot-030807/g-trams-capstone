@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Users, Building2, FileCheck2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { resilientApiFetch } from '../../utils/googleAuthUtils';
 
 const CountUp = ({ end, duration = 2000 }) => {
   const [count, setCount] = useState(0);
   const countRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
+  const safeEnd = Number(end) || 0;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -32,19 +34,19 @@ const CountUp = ({ end, duration = 2000 }) => {
       const progress = timestamp - startTime;
       
       const easeOutQuart = 1 - Math.pow(1 - Math.min(progress / duration, 1), 4);
-      setCount(Math.floor(easeOutQuart * end));
+      setCount(Math.floor(easeOutQuart * safeEnd));
 
       if (progress < duration) {
         requestAnimationFrame(animateCount);
       } else {
-        setCount(end);
+        setCount(safeEnd);
       }
     };
     
     requestAnimationFrame(animateCount);
-  }, [end, duration, isVisible]);
+  }, [safeEnd, duration, isVisible]);
 
-  return <span ref={countRef}>{count.toLocaleString()}</span>;
+  return <span ref={countRef}>{Number(count || 0).toLocaleString()}</span>;
 };
 
 const PublicStats = () => {
@@ -53,13 +55,13 @@ const PublicStats = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/public-stats`);
+        const response = await resilientApiFetch('/api/v1/auth/public-stats');
         if (response.ok) {
           const data = await response.json();
           setStats({
-            operators: data.operators || 0,
-            todas: data.todas || 0,
-            franchises: data.franchises || 0
+            operators: Number(data?.operators) || 0,
+            todas: Number(data?.todas) || 0,
+            franchises: Number(data?.franchises) || 0
           });
         }
       } catch (err) {
