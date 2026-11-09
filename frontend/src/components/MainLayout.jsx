@@ -29,7 +29,7 @@ const MainLayout = ({ children, hideNav = false }) => {
   // Reset body classes when entering main layout
   useEffect(() => {
     document.documentElement.classList.remove('auth-view');
-    document.body.classList.remove('auth-view');
+    document.body.classList.remove('auth-view'); document.documentElement.style.backgroundColor = ''; document.body.style.backgroundColor = '';
   }, []);
 
   // Ensure sidebar is closed on mobile when bottom navigation is active
@@ -137,13 +137,13 @@ const MainLayout = ({ children, hideNav = false }) => {
 
   if (hideNav) {
     return (
-      <div className="min-h-[100dvh] bg-neutral-bg dark:bg-neutral-bg-dark text-neutral-text dark:text-neutral-text-dark flex flex-col transition-colors duration-200 print:bg-white print:text-black">
+      <div className="min-h-[100dvh] w-full max-w-full overflow-x-hidden bg-neutral-bg dark:bg-neutral-bg-dark text-neutral-text dark:text-neutral-text-dark flex flex-col transition-colors duration-200 print:bg-white print:text-black">
         {isOffline && (
           <div className="bg-red-600 text-white text-center py-2 px-4 text-[11px] font-bold z-50 shadow-md">
             ⚠️ Offline ka ngayon. Limitado ang ibang features.
           </div>
         )}
-        <main className="flex-1 w-full flex flex-col">
+        <main className="flex-1 w-full max-w-full overflow-x-hidden flex flex-col">
           {children}
         </main>
       </div>

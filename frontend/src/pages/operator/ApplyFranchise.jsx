@@ -2441,7 +2441,7 @@ const ApplyFranchise = () => {
   if (isCapacityFull && !isRenewing && !isReapplying) {
     return (
       <MainLayout hideNav={true}>
-        <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
+        <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
           {/* Top Hero Banner */}
           <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
             <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
@@ -2571,7 +2571,7 @@ const ApplyFranchise = () => {
       )}
 
       {/* Full-Screen Immersive Form Layout */}
-      <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
+      <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
         
         {/* Top Hero Banner */}
         <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
@@ -4470,7 +4470,7 @@ const ApplyFranchise = () => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Operator Name</span>
                       <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || '—'}</span>
@@ -4532,7 +4532,7 @@ const ApplyFranchise = () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Make &amp; Model</span>
                       <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.make || '—'} ({formData.made || '—'})</span>
@@ -4547,11 +4547,11 @@ const ApplyFranchise = () => {
                     </div>
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Engine / Motor No.</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.motorNo || '—'}</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.motorNo || '—'}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Chassis Serial / VIN</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.chassisNo || '—'}</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.chassisNo || '—'}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">LTO OR/CR Expiry</span>
@@ -4590,7 +4590,7 @@ const ApplyFranchise = () => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Association</span>
                       <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaName || 'NON-TODA'}</span>
@@ -4636,7 +4636,7 @@ const ApplyFranchise = () => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Serial Number</span>
                       <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaSerialNo || '—'}</span>
@@ -4659,7 +4659,7 @@ const ApplyFranchise = () => {
                     </div>
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Civil Status &bull; TIN</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaCivilStatus || '—'} &bull; {formData.cedulaTin || '—'}</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.cedulaCivilStatus || '—'} &bull; {formData.cedulaTin || '—'}</span>
                     </div>
                   </div>
                 </div>

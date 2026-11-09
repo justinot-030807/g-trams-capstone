@@ -1321,7 +1321,12 @@ const scanDocument = async (req, res) => {
                 console.warn('[scanDocument] Gemini extraction error:', err.message);
             }
         } else {
-            console.warn('[scanDocument] GEMINI_API_KEY is not defined in environment variables.');
+            console.warn('[scanDocument] GEMINI_API_KEY is not defined in environment variables. Running fallback OCR engine...');
+            try {
+                extracted = await extractWithGemini(base64Data, mimeType, docType);
+            } catch (err) {
+                console.warn('[scanDocument] Fallback OCR extraction error:', err.message);
+            }
         }
 
         console.log(`[scanDocument] Extraction result for ${docType}:`, extracted);
