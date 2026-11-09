@@ -948,7 +948,7 @@ const UserManagement = () => {
               <h2 className="text-base font-semibold text-white">{selectedUser.name}</h2>
               <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
                 <span className="text-[#D4AF37] text-xs font-semibold uppercase tracking-wider bg-black/25 px-2 py-0.5 rounded border border-[#D4AF37]/30">
-                  {selectedUser.role.replace('_', ' ')}
+                  {(selectedUser?.role || 'operator').replace('_', ' ')}
                 </span>
                 {modalActivity && (
                   <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium border ${modalActivity.badgeClass}`}>

@@ -22,7 +22,7 @@ const MaintenanceMode = () => {
           setStatusMessage('Maintenance mode has ended! Redirecting...');
           setTimeout(() => {
             const role = (localStorage.getItem('role') || '').toLowerCase();
-            if (role === 'admin' || role === 'administrator') {
+            if (role.includes('admin')) { navigate('/admin-dashboard'); } else if (role.includes('bplo')) { navigate('/bplo-dashboard'); } else if (role.includes('cashier')) { navigate('/cashier-dashboard'); return; } if (role.includes('admin')) {
               navigate('/admin-dashboard');
             } else if (localStorage.getItem('token')) {
               navigate('/operator-dashboard');

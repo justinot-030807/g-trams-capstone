@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
-  RefreshCw, AlertCircle, CheckCircle, CheckCircle2, Clock, Loader2, 
+  RefreshCw, AlertCircle, AlertTriangle, CheckCircle, CheckCircle2, Clock, Loader2, 
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle, Banknote, Award,
   Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
@@ -1197,7 +1197,7 @@ const OperatorDashboard = () => {
                     );
                   })()}
 
-                  {unit?.status === 'Ready for Pickup' && (() => {
+                  {unit?.status === 'For Payment' && (() => {
                     const info = getApplicationValidityInfo(unit);
                     return (
                       <div className="mb-3.5 bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 border border-[#F59E0B]/30 p-3 rounded-lg space-y-1.5">
@@ -1269,7 +1269,7 @@ const OperatorDashboard = () => {
               >
                 {unit?.status === 'Expired' ? (
                   <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
-                ) : unit?.status === 'Active' ? (
+                ) : (unit?.status === 'Active' || unit?.status === 'Active - Under Warning') ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
                     <button 
                       onClick={() => { setECopyUnit(unit); setIsECopyModalOpen(true); }} 

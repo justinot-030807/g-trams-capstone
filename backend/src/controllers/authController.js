@@ -821,7 +821,7 @@ exports.toggleUserStatus = async (req, res) => {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
         
-        if (user.role === 'admin') {
+        if (['admin', 'administrator', 'system_admin', 'system admin'].includes(String(user.role || '').toLowerCase().trim())) {
             return res.status(400).json({ message: 'Cannot deactivate an administrator account.' });
         }
 

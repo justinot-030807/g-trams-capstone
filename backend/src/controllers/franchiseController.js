@@ -564,7 +564,7 @@ const cancelMyFranchise = async (req, res) => {
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
         if (!franchise.operator || franchise.operator.toString() !== req.user._id.toString()) return res.status(401).json({ message: 'Not authorized to cancel this application' });
         
-        if (!['Pending', 'For Signing', 'Ready for Pickup'].includes(franchise.status)) {
+        if (!['Pending', 'For Payment', 'For Signing', 'Ready for Pickup'].includes(franchise.status)) {
             return res.status(400).json({ message: 'Only pending or unreleased applications can be cancelled.' });
         }
 
@@ -606,7 +606,7 @@ const requestFranchiseCancellation = async (req, res) => {
         }
 
         // Only Active franchises can undergo voluntary cancellation
-        if (franchise.status !== 'Active') {
+        if (!['Active', 'Active - Under Warning'].includes(franchise.status)) {
             return res.status(400).json({ 
                 message: `Cannot request voluntary cancellation: Current status is '${franchise.status}'. Only Active franchises can be voluntarily cancelled.` 
             });

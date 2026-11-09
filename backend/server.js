@@ -19,8 +19,8 @@ const server = http.createServer(app);
 // Enable Payload Compression (Gzip/Brotli)
 app.use(compression());
 
-// Global Timeout: 15 seconds max per request to prevent hanging
-app.use(timeoutMiddleware(15000));
+// Global Timeout: 45 seconds max per request to prevent hanging while allowing OCR/backups/SMTP
+app.use(timeoutMiddleware(45000));
 
 app.set('trust proxy', 1);
 connectDB();
@@ -128,9 +128,12 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/config/swagger');
 app.use(`${BASE_URI}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Health check route for Render/Uptime monitors
+// Health check routes for Render/Uptime monitors
 app.get('/', (req, res) => {
     res.status(200).json({ message: 'G-TRAMS API is running smoothly.' });
+});
+app.get(`${BASE_URI}/health`, (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'G-TRAMS API is running smoothly.' });
 });
 
 const { errorHandler, notFound } = require('./src/middleware/errorMiddleware');

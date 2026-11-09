@@ -150,7 +150,7 @@ const CashierDashboard = () => {
       officialReceiptNo: '',
       payerName: franchise.fullName || '',
       amountPaid: franchise.amountPaid || 500,
-      paymentMethod: 'Cash',
+      paymentMethod: localStorage.getItem('cashier_default_payment') || 'Cash',
       remarks: 'Payment settled at Municipal Treasury Window'
     });
     setIsPayModalOpen(true);
@@ -199,6 +199,9 @@ const CashierDashboard = () => {
           cashierName: currentCashierName
         });
         setIsReceiptOpen(true);
+        if (localStorage.getItem('cashier_auto_print') === 'true') {
+          setTimeout(() => window.print(), 300);
+        }
 
         fetchQueue();
       } else {
@@ -603,6 +606,9 @@ const CashierDashboard = () => {
                             onClick={() => {
                               setReceiptData(item);
                               setIsReceiptOpen(true);
+        if (localStorage.getItem('cashier_auto_print') === 'true') {
+          setTimeout(() => window.print(), 300);
+        }
                             }}
                             className="px-3.5 py-2 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3E3834] text-[#1F1D1B] dark:text-[#EAE7E1] rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 min-h-[44px] border border-[#E4E1DC] dark:border-[#3E3834]"
                           >
@@ -712,10 +718,12 @@ const CashierDashboard = () => {
                   </label>
                   <select
                     value={payFormData.paymentMethod}
-                    disabled
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-white outline-none cursor-not-allowed opacity-90 min-h-[44px]"
+                    onChange={(e) => setPayFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] min-h-[44px]"
                   >
                     <option value="Cash">Cash (Over-the-Counter)</option>
+                    <option value="GCash / Maya">GCash / Maya (Digital Wallet)</option>
+                    <option value="Treasury Check">Treasury Check</option>
                   </select>
                 </div>
 
@@ -776,7 +784,27 @@ const CashierDashboard = () => {
       {/* ========================================================================= */}
       {isReceiptOpen && receiptData && (
         <div className="fixed inset-0 z-[260] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
-          <div className="bg-white text-[#1F1D1B] rounded-lg p-6 sm:p-8 max-w-lg w-full shadow-xl space-y-6 relative max-h-[90vh] overflow-y-auto border border-[#E4E1DC]">
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              #official-receipt-print-area, #official-receipt-print-area * { visibility: visible !important; }
+              #official-receipt-print-area {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                overflow: visible !important;
+                box-shadow: none !important;
+                border: 1px solid #000 !important;
+                padding: 24px !important;
+                background: #fff !important;
+              }
+              .no-print { display: none !important; }
+            }
+          `}</style>
+          <div id="official-receipt-print-area" className="bg-white text-[#1F1D1B] rounded-lg p-6 sm:p-8 max-w-lg w-full shadow-xl space-y-6 relative max-h-[90vh] overflow-y-auto border border-[#E4E1DC]">
             
             {/* Header / Seal */}
             <div className="text-center space-y-1 border-b-2 border-[#1F1D1B] pb-4">
@@ -872,7 +900,7 @@ const CashierDashboard = () => {
             </div>
 
             {/* Modal Buttons */}
-            <div className="flex items-center gap-2 pt-2 border-t border-[#E4E1DC]">
+            <div className="no-print flex items-center gap-2 pt-2 border-t border-[#E4E1DC]">
               <button
                 type="button"
                 onClick={() => setIsReceiptOpen(false)}

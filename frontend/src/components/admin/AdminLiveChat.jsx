@@ -261,9 +261,13 @@ const AdminLiveChat = () => {
 
   const getThreadOperator = (thread) => {
     if (!thread || !thread.participants) return { name: 'Operator', email: '', picture: '' };
+    const isSupportRole = (r) => {
+      const norm = String(r || '').toLowerCase().trim().replace(/_/g, ' ');
+      return norm.includes('admin') || norm === 'bplo staff';
+    };
     const op = thread.participants.find(p => 
       String(p._id || p) !== String(currentUser._id || currentUser.id) &&
-      !String(p.role || '').toLowerCase().includes('admin')
+      !isSupportRole(p.role)
     ) || thread.participants.find(p => String(p._id || p) !== String(currentUser._id || currentUser.id));
     return op || { name: 'Operator', email: '', picture: '' };
   };

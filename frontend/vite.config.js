@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, '.', '')
   const rawApiUrl = (env.VITE_API_URL || 'https://g-trams-web2.onrender.com').trim().replace(/\/+$/, '')
   const resolvedApiUrl = rawApiUrl.includes('workers.dev')
     ? 'https://g-trams-web2.onrender.com'

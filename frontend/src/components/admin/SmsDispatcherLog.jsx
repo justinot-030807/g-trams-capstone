@@ -74,9 +74,10 @@ const SmsDispatcherLog = () => {
       }
     };
 
-    window.addEventListener('gtrams_sms_dispatched', (e) => handleSmsDispatched(e.detail));
+    const onSmsDispatched = (e) => handleSmsDispatched(e.detail);
+    window.addEventListener('gtrams_sms_dispatched', onSmsDispatched);
     return () => {
-      window.removeEventListener('gtrams_sms_dispatched', (e) => handleSmsDispatched(e.detail));
+      window.removeEventListener('gtrams_sms_dispatched', onSmsDispatched);
     };
   }, []);
 

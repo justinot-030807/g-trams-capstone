@@ -816,7 +816,7 @@ const handleAddSingleMember = async (req, res) => {
 // @route   POST /api/v1/toda/members/single AND /api/v1/toda/members/individual
 // @desc    Add a single individual member directly to active accredited TODA roster
 // @access  Private (TODA President, BPLO Staff, Admin)
-router.post('/members/single', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'admin'), handleAddSingleMember);
-router.post('/members/individual', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'admin'), handleAddSingleMember);
+router.post('/members/single', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'system_admin', 'admin'), handleAddSingleMember);
+router.post('/members/individual', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'system_admin', 'admin'), handleAddSingleMember);
 
 module.exports = router;

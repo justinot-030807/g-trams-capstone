@@ -868,7 +868,7 @@ const SubmitMembers = () => {
                                 />
                               ) : (
                                 <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-xs shrink-0 shadow-xs">
-                                  {member.name.charAt(0).toUpperCase()}
+                                  {(member.name || member.operatorName || '?').charAt(0).toUpperCase()}
                                 </div>
                               )}
                               <div className="min-w-0">

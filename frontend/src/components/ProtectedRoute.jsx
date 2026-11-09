@@ -22,20 +22,24 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const userStr = localStorage.getItem('user');
 
   // Verify JWT structure, expiration, and authoritative role claim
+  let isTokenInvalidOrExpired = false;
   if (token) {
     try {
       const decoded = jwtDecode(token);
-      if (decoded?.exp && decoded.exp * 1000 < Date.now()) {
-        clearAuthStorage();
-        return <Navigate to="/login" replace />;
-      }
-      if (decoded?.role) {
+      const currentTimestampSec = Math.floor(new Date().getTime() / 1000);
+      if (decoded?.exp && decoded.exp < currentTimestampSec) {
+        isTokenInvalidOrExpired = true;
+      } else if (decoded?.role) {
         userRole = decoded.role;
       }
     } catch {
-      clearAuthStorage();
-      return <Navigate to="/login" replace />;
+      isTokenInvalidOrExpired = true;
     }
+  }
+
+  if (isTokenInvalidOrExpired) {
+    clearAuthStorage();
+    return <Navigate to="/login" replace />;
   }
 
   // Fallback: get role from user object if missing from storage key

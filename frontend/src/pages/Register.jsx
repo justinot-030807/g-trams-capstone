@@ -435,8 +435,12 @@ const Register = () => {
       }
     }
 
-    if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system admin') { navigate('/admin-dashboard'); } else if (normalizedRole === 'bplo staff') { navigate('/bplo-dashboard'); } else if (normalizedRole === 'cashier') { navigate('/cashier-dashboard'); } else if (false) {
+    if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system admin') {
       navigate('/admin-dashboard');
+    } else if (normalizedRole === 'bplo staff') {
+      navigate('/bplo-dashboard');
+    } else if (normalizedRole === 'cashier') {
+      navigate('/cashier-dashboard');
     } else {
       navigate('/operator-dashboard');
     }

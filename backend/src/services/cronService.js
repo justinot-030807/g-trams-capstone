@@ -241,6 +241,20 @@ function startFranchiseCronJobs() {
         timezone: MANILA_TIMEZONE
     });
 
+    // Keepalive ping every 10 minutes on Render to prevent cold-start sleep during daytime/UAT
+    if (process.env.NODE_ENV !== 'test') {
+        const https = require('https');
+        const keepAliveUrl = `${(process.env.RENDER_EXTERNAL_URL || 'https://g-trams-web2.onrender.com').replace(/\/+$/, '')}/api/v1/health`;
+        cron.schedule('*/10 * * * *', () => {
+            https.get(keepAliveUrl, (res) => {
+                res.resume();
+            }).on('error', () => {});
+        }, {
+            scheduled: true,
+            timezone: MANILA_TIMEZONE
+        });
+    }
+
     return midnightTask;
 }
 

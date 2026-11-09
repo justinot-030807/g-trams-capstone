@@ -354,7 +354,7 @@ const CashierSettings = () => {
             {/* Header */}
             <div className="flex items-center gap-3 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="w-14 h-14 rounded-full bg-[#9E2A2B] text-white border-2 border-[#D4AF37] flex items-center justify-center font-bold text-xl shadow-xs shrink-0">
-                {profileData.name.charAt(0).toUpperCase()}
+                {(profileData.name || 'C').charAt(0).toUpperCase()}
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">

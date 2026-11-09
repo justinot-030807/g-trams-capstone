@@ -10,8 +10,8 @@ router.use(protect);
 
 router.get('/unread-count', async (req, res) => {
   try {
-    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
-    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
+    const isUserAdmin = ['admin', 'administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'].includes(String(req.user.role || '').toLowerCase().trim().replace(/_/g, ' '));
+    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'] } }).select('_id');
     const adminIds = adminUsers.map(a => a._id);
 
     let threadQuery;
@@ -52,8 +52,8 @@ router.get('/unread-count', async (req, res) => {
 
 router.get('/threads', async (req, res) => {
   try {
-    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
-    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
+    const isUserAdmin = ['admin', 'administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'].includes(String(req.user.role || '').toLowerCase().trim().replace(/_/g, ' '));
+    const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'] } }).select('_id');
     const adminIds = adminUsers.map(a => a._id);
 
     let query;
@@ -94,7 +94,7 @@ router.get('/threads', async (req, res) => {
 
 router.get('/messages/:threadId', async (req, res) => {
   try {
-    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
+    const isUserAdmin = ['admin', 'administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'].includes(String(req.user.role || '').toLowerCase().trim().replace(/_/g, ' '));
     const threadFilter = isUserAdmin
       ? { _id: req.params.threadId }
       : { _id: req.params.threadId, $or: [ { participants: req.user._id }, { isAnnouncement: true } ] };
@@ -122,7 +122,7 @@ router.post('/messages', async (req, res) => {
     let thread = null;
     let recipients = [];
     const senderRole = String(req.user.role || '').toLowerCase();
-    const isSenderAdmin = senderRole.includes('admin');
+    const isSenderAdmin = senderRole.includes('admin') || senderRole === 'bplo_staff' || senderRole === 'bplo staff';
     
     if (threadId && threadId !== 'new') {
       thread = isSenderAdmin ? await ChatThread.findById(threadId) : await ChatThread.findOne({ _id: threadId, participants: req.user._id });
@@ -138,7 +138,7 @@ router.post('/messages', async (req, res) => {
       }
 
       if (!thread) {
-        const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } });
+        const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'] } });
         if (!admins.length) return res.status(400).json({ message: 'No admin found to receive message' });
         const adminIds = admins.map(a => a._id);
 
@@ -157,7 +157,7 @@ router.post('/messages', async (req, res) => {
     }
 
     // Ensure all current admins and sender are included in participants
-    const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
+    const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'] } }).select('_id');
     const existingStrs = new Set((thread.participants || []).map(p => p.toString()));
     let threadModified = false;
     for (const a of admins) {
@@ -201,7 +201,8 @@ router.post('/messages', async (req, res) => {
 
       // Check recipient's role
       const recUser = await User.findById(recId).select('role');
-      const isRecAdmin = recUser && String(recUser.role || '').toLowerCase().includes('admin');
+      const recRole = recUser ? String(recUser.role || '').toLowerCase().trim().replace(/_/g, ' ') : '';
+      const isRecAdmin = recRole.includes('admin') || recRole === 'bplo staff';
 
       // Do NOT create notifications or push notifications for fellow admins when an admin sends a message!
       if (isSenderAdmin && isRecAdmin) {
@@ -298,7 +299,7 @@ router.post('/messages', async (req, res) => {
 
 router.put('/messages/:threadId/read', async (req, res) => {
   try {
-    const isUserAdmin = String(req.user.role || '').toLowerCase().includes('admin');
+    const isUserAdmin = ['admin', 'administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'].includes(String(req.user.role || '').toLowerCase().trim().replace(/_/g, ' '));
     const threadFilter = isUserAdmin
       ? { _id: req.params.threadId }
       : { _id: req.params.threadId, $or: [ { participants: req.user._id }, { isAnnouncement: true } ] };
@@ -307,7 +308,7 @@ router.put('/messages/:threadId/read', async (req, res) => {
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
 
     if (isUserAdmin) {
-      const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin'] } }).select('_id');
+      const adminUsers = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'] } }).select('_id');
       const adminIds = adminUsers.map(a => a._id);
 
       // Admin reading: ONLY mark messages from OPERATORS (non-admins) as read!
@@ -350,7 +351,7 @@ router.post('/broadcast', async (req, res) => {
 
     // Ensure only admins can broadcast
     const role = String(req.user.role || '').toLowerCase().replace(/_/g, ' ');
-    if (role !== 'admin' && role !== 'administrator') {
+    if (!['admin', 'administrator', 'system admin', 'bplo staff'].includes(role)) {
       return res.status(403).json({ message: 'Only admins can broadcast messages' });
     }
 
@@ -459,7 +460,7 @@ router.delete('/messages/:messageId', async (req, res) => {
     if (!message) return res.status(404).json({ message: 'Message not found' });
     
     // Only sender or admin can delete
-    const isAdmin = String(req.user.role).toLowerCase().includes('admin');
+    const isAdmin = ['admin', 'administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'].includes(String(req.user.role).toLowerCase().trim().replace(/_/g, ' '));
     if (String(message.sender) !== String(req.user._id) && !isAdmin) {
       return res.status(403).json({ message: 'Unauthorized to delete this message' });
     }
@@ -473,7 +474,7 @@ router.delete('/messages/:messageId', async (req, res) => {
 
 router.delete('/threads/:threadId', async (req, res) => {
   try {
-    const isAdmin = String(req.user.role).toLowerCase().includes('admin');
+    const isAdmin = ['admin', 'administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'].includes(String(req.user.role).toLowerCase().trim().replace(/_/g, ' '));
     if (!isAdmin) return res.status(403).json({ message: 'Only admins can delete entire threads' });
 
     await ChatMessage.deleteMany({ thread: req.params.threadId });

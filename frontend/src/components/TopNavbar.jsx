@@ -50,7 +50,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
       if (isRoleSystemAdmin) defaultLink = '/admin-dashboard';
       if (isRoleBplo) defaultLink = '/bplo-dashboard';
       if (isRoleCashier) defaultLink = '/cashier-dashboard';
-      if (n?.type === 'chat') defaultLink = isRoleSystemAdmin ? '/admin/tickets' : '/operator-dashboard';
+      if (n?.type === 'chat') defaultLink = (isRoleSystemAdmin || isRoleBplo) ? '/admin/tickets' : '/operator-dashboard';
 
       return {
         id: n?._id,
@@ -418,7 +418,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-4 py-2 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] transition-colors"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.target.value.trim() !== '') {
-                  navigate(`/franchise-masterlist?search=${encodeURIComponent(e.target.value)}`);
+                  const q = encodeURIComponent(e.target.value.trim()); const norm = String(role || '').toLowerCase().trim().replace(/_/g, ' '); navigate(norm.includes('admin') ? `/user-management?search=${q}` : norm === 'cashier' ? `/cashier-dashboard?search=${q}` : norm === 'toda president' ? `/submit-members?search=${q}` : norm === 'bplo staff' ? `/franchise-masterlist?search=${q}` : '/operator-dashboard');
                 }
               }}
             />

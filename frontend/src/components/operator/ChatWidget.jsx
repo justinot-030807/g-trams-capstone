@@ -172,11 +172,12 @@ const ChatWidget = ({ inline = false }) => {
         if (activeThread._id && activeThread._id !== 'new') {
           payload.threadId = activeThread._id;
         }
-        const isCurrentAdmin = String(currentUser.role || '').toLowerCase().includes('admin');
+        const normCurrRole = String(currentUser.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        const isCurrentAdmin = normCurrRole.includes('admin') || normCurrRole === 'bplo staff';
         if (isCurrentAdmin) {
           const operatorParticipant = activeThread.participants?.find(p => {
-            const role = String(p.role || '').toLowerCase();
-            return !role.includes('admin');
+            const role = String(p.role || '').toLowerCase().trim().replace(/_/g, ' ');
+            return !role.includes('admin') && role !== 'bplo staff';
           });
           if (operatorParticipant) {
             payload.recipientId = operatorParticipant._id || operatorParticipant;
@@ -382,7 +383,8 @@ const ChatWidget = ({ inline = false }) => {
     return String(sid) === String(currentUserId);
   };
 
-  const isCurrentUserAdmin = String(currentUser?.role || localStorage.getItem('role') || '').toLowerCase().includes('admin');
+  const normWidgetRole = String(currentUser?.role || localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
+  const isCurrentUserAdmin = normWidgetRole.includes('admin') || normWidgetRole === 'bplo staff';
 
   const getThreadTitle = (t) => {
     if (!t) return 'GTRAMS Support';
@@ -393,8 +395,8 @@ const ChatWidget = ({ inline = false }) => {
       // For Admin: ONLY show Operator's name. Never list other admins!
       const operator = t.participants?.find(p => {
         if (!p) return false;
-        const role = String(p.role || '').toLowerCase();
-        return role && !role.includes('admin');
+        const role = String(p.role || '').toLowerCase().trim().replace(/_/g, ' ');
+        return role && !role.includes('admin') && role !== 'bplo staff';
       });
       return operator?.name || 'Operator';
     } else {
@@ -405,8 +407,8 @@ const ChatWidget = ({ inline = false }) => {
 
   const getSenderName = (sender) => {
     if (!sender) return 'User';
-    const sRole = String(sender.role || '').toLowerCase();
-    if (sRole.includes('admin')) {
+    const sRole = String(sender.role || '').toLowerCase().trim().replace(/_/g, ' ');
+    if (sRole.includes('admin') || sRole === 'bplo staff') {
       return 'GTRAMS Support';
     }
     return sender.name || 'Operator';

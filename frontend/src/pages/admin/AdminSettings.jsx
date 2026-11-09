@@ -5,7 +5,7 @@ import {
   CheckCircle2, AlertCircle, Moon, Sun, Globe, Clock, 
   Wallet, CalendarDays, AlertTriangle, ShieldCheck, 
   Bell, FileCheck, Shield, ChevronRight, ChevronLeft, X, Search, RefreshCw, Info,
-  ShieldAlert, Plus, Trash2, Scale, Database, RotateCcw, Download, UploadCloud, FileArchive, HardDrive
+  ShieldAlert, Plus, Trash2, Scale, Database, RotateCcw, Download, UploadCloud, FileArchive, HardDrive, Megaphone
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';

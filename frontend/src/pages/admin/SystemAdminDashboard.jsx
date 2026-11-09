@@ -114,7 +114,7 @@ const SystemAdminDashboard = () => {
               {action.replace(/_/g, ' ')}
             </span>
             <span className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] font-medium mt-0.5 truncate max-w-xs">
-              {log.performedByName ? `By ${log.performedByName}` : log.details?.name ? `Target: ${log.details.name}` : 'Administrative Operation'}
+              {log.actorName || log.performedByName ? `By ${log.actorName || log.performedByName}` : log.details?.name ? `Target: ${log.details.name}` : 'Administrative Operation'}
             </span>
           </div>
         );
@@ -319,7 +319,7 @@ const SystemAdminDashboard = () => {
             </div>
             <button
               type="button"
-              onClick={() => navigate('/admin/settings')}
+              onClick={() => navigate('/admin/audit-logs')}
               className="text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>View Full Audit Log</span>

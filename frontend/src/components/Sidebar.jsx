@@ -172,6 +172,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: t('nav.settings', 'Settings'), 
       path: '/operator/settings', 
       icon: <Settings size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.helpSupport', 'Help & Support'), 
+      path: '/help-support', 
+      icon: <HelpCircle size={18} /> 
     }
   ];
 
@@ -244,6 +250,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: 'System Reports', 
       path: '/system-reports', 
       icon: <Printer size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.supportTickets', 'Support & Tickets'), 
+      path: '/admin/tickets', 
+      icon: <HelpCircle size={18} />,
+      badge: chatUnreadCount > 0 ? chatUnreadCount : null
     },
     { 
       type: 'link', 

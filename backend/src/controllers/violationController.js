@@ -191,7 +191,7 @@ const recordViolation = async (req, res) => {
         // Check if the violation type itself is configured as Grave in settings
         const matchedTypeConfig = policyTypes.find(t => 
             (violationCode && t.code === violationCode) || 
-            t.name.toLowerCase() === violationType.toLowerCase()
+            (t?.name || '').toLowerCase() === String(violationType || '').toLowerCase()
         );
 
         const isGrave = Boolean(
