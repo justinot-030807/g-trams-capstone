@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
   FileCheck, ShieldAlert, LogOut, User, Printer, 
-  HelpCircle, ChevronDown, Folder, PanelLeftClose, Receipt
+  HelpCircle, ChevronDown, Folder, PanelLeftClose, Receipt, Shield
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSocket } from '../context/SocketContext';
@@ -187,6 +187,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: t('nav.userManagement', 'User Accounts'), 
       path: '/user-management', 
       icon: <Users size={18} /> 
+    },
+    { 
+      type: 'link', 
+      name: t('nav.auditLogs', 'Audit Trail & Logs'), 
+      path: '/admin/audit-logs', 
+      icon: <Shield size={18} /> 
     },
     { 
       type: 'link', 

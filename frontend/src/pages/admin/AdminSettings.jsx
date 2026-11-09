@@ -167,11 +167,27 @@ const AdminSettings = () => {
 
       if (listRes.ok) {
         const listData = await listRes.json();
-        setBackups(listData.backups || []);
+        const loadedBackups = Array.isArray(listData.backups) ? listData.backups : [];
+        setBackups(loadedBackups);
+        if (!statusRes.ok && loadedBackups.length > 0) {
+          const totalBytes = loadedBackups.reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
+          setBackupStats(prev => ({
+            ...prev,
+            totalBackups: loadedBackups.length,
+            latestBackupDate: loadedBackups[0]?.createdAt || null,
+            totalStorageFormatted: totalBytes > 1024 * 1024
+              ? `${(totalBytes / (1024 * 1024)).toFixed(2)} MB`
+              : `${(totalBytes / 1024).toFixed(1)} KB`
+          }));
+        }
       }
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         if (statusData.stats) setBackupStats(statusData.stats);
+      }
+      if (!listRes.ok && !statusRes.ok) {
+        const errData = await listRes.json().catch(() => ({}));
+        showToast(errData.message || 'Unable to load backup archives right now.', 'error');
       }
     } catch (err) {
       console.error('Error fetching backups:', err);
@@ -502,6 +518,8 @@ const AdminSettings = () => {
   useEffect(() => {
     if (activeTab === 'audit') {
       fetchAuditLogs(1, auditActionFilter, auditSearchQuery);
+    } else if (activeTab === 'backup') {
+      fetchBackups();
     }
   }, [activeTab]);
 
@@ -1003,19 +1021,6 @@ const AdminSettings = () => {
 
             {isSystemAdmin && (
               <button
-                onClick={() => { setActiveTab('audit'); fetchAuditLogs(1, auditActionFilter, auditSearchQuery); }}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
-                  activeTab === 'audit'
-                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
-                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
-                }`}
-              >
-                <Shield size={15} />
-                <span>Audit Trail & Security Logs</span>
-              </button>
-            )}
-            {isSystemAdmin && (
-              <button
                 onClick={() => { setActiveTab('backup'); fetchBackups(); }}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
                   activeTab === 'backup'
@@ -1113,7 +1118,7 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
                       Fiscal Year Cycle
@@ -1980,8 +1985,6 @@ const AdminSettings = () => {
               </div>
             </div>
           )}
-        </div>
-      )}
 
           {/* TAB: HOMEPAGE ANNOUNCEMENTS & ADVISORIES (IT Management) */}
           {activeTab === 'announcements' && isSystemAdmin && (
@@ -2350,6 +2353,8 @@ const AdminSettings = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
 
           {/* RESTORE CONFIRMATION SAFETY MODAL */}
           {restoreModal.isOpen && (

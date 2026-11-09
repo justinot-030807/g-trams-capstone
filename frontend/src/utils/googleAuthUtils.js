@@ -117,6 +117,8 @@ export const unwrapGoogleProfile = (raw) => {
 
 export const DEFAULT_GOOGLE_CLIENT_ID = '371606618285-og7vq7cn9gb0kpacq171fhf1jclvlhgq.apps.googleusercontent.com';
 
+let preferredApiOrigin = null;
+
 export const getCandidateBaseUrls = () => {
   const primary = String(import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
   const isLocal = primary.includes('localhost') || primary.includes('127.0.0.1');
@@ -124,48 +126,105 @@ export const getCandidateBaseUrls = () => {
     return [primary];
   }
   const candidates = [
+    preferredApiOrigin,
     primary,
-    'https://gtrams-backend.justinelachica114.workers.dev',
-    'https://g-trams-web2.onrender.com'
+    'https://g-trams-web2.onrender.com',
+    'https://gtrams-backend.justinelachica114.workers.dev'
   ].filter(Boolean);
   return [...new Set(candidates)];
 };
 
 /**
  * Resilient fetch wrapper that handles Render cold-start hibernation (429 text/plain),
- * mobile browser popup focus network transitions, and workers.dev fallback to onrender.com.
+ * shared proxy 429 rate-limits on workers.dev, and gateway cold-start (502/503/504).
  */
 export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const baseUrls = getCandidateBaseUrls();
   let lastError = null;
+  let lastResponse = null;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const baseUrl = baseUrls[attempt % baseUrls.length];
     const url = `${baseUrl}${cleanPath}`;
     try {
       const res = await fetch(url, options);
-      const contentType = res.headers?.get ? (res.headers.get('content-type') || '') : '';
+      lastResponse = res;
 
-      // Detect Render edge hibernate rate-limit (429 text/plain) or gateway cold-start (502/504)
-      const isEdgeHibernate429 = res.status === 429 && !contentType.includes('application/json');
-      const isBadGateway = res.status === 502 || res.status === 504;
+      const isRateLimited429 = res.status === 429;
+      const isBadGateway = res.status === 502 || res.status === 503 || res.status === 504;
 
-      if ((isEdgeHibernate429 || isBadGateway) && attempt < maxAttempts - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1200 * (attempt + 1)));
+      if ((isRateLimited429 || isBadGateway) && attempt < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 600 * (attempt + 1)));
         continue;
+      }
+
+      if (res.ok && !baseUrl.includes('localhost')) {
+        preferredApiOrigin = baseUrl;
       }
 
       return res;
     } catch (err) {
       lastError = err;
       if (attempt < maxAttempts - 1) {
-        await new Promise(resolve => setTimeout(resolve, 900 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
       }
     }
   }
 
+  if (lastResponse) return lastResponse;
   throw lastError || new Error('Unable to connect to the server.');
+};
+
+/**
+ * Installs a global window.fetch interceptor so any direct fetch(`${VITE_API_URL}/api/v1/...`)
+ * automatically falls back from workers.dev to g-trams-web2.onrender.com on HTTP 429 / 502 / 503 / 504 or network failure.
+ */
+export const installGlobalApiFetchInterceptor = () => {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function' || window.__gtramsFetchInstalled) {
+    return;
+  }
+  window.__gtramsFetchInstalled = true;
+  const nativeFetch = window.fetch.bind(window);
+
+  const PROD_ORIGINS = [
+    'https://gtrams-backend.justinelachica114.workers.dev',
+    'https://g-trams-web2.onrender.com'
+  ];
+
+  window.fetch = async (input, init) => {
+    const rawUrl = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
+    const matchedOrigin = PROD_ORIGINS.find(origin => rawUrl.startsWith(origin));
+
+    if (!matchedOrigin || typeof input !== 'string') {
+      return nativeFetch(input, init);
+    }
+
+    const pathAndQuery = rawUrl.slice(matchedOrigin.length);
+    const firstOrigin = preferredApiOrigin && PROD_ORIGINS.includes(preferredApiOrigin)
+      ? preferredApiOrigin
+      : matchedOrigin;
+    const fallbackOrigin = PROD_ORIGINS.find(o => o !== firstOrigin) || firstOrigin;
+
+    try {
+      const res = await nativeFetch(`${firstOrigin}${pathAndQuery}`, init);
+      if ((res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504) && fallbackOrigin !== firstOrigin) {
+        const retryRes = await nativeFetch(`${fallbackOrigin}${pathAndQuery}`, init);
+        if (retryRes.ok || retryRes.status !== 429) {
+          preferredApiOrigin = fallbackOrigin;
+          return retryRes;
+        }
+      }
+      return res;
+    } catch (err) {
+      if (fallbackOrigin !== firstOrigin) {
+        const retryRes = await nativeFetch(`${fallbackOrigin}${pathAndQuery}`, init);
+        preferredApiOrigin = fallbackOrigin;
+        return retryRes;
+      }
+      throw err;
+    }
+  };
 };
 
 export const isValidContact = (value) => {

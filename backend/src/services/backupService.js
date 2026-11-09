@@ -1,8 +1,22 @@
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const mongoose = require('mongoose');
 const AuditLog = require('../models/auditLogModel');
 const { ChatMessage, ChatThread } = require('../models/chatModel');
+
+// Persistent MongoDB storage for backup archives (prevents data loss on Render ephemeral filesystem)
+const backupArchiveSchema = new mongoose.Schema({
+    filename: { type: String, required: true, unique: true },
+    sizeBytes: { type: Number, required: true },
+    isAutomated: { type: Boolean, default: false },
+    triggeredBy: { type: String, default: 'System' },
+    notes: { type: String, default: '' },
+    data: { type: Buffer, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const BackupArchive = mongoose.models.BackupArchive || mongoose.model('BackupArchive', backupArchiveSchema, 'backup_archives');
 
 // Models mapping for full system data recovery
 const MODELS = {
@@ -122,6 +136,27 @@ async function createBackupFile({ isAutomated = false, triggeredBy = 'System', n
     const fullPath = path.join(BACKUP_DIR, filename);
 
     fs.writeFileSync(fullPath, compressedBuffer);
+
+    // Persist archive in MongoDB so ephemeral cloud disks (Render) never lose backups
+    if (compressedBuffer.length < 14 * 1024 * 1024) {
+        try {
+            await BackupArchive.findOneAndUpdate(
+                { filename },
+                {
+                    filename,
+                    sizeBytes: compressedBuffer.length,
+                    isAutomated,
+                    triggeredBy,
+                    notes,
+                    data: compressedBuffer,
+                    createdAt: new Date()
+                },
+                { upsert: true, new: true }
+            );
+        } catch (dbErr) {
+            console.warn('[BackupService] Could not persist backup archive to MongoDB:', dbErr.message);
+        }
+    }
 
     // Apply rolling retention for automated backups
     if (isAutomated) {
@@ -269,12 +304,48 @@ function deleteBackupFile(filename) {
     const safeName = path.basename(filename);
     const fullPath = path.join(BACKUP_DIR, safeName);
 
-    if (!fs.existsSync(fullPath)) {
-        throw new Error('Backup file not found.');
+    if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
     }
-
-    fs.unlinkSync(fullPath);
+    BackupArchive.deleteOne({ filename: safeName }).catch(() => {});
     return { success: true, filename: safeName };
+}
+
+/**
+ * Sync persisted MongoDB backup archives to local disk & auto-create baseline snapshot if empty
+ */
+async function ensurePersistentBackups() {
+    if (process.env.NODE_ENV === 'test') return;
+    try {
+        ensureBackupDir();
+        const storedArchives = await BackupArchive.find().sort({ createdAt: -1 }).limit(12).lean();
+        for (const arch of storedArchives) {
+            if (!arch.filename || !arch.data) continue;
+            const safeName = path.basename(arch.filename);
+            const fullPath = path.join(BACKUP_DIR, safeName);
+            if (!fs.existsSync(fullPath)) {
+                const buf = Buffer.isBuffer(arch.data)
+                    ? arch.data
+                    : (arch.data.buffer ? Buffer.from(arch.data.buffer) : Buffer.from(arch.data));
+                fs.writeFileSync(fullPath, buf);
+                if (arch.createdAt) {
+                    const mtime = new Date(arch.createdAt);
+                    fs.utimesSync(fullPath, mtime, mtime);
+                }
+            }
+        }
+
+        const currentFiles = listBackupFiles();
+        if (currentFiles.length === 0) {
+            await createBackupFile({
+                isAutomated: true,
+                triggeredBy: 'System Auto-Baseline',
+                notes: 'Initial automated baseline snapshot'
+            });
+        }
+    } catch (err) {
+        console.warn('[BackupService] ensurePersistentBackups warning:', err.message);
+    }
 }
 
 module.exports = {
@@ -285,5 +356,6 @@ module.exports = {
     parseBackupBuffer,
     restoreFromBackup,
     deleteBackupFile,
-    pruneOldAutomatedBackups
+    pruneOldAutomatedBackups,
+    ensurePersistentBackups
 };

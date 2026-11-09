@@ -35,6 +35,7 @@ exports.createManualBackup = async (req, res) => {
  */
 exports.listBackups = async (req, res) => {
     try {
+        await backupService.ensurePersistentBackups();
         const backups = backupService.listBackupFiles();
         res.status(200).json({
             success: true,
@@ -55,6 +56,7 @@ exports.listBackups = async (req, res) => {
  */
 exports.downloadBackup = async (req, res) => {
     try {
+        await backupService.ensurePersistentBackups();
         const { filename } = req.params;
         const safeName = path.basename(filename);
         const fullPath = path.join(backupService.BACKUP_DIR, safeName);
@@ -114,6 +116,7 @@ exports.downloadDirectSnapshot = async (req, res) => {
 exports.restoreFromFile = async (req, res) => {
     try {
         req.setTimeout(180000); // 3 minute allowance
+        await backupService.ensurePersistentBackups();
         const { filename } = req.params;
         const safeName = path.basename(filename);
         const fullPath = path.join(backupService.BACKUP_DIR, safeName);
@@ -193,6 +196,7 @@ exports.deleteBackup = async (req, res) => {
  */
 exports.getBackupStatus = async (req, res) => {
     try {
+        await backupService.ensurePersistentBackups();
         const files = backupService.listBackupFiles();
         const latestBackup = files.length > 0 ? files[0] : null;
         const totalSizeBytes = files.reduce((acc, f) => acc + (f.sizeBytes || 0), 0);

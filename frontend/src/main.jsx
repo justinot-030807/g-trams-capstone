@@ -3,7 +3,11 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import ErrorBoundary from './components/common/ErrorBoundary.jsx';
+import { installGlobalApiFetchInterceptor } from './utils/googleAuthUtils.js';
 import './index.css';
+
+// Install global fetch failover between workers.dev and onrender.com
+installGlobalApiFetchInterceptor();
 
 // Pre-mount theme enforcement to prevent flashing
 const savedTheme = localStorage.getItem('theme');
@@ -33,7 +37,6 @@ window.addEventListener('unhandledrejection', (event) => {
   if (
     msg.includes('dynamically imported module') ||
     msg.includes('loading chunk') ||
-    msg.includes('failed to fetch') ||
     msg.includes('failed to load module script') ||
     msg.includes('importing a module script failed')
   ) {

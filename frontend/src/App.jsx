@@ -31,6 +31,7 @@ const BploDashboard = lazyRetry(() => import('./pages/admin/BploDashboard'), 'Bp
 const FranchiseMasterlist = lazyRetry(() => import('./pages/admin/FranchiseMasterlist'), 'FranchiseMasterlist');
 const UserManagement = lazyRetry(() => import('./pages/admin/UserManagement'), 'UserManagement');
 const AdminSettings = lazyRetry(() => import('./pages/admin/AdminSettings'), 'AdminSettings');
+const AdminAuditLogs = lazyRetry(() => import('./pages/admin/AdminAuditLogs'), 'AdminAuditLogs');
 const FranchiseApproval = lazyRetry(() => import('./pages/admin/FranchiseApproval'), 'FranchiseApproval');
 const FranchiseReviewPage = lazyRetry(() => import('./pages/admin/FranchiseReviewPage'), 'FranchiseReviewPage');
 const ManageRevocations = lazyRetry(() => import('./pages/admin/ManageRevocations'), 'ManageRevocations');
@@ -122,6 +123,7 @@ function App() {
                   {/* SYSTEM ADMIN SECURE ROUTES (IT Maintenance, Accounts, Telemetry, Policy) */}
                   <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><AdminDashboard /></ProtectedRoute>} />
                   <Route path="/user-management" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><UserManagement /></ProtectedRoute>} />
+                  <Route path="/admin/audit-logs" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><AdminAuditLogs /></ProtectedRoute>} />
                   <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminSettings /></ProtectedRoute>} />
                   <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
                   <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminTickets /></ProtectedRoute>} />
